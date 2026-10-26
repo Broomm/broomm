@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -61,11 +62,18 @@ class _Firmware extends RommClient {
 
 void main() {
   late Directory root;
-  setUp(
-    () async =>
-        root = await Directory.systemTemp.createTemp('broomm-playstation-'),
-  );
-  tearDown(() async => root.delete(recursive: true));
+  var workersFinished = true;
+  setUp(() async {
+    workersFinished = true;
+    root = await Directory.systemTemp.createTemp('broomm-playstation-');
+  });
+  tearDown(() async {
+    if (!workersFinished)
+      throw StateError(
+        'Save worker still active; test data kept at ${root.path}',
+      );
+    await root.delete(recursive: true);
+  });
   TestedBuild build(String name) => TestedBuild({
     'id': name.toLowerCase(),
     'name': name,
@@ -110,6 +118,7 @@ void main() {
       final io = await f.open(mode: FileMode.write);
       try {
         await io.truncate(8 * 1024 * 1024 ~/ 512 * 528);
+        await io.setPosition(0);
         await io.writeFrom(ascii.encode('Sony PS2 Memory Card Format '));
         await io.setPosition(4096);
         await io.writeByte(marker);
@@ -338,43 +347,53 @@ void main() {
   });
 
   test('PS2 whole-card ZIPs work in both emulators without importing state groups or BIOS', () async {
-    final e = await emulator('PCSX2'),
-        layout = await gameProgressLayout(resolved(e), 'ps2');
-    final store = ProgressStore(
-      Directory('${root.path}/cloud'),
-      layout,
-      3,
-      42,
-      ownerRoot: root,
-    );
-    await card((await layout.target('save/slot1.ps2')).path, ps2: true);
-    await card(
-      (await layout.target('save/slot2.ps2')).path,
-      ps2: true,
-      marker: 19,
-    );
-    final before = await store.capture(),
-        exported = await store.exportNative(before);
+    final finished = Completer<void>();
+    workersFinished = false;
+    // A test timeout does not cancel an Isolate.run file writer. Drain its whole
+    // workflow before teardown removes storage; the original timeout still fails.
+    addTearDown(() => finished.future);
     try {
-      expect(exported.extension, 'zip');
-      final arms = await emulator('ARMSX2'),
-          other = await gameProgressLayout(resolved(arms), 'ps2');
-      final imported = await ProgressStore(
-        Directory('${root.path}/other-cloud'),
-        other,
+      final e = await emulator('PCSX2'),
+          layout = await gameProgressLayout(resolved(e), 'ps2');
+      final store = ProgressStore(
+        Directory('${root.path}/cloud'),
+        layout,
         3,
         42,
         ownerRoot: root,
-      ).importNative(exported.file);
-      expect(imported.ordinaryDigest, before.ordinaryDigest);
-      expect(imported.hasStates, false);
+      );
+      await card((await layout.target('save/slot1.ps2')).path, ps2: true);
+      await card(
+        (await layout.target('save/slot2.ps2')).path,
+        ps2: true,
+        marker: 19,
+      );
+      final before = await store.capture(),
+          exported = await store.exportNative(before);
+      try {
+        expect(exported.extension, 'zip');
+        final arms = await emulator('ARMSX2'),
+            other = await gameProgressLayout(resolved(arms), 'ps2');
+        final imported = await ProgressStore(
+          Directory('${root.path}/other-cloud'),
+          other,
+          3,
+          42,
+          ownerRoot: root,
+        ).importNative(exported.file);
+        expect(imported.ordinaryDigest, before.ordinaryDigest);
+        expect(imported.hasStates, false);
+      } finally {
+        await exported.close();
+      }
+      final invalid = await card('${root.path}/wrong.ps2');
+      await expectLater(store.importNative(invalid), throwsFormatException);
+      expect((await store.capture()).ordinaryDigest, before.ordinaryDigest);
     } finally {
-      await exported.close();
+      workersFinished = true;
+      finished.complete();
     }
-    final invalid = await card('${root.path}/wrong.ps2');
-    await expectLater(store.importNative(invalid), throwsFormatException);
-    expect((await store.capture()).ordinaryDigest, before.ordinaryDigest);
-  });
+  }, tags: ['full-size-save']);
 
   test('switching PS2 engines retains one cloud card and each engine’s matching states', () async {
     final pcs = await emulator('PCSX2'), arms = await emulator('ARMSX2');
@@ -385,6 +404,19 @@ void main() {
     );
     final api = SaveServer();
     addTearDown(api.close);
+    final finished = Completer<void>();
+    workersFinished = false;
+    addTearDown(() => finished.future);
+    final clock = Stopwatch()..start();
+    void phase(String message) => printOnFailure(
+      'PS2 cloud round trip +${clock.elapsedMilliseconds} ms: $message',
+    );
+    Future<void> runPhase(String name, Future<void> Function() work) async {
+      phase('begin $name');
+      await work();
+      phase('end $name');
+    }
+
     CloudGame game(ProgressLayout layout) => CloudGame(
       server: serverId,
       profile: profileId,
@@ -393,47 +425,59 @@ void main() {
       client: api,
       layout: layout,
     );
-    final cloud = CloudSaves(root, notice: (_, __) {});
-    await cloud.beforePlay(game(first));
-    await card((await first.target('save/slot1.ps2')).path, ps2: true);
-    await (await first.target('${first.areas.last.id}/slot.p2s'))
-        .writeAsBytes([1, 2, 3]);
-    await cloud.afterPlay(game(first), 0);
-    expect(api.records.values.single.name, endsWith('.ps2'));
-    await cloud.beforePlay(game(second));
-    expect(api.records, hasLength(1));
-    expect((await cloud.store(game(second)).state())['pending'], false);
-    expect(
-      (await second.files()).keys.where((k) => k.startsWith('states-')),
-      isEmpty,
-    );
-    await (await second.target('${second.areas.last.id}/slot.p2s'))
-        .writeAsBytes([4, 5, 6]);
-    await cloud.afterPlay(game(second), 0);
-    final afterSwitch = await cloud
-        .store(game(second))
-        .capture(
-          retained: await cloud
-              .store(game(second))
-              .load(
-                (await cloud.store(game(second)).state())['snapshot'] as String,
-              ),
-        );
-    expect(
-      afterSwitch.entries.keys.where((k) => k.startsWith('states-')),
-      containsAll([
-        '${first.areas.last.id}/slot.p2s',
-        '${second.areas.last.id}/slot.p2s',
-      ]),
-    );
-    final versions = api.records.length;
-    await cloud.sync(game(first));
-    expect(api.records, hasLength(versions));
-    expect((await cloud.store(game(first)).state())['pending'], false);
-    expect(
+    final cloud = CloudSaves(root, notice: (_, __) {}, phase: phase);
+    try {
+      await runPhase('PCSX2 before play', () => cloud.beforePlay(game(first)));
+      await card((await first.target('save/slot1.ps2')).path, ps2: true);
       await (await first.target('${first.areas.last.id}/slot.p2s'))
-          .readAsBytes(),
-      [1, 2, 3],
-    );
-  });
+          .writeAsBytes([1, 2, 3]);
+      await runPhase('PCSX2 after play', () => cloud.afterPlay(game(first), 0));
+      expect(api.records.values.single.name, endsWith('.ps2'));
+      await runPhase(
+        'ARMSX2 before play',
+        () => cloud.beforePlay(game(second)),
+      );
+      expect(api.records, hasLength(1));
+      expect((await cloud.store(game(second)).state())['pending'], false);
+      expect(
+        (await second.files()).keys.where((k) => k.startsWith('states-')),
+        isEmpty,
+      );
+      await (await second.target('${second.areas.last.id}/slot.p2s'))
+          .writeAsBytes([4, 5, 6]);
+      await runPhase(
+        'ARMSX2 after play',
+        () => cloud.afterPlay(game(second), 0),
+      );
+      final afterSwitch = await cloud
+          .store(game(second))
+          .capture(
+            retained: await cloud
+                .store(game(second))
+                .load(
+                  (await cloud.store(game(second)).state())['snapshot']
+                      as String,
+                ),
+          );
+      expect(
+        afterSwitch.entries.keys.where((k) => k.startsWith('states-')),
+        containsAll([
+          '${first.areas.last.id}/slot.p2s',
+          '${second.areas.last.id}/slot.p2s',
+        ]),
+      );
+      final versions = api.records.length;
+      await runPhase('PCSX2 sync after switch', () => cloud.sync(game(first)));
+      expect(api.records, hasLength(versions));
+      expect((await cloud.store(game(first)).state())['pending'], false);
+      expect(
+        await (await first.target('${first.areas.last.id}/slot.p2s'))
+            .readAsBytes(),
+        [1, 2, 3],
+      );
+    } finally {
+      workersFinished = true;
+      finished.complete();
+    }
+  }, tags: ['full-size-save']);
 }

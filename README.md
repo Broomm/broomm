@@ -114,6 +114,8 @@ The [responsiveness/loading follow-up](docs/research/pairing-responsiveness.md) 
 
 ## Read the documentation
 
+For CI failures and local reproduction, see the [latest hosted-run follow-up](docs/github-releases.md#sixth-hosted-ci-follow-up--2026-10-26). Linux ARM64 now compiles and links; the remaining packaging failure came from checking the launcher before preparing its engine's SDK search paths. The correction prepares all binaries before auditing dependencies, with native regressions scheduled on both Linux architectures. Local checks inspect actual x64/ARM64 engines on macOS; native Linux loader checks still require CI. The supplied macOS native test command succeeds; its result upload fails on GitHub artifact-storage DNS and needs a rerun. Android signing already built successfully according to the owner; device acceptance remains separate.
+
 | Document | Purpose |
 | --- | --- |
 | [PROJECT.md](PROJECT.md) | Product requirements, user journeys, and deferred scope |
@@ -148,8 +150,8 @@ GitHub builds follow Teddy's **`version.txt` + automatic tags** policy. PRs agai
 universal packages; successful branch pushes publish stable/candidate releases
 only after checks and every build pass. Configure the four Android signing
 secrets before publishing. See [workflow setup, version examples, commands and
-current native limits](docs/github-releases.md). The workflow is prepared locally;
-the first hosted matrix run remains required.
+current native limits](docs/github-releases.md). Hosted failures have been corrected
+locally; a complete successful hosted matrix remains required.
 
 Project workflows are Dart within Flutter; no PGCS code or Go helpers. Optional C injection bridges may ship precompiled on desktop. Android uses ordinary external emulator app handoff without input injection or overlays. Desktop configuration always stays Broomm-local, even for system-selected executables, and emulator updates are manual/setup-file initiated.
 

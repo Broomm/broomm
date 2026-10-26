@@ -110,7 +110,12 @@ jobs:
         if: matrix.platform == 'linux'
         run: bash tool/ci/run.sh dart format --output=none --set-exit-if-changed lib test tool
       - name: Test
-        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded
+        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded --exclude-tags full-size-save
+      # Full native memory cards require repeated durable copies/readback. Give
+      # those tests the runner without competing suites, with unchanged limits.
+      - name: Test full-size save workflows
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded test/playstation_test.dart --tags full-size-save --concurrency=1
 
   native-macos:
     runs-on: macos-26
@@ -203,6 +208,9 @@ jobs:
         run: bash tool/ci/prepare_android.sh
       - name: Resolve locked packages
         run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Test Linux bundle portability checks
+        if: matrix.platform == 'linux'
+        run: bash tool/ci/run.sh bash tool/ci/test_linux_bundle.sh
       - name: Build and package (PR/local Android signing)
         if: matrix.platform != 'android' || needs.version.outputs.publish != 'true'
         run: bash tool/ci/run.sh dart tool/release/package.dart

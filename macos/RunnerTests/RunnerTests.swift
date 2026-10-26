@@ -84,11 +84,18 @@ class RunnerTests: XCTestCase {
     let window = try XCTUnwrap(NSApp.windows.compactMap { $0 as? MainFlutterWindow }.first)
     let original = window.frame
     defer { window.setFrame(original, display: true); window.present(overlay: false) }
-    let chosen = NSRect(x: original.origin.x + 12, y: original.origin.y + 8, width: 1100, height: 760)
+    // Hosted runners can have a smaller screen than a developer's monitor.
+    // Exercise a user frame which fits that screen: AppKit otherwise constrains
+    // an oversized requested frame when ordering the window front.
+    let visible = try XCTUnwrap(window.screen ?? NSScreen.main).visibleFrame
+    let chosen = NSRect(x: visible.minX + 16, y: visible.minY + 16,
+                        width: min(1100, visible.width - 32), height: min(760, visible.height - 32))
     window.setFrame(chosen, display: true)
+    let accepted = window.frame
+    XCTAssertEqual(accepted, chosen, "The fixture must fit the visible screen: \(visible)")
     for overlay in [true, true, false, true, false] {
       window.present(overlay: overlay)
-      XCTAssertEqual(window.frame, chosen)
+      XCTAssertEqual(window.frame, accepted, "overlay=\(overlay), visible screen=\(visible)")
       XCTAssertTrue(window.styleMask.contains([.titled, .closable, .miniaturizable, .resizable]))
       XCTAssertFalse(window.styleMask.contains(.fullSizeContentView))
       XCTAssertEqual(window.level, overlay ? .statusBar : .normal)

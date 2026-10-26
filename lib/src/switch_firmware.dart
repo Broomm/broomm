@@ -32,7 +32,9 @@ Future<bool> _present(
   if (directory) {
     await ownedDirectory(Directory(checked));
     return (await Directory(checked).list(followLinks: false).toList()).any(
-      (f) => RegExp(r'/[a-fA-F0-9]{32}\.nca$').hasMatch(f.path),
+      (f) =>
+          RegExp(r'^[a-fA-F0-9]{32}\.nca$')
+              .hasMatch(f.uri.pathSegments.where((s) => s.isNotEmpty).last),
     );
   }
   final f = await addonFile(root, relative);

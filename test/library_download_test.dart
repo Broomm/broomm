@@ -412,7 +412,7 @@ void main() {
       final path = model.installed.single.directory.path;
       model.switchAccount();
       await model.login('Two', 'password');
-      expect(model.installed.single.directory.path, path);
+      expect(model.installed.single.directory.uri, Directory(path).uri);
       await model.downloadGame(fixture());
       expect(clients.fold<int>(0, (n, c) => n + c.transfers), 1);
       final restarted = ShellModel(
@@ -424,7 +424,7 @@ void main() {
       await restarted.start();
       await restarted.chooseServer(saved);
       await restarted.login('One', 'password');
-      expect(restarted.installed.single.directory.path, path);
+      expect(restarted.installed.single.directory.uri, Directory(path).uri);
       (model.client! as _ModelClient).deny = true;
       await model.loadLibrary();
       expect(model.installed, isEmpty);

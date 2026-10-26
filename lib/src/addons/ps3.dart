@@ -193,7 +193,10 @@ class Ps3Addons {
 
   Future<void> _profile(Directory root, String id) async {
     final j = await addonJson(File(await addonPath(root, 'profile.json')));
-    if (root.path != '${data.path}/profiles/$id/emulators/rpcs3' ||
+    if (root.absolute.uri !=
+            Directory('${data.path}/profiles/$id/emulators/rpcs3')
+                .absolute
+                .uri ||
         j['version'] != 1 ||
         j['profile'] != id ||
         j['emulator'] != 'rpcs3')

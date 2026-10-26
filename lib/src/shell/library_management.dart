@@ -230,8 +230,9 @@ extension LibraryManagement on GameLibrary {
           final contents = await old.list(followLinks: false).toList();
           if (contents.every(
             (f) =>
-                RegExp(r'/(icon\.png|logo\.(png|webp)|hero\.(png|jpg|webp))$')
-                    .hasMatch(f.path),
+                f is File &&
+                RegExp(r'^(icon\.png|logo\.(png|webp)|hero\.(png|jpg|webp))$')
+                    .hasMatch(f.uri.pathSegments.last),
           ))
             await old.delete(recursive: true);
         } on FileSystemException {

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'shell_model_test.dart' show FixtureRomm, settleModel;
 import 'navigation_test.dart' show buttonNode, native;
+import 'support/review_emulators.dart';
 
 class PlatformRomm extends FixtureRomm {
   PlatformRomm(super.server);
@@ -34,6 +35,7 @@ void main() {
       ShellStorage(root),
       project: Directory.current.path,
       clientFactory: PlatformRomm.new,
+      emulatorManager: ReviewEmulators(root, project: Directory.current.path),
     );
     await model.start();
     await model.addServer('https://server.example');

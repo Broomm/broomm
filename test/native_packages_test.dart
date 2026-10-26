@@ -449,6 +449,56 @@ void main() {
         await lease.release();
       }
     });
+    for (final keepReference in [false, true]) {
+      test(
+        'native Switch references ${keepReference ? 'retain package bytes until explicitly removed' : 'outside the package directory cannot retain a generation'}',
+        () async {
+          final entry = await install(1);
+          await sync(entry);
+          final profile = (await prepare(
+            addonProfile,
+            DownloadCancellation(),
+          )).$2;
+          final original = File(
+            '${profile.path}/user/games/01005d100807a000/dlc.json',
+          );
+          final path =
+              (jsonDecode(await original.readAsString()) as List).single['path']
+                  as String;
+          // Native enumeration uses host separators, unlike the joined setup
+          // paths. A user-managed emulator entry must still protect its bytes.
+          final package =
+              (await File(
+                    path,
+                  ).parent.list().where((e) => e is File).toList()).single
+                  as File;
+          final external = File(
+            '${profile.path}/user/games/0100000000000000/updates.json',
+          );
+          await external.parent.create();
+          final reference = keepReference
+              ? package.path
+              : '${package.parent.path}-other/not-owned.nsp';
+          final text = jsonEncode([
+            {'path': reference},
+          ]);
+          await external.writeAsString(text);
+          final lease = await SessionLease.acquire(root);
+          try {
+            await service.uninstall(addonServer, 1);
+            expect(await File(path).exists(), keepReference);
+            expect(await external.readAsString(), text);
+            if (keepReference) {
+              await external.delete();
+              await service.uninstall(addonServer, 1);
+              expect(await File(path).exists(), false);
+            }
+          } finally {
+            await lease.release();
+          }
+        },
+      );
+    }
     test('durable deletion resumes after an inner manifest is lost and preserves game progress', () async {
       final entry = await install(1);
       await sync(entry);

@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T19:24:00.875782Z",
+  "base_revision": "988353f26a3e21f69f4ed73e66aa5987826f1cf9",
+  "revision_scope": "uncommitted CI/test-infrastructure corrections; final changed-source fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "devbox": "0.18.4"
+  },
+  "supplied_logs": [
+    {
+      "attachment": "029cd2bf-b180-4959-84c3-e51e970ee617",
+      "job": "Windows checks: one PS2 cloud round-trip timeout, then live-worker deletion failure",
+      "sha256": "3e057dcc91ef7774188547278da37b8047a1593804ad1986116320ee08478507"
+    },
+    {
+      "attachment": "2b9b5bbc-b3d4-4c1e-8f9d-0278c08ee68f",
+      "job": "Linux x64: static pkg-config preflight lacks xtst",
+      "sha256": "4359c5f133a52210c36f646462cd9b144bbb513989ee5b931f6047e196c802a6"
+    },
+    {
+      "attachment": "d279eda5-8c7d-4bd2-9223-b05c907bfad4",
+      "job": "Linux ARM64: static pkg-config preflight lacks xtst",
+      "sha256": "d2ceac849513fdec57cd442ab119d97465508e3c2e1c124893d81a3bde0e68a7"
+    }
+  ],
+  "test_partition": {
+    "ordinary": 348,
+    "full_size_save": 2,
+    "total": 350,
+    "production_test_timeout_seconds": 30,
+    "forced_fixture_timeout_ms": 500,
+    "forced_fixture_expected_exit": 1
+  },
+  "verification_commands": [
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded --exclude-tags full-size-save",
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded test/playstation_test.dart --tags full-size-save --concurrency=1",
+    "devbox run -- flutter --suppress-analytics analyze --no-pub",
+    "devbox run -- dart format --output=none --set-exit-if-changed lib test tool",
+    "devbox --config tool/ci/lint run check",
+    "devbox run -- dart .tool-cache/ci-fourth-sdk-paths.dart x64 --xtst",
+    "devbox run -- dart .tool-cache/ci-fourth-sdk-paths.dart arm64 --xtst",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-fourth-sdk-query.sh x64",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-fourth-sdk-query.sh arm64",
+    "devbox --config tool/ci/linux run -- pkg-config --modversion gtk+-3.0 glib-2.0 gio-2.0",
+    "devbox run -- dart .tool-cache/ci-fourth-timeout-fixture.dart",
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded .tool-cache/ci-fourth-forced-timeout_test.dart --plain-name 'switching PS2 engines'",
+    "git diff --check"
+  ],
+  "diagnostics": {
+    ".tool-cache/ci-fourth-ps2-before.log": {
+      "result": "passed: isolated original PS2 engine-switching round trip, approximately eight seconds on macOS",
+      "sha256": "084475ff149051c19094dcf40792ce840036d87a5dbac790fa63bc1f42ba6133"
+    },
+    ".tool-cache/ci-fourth-sdk-paths.dart": {
+      "result": "diagnostic source: declared/propagated-only SDK paths; excludes unrelated runtime closure paths",
+      "sha256": "77d64fc5408641f5c28023688a92fcd2952e3cc241520710f04d8d2f29b69a58"
+    },
+    ".tool-cache/ci-fourth-sdk-query.sh": {
+      "result": "diagnostic source: host pkg-config with default search disabled, shared/static queries over Linux metadata",
+      "sha256": "8ea77461b1d3dc888f877e01705ecb9088ad2c05f489dd8d1f0e4ac2ff00fc04"
+    },
+    ".tool-cache/ci-fourth-x64-inputs-before.log": {
+      "result": "selected 57 pkg-config directories from 126 declared/propagated outputs",
+      "sha256": "0093200b241965fd085ebd44151f697ba1e81d0afb2c31f8e6ea8f254706fe1d"
+    },
+    ".tool-cache/ci-fourth-arm64-inputs-before.log": {
+      "result": "selected 57 pkg-config directories from 126 declared/propagated outputs",
+      "sha256": "0093200b241965fd085ebd44151f697ba1e81d0afb2c31f8e6ea8f254706fe1d"
+    },
+    ".tool-cache/ci-fourth-x64-query-before.log": {
+      "result": "reproduced: shared query passes, static query fails on missing xtst",
+      "sha256": "1fc1534b2ce4fbd170983700019fecdc7c31a87c62c00f1480ad75fb48a4df70"
+    },
+    ".tool-cache/ci-fourth-arm64-query-before.log": {
+      "result": "reproduced: shared query passes, static query fails on missing xtst",
+      "sha256": "e25dcc45e602eef526773be088b7ce8cc0f431085da57f2f87efafa4c7764407"
+    },
+    ".tool-cache/ci-fourth-linux-lock.log": {
+      "result": "resolved: existing XTest primary output pinned to the same Nix snapshot",
+      "sha256": "f5c90e702a23bce32409d1bdee4478594ae105100b7a9db26e3568d240f2c01e"
+    },
+    ".tool-cache/ci-fourth-xtst-paths.json": {
+      "result": "evaluated: exact x64/ARM64 XTest outputs, version 1.2.4",
+      "sha256": "6bd80d994ecd2a6f7c3d91e9c8b9902a831be0ed6bdd29c6d21616b3b47289d2"
+    },
+    ".tool-cache/ci-fourth-x64-inputs-after.log": {
+      "result": "selected 58 pkg-config directories from 127 declared/propagated outputs",
+      "sha256": "b73a14b3fa8304ee4cd5616a02934a2ebed733c95542c3b0352a3462707ca9aa"
+    },
+    ".tool-cache/ci-fourth-arm64-inputs-after.log": {
+      "result": "selected 58 pkg-config directories from 127 declared/propagated outputs",
+      "sha256": "b73a14b3fa8304ee4cd5616a02934a2ebed733c95542c3b0352a3462707ca9aa"
+    },
+    ".tool-cache/ci-fourth-x64-query-after.log": {
+      "result": "passed: full shared/static GTK/GLib/GIO dependency queries, Linux x64 metadata only",
+      "sha256": "0d17f44e2f8d21840bdc7ce35423679f76d8d967df5f9e3571ab01adc0b939c1"
+    },
+    ".tool-cache/ci-fourth-arm64-query-after.log": {
+      "result": "passed: full shared/static GTK/GLib/GIO dependency queries, Linux ARM64 metadata only",
+      "sha256": "0024023b79d845803e3630035bb4cf5131af9be7be6c8d406f4d04291927ab0d"
+    },
+    ".tool-cache/ci-fourth-devbox-generation.log": {
+      "result": "passed: actual Devbox environment generation and pinned version query on macOS",
+      "sha256": "994929fd7ddffc7d990ccd897800c96556f6d3cf012adf1ae3e057f50576d175"
+    },
+    ".tool-cache/ci-fourth-main-tests.log": {
+      "result": "passed: 348 ordinary tests, first CI partition",
+      "sha256": "fa70ef93e18e256811ef86b5bc7c536b5a5764be422af7f798a5e03763999c82"
+    },
+    ".tool-cache/ci-fourth-full-size-tests-final.log": {
+      "result": "passed: two full-size native-card tests, separate single-suite CI partition, about ten seconds including both cases",
+      "sha256": "2643956c12cfe266dfc97a8a59c233bf9eb4da07c6858cbe5112624bf7442479"
+    },
+    ".tool-cache/ci-fourth-timeout-fixture.dart": {
+      "result": "diagnostic source: private test copy with forced 500 ms timeout only",
+      "sha256": "892c3f8c700717ef2f1bdc7b3b7de254785e2750e6f4d4da79feb51232ba1353"
+    },
+    ".tool-cache/ci-fourth-forced-timeout_test.dart": {
+      "result": "private regression fixture: full workflow with forced short framework timeout, no production limit change",
+      "sha256": "6c326f12cc85965b1837cdb1ef52c41b829baba6b6fe2e0fce9e28476dbf6a47"
+    },
+    ".tool-cache/ci-fourth-forced-timeout.log": {
+      "result": "expected exit 1: timeout remains a failure; whole save workflow drains by 7906 ms with no secondary deletion failure",
+      "sha256": "d92cb0613881a1fa4902aeea0f8dec192fd1e9039dd869f62d4eca112bbaf7e8"
+    },
+    ".tool-cache/ci-fourth-analyze.log": {
+      "result": "initial finding: test diagnostic used print; replaced with failure-only printOnFailure",
+      "sha256": "dab9d99026f6443ea6795b3b720fe231fec5f09c937e3504aa23a95e9a964b83"
+    },
+    ".tool-cache/ci-fourth-analyze-final.log": {
+      "result": "passed: no issues",
+      "sha256": "5d8fdd0458bb4b5c214862bcbcab52a75a18cf5bf5fe01db7e5ee88ebcb28d28"
+    },
+    ".tool-cache/ci-fourth-format-final.log": {
+      "result": "passed: 217 Dart files, zero changes",
+      "sha256": "6582e38c089b84e5fad40cadbdaa0337fd708b5db9fa1e756bfaadcc6e275dc3"
+    },
+    ".tool-cache/ci-fourth-lint-final.log": {
+      "result": "passed: workflow/ShellCheck with the existing documented concurrency.queue schema exception",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    }
+  },
+  "limitations": [
+    "The precise Windows timeout phase/cause is unknown from the supplied log. Resource contention is a hypothesis; isolated CI scheduling needs a new Windows run, and no native Windows success is claimed.",
+    "Both restricted Linux metadata queries run on macOS using host pkg-config. They reproduce/correct the preflight dependency gap but are not Linux Devbox shell execution, app compilation, linking, bundle auditing or runtime verification.",
+    "The previous closure-wide query included unavailable search directories; the new query follows only declared/propagated inputs. Future native Linux execution remains required.",
+    "The forced 500 ms fixture remains a failing test, not a passing retry. It verifies worker draining without changing committed 30-second limits.",
+    "No production/native code changed. No new app build or native app-test execution is claimed.",
+    "No new test skips, assertion or timeout relaxations, signing changes, OS installs, emulator/profile/RomM mutations, Git commits, pushes, tags or releases.",
+    "A complete successful hosted matrix requires a new commit/run containing all changes, including dart_test.yaml. No remote job is dispatched here."
+  ],
+  "changed_source_sha256": {
+    ".github/workflows/release.yml": "50b492cbbde0672685cd45b930d6663763a23424d55e917c1dcca75152f34f4e",
+    "dart_test.yaml": "270585a1ce5e337d754562c478540996631ad17958829810777c421c1cf4389a",
+    "test/playstation_test.dart": "3683def37d1f81d9f7c03e3bdc190c460ac752c9d6dfcfd420fbae21b256a2dc",
+    "tool/ci/linux/devbox.json": "231f179d041353fdc58e76b27010c4d82704010b79de6cb1846cd1b1e8d5d81c",
+    "tool/ci/linux/devbox.lock": "f84ad18947b6d6e4d2b6344b45b5931432135cc59eb25bdb3aa1b62613df7866"
+  }
+}

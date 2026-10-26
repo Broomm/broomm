@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T18:18:09.354412Z",
+  "base_revision": "cf27b39bef293bef31908e422280f1d9ad6d485c",
+  "revision_scope": "uncommitted corrections on this base; tracked and new changed source fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "devbox": "0.18.4"
+  },
+  "supplied_logs": [
+    {
+      "attachment": "c1c5b9d0-9754-4236-9173-29417520f35c",
+      "job": "Windows Flutter checks: three Switch package failures",
+      "sha256": "a414094ac46c305c090fbd8e825c65373263984ed21bc1872ca169890fa8a993"
+    },
+    {
+      "attachment": "87977858-7279-4e79-b263-23faeedfcad0",
+      "job": "Linux x64: Pango link failure",
+      "sha256": "43b5faa1b365934996edd80b8d148375de7fee4630cbc2ecfb1ea0e04d50ea8a"
+    },
+    {
+      "attachment": "c5d4e919-7484-4233-ae1b-d4f9b668af4c",
+      "job": "Linux ARM64: Pango/Fontconfig link failure",
+      "sha256": "f3d74f8eefbd60b6eacc7ec678bc746cfe82cb1809370c8f6b002067a4643230"
+    }
+  ],
+  "verification_commands": [
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+    "devbox run -- flutter --suppress-analytics analyze --no-pub",
+    "devbox run -- dart format --output=none --set-exit-if-changed lib test tool",
+    "devbox --config tool/ci/lint run check",
+    "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox run -- bash tool/build_app.sh --portable --debug --no-pub",
+    "devbox --config tool/ci/linux run -- pkg-config --print-errors --static --cflags --libs gtk+-3.0 glib-2.0 gio-2.0",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-third-query-linux.sh",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-third-query-linux.sh arm64",
+    "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox --config tool/ci/linux run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-third-native-probe.sh",
+    "git diff --check"
+  ],
+  "diagnostics": {
+    ".tool-cache/ci-third-switch-tests.log": {
+      "result": "passed: 14 affected package and Windows path-codec tests on macOS",
+      "sha256": "4747177e2fce118e9cd61cea9ad7cde6f9e02b57018a68dcdf6c3e4ee74677e4"
+    },
+    ".tool-cache/ci-third-full-tests-final.log": {
+      "result": "passed: 350 Flutter tests on macOS ARM64, final source",
+      "sha256": "20d7a460a377574e3e0b6d8300089be9e29aeaf7206e7b0209be6da6a4bc4fa7"
+    },
+    ".tool-cache/ci-third-analyze-final.log": {
+      "result": "passed: no analysis issues",
+      "sha256": "0cad3308e4f46293cb2d34d3b7d9104d447cf462b7f2297ced6fa91684d62a37"
+    },
+    ".tool-cache/ci-third-format-final.log": {
+      "result": "passed: 217 Dart files, zero changes",
+      "sha256": "6582e38c089b84e5fad40cadbdaa0337fd708b5db9fa1e756bfaadcc6e275dc3"
+    },
+    ".tool-cache/ci-third-lint-verified.log": {
+      "result": "passed: workflow/ShellCheck with existing documented queue schema exception",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    },
+    ".tool-cache/ci-third-macos-build-final.log": {
+      "result": "passed: portable macOS debug app rebuilt from final source",
+      "sha256": "e005c981a71c53c9cb9fc4916486f854c224fd66e77272cbfb92954cb1dcdabd"
+    },
+    ".tool-cache/ci-third-linux-private-lock.log": {
+      "result": "resolved: mount and SELinux development outputs",
+      "sha256": "9eb143d9e77b6398ab7c8819e013c99a518cadf6fbfed916fed1a5f0ae19eb72"
+    },
+    ".tool-cache/ci-third-linux-private-lock-2.log": {
+      "result": "resolved: libthai and libsepol development outputs",
+      "sha256": "8efdf2f4731e6f476aecb6ddb46734f5cc109a8ff222354681307231525e7398"
+    },
+    ".tool-cache/ci-third-linux-private-lock-3.log": {
+      "result": "resolved: libdatrie development output",
+      "sha256": "62d51babefec7f97c2eb792d9f4053bf3bcc969205dc9a2be75d34aa5aae82ba"
+    },
+    ".tool-cache/ci-third-linux-private-lock-4.log": {
+      "result": "resolved: remaining private GTK metadata outputs",
+      "sha256": "71f3e2a278e382c2dc0634f40fb278f3569ce7fc1eef9996c70c84d20118479a"
+    },
+    ".tool-cache/ci-third-linux-x64-static-before.log": {
+      "result": "diagnostic failure before completing private metadata: libsepol missing",
+      "sha256": "c03a0139f5a766e14d50210dbb6e82aed597f1cb665ddaebae6670454b078abb"
+    },
+    ".tool-cache/ci-third-linux-x64-static.log": {
+      "result": "diagnostic failure before completing private metadata: datrie missing",
+      "sha256": "15ec9cd82b1434b0fa91aaa7c03c8a9e74e4363dd6090924e8095c65ebaed95f"
+    },
+    ".tool-cache/ci-third-linux-x64-static-final.log": {
+      "result": "diagnostic failure before completing private metadata: Xdmcp missing",
+      "sha256": "f999e74a6389ec703176f0039663279ca2636899c3c518014fea2a1866338553"
+    },
+    ".tool-cache/ci-third-linux-x64-static-complete.log": {
+      "result": "passed: full GTK/GLib/GIO static flags using actual x64 Linux metadata and host pkg-config; no target execution",
+      "sha256": "beeba81ab456196fe0df5c45a65f011405c89765689fc4948b0c45d89f9551fe"
+    },
+    ".tool-cache/ci-third-linux-arm64-static-complete.log": {
+      "result": "passed: full GTK/GLib/GIO static flags using actual ARM64 Linux metadata and host pkg-config; no target execution",
+      "sha256": "bdc52e1991ae6eb8ae8858723284fd358eb19ec8635a16fb3483491868532519"
+    },
+    ".tool-cache/ci-third-linux-x64-closure.log": {
+      "result": "inspected: pinned x64 Linux dependency closure",
+      "sha256": "1cd058ac472fdb2c11348535621230025d1dceb25929c8e0c446128e6e9ad55d"
+    },
+    ".tool-cache/ci-third-linux-arm64-closure.log": {
+      "result": "inspected: pinned ARM64 Linux dependency closure",
+      "sha256": "3c247593fcd1b146ee983baeecc61d228d1d2650c5cda6401650b0fc35b3944d"
+    },
+    ".tool-cache/ci-third-macos-sdk-static-final-verified.log": {
+      "result": "passed: actual Devbox manifest environment generation and complete static queries on macOS",
+      "sha256": "5d071b93efcd30dc25b5ed03f50b343d3241e7c7e830aeaa2928f1e3fb157f58"
+    },
+    ".tool-cache/ci-third-native-probe.sh": {
+      "result": "diagnostic source: real GTK/GLib/GIO linkage, literal arguments, rejected missing SDK",
+      "sha256": "ff86550088da8ac1f451688106ea44713b74a66b73b2ccbef7e5f8ba159e96e4"
+    },
+    ".tool-cache/ci-third-native-probe-compile.log": {
+      "result": "intermediate: linkage passed but reported missing libthai metadata, subsequently fixed",
+      "sha256": "7b77ed333a6bf851cb33893e171d7f32928bcf30e74a0124dc54379f98aad3bb"
+    },
+    ".tool-cache/ci-third-native-probe-final.log": {
+      "result": "intermediate: linkage passed but reported missing epoxy metadata, subsequently fixed",
+      "sha256": "762eddf9cad095467b0485b3392d71f4bbb0b974cbd848cc790b04d650bfdcfe"
+    },
+    ".tool-cache/ci-third-native-probe-verified.log": {
+      "result": "passed: production CMake boundary under poisoned inherited SDK flags; Clang 21.1.8 macOS compile/link/run, literal arguments retained, missing SDK rejected; no missing metadata diagnostics",
+      "sha256": "d4280a7195c819e20362060fece8af72cf964bca111380cb1351e0f969dff645"
+    },
+    ".tool-cache/ci-third-query-linux.sh": {
+      "result": "diagnostic source: closure-confined target metadata queries with host pkg-config",
+      "sha256": "fe22d399a42255293be369d9f06bc7f3804103c368c126b2950e86568a159356"
+    },
+    ".tool-cache/ci-third-arm64-sdk.sh": {
+      "result": "diagnostic source: fetch pinned ARM64 metadata without executing target binaries",
+      "sha256": "eedd96606b5a4389f82fe67d68153fd74c0bb1e8e3ed2c104c1b4ec635327d58"
+    }
+  },
+  "limitations": [
+    "Linux .pc dependency graph inspection is performed by host pkg-config on macOS, without executing any Linux binary. Native Linux application compilation, compiler-shim execution, bundle audit and runtime remain pending.",
+    "Native CMake linkage probe runs on macOS with the Devbox Clang 21.1.8, exercising the production CMake shim/environment, not /usr/bin/clang-18 Linux shims.",
+    "Windows path-codec regressions execute on macOS. Actual Windows filesystem execution still requires the new hosted run.",
+    "The unchanged six native macOS app tests were not rerun or counted again in this follow-up.",
+    "Hosted jobs must use a new commit containing these changes. No remote CI run is dispatched here.",
+    "No test skips, assertion relaxation, timeout increases, signing changes, OS installations, emulator/profile/RomM mutations, cache deletion, Git commits, pushes, tags or releases.",
+    "Only dependency paths and bounded diagnostics are recorded; full environment output and credentials are excluded."
+  ],
+  "native_shim_modes": {
+    "tool/ci/linux-tools/cmake": "755",
+    "tool/ci/linux-tools/clang": "755",
+    "tool/ci/linux-tools/clang++": "755"
+  },
+  "changed_source_sha256": {
+    "lib/src/addons/package_import.dart": "6275d81973fc846b3e0a2886f55c7c8e66cddfdd6a7eae2218766c6200daa407",
+    "lib/src/addons/packages.dart": "f4ff979292dd599c047b7372291183ab50db550cda02904e4e75525ccc460160",
+    "test/switch_package_paths_test.dart": "e138288eecbea6b6156e5bd1074ebe074bb3b076aee7ffa0444c58221ed0736e",
+    "tool/ci/build_linux.sh": "f9d32ea9fc1cccd3b41249ae66c8b96e2f0e7e9d69264bb2ac0fe472e70b1a67",
+    "tool/ci/lint_workflow.sh": "cdc2de093af8f3cf02974dcc79467bba7d474c9e969c7e066abb9400411ebae7",
+    "tool/ci/linux-tools/clang": "03372b3f9e000ee4a508af7bad33bec1ee441e91275480d654c00ad6f3a1e10b",
+    "tool/ci/linux-tools/clang++": "6208ac1803fe5df9e1a558ccee2968e5c3a27e96e47768d5b8a4c88e9b0a0cda",
+    "tool/ci/linux-tools/cmake": "a9abd14b8c72877c58bc7e025522a1efce637e78ad5e83ed9e12db0f9954a677",
+    "tool/ci/linux-tools/environment.sh": "cf96cc6247f07783cd8f6e77ffe7fe6f0bfca32ed6279c2c75ab9b1e6edca34d",
+    "tool/ci/linux/devbox.json": "96b52ca348a1b465048590dd2d03e78578c52b69984aaf590880ccea515cd2cb",
+    "tool/ci/linux/devbox.lock": "9e50293bb2c18697b12917ffc3be610308800752db8ff7dc87d0575951678d41"
+  }
+}

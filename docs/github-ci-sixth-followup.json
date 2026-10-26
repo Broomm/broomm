@@ -1,0 +1,239 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T20:20:59.313498Z",
+  "base_revision": "087aaa1889f1c9fb46e7a04fcaee070054aa8ccf",
+  "revision_scope": "uncommitted Linux bundle preparation/audit ordering fix and native CI regressions; fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "devbox": "0.18.4",
+    "readelf": "GNU binutils 2.42",
+    "patchelf": "0.15.0"
+  },
+  "supplied_logs": [
+    {
+      "attachment": "0484c6e9-1340-48a4-9d29-0d976d8aa9c7",
+      "job": "native-macos",
+      "sha256": "b9293628493a0c52ae09026427453316b680b1a5362200b80f499bd8bee30c76",
+      "observation": "Native xcodebuild test command succeeds; upload-artifact fails on ENOTFOUND productionresultssa16.blob.core.windows.net. Individual native test counts are absent."
+    },
+    {
+      "attachment": "86ee0541-a0b5-4c6b-8dcf-bad6134fc4a5",
+      "job": "build-linux-arm64",
+      "sha256": "17f617da3288a6bb65297a184cf024e913106a912b10b3a7dbbd3fdcb5f049c3",
+      "observation": "Flutter build/compile/link/bundle install exit 0; package audit rejects libepoxy resolved from the unprepared engine SDK RUNPATH."
+    }
+  ],
+  "locked_flutter": {
+    "version": "3.47.0",
+    "nixpkgs_revision": "c7def046b9a883d46974757852106483d741586f",
+    "paths": {
+      "source": "/nix/store/akq5azpip8xzarlxqxis02lg2zz3hmcb-source",
+      "targets": {
+        "arm64": {
+          "artifacts": "/nix/store/dwbpl32nyzdsv7isz94ww655mf52hwba-flutter-artifacts-linux-aarch64-linux",
+          "sdk": "/nix/store/vblrk9hkk5i62wb1snkpmsg0l0jgzycr-flutter-wrapped-3.47.0-sdk-links"
+        },
+        "x64": {
+          "artifacts": "/nix/store/xs9sbm2hvfwamknf1jslar5071g4wfik-flutter-artifacts-linux-x86_64-linux",
+          "sdk": "/nix/store/vzpwdyanhvadbk6lsmq8f7ayc8403aiw-flutter-wrapped-3.47.0-sdk-links"
+        }
+      }
+    }
+  },
+  "verification_commands": [
+    "devbox run -- dart .tool-cache/ci-sixth-engine-probe.dart",
+    "devbox --config tool/ci/lint run check",
+    "bash -n tool/ci/check_linux_bundle.sh tool/ci/test_linux_bundle.sh",
+    "git diff --check"
+  ],
+  "diagnostics": {
+    ".tool-cache/ci-sixth-flutter-paths.json": {
+      "result": "Exact SDK/engine artifact outputs evaluated from the committed Flutter lock revision.",
+      "sha256": "0fefe330b184a164b1817e8262d01d84e37bf9574578f6ab6179f006bf62976f"
+    },
+    ".tool-cache/ci-sixth-engine-fetch.log": {
+      "result": "Pinned Linux artifact closure fetched through Nix cache; no Linux executable invoked.",
+      "sha256": "6fbd4e2023822ae728d944fd03dd23c6768952d3bc2521db6748e9cf4d860fc7"
+    },
+    ".tool-cache/ci-sixth-engine-probe.dart": {
+      "result": "Diagnostic source: production before/after scripts, actual ELF copies, forced orders, modeled loader boundary.",
+      "sha256": "da571e966ab0bc549b92bc0127d55739617ff4f9bf21856e994c8638ef81de55"
+    },
+    ".tool-cache/ci-sixth-engine-probe.log": {
+      "result": "Passed actual-ELF preparation/order probes for both architectures; no Linux execution.",
+      "sha256": "4c114043d2b7c5774fd25931debcf4320b824c779f66150226b20164e4176198"
+    },
+    ".tool-cache/ci-sixth-engine-probe.json": {
+      "result": "Exact baseline/corrected statuses and unchanged SDK engine hashes.",
+      "sha256": "e096375a61eed8890ec2a8010bec94deb90005d7296f6e6dcf95ca3f84b5d107"
+    },
+    ".tool-cache/ci-sixth-lint-final.log": {
+      "result": "Passed workflow/actionlint and ShellCheck, including new native regression script.",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    },
+    ".tool-cache/ci-sixth-shell-syntax.log": {
+      "result": "Passed shell syntax checks for modified and added scripts.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    ".tool-cache/ci-sixth-diff-check.log": {
+      "result": "Passed whitespace/diff checks.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-source.log": {
+      "result": "Actual locked engine ELF header and dynamic metadata before patching.",
+      "sha256": "97b59237c57caa6f57d40327af326d613c4e08bd4060ee0855b9984eccddb580"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-before-launcher-first.log": {
+      "result": "Expected failure: baseline launcher audit sees unprepared engine SDK RUNPATH.",
+      "sha256": "5330465a3720445bb8ab8599110adc779e7b490c28873d0c132514c15bd31936"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-after-launcher-first.log": {
+      "result": "Passed: prepare entire bundle first, then inspect both ELF dependency boundaries.",
+      "sha256": "a58ac6f725333cf321afd40ea412753532d22e93dbf36d84cfb4d77a7c40a452"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-before-engine-first.log": {
+      "result": "Expected baseline pass: engine happens to be prepared before launcher.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-after-engine-first.log": {
+      "result": "Passed: prepare entire bundle first, then inspect both ELF dependency boundaries.",
+      "sha256": "0f3c4ecacbea68b44104a402d46bab0a70850e892e9499e454cf8f04dabdfeb7"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-loader-error.log": {
+      "result": "Expected failure: controlled nonzero loader result remains visible and blocks RUNNING.txt.",
+      "sha256": "238813317bdebb5abbf443c608e9d364707c19138f95afe5fdbcef90b1158c3d"
+    },
+    ".tool-cache/ci-sixth-engine-probe/x64-sdk-interpreter.log": {
+      "result": "Expected failure: real ELF SDK interpreter is rejected before loader invocation.",
+      "sha256": "81b21ead5cbd3c758cbc4151bf76e802f4bdb1888f6354ac3ea9cf311f3b9e3a"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-source.log": {
+      "result": "Actual locked engine ELF header and dynamic metadata before patching.",
+      "sha256": "64032647114f6973dd464db62ed4f5a2c510f1ba77f6410fee49965658d463f7"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-before-launcher-first.log": {
+      "result": "Expected failure: baseline launcher audit sees unprepared engine SDK RUNPATH.",
+      "sha256": "7738505b8f90c0581305095401e09005730f48f2d93b959f2416afb2aa5ce1ca"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-after-launcher-first.log": {
+      "result": "Passed: prepare entire bundle first, then inspect both ELF dependency boundaries.",
+      "sha256": "a58ac6f725333cf321afd40ea412753532d22e93dbf36d84cfb4d77a7c40a452"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-before-engine-first.log": {
+      "result": "Expected baseline pass: engine happens to be prepared before launcher.",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-after-engine-first.log": {
+      "result": "Passed: prepare entire bundle first, then inspect both ELF dependency boundaries.",
+      "sha256": "0f3c4ecacbea68b44104a402d46bab0a70850e892e9499e454cf8f04dabdfeb7"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-loader-error.log": {
+      "result": "Expected failure: controlled nonzero loader result remains visible and blocks RUNNING.txt.",
+      "sha256": "f0c195c6a0a2f2be795285113c068846f3663ce7c6ebddbaa62211eedf7626d7"
+    },
+    ".tool-cache/ci-sixth-engine-probe/arm64-sdk-interpreter.log": {
+      "result": "Expected failure: real ELF SDK interpreter is rejected before loader invocation.",
+      "sha256": "041a7b392ab402ba8cadd8aba8dae0ecdfc8fdf2e0b0234f28fd83c76602f418"
+    }
+  },
+  "elf_preparation_probe": [
+    {
+      "arch": "x64",
+      "case": "before-launcher-first",
+      "exit_code": 1,
+      "expected_failure": true,
+      "native_loader": false
+    },
+    {
+      "arch": "x64",
+      "case": "after-launcher-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "x64",
+      "case": "before-engine-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "x64",
+      "case": "after-engine-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "x64",
+      "source_sha256": "a915d7626890b76d4f15b8519b99eac2c34c983d67d59c9581383c8e7df955f2",
+      "source_unchanged": true,
+      "loader_errors_preserved": true,
+      "sdk_interpreter_rejected": true,
+      "native_loader": false
+    },
+    {
+      "arch": "arm64",
+      "case": "before-launcher-first",
+      "exit_code": 1,
+      "expected_failure": true,
+      "native_loader": false
+    },
+    {
+      "arch": "arm64",
+      "case": "after-launcher-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "arm64",
+      "case": "before-engine-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "arm64",
+      "case": "after-engine-first",
+      "exit_code": 0,
+      "expected_failure": false,
+      "native_loader": false
+    },
+    {
+      "arch": "arm64",
+      "source_sha256": "2c51925cb56ae316c3cfa975cf0c4e7ef0586543324bbf4035f82a1a82370e60",
+      "source_unchanged": true,
+      "loader_errors_preserved": true,
+      "sdk_interpreter_rejected": true,
+      "native_loader": false
+    }
+  ],
+  "native_linux_regressions": {
+    "script": "tool/ci/test_linux_bundle.sh",
+    "scheduled": [
+      "build-linux-x64",
+      "build-linux-arm64"
+    ],
+    "cases": [
+      "forced launcher-first/engine-first discovery, host resolution and executable relocation",
+      "missing transitive library rejects bundle",
+      "SDK interpreter rejects bundle"
+    ],
+    "local_execution": "Not executed: Linux host required. Only syntax/ShellCheck and separate actual-ELF modeled-loader probes ran on this Mac."
+  },
+  "changed_source_sha256": {
+    "tool/ci/check_linux_bundle.sh": "234d3168fc4c1a5e23dfa89dcd630cda6d80947b3313df338f467a8f8c9150f5",
+    "tool/ci/test_linux_bundle.sh": "091d946978c4c1c1f66d270d17aae1e3592825b0b49c7abd3ed81150d170e6c0",
+    ".github/workflows/release.yml": "7a661fad877d1f7a01327904c6f58151dbc45513c6fd0296a8d8cfde0d437931"
+  },
+  "limitations": [
+    "Local ELF patching/metadata inspection uses native macOS tools and copied real Linux artifacts; the loader boundary is modeled. No native Linux binary, ldd, or new Linux regression fixture is executed here.",
+    "The macOS failure is a hosted artifact-storage DNS error. Upload requirements and native assertions are unchanged; rerun the job. No new local macOS app/native test result is claimed.",
+    "Full native Linux dependency resolution, relocation/execution, packaging and a complete successful hosted matrix require a new run containing this correction.",
+    "The two supplied logs contain no new Windows or Android result. Application/Dart sources are unchanged; no full Flutter rerun is claimed.",
+    "No dependency manifest/lock change, runtime/OS installation, test skipping, assertion/timeout relaxation, global SDK/signing change, emulator/profile/save mutation or Git commit/push/tag/release."
+  ]
+}

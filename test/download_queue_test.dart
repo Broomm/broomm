@@ -144,7 +144,12 @@ void main() {
     expect(model.queuedGame(2)!.progress!.game.id, 2);
     final stages = await Directory('${data.path}/library/${model.server!.id}')
         .list()
-        .where((f) => f.path.contains('/.partial-'))
+        .where(
+          (f) => f.uri.pathSegments
+              .where((s) => s.isNotEmpty)
+              .last
+              .startsWith('.partial-'),
+        )
         .toList();
     expect(stages.length, 2);
     model.cancelDownload(first);

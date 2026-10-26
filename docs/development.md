@@ -65,6 +65,8 @@ Only run a native build script on a compatible configured host. No script may in
 
 CI should run format/analyze/domain/widget checks and native host jobs independently, with full logs and revision identity. Build bridge artifacts from audited source and verify packaged architecture/dependencies. Add native sanitizer/race checks appropriate to the chosen languages without blocking unrelated host results behind a single job.
 
+The first hosted run exposed native-path assumptions and macOS-only filesystem tools in shared workflows. Native enumeration now yields portable add-on identities; Windows/Linux use existing Dart digest and file-copy code while macOS retains its native optimizations. Presentation tests inject their recipe host rather than enabling production native packages. The macOS writer fixture builds its own native guard, and widget tests drain download work before removing temporary storage. Keep these tests enabled on their native CI hosts. Linux GTK/pkg-config are pinned to the existing glibc 2.39 snapshot; metadata evaluation is distinct from compilation. See the [hosted failure follow-up](github-releases.md#first-hosted-failures-and-corrections--2026-10-26).
+
 Prioritize failure tests that protect progress: interruption before/after publication, upload accepted with lost response, profile switch while work is queued, stale baseline, two-device conflict, corrupt/missing working tree, live writer after launcher wrapper exit, disk-full, revoked token and incomplete remote listing. Use controlled clocks, locks and fail points rather than timing luck.
 
 ## Manual acceptance record

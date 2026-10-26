@@ -76,6 +76,9 @@ void main() {
     await file.delete();
     await Link(file.path).create('${data.path}/foreign-save');
     expect(await read(), CloudSaveStatus.attention);
-    expect(await Link(file.path).target(), '${data.path}/foreign-save');
+    expect(
+      File(await Link(file.path).target()).uri,
+      File('${data.path}/foreign-save').uri,
+    );
   });
 }

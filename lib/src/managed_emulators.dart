@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import 'session_lease.dart';
 import 'managed_profile.dart';
 import 'retroarch.dart';
 import 'retroarch_saves.dart';
+import 'progress/digest.dart';
 
 class TestedBuild {
   TestedBuild(Map j)
@@ -1182,10 +1184,14 @@ Future<String> runOwnedTool(String executable, List<String> args) async {
   return utf8.decode(out);
 }
 
-Future<String> sha256File(String path) async => (await runOwnedTool(
-  '/usr/bin/shasum',
-  ['-a', '256', path],
-)).split(' ').first;
+Future<String> sha256File(String path) async {
+  if (!Platform.isMacOS) return Isolate.run(() => progressFileHash(File(path)));
+  return (await runOwnedTool('/usr/bin/shasum', [
+    '-a',
+    '256',
+    path,
+  ])).split(' ').first;
+}
 
 Future<void> copyTree(
   String source,
@@ -1202,6 +1208,35 @@ Future<void> copyTree(
   if (await FileSystemEntity.type(target, followLinks: false) !=
       FileSystemEntityType.notFound)
     throw StateError('Setup refused to overwrite an existing destination.');
-  await runOwnedTool('/bin/cp', ['-cR', source, target]);
+  if (Platform.isMacOS) {
+    // APFS clones keep large, validated emulator trees cheap on macOS.
+    await runOwnedTool('/bin/cp', ['-cR', source, target]);
+  } else if (type == FileSystemEntityType.file) {
+    await File(source).copy(target);
+  } else {
+    await Directory(target).create();
+    final depth = Directory(source).uri.pathSegments
+        .where((s) => s.isNotEmpty)
+        .length;
+    await for (final entry in Directory(
+      source,
+    ).list(recursive: true, followLinks: false)) {
+      cancellation.check();
+      final relative = entry.uri.pathSegments
+          .where((s) => s.isNotEmpty)
+          .skip(depth)
+          .join('/');
+      final destination = '$target/$relative';
+      if (entry is Directory) {
+        await Directory(destination).create();
+      } else if (entry is File) {
+        await entry.copy(destination);
+      } else if (entry is Link && allowBundleLinks) {
+        await Link(destination).create(await entry.target());
+      } else {
+        throw StateError('The selected local source changed while copying.');
+      }
+    }
+  }
   cancellation.check();
 }

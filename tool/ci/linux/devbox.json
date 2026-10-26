@@ -4,8 +4,29 @@
     "flutter": "3.47.0-sdk-links",
     "cmake": "3.31.7",
     "ninja": "1.13.1",
-    "pkg-config": "0.29.2",
-    "gtk3": {"version": "3.24.43", "outputs": ["out", "dev"]},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#pkg-config": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#gtk3^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#pcre2^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libthai^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libdatrie^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#xorg.libXdmcp^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#xorg.libXtst": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#lerc^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libxkbcommon^out,dev": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libepoxy^out,dev": {},
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libsepol^out,dev": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#libselinux^out,dev": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#util-linuxMinimal^lib,dev": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
     "patchelf": "0.15.0",
     "binutils": "2.42",
     "ripgrep": "14.1.1"

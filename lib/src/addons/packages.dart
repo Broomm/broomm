@@ -468,16 +468,13 @@ class GamePackages {
             base = found.title;
             final replacements = {
               for (final s in sources.values)
-                '${packages.absolute.path}/${s['file']}':
-                    '${dir.absolute.path}/$generation/packages/${s['file']}',
+                switchPackagePathIdentity(
+                  '${packages.path}/${s['file']}',
+                ): File('${dir.path}/$generation/packages/${s['file']}')
+                    .absolute
+                    .uri
+                    .toFilePath(),
             };
-            Object rewrite(Object? value) {
-              if (value is String) return replacements[value] ?? value;
-              if (value is Map)
-                return {for (final e in value.entries) e.key: rewrite(e.value)};
-              if (value is List) return value.map(rewrite).toList();
-              return value!;
-            }
 
             for (final e in {
               'updates': found.updates,
@@ -490,7 +487,10 @@ class GamePackages {
                     'games/$base/${e.key}.json',
                     createParents: true,
                   );
-              await addonWrite(file, rewrite(e.value));
+              await addonWrite(
+                file,
+                relocateSwitchPackagePaths(e.value, replacements),
+              );
               units[path] = {
                 'version': sequence,
                 'files': {'': await sha256File(file.path)},
@@ -778,8 +778,8 @@ class GamePackages {
 
   /// References include inactive profiles and retained native preimages. Keeping
   /// a shared update for another installed release must keep its NSP bytes too.
-  Future<Set<String>> _switchReferences() async {
-    final references = <String>{};
+  Future<Set<Uri>> _switchReferences() async {
+    final references = <Uri>{};
     var count = 0;
     Future<void> inspect(File file) async {
       final checked = await addonFile(file.parent, file.uri.pathSegments.last);
@@ -789,7 +789,8 @@ class GamePackages {
         );
       final value = jsonDecode(await checked.readAsString());
       void visit(Object? v) {
-        if (v is String && v.endsWith('.nsp')) references.add(v);
+        if (v is String && v.endsWith('.nsp'))
+          references.add(switchPackagePathIdentity(v));
         if (v is Map) v.values.forEach(visit);
         if (v is List) v.forEach(visit);
       }
@@ -825,7 +826,7 @@ class GamePackages {
                 'Linked Switch metadata was kept',
               );
             if (rel == 'user/games' &&
-                !RegExp(r'/(updates|dlc)\.json$').hasMatch(f.path))
+                !{'updates.json', 'dlc.json'}.contains(f.uri.pathSegments.last))
               continue;
             await inspect(f);
           }
@@ -866,7 +867,14 @@ class GamePackages {
     return references;
   }
 
-  Future<void> _collectRetained(Set<String> references) async {
+  bool _referencesPackages(Set<Uri> references, String path) {
+    final prefix = Directory('$path/packages').absolute.uri
+        .normalizePath()
+        .toString();
+    return references.any((r) => r.toString().startsWith(prefix));
+  }
+
+  Future<void> _collectRetained(Set<Uri> references) async {
     final addons = Directory('${data.path}/addons');
     if (!await addons.exists()) return;
     await for (final server in addons.list(followLinks: false)) {
@@ -891,9 +899,7 @@ class GamePackages {
           if (!RegExp(r'^generation-[a-zA-Z0-9_-]+$').hasMatch(name))
             throw const FormatException('Invalid retained Switch generation');
           final path = await addonPath(dir, name);
-          if (references.any(
-            (r) => r.startsWith('${Directory(path).absolute.path}/packages/'),
-          )) {
+          if (_referencesPackages(references, path)) {
             next.add(name);
           } else if (await addonExists(path)) {
             await ownedDirectory(Directory(path));
@@ -1006,15 +1012,13 @@ class GamePackages {
     if (await addonExists(current.path)) await current.delete();
     final references = engine == 'ryubing'
         ? await _switchReferences()
-        : <String>{};
+        : <Uri>{};
     final kept = <String>[];
     for (final name in (deleting['generations'] as List).cast<String>()) {
       if (!RegExp(r'^generation-[a-zA-Z0-9_-]+$').hasMatch(name))
         throw const FormatException('Invalid deleting generation');
       final path = await addonPath(dir, name);
-      if (references.any(
-        (r) => r.startsWith('${Directory(path).absolute.path}/packages/'),
-      )) {
+      if (_referencesPackages(references, path)) {
         kept.add(name);
       } else if (await addonExists(path)) {
         await ownedDirectory(Directory(path));

@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T19:52:54.226954Z",
+  "base_revision": "4c366be55013f35dc243ddd6da9e8226ce8741be",
+  "revision_scope": "uncommitted Linux CMake/preflight correction; source fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "devbox": "0.18.4",
+    "compiler": "Apple clang 21.0.0 (clang-2100.3.34.2)",
+    "cmake": "3.31.7",
+    "flutter_headers": "3.47.0",
+    "linux_header_snapshot": "5ed627539ac84809c78b2dd6d26a5cebeb5ae269"
+  },
+  "supplied_logs": [
+    {
+      "attachment": "cd8b503d-72c6-4b7e-a3dc-73baf1a61600",
+      "job": "Linux x64 build: X11/Xlib.h missing from runner compile flags",
+      "sha256": "8b2f43b184adc1003e734d6b24b1b84229f8d9cbd15999a3f4393662c40d3e86"
+    },
+    {
+      "attachment": "d309c835-99db-4f9a-867a-2f5ff3957d54",
+      "job": "Linux ARM64 build: X11/Xlib.h missing from runner compile flags",
+      "sha256": "dc144153d46c57cc90dd77117fde0890142b56bef91bd9b61c3df9ad2af891cf"
+    }
+  ],
+  "verification_commands": [
+    "devbox run -- dart .tool-cache/ci-fifth-cross-compile.dart x64",
+    "devbox run -- dart .tool-cache/ci-fifth-cross-compile.dart arm64",
+    "devbox run -- dart .tool-cache/ci-fifth-verify-objects.dart",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-fifth-sdk-query.sh x64",
+    "devbox run -- bash /Users/ptrschneider/Projects/broomm/.tool-cache/ci-fifth-sdk-query.sh arm64",
+    "devbox --config tool/ci/lint run check",
+    "git diff --check"
+  ],
+  "diagnostics": {
+    ".tool-cache/ci-fifth-linux-toolchain-paths.json": {
+      "result": "evaluated: immutable Nix snapshot Linux GCC 13.3/glibc 2.39/header paths for both targets",
+      "sha256": "293dbef535eb955774e13bbd45def6d3ffaf11882c513ad187523a4b437030d0"
+    },
+    ".tool-cache/ci-fifth-linux-toolchain-fetch.log": {
+      "result": "fetched through Nix cache only: pinned C++ and Linux headers; no Linux executable invoked",
+      "sha256": "8c172576d139a723bacbbdb8b2c724e9822918e1802980165fe18b018fc8dbff"
+    },
+    ".tool-cache/ci-fifth-cross-compile.dart": {
+      "result": "diagnostic source: exact runner baseline failure, real CMake dependency/settings/runner target object builds",
+      "sha256": "85a6070ea16321b560b12e6f6c56b495ab5544a8f53ea2ade431d3db1067daab"
+    },
+    ".tool-cache/ci-fifth-x64-before.log": {
+      "result": "expected compile failure: actual runner lacks X11/Xlib.h with GTK-only flags",
+      "sha256": "9aa32768007c8231c33ce889da3c9e2e5a5319078160392aefb365c596e235bb"
+    },
+    ".tool-cache/ci-fifth-arm64-before.log": {
+      "result": "expected compile failure: actual runner lacks X11/Xlib.h with GTK-only flags",
+      "sha256": "f88138d2bbbcba9f390d2abce0dcfcbe1a5b6071794d02e17c31b0358b108260"
+    },
+    ".tool-cache/ci-fifth-x64-cross.log": {
+      "result": "diagnostic harness setup: reproduced baseline; initial harness omitted native Ninja path",
+      "sha256": "90b781e59d789f5f04799f235dba5c853de7ec30bcb63b74affd01ef02f40d88"
+    },
+    ".tool-cache/ci-fifth-x64-cmake-configure-before.log": {
+      "result": "initial diagnostic harness Ninja path finding, corrected without production changes",
+      "sha256": "aa1764b46ab0df647dcd4946586f82fc0e251dc09604429341b8314ba7bebe89"
+    },
+    ".tool-cache/ci-fifth-x64-cmake-configure-pkg-before.log": {
+      "result": "initial diagnostic harness pkg-config path finding, corrected without production changes",
+      "sha256": "1176c07b876294679a391b406708c6f2c06a01c2ceaf26528f13159b8faa5882"
+    },
+    ".tool-cache/ci-fifth-x64-cross-verified.log": {
+      "result": "passed: reproduced missing header, compiled three actual x64 runner source objects with -Wall -Werror",
+      "sha256": "db76ab68e7b1bd7b2c47e6e55e27ac38fd9f2d010b5c5fe143c0b41f09241e48"
+    },
+    ".tool-cache/ci-fifth-arm64-cross-verified.log": {
+      "result": "passed: reproduced missing header, compiled three actual ARM64 runner source objects with -Wall -Werror",
+      "sha256": "160c459d1f98d65a1f91d9b50baba3aa81cfcf7ca4151c99afce5ef946f12581"
+    },
+    ".tool-cache/ci-fifth-x64-cmake-configure.log": {
+      "result": "passed: real dependency declarations and runner target; object-only cross harness",
+      "sha256": "e849ad03fc75a0da774c443d98278b0c42087f28e87ae4be5c7bb2851b365037"
+    },
+    ".tool-cache/ci-fifth-arm64-cmake-configure.log": {
+      "result": "passed: real dependency declarations and runner target; object-only cross harness",
+      "sha256": "8ac6978f99c931c8541d85b7217683518a0541546e208ce98d66be77a9266278"
+    },
+    ".tool-cache/ci-fifth-x64-cmake-objects.log": {
+      "result": "passed: complete compiler commands and three Linux x64 runner objects",
+      "sha256": "1c5a6e0c29b1e58d62eebb6b466379eb89cc13fc6145f18b4eeaf1810ccf817d"
+    },
+    ".tool-cache/ci-fifth-arm64-cmake-objects.log": {
+      "result": "passed: complete compiler commands and three Linux ARM64 runner objects",
+      "sha256": "aa114e89c6016a645522b6882791f012006b5c87b8697c9f5bf61a5b3e8a2c71"
+    },
+    ".tool-cache/ci-fifth-verify-objects.dart": {
+      "result": "diagnostic source: ELF class, endianness, machine ID and X11 symbols/link inputs",
+      "sha256": "c14e824e7cfa3e8bea017d2360d3caaf2b3201f2cea5b0c0a456bac4e9171b40"
+    },
+    ".tool-cache/ci-fifth-objects.log": {
+      "result": "passed: six ELF64 relocatable objects, correct architectures, both X11 branches/link inputs",
+      "sha256": "de51e0ffbf46d1fafb548b8ce57b52d018d248f2ff341e448ba290e5b32cc9df"
+    },
+    ".tool-cache/ci-fifth-x64-x11-symbols.log": {
+      "result": "verified: compiled X11 window-manager branch references",
+      "sha256": "8ab60929e76cf8672e8d697d2a2031c7749b16856b7d3191b8ce4054a78b22ef"
+    },
+    ".tool-cache/ci-fifth-arm64-x11-symbols.log": {
+      "result": "verified: compiled X11 window-manager branch references",
+      "sha256": "8271d500e09c128a8c5097fad6b4fb012fa8fee3484091f7f08c2494b086a936"
+    },
+    ".tool-cache/ci-fifth-x64-link-inputs.log": {
+      "result": "verified: actual runner link specification contains Linux libX11 input; linking not executed",
+      "sha256": "98e94ccc1afb6375b954313479f826614fd537b09773a3453506a658d6b1edee"
+    },
+    ".tool-cache/ci-fifth-arm64-link-inputs.log": {
+      "result": "verified: actual runner link specification contains Linux libX11 input; linking not executed",
+      "sha256": "b318794f0452fd5669729738034689b588215d71b9e22fef5eb46b5dbe1ad180"
+    },
+    ".tool-cache/ci-fifth-x64-pkgconfig.log": {
+      "result": "passed: complete shared/static preflight queries including x11 with restricted x64 Linux metadata",
+      "sha256": "12672301559b51d8495eb3c7bb34021087c5a85776ce1e92b7151ba990dd7286"
+    },
+    ".tool-cache/ci-fifth-arm64-pkgconfig.log": {
+      "result": "passed: complete shared/static preflight queries including x11 with restricted ARM64 Linux metadata",
+      "sha256": "e70e85152a998f0927be5fba894eacd233d618688bc904d2a6e2fd3e10786172"
+    },
+    ".tool-cache/ci-fifth-lint.log": {
+      "result": "passed: workflow/ShellCheck with existing documented queue schema exception",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    }
+  },
+  "object_outputs": [
+    {
+      "path": ".tool-cache/ci-fifth-x64-cmake/build/runner/CMakeFiles/broomm_ci.dir/my_application.cc.o",
+      "architecture": "x64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 62,
+      "sha256": "e95b2966fc161c1d9133c9262574d44099de79907a38587ba56af8e1731528ff"
+    },
+    {
+      "path": ".tool-cache/ci-fifth-x64-cmake/build/runner/CMakeFiles/broomm_ci.dir/Users/ptrschneider/Projects/broomm/linux/flutter/generated_plugin_registrant.cc.o",
+      "architecture": "x64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 62,
+      "sha256": "63ed9f5db2fb4a525e404c375f1170750e3ed125e771975ab27816d5dd309ba9"
+    },
+    {
+      "path": ".tool-cache/ci-fifth-x64-cmake/build/runner/CMakeFiles/broomm_ci.dir/main.cc.o",
+      "architecture": "x64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 62,
+      "sha256": "102d11019fb2445451b120d19f5db53462c7f8b47382910d159bc795f68fdf64"
+    },
+    {
+      "path": ".tool-cache/ci-fifth-arm64-cmake/build/runner/CMakeFiles/broomm_ci.dir/my_application.cc.o",
+      "architecture": "arm64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 183,
+      "sha256": "1f9133b3a9db8dd45650550d4f1b9a6e19c29a0616755107aca277c62be3c5e7"
+    },
+    {
+      "path": ".tool-cache/ci-fifth-arm64-cmake/build/runner/CMakeFiles/broomm_ci.dir/Users/ptrschneider/Projects/broomm/linux/flutter/generated_plugin_registrant.cc.o",
+      "architecture": "arm64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 183,
+      "sha256": "15f7a2430ac24389ace451e20ad56e28dc3eb0fe2a3efdf10598714a6f06e61a"
+    },
+    {
+      "path": ".tool-cache/ci-fifth-arm64-cmake/build/runner/CMakeFiles/broomm_ci.dir/main.cc.o",
+      "architecture": "arm64",
+      "format": "ELF64 little-endian relocatable",
+      "machine": 183,
+      "sha256": "f2d0e1b2a53a88f2fea49294812ea8a5844cacf681616c36885ffe9c50433e4f"
+    }
+  ],
+  "compiled_source_sha256": {
+    "linux/runner/main.cc": "ea23f7cdf74091d63bba29ef60486370b766157b848f0cfe62bd8b1c1695a0c1",
+    "linux/runner/my_application.cc": "25142a0b18dd0d8c005d1739f14e6f37f1af240e89246f91a5b09bfdbbe4a501",
+    "linux/runner/my_application.h": "a4218d7ac0db8a9a6716daf216b2d4fc6bdc7ac647e3183078b2c962ebdfcf70",
+    "linux/runner/credential_store.h": "be5eae3720bb196b2615b8b17257a2c5c88efd1a303b4914e09475fec0f37466",
+    "linux/flutter/generated_plugin_registrant.cc": "7861b227b10a10cc1d7643f82a246b7db35b503f2d9ff1d3c906136e6c260dce",
+    "linux/flutter/generated_plugin_registrant.h": "00f93bb5b1faefdede8f6065df327522900fb0b8efee86bacf424fd947ed14bb"
+  },
+  "selected_header_sha256": {
+    "/nix/store/1nkbyzij45ckvnw9bkqqm79jzi7nlkdb-flutter-wrapped-3.47.0-sdk-links/engine/src/flutter/shell/platform/linux/public/flutter_linux/flutter_linux.h": "5c126fb95361802d8b114a1f7f57025bb820233ac7e000fcb262b5d5f0384d24",
+    "/nix/store/a9af132rd3pz7nzvb7znybgcw1vjwm0r-gtk+3-3.24.43-dev/include/gtk-3.0/gdk/gdkx.h": "6e9bcd8a52645f1520ec5e3b90c73c40128478daef683e3622eb8970eb22c833",
+    "/nix/store/9rcc4vw6140z5s306jmppnfcys5782mk-libX11-1.8.10-dev/include/X11/Xlib.h": "7430c535c4e2b0a31d002d5f9d8f21c6b9f7232e9aad2e297662b90c2591f64d",
+    "/nix/store/l9j0a39w4vpdw43vfknpw8f2sxdx6apb-gtk+3-3.24.43-dev/include/gtk-3.0/gdk/gdkx.h": "6e9bcd8a52645f1520ec5e3b90c73c40128478daef683e3622eb8970eb22c833",
+    "/nix/store/qspp7v4j454ws6zayp9fkhqbbw46vbr0-libX11-1.8.10-dev/include/X11/Xlib.h": "7430c535c4e2b0a31d002d5f9d8f21c6b9f7232e9aad2e297662b90c2591f64d"
+  },
+  "limitations": [
+    "Actual Linux-target ELF object cross-compilation is performed on macOS with approved Apple Clang 21, not native Ubuntu Clang 18. No Linux binary is executed.",
+    "The private object-only CMake harness supplies CMAKE_CXX_COMPILER_WORKS and CMAKE_CXX_ABI_COMPILED because it has no Linux linker/loader. Production CMake/native CI compiler, ABI and link checks are unchanged.",
+    "The Flutter engine interface in the object harness supplies actual SDK public headers but is not linked to an engine library. No final application linking, bundle audit, launch or runtime acceptance is claimed.",
+    "The cross harness consumes actual project dependency/settings declarations and the actual runner CMakeLists; it verifies compiler-flag wiring, not just standalone header compilation.",
+    "Dart behavior/source is unchanged. The full Flutter suite, macOS app build and native macOS tests were not rerun or recounted here.",
+    "The two supplied logs contain no new Windows check result. A full successful native hosted matrix still needs a new run containing these changes.",
+    "No new runtime/OS dependencies, test skips, assertion/timeout relaxation, SDK global selection, signing change, emulator/profile/RomM mutation, Git commit, push, tag or release."
+  ],
+  "changed_source_sha256": {
+    "linux/CMakeLists.txt": "8c8979e27b6cac559ff2c1d928bb7e3ee19b056ea23d981af00927070f03f905",
+    "linux/runner/CMakeLists.txt": "952da712d4934700e751c75da7c2df62ec3c91830b3bf57dea054a93d6dbaf7b",
+    "tool/ci/build_linux.sh": "742eba5cdff2a5662dcfbba02c037b989dd5549fe217f20b8798f61439a3dc5e"
+  }
+}

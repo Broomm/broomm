@@ -215,6 +215,38 @@ void main() {
     expect(await installed(secondAddonProfile).exists(), false);
     expect(await save.readAsString(), 'progress');
   });
+  for (final diverted in [false, true]) {
+    test(
+      'PS3 profile validation rejects ${diverted ? 'a copied owner record outside managed storage' : 'another account in the expected directory'} before importing content',
+      () async {
+        final profile = Directory(
+          diverted
+              ? '${root.path}/foreign-profile'
+              : '${root.path}/profiles/$addonProfile/emulators/rpcs3',
+        );
+        await profile.create(recursive: true);
+        await File('${profile.path}/profile.json').writeAsString(
+          jsonEncode({
+            'version': 1,
+            'profile': diverted ? addonProfile : secondAddonProfile,
+            'emulator': 'rpcs3',
+          }),
+        );
+        final saved = File('${profile.path}/progress');
+        await saved.writeAsString('keep');
+        addons = Ps3Addons(
+          root,
+          library,
+          prepare: (_, _) async => ('unused', profile),
+          importer: native.install,
+        );
+        await expectLater(sync(), throwsFormatException);
+        expect(native.imports, 0);
+        expect(client.downloads, isEmpty);
+        expect(await saved.readAsString(), 'keep');
+      },
+    );
+  }
   test('foreign PS3 package IDs are rejected before import while game-created data can coexist with legitimate packages', () async {
     final payload = {...base, 'dlc/Foreign.pkg': ps3Package(id: 'BLES01863')};
     remote = await ps3Game(payload);

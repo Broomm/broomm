@@ -145,6 +145,15 @@ void main() {
 
     Future<void> finish(WidgetTester t) async {
       await t.pumpWidget(const SizedBox());
+      var finished = false;
+      final drained = () async {
+        await model.finishDownloads();
+        await model.finishCloud();
+      }().whenComplete(() => finished = true);
+      // Drive both the widget clock and real I/O until the native queue lock
+      // closes. The filesystem cannot be deleted with a writer still alive.
+      await driveArtwork(t, () => finished);
+      await drained;
       await t.binding.setSurfaceSize(null);
       t.view.resetPhysicalSize();
       t.view.resetDevicePixelRatio();
@@ -153,87 +162,95 @@ void main() {
     testWidgets(
       'one Store entry offers filename-tagged versions and controller choice installs only the selected identity',
       (t) async {
-        await open(t);
-        await t.pumpAndSettle();
-        expect(
-          buttonNode(
-            t,
-            find.byKey(const ValueKey('download-version-1')),
-          ).hasFocus,
-          true,
-        );
-        t.view.physicalSize = const Size(390, 844);
-        await t.binding.setSurfaceSize(const Size(390, 844));
-        await t.pumpAndSettle();
-        expect(
-          buttonNode(
-            t,
-            find.byKey(const ValueKey('download-version-1')),
-          ).hasFocus,
-          true,
-          reason:
-              'Responsive details behind the modal must not steal its focus.',
-        );
-        expect(find.text('Chronicle (Europe)'), findsOneWidget);
-        expect(find.text('Chronicle (USA) (Rev 1).iso'), findsOneWidget);
-        await native(t, 'down');
-        await native(t, 'accept');
-        await driveArtwork(t, () => model.installed.length == 1);
-        expect(model.installed.single.game.id, 2);
-        expect(catalogue.transferred, [2]);
-        expect(model.installation(1), isNull);
-        expect(find.text('Choose a version'), findsNothing);
-        expect(t.takeException(), isNull);
-        await finish(t);
+        try {
+          await open(t);
+          await t.pumpAndSettle();
+          expect(
+            buttonNode(
+              t,
+              find.byKey(const ValueKey('download-version-1')),
+            ).hasFocus,
+            true,
+          );
+          t.view.physicalSize = const Size(390, 844);
+          await t.binding.setSurfaceSize(const Size(390, 844));
+          await t.pumpAndSettle();
+          expect(
+            buttonNode(
+              t,
+              find.byKey(const ValueKey('download-version-1')),
+            ).hasFocus,
+            true,
+            reason:
+                'Responsive details behind the modal must not steal its focus.',
+          );
+          expect(find.text('Chronicle (Europe)'), findsOneWidget);
+          expect(find.text('Chronicle (USA) (Rev 1).iso'), findsOneWidget);
+          await native(t, 'down');
+          await native(t, 'accept');
+          await driveArtwork(t, () => model.installed.length == 1);
+          expect(model.installed.single.game.id, 2);
+          expect(catalogue.transferred, [2]);
+          expect(model.installation(1), isNull);
+          expect(find.text('Choose a version'), findsNothing);
+          expect(t.takeException(), isNull);
+        } finally {
+          await finish(t);
+        }
       },
     );
     testWidgets(
       'cancelling or failing a version keeps the chooser and library safe; profile changes reject a held selection',
       (t) async {
-        await open(t);
-        await t.tap(find.text('Cancel'));
-        await t.pumpAndSettle();
-        expect(model.installed, isEmpty);
-        expect(catalogue.transferred, isEmpty);
-        await t.tap(find.text('Download game'));
-        await driveArtwork(
-          t,
-          () => find
-              .byKey(const ValueKey('download-version-2'))
-              .evaluate()
-              .isNotEmpty,
-        );
-        catalogue.reject = true;
-        await t.tap(find.byKey(const ValueKey('download-version-2')));
-        await driveArtwork(
-          t,
-          () => find.text('This version is unavailable.').evaluate().isNotEmpty,
-        );
-        expect(model.installed, isEmpty);
-        expect(find.text('Choose a version'), findsOneWidget);
-        catalogue.reject = false;
-        catalogue.wrongIdentity = true;
-        await t.tap(find.byKey(const ValueKey('download-version-2')));
-        await driveArtwork(
-          t,
-          () => find
-              .text('RomM returned a different game identity.')
-              .evaluate()
-              .isNotEmpty,
-        );
-        expect(catalogue.transferred, isEmpty);
-        catalogue.wrongIdentity = false;
-        catalogue.heldVersion = Completer<RommGame>();
-        await t.tap(find.byKey(const ValueKey('download-version-2')));
-        model.switchAccount();
-        catalogue.heldVersion!.complete(catalogue.version(2));
-        await driveArtwork(
-          t,
-          () => find.text('The active profile changed.').evaluate().isNotEmpty,
-        );
-        expect(catalogue.transferred, isEmpty);
-        expect(model.installed, isEmpty);
-        await finish(t);
+        try {
+          await open(t);
+          await t.tap(find.text('Cancel'));
+          await t.pumpAndSettle();
+          expect(model.installed, isEmpty);
+          expect(catalogue.transferred, isEmpty);
+          await t.tap(find.text('Download game'));
+          await driveArtwork(
+            t,
+            () => find
+                .byKey(const ValueKey('download-version-2'))
+                .evaluate()
+                .isNotEmpty,
+          );
+          catalogue.reject = true;
+          await t.tap(find.byKey(const ValueKey('download-version-2')));
+          await driveArtwork(
+            t,
+            () =>
+                find.text('This version is unavailable.').evaluate().isNotEmpty,
+          );
+          expect(model.installed, isEmpty);
+          expect(find.text('Choose a version'), findsOneWidget);
+          catalogue.reject = false;
+          catalogue.wrongIdentity = true;
+          await t.tap(find.byKey(const ValueKey('download-version-2')));
+          await driveArtwork(
+            t,
+            () => find
+                .text('RomM returned a different game identity.')
+                .evaluate()
+                .isNotEmpty,
+          );
+          expect(catalogue.transferred, isEmpty);
+          catalogue.wrongIdentity = false;
+          catalogue.heldVersion = Completer<RommGame>();
+          await t.tap(find.byKey(const ValueKey('download-version-2')));
+          model.switchAccount();
+          catalogue.heldVersion!.complete(catalogue.version(2));
+          await driveArtwork(
+            t,
+            () =>
+                find.text('The active profile changed.').evaluate().isNotEmpty,
+          );
+          expect(catalogue.transferred, isEmpty);
+          expect(model.installed, isEmpty);
+        } finally {
+          await finish(t);
+        }
       },
     );
   });

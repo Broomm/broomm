@@ -135,6 +135,34 @@ class SwitchPackages {
   final List<dynamic>? dlc;
 }
 
+/// Ryubing's JSON paths can use either separator on Windows. Compare identities
+/// before publishing metadata so a native spelling cannot retain a staging path.
+Uri switchPackagePathIdentity(String path) {
+  final windows =
+      RegExp(r'^[A-Za-z]:[\\/]').hasMatch(path) || path.startsWith(r'\\');
+  return windows
+      ? Uri.file(path, windows: true).normalizePath()
+      : File(path).absolute.uri.normalizePath();
+}
+
+Object relocateSwitchPackagePaths(
+  Object? value,
+  Map<Uri, String> replacements,
+) {
+  if (value is String)
+    return replacements[switchPackagePathIdentity(value)] ?? value;
+  if (value is Map)
+    return {
+      for (final entry in value.entries)
+        entry.key: relocateSwitchPackagePaths(entry.value, replacements),
+    };
+  if (value is List)
+    return value
+        .map((v) => relocateSwitchPackagePaths(v, replacements))
+        .toList();
+  return value!;
+}
+
 /// Let the pinned Ryubing scanner decrypt CNMT/NCA metadata and choose the
 /// highest update. Never derive title, version or DLC IDs from package names.
 Future<SwitchPackages> inspectSwitchPackages(

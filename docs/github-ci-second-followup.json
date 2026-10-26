@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T17:38:02.935492Z",
+  "base_revision": "208dda7dc6e3d80f697377cd01b069f48a6405b7",
+  "revision_scope": "uncommitted corrections on this base; changed source fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "devbox": "0.18.4"
+  },
+  "supplied_logs": [
+    {
+      "attachment": "53782d21-7563-4491-9f98-f0d51cf763a9",
+      "job": "Linux Flutter checks bootstrap",
+      "sha256": "272a6ded793f2e19777f351c5a58b0a633607e19642fbe9325ba8a9bb3a7c0c4"
+    },
+    {
+      "attachment": "7c1570e5-c826-49b8-86b4-16a562915db8",
+      "job": "Windows Flutter checks: ten failures",
+      "sha256": "39ecc9020e564d3e5dd5a2c96cf8f0789bc6b17b18d78c20522da739164eade5"
+    },
+    {
+      "attachment": "55586289-7961-45f8-ba26-be769ba2193f",
+      "job": "Linux x64 package bootstrap",
+      "sha256": "7c839ef68b3b9c022993ab64701833984e405909a14c3c363c35595dbda7b0e2"
+    },
+    {
+      "attachment": "2169a597-2102-45db-a76d-7070e65e8c7d",
+      "job": "Linux ARM64 package bootstrap",
+      "sha256": "2eabc82c3b8587343e2f0abbe67d64c057fcc279a803b72e57454e5bcb48f058"
+    }
+  ],
+  "diagnostics": {
+    ".tool-cache/ci-second-linux-shell-before.log": {
+      "result": "expected failure: actual Devbox environment generation reproduced invalid gtk3. selector",
+      "sha256": "e63e99ae9012f7b64cf3bbebf41fcba1f06bb14ad10cf67865617f70be0f76d9"
+    },
+    ".tool-cache/ci-second-linux-generated-before.nix": {
+      "result": "generated Nix before correction; syntax failure reproduced",
+      "sha256": "b17e36704f4ebf987499ded8feba463e418576cd6e4bbcd1dcc038665dd0cce0"
+    },
+    ".tool-cache/ci-second-linux-generated.nix": {
+      "result": "generated Nix after correction; evaluated successfully by Devbox on macOS",
+      "sha256": "ac700a5b51af89dbecd0e018a91ae4d2a6cbd9e9e984c155301b54e671f2c73c"
+    },
+    ".tool-cache/ci-second-linux-lock.log": {
+      "result": "passed: corrected output selection resolved to immutable commit/nar hash",
+      "sha256": "5a7be51a16a37a968433dea343a7598669fcbd4754d2e69538bf33917897d34b"
+    },
+    ".tool-cache/ci-second-linux-shell.log": {
+      "result": "passed: full Devbox shell generation, not only package metadata",
+      "sha256": "5be3c7977c9cbd3a3fd69d37a7f6ca9b5d1ef5381055ac9c46ba388eff9f1c22"
+    },
+    ".tool-cache/ci-second-linux-pkg-versions.log": {
+      "result": "passed: actual package query reported GTK 3.24.43, GLib/GIO 2.80.4",
+      "sha256": "de7def1bdecf0ab9b9e7d34475f67eb3d3d8b5e6916b352008a92df7e658bac6"
+    },
+    ".tool-cache/ci-second-linux-pkg-flags.log": {
+      "result": "passed: GTK/GLib/GIO compiler and linker flag query",
+      "sha256": "31e286c3f8a38637316d3f03888ca9a2e1b571fdaf2f547056af3d3bf8da3ccb"
+    },
+    ".tool-cache/ci-second-targeted.log": {
+      "result": "passed: 28 affected PS3/Switch tests",
+      "sha256": "83030f690f3ccbba6b14bdb67dd12d13f9acfe61e37752d6d02b8707d7940fee"
+    },
+    ".tool-cache/ci-second-full-tests.log": {
+      "result": "passed: 348 Flutter tests on macOS ARM64",
+      "sha256": "04c9f589efd20e8aaf873096ea956845dfbee9beded2a6f1fbddd36646330b44"
+    },
+    ".tool-cache/ci-second-analyze.log": {
+      "result": "passed: no issues",
+      "sha256": "6705a2bb6c7c44cdda1f72528eff5174aa89ce40c9fce1c20629318dbfdd6f69"
+    },
+    ".tool-cache/ci-second-format.log": {
+      "result": "passed: 216 files, zero changes",
+      "sha256": "145baa3bc00fa22bbf21241f9ae7e1680e2df51fd67a5bb5a514d35fa01f83df"
+    },
+    ".tool-cache/ci-second-lint.log": {
+      "result": "passed: workflow/ShellCheck with existing documented queue schema exception",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    },
+    ".tool-cache/ci-second-macos-build.log": {
+      "result": "passed: portable debug app rebuilt",
+      "sha256": "e005c981a71c53c9cb9fc4916486f854c224fd66e77272cbfb92954cb1dcdabd"
+    }
+  },
+  "limitations": [
+    "Actual Devbox generation and pkg-config execution use tool/ci/linux on macOS, not native Linux. No Linux build or Windows test execution was performed locally.",
+    "These corrections require a new hosted commit/run; rerunning the old revision preserves its failures.",
+    "Native macOS test sources/libraries are unchanged and their earlier six-test result is not recounted as a new execution.",
+    "No test skips, timeout increases, signing-secret changes, OS installs, cache deletions, RomM mutations, Git commits, pushes, tags or releases.",
+    "Generated shell environment output remains private and ignored; it is not included in this record."
+  ],
+  "changed_source_sha256": {
+    "lib/src/addons/packages.dart": "ddda7b5a66e5346985837cab27f338d975375a4234f2341ada6456daa4f564d2",
+    "lib/src/addons/ps3.dart": "4203f8a007c655f98d3eacf9dbfb557a7dd97d1b0525b2532a20dec94716ba8a",
+    "lib/src/switch_firmware.dart": "0ee1bf8ace1806d9cdf49205f443136e220bccbe7932bdce0cdd30adbdb37e6f",
+    "test/native_packages_test.dart": "e083172f3694a5551cf683320b8e2e8c35edf1cbccf52d26dcfaad258f3ee6d8",
+    "test/ps3_addons_test.dart": "958474224c580f9b8ef551d332e9a8bcfb1b6de456c3f992352bf2d291ffa85b",
+    "test/switch_firmware_test.dart": "7fa81b986ccdf6524c0b8280a30f55705a4002515cbeeeb267d2c6fa8e3ab22d",
+    "tool/ci/linux/devbox.json": "b86b1a5198b19b3a6b97c3284fb4e3f97d414f01feecb4582fb79a12e6def394",
+    "tool/ci/linux/devbox.lock": "acb96fb22cf2494dd5cd039cbc6c0bd31d62834ed667afe9a3fca75d6f8cdbfd"
+  }
+}

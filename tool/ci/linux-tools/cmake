@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# shellcheck source=tool/ci/linux-tools/environment.sh
+source "$(dirname "$0")/environment.sh"
+: "${BROOMM_LINUX_CMAKE:?Run tool/ci/build_linux.sh to select CMake}"
+exec "$BROOMM_LINUX_CMAKE" "$@"

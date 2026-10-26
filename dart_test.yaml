@@ -1,0 +1,4 @@
+# These native-size fixtures still run with the default 30-second test limit.
+# CI runs them in a separate step so other suites do not compete for disk/CPU.
+tags:
+  full-size-save: {}

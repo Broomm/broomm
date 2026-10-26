@@ -197,6 +197,46 @@ void main() {
       isNotNull,
     );
   });
+  for (final linked in [false, true]) {
+    test(
+      'artwork replacement retains ${linked ? 'linked' : 'unrelated'} files beside an old choice',
+      () async {
+        await install();
+        final first = await library.saveArtwork(
+          serverId,
+          1,
+          icon: choice(1, ArtworkKind.icon),
+        );
+        final old = File(first!.icon!).parent;
+        final foreign = File('${root.path}/foreign');
+        await foreign.writeAsString('keep');
+        if (linked) {
+          // Even a recognized image filename must not authorize deleting a link.
+          await Link('${old.path}/hero.jpg').create(foreign.path);
+        } else {
+          await File('${old.path}/notes.txt')
+              .writeAsString('keep alongside artwork');
+        }
+        final next = await library.saveArtwork(
+          serverId,
+          1,
+          icon: choice(3, ArtworkKind.icon),
+        );
+        expect(
+          await File(next!.icon!).readAsBytes(),
+          choice(3, ArtworkKind.icon).bytes,
+        );
+        expect(await File(first.icon!).exists(), true);
+        expect(await foreign.readAsString(), 'keep');
+        expect(
+          linked
+              ? await Link('${old.path}/hero.jpg').exists()
+              : await File('${old.path}/notes.txt').exists(),
+          true,
+        );
+      },
+    );
+  }
   test('failed or mismatched artwork never replaces an existing selection or changes game bytes', () async {
     final game = await install();
     final first = await library.saveArtwork(

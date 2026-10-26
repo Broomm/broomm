@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-26T17:04:53.870079Z",
+  "base_revision": "b3fddece07a1198d44522c8841f5ed80482dd3b1",
+  "revision_scope": "uncommitted working-tree corrections on this base; exact changed source fingerprints below",
+  "host": {
+    "os": "macos",
+    "architecture": "macos_arm64",
+    "native_test_os": "27.0.1",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "supplied_run": "https://github.com/pedrotrschneider/broomm/actions/runs/40358346298",
+  "supplied_logs": [
+    {
+      "attachment": "ade8fec3-a120-41f4-b043-346be54726e5",
+      "job": "Linux Flutter checks",
+      "failed_tests": 7,
+      "sha256": "6234c15d35047a15bc53e61ed266e6ea979be2662495413fdd83d5205ccddf39"
+    },
+    {
+      "attachment": "bba30ca5-2867-4f7e-a31a-adc91579eeee",
+      "job": "macOS Flutter checks",
+      "failed_tests": 1,
+      "sha256": "1a0eea4d51c9062bf728c9b77df4a16dd9ab83ab52396872d94576df2ef154e4"
+    },
+    {
+      "attachment": "1c500baf-fc6c-4de1-8d7d-65cd3a6392ea",
+      "job": "Windows Flutter checks",
+      "failed_tests": 28,
+      "sha256": "3084d46a04b1cb27636815444df82f6d7a9ca959624bedf36f7dc90d242ed39d"
+    },
+    {
+      "attachment": "46305ea0-9a68-4575-a40a-647d2bede3f0",
+      "job": "macOS native tests",
+      "failed_tests": 1,
+      "sha256": "890cd111ba0741f2eab7d4c8d17baf62e86f21404be0f5fc68f2f5918070f9a7"
+    },
+    {
+      "attachment": "69eea142-5160-474a-9cc1-2c33dfc866af",
+      "job": "Linux x64 build",
+      "failed_tests": null,
+      "sha256": "27e89a2cebb1d28656555f91eb37102607e8f8b98ca47835e2253e0fdb066829"
+    },
+    {
+      "attachment": "359f53ed-2898-401e-a1df-b7f5710f2e87",
+      "job": "Linux ARM64 build",
+      "failed_tests": null,
+      "sha256": "2f1ac4bec97de3e1a6d5af53aad53e3369c743b3474112ca098cbaa88fd13d74"
+    }
+  ],
+  "owner_report": "Android package build passed with configured signing secrets; APK/device behavior not reverified locally",
+  "checks": {
+    "flutter_tests": {
+      "result": "passed: 342 tests on macOS ARM64",
+      "log": ".tool-cache/ci-fix-full-tests.log",
+      "sha256": "0072a2cf176063f97b4a11a5e428d9c5228183504bc27458c15d4ce8479a9b70"
+    },
+    "analyze": {
+      "result": "passed: no issues",
+      "log": ".tool-cache/ci-fix-analyze.log",
+      "sha256": "025d73c35109f7744bda82b08922fd619d67c08042e74f789dcc512078d95a3a"
+    },
+    "format": {
+      "result": "passed: 216 files, zero differences",
+      "log": ".tool-cache/ci-fix-format.log",
+      "sha256": "c0f5009609949d10f49dc64b7e01fb88aa1826c7c1e97085cc25fbcd713d0ee2"
+    },
+    "workflow_shell_lint": {
+      "result": "passed with existing documented actionlint concurrency.queue schema exception",
+      "log": ".tool-cache/ci-fix-lint.log",
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    },
+    "macos_rebuild": {
+      "result": "passed: three native libraries and portable debug app rebuilt",
+      "log": ".tool-cache/ci-fix-native-macos.log",
+      "sha256": "828dc0a5c74cd15a3b7f153e9a3204b55db7920579d5c6554fe3ad787bb48392"
+    },
+    "macos_native_tests": {
+      "result": "passed: six native tests, zero skipped/failed; two existing XCTest deployment target link warnings",
+      "log": ".tool-cache/ci-fix-native-final.log",
+      "sha256": "ca73c9abab01345371c5823b00d74511226c75a78abecc511885ee8ba8d9f36a"
+    },
+    "linux_dependency_evaluation": {
+      "result": "evaluated target packages only; not a native build",
+      "log": ".tool-cache/ci-fix-linux-pin.json",
+      "sha256": "6a5e2be3311ae70e51a7e789f819d080813e1e9b1ca844d92df9c216f8b1c114"
+    }
+  },
+  "linux_target_packages": {
+    "arm64": {
+      "glib": "2.80.4",
+      "gtk": "3.24.43",
+      "gtkDev": "/nix/store/l9j0a39w4vpdw43vfknpw8f2sxdx6apb-gtk+3-3.24.43-dev",
+      "host": "aarch64-linux",
+      "libc": "2.39",
+      "pkgConfig": "0.29.2"
+    },
+    "x64": {
+      "glib": "2.80.4",
+      "gtk": "3.24.43",
+      "gtkDev": "/nix/store/a9af132rd3pz7nzvb7znybgcw1vjwm0r-gtk+3-3.24.43-dev",
+      "host": "x86_64-linux",
+      "libc": "2.39",
+      "pkgConfig": "0.29.2"
+    }
+  },
+  "limitations": [
+    "No new hosted Windows or Linux native build/execution. Full hosted matrix requires a commit containing these corrections.",
+    "Supplied hosted native macOS log names the failing frame test but omits its assertion. The display-fitting fixture retains exact assertions and passes locally; hosted cause confirmation remains pending.",
+    "No emulator gameplay, save synchronization, private RomM account or signing-secret changes in this follow-up.",
+    "No commit, push, tag, draft, release or repository setting changed.",
+    "Interrupted diagnostic test attempts are retained in ignored local logs and are not counted as passing checks."
+  ],
+  "changed_source_sha256": {
+    "lib/src/addons/files.dart": "67d13b8632ca1f90cac7b09afce8c297ed58f9b755d782341a78cde70a6d669f",
+    "lib/src/managed_emulators.dart": "1052886510bb25a3778aaf0ee309cffed1b5931dbc5d12e09918e88a5428426b",
+    "lib/src/shell/library_management.dart": "981b2d32a0ec09225029a0d10f7bfd8a4394c48c72c729a4428f859e34eaa6cd",
+    "macos/RunnerTests/RunnerTests.swift": "4c32dc14fa7121ea3242eaa5367b1ddb756f7cb32422205502e2d1e93bf4b36f",
+    "test/cloud_save_status_test.dart": "ba35a4af37d12eb51e04bd60a4bdd4d71c7ec6fb2ec1e378ba4f368aa8cba906",
+    "test/download_queue_test.dart": "19548cb1fc7ba9cea2d89bbc6ce02257250085e5fbc1c5d98645d26726a7fe23",
+    "test/emulator_configuration_test.dart": "3db87515a12f9be787f83654c32ddf9a62aac9417eba00b96cf9b9d9ba0917ff",
+    "test/emulator_settings_navigation_test.dart": "5357304381fa98c64cae024f4cd820d46c8e74cba11aa884a3c6d4c7eff08432",
+    "test/game_versions_test.dart": "3c9278629fa3fffe6085366429241083070f94f8940f694a576a2a36a90a1779",
+    "test/home_artwork_library_test.dart": "e1d0c8b574c7d92b6494442c6bfc0124c7980e0548b00d5f119d8e217f99caf7",
+    "test/library_download_test.dart": "777288c297b71c33fb388421a52ca6757c8e6faed8ffd07c81d09bb554fc768f",
+    "test/owned_files_test.dart": "0ccef8cc84e524f402141fb476e6d4ecb2b7c1d4f208d04c08d84910667781f6",
+    "test/playstation_test.dart": "a2e4f5f105911644f41b5ad5f58d7e57e5f09e7dc8a9314c733b6f0e8ca02a8d",
+    "test/shell_widget_test.dart": "a49bd8ce52d9d8f251014427daf8636ee55e8a1525e336a89ac0345687a01012",
+    "test/support/review_emulators.dart": "ed8f0e755b41dba5125249b698de845a814706a660eb94c2f7dfe7e4efc5698c",
+    "tool/ci/build_linux.sh": "a34791ee790b70a2ce26d11a6617453f11fc2982592d3065fba18054f5da4358",
+    "tool/ci/lint_workflow.sh": "09e4f3b04770d93df8a4870d921391ade7fcbb19d1cb4156299f3c84f3ccc8fd",
+    "tool/ci/linux/devbox.json": "339f9f10383677ae565fd7fbd16e7ecf5c8d22fa388aafba921a9f6d1c57da76",
+    "tool/ci/linux/devbox.lock": "471ddc243fb5bb0fc0db6541870b0077242f8d8ba575682b7e2b14de4da84314",
+    "tool/test_macos.sh": "7b40806fb78836926664125fe49ed2c50b1b3d62427350bedb4bb2adbdacc9ba"
+  }
+}

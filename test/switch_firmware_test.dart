@@ -197,6 +197,37 @@ void main() {
       c.close();
     }
   });
+  for (final engine in ['Ryubing', 'Eden']) {
+    test(
+      '$engine keeps an existing incomplete resource tree and requires explicit repair',
+      () async {
+        final c = await client();
+        final build = manager.buildFor(engine)!;
+        final firmware = Directory(
+          '${manager.root.path}/${build.id}/${build.hash}/resources/switch_firmware',
+        );
+        await firmware.create(recursive: true);
+        final foreign = File('${firmware.path}/unrelated.txt');
+        await foreign.writeAsString('keep');
+        try {
+          await expectLater(
+            run(c, emulator: engine),
+            throwsA(isA<RommFailure>()),
+          );
+          expect(await foreign.readAsString(), 'keep');
+          expect(
+            await Directory('${firmware.path}/${'a' * 32}.nca').exists(),
+            false,
+          );
+          final p =
+              '${root.path}/profiles/$profile/emulators/${engine == 'Eden' ? 'eden/data/eden/nand' : 'ryubing/user/bis'}/system/Contents/registered';
+          expect(await Directory(p).exists(), false);
+        } finally {
+          c.close();
+        }
+      },
+    );
+  }
   test('typo aliases and ambiguous firmware choices fail before any download; cancelled provisioning is retryable', () async {
     for (final c in [
       await client(title: 'title.keus'),

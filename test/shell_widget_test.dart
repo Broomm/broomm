@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'shell_model_test.dart' show FixtureRomm, settleModel;
+import 'support/review_emulators.dart';
 
 void main() {
   late Directory root;
@@ -358,6 +359,7 @@ void main() {
         ShellStorage(root),
         clientFactory: _DownloadFixture.new,
         project: Directory.current.path,
+        emulatorManager: ReviewEmulators(root, project: Directory.current.path),
       );
       await t.runAsync(model.start);
       await openHome(t);

@@ -124,6 +124,26 @@ void main() {
       ['tool/fixtures/configuration_child.c', '-o', binary],
     );
     expect(compiler.exitCode, 0, reason: '${compiler.stderr}');
+    // A fresh checkout has no build/native artifacts. Compile this test's
+    // actual writer guard in its private project rather than borrowing a
+    // developer's previous application build.
+    final guard = File(
+      '${data.path}/build/native/broomm-installer-guard.dylib',
+    );
+    await guard.parent.create(recursive: true);
+    final guardCompiler = await Process.run(
+      '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang',
+      [
+        '-dynamiclib',
+        '-std=c11',
+        'native/installer_guard.c',
+        '-framework',
+        'AppKit',
+        '-o',
+        guard.path,
+      ],
+    );
+    expect(guardCompiler.exitCode, 0, reason: '${guardCompiler.stderr}');
     final release = File('${root.path}/home/release'),
         foreign = File('${data.path}/foreign');
     final e = PreparedEmulator(
@@ -135,7 +155,7 @@ void main() {
       null,
       userDirectory: foreign.path,
     );
-    final configuration = EmulatorConfiguration(data, Directory.current.path);
+    final configuration = EmulatorConfiguration(data, data.path);
     await configuration.start(() async => ResolvedSession(e, '', '', {}));
     final settings = File('${root.path}/home/private-settings');
     try {

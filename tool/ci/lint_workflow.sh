@@ -10,4 +10,4 @@ awk '
   END { if (total != 1 || cancel != 1) exit 1 }
 ' .github/workflows/release.yml
 actionlint -ignore '^unexpected key "queue" for "concurrency" section\.' .github/workflows/release.yml
-shellcheck tool/ci/*.sh tool/ci/linux-tools/clang tool/ci/linux-tools/clang++ tool/build_app.sh
+shellcheck tool/ci/*.sh tool/ci/linux-tools/* tool/build_app.sh tool/test_macos.sh
