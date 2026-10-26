@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "builds": [
+    {
+      "id": "retroarch",
+      "name": "RetroArch",
+      "version": "1.22.2 / 20261001 + Snes9x 1.63",
+      "host": "macos-arm64",
+      "bundle": "RetroArch.app",
+      "executable": "Contents/MacOS/RetroArch",
+      "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {},
+      "core_sha256": "8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6"
+    },
+    {
+      "id": "dolphin",
+      "name": "Dolphin",
+      "version": "2609",
+      "host": "macos-arm64",
+      "bundle": "Dolphin.app",
+      "executable": "Contents/MacOS/Dolphin",
+      "sha256": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+      "sdl": 3,
+      "native": {
+        "BROOMM_CORE_SYSTEM": "0000000100172cb8",
+        "BROOMM_CORE_STATE": "0000000100204d50",
+        "BROOMM_CORE_SET_STATE": "0000000100204ba8"
+      }
+    },
+    {
+      "id": "rpcs3",
+      "name": "RPCS3",
+      "version": "0.0.42-20031 d08d568d",
+      "host": "macos-arm64",
+      "bundle": "RPCS3.app",
+      "executable": "Contents/MacOS/rpcs3",
+      "sha256": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {
+        "BROOMM_EMU_STATUS": "0000000103ddca50"
+      }
+    },
+    {
+      "id": "azahar",
+      "name": "Azahar",
+      "version": "2126.1.2",
+      "host": "macos-arm64",
+      "bundle": "Azahar.app",
+      "executable": "Contents/MacOS/azahar",
+      "sha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+      "sdl": 2,
+      "native": {}
+    },
+    {
+      "id": "ryubing",
+      "name": "Ryubing",
+      "version": "1.3.3",
+      "host": "macos-arm64",
+      "bundle": "Ryujinx.app",
+      "executable": "Contents/MacOS/Ryujinx",
+      "sha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+      "sdl": 2,
+      "sdl_library": "Contents/Frameworks/libSDL2.dylib",
+      "native": {}
+    },
+    {
+      "id": "melonds",
+      "name": "melonDS",
+      "version": "1.1",
+      "host": "macos-arm64",
+      "bundle": "melonDS.app",
+      "executable": "Contents/MacOS/melonDS",
+      "sha256": "b76167f554bb6b50a712cbf025c6872159318afb12d840fadc885785f6bc35c4",
+      "sdl": 2,
+      "native": {}
+    },
+    {
+      "id": "rpcs3-intel",
+      "name": "RPCS3 Intel",
+      "version": "0.0.42-20031 d08d568d · x86_64 / Rosetta",
+      "host": "macos-arm64",
+      "architecture": "x64",
+      "bundle": "RPCS3.app",
+      "executable": "Contents/MacOS/rpcs3",
+      "sha256": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {
+        "BROOMM_EMU_STATUS": "0000000104265860"
+      }
+    },
+    {
+      "id": "duckstation",
+      "name": "DuckStation",
+      "version": "0.1-12083-g00e299795",
+      "host": "macos-arm64",
+      "architecture": "arm64",
+      "bundle": "DuckStation.app",
+      "executable": "Contents/MacOS/DuckStation",
+      "sha256": "9d81c03e32e864a6b27ddab039556a1708306b952066171a51c0befc3273b06e",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {
+        "BROOMM_DUCK_VALID": "00000001008100e5",
+        "BROOMM_DUCK_PAUSED": "00000001008100e6"
+      }
+    },
+    {
+      "id": "pcsx2",
+      "name": "PCSX2",
+      "version": "2.8.2 / fd9d310 · x86_64 / Rosetta",
+      "host": "macos-arm64",
+      "architecture": "x64",
+      "bundle": "PCSX2.app",
+      "executable": "Contents/MacOS/PCSX2",
+      "sha256": "b6c2cd600ddee34a50a0637b4a6f4188b5a9e29b7d8ab4aca7078c8e6f90911d",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {
+        "BROOMM_PS2_STATE": "00000001031553cc"
+      }
+    },
+    {
+      "id": "armsx2",
+      "name": "ARMSX2",
+      "version": "nightly-20261023 / 90126bdfea",
+      "host": "macos-arm64",
+      "architecture": "arm64",
+      "bundle": "ARMSX2.app",
+      "executable": "Contents/MacOS/ARMSX2",
+      "sha256": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {}
+    },
+    {
+      "id": "eden",
+      "name": "Eden",
+      "version": "0.2.1 (experimental macOS)",
+      "host": "macos-arm64",
+      "architecture": "arm64",
+      "bundle": "eden.app",
+      "executable": "Contents/MacOS/eden",
+      "sha256": "18de303111bf6181d80af8b365f27aa5b04f9ee7d28f13ce4eaa161d85cc00b7",
+      "sdl": 2,
+      "sdl_library": null,
+      "native": {}
+    },
+    {
+      "id": "ppsspp",
+      "name": "PPSSPP",
+      "version": "1.20.4 / 3a31057",
+      "host": "macos-arm64",
+      "architecture": "arm64",
+      "bundle": "PPSSPPSDL.app",
+      "executable": "Contents/MacOS/PPSSPPSDL",
+      "sha256": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
+      "sdl": 2,
+      "sdl_library": "Contents/Frameworks/SDL2.framework/Versions/A/SDL2",
+      "native": {}
+    }
+  ]
+}

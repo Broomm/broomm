@@ -1,0 +1,82 @@
+{
+  "recordedAtUtc": "2026-10-17T12:45:02.185055Z",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "abi": "macos_arm64"
+  },
+  "revision": "Workspace source SHA-256 fingerprints; this checkout has no Git repository.",
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "analysis": "passed",
+      "testsPassed": 82,
+      "log": ".tool-cache/research/download-input/check-final.log"
+    },
+    {
+      "command": "BROOMM_RENDER_ROOT=\"$PWD/.tool-cache/research/download-input/previews\" devbox run -- flutter test tool/render_shell_test.dart",
+      "result": "passed",
+      "testsPassed": 1,
+      "log": ".tool-cache/research/download-input/render-final.log",
+      "previews": ".tool-cache/research/download-input/previews"
+    },
+    {
+      "command": "devbox run app-build",
+      "result": "passed",
+      "log": ".tool-cache/research/download-input/build-final.log",
+      "artifact": "build/macos/Build/Products/Debug/broomm.app"
+    }
+  ],
+  "verified": [
+    "Real loopback HTTP transfers with actual Dart client and filesystem",
+    "Size/raw CRC checks and compressed-container distinction",
+    "Independent-process OS lock exclusion and interrupted-stage cleanup",
+    "Profile/server ownership, restart and sign-out during transfer",
+    "Flutter pointer/keyboard/controller action tests and Store-to-Home download flow",
+    "Rendered widget artifact inspection",
+    "Native macOS debug compilation"
+  ],
+  "notVerified": [
+    "Owner-authenticated live RomM downloads",
+    "Physical mixed-input/controller acceptance for this slice",
+    "Native Linux/Steam, Windows or Android behavior",
+    "Playing downloaded RomM games or save synchronization",
+    "Power-loss directory durability"
+  ],
+  "ownerApp": "Existing running app was left untouched; no restart or login loss.",
+  "sourceSha256": {
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "lib/src/romm/client.dart": "f42297f86a08b6235e1c70c1efcd3dd7fd5bbe8f26db4a319dc42dae3ddd805c",
+    "lib/src/romm/models.dart": "037700c6f02aaa8f607643aae82e58c9f3c7ab7d332829006c4007cc03949699",
+    "lib/src/romm/transfer.dart": "b56c04f87f4643aad0bdc2c0e93cf9673e80184a9a0e28b7eb4751a3fe2b9ecb",
+    "lib/src/shell/app.dart": "e46a33d8a9cd500b579eb6d5893e44b4aac1f70977bff416530c5b10289872e2",
+    "lib/src/shell/artwork.dart": "d2fa4e3ba60ae37531503a57e5858d7a97cb2ff21a7cc05db6e1e1249c7b6ba6",
+    "lib/src/shell/controller_input.dart": "0c19d697abb1b2a9d97217f228374c5047683fc5a2cab3ba54ffc5133d3fd263",
+    "lib/src/shell/controls.dart": "5d10e6b4af9e08785563739f3ce2ea24020ab72b72a0420dc850fa12bb2b5937",
+    "lib/src/shell/download_status.dart": "5a5c3a0165f9518252b39dfd92d7de98421daaa4878a8355e9e890833a9b7f83",
+    "lib/src/shell/home_screen.dart": "4fbc6747bce2cf4971042b0a775bb492c4005f811c1e9ba7acde6c8391a7547c",
+    "lib/src/shell/library.dart": "d669272e4f007fd5c263c0a0eee3e672a40150000009330e8d77aa4ea380ff43",
+    "lib/src/shell/model.dart": "0ae85c29d2015e632cfc47e62a2dd27e72454da667b7c8e9392a8b92707ce8b5",
+    "lib/src/shell/onboarding.dart": "3508e612b201909396b80230ebf04213c348f7908d0ac24c357d7ea0bfeaf203",
+    "lib/src/shell/settings_screen.dart": "568e8f46c87f70663560585076850862281368c63eca333918251609d54d92ee",
+    "lib/src/shell/storage.dart": "b0bfa8039123c0159e4725eaac9d645e60268cc12814e4606bc72fada7f88309",
+    "lib/src/shell/store_screen.dart": "b92d57617d06fb73126912689bfb5aad27910e3cf7a07e0f938b61e86b2105e3",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "pubspec.yaml": "02544bdb1e708e4d5eed50d03791f80114744676f8c00ae93c237ff466fda30b",
+    "test/library_download_test.dart": "152ff626182df7741b588ef79c2c4bf0e6bced000394a6abf52503c8446e9c35",
+    "test/shell_widget_test.dart": "82760eb282a7d461397d6dda99389234e47899e30ebf132f2b2d7a7a054283a0",
+    "test/support/hold_library_lock.dart": "3242885b42001f7e5a58f500a7b42d1d6bf8d766e1a397fe2859b3a38505bd70",
+    "tool/render_shell_test.dart": "4aaa550ae7640fde8c26073aff580b0c007ab22eb92b8d36f19ae9d5f9000523"
+  },
+  "artifactSha256": {
+    "build/macos/Build/Products/Debug/broomm.app/Contents/MacOS/broomm": "332566b61735478f3c67ac8508600c3200984b0f86b6f0b1ec79e83aca1ab061",
+    "build/macos/Build/Products/Debug/broomm.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/kernel_blob.bin": "3788bc2f96e1427a9549cd9ed286924bf4a2e627f3450700e41120212a4830ef"
+  },
+  "references": {
+    "schemaSha256": "ce59cca7062a05d7e63a93f3f6da896dd42604e87494055ca05e473b5287d43b",
+    "romm540FilesHandlerSha256": "0dbe0fbff3519f4c3c550a3772ed0b11b72625e4a52a2602769d33b41a407057",
+    "romm540ModelSha256": "d1f62fb728fdda81ce540e3a5c2f68da6fb5c73b3ecc443b6221bfe3fd78c446",
+    "romm540HashImplementationSha256": "914f34d0c783724cdd9933a2e8e2bd4f48eba055d11e5f2a3ce351e1925a2df2"
+  }
+}

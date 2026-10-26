@@ -1,0 +1,147 @@
+{
+  "date": "2026-10-22T17:17:03.550960Z",
+  "host": "macos",
+  "dart": "3.13.0 (stable) (Wed Aug 5 00:28:05 2026 -0700) on \"macos_arm64\"",
+  "gitHead": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": true,
+  "sourceSha256": {
+    "lib/src/app_model.dart": "5bb2969009907ebdd793ab68336ad1ae8d08924ddae87e04c61201c2e9cf55d9",
+    "lib/src/managed_emulators.dart": "7bf4e1d15e07a18cef923b94f5b8a373ddc2e9ec46cbe2f76a0d9a130e139f25",
+    "lib/src/progress/digest.dart": "9942e105a44d59e04b1b7a1065af8ed25b960ce14a09db85fa02bd8e9d2210c8",
+    "lib/src/progress/files.dart": "6cbfd93927e9da627bab22f27aaec38d2c98c0f7aee3deed18221c69c4420f58",
+    "lib/src/progress/layout.dart": "cc70bfb0987f5839409805b98462ab65520e38692416e7ccef2677c0bc04cda5",
+    "lib/src/progress/service.dart": "c41f827525b8e89a0510e56b3febaf368894b48d2f48c88b821d72c5e2ae1489",
+    "lib/src/progress/store.dart": "1ced4f2c99c20bb5f07077c6ccb2ad39179ddf4c830bf8a1ef8a90b858a23397",
+    "lib/src/progress/zip.dart": "e0d006ce9097b71fa3d2fc9e9e7f3efd959b17b1a3ceab3999d5a511741723ac",
+    "lib/src/romm/client.dart": "8dddaaf07f2369cbe088405815ae34b4e6b3f34d16110fb47915fae3fdbb70f8",
+    "lib/src/romm/saves.dart": "4b1e375220ed8622fa0e0c2ebffb2f5365216c677d5b54f207e27156470b19bd",
+    "lib/src/session.dart": "eb006c918ccbbd2037624914dcbce91c64e04c8dbb0fc54e20398837b1a5861a",
+    "lib/src/shell/app.dart": "56b185ba2847c690710a1567641ea9e79a1dcdbd53f17d2af9613c9e1b36c15e",
+    "lib/src/shell/artwork_picker.dart": "ca39cba406890de181657cf2605e92530a27c908772e3e596faa7c3a2dc67887",
+    "lib/src/shell/cloud_model.dart": "0ada550516e7faeb58f62944cd14195a146d200db6fc658bd0a8b5787cd860c7",
+    "lib/src/shell/cloud_saves_dialog.dart": "a1d8553facf0ad725f99a79f3d3af3698e5c46d5963301031ed29c804491994a",
+    "lib/src/shell/game_session_screen.dart": "661cf757449d5f910902e678af62acf73f9ea85e056d8f6f9a0c78699e9b5123",
+    "lib/src/shell/model.dart": "b3e76fdbb2f00869161dc8e0c80fcd79008adc5e6bf4a22a2c40e53bd66cd7d0",
+    "lib/src/shell/onboarding.dart": "2b05b2bfa0d7e943d4a8869c4e97ba88b7f90eddcf926f149c465084ea2b9f45",
+    "test/cloud_saves_test.dart": "bf51a21c85bd226bebdd27b62291d8278284cd4c8ac447c1461ff11d5ba4b3fe",
+    "test/game_session_screen_test.dart": "423e35a3cd1ecc01273bcc29c8cbc2f8d3d4fabc66976120e81c4268dce2090e",
+    "test/progress_archive_test.dart": "b53e0a700fd33b6a08b6ae865b0fa921dd4989b479f668639da82669444ff041",
+    "test/romm_saves_http_test.dart": "21d86af84b73a20b5cfe3090d2c49a572bafe9d5a8c3931e366f63f8f043d317",
+    "tool/check_cloud_progress_test.dart": "a535f9a5a0ceea93e61110f8bff1512bba0f64425a5f32c3eaf3570c82a672dd",
+    "tool/check_cloud_session_test.dart": "909114cc02fa5e1c79973ea5b3f43a57fb9d9b65152a9cc8c3baa51b338f5a81"
+  },
+  "checks": {
+    "flutter-tests-final.log": {
+      "passed": 201,
+      "sha256": "4428e3f4b7b484ec681219facb52eaadb600d4fc213f564599e7818a99fc8a37"
+    },
+    "final-save-checks.log": {
+      "passed": 25,
+      "sha256": "7d2652d4569624e85c541e8d6a57398407efabc204c1ca82d9fb551e14d28249"
+    },
+    "controller-checks.log": {
+      "passed": 30,
+      "sha256": "5a1ff3e0583a29853b9fedf43b8622e6237701d5ecd3710ba8657a68cb9d3e79"
+    },
+    "render.log": {
+      "passed": 1,
+      "sha256": "6af5a3970608ad49dbf5240903933e7eefd3f346aa87fe3d1d5c51f5e0274394"
+    }
+  },
+  "analysis": "No issues found; .tool-cache/research/cloud-saves/analyze.log",
+  "commands": [
+    "devbox run -- flutter analyze",
+    "devbox run -- flutter test test tool/check_cloud_progress_test.dart tool/check_cloud_session_test.dart --concurrency=1",
+    "devbox run -- flutter test test/cloud_saves_test.dart test/romm_saves_http_test.dart test/progress_archive_test.dart tool/check_cloud_progress_test.dart tool/check_cloud_session_test.dart --concurrency=1",
+    "devbox run -- flutter test test/game_session_screen_test.dart test/shell_widget_test.dart test/cloud_saves_test.dart --concurrency=1",
+    "devbox run -- flutter test tool/render_home_artwork_test.dart --concurrency=1",
+    "devbox run -- bash tool/build_app.sh --release",
+    "/usr/bin/codesign --verify --deep --strict build/macos/Build/Products/Release/broomm.app",
+    "/usr/bin/unzip -t build/releases/Broomm-macOS-arm64-cloud-saves.zip"
+  ],
+  "nativeFiles": [
+    {
+      "emulator": "RetroArch",
+      "platform": "snes",
+      "identity": "snes9x-sram-v1:snes",
+      "files": 1,
+      "bytes": 2048,
+      "roundTrip": true,
+      "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+    },
+    {
+      "emulator": "Dolphin",
+      "platform": "ngc",
+      "identity": "dolphin-gci-v1:GALE01",
+      "files": 1,
+      "bytes": 90176,
+      "roundTrip": true,
+      "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+    },
+    {
+      "emulator": "Dolphin",
+      "platform": "wii",
+      "identity": "dolphin-wii-data-v1:RSBE01",
+      "files": 9,
+      "bytes": 16693936,
+      "roundTrip": true,
+      "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+    },
+    {
+      "emulator": "Azahar",
+      "platform": "3ds",
+      "identity": "azahar-data-v1:0004000000030800",
+      "files": 3,
+      "bytes": 41400,
+      "roundTrip": true,
+      "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+    },
+    {
+      "emulator": "RPCS3",
+      "platform": "ps3",
+      "identity": "rpcs3-savedata-v1:BLUS31183",
+      "files": 0,
+      "bytes": 0,
+      "roundTrip": true,
+      "note": "Identity validated; this fixture has no game progress. No gameplay save-load claim."
+    }
+  ],
+  "nativeSession": {
+    "emulator": "RetroArch",
+    "build": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+    "realWriterExitBeforeCapture": true,
+    "sessionLeaseHeldDuringFinalization": true,
+    "managedAssetReadback": true,
+    "server": "in-memory fixture; not owner-authenticated RomM",
+    "events": [
+      "visible-finalization",
+      "progress-verified",
+      "exit-complete"
+    ]
+  },
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-arm64-cloud-saves.zip",
+    "bytes": 19068831,
+    "sha256": "5da3552dc687ae5e61868ad926da98494c50fdd18a827ceeecb5d7c23be8af81",
+    "codesignVerified": true,
+    "notarized": false
+  },
+  "verified": [
+    "Managed-only synchronization and explicit import/backup policies with fixture server",
+    "Real loopback HTTP transfer contracts",
+    "Process interruption, conflicts, leases, provenance and recovery regressions",
+    "Isolated macOS native file round trips",
+    "Real RetroArch writer shutdown and finalization against fixture server",
+    "Offscreen Home/Options render",
+    "macOS ARM64 release compilation and signed archive extraction"
+  ],
+  "unverified": [
+    "Owner-authenticated RomM save transfers",
+    "Cross-device gameplay and save-state loads",
+    "RPCS3 actual savedata round trip",
+    "Ryubing save-index/account mapping",
+    "Native Linux/Steam, Windows and Android save access",
+    "Universal atomic conditional writes: RomM 5.4 has no CAS",
+    "Power-loss durability across filesystems"
+  ]
+}

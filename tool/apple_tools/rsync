@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Repair only generated copies after macOS openrsync preserves Nix's read-only
+# directory modes despite Flutter's --chmod option. Do not follow nested symlinks.
+set -euo pipefail
+/usr/bin/rsync "$@"
+project="$(cd "$(dirname "$0")/../.." && pwd -P)"
+destination="${!#}"
+if [ -d "$destination" ]; then
+  destination="$(cd "$destination" && pwd -P)"
+  case "$destination" in
+    "$project"/build/*)
+      /usr/bin/find -P "$destination" -type d -exec chmod u+w {} +
+      /usr/bin/find -P "$destination" -type f -exec chmod u+w {} + ;;
+  esac
+fi

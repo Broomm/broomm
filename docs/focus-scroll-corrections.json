@@ -1,0 +1,130 @@
+{
+  "recordedAtUtc": "2026-10-18T14:33:50.731680Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "revision": "Uncommitted workspace identified by SHA-256 fingerprints below.",
+  "priorSnapshot": "docs/navigation-and-motion.json",
+  "host": {
+    "os": "macOS",
+    "version": "27.0.1 (26A434)",
+    "architecture": "arm64",
+    "xcode": "27.1 (27A9275)"
+  },
+  "toolchain": {
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "engine": "5f77625673"
+  },
+  "trigger": "Owner screenshots: Store search return clipped heading/label; emulator cards clipped entering from above/below; Down incorrectly traversed horizontal action rows.",
+  "changes": [
+    "Reveal full cards/field labels where they fit; keep active controls visible in oversized content.",
+    "Eager scroll views identify first/last enabled visual rows. Lazy Store endpoints come from catalogue data.",
+    "Emulator arrows/controller directions follow rendered geometry, including wrapped rows; Tab keeps numeric order.",
+    "New focus cancels obsolete scrolling, even when the destination is already visible.",
+    "Respect saved/platform reduced motion; preserve application and emulator data workflows."
+  ],
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "result": "passed",
+      "analysis": "passed",
+      "testsPassed": 131,
+      "log": ".tool-cache/research/navigation-followup/app-check.log"
+    },
+    {
+      "command": "devbox run -- flutter analyze",
+      "result": "passed",
+      "log": ".tool-cache/research/navigation-followup/analyze-final.log",
+      "scope": "Includes new renderer; final app-check reanalyses after the text-editing return adjustment."
+    },
+    {
+      "command": "BROOMM_RENDER_ROOT=\"$PWD/.tool-cache/research/navigation-followup/previews\" devbox run -- flutter test tool/render_navigation_test.dart tool/render_shell_test.dart tool/render_managed_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "testsPassed": 3,
+      "log": ".tool-cache/research/navigation-followup/renders.log",
+      "scope": "Isolated offscreen widget rendering; no desktop computer use"
+    },
+    {
+      "command": "devbox run app-build",
+      "result": "passed",
+      "log": ".tool-cache/research/navigation-followup/build-macos.log",
+      "artifact": "build/macos/Build/Products/Debug/broomm.app"
+    }
+  ],
+  "documentationLinksChecked": 71,
+  "sourceFingerprints": {
+    "lib/controller_lab.dart": "8afaa14512065b54c3ff1f53db52fbc93b62e75d184d465bfc7db01f54767453",
+    "lib/src/app_model.dart": "904780c7a2249fa443b13694696dddfc048abe9915da7de74051c625e223cf19",
+    "lib/src/shell/app.dart": "1a1951670c1d0e610dc289f0ab37e709812ba126be5c4f7c7e9d09c3602d9bcd",
+    "lib/src/shell/artwork.dart": "26adb63ea2265ae230cdb5748828b37bc077f44f2c1f962c1c866b4811de8005",
+    "lib/src/shell/controls.dart": "8935d3ebc3d21ec758487d593e17a4d34b4c51317ad8c7aafb470c70417e0c2c",
+    "lib/src/shell/emulator_settings_screen.dart": "8cdadb9e26730b166c10a391994f06d8d035ed3feadd3834b718f9c2ee5f9421",
+    "lib/src/shell/game_session_screen.dart": "99ffb7d6903b07e44bee271239e30833d05cfbc9bd35ead2db40bd9639ec7d22",
+    "lib/src/shell/home_screen.dart": "bf2ed36f32a42e1e3bd7799d70e23888c5f628988dc3b0858d9afb0e21c43a33",
+    "lib/src/shell/navigation.dart": "e35ec13faf216f2be61dcc8803cef81e76bf785f7c6a69e31545f3778dc0ac66",
+    "lib/src/shell/onboarding.dart": "187003f704b1451bab845313467ec57c510d64c11b19c7cfbab1f0c396ee8636",
+    "lib/src/shell/settings_screen.dart": "475a353f9cf6c813cb3afc3cc097215a298e86bb97d395b1a335dc3f3a4bcf38",
+    "lib/src/shell/store_screen.dart": "a620a5c9baec1eba2bca7f52dc7115c8f7d1199526695da9ea7c706e65a791fc",
+    "lib/src/widgets/pairing_screen.dart": "e55e9ae963e132de219bc07fdff018838835fe0f35b6440a34359b047dc9f971",
+    "test/navigation_test.dart": "8bed252a2b028667a08d7e014a9a0ebce9592ee6e73682eed11a0d61fa630713",
+    "test/emulator_settings_navigation_test.dart": "50f87434e0cfe95309c4e3cdebc607229ae3c3b20e2c261c37b513cf0ca156f4",
+    "test/game_session_screen_test.dart": "28eec75231bf7a035f93ecef9d6163e9d0740b88030dd1b1ff8163f781f40768",
+    "tool/render_navigation_test.dart": "478162c80f9fe91d7cad2e852a85c4d1ac65430db81cd379bb08a07d501faf1a",
+    "tool/render_shell_test.dart": "4aaa550ae7640fde8c26073aff580b0c007ab22eb92b8d36f19ae9d5f9000523",
+    "tool/render_managed_test.dart": "45e984a5f020314a5ea009c66d14f611df80bb856a5d8af4b835ee36026da40b",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "PROJECT.md": "98510e8fd853a6e074fe7d07f49100f0018c08a758b24861fa9b35c7887919c8",
+    "IMPLEMENTATION.md": "d3381d03a366be882cbeffeb059d18b5d4d8a23e20339cca6c8126b36d8c77b6",
+    "README.md": "4b9482bc9ef6c8b867e4675e4c991d904cf65c8160dd69472fcb04d2f6bde56f",
+    "docs/navigation-and-motion.md": "1ec35d7a26fccbf2b2c34685e7ae27445bb2d5cbf323d521b6a5c4e25feea158",
+    "docs/navigation-and-motion.json": "988dc970904d243648604468ca82b5a3b991af916a5361cbbf134de5b59cd412"
+  },
+  "buildFingerprints": {
+    "build/macos/Build/Products/Debug/broomm.app/Contents/MacOS/broomm": "4e6087f9953f74296186cfa0e021d180182302452e65482f6b96ebb27c60d96c",
+    "build/macos/Build/Products/Debug/broomm.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/kernel_blob.bin": "ee5c22f7e4aac5aadf4a0872d2ec6e26a04285425a7b5c7e10b6c625cd5ce25b"
+  },
+  "logFingerprints": {
+    ".tool-cache/research/navigation-followup/app-check.log": "3a17bda41d94878c368c33e5c34eefe9d720aec9ad98e2229922adbecbc799a0",
+    ".tool-cache/research/navigation-followup/analyze-final.log": "679b7ac1e181604359bb4ecd5555f79509ffe25a1cf6d10b6a7b71f602795f42",
+    ".tool-cache/research/navigation-followup/renders.log": "87d33306b6eacd3612f1e613b3c745f4a8b12320f5157810815c7f63ae5c380f",
+    ".tool-cache/research/navigation-followup/build-macos.log": "f9eccec19a730bc31d4b6d6ae2e8d79b7792b57e8b09135cd80b2afa3f70fca6"
+  },
+  "inspectedPreviewFingerprints": {
+    ".tool-cache/research/navigation-followup/previews/store-search-top.png": "1cff2c8bb1414bb55abc42743271f6c4f1189e306aa106d707f1cf7febcb0975",
+    ".tool-cache/research/navigation-followup/previews/emulator-down-full-card.png": "bfd9717ab905e6a6143dc5fbc445af24155ce96bbdd967ee93458d111652939d",
+    ".tool-cache/research/navigation-followup/previews/emulator-up-full-card.png": "d59a7d113e4e6334195a844db8e6b36f89c47fdad9e604f669124ce7f0e8f931",
+    ".tool-cache/research/navigation-followup/previews/emulator-wrapped-full-card.png": "404ad04cf4b890b094a6a6d1f3d0d96cb94c3e22acd776cff9cd57fd74537d26"
+  },
+  "investigations": [
+    {
+      "log": ".tool-cache/research/navigation-followup/focus-regressions-initial.log",
+      "result": "failed",
+      "finding": "Synthetic configured-card state was cleared by real re-inspection of empty fixture installation records; the test now follows that state transition."
+    },
+    {
+      "log": ".tool-cache/research/navigation-followup/emulators-regressions.log",
+      "result": "failed",
+      "finding": "At 390x620 the explanatory header exceeded the viewport; confirmed focused-control visibility, then checked the exact top after resizing."
+    },
+    {
+      "log": ".tool-cache/research/navigation-followup/focus-regressions.log",
+      "result": "failed",
+      "finding": "Old reveal animation continued after an already-visible destination gained focus; added immediate cancellation."
+    },
+    {
+      "log": ".tool-cache/research/navigation-followup/focus-regressions-final.log",
+      "result": "passed",
+      "testsPassed": 19,
+      "scope": "Targeted regressions before the final empty/error Store endpoint additions; full final suite recorded above."
+    }
+  ],
+  "limitations": [
+    "Owner observed the original failures; owner acceptance of these corrections and physical-controller motion feel remain unverified.",
+    "Keyboard/native-channel regressions and offscreen artifacts are automated Flutter checks, not physical input or desktop visual acceptance.",
+    "No native Linux/Steam/gamescope, Windows, or Android execution on this macOS host.",
+    "Native emulator/Keychain/window suites from the initial snapshot were not rerun for this Dart scrolling correction; no new gameplay acceptance claimed.",
+    "If an entire card or a long heading/footer cannot fit with the focused control, keep that control visible instead of hiding it to force a page edge."
+  ]
+}

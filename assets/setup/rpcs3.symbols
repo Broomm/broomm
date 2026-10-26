@@ -1,0 +1,8 @@
+0000000100248fbc _ZN11main_window13OnPlayOrPauseEv
+0000000100029a00 _ZNK11main_window10metaObjectEv
+0000000105e26ff0 g_progr_ftotal
+0000000105e26ff4 g_progr_fdone
+0000000105e26ff8 g_progr_ftotal_bits
+0000000105e27000 g_progr_fknown_bits
+0000000105e27008 g_progr_ptotal
+0000000105e2700c g_progr_pdone

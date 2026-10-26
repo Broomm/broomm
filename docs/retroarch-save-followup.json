@@ -1,0 +1,471 @@
+{
+  "utc": "2026-10-23T20:48:33.913244Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "Uncommitted cumulative work; source hashes identify this delivery.",
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "cpu": "Apple M1 Pro",
+    "architecture": "arm64"
+  },
+  "sourceSha256": {
+    "lib/src/retroarch_saves.dart": "ea608fecd895392adacb23e308ead0812a17ec6d79cacc377dfcbfbfab9b6afc",
+    "lib/src/retroarch.dart": "ff08b6a27718a973d69223a6f8dd39c339ca67700b6b600fe553ff287b3d59eb",
+    "lib/src/emulators.dart": "cdd38d02323045fafbf890257cfd65af443274de048aaf241b41ae99ceb3cd9d",
+    "lib/src/managed_emulators.dart": "4661d7ecaefd2198ecaafffdfaced929a674793678dbbe5f73b6f26eac111a9a",
+    "lib/src/progress/layout.dart": "b99368f0bc3ebf2f4e989bac815e6e17c3a40845548a4516ab2df37406720daf",
+    "lib/src/progress/store.dart": "b866ce72f4be7d26f9be0349d317d55cdf3ba5a03fc42d7b1a063cd5056f08a2",
+    "lib/src/progress/native_export.dart": "0f9f9ace7c4aeceef3879482c0d0e82bbc812b298923f34c77701b915c65ebe8",
+    "lib/src/progress/service.dart": "6f98db08d27a0fa1a15e373f1c68633c41eee7620c34b40fb249fe9545becef9",
+    "test/retroarch_save_recovery_test.dart": "01bbd431bcafa96598033c3b8397a2e3040ff90cee75ef0b0ecf7282554bf3ae",
+    "test/retroarch_systems_test.dart": "257ed147248509760d99da20c351de965ece8db1ffa606e001b3bc577091b47b",
+    "tool/check_retroarch_saves_test.dart": "e1a4bd8ab505c1d586b6fe7a02cf9544ec5d37103e94ca8fe8caef538c3d9ebd",
+    "docs/platform-support-matrix.md": "35be1cd7d06cf2be0927fb8da33a739ff8d6aaa29abe1d6b445618f48203c35b",
+    "docs/platform-support-matrix.json": "b0ecb2b23c326dd5357c79d129b1284c5a8a136f8e10f2c8e48fd9b1247f4993",
+    "docs/retroarch-save-followup.md": "b3e6dc8c85c60b312c7726501d27572c93b56cc096f431a146459e281a6949d8",
+    "PROJECT.md": "686075cba785c197def0548d53b4101ff9015ffffb4c9c199b6c6166ad6020fe",
+    "IMPLEMENTATION.md": "f2c45171fcf32218d6697c295ba6024ac31a8fdba886c75cab4abb282246be94",
+    "README.md": "5441d15955ff5b1bf95cb2c0d4a7e06334223d393d0207d550dfd8c0dd9ad2de"
+  },
+  "ownerReports": [
+    {
+      "slug": "3do",
+      "date": "2026-10-23",
+      "report": "Launch and save states verified; ordinary save failed before this fix."
+    },
+    {
+      "slug": "arcade",
+      "date": "2026-10-23",
+      "report": "Cloud saves verified."
+    },
+    {
+      "slug": "atari2600",
+      "date": "2026-10-23",
+      "report": "Save verified; retained artifact is a state archive."
+    },
+    {
+      "slug": "atari-jaguar-cd",
+      "date": "2026-10-23",
+      "report": "Ignore for now: no compatible media."
+    },
+    {
+      "slug": "lynx",
+      "date": "2026-10-23",
+      "report": "BIOS added and launch verified."
+    },
+    {
+      "slug": "dc",
+      "date": "2026-10-23",
+      "report": "Crazy Taxi played; first upload absent, subsequent crash reviewed manually."
+    },
+    {
+      "slug": "nes",
+      "date": "2026-10-23",
+      "report": "1943 played; no ordinary save observed."
+    },
+    {
+      "slug": "sega32",
+      "date": "2026-10-23",
+      "report": "Mortal Kombat II played successfully."
+    }
+  ],
+  "catalogueInspection": {
+    "path": ".tool-cache/research/ra-save-followup/catalogue.json",
+    "authenticatedReadOnly": true,
+    "threeDoBiosNowPresent": true,
+    "lynxBiosNowPresent": true,
+    "saturnFirmwareEmpty": true
+  },
+  "checks": {
+    "flutter": {
+      "passed": 291,
+      "log": ".tool-cache/research/ra-save-followup/flutter-final-confirmed.log"
+    },
+    "targetedSaveRegressions": {
+      "passed": 34,
+      "log": ".tool-cache/research/ra-save-followup/regressions-delivery.log"
+    },
+    "analysis": {
+      "log": ".tool-cache/research/ra-save-followup/analyze-delivery.log",
+      "noIssues": true
+    },
+    "native": {
+      "passed": true,
+      "fixtureCases": 11,
+      "log": ".tool-cache/research/ra-save-followup/native-final-confirmed.log",
+      "resultPath": ".tool-cache/research/ra-save-followup/native-qpFuk3/results.json",
+      "server": "In-memory RomM contract fixture; no owner server save writes",
+      "flycastPrivateFileHandlesAsserted": true,
+      "normalWriterExitBeforeCapture": true,
+      "fixtures": [
+        {
+          "slug": "nes",
+          "rom": 4093,
+          "title": "The Legend of Zelda",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "c211af993da28a894e189735f2888c53e3541673bf0d720bc130a42b98467634",
+              "bytes": 8192
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 8192
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "genesis",
+          "rom": 6401,
+          "title": "Sonic the Hedgehog 3",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000002/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "89cc446564133aef5509268dc91923bdc429eef11704b2c84c36919d506ddfa1",
+              "bytes": 604
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 604
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "gamegear",
+          "rom": 6276,
+          "title": "Shining Force: The Sword of Hajya",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000003/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "18000274cf0d393554032ae9920aea4cf8d12c0d81f9118d385bf5782033a1fb",
+              "bytes": 26752
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 26752
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "sms",
+          "rom": 6850,
+          "title": "Phantasy Star",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000004/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "36e3b29df6c67e3bedadf20fc0f09aa0ec0479f484a303aa49e3426b36ec1034",
+              "bytes": 8188
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 8188
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "sega32",
+          "rom": 6780,
+          "title": "NBA Jam Tournament Edition",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000005/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "25df2449b2e5a35fea14e02a7158e283801a1069c9f84631b9a9dacb2f809a7f",
+              "bytes": 8192
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 8192
+            }
+          ],
+          "pending": false,
+          "source": "test EEPROM sentinel; native load/flush, not game-created progress",
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "lynx",
+          "rom": 6460,
+          "title": "Eye of the Beholder",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000006/emulators/retroarch",
+          "saveFiles": {},
+          "stateKeys": [
+            "states-608d0fa3cb1b68df-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 30129
+            }
+          ],
+          "pending": false,
+          "matchedStateVerified": true
+        },
+        {
+          "slug": "arcade",
+          "rom": 718,
+          "title": "The Simpsons",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000007/emulators/retroarch",
+          "saveFiles": {
+            "save/fbneo/simpsons2p.nv": {
+              "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c",
+              "bytes": 128
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 282
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "3do",
+          "rom": 6027,
+          "title": "Crash 'n Burn",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000008/emulators/retroarch",
+          "saveFiles": {
+            "save/opera/per_game/Crash n Burn.0.srm": {
+              "sha256": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e",
+              "bytes": 32768
+            }
+          },
+          "stateKeys": [
+            "states-c14f877111e110e3-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 32768
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].srm",
+              "bytes": 32768
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/00000000000000000000000000000009/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-7d6ff31f5588645a-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 3297
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].zip",
+              "bytes": 3281
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "nes",
+          "rom": 3745,
+          "title": "1943",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/0000000000000000000000000000000a/emulators/retroarch",
+          "saveFiles": {},
+          "stateKeys": [],
+          "uploaded": [],
+          "pending": false
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi (fresh VMUs)",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-qpFuk3/data/profiles/0000000000000000000000000000000b/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-7d6ff31f5588645a-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 1590
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        }
+      ]
+    },
+    "build": {
+      "log": ".tool-cache/research/ra-save-followup/build-delivery.log",
+      "approvedPreinstalledXcode": true
+    },
+    "archive": {
+      "integrityLog": ".tool-cache/research/ra-save-followup/archive-integrity.log",
+      "strictDeepSignatureLog": ".tool-cache/research/ra-save-followup/signature-extracted.log",
+      "unpackedPath": ".tool-cache/research/ra-save-followup/release-final-SaN6bN"
+    }
+  },
+  "sourceInputSha256": {
+    "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+    "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+    "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+    "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+    "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+  },
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-save-fixes.zip",
+    "bytes": 19779607,
+    "sha256": "9db1d65d0e95f708787b6414c64b1430bd4f68f6d6e94b9c733c6707c4d06bc5",
+    "nativePack": "macOS arm64",
+    "checkoutBoundDevelopmentBuild": true,
+    "notarized": false,
+    "includesEmulatorsCoresBiosKeysOrRoms": false
+  },
+  "findings": [
+    {
+      "issue": "Opera raw .srm export was rejected by its own upload readback",
+      "fix": "Concrete 32 KiB native filename/version boundary, native ZIP fallback and retained raw retry"
+    },
+    {
+      "issue": "Flycast defaults wrote shared VMUs outside the save boundary",
+      "fix": "Pinned reicast_per_content_vmus=All VMUs, session-only global option override, native product-ID names and legacy copies"
+    },
+    {
+      "issue": "Flycast ignores the expected generic state basename after this startup path",
+      "fix": "Normalize its observed ROM-basename state into the existing exact-build state group"
+    },
+    {
+      "issue": "Compressed cartridge saves were looked up by inner ZIP member instead of native outer filename",
+      "fix": "Preserve outer-name native SRAM with canonical cloud naming and archive ambiguity rejection"
+    },
+    {
+      "issue": "Background retained retry rejected core IDs containing underscores",
+      "fix": "Accept actual core identities and retain raw native save paths without a live installation"
+    }
+  ],
+  "failedChecksAndRepairs": [
+    {
+      "log": ".tool-cache/research/ra-save-followup/regressions.log",
+      "cause": "Sandbox prevented Flutter local test sockets",
+      "resolution": "Approved native test execution; final complete suite passes"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/native-saves-2.log",
+      "cause": "Native SRAM showed the outer ZIP basename; 32X and Lynx did not create ordinary saves in short sessions",
+      "resolution": "Correct outer-name capture; distinguish seeded EEPROM and upstream state-only support"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/native-saves-3.log",
+      "cause": "Actual pinned Flycast key is reicast_; frontend per-core overrides took precedence",
+      "resolution": "Correct key and session-only global options; assert actual open VMU handles"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/native-optical.log",
+      "cause": "Native VMU filenames use disc product ID and state path uses ROM basename; test also expected an incidental loading-log phrase",
+      "resolution": "Capture actual filenames, validate private file handles and positive SRAM result; final checks pass"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/native-final.log",
+      "cause": "Arcade fixture mistakenly required an absent, unnecessary Neo Geo BIOS",
+      "resolution": "Remove fixture-only requirement; Simpsons NVRAM and final entire native suite pass"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/build-release.log",
+      "cause": "Sandbox denied normal Xcode module/Swift package caches",
+      "resolution": "Build through approved Xcode execution, without SDK/global settings changes"
+    },
+    {
+      "log": ".tool-cache/research/ra-save-followup/signature.log",
+      "cause": "Incremental outer app seal referenced the prior App.framework",
+      "resolution": "Verify inner framework, refresh outer ad-hoc signature with existing Release.entitlements, verify extracted ZIP deeply/strictly"
+    }
+  ],
+  "externalEffects": {
+    "ownerProgressChanged": false,
+    "serverSavesChanged": false,
+    "catalogueChanged": false,
+    "ownerGameProcessesSignalled": false,
+    "rememberedSigninUsedUnderExistingLock": true,
+    "newDependencies": [],
+    "globalDependenciesInstalled": false,
+    "nativeBridgeChanged": false
+  },
+  "remaining": [
+    "Regional Saturn BIOS missing; Jaguar CD media validation explicitly deferred",
+    "Pinned Stella and Beetle Lynx expose no ordinary cartridge save-RAM interface; cloud states supported",
+    "32X game-created EEPROM write requires a save-producing gameplay case; seeded native EEPROM retention is separately verified",
+    "Ambiguous multi-game legacy shared VMUs require explicit ownership/migration rather than automatic copying",
+    "Real cross-device RomM gameplay and physical input; Linux/Steam/gamescope, Windows and Android native delivery"
+  ],
+  "primarySources": [
+    "https://github.com/libretro/opera-libretro/blob/master/opera_lr_nvram.c",
+    "https://docs.libretro.com/library/flycast/#visual-memory-unit",
+    "https://github.com/libretro/RetroArch/blob/master/runloop.c",
+    "https://github.com/libretro/beetle-lynx-libretro/blob/master/libretro.cpp",
+    "https://github.com/libretro/picodrive/blob/master/platform/libretro/libretro.c"
+  ]
+}

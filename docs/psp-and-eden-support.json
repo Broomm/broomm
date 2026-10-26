@@ -1,0 +1,531 @@
+{
+  "date": "2026-10-24T02:22:45.699380Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "worktree": "Cumulative uncommitted owner work preserved; source hashes identify tested implementation.",
+  "host": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+  "architecture": "Apple Silicon ARM64 / M1 Pro",
+  "sourceSha256": {
+    "lib/src/psp.dart": "95fb651dd05354961803bd88a29d0baf50a3503ccc791df9cd12ec52117c3318",
+    "lib/src/sony_sfo.dart": "088a76125149662a33bf3d48760629dc343dbe29343b585cae5490b9977aa53d",
+    "lib/src/macos_aes.dart": "ca88892357738621c01f7ce9cfe8f96d84e437b83975ca34838c336fa79949d5",
+    "lib/src/switch_content.dart": "fad1ca84a1f591143aecbc9decb78c3c56e771b7e2a244109338bdc71a32e07d",
+    "lib/src/ppsspp_adapter.dart": "2f2f806baceaa86c639e3fd0ffb79c401190dffce705032f09a098fbd01d8da4",
+    "lib/src/eden_adapter.dart": "f6783da004299d0199373df32bfedf95754bc592c4e9dd3d6fd21217e2effc82",
+    "lib/src/game_launch.dart": "8e3ab726ad21a6c956042f021d5b6fc1ad08165b77a3ef52e6b5ac377fd62ef9",
+    "lib/src/controller_mapping.dart": "d5029a0936ad7bf6d1c54674711a132e886b385f0f86ad0b18f2eee6c3bc4820",
+    "lib/src/widgets/controller_tester.dart": "89bb0e94c93120c94ef95421ce4f0983691d758e9062b06a7977e106af979a6f",
+    "lib/src/managed_emulators.dart": "218f01465422d77f1f2f22d3abb9050d462898e1aee7620bed6995c53a18a48d",
+    "lib/src/managed_profile.dart": "af3f921680ae95d0cd0aa36c6a02b1a584f64c3b934c0dd22c641e472a155874",
+    "lib/src/emulator_configuration.dart": "243f47bdd563d7d939b3479ea8f85f0fba760a9dfae8899fab347a1b114cbbef",
+    "lib/src/session.dart": "cc5493c658d14c82a5aaa353e9e69f1fa7638c1607b2b2df3b1c5a9379794f40",
+    "lib/src/progress/eden.dart": "74595437fa77e42d2333aef8589c10451a223d5557a629df6b93c6d903e929e1",
+    "lib/src/progress/layout.dart": "2740abb79c2a490c007164b0316e5e19d12b9b6221149b9fad4602e5310a7b01",
+    "lib/src/progress/store.dart": "cb41c620f0d37c50024d9adafa7fbec1383705f76cd8a76e9579e740f183b6cd",
+    "lib/src/addons/packages.dart": "f469aa4400c0bb4e71210cfcafc12df4e88c03e40c6d5f2b4238994f77560ea2",
+    "lib/src/addons/psp.dart": "f8f1f12f16c3cde31c98f7343549f8e54122839978cd79cf98296f85d1e97fea",
+    "lib/src/addons/eden.dart": "42609a77017544baca116d0573d9967cce9a7fba8f59705641f6dd89ea5e70d4",
+    "lib/src/addons/package_profile.dart": "93ea68d9a60d741d082d7f9955e87921cd3e132bf56f94b1d232d7f7768380f8",
+    "lib/src/switch_firmware.dart": "93426b0ea06ed9bcbd7595db46443a759f911b4d6db3c82a590e37ef37474746",
+    "lib/src/shell/model.dart": "a5bee3ea6a91e77afb77547a2ca37d3a02af657b810f3b090f1e00495fb9ff12",
+    "lib/src/shell/app.dart": "3a9152c957dcee25a6fcbe3595acc6a606798f01d8bab02ebdece6eca437f578",
+    "native/session.inc": "f1725d4e51d73f9374e28c673172ea6c860fe6aef5b3331ac7ccad86dd0b7853",
+    "native/ppsspp.inc": "0e9db6ca79d2d0a33dbe9a638aef4334065e7d8d63fa343b7ef596ad92ae51e0",
+    "native/ppsspp_storage.inc": "924c77d89e58926289a93fd376e175499bab379473d1b7eb3ea74006bdd68dff",
+    "native/eden.inc": "d83f2cfc891e0274e1622abfd50753fc42a5a0b0cf4e486a8b87c643cf3e5aec",
+    "native/eden_probe.inc": "0e32ea57fd494e68cfbe6d6417b33836305443d9a9f42837dfe27c2eda6e1ef0",
+    "native/sdl2_ports.inc": "c51097bf7dba9a0d5c34143e02f5c5fa69e347f3933ce350244d8206a1ad6ed2",
+    "native/test_sources.inc": "692eff2c0ce5fd9cf69661e25976cc9d55195593dd644680d67876fd25981dc9",
+    "native/installer_guard.c": "3e2e70424707b4815ccfa7bcf01abd3be03478ab53eace7bc1c32847c94e125b",
+    "experiments/injection/src/probe.c": "14516393fa9c5a30cec664615dcbc94348b2c1c070da52b9e9a4af6764fd37fd",
+    "experiments/injection/src/abi_slots.h": "67a1a67ebf26cd25da39d815ceb2265e266898d75499ed2fb90621e6289965b9",
+    "experiments/injection/tools/derive-slots.dart": "471e393cfe320c685863a96331eb840ddfcb0f1d08b01e70cb56763317ff81a9",
+    "test/psp_test.dart": "e0a71688b247bcfb37aa2b057dd367b3e151ff3633bea7218a57f34fdcb01264",
+    "test/eden_test.dart": "63c8fb120924b58aee763e826dd8ce4f4618f22942323a6c2bae8f4fc1aa4e5f",
+    "test/portable_packages_test.dart": "350d63287cece01a83a1b432d501d9cee476875b432c98d94ad7abf2710d1259",
+    "test/switch_firmware_test.dart": "042d5433c3fbb29c940aafb91181f1c100a0cfa38b1890c974424721a8403217",
+    "tool/capture_ppsspp_setup.dart": "36517117d54e41ff07711f8823db2ce97fbc98f0f28f48cd46233779626d0802",
+    "tool/capture_eden_setup.dart": "7e8f1e0b5b27556c692cd36339a71cf39247787e2aa193660739d26d6b65a4ad",
+    "tool/check_ppsspp_defaults_test.dart": "6537249ad1b2b405d073c8973e6613badfad1ab2154ccc127bc9131341a5b876",
+    "tool/check_ppsspp_test.dart": "e2f866e519b0a2e216c00b469973f3087fc3933ceaf957d5735899a1b31e9670",
+    "tool/check_eden_test.dart": "0d83baa1aca5a69fa0230e5a119f9e77a2ec8f7b3e6566acf2e61b96e8fdc429",
+    "tool/check_eden_packages_test.dart": "5dff1c5c0d184f1ae9ef592d68a639c768575b9bf0a189e82358682600da2ece",
+    "tool/check_playstation_test.dart": "7a7a8b9cc952e69cd6fb4f4674fca06141249b28828f57ee25cb14dabb38ab43",
+    "tool/fixtures/ppsspp_defaults.c": "295b08f0fcea71a616f60a33c0d1ea2f9d3fa0ac930cc8f6805d48d124a03197",
+    "tool/build_bridges.sh": "87ac737610bef6ea955304c448a36e95a4f7f7d2a5ac1c188a9d25a4adb1b93c",
+    "assets/setup/ppsspp.integrity.json": "bf6c99bf1ea7ae586cd95a13aac8807686d68465e828e9a3af473c5690172d17",
+    "assets/setup/ppsspp.symbols": "8ea50a8b08a710794380d70f2bd4702cbde846f5e5d5d4f35ec6312f5a684744",
+    "assets/setup/eden.integrity.json": "4ecb961beb6217585754b98c467d0f4c1cb6ebc447fbc8f27718f8932392139b",
+    "assets/setup/eden.symbols": "8cb0ecd0518f526adc33ee175a924b83de7106ca4cebfb17bf82195d5e6f901e",
+    "assets/setup/tested-builds.json": "fe34e48cc24b842d2daf56b5b64bc41ae59c8c095af09c74a72ce27fc56cb906",
+    "assets/setup/setup.json": "3df5ba7304d0d956f868918171127dc85dc5c917166bb7ad777f3da4e33960bb",
+    "PROJECT.md": "4d5dc8b45fd0d4835c6b1e1c94ac6c4b8ad2b3a7d4b9439fa7a7f8863732469a",
+    "IMPLEMENTATION.md": "a869bba49e507a6b09b5bf413120093f10869d89cb0de89bc3dc44116e566d9b",
+    "README.md": "e0be954cfd39551d62360a25a0bf596481d964a4ff711f70023411432bd1dd16",
+    "docs/platform-support-matrix.md": "b0282a009b79b089e6aac8d1a8e573c2af587b951edea50d2a697d5ca310a415",
+    "docs/platform-support-matrix.json": "f5b16a051455cac24c5e5dcca4ce1bd2d32636f05c9cc46d3df9f719a40d7411",
+    "docs/psp-and-eden-support.md": "35c0b797508fe4c38d0c28fdcceb7c3fec892215a33ad910b6eafd8e4c41bbd5",
+    "native/README.md": "d19a3f2a725c8f67327b9373f2acdb365b18bb489cf04c1c142ef70d77e8ea73",
+    "experiments/injection/SOURCES.md": "54d64af8200ad6fa4e1df3b4e1f4a0edb629fdf79b620e79293d372e64ffa92c"
+  },
+  "builds": [
+    {
+      "id": "ppsspp",
+      "version": "1.20.4 / 3a31057",
+      "architecture": "arm64 tested, universal upstream executable",
+      "bundle": "prototype-data/ppsspp/PPSSPPSDL.app",
+      "original": ".tool-cache/research/psp/extracted-aJAtkv/PPSSPPSDL.app",
+      "originalExecutableSha256": "fe7db073d8646c24c6f5035409d5c3ef91234b026232c9ac7dc79c07f75e3ef8",
+      "preparedExecutableSha256": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
+      "archiveUrl": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPPSDL-macOS-v1.20.4.zip",
+      "archiveBytes": 37389023,
+      "archiveSha256": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+      "vendorDigest": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+      "sourceArchiveSha256": "cf5e494798a9e5bfdaadb0924fff1ed37e56baf4691112d75dd466e97a38ade7",
+      "sourceUrl": "https://github.com/hrydgard/ppsspp/archive/refs/tags/v1.20.4.tar.gz",
+      "license": "GPL-2.0-or-later",
+      "sdl": "upstream SDL2 framework 2.26.5"
+    },
+    {
+      "id": "eden",
+      "version": "0.2.1",
+      "architecture": "arm64",
+      "upstreamMacOSStatus": "experimental",
+      "bundle": "prototype-data/eden/eden.app",
+      "originalExecutableSha256": "2aecd4e7a08e683026d9d44eab2cb221f153a68666207b52cdf0123766d8995c",
+      "preparedExecutableSha256": "18de303111bf6181d80af8b365f27aa5b04f9ee7d28f13ce4eaa161d85cc00b7",
+      "archiveSha256": "40575fc79a61550fbb9e332cbae94ccd20f5de20ff61b4b60fe1d42f2525c0b5",
+      "archiveBytes": 24259461,
+      "sourceArchiveSha256": "a43ea2886b75204438f691a4ddfad99e88b508e30431978dd13fba1c22440d19",
+      "archiveUrl": "https://stable.eden-emu.dev/v0.2.1/Eden-macOS-v0.2.1.dmg",
+      "vendorDigest": null,
+      "digestScope": "independently observed official download; vendor checksum not published in release API",
+      "sourceUrl": "https://git.eden-emu.dev/eden-emu/eden/archive/v0.2.1.tar.gz",
+      "license": "GPL-3.0-or-later, inherited component notices retained",
+      "sdl": "static SDL2",
+      "qt": "static Qt 6.7.3"
+    }
+  ],
+  "bundlePreparation": "Private copy and ad-hoc signing only; no emulator implementation/source patch. Emulator binaries and console assets are excluded from the app ZIP.",
+  "pspMedia": [
+    {
+      "rom": 5973,
+      "name": "Puzzle Bobble Pocket",
+      "path": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/media/Puzzle Bobble Pocket.cso",
+      "bytes": 9609508,
+      "sha256": "360393c26b4b9184b7a2f7b1ae8a6efad4efe5f3eb544ce20615da9d338b38c5",
+      "metadata": {
+        "CATEGORY": "UG",
+        "DISC_ID": "ULJM05011",
+        "DISC_VERSION": "1.01",
+        "PSP_SYSTEM_VER": "1.00",
+        "TITLE": "PUZZLEBOBBLE POCKET"
+      }
+    },
+    {
+      "rom": 5953,
+      "name": "N+",
+      "path": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/media/N Plus.cso",
+      "bytes": 53700316,
+      "sha256": "cacccc9ca61f02d9f12d8b2d3ce98eb4e86f635ec21d13f607c4d872c3728700",
+      "metadata": {
+        "CATEGORY": "UG",
+        "DISC_ID": "ULUS10340",
+        "DISC_VERSION": "1.02",
+        "PSP_SYSTEM_VER": "3.95",
+        "TITLE": "n+™"
+      }
+    }
+  ],
+  "earlierNativePspBothGameSaves": [
+    {
+      "rom": 5953,
+      "title": "N+",
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/native-Lyi1LM/data/profiles/00000000000000000000000000000002/emulators/ppsspp",
+      "files": {
+        "save/ULUS10340DATA00/SND0.AT3": {
+          "sha256": "9ffb65334d09c93bceb3b5347c969efa779575cc746f32d4180ab760b6074617",
+          "bytes": 165332
+        },
+        "save/ULUS10340DATA00/SECURE.BIN": {
+          "sha256": "ce8d4ad106b74306ccdf61d6f51170735c527b0a6e1d52d16a6922f7ce67ffc7",
+          "bytes": 148
+        },
+        "save/ULUS10340DATA00/ICON0.PNG": {
+          "sha256": "a37835b44d8d14731296cb2bd6b6241c4283d82a75224d38343cab1d7c29ff7e",
+          "bytes": 2575
+        },
+        "save/ULUS10340DATA00/PIC1.PNG": {
+          "sha256": "286cc8ddf337aba4cca7c97e96a59dac41fa1356434d2dde2cd48ac19d067f4f",
+          "bytes": 133861
+        },
+        "save/ULUS10340DATA00/ICON1.PMF": {
+          "sha256": "346f196c2961ecd4746832a9928d054a88f7ef3b9d26ba57d22acd4a06d5807e",
+          "bytes": 55296
+        },
+        "save/ULUS10340DATA00/PARAM.SFO": {
+          "sha256": "4f2474d1fb296d38aa6153037ba75a4c0704e1fb0d8efeaa676cd709d72227cd",
+          "bytes": 4912
+        },
+        "states-dfc7937e30b7a91b-macos-arm64/game0.jpg": {
+          "sha256": "228747350953749625be80572a3ac79e8873ba06b6e2b90cea6dbcc0b6e9e37e",
+          "bytes": 66541
+        },
+        "states-dfc7937e30b7a91b-macos-arm64/game0.ppst": {
+          "sha256": "7b242e7213f0282bd7786d21b3b46b78d34e5b2f0bb5edf13a43dc456006c010",
+          "bytes": 3507339
+        }
+      },
+      "ordinaryRoundTrip": true,
+      "stateSaveLoadAndRestore": true,
+      "nativeButtonReadbackAndFaceSwap": true,
+      "disconnectReassignment": true,
+      "pending": false
+    },
+    {
+      "rom": 5973,
+      "title": "Puzzle Bobble Pocket",
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/native-Lyi1LM/data/profiles/00000000000000000000000000000001/emulators/ppsspp",
+      "files": {
+        "save/ULJM050110000/ICON0.PNG": {
+          "sha256": "743fde30dae5789e99aa9b393d344d89d0e665e31f985515b538745a6775ecbb",
+          "bytes": 22043
+        },
+        "save/ULJM050110000/PIC1.PNG": {
+          "sha256": "9839e4cf31269c626081ecf0a2fb9a61a7d63de70f26b254f99731db1635026b",
+          "bytes": 38199
+        },
+        "save/ULJM050110000/DATA.BIN": {
+          "sha256": "f316156a808d57402201774ed5cd1a4228725af3611c929856350db118603ce0",
+          "bytes": 56
+        },
+        "save/ULJM050110000/PARAM.SFO": {
+          "sha256": "59262be3b17d9ffd06dbc7b3b0eddaa8edb76043dfc4305da161313d2a0fc1a2",
+          "bytes": 4912
+        },
+        "states-f2e33b0be6a32f3a-macos-arm64/game0.ppst": {
+          "sha256": "05317260463cb359b3a3c4a0bb8ace7c94591e00a4d6dc8787c3d32acefb687f",
+          "bytes": 4369588
+        },
+        "states-f2e33b0be6a32f3a-macos-arm64/game0.jpg": {
+          "sha256": "71d9c2d260d2ec1d8a5f2d2590abfe8df3a2f39a02e8b24c8171ab1a3f693d59",
+          "bytes": 188734
+        }
+      },
+      "ordinaryRoundTrip": true,
+      "stateSaveLoadAndRestore": true,
+      "nativeButtonReadbackAndFaceSwap": true,
+      "disconnectReassignment": true,
+      "pending": false
+    }
+  ],
+  "nativePspResults": [
+    {
+      "rom": 5953,
+      "title": "N+",
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/native-flFQrt/data/profiles/00000000000000000000000000000002/emulators/ppsspp",
+      "files": {
+        "save/ULUS10340DATA00/SND0.AT3": {
+          "sha256": "9ffb65334d09c93bceb3b5347c969efa779575cc746f32d4180ab760b6074617",
+          "bytes": 165332
+        },
+        "save/ULUS10340DATA00/SECURE.BIN": {
+          "sha256": "750d7ac8a2d193d91bec3f834c6ffe4ca0ff1b231e22481a16dc0439cf90e472",
+          "bytes": 148
+        },
+        "save/ULUS10340DATA00/ICON0.PNG": {
+          "sha256": "a37835b44d8d14731296cb2bd6b6241c4283d82a75224d38343cab1d7c29ff7e",
+          "bytes": 2575
+        },
+        "save/ULUS10340DATA00/PIC1.PNG": {
+          "sha256": "286cc8ddf337aba4cca7c97e96a59dac41fa1356434d2dde2cd48ac19d067f4f",
+          "bytes": 133861
+        },
+        "save/ULUS10340DATA00/ICON1.PMF": {
+          "sha256": "346f196c2961ecd4746832a9928d054a88f7ef3b9d26ba57d22acd4a06d5807e",
+          "bytes": 55296
+        },
+        "save/ULUS10340DATA00/PARAM.SFO": {
+          "sha256": "bb40f73bdad0e7b9a3009169d167ed92946193999d51908e878ba745cbff95b8",
+          "bytes": 4912
+        },
+        "states-dfc7937e30b7a91b-macos-arm64/game0.jpg": {
+          "sha256": "b7eb0c27b8abe57fe80b6ac0fbb7c40cb11f703fa563b9c815b3db9de9e9880d",
+          "bytes": 68835
+        },
+        "states-dfc7937e30b7a91b-macos-arm64/game0.ppst": {
+          "sha256": "4b2bc0f0885d2293eb228d17c8f3579ffbcae1e3112d691ef6de8eb16c80714f",
+          "bytes": 3509487
+        }
+      },
+      "ordinaryRoundTrip": true,
+      "stateOnlyBundle": false,
+      "stateSaveLoadAndRestore": true,
+      "nativeButtonReadbackAndFaceSwap": true,
+      "disconnectReassignment": true,
+      "pending": false
+    },
+    {
+      "rom": 5973,
+      "title": "Puzzle Bobble Pocket",
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/psp/native-flFQrt/data/profiles/00000000000000000000000000000001/emulators/ppsspp",
+      "files": {
+        "states-f2e33b0be6a32f3a-macos-arm64/game0.ppst": {
+          "sha256": "8d2e27ceb282e868ac281c6a732d1e41eed97c6d6973e8b25cb7402bae3a988f",
+          "bytes": 4242744
+        },
+        "states-f2e33b0be6a32f3a-macos-arm64/game0.jpg": {
+          "sha256": "dac8541a2c8790d9a8db13e7d2491bca1185bb6f161451b45dbc050f8d552569",
+          "bytes": 185760
+        }
+      },
+      "ordinaryRoundTrip": false,
+      "stateOnlyBundle": true,
+      "stateSaveLoadAndRestore": true,
+      "nativeButtonReadbackAndFaceSwap": true,
+      "disconnectReassignment": true,
+      "pending": false
+    }
+  ],
+  "nativeEdenResults": {
+    "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/eden/native-mvormd/data/profiles/0123456789abcdef0123456789abcdef/emulators/eden",
+    "program": "01005d100807a000",
+    "nativeButtons": true,
+    "twoConsolePorts": true,
+    "liveRemap": true,
+    "disconnectPause": true,
+    "saveFixtureRoundTrip": true
+  },
+  "edenNativeControlFixtureUpdateFile": 11696,
+  "edenPackageResults": {
+    "base": "01005d100807a000",
+    "sources": 6,
+    "ncas": 14,
+    "repeatedWithoutTransfer": true,
+    "twoProfiles": true,
+    "uninstallRetainedProgress": true,
+    "nativeUpdateLoad": true
+  },
+  "checks": [
+    {
+      "name": "analysis",
+      "command": "devbox run -- flutter analyze",
+      "log": ".tool-cache/research/eden/analyze-accepted.log",
+      "logSha256": "500321cbc22d16f06c1b3e6da9849b7c44796eac5e699664b997f052013dc582",
+      "passed": true
+    },
+    {
+      "name": "Flutter regressions",
+      "command": "devbox run -- flutter test",
+      "log": ".tool-cache/research/eden/tests-delivery.log",
+      "logSha256": "55ac18b3c61208e843e870ad592a265fe9370b69bb8d9bbf2e5122a80be1a10a",
+      "passed": true,
+      "tests": 313
+    },
+    {
+      "name": "PPSSPP native sessions",
+      "command": "devbox run -- flutter test tool/check_ppsspp_test.dart --reporter expanded",
+      "log": ".tool-cache/research/psp/native-accepted.log",
+      "logSha256": "59dafc374ea44f074ae82b1423d7c7bd66cd3d142b0965f3b6a6d8db4dc2224d",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "PPSSPP scoped defaults",
+      "command": "devbox run -- flutter test tool/check_ppsspp_defaults_test.dart --reporter expanded",
+      "log": ".tool-cache/research/psp/defaults-delivery.log",
+      "logSha256": "78923e48ae741b25baba765d17d327fea0c5ee7b760ad93a52f5d38506b84ff5",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "Eden native control/progress with matching update",
+      "command": "devbox run -- flutter test tool/check_eden_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/native-updated-game.log",
+      "logSha256": "d2cf3a125ee9313763fe8d55235162144b33b1484298db51760adf11f8026db7",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "Eden real packages and native update load",
+      "command": "devbox run -- flutter test tool/check_eden_packages_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/packages-delivery.log",
+      "logSha256": "5cdcd052950e2821661e140f7780f034b4d798aee73acc4285fc2b6690a31e78",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "six existing native fixtures",
+      "command": "devbox run -- flutter test tool/smoke_managed_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/legacy-six.log",
+      "logSha256": "79a3da171f3e1a5bfa6d7dc389a961b8195a4d0f2d893afa2d0d5171b9d59e12",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "Sony native regression",
+      "command": "devbox run -- flutter test tool/check_playstation_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/sony-regression-corrected.log",
+      "logSha256": "edb9918f47a1fccc928460fc7f3e957a1d0cda211fe0538f430fede21e1eece1",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "private no-game configuration",
+      "command": "devbox run -- flutter test tool/check_emulator_configuration_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/configuration-final.log",
+      "logSha256": "f6069c9bcba0512f664db8f5730c6c7c3f937612b56dece3abbaadd8c6d0acc5",
+      "passed": true,
+      "tests": 1
+    },
+    {
+      "name": "native writer/installer guards",
+      "command": "devbox run -- flutter test tool/check_installer_guard_test.dart --reporter expanded",
+      "log": ".tool-cache/research/eden/guards-final.log",
+      "logSha256": "25f803cb7866006f8e9b981483e3985836eef262e2f83be2e943138e89cf0b19",
+      "passed": true,
+      "tests": 5
+    },
+    {
+      "name": "AddressSanitizer + UndefinedBehaviorSanitizer private preference guard",
+      "command": "devbox run -- env BROOMM_DEFAULTS_SANITIZERS=1 flutter test tool/check_ppsspp_defaults_test.dart --reporter expanded",
+      "log": ".tool-cache/research/psp/defaults-sanitizers.log",
+      "logSha256": "7d252c3bd4eb18320f8b63bf6362a660dcd5b73534fa0f804e5a8c4611fa18c6",
+      "passed": true,
+      "tests": 1
+    }
+  ],
+  "nativeBridgeSha256": {
+    "broomm-sdl2.dylib": "90c7ae56614df3739994fe9510d3d7b16090e712294f6918520cc031096181f1",
+    "broomm-sdl3.dylib": "d078bc2275a26acb2ae2b710923bbb5a4253d48a513c1b5f5dc3e6eefb25105a",
+    "broomm-installer-guard.dylib": "6711b9e697b3f85aa0b6afac694b8039016b668fb6e3034ed948cd01f23e0f3d"
+  },
+  "staticAnalysis": [
+    {
+      "command": "devbox run -- env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer /usr/bin/xcrun clang --analyze -arch arm64 -std=c11 -DBROOMM_SESSION_BRIDGE -DBROOMM_SDL_MAJOR=2 -Xanalyzer -analyzer-output=text experiments/injection/src/probe.c",
+      "log": ".tool-cache/research/eden/native-static-final.log",
+      "passed": true,
+      "diagnostics": 0
+    },
+    {
+      "command": "devbox run -- env DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer /usr/bin/xcrun clang --analyze -arch arm64 -std=c11 -Xanalyzer -analyzer-output=text native/installer_guard.c",
+      "log": ".tool-cache/research/eden/installer-static-final.log",
+      "passed": true,
+      "diagnostics": 0
+    }
+  ],
+  "priorFailures": [
+    {
+      "log": ".tool-cache/research/eden/native-delivery.log",
+      "sample": ".tool-cache/research/eden/native-wO1Q68/hang.sample.txt",
+      "cause": "Unpatched Quest emitted guest Break 0xE401. Input/remap/disconnect native checks completed, then Qt close waited while EmuThread spun in Kernel SuspendEmulation during shutdown.",
+      "correction": "Final native control/save fixture installs the supplied matching update, as the normal game download does; it closes normally. The failed fixture writer/data were retained and its exact private PID was sampled then terminated. Upstream compatibility is not claimed repaired."
+    },
+    {
+      "log": ".tool-cache/research/psp/native-delivery.log",
+      "cause": "Puzzle Bobble ordinary-save assertion assumed timed random gameplay always clears a round. Native state preview showed round start, while the prior passing run showed round clear.",
+      "correction": "N+ remains required game-created ordinary-save fixture; Puzzle Bobble always requires native input/state restore and verifies native ordinary progress if written. No fabricated game save introduced."
+    },
+    {
+      "log": ".tool-cache/research/psp/native-save-boundary.log",
+      "cause": "State-only cloud expectation incorrectly required no BROOMM save record and a state companion. Established protocol exports one complete state-only bundle through saves, and creates a companion only when ordinary files also exist.",
+      "correction": "Fixture checks the actual uploaded/readback bundle and excludes invented savedata, preserving the existing production protocol."
+    },
+    {
+      "log": ".tool-cache/research/eden/sony-regression.log",
+      "resultPath": ".tool-cache/research/playstation/native-aOTAcG/results.json",
+      "cause": "ARMSX2 and PCSX2 share a profile. The synthetic test-input file retained source A disconnected; reattachment got a new SDL ID while the test already held Join, so the required neutral gesture sample never occurred.",
+      "correction": "Opt-in test session resets its per-process command file; Sony fixture waits for fresh neutral samples for both actual test source IDs and canPair. No physical-input gate or timeout relaxed."
+    },
+    {
+      "log": ".tool-cache/research/psp/native-bobble-diagnostics.log",
+      "cause": "Frontend final boot overwrote early core pause; pairing chord was consumed while not actionable.",
+      "correction": "Native frontend readiness flags guarded against exact instructions; actual core acknowledgment retained."
+    },
+    {
+      "log": ".tool-cache/research/eden/hung-startup.sample.txt",
+      "cause": "Self-exec Vulkan probe inherited installer writer guard and rejected parent-held lease.",
+      "correction": "Exact native probe-only bypass; real writer remains locked."
+    },
+    {
+      "log": ".tool-cache/research/eden/native-dispatch.log",
+      "cause": "LTO SDL build removed original DynAPI anchors.",
+      "correction": "Three independent surviving static stubs and pinned instructions."
+    },
+    {
+      "log": ".tool-cache/research/eden/native-hotplug.log",
+      "cause": "Device-added callback fired before virtual instance ID publication.",
+      "correction": "Queue raw native index and translate after publication."
+    },
+    {
+      "log": ".tool-cache/research/eden/native-thread-interface.log",
+      "cause": "Test pressed a button before activation release gate opened, keeping input deliberately blocked.",
+      "correction": "Wait for native resume and !blocked after every activation."
+    },
+    {
+      "log": ".tool-cache/research/eden/unit-new.log",
+      "cause": "Missing future save layout was queried through strict existing-parent file helper.",
+      "correction": "Read-only directory-chain check returns absence but rejects links; account/migration regressions."
+    },
+    {
+      "log": ".tool-cache/research/eden/targeted-final.log",
+      "cause": "New firmware test expected flat NCA; observed native firmware layout is .nca/00, supported by Eden RegisteredCache.",
+      "correction": "Fixture assertion now matches native verified path; no weakened firmware behavior."
+    }
+  ],
+  "fixtureCleanup": {
+    "hungEdenPid": 69409,
+    "privateRoot": ".tool-cache/research/eden/native-wO1Q68",
+    "normalCloseTimedOut": true,
+    "sigtermIgnored": true,
+    "sigkillAppliedToConfirmedFixtureOnly": true,
+    "processExitVerified": true,
+    "ownerProcessesSignaled": false
+  },
+  "effects": {
+    "ownerProgressChanged": false,
+    "remoteSaveChanged": false,
+    "osPackagesInstalled": false,
+    "newRuntimeDependency": false,
+    "emulatorImplementationCopied": false,
+    "automaticUpdatesAdded": false
+  },
+  "limits": [
+    "Current native runtime delivery/acceptance is macOS ARM64; other hosts and physical Steam/gamescope input remain unverified.",
+    "Eden macOS upstream build is experimental; native graphics/guest compatibility issues remain upstream.",
+    "Eden save round trip uses a seeded fixture marker, not a game-created save point; ordinary export format matches Ryubing logical areas.",
+    "Eden update load is native verified; gameplay recognition/entitlement of all DLC is not verified.",
+    "Eden accepts one update NSP per game; multiple update versions are rejected explicitly, unlike Ryubing highest-version scanning.",
+    "PSP native folder/ZIP DLC ownership is fixture-tested; generic PKG/game-specific patch execution and real DLC gameplay remain.",
+    "PSP supported media are ISO, CSO v1 (2048-byte raw/deflate sectors), PBP with valid native DISC_ID; ZSO/CSO2/homebrew without ID unsupported.",
+    "Overlay remains a separate Flutter window; no GPU present-hook overlay or preview capture added."
+  ],
+  "release": {
+    "archive": "build/releases/Broomm-macOS-arm64-psp-eden.zip",
+    "archiveBytes": 20001329,
+    "archiveSha256": "d5d02c8ac1a57827a5368d03ffcebf74040b70f53bd3568c415b00a3687f3f13",
+    "application": "build/macos/Build/Products/Release/broomm.app",
+    "unpacked": ".tool-cache/research/eden/release-unpacked-TyiywY/broomm.app",
+    "buildLog": ".tool-cache/research/eden/build-release.log",
+    "buildSucceeded": true,
+    "archiveIntegrityPassed": true,
+    "deepStrictSignaturePassed": true,
+    "freshExtractionSignaturePassed": true,
+    "signing": "ad-hoc development release; no notarization claim",
+    "applicationArchitecture": "universal x86_64 + arm64; emulator runtime pack accepted only macOS ARM64",
+    "nativeSha256": {
+      "broomm-sdl2.dylib": "90c7ae56614df3739994fe9510d3d7b16090e712294f6918520cc031096181f1",
+      "broomm-sdl3.dylib": "d078bc2275a26acb2ae2b710923bbb5a4253d48a513c1b5f5dc3e6eefb25105a",
+      "broomm-installer-guard.dylib": "6711b9e697b3f85aa0b6afac694b8039016b668fb6e3034ed948cd01f23e0f3d"
+    },
+    "reviewedAssetSha256": {
+      "setup.json": "3df5ba7304d0d956f868918171127dc85dc5c917166bb7ad777f3da4e33960bb",
+      "tested-builds.json": "fe34e48cc24b842d2daf56b5b64bc41ae59c8c095af09c74a72ce27fc56cb906",
+      "ppsspp.integrity.json": "bf6c99bf1ea7ae586cd95a13aac8807686d68465e828e9a3af473c5690172d17",
+      "ppsspp.symbols": "8ea50a8b08a710794380d70f2bd4702cbde846f5e5d5d4f35ec6312f5a684744",
+      "eden.integrity.json": "4ecb961beb6217585754b98c467d0f4c1cb6ebc447fbc8f27718f8932392139b",
+      "eden.symbols": "8cb0ecd0518f526adc33ee175a924b83de7106ca4cebfb17bf82195d5e6f901e"
+    },
+    "emulatorOrConsoleAssetsBundled": false,
+    "zipRecipe": "/usr/bin/ditto -c -k --sequesterRsrc --keepParent <app> <archive>"
+  }
+}

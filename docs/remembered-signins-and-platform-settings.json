@@ -1,0 +1,159 @@
+{
+  "recordedAtUtc": "2026-10-17T23:32:37.190604Z",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64"
+  },
+  "revision": "Workspace SHA-256 fingerprints; this checkout has no Git repository.",
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "result": "passed",
+      "analysis": "passed",
+      "testsPassed": 115,
+      "log": ".tool-cache/research/auth-platforms/check-complete.log"
+    },
+    {
+      "command": "BROOMM_RENDER_ROOT=.tool-cache/research/auth-platforms/previews devbox run -- flutter test tool/render_managed_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/auth-platforms/render-verified.log",
+      "previews": ".tool-cache/research/auth-platforms/previews",
+      "scope": "Fixture platform cards, inline review, configured/removal/compact layouts and retained Wii pairing; PNG inspection, no computer-use automation"
+    },
+    {
+      "command": "devbox run -- dart tool/check_keychain.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/auth-platforms/keychain-native-final.log",
+      "scope": "Exact native adapter source; disposable credential write, separate-process restore, update, delete and invalid identity"
+    },
+    {
+      "command": "devbox run prototype-check-macos",
+      "result": "Passed",
+      "testsPassed": 3,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": ".tool-cache/research/auth-platforms/native-macos-final.log",
+      "summary": ".tool-cache/research/auth-platforms/native-summary.json",
+      "scope": "Keychain fixture and two existing window regressions; arm64 host, no owner credentials"
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_home_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/auth-platforms/home-native-final.log",
+      "scope": "Real managed RetroArch/Snes9x, provided SNES ROM, fixture account/catalogue, Home to pairing/play and normal close back to Home",
+      "syntheticInput": true,
+      "fixtureData": ".tool-cache/research/managed-play/home-data"
+    },
+    {
+      "command": "devbox run app-build",
+      "result": "passed",
+      "log": ".tool-cache/research/auth-platforms/build-complete.log",
+      "artifact": "build/macos/Build/Products/Debug/broomm.app"
+    }
+  ],
+  "sourceFingerprints": {
+    "lib/src/romm/client.dart": "c40bb8301219e5b84462910912efd5bdf9ded39d095f4db68554fae889fd29ed",
+    "lib/src/romm/credential.dart": "1bd1e29c15264e01c506ea1ef2c55610b5239e3c2bb8ddd38d65bbee50754789",
+    "lib/src/shell/credentials.dart": "caeddc58b46527dac14d7104f5877b111672709da1876e0ccc649eda18b2d6a7",
+    "lib/src/shell/storage.dart": "8bde9408dde1444c54977fc1843b6a830b7b5914d2daca8b02ea1198ed428bbd",
+    "lib/src/shell/model.dart": "dcbd1b980035226434f58b75ecb22e3c4e3b9cc8c37cfd4ce5b9d0d2a6b03b2b",
+    "lib/src/shell/controls.dart": "4629a0c75f08af63183d6773c3f096d4e36b176c4a3b1af2cb4a10fc467076fd",
+    "lib/src/shell/onboarding.dart": "a2d94eb34ad939026181fbc601611c30bd43aaab0006083397a813aeb5677b8d",
+    "lib/src/shell/settings_screen.dart": "28447320e8c6dcd30b8dc996783ce4f5d47e4d3c50da271be49a576cdbd0e135",
+    "lib/src/shell/emulator_settings_screen.dart": "d1c0c5a264104535752480714b6217d9830a695bee83bfa3876821244c6bcfdb",
+    "lib/src/shell/app.dart": "8df28b7ea38f1fca25d8e20335d726bb0d0afcb04b0935ce7435308ba4d9f14b",
+    "lib/src/game_launch.dart": "341d49bd5edb0c194c53e194b234e81d5d4ec3d47041631f5d97a15313ccdc8b",
+    "lib/src/managed_emulators.dart": "db0e974ab5a2ce8e68b3db1910209eb53b84d1f61c153114329e6c98bb90de58",
+    "macos/Runner/MainFlutterWindow.swift": "ece7942c97dd790fd5198cf33909cd77090bdbf5b2ac6d44764e298bfa88a9b2",
+    "macos/RunnerTests/RunnerTests.swift": "81b7cabcae4403877cd0177f54e91f975f2c40389f13c76b499af319a5083111",
+    "linux/runner/credential_store.h": "288c8fc9894e330aeb3512d957988f5695fb59a1c065237c4eadc4638c5cc5d2",
+    "linux/runner/my_application.cc": "25142a0b18dd0d8c005d1739f14e6f37f1af240e89246f91a5b09bfdbbe4a501",
+    "windows/runner/credential_store.h": "eb17a2ddc0ad94ad858c5a8bb16d44701a82671feac6a686570d5f88242ce36e",
+    "windows/runner/flutter_window.cpp": "9d9b7d1224b5c04612274202d26485dc07bc44cc3294f180f27e779a4a564bd3",
+    "windows/runner/flutter_window.h": "052759712d57a5ed075bbf2b71a6303c60aebfcb287838206b5522b685704ea1",
+    "windows/runner/CMakeLists.txt": "361ba9400fa19d9008090850c8a7ecb0e3590744c9a2ac2eb1e734934f7d17ff",
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommCredentials.kt": "1c811b92e15c995f49987276fe2365244514fbbc57294ce1d488f58c8d4201ae",
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": "06d4abd7b59ae3077b2b136c99d3eefa5e39e965e44051eff6787cb70c554a75",
+    "test/console_field_navigation_test.dart": "146627d589e9e21cf9ca417c8d9fef45b4c96a68477804e00b0206c1190b93b4",
+    "test/remembered_signin_test.dart": "1b3c9a1125777864c482c05f000e66ee9489153292f37f30bf803f7606ba71bf",
+    "test/romm_client_test.dart": "a0e24bd492f2816ba5807724af7ec8c3510d708e4185d519388d2a95b445c18f",
+    "test/emulator_settings_navigation_test.dart": "9db50e2862f2e3e42bcbc7fafaecd0b64bbaa6edb6f374e2201f6095e4412cd9",
+    "test/emulator_setup_flow_macos_test.dart": "280fc7d3707092a58786ce03f9e2c9ba7664b8a338425d12012a7e329ffc699a",
+    "test/managed_emulators_test.dart": "f3b8a3a34139dcf1269526ea4c20e93147e89cd005c6e6f42a412c7321eea6a7",
+    "test/shell_widget_test.dart": "b25edd891b795a1703a55eb7fa2201e6c3f43c20129e463fdd468d5596a22192",
+    "tool/check_keychain.dart": "6c3a553be0c7b84d4f1f394df840b3205f916a12ecec7727c36fdb171868f9ea",
+    "tool/render_managed_test.dart": "45e984a5f020314a5ea009c66d14f611df80bb856a5d8af4b835ee36026da40b",
+    "tool/smoke_home_test.dart": "e809bdcbb8a15bf80b291b2477613cf5d7fa15a4d23436d5600c94ea00092851",
+    "tool/test_macos.sh": "b4e901de77a9ff941fd218ebf912fee46e085ba21ecbbf331820c90a62cfe5bb",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2"
+  },
+  "research": {
+    "argosyRepository": "https://github.com/rommapp/argosy-launcher",
+    "argosyTreeSha": "98562a1e7c6679eaa1edf91ce440655479520eaa",
+    "snapshot": ".tool-cache/research/auth-platforms",
+    "sourceFingerprints": {
+      ".tool-cache/research/auth-platforms/RomMConnectionManager.kt": "1a9c30e921f3dcf7da38a64be77c9c6e72851bf048a53e4e5b622be4851fa044",
+      ".tool-cache/research/auth-platforms/RomMApiClient.kt": "5a77a19fb0dea57e1ab053416864655569ecbd1bc43ca2897ed7af9bc479d05e",
+      ".tool-cache/research/auth-platforms/RomMAccountEntity.kt": "fe95746ac66820659757dcdb618fffa6602629b77898810921fa98104edf0631",
+      ".tool-cache/research/auth-platforms/RomMAccountRepository.kt": "5663e698109d56e5b73b5fcab9b9605956261edc27d8aacb1d658e15b208c701",
+      ".tool-cache/research/auth-platforms/DeviceAuthPoller.kt": "a84da1555d09600083afa794ea80901ce7d795257edfa843b6643c5ef6b970d5"
+    },
+    "scope": "Public source inspection only. No Argosy runtime, code reuse or encryption audit. Saved per-account token restoration inspired Broomm behavior; device-approval/QR flow not implemented.",
+    "dependencyChoice": "No new dependencies. Direct OS SDK adapters after comparison with flutter_secure_storage 11.2.0; see Markdown record for runtime, maintenance, licensing and distribution tradeoffs."
+  },
+  "failureInvestigations": [
+    {
+      "issue": "Dynamic review controls skipped by focus creation order",
+      "correction": "Stable card focus nodes and explicit numeric traversal order",
+      "regression": "Keyboard and native controller-channel review-to-confirm-to-next-card route"
+    },
+    {
+      "issue": "Indeterminate removal progress made the widget harness wait for settlement before real I/O",
+      "correction": "Drive real I/O and frames until removal completes, then settle",
+      "regression": "Actual card-driven install/remove test; no timeouts increased"
+    },
+    {
+      "issue": "Restricted Flutter workers could not bind localhost sockets",
+      "correction": "Run authorized test commands with local-socket permission; no code/test suppression",
+      "log": ".tool-cache/research/auth-platforms/check-final.log"
+    },
+    {
+      "issue": "Deprecated Apple noninteractive auth flag",
+      "correction": "LAContext.interactionNotAllowed with kSecUseAuthenticationContext for read/update/add/delete; final native checks pass"
+    },
+    {
+      "issue": "Lazy cast could defer malformed platform-default errors until UI access",
+      "correction": "Eagerly validate defaults and server references at storage load; original settings retained",
+      "regression": "Wrong value type, unknown server identity and old schema without optional field"
+    }
+  ],
+  "preservation": [
+    "Uninstall fixture verifies private progress and original source bundle survive; backend verifies reinstall and interrupted removal.",
+    "Session/writer leases exclude managed removal during active gameplay; no force-kill or owner-app restart.",
+    "Keychain/native checks use disposable identities; ordinary sign-ins and game progress are not inspected or replaced.",
+    "Home smoke confirms session.running=false after normal close. Test-only synthetic sources are never enabled in ordinary app startup.",
+    "No password, OAuth access JWT or one-time pairing code persisted; no plaintext credential fallback; native lock files contain no secrets.",
+    "No emulator bridge/runtime behavior changed in this follow-up; earlier six-ROM evidence remains historical."
+  ],
+  "limitations": [
+    "No owner-authenticated RomM server sign-in/refresh/restart/revocation acceptance.",
+    "Linux/Windows/Android credential adapters are source-inspected, not natively compiled or executed here; native toolchains/hosts unavailable. macOS success is not cross-platform acceptance.",
+    "Linux requires existing unlocked Secret Service/default collection/session bus; Steam/gamescope availability remains unverified.",
+    "Windows native credential blob limit can leave oversized credentials session-only; error visible. Release signing and changed development identities need packaging acceptance.",
+    "Only one emulator choice is currently validated per supported platform; default routing/persistence exists, but no real alternative-emulator launch was available.",
+    "No physical controller/visual acceptance, sanitizers, full offline profile activation, save/state sync or renderer overlay acceptance.",
+    "XCTest reports host SDK deployment-version linker warnings (target macOS12 versus XCTest14); final app build/analyzer are clean."
+  ],
+  "documentationCheck": {
+    "localTargetsChecked": 107,
+    "filesChecked": 10,
+    "result": "passed",
+    "dependencyFingerprintsUnchanged": true
+  },
+  "artifactExecutablePath": "build/macos/Build/Products/Debug/broomm.app/Contents/MacOS/broomm",
+  "artifactExecutableSha256": "62b3418a9661692da65bb697823395e5c0ceea328d8510edb0403afb1bd28849"
+}

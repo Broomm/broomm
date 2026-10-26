@@ -1,0 +1,320 @@
+{
+  "date": "2026-10-22",
+  "gitBase": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "Uncommitted feature work retained; this record scopes the keyboard and investigation changes.",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "dart": "3.13.0 (stable) (Wed Aug 5 00:28:05 2026 -0700) on \"macos_arm64\""
+  },
+  "keyboard": {
+    "implemented": true,
+    "shortcuts": {
+      "Y": "Space",
+      "X": "Backspace",
+      "hold R2": "Shift",
+      "L3": "Caps Lock",
+      "L1/R1": "Caret left/right",
+      "Start": "Submit",
+      "B": "Dismiss"
+    },
+    "nativeAdaptersChanged": [
+      "macOS GameController",
+      "Windows XInput",
+      "Linux evdev",
+      "Android gamepad"
+    ],
+    "nativeVerified": [
+      "macOS GameController snapshots"
+    ],
+    "physicalAcceptance": false,
+    "newDependencies": false
+  },
+  "preview": {
+    "status": "Researched design proposal; not shipped.",
+    "macOS": "ScreenCaptureKit window-filter stream to Flutter texture, Screen Recording permission.",
+    "windows": "Windows.Graphics.Capture and D3D11 texture adapter.",
+    "linuxWaylandGamescope": "Portal/PipeWire source/permission/compositor experiment required.",
+    "android": "Existing external-app scope retained.",
+    "captureExecuted": false,
+    "dependencyAdded": false
+  },
+  "cache": {
+    "executed": {
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/loading-keyboard/native-cache-jTJJU9",
+      "host": "macos",
+      "build": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+      "initialPpuObjects": 204,
+      "runs": [
+        {
+          "pass": 1,
+          "readyMilliseconds": 187220,
+          "ppuObjectsUnchanged": 204,
+          "ppuObjectsModified": 0,
+          "ppuObjectsAdded": 0,
+          "shaderFiles": 155
+        },
+        {
+          "pass": 2,
+          "readyMilliseconds": 187395,
+          "ppuObjectsUnchanged": 204,
+          "ppuObjectsModified": 0,
+          "ppuObjectsAdded": 0,
+          "shaderFiles": 155
+        }
+      ],
+      "sourceReadOnlyCopy": true
+    },
+    "instrumentation": "Relative file paths, sizes and modification times; native source copy excluded unreadable rotated logs. No cache hashes or gameplay progress claims.",
+    "sample": ".tool-cache/research/loading-keyboard/cache-startup.sample",
+    "observedSamplePhase": "RSX vkCreateGraphicsPipelines -> MoltenVK -> SPIR-V to MSL conversion",
+    "settingsChanged": false,
+    "pipelineCacheBridgeImplemented": false,
+    "ordinaryProgressModified": false,
+    "remoteSavesModified": false
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter test --concurrency=1 --reporter=expanded",
+      "result": "passed",
+      "tests": 231,
+      "log": ".tool-cache/research/loading-keyboard/flutter-tests-final.log",
+      "scope": "Complete suite; final presentation-only badge styling separately verified by the focused checks."
+    },
+    {
+      "command": "BROOMM_LIBRARY_RENDER_ROOT=.tool-cache/research/loading-keyboard/previews devbox run -- flutter test tool/render_library_followup_test.dart test/console_keyboard_shortcuts_test.dart test/shell_widget_test.dart --concurrency=1 --reporter=expanded",
+      "result": "passed",
+      "tests": 14,
+      "log": ".tool-cache/research/loading-keyboard/visual-shortcuts-final.log"
+    },
+    {
+      "command": "devbox run -- flutter analyze",
+      "result": "no issues",
+      "log": ".tool-cache/research/loading-keyboard/analyze-delivery.log"
+    },
+    {
+      "command": "devbox run -- bash tool/test_macos.sh -only-testing:RunnerTests/RunnerTests/testGameControllerKeyboardShortcutEvents -only-testing:RunnerTests/RunnerTests/testHeldShiftWaitsForEveryControllerRelease",
+      "result": "Passed",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "log": ".tool-cache/research/loading-keyboard/native-keyboard-1.log",
+      "scope": "Native API tests with writable GameController snapshot devices, no physical pads."
+    },
+    {
+      "command": "devbox run -- flutter test tool/check_rpcs3_cache_test.dart --concurrency=1 --reporter=expanded",
+      "result": "passed",
+      "tests": 1,
+      "launches": 2,
+      "log": ".tool-cache/research/loading-keyboard/native-cache-2.log"
+    }
+  ],
+  "sourceReferences": [
+    {
+      "path": ".tool-cache/research/loading-keyboard/rpcs3-VKPipelineCompiler.cpp",
+      "bytes": 11730,
+      "sha256": "89972c0d71aa1dc4c3a413abfb3943a5ba687be2b03932a4d0abeac916b25e96",
+      "url": "https://github.com/RPCS3/rpcs3/blob/d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3/Emu/RSX/VK/VKPipelineCompiler.cpp"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/rpcs3-VKProgramPipeline.cpp",
+      "bytes": 19346,
+      "sha256": "f32ed9374e9d2c4e7d28e728c31c240b647a3c22bb54fde37961474c07b2b34f",
+      "url": "https://github.com/RPCS3/rpcs3/blob/d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3/Emu/RSX/VK/VKProgramPipeline.cpp"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/rpcs3-System.h",
+      "bytes": 12595,
+      "sha256": "b8a8dea918b18801d3605bda42b72ad531e83f7d05bcee0dea4282d33edfcb75",
+      "url": "https://github.com/RPCS3/rpcs3/blob/d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3/Emu/System.h"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/rpcs3-PPUThread.cpp",
+      "bytes": 153993,
+      "sha256": "21f5d2e0acde69759b0e2d2ad474b3315d0543c35c1247091b90257c211e2e9d",
+      "url": "https://github.com/RPCS3/rpcs3/blob/d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3/Emu/Cell/PPUThread.cpp"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/MoltenVK-configuration.md",
+      "bytes": 30872,
+      "sha256": "16807a341695c77d3f40d7298aaf189f372cd641e98185a6d52ea91cc4e53a55",
+      "url": "https://github.com/KhronosGroup/MoltenVK/blob/main/Docs/MoltenVK_Configuration_Parameters.md"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/apple-screen-capture.md",
+      "bytes": 11237,
+      "sha256": "5ed9d10f67ce3847912454edefd70860fa4ad183a155ac835a8247f55c00d426",
+      "url": "https://developer.apple.com/documentation/screencapturekit/capturing-screen-content-in-macos"
+    }
+  ],
+  "additionalPrimaryReferences": [
+    "https://github.com/KhronosGroup/MoltenVK/blob/main/Docs/MoltenVK_Runtime_UserGuide.md#shader-loading-time",
+    "https://learn.microsoft.com/en-us/windows/apps/develop/media-authoring-processing/screen-capture",
+    "https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.ScreenCast.html"
+  ],
+  "implementation": [
+    {
+      "path": "lib/src/shell/keyboard.dart",
+      "bytes": 16506,
+      "sha256": "feb4a23ea6d5869b9185581a42d99ef80539fc2e1ea66d6bfcfa10e7a10ab9e5"
+    },
+    {
+      "path": "lib/src/shell/controller_input.dart",
+      "bytes": 11829,
+      "sha256": "b941213a420872fe726cbdf2e54ff7da80a1793d2fc6442aaa65f0afefa18757"
+    },
+    {
+      "path": "lib/src/shell/app.dart",
+      "bytes": 27774,
+      "sha256": "5bfe62bbdef6e270e14e16b1821c8ad4cb0be52b80e047314dc49aa606edc60c"
+    },
+    {
+      "path": "lib/src/shell/game_session_screen.dart",
+      "bytes": 13137,
+      "sha256": "08caafdeca3cd1d027eca49a65cab31807a5cfc1d51547724ad9d625ffcb3826"
+    },
+    {
+      "path": "macos/Runner/MainFlutterWindow.swift",
+      "bytes": 9769,
+      "sha256": "b3d40d20a778aa1c9dbad7a714affb7545e5b12655ecf8d25d4f2165e6ad2ca9"
+    },
+    {
+      "path": "macos/RunnerTests/RunnerTests.swift",
+      "bytes": 5680,
+      "sha256": "227875a3796547faad2e52c1c2eb551df86febf0c4a13626861ee130f29b2e15"
+    },
+    {
+      "path": "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt",
+      "bytes": 5165,
+      "sha256": "8680b8945633cf7f5ea7e0912d14cc87591035c866adb3c31074d06c90fb8078"
+    },
+    {
+      "path": "test/console_keyboard_shortcuts_test.dart",
+      "bytes": 5283,
+      "sha256": "7dad72c537ce8e3a54262e2169ae16f1ae508c28b36f23d880429f030c1c58d7"
+    },
+    {
+      "path": "tool/check_rpcs3_cache_test.dart",
+      "bytes": 7184,
+      "sha256": "64aaf35ea6cb544857a664a0f09d17377e443ae0d24cd0e65f0f7fba1991cbbd"
+    },
+    {
+      "path": "tool/render_library_followup_test.dart",
+      "bytes": 4529,
+      "sha256": "e357d61b119392dba44911ab54237eaf549dfad7a4dad5b45885a68548f65003"
+    }
+  ],
+  "logs": [
+    {
+      "path": ".tool-cache/research/loading-keyboard/flutter-tests-final.log",
+      "bytes": 43222,
+      "sha256": "dbde4e6d25b17151f274deae9dfb9849e0cc3e551be398a6b149fd976507b771"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/visual-shortcuts-final.log",
+      "bytes": 2942,
+      "sha256": "c1b18d1f11fc76bef954f5df8d98708e5bcb80aa4864bb0692f55ae810a93f4b"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/analyze-delivery.log",
+      "bytes": 446,
+      "sha256": "f34502305108853590c8729a45358f668c37a19af2e768b6d8a917d775081d14"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/native-cache-2.log",
+      "bytes": 849,
+      "sha256": "c72e3cd69afde2d20d1bd3648b02c1d57c317adb4aed269dadb82213fa33c46c"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/native-keyboard-1.log",
+      "bytes": 1076,
+      "sha256": "e1138f681c2b41a0d6be3559b8b4105c6a8abaaf0b6d0a08db4b4c1b15380d5a"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/native-keyboard-summary.json",
+      "bytes": 969,
+      "sha256": "b94df501fe76eadd591ac7eb2b99bdd676f778c7a671df0e172fece72fc65284"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/cache-startup.sample",
+      "bytes": 396760,
+      "sha256": "c175eeb7646a98e5b6687f2e9071103e92040f6521190197dec92300421cd05c"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/build-release.log",
+      "bytes": 706,
+      "sha256": "19d31047d760e12f6c709ab76c05aec0baa931b91d93c86293c3b8171ead4d5d"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/signature-initial.log",
+      "bytes": 749,
+      "sha256": "2a34701edcb58734cb2849a11771fc3dd79b89a5cfa269a6d3a6f49956aa5186"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/signature-final.log",
+      "bytes": 749,
+      "sha256": "2a34701edcb58734cb2849a11771fc3dd79b89a5cfa269a6d3a6f49956aa5186"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/signature-extracted.log",
+      "bytes": 947,
+      "sha256": "5082211c383245d3d7e468bb3470d58140dde1a7d57becd4827ae8b6fdd02513"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/archive-test.log",
+      "bytes": 15518,
+      "sha256": "c656df71c9f6078266e69f4e8164fad5dedffac428ff6c9cae38da5f33f0d34a"
+    }
+  ],
+  "renders": [
+    {
+      "path": ".tool-cache/research/loading-keyboard/previews/keyboard-store.png",
+      "bytes": 299661,
+      "sha256": "ab05b0f2919a7a79d6b243ceb2e4dae288d901bda5712e6c0dd88a81f302d97e"
+    },
+    {
+      "path": ".tool-cache/research/loading-keyboard/previews/keyboard-compact.png",
+      "bytes": 151462,
+      "sha256": "0145b31c8b9637b929d12d3cccbb503b229f4257fc443300e65adca14b0dde28"
+    }
+  ],
+  "retainedFailures": [
+    {
+      "log": ".tool-cache/research/loading-keyboard/native-cache-1.log",
+      "cause": "Copying the entire source profile encountered unreadable RPCS3.log.gz. Corrected fixture copying to select the required configuration, firmware and cache areas; normal log permissions unchanged."
+    },
+    {
+      "log": ".tool-cache/research/loading-keyboard/cache-sample.log",
+      "cause": "The first sampled process had already exited; sample of the actual second launch succeeded separately."
+    },
+    {
+      "log": ".tool-cache/research/loading-keyboard/keyboard-tests-1.log",
+      "cause": "The new test incorrectly awaited a void lifecycle call; corrected test API usage."
+    },
+    {
+      "log": ".tool-cache/research/loading-keyboard/keyboard-tests-2.log",
+      "cause": "The dock is outside the Navigator widget. Modal test now uses the original field route context."
+    },
+    {
+      "log": ".tool-cache/research/loading-keyboard/flutter-tests-1.log",
+      "cause": "An added hint changed accessible key names and a modal assertion was misplaced in a closed-dock test. Key names preserved, visible shortcut badges retained, assertion moved to the intended covered-field scenario."
+    }
+  ],
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-keyboard-shortcuts.zip",
+    "bytes": 19342470,
+    "sha256": "89332ff7d99227e1923666957f33e9dfd0c551f52f9c66594e84fd19e36b52e9",
+    "app": "build/macos/Build/Products/Release/broomm.app",
+    "buildCommand": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox run -- bash tool/build_app.sh --release",
+    "zipIntegrity": "passed",
+    "appDeepStrictSignature": "passed",
+    "extractedDeepStrictSignature": "passed",
+    "distribution": "Apple Silicon checkout-bound development build; ad-hoc signed, not notarized."
+  },
+  "limits": [
+    "Preview capture remains a proposal, including macOS permission/compositor acceptance.",
+    "No Vulkan pipeline serialization hook or emulator update was added.",
+    "Physical controllers and native Windows/Linux/Android checks remain pending.",
+    "The stack sample establishes repeated MoltenVK conversion; all Metal driver-cache/sandbox interactions have not been audited."
+  ]
+}

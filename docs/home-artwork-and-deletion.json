@@ -1,0 +1,158 @@
+{
+  "recordedAtUtc": "2026-10-19T04:43:53.986560Z",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "dart": "3.13.0 (stable) (Wed Aug 5 00:28:05 2026 -0700) on \"macos_arm64\"",
+    "architecture": "arm64"
+  },
+  "revision": {
+    "baseCommit": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+    "workspace": "Uncommitted feature changes over pre-existing navigation/motion work; exact tested source fingerprints below."
+  },
+  "ownerDecision": "Delete removes downloaded game files and selected artwork; retain saves and save states for every profile.",
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "result": "passed",
+      "analysis": "No issues found",
+      "testsPassed": 149,
+      "log": ".tool-cache/research/home-artwork/check-ready.log"
+    },
+    {
+      "command": "devbox run -- flutter test tool/render_home_artwork_test.dart",
+      "result": "passed",
+      "testsPassed": 1,
+      "log": ".tool-cache/research/home-artwork/render-ready.log",
+      "scope": "Generated fixture images; real widget/file-image decoding and seven inspected offscreen PNGs. No computer-control automation."
+    },
+    {
+      "command": "devbox run prototype-check-macos",
+      "result": "Passed",
+      "testsPassed": 4,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": ".tool-cache/research/home-artwork/native-macos.log",
+      "summary": ".tool-cache/research/home-artwork/native-summary.json",
+      "resultBundle": "build/macos/Logs/Test/Test-Runner-2026.10.19_01-24-11--0300.xcresult",
+      "scope": "Two window regressions plus credential persistence and independent SGDB/RomM native Keychain slots. Disposable identities only."
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_home_test.dart",
+      "result": "passed",
+      "testsPassed": 1,
+      "log": ".tool-cache/research/home-artwork/home-native-ready.log",
+      "scope": "Provided SNES ROM; real managed RetroArch/Snes9x; fixture RomM catalogue/download; Home to pairing/play and normal close to Home.",
+      "syntheticInput": true,
+      "fixtureData": ".tool-cache/research/managed-play/home-data"
+    },
+    {
+      "command": "devbox run -- bash tool/build_app.sh --release",
+      "result": "passed",
+      "log": ".tool-cache/research/home-artwork/build-ready.log",
+      "artifact": "build/macos/Build/Products/Release/broomm.app"
+    },
+    {
+      "result": "passed",
+      "commandsPreviouslyExecuted": [
+        "codesign --verify --deep --strict build/macos/Build/Products/Release/broomm.app",
+        "unzip -t -q build/releases/Broomm-macOS-arm64-artwork.zip",
+        "ditto -x -k build/releases/Broomm-macOS-arm64-artwork.zip .tool-cache/research/home-artwork/unpacked",
+        "codesign --verify --deep --strict .tool-cache/research/home-artwork/unpacked/broomm.app"
+      ],
+      "scope": "Built and extracted app signature integrity and complete ZIP CRC verification; ad hoc signing, no notarization."
+    }
+  ],
+  "regressions": [
+    "Strict square PNG grids versus heroes, pagination, CDN credential isolation, redirects/MIME/bounds and independent request-owner cancellation.",
+    "Profile/server-bound secure SGDB key independent from remembered RomM login; corrupt/unavailable credential storage remains explicit.",
+    "Artwork publication/replacement/partial updates and damaged optional record repair without damaging the ROM.",
+    "Deletion excludes active and independent-process writers, preserves all progress and other servers/games, rejects foreign files/identities.",
+    "External deletion intent recovers pre-rename, missing inner receipt, partially removed payload and marker-only cleanup; play/reinstall remain blocked.",
+    "Actual app sequential pickers, paged controller selection, decoded 75%-height Home hero, hover/Select menu, cancel/confirm delete and focus restoration."
+  ],
+  "investigationsAndCorrections": [
+    "Offscreen FileImage checks needed real I/O plus driven Flutter frames; precache-only waits stalled in FakeAsync. Production file loading was not weakened.",
+    "Deletion checkpoint moved outside the recursively removed game tree so it survives loss of the inner receipt and entire payload.",
+    "Menu selects/reveals the hovered title before modal activation so focus returns to it.",
+    "The app-build Devbox script did not forward the release flag; explicit bash invocation produced and verified the Release artifact. Initial Debug build is retained in build-release.log."
+  ],
+  "artifact": {
+    "zip": "build/releases/Broomm-macOS-arm64-artwork.zip",
+    "bytes": 18748324,
+    "sha256": "b5366b3a1c2818c9b2faa617de3bd61263a6f2a4b2fbaca1c677caef5dcb6c7e",
+    "bundle": "build/macos/Build/Products/Release/broomm.app",
+    "executableSha256": "14da0f35e5e33f456511ddc693926fe34750b7d50790cd6296f5cbbf54cfe828",
+    "executableArchitectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "verifiedEmulatorPackArchitecture": "arm64",
+    "distribution": "Ad-hoc-signed development release with checkout-managed data/setup paths; no owner app restart and no standalone/notarized distribution claim."
+  },
+  "environmentAndDependencies": {
+    "newPackages": [],
+    "osDependenciesInstalled": [],
+    "unchangedFromManagedMilestone": [
+      "pubspec.yaml",
+      "pubspec.lock",
+      "devbox.json",
+      "devbox.lock"
+    ]
+  },
+  "sourceSha256": {
+    "lib/src/steamgrid.dart": "4dea56f898e4f088328f87b4c636270a30e5dd5f41ca23b70413b35c19656929",
+    "lib/src/romm/models.dart": "81a4f35ebce182431d770c201df20f506d7f530f622c5b2282984f72a95b4aa1",
+    "lib/src/shell/steamgrid_credentials.dart": "f11a08f3f7a274acc4eaf16519065dc9cce666c12d3e4b052dc325bf7b649289",
+    "lib/src/shell/library.dart": "6e7cf5fb5fd870114963a08589b9d649e02cf1c1f155f6f3f6c6c394b0ac70b8",
+    "lib/src/shell/library_management.dart": "4cc0a191fbd3363ebe0c657ea75768f91cb131ce70b6b48a923a37a958e01f84",
+    "lib/src/shell/model.dart": "76644836b28d8edf560bb5dbed49849213f6464f9db5744752cd04e3f71caa86",
+    "lib/src/shell/artwork_picker.dart": "511a15a78517f5f700baa4bfeea88d022170eda11ad6487ae5de03cb2a6fdfca",
+    "lib/src/shell/artwork.dart": "2c384b2e6b6cf667d5dd841d0ad96f1901ac7d7601c0165c8f5237890deee108",
+    "lib/src/shell/home_screen.dart": "21e9efded2ff55e4ef981a11986f4a85d7be453fb082e0ecff98e5a50c64d2c7",
+    "lib/src/shell/app.dart": "8488531e739d38337e54bc1b400ac6f37ede10af057665beb0288a7097768599",
+    "lib/src/shell/controls.dart": "e306fb1057c89526c822f8db6b9f52f27004a131e7f5ddea755888df8cb03c4a",
+    "lib/src/shell/settings_screen.dart": "f080e052a4d52115a90622787ba4aef6a36ea33b220c4f441fdedf84dc4d4804",
+    "lib/src/shell/controller_input.dart": "f20bd76e94b176f85e2e1ac38a43108f633cc98e437fc73f9c6198fdd16ce97e",
+    "macos/Runner/MainFlutterWindow.swift": "eac8127c1abe54a211bc5154902c0cb66c40a8cfa221adf20e5959817a752209",
+    "macos/RunnerTests/RunnerTests.swift": "77a37f3796033d9d7b7a7c325f5dcb39fc7756872d19a4eb2a9c643d6e381918",
+    "linux/runner/credential_store.h": "be5eae3720bb196b2615b8b17257a2c5c88efd1a303b4914e09475fec0f37466",
+    "windows/runner/credential_store.h": "792262ae894d02bd9d5234b991b57327e619410d256192b34bcfd2a1ff1cdc0e",
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommCredentials.kt": "248277f30d9ad38fd556b88ab91161bfd8c68befcab672d17fca4297a24f332a",
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": "3503ba616b2cf9ee5cbac0fc78a86bcade7231e3037d6e89a367dc6894c6eb80",
+    "tool/build_app.sh": "8e79ee1c3bd8f86af0fa994a99669ddaf4dfbed2f0309c14479e3d906754bbc3",
+    "tool/render_home_artwork_test.dart": "69f0d67f3c52baf723d26e726deef30d775568d1db2fdf29ab5b5ed66b8382c4",
+    "tool/smoke_home_test.dart": "e809bdcbb8a15bf80b291b2477613cf5d7fa15a4d23436d5600c94ea00092851",
+    "test/steamgrid_client_test.dart": "28cecf12260febbc290cb82a0aab7b166ab7e6ad0b7a61bc6f4d57bc5f7d1b8c",
+    "test/home_artwork_library_test.dart": "7930f4ce46e039d32a3c2e2a3f4737d61d18d1a5dff46ccc1eccc6172b63c093",
+    "test/home_artwork_widget_test.dart": "653442eca60660944fb9f82f04bcdd6b47a8011ee717c3e1dcfcc378794fbe22",
+    "test/steamgrid_credentials_test.dart": "b2b93c0ce42825ae601624d258cf1e367243fa681a56743ba6258ce81c8f4029",
+    "test/support/artwork_fixtures.dart": "af1473209c6f3abea1f0b3d1dcffd8322a93316bc07a4ce06bef98bbefc00347",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2"
+  },
+  "publicContractSha256": {
+    ".tool-cache/research/home-artwork/sgdb-api.html": "ef21eb110dadd58d91b8ccdce59a740ac2aec4c36795ac15085cd5c637e31dab",
+    ".tool-cache/research/home-artwork/sgdb-openapi.yml": "7d390f6e6f52b0eb048cafc2bfe230039d5852c6254a31a78a420a7a2ea5631d",
+    ".tool-cache/research/home-artwork/romm-search.py": "fcf5292d69f1d097c084e7656361e57922b27e91703bed5cd724650919aa470b"
+  },
+  "previewSha256": {
+    ".tool-cache/research/home-artwork/previews/square-picker.png": "40c954ae82d98be8ff8585e099ff3a1616c277cacf284fb5a72e4cac49bae991",
+    ".tool-cache/research/home-artwork/previews/hero-picker.png": "0d1ca4501cb6008124f38ecca41590888f5b27f191e8619ddcd92ac3f7e84718",
+    ".tool-cache/research/home-artwork/previews/home-hero.png": "91b690b0ceea0c98630baf5503114ff6d8dca59cf6b8cd54423b7be337f9a676",
+    ".tool-cache/research/home-artwork/previews/title-options.png": "1aa135b3946ec81f57e6fff889665511d54ccdbe74e333aeace6a1488e6e721a",
+    ".tool-cache/research/home-artwork/previews/api-key-setting.png": "4add0e197f80ac8f18220c5ac59fd5dcb9030e7a05fdf2da4433b26bd241b882",
+    ".tool-cache/research/home-artwork/previews/home-compact.png": "097978cd106485784a4593231994c2a1ff24e5b55abe37d66c613e4ae93bfc7d",
+    ".tool-cache/research/home-artwork/previews/square-picker-compact.png": "f70aa1cf7b20c02bf6bc4d2a0f224af397edb0c60ecee96ec389b65345811476"
+  },
+  "limitations": [
+    "No owner SGDB API key was available: live authenticated SGDB/RomM artwork retrieval remains unverified; local real HTTP and public contracts were checked.",
+    "Physical-controller and owner visual acceptance remain pending; widget/native API tests are not those observations.",
+    "Native Linux/Steam, Windows and Android credential/input checks remain pending.",
+    "No new emulator bridge changes or broad six-emulator gameplay rerun; real Home Play check uses supplied SNES ROM.",
+    "Process-interruption checkpoints tested; full power-loss/directory-fsync durability is not claimed.",
+    "Save synchronization, offline login and standalone distribution remain separate unfinished milestones."
+  ]
+}

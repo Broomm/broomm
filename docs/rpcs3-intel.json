@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-22T23:39:28.115905Z",
+  "base_revision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "working_tree": "uncommitted feature work preserved",
+  "host": {
+    "os": "macOS 27.0.1",
+    "architecture": "arm64",
+    "intel_emulator": "x86_64 translated by Rosetta"
+  },
+  "distribution": {
+    "version": "0.0.42-20031 d08d568d",
+    "url": "https://github.com/RPCS3/rpcs3-binaries-mac/releases/tag/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad",
+    "archive_bytes": 42447907,
+    "archive_sha256": "06312f8d2b3c921eb9eb2e96c0e671b77283f8f65a276dc60833bd99ff7e2967",
+    "executable_sha256": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+    "inventory_files": 444,
+    "inventory_links": 30
+  },
+  "native_intel": {
+    "game": 8002,
+    "passes": [
+      {
+        "pass": 1,
+        "readyMs": 312316,
+        "hash": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+        "pairPauseResumeRemapNormalClose": true,
+        "saveIdentity": "rpcs3-savedata-v1:BLUS30490"
+      },
+      {
+        "pass": 2,
+        "readyMs": 183080,
+        "hash": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+        "pairPauseResumeRemapNormalClose": true,
+        "saveIdentity": "rpcs3-savedata-v1:BLUS30490"
+      }
+    ],
+    "fixture": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/rpcs3-intel/native-TVoOxY",
+    "physical_controller_acceptance": false,
+    "romm_writes": false
+  },
+  "native_arm": [
+    {
+      "game": "smw",
+      "emulator": "RetroArch",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/retroarch",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "melee",
+      "emulator": "Dolphin",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/dolphin",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "brawl",
+      "emulator": "Dolphin",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/dolphin",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "rayman",
+      "emulator": "RPCS3",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/rpcs3",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "mk7",
+      "emulator": "Azahar",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/azahar",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "3dworld",
+      "emulator": "Ryubing",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/ryubing",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    }
+  ],
+  "native_intel_firmware": {
+    "build": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+    "transfers": 1,
+    "profiles": 2,
+    "phases": [
+      "Checking RomM for PS3 firmware",
+      "Downloading PS3 firmware",
+      "Verifying PS3 firmware",
+      "Installing PS3 firmware"
+    ]
+  },
+  "verification": {
+    "flutter_tests": 234,
+    "analysis": "clean",
+    "intel_launches": 2,
+    "arm_rom_sessions": 7,
+    "native_firmware": "passed",
+    "logs": {
+      ".tool-cache/research/rpcs3-intel/flutter-tests-final-routing.log": "91a80799a10d9f77f0e5cd9649bfb489a81a0d5becc311e824bebf9f853a7c85",
+      ".tool-cache/research/rpcs3-intel/analyze-delivery.log": "eda1d654688ba465706b28b425555beda7b281cfdc5bc42651a9636361f58f3f",
+      ".tool-cache/research/rpcs3-intel/native-1.log": "56e7d67f5dba0d051fab882c3e0f29c6212c42bca8a910933c58cce30838a9b5",
+      ".tool-cache/research/rpcs3-intel/native-arm.log": "6d15e065f1b14aca60e1127b690fb547809c35794aaae3df1f30be8eb30d9749",
+      ".tool-cache/research/rpcs3-intel/native-firmware.log": "a884b0c01869103a1c521b914ac4aca0c5d7cad8b92b08f688551efa176e9607",
+      ".tool-cache/research/rpcs3-intel/build-release.log": "039675cef536d6e87caf4a5780c3062c735698f3b687486df60777f786faaac7",
+      ".tool-cache/research/rpcs3-intel/archive-test.log": "5e2022ac4fb94b4acc85a46e7ed50e63f198f99baa6bf7d02224f25ddfe3b537",
+      ".tool-cache/research/rpcs3-intel/signature-app.log": "2a34701edcb58734cb2849a11771fc3dd79b89a5cfa269a6d3a6f49956aa5186",
+      ".tool-cache/research/rpcs3-intel/signature-archive.log": "624a3629c43dce93e6b6fa5b874806d5e9e0c2e779d88b846446281445eb4c36",
+      ".tool-cache/research/rpcs3-intel/signature-app-before-refresh.log": "370c92d43d12b846f9907b022b0d0b4f39079fff73859dbd6db0a4ecfc5c32e2",
+      ".tool-cache/research/rpcs3-intel/signature-refresh.log": "57af93c025b2cb97b82f3b0ed40b3d2ccfce6f63af5d49da82a2808cbbe1cf66",
+      ".tool-cache/research/rpcs3-intel/variants-1.log": "712ee2faf87887d40354686e8b3d910d22495c75414f6a8f4b46e87601a1c615",
+      ".tool-cache/research/rpcs3-intel/flutter-tests.log": "a488ce5349c901531b86203f76a20812fac8664456d919a7cedb6e908e62d31c"
+    },
+    "corrected_test_assumptions": [
+      "The first new profile test compared a canonical /private/var target with an unnormalized /var alias; both sides now resolve the actual directory identity.",
+      "The initial complete run exposed an older singleWhere(PS3) assumption; the ISO/sidecar test now exercises both variants."
+    ]
+  },
+  "native_libraries": {
+    "broomm-sdl2": {
+      "sha256": "2c6c2849523bc59c576202208e5d3b17e7258bf5b6d6e81878c0f3986fd62515",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ]
+    },
+    "broomm-sdl3": {
+      "sha256": "97c73a1db3d039584370a4e7b193963794047219dfd25e03fdee21255b43f75a",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ]
+    },
+    "broomm-installer-guard": {
+      "sha256": "963281a869af4782b236ca27ca93e641daa433c1c7c1bfb0d209c13fa584f4ec",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ]
+    }
+  },
+  "source_sha256": {
+    "lib/src/game_launch.dart": "e15704efcfed7bbd8f831437cc09d8be1c20270e13a15bd5283b4ec0a054276c",
+    "lib/src/managed_emulators.dart": "83f9cf37f31cd63db9daf3b9fbb259d6903d63a2c2e528dd1c07bf44dbc6c267",
+    "lib/src/managed_profile.dart": "c0b75cd00810e942a7d9fe51534eda95f609a9836c7598dd2d2b0c26f3c3407c",
+    "lib/src/emulators.dart": "c4340c9867950171319fdc92c10c8c0783a61ea31f82fd2c3057a07c7d511b7c",
+    "lib/src/session.dart": "a88b5cabaff9b27a977c1c9eb34843d89d2f412be5a7f9bbd5d710b4cff1989c",
+    "lib/src/ps3_firmware.dart": "e2cfb0df7a7ffe2e916a98ae644f5b065a4ba5394246d3c98b8711d99883def4",
+    "lib/src/shell/model.dart": "cedbb9c6461273a54d238fa366f17494f800232aeb2295d1692a0fac6443ee4e",
+    "lib/src/shell/app.dart": "12a95640fa9f76e08583f193fffe07f11987d68ca105a00062d8d88a764bc920",
+    "lib/src/shell/emulator_settings_screen.dart": "c5b858a42ac4d283f432097ae90ddcc4ce90bcfb4dd5551e8b368d503b15bdef",
+    "experiments/injection/src/probe.c": "ce2616b31c501349c38fea6c2884616609b14233798ec1de97cd544c1707bb6a",
+    "native/session.inc": "ab65e17891bf540b730eddc21a5a1f03d77520227913240a2e90409490d485ed",
+    "native/installer_guard.c": "32f17fe39ea644af2124a69a67c38bd71c3b92937946f23a531f31a4cbcbfbf7",
+    "tool/build_bridges.sh": "0fc455f8899033cdc123a9407bca246662addfa4922c75d845a3f9155912c3e9",
+    "tool/build_app.sh": "8e79ee1c3bd8f86af0fa994a99669ddaf4dfbed2f0309c14479e3d906754bbc3",
+    "tool/capture_rpcs3_intel_setup.dart": "1460e4db3ef841c36fdc77c6a102a22210badf0d20af522e492e5361bab8f64f",
+    "tool/check_rpcs3_intel_test.dart": "5c49de812c0d2700ab7790222c902f87e4378797603a245f6db8dd91be262fd3",
+    "tool/check_ps3_firmware_test.dart": "49e8f03cdb86823cb2792690479a3653a58395f224c9d870439fac6cb37f4541",
+    "tool/smoke_managed_test.dart": "fa3f79765066ee00b7a84764fad9d80aac3b166ee0c66bcc491ce6bdbffc800e",
+    "test/rpcs3_variants_test.dart": "12c722df35bd7ce353811d101a70d90e9cb9336a88a3c6fff814d6063b70683b",
+    "test/ps3_disc_test.dart": "d41aa5b758340762de3b93096c74486072e05722e4dda7a85aa7d73d81e9d4b3",
+    "assets/setup/tested-builds.json": "601aef891850cbc0cd4eb629f114f8e322cca41eff8f3c8e860458fba27c3eaf",
+    "assets/setup/setup.json": "63d21ac8873c71ecbc5def725def27c8e5c70392b7de81a72106709ffd9b123b",
+    "assets/setup/rpcs3-intel.integrity.json": "c4782f82f8ab176c3c9acb480a502ab5a17c47cc33d5bf4317df7d4ea311a600",
+    "assets/setup/rpcs3-intel.symbols": "1578c074e02464a6a3c6933537c4d770168e80dc6a21fe18cb4053925381a380",
+    "PROJECT.md": "f6b66a3d14e0cef446ed7243c7e89df1e41c2394f23d24efda7c72608c09d709",
+    "IMPLEMENTATION.md": "497fd72d86162eecef024cf182d2a136821f5786fd580ea3a6c4ee904e553640",
+    "README.md": "e9fce965da6a56b7d003e8dab098d185a511c2954669728f2e67caaa7ed8535b",
+    "docs/rpcs3-intel.md": "0b2a7131e237d706785f7db600bdd414427b76475e11a9c51797761dc7229e08",
+    "docs/flutter-window-capture.md": "1301a1433287224bb673340c2dfc0da6f8507572f2782438bde4e7b842260fdc",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2"
+  },
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-rpcs3-intel.zip",
+    "bytes": 19430531,
+    "sha256": "eeac454ab87e86dd581c228c5e8f2156c70575a3af2efc71c72bae6116d22cf4",
+    "app_deep_strict_signature": true,
+    "archive_integrity": true,
+    "extracted_app_deep_strict_signature": true,
+    "outer_ad_hoc_seal_refreshed": true,
+    "nested_frameworks_repaired": false,
+    "signing": "ad hoc development build",
+    "notarized": false,
+    "checkout_bound": true
+  },
+  "preview": {
+    "status": "dependency comparison only; no package added",
+    "recommended_candidate": "flutter_webrtc",
+    "reviewed_plugin_revision": "db81cea2730ae65b53fd3ffa97f45ad71200344a",
+    "reviewed_cpp_wrapper_revision": "9f6a87af46a5810a452aa20306c705b7c5269fbe",
+    "capture_executed": false,
+    "gamescope_verified": false
+  },
+  "limitations": [
+    "Physical gameplay/save reload needs owner verification",
+    "No claim of better Intel compatibility or performance",
+    "Actual Intel Mac, Linux/Steam/gamescope, Windows and Android native checks were not run",
+    "No renderer overlay or loading preview implemented"
+  ]
+}

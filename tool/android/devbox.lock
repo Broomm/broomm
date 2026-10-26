@@ -1,0 +1,57 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "github:NixOS/nixpkgs/nixpkgs-unstable": {
+      "last_modified": "2026-10-05T09:07:57Z",
+      "resolved": "github:NixOS/nixpkgs/aa48d347080940b8a2b8d2f48228674e280a3514?lastModified=1791191277&narHash=sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA%3D"
+    },
+    "kotlin@2.4.0": {
+      "last_modified": "2026-07-08T21:13:06Z",
+      "resolved": "github:NixOS/nixpkgs/389ed85304b281ca7f306cf8a1eb4378651ca44e#kotlin",
+      "source": "devbox-search",
+      "version": "2.4.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/3lpw28h89dzis20k7v5vxnv5cw0whxrm-kotlin-2.4.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/3lpw28h89dzis20k7v5vxnv5cw0whxrm-kotlin-2.4.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/j72h7jfqvjylmjb5nsiixrwvjm0s9ndl-kotlin-2.4.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/j72h7jfqvjylmjb5nsiixrwvjm0s9ndl-kotlin-2.4.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/4xj8bc0m8aqyzv9f9m9imj1lwpcfkqfb-kotlin-2.4.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/4xj8bc0m8aqyzv9f9m9imj1lwpcfkqfb-kotlin-2.4.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/xbzj7vwvp7i9xpv7ggpz7cza5vqr6id3-kotlin-2.4.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/xbzj7vwvp7i9xpv7ggpz7cza5vqr6id3-kotlin-2.4.0"
+        }
+      }
+    }
+  }
+}

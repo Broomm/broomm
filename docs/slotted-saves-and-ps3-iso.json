@@ -1,0 +1,454 @@
+{
+  "date": "2026-10-22",
+  "gitBase": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "Uncommitted changes; delivery includes the existing feature work in this checkout.",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "runtime": "3.13.0 (stable) (Wed Aug 5 00:28:05 2026 -0700) on \"macos_arm64\""
+  },
+  "format": {
+    "slot": "BROOMM",
+    "emulator": "Broomm",
+    "name": "Broomm [yyyy-mm-dd_hh-mm-ss].ext",
+    "ds": "raw sav",
+    "snes": "raw srm",
+    "directories": "native zip",
+    "states": "matching timestamped state archive with internal provenance",
+    "remoteCleanup": false,
+    "legacy": "read-only migration fallback"
+  },
+  "sources": [
+    {
+      "path": ".tool-cache/research/slotted-saves/SaveSyncApiClient-pinned.kt",
+      "bytes": 31976,
+      "sha256": "27c18552811a3dc73b1af2e728fd85dbdbbfbf2f8bff8cab56598046abdbc045",
+      "url": "https://github.com/rommapp/argosy-launcher/blob/98562a1e7c6679eaa1edf91ce440655479520eaa/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncApiClient.kt"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/SaveUploader-pinned.kt",
+      "bytes": 35061,
+      "sha256": "3430d57e8ab87749fbdf8a9b3595ea23b862f9ba146f136a1efd0ed852091e2f",
+      "url": "https://github.com/rommapp/argosy-launcher/blob/98562a1e7c6679eaa1edf91ce440655479520eaa/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveUploader.kt"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/rpcs3-iso.cpp",
+      "bytes": 48666,
+      "sha256": "861e1f229b0391fd651def37449b25cb611af2b1680ac95f835b167f75c74435",
+      "url": "https://github.com/RPCS3/rpcs3/blob/d08d568d/rpcs3/Loader/ISO.cpp"
+    },
+    {
+      "path": ".tool-cache/research/cloud-saves/romm-saves.py",
+      "bytes": 31701,
+      "sha256": "296ed9b5ea7f99a1b45fa676e2a7a9024eeb8f0f70b749c893780c4f9be430c9",
+      "url": "https://github.com/rommapp/romm/blob/5.4.0/backend/endpoints/saves.py"
+    },
+    {
+      "path": ".tool-cache/research/cloud-saves/romm-states.py",
+      "bytes": 13133,
+      "sha256": "13ce161685e6633c066aec532e0106aebf97e22fbb748878f8be52a1ac032b93",
+      "url": "https://github.com/rommapp/romm/blob/5.4.0/backend/endpoints/states.py"
+    },
+    {
+      "path": ".tool-cache/research/cloud-saves/romm-asset-store.py",
+      "bytes": 16579,
+      "sha256": "3f6c6bb20c4169f64d3e44019a60c97f122a4b9ad053e6d9a5791b58d4072775",
+      "url": "https://github.com/rommapp/romm/blob/5.4.0/backend/handler/asset_store.py"
+    }
+  ],
+  "implementation": [
+    {
+      "path": "lib/src/ps3_disc.dart",
+      "bytes": 6190,
+      "sha256": "d2c9acd0f8e8ad9e2affa368bc0549d812e1a44cef919793303c9f2db4342596"
+    },
+    {
+      "path": "lib/src/game_launch.dart",
+      "bytes": 3268,
+      "sha256": "ef8e52dc20d86f183067504e63813aa8df4c94026100429ad9a74887319ab2ec"
+    },
+    {
+      "path": "lib/src/emulators.dart",
+      "bytes": 17896,
+      "sha256": "94087d08978cde0cac712643b2bd58dd4a51bbe45a4985bff7e586f676c47b90"
+    },
+    {
+      "path": "lib/src/addons/ps3.dart",
+      "bytes": 21858,
+      "sha256": "3cc16a0aeddbb512edf40847d8d9506cfb3fd5a90fb5adc3028dc9cad4e13c8c"
+    },
+    {
+      "path": "lib/src/progress/layout.dart",
+      "bytes": 13316,
+      "sha256": "7424cf2e77896d9d53117834d625e224f4b76562430a7a2ff1990ab29163a32d"
+    },
+    {
+      "path": "lib/src/progress/store.dart",
+      "bytes": 22422,
+      "sha256": "4dca058411689a9234067afd1f448e8db80a7646d90286ee8803675d2d76f888"
+    },
+    {
+      "path": "lib/src/progress/native_export.dart",
+      "bytes": 2501,
+      "sha256": "240a2d7cb24eb3246605cec0c2cea06cb81469c5f3cf7279ebf261e04e630a42"
+    },
+    {
+      "path": "lib/src/progress/service.dart",
+      "bytes": 31314,
+      "sha256": "1b9797c00d54176e8dd65494ac3080a5251541e9ec816073466f0ae08a8b975c"
+    },
+    {
+      "path": "lib/src/romm/saves.dart",
+      "bytes": 16313,
+      "sha256": "44a22d8056bcfb3bf8f4e073c106a3828712ed3eef2de66e2711bfd058ae2caa"
+    },
+    {
+      "path": "lib/src/shell/app.dart",
+      "bytes": 27710,
+      "sha256": "d6957295d3924d863d20b81763fb388c9ec4c3d4370ab7ff698ba05bbd43512b"
+    },
+    {
+      "path": "lib/src/shell/cloud_saves_dialog.dart",
+      "bytes": 12088,
+      "sha256": "62cef6f79c688455d6cd12f333eb17247c97397eda18c2293824e480b921a9ca"
+    },
+    {
+      "path": "lib/src/shell/download_status.dart",
+      "bytes": 5701,
+      "sha256": "36145673849e76cce7be5722e532ee60857edb98647edd5a445faee9b7628134"
+    },
+    {
+      "path": "test/ps3_disc_test.dart",
+      "bytes": 5842,
+      "sha256": "92bcc738240f8ca4288544e0cb81ca81f78d5e2dc88594ffb008c0216abdfbc5"
+    },
+    {
+      "path": "test/ds_progress_test.dart",
+      "bytes": 8405,
+      "sha256": "2874c825ee8a630b9219a1c52266ce2d0d875d2a040b8ef7724b16d5788cb827"
+    },
+    {
+      "path": "test/cloud_saves_test.dart",
+      "bytes": 24113,
+      "sha256": "5f287c1b46a76d8a360ceaef7c1e96028d21db1dd85c859043d302a6a5604f04"
+    },
+    {
+      "path": "test/romm_saves_http_test.dart",
+      "bytes": 11144,
+      "sha256": "d0a88958244d038e84ff5e48eddb4255fc5d3c45c8c001a07566b7ea08d4e1a0"
+    },
+    {
+      "path": "tool/check_ps3_iso_test.dart",
+      "bytes": 3267,
+      "sha256": "7df77d13c4e580a51953d4034d09239ef4ad5f67ec8be4463045636530dc077d"
+    },
+    {
+      "path": "tool/check_cloud_progress_test.dart",
+      "bytes": 8622,
+      "sha256": "b82d47cfe353b470e2c821def12e62e539f28475bca0158e5cab9ea354abd3d2"
+    },
+    {
+      "path": "tool/check_cloud_session_test.dart",
+      "bytes": 5300,
+      "sha256": "909114cc02fa5e1c79973ea5b3f43a57fb9d9b65152a9cc8c3baa51b338f5a81"
+    },
+    {
+      "path": "tool/check_switch_progress_test.dart",
+      "bytes": 6719,
+      "sha256": "1a5c0629acc35986c7c99d196064270aa91f5423e3645dc68c5617ecd269a705"
+    }
+  ],
+  "checks": [
+    {
+      "command": "devbox run -- flutter test --concurrency=1 --reporter=expanded",
+      "log": ".tool-cache/research/slotted-saves/full-tests-final.log",
+      "result": "passed",
+      "checks": 228
+    },
+    {
+      "command": "devbox run -- flutter analyze",
+      "log": ".tool-cache/research/slotted-saves/analyze-delivery.log",
+      "result": "no issues"
+    },
+    {
+      "command": "devbox run -- flutter test tool/check_ps3_iso_test.dart --concurrency=1 --reporter=expanded",
+      "log": ".tool-cache/research/slotted-saves/native-ps3-iso-1.log",
+      "result": "passed",
+      "checks": 1
+    },
+    {
+      "command": "devbox run -- flutter test tool/check_cloud_progress_test.dart tool/check_cloud_session_test.dart --concurrency=1 --reporter=expanded",
+      "log": ".tool-cache/research/slotted-saves/native-progress-1.log",
+      "result": "passed",
+      "checks": 2
+    },
+    {
+      "command": "devbox run -- flutter test tool/check_switch_progress_test.dart --concurrency=1 --reporter=expanded",
+      "log": ".tool-cache/research/slotted-saves/native-switch-1.log",
+      "result": "passed",
+      "checks": 1
+    },
+    {
+      "command": "devbox run -- flutter test .tool-cache/research/slotted-saves/verify_live_test.dart --concurrency=1 --reporter=expanded",
+      "log": ".tool-cache/research/slotted-saves/live-native-flutter-2.log",
+      "result": "passed",
+      "checks": 1,
+      "recipe": ".tool-cache/research/slotted-saves/verify_live.dart",
+      "effects": "Appended a native BROOMM version using isolated local progress; previous server saves retained; normal secure OAuth refresh."
+    }
+  ],
+  "nativePs3": {
+    "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/slotted-saves/native-ps3-iso-IDicRR",
+    "game": 8002,
+    "title": "BLUS30490",
+    "hash": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+    "downloadedDkeyPresent": true,
+    "keyPassedInArguments": false,
+    "nativePausePairResumeClose": true,
+    "physicalControllerAcceptance": false
+  },
+  "nativeFiles": {
+    "host": "macos",
+    "fixtures": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/cloud-saves/native-progress-Syy4rR",
+    "results": [
+      {
+        "emulator": "RetroArch",
+        "platform": "snes",
+        "identity": "snes9x-sram-v1:snes",
+        "files": 1,
+        "bytes": 2048,
+        "roundTrip": true,
+        "nativeExportExtension": "srm",
+        "nativeExportRoundTrip": true,
+        "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+      },
+      {
+        "emulator": "Dolphin",
+        "platform": "ngc",
+        "identity": "dolphin-gci-v1:GALE01",
+        "files": 1,
+        "bytes": 90176,
+        "roundTrip": true,
+        "nativeExportExtension": "zip",
+        "nativeExportRoundTrip": true,
+        "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+      },
+      {
+        "emulator": "Dolphin",
+        "platform": "wii",
+        "identity": "dolphin-wii-data-v1:RSBE01",
+        "files": 9,
+        "bytes": 16693936,
+        "roundTrip": true,
+        "nativeExportExtension": "zip",
+        "nativeExportRoundTrip": true,
+        "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+      },
+      {
+        "emulator": "Azahar",
+        "platform": "3ds",
+        "identity": "azahar-data-v1:0004000000030800",
+        "files": 3,
+        "bytes": 41400,
+        "roundTrip": true,
+        "nativeExportExtension": "zip",
+        "nativeExportRoundTrip": true,
+        "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+      },
+      {
+        "emulator": "RPCS3",
+        "platform": "ps3",
+        "identity": "rpcs3-savedata-v1:BLUS31183",
+        "files": 0,
+        "bytes": 0,
+        "roundTrip": true,
+        "nativeExportExtension": null,
+        "nativeExportRoundTrip": false,
+        "note": "Identity validated; this fixture has no game progress. No gameplay save-load claim."
+      },
+      {
+        "emulator": "melonDS",
+        "platform": "nds",
+        "identity": "melonds-sav-v1:ARGE-00",
+        "files": 1,
+        "bytes": 262144,
+        "roundTrip": true,
+        "nativeExportExtension": "sav",
+        "nativeExportRoundTrip": true,
+        "note": "Native files restored byte-for-byte; no gameplay save-load claim."
+      }
+    ]
+  },
+  "nativeSwitch": {
+    "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/library-followup/native-switch-tanWuL",
+    "build": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+    "program": "010028600ebda000",
+    "phases": [
+      "native-initialization",
+      "initial-writer-stopped",
+      "restore-before-gameplay"
+    ],
+    "committed0RestoredToWorking1": true,
+    "nativeZipRoundTrip": true,
+    "physicalGameplay": false
+  },
+  "live": {
+    "started": "2026-10-22T21:02:01.491382Z",
+    "finished": "2026-10-22T21:02:03.741375Z",
+    "host": "macos",
+    "rom": 5590,
+    "accountVerified": true,
+    "version": {
+      "id": 61,
+      "name": "Broomm [2026-10-22_21-02-02].sav",
+      "slot": "BROOMM",
+      "bytes": 262144
+    },
+    "rawBytesReadbackVerified": true,
+    "previousAssetsUnchanged": 9,
+    "nativeSourceUnmodified": true,
+    "usesProductionCloudSaves": true,
+    "fixture": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/slotted-saves/live-native-udkNRH"
+  },
+  "responsePrecision": {
+    "post": [
+      60,
+      5590,
+      1,
+      "Broomm [2026-10-22_20-59-28].sav",
+      "Broomm",
+      "BROOMM",
+      262144,
+      "b9feaa504834f2c92e9390cc73ab0a45",
+      "2026-10-22T20:59:28.412392+00:00",
+      false,
+      "users/557365723a31/saves/nds/5590/Broomm"
+    ],
+    "detail": [
+      60,
+      5590,
+      1,
+      "Broomm [2026-10-22_20-59-28].sav",
+      "Broomm",
+      "BROOMM",
+      262144,
+      "b9feaa504834f2c92e9390cc73ab0a45",
+      "2026-10-22T20:59:28+00:00",
+      false,
+      "users/557365723a31/saves/nds/5590/Broomm"
+    ],
+    "beforeCount": 8,
+    "afterCount": 9
+  },
+  "logs": [
+    {
+      "path": ".tool-cache/research/slotted-saves/full-tests-final.log",
+      "bytes": 42520,
+      "sha256": "6c57f07af616e70da04d9100e6e6607d0bf4f1274aae11a632b5590700a7ef5b"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/analyze-delivery.log",
+      "bytes": 446,
+      "sha256": "124ebd32238b420eb88b764c2e4ed4bc2629a7b4c5595419acf6e0579edefbaa"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/native-ps3-iso-1.log",
+      "bytes": 565,
+      "sha256": "5cb987c77b9518f777d17d94f481ac476068c963b46ed975439e18c7c7fb0eb2"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/native-progress-1.log",
+      "bytes": 1836,
+      "sha256": "9d1a5a87640670cb6ab2695006521fb1e84327c71bab1caf2ff70acd7563de79"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/native-switch-1.log",
+      "bytes": 592,
+      "sha256": "7f1d0bf1ab7bcb6e9ebdfc4d6382c64c720be7755eea09447bf5167bf7d8b960"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/live-native-flutter-2.log",
+      "bytes": 2025,
+      "sha256": "76370bb00c5615eb8f7826710b749f2b833bfc0481abf34efe428e5433d7df68"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/build-release-final.log",
+      "bytes": 706,
+      "sha256": "19d31047d760e12f6c709ab76c05aec0baa931b91d93c86293c3b8171ead4d5d"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/signature-app.log",
+      "bytes": 749,
+      "sha256": "2a34701edcb58734cb2849a11771fc3dd79b89a5cfa269a6d3a6f49956aa5186"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/signature-extracted.log",
+      "bytes": 929,
+      "sha256": "6952aba4eda86e5f975ef93c0227c4ba3893a52a5f417d69d724c85b17a37e68"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/archive-test.log",
+      "bytes": 15506,
+      "sha256": "a84001c11618dcf79f1a3244e08a278c516a6e5e331dbe72b2830288cc9812ec"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/signature-initial.log",
+      "bytes": 524,
+      "sha256": "f64e6301d4dc5da3699a4fc299f82c90c79c33e8e537e51eee50c0441ef22cb7"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/signature-framework.log",
+      "bytes": 213,
+      "sha256": "e52cf37b1710d6923bcbd061c5e4b50af2cb86f51ccaf28f013cec277de8b29c"
+    },
+    {
+      "path": ".tool-cache/research/slotted-saves/signature-refresh.log",
+      "bytes": 76,
+      "sha256": "57af93c025b2cb97b82f3b0ed40b3d2ccfce6f63af5d49da82a2808cbbe1cf66"
+    }
+  ],
+  "retainedFailedExperiments": [
+    {
+      "log": ".tool-cache/research/slotted-saves/signature-initial.log",
+      "cause": "Incremental build outer app seal referenced the previous App.framework. Inner framework verified; refreshing the generated outer ad-hoc signature with existing Release.entitlements corrected the seal before packaging. Final app and extracted archive pass deep strict verification."
+    },
+    {
+      "log": ".tool-cache/research/slotted-saves/live-native.log",
+      "cause": "Standalone Dart cannot load shared Flutter UI imports; no remote write occurred."
+    },
+    {
+      "log": ".tool-cache/research/slotted-saves/live-native-flutter.log",
+      "cause": "Fresh RomM POST preserved subsecond updated_at, persisted GET truncated it. Native save created and retained; transport now obtains the stored revision with strict content/identity checks."
+    },
+    {
+      "log": ".tool-cache/research/slotted-saves/response-regressions-1.log",
+      "cause": "Legacy HTTP fixture returned a listing for the new canonical detail request. Fixture corrected to model the actual endpoint."
+    },
+    {
+      "log": ".tool-cache/research/slotted-saves/regressions-1.log",
+      "cause": "Old public-contract assertions and incomplete synthetic Azahar directory fixtures; corrected to the native export contract, preserving validation."
+    },
+    {
+      "log": ".tool-cache/research/slotted-saves/regressions-4.log",
+      "cause": "New test expected afterPlay to throw; its owning boundary deliberately reports retained/pending progress through notices. Regression now asserts that visible pending outcome and retry."
+    }
+  ],
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-save-history.zip",
+    "bytes": 19318164,
+    "sha256": "fb093a5374b6d57fc06d7a225988c99bdbaec5552a89b6177fc991a5c6ad67c1",
+    "build": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox run -- bash tool/build_app.sh --release",
+    "app": "build/macos/Build/Products/Release/broomm.app",
+    "zipIntegrity": "passed",
+    "appDeepStrictSignature": "passed",
+    "extractedDeepStrictSignature": "passed",
+    "distribution": "Apple Silicon checkout-bound development build; ad-hoc signed, not notarized."
+  },
+  "limits": [
+    "No native Linux/Windows/Android verification in this slice.",
+    "No physical-controller, cross-device gameplay/state-load or PS3 savedata acceptance.",
+    "PS3 PKG/DLC gameplay acceptance remains separate.",
+    "Primary and state companion publication is not an atomic server transaction.",
+    "Server administrator retention may prune slot history independently of Broomm."
+  ]
+}

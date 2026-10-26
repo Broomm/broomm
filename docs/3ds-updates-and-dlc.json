@@ -1,0 +1,124 @@
+{
+  "timeUtc": "2026-10-22T14:46:03.039448Z",
+  "host": "macos-arm64",
+  "revision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "testedWorkingTree": true,
+  "checks": {
+    "analysis": "pass",
+    "flutterTests": 175,
+    "realNativeWorkflow": "pass",
+    "releaseBuild": "pass",
+    "builtAndExtractedSignatureVerification": "pass",
+    "archiveIntegrity": "pass"
+  },
+  "native": {
+    "timeUtc": "2026-10-22T14:38:58.422301Z",
+    "host": "macos-arm64",
+    "azaharVersion": "2126.1.2",
+    "azaharSha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+    "baseTitle": "00040000000edf00",
+    "installedPackages": 1,
+    "importedFiles": 118,
+    "remoteTransfers": 0,
+    "repeatImports": 0,
+    "secondProfileApplied": true,
+    "allProfilesUninstalled": true,
+    "progressSentinelsKept": 3,
+    "ownerGameAndProgressModified": false,
+    "timingsMs": {
+      "install": 3193,
+      "repeat": 1220,
+      "secondProfile": 1509,
+      "remove": 433
+    },
+    "phases": [
+      {
+        "phase": "Verifying managed Azahar for ROM 18",
+        "ms": 16
+      },
+      {
+        "phase": "Azahar import dlc for ROM 18",
+        "ms": 1208
+      },
+      {
+        "phase": "Verifying managed Azahar for ROM 18",
+        "ms": 3203
+      }
+    ],
+    "testData": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/3ds-addons/native-workflow-PcPdSW",
+    "limitations": [
+      "Remote manifest reconstructed from a copied local RomM receipt; no live authenticated API request.",
+      "Actual native CIA import and filesystem cleanup verified; in-game DLC visibility remains an owner check."
+    ]
+  },
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-arm64-3ds-addons.zip",
+    "bytes": 18825671,
+    "sha256": "acd11cdf076245cb7b92fbd5e554d9c15f1a32d8354e4ddd85f9113ae626ef66",
+    "kind": "checkout-based macOS Apple Silicon development build; not notarized"
+  },
+  "logs": {
+    "analyze.log": {
+      "path": ".tool-cache/research/3ds-addons/analyze.log",
+      "sha256": "9f0e50952a9e195a3f730c58b3345b1ea4e908ee35124a00edcb5f308bbb0d23",
+      "bytes": 446
+    },
+    "tests.log": {
+      "path": ".tool-cache/research/3ds-addons/tests.log",
+      "sha256": "70d6ec8cbda413d5d1fd1ead63c15fc06feff001fd110ccf994c30d8fdab604f",
+      "bytes": 31713
+    },
+    "native-workflow.log": {
+      "path": ".tool-cache/research/3ds-addons/native-workflow.log",
+      "sha256": "26bda5e0b140ad17f1607be66b1d6e40e564741e725e1143557448c7ac84b687",
+      "bytes": 844
+    },
+    "build.log": {
+      "path": ".tool-cache/research/3ds-addons/build.log",
+      "sha256": "d93a379b2e76a8d54f7f39168288842edb822d183fc5511b210ccb697eea90bc",
+      "bytes": 706
+    },
+    "archive-signature.log": {
+      "path": ".tool-cache/research/3ds-addons/archive-signature.log",
+      "sha256": "86d56b9bac396456069da0d68d485d436aef64beabb2e17e5b1b2e01ff9c4491",
+      "bytes": 857
+    },
+    "archive-integrity.log": {
+      "path": ".tool-cache/research/3ds-addons/archive-integrity.log",
+      "sha256": "8b908a97ad3aa56dd08c4ead7bca29368222f42b97493940895770792fdf0843",
+      "bytes": 12214
+    }
+  },
+  "sourceSha256": {
+    "lib/src/addons/azahar_import.dart": "369de681e637343a3144bd6f635dbb71523ac22dc4b8a54828d60620f32da730",
+    "lib/src/addons/files.dart": "5084a9f25925f654eeb1d14dc168c0812c119e05a9a3f0f3bdf80735cf207a71",
+    "lib/src/addons/profile.dart": "3d8816b55a5c50032274ceba40f7d7bd773be5ee6ab6289687641041e1a4e911",
+    "lib/src/addons/service.dart": "08ce2dd8ee880320e5799c5469f38f8497b03433409ddfe3421fcd91b1c024e1",
+    "lib/src/addons/three_ds.dart": "aae3d998efa718c87e24fce6a442df53fa73ac5c227e68c5fd5c2c6567d5e99d",
+    "lib/src/managed_emulators.dart": "b2d11754f7dac450542a3ed4a7fefccc7558999abb1a5616bc18603bd77745c6",
+    "lib/src/managed_profile.dart": "f3577622532b313d3940d899a580b58449bd7eb18b0184c974ccd32c276cd7c8",
+    "lib/src/romm/models.dart": "9fc797674719af2f1d130aea391481c12dde783928c5f55e43d4f6cc17a9e880",
+    "lib/src/shell/library.dart": "c3e1f8b9cebc5c55c458655bbe744923043bcc832da021cec8ba8942fdd7bbc4",
+    "lib/src/shell/library_management.dart": "0854af27591d2c1341315dc5481d4157d83c18e9f07c66615367a19f3c968e12",
+    "lib/src/shell/model.dart": "f0ad6003bc853d0088018abb18214f526db458de74e587214d3300151cc19e02",
+    "lib/src/shell/artwork_picker.dart": "ded241b22d3450e5a10ff412ea8f46cfdc297d902c34957f9bba51c522ae6fe6",
+    "lib/src/shell/app.dart": "113cc24ec241b3d4b14ab6aa4fe829b9f8ba3d0818aa5aac1d6fe0e18b9e4042",
+    "lib/src/shell/home_screen.dart": "0c86b7b854d428340ff2e4ff5c8400ce2006974fdddda6590b83c26ed1ac2889",
+    "lib/src/session_lease.dart": "c6223b4da3f5e59f3269c86dbc289b0ed00e98ccf3bec7499717c71eee37d081",
+    "test/three_ds_addons_test.dart": "4c5c30e80c7604b094e710104e26ea0f7eee41fbcec228535186323fda98a7e9",
+    "test/addon_shell_test.dart": "784e01f671d796d1ec1428179c7aa857ae872dd0deea284f1638be670d7c0302",
+    "test/support/addon_fixtures.dart": "fc7abfbf4de57a70a7d382603eefbde805f5e26242930d75b466e00fec5401a2",
+    "tool/check_3ds_addons_test.dart": "ff1be79d0ae7ed7fec97baaef03fea52c03e6a4d49944c9003e86cd41e40f824",
+    "PROJECT.md": "75e27ac947444bb3a2ca0088ea46f260efd4953021404e25ed3738069a5286ba",
+    "IMPLEMENTATION.md": "928434bdb380e005548867f69d06c818e8a183fee364f771b5e2107a23d32074",
+    "README.md": "0a415648145701ba85c7940e396cd5f719b368f4fadb2ee92aeef1ed32c359ed",
+    "docs/3ds-updates-and-dlc.md": "2c61da1e28d27b68079edef3b2a8c64468d43ed6e589328dcf39bd265f53e0af"
+  },
+  "unverified": [
+    "Live authenticated RomM catalogue/transfer for these add-ons",
+    "In-game DLC visibility",
+    "Real update-CIA gameplay",
+    "Linux, Windows and Android native add-on installation",
+    "Physical-controller/Steam acceptance"
+  ]
+}

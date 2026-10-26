@@ -1,0 +1,293 @@
+{
+  "recordedAtUtc": "2026-10-17T19:36:51.910799Z",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64"
+  },
+  "revision": "Workspace SHA-256 fingerprints; no Git repository in this checkout.",
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "analysis": "passed",
+      "testsPassed": 94,
+      "log": ".tool-cache/research/managed-play/check-preservation-final.log"
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_managed_test.dart",
+      "result": "passed",
+      "romsPassed": 6,
+      "log": ".tool-cache/research/managed-play/native-final.log",
+      "profiles": "Retained after first-run tests; final run includes warm caches",
+      "durationSeconds": 212
+    },
+    {
+      "command": "BROOMM_SMOKE_GAMES=mk7,3dworld BROOMM_SMOKE_PROFILE=e123456789abcdef0123456789abcdef devbox run -- flutter test tool/smoke_managed_test.dart",
+      "result": "passed",
+      "romsPassed": 2,
+      "profiles": "New profile roots absent before this run",
+      "log": ".tool-cache/research/managed-play/native-fresh-profiles.log"
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_home_test.dart",
+      "result": "passed",
+      "catalogue": "Explicit fixture account; provided SNES bytes downloaded under a different filename",
+      "log": ".tool-cache/research/managed-play/native-home-preserved.log"
+    },
+    {
+      "command": "devbox run -- flutter test .tool-cache/research/managed-play/check_profile_roots_test.dart",
+      "result": "passed",
+      "scope": "Final writable-root guard against all five real retained emulator profiles, with session lease held",
+      "log": ".tool-cache/research/managed-play/profile-roots.log"
+    },
+    {
+      "command": "devbox run -- flutter test tool/render_managed_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/managed-play/render-verified.log",
+      "previews": ".tool-cache/research/managed-play/previews"
+    },
+    {
+      "command": "devbox run app-build",
+      "result": "passed",
+      "log": ".tool-cache/research/managed-play/build-verified.log",
+      "artifact": "build/macos/Build/Products/Debug/broomm.app"
+    }
+  ],
+  "nativeSessions": [
+    {
+      "game": "smw",
+      "emulator": "RetroArch",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/retroarch",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "melee",
+      "emulator": "Dolphin",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/dolphin",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "brawl",
+      "emulator": "Dolphin",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/dolphin",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "rayman",
+      "emulator": "RPCS3",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/rpcs3",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "mk7",
+      "emulator": "Azahar",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/azahar",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "3dworld",
+      "emulator": "Ryubing",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/f123456789abcdef0123456789abcdef/emulators/ryubing",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    }
+  ],
+  "freshProfiles": [
+    {
+      "game": "mk7",
+      "emulator": "Azahar",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/e123456789abcdef0123456789abcdef/emulators/azahar",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    },
+    {
+      "game": "3dworld",
+      "emulator": "Ryubing",
+      "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/e123456789abcdef0123456789abcdef/emulators/ryubing",
+      "pairing": true,
+      "resumed": true,
+      "liveRemap": true,
+      "closed": true
+    }
+  ],
+  "testedBuilds": [
+    {
+      "id": "retroarch",
+      "name": "RetroArch",
+      "version": "1.22.2 / 20261001 + Snes9x 1.63",
+      "host": "macos-arm64",
+      "bundle": "RetroArch.app",
+      "executable": "Contents/MacOS/RetroArch",
+      "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {},
+      "core_sha256": "8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6"
+    },
+    {
+      "id": "dolphin",
+      "name": "Dolphin",
+      "version": "2609",
+      "host": "macos-arm64",
+      "bundle": "Dolphin.app",
+      "executable": "Contents/MacOS/Dolphin",
+      "sha256": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+      "sdl": 3,
+      "native": {
+        "BROOMM_CORE_SYSTEM": "0000000100172cb8",
+        "BROOMM_CORE_STATE": "0000000100204d50",
+        "BROOMM_CORE_SET_STATE": "0000000100204ba8"
+      }
+    },
+    {
+      "id": "rpcs3",
+      "name": "RPCS3",
+      "version": "0.0.42-20031 d08d568d",
+      "host": "macos-arm64",
+      "bundle": "RPCS3.app",
+      "executable": "Contents/MacOS/rpcs3",
+      "sha256": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {
+        "BROOMM_EMU_STATUS": "0000000103ddca50"
+      }
+    },
+    {
+      "id": "azahar",
+      "name": "Azahar",
+      "version": "2126.1.2",
+      "host": "macos-arm64",
+      "bundle": "Azahar.app",
+      "executable": "Contents/MacOS/azahar",
+      "sha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+      "sdl": 2,
+      "native": {}
+    },
+    {
+      "id": "ryubing",
+      "name": "Ryubing",
+      "version": "1.3.3",
+      "host": "macos-arm64",
+      "bundle": "Ryujinx.app",
+      "executable": "Contents/MacOS/Ryujinx",
+      "sha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+      "sdl": 2,
+      "sdl_library": "Contents/Frameworks/libSDL2.dylib",
+      "native": {}
+    }
+  ],
+  "verified": [
+    "Whole-bundle local setup and core identity, private staging/receipts/retry",
+    "Profile-private effective writable roots and retained progress",
+    "Native readiness, pairing, play, pause/menu, live remap and clean exit for six real ROMs",
+    "Home download receipt through native Play and return to Home",
+    "Rendered widget PNG review without computer-control tools",
+    "Native macOS debug compilation"
+  ],
+  "notVerified": [
+    "Owner-authenticated live RomM download/gameplay",
+    "Physical game actions, gyro feel/calibration and fullscreen visual acceptance",
+    "Linux/Steam/gamescope, Windows or Android native execution",
+    "GPU-renderer injection overlay",
+    "Remote archive delivery, arbitrary newer builds or system-executable selection",
+    "RomM save/state synchronization, full offline activation or save recovery journals",
+    "Power-loss durability"
+  ],
+  "dependencies": "No new Dart libraries or OS-installed dependencies; Devbox plus approved pre-provisioned Xcode tools.",
+  "ownerApp": "No restart of the existing interactive app or logout performed.",
+  "validationSequence": "The complete native six-ROM run and new 3DS/Switch profiles preceded the final existing-profile missing-root guard. That final guard was checked by 94 regular tests, all five retained real profile roots and a repeated actual Home/native play-return test; the final native app was then rebuilt. No bridge source changed in this slice.",
+  "sourceSha256": {
+    "assets/setup/azahar.integrity.json": "acad77dd1d301eebd2472ced90ae39f42ce83d6f17f12f4d71bf58013ceb49ea",
+    "assets/setup/azahar.symbols": "9e77edb253b151d432f9396edb0339254e541dd39f347938e85046e097d10731",
+    "assets/setup/dolphin.integrity.json": "afec07646f4c38db736040af693ac70319cead992adb2b6d789d4ee2fae34972",
+    "assets/setup/dolphin.symbols": "d3c3053aac8e0c2bc6ef94e1e591476e760375870b33a4ae8ecc248e362eab98",
+    "assets/setup/retroarch.integrity.json": "617ca4e5c4c47396800b82cecaa3229bfbc048bda590331fe7d1c650d0b5c484",
+    "assets/setup/retroarch.symbols": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "assets/setup/rpcs3.integrity.json": "14aed0d0e7dea54bab24dfcad6f5afd5195825a7ab005ad9c89d9f8f628acb61",
+    "assets/setup/rpcs3.symbols": "8b65836b388e92c4850fb890beb7fd1adf13c564df7999b096889da5bdace1cd",
+    "assets/setup/ryubing.integrity.json": "c076fbae6e17fb63e7ae8a04055c63f107085475c82b1ae21f98edd252a1d6a2",
+    "assets/setup/ryubing.symbols": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "assets/setup/setup.json": "7989330b6cfbe8bf210cc0c620cd0c12a7b6baa6e4064e95309dfc2246dfcbd0",
+    "assets/setup/tested-builds.json": "6eafce8c0e4809af0cd4cd6211f49aeedecad1f5096f077fcbbe61ecfde4afa7",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "lib/controller_lab.dart": "f66b8071a47f6adeddec58fbb534b4fd90a9ca1da906e8c90d1b388628979a4b",
+    "lib/main.dart": "cd02ff6493c7088c8448041afc132e2e96bc33787849c4a09c1ea7269c1a8ef0",
+    "lib/src/app_model.dart": "ffa3ab65246d48bb745c9bb70418f4cdc55e42a30a17fd77314ddc465b2dc5fd",
+    "lib/src/catalogue.dart": "968a9ad1d28f3dfce6a88fce83638b32feccbe52276b4653b3f8d5d7c84c4dd2",
+    "lib/src/controller_mapping.dart": "b8351de23c7d059079c37efaca3ac801aeb10806e71776cc396338ae4f3b92d2",
+    "lib/src/emulators.dart": "1f3ff76bf9e1116ad63bb4520e28cf7a0fb481278399c47302991668b0b46c77",
+    "lib/src/game_launch.dart": "f79548116669fce37ff6baef28825cf358ab49198fc6ca64d5f31e9b2a45dddd",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "lib/src/managed_emulators.dart": "75e48358ec2df24d39aa74738f3a6f2c0e09d65aeb2a9689d7f8046d23e3b370",
+    "lib/src/managed_profile.dart": "f3577622532b313d3940d899a580b58449bd7eb18b0184c974ccd32c276cd7c8",
+    "lib/src/pairing.dart": "e05e7ef0ce5312c150a9fa386708a04b2dc04018989b56d002466ae6394f1252",
+    "lib/src/pairing_gestures.dart": "9562063e3e6d72e14f99c3a5e4415ab853584b1ff24bafd4c3e1938785427325",
+    "lib/src/romm/client.dart": "f42297f86a08b6235e1c70c1efcd3dd7fd5bbe8f26db4a319dc42dae3ddd805c",
+    "lib/src/romm/models.dart": "2cfe0a1ef2d623381bd1d2f81add3387ba730cec0065a5e3110d3450a3773adb",
+    "lib/src/romm/transfer.dart": "b56c04f87f4643aad0bdc2c0e93cf9673e80184a9a0e28b7eb4751a3fe2b9ecb",
+    "lib/src/session.dart": "c896a10c32a3f979e8387dd3b0667c3c7d32dceadec39fe623d620e0d2fb68a7",
+    "lib/src/session_lease.dart": "c6223b4da3f5e59f3269c86dbc289b0ed00e98ccf3bec7499717c71eee37d081",
+    "lib/src/session_log.dart": "0b7b941f660f98bc57b36c55f5e4a9fe1aafb19ec54492a75bf54238e34166fc",
+    "lib/src/shell/app.dart": "d2f4c53783527e245c6a3b1f1b7aa141326a1d8c2d6b5f3fd12d8d047cd0e99f",
+    "lib/src/shell/artwork.dart": "d2fa4e3ba60ae37531503a57e5858d7a97cb2ff21a7cc05db6e1e1249c7b6ba6",
+    "lib/src/shell/controller_input.dart": "0c19d697abb1b2a9d97217f228374c5047683fc5a2cab3ba54ffc5133d3fd263",
+    "lib/src/shell/controls.dart": "350d042ddc695e9007555a95befc844ee67af6cb5f230d21fcc21b5eae39d828",
+    "lib/src/shell/download_status.dart": "f295d775b06ab568b5b62ee1f2548bad7249d2802194edfb47f1cc26ac06b789",
+    "lib/src/shell/emulator_settings_screen.dart": "0bb2b8a499ff0e0b16f843009e68adb6c7d47311b50341d3644ea939a90077ed",
+    "lib/src/shell/game_session_screen.dart": "51015fe6422d9e6cbacbda94409716dced8b198b836e5c4a0e55fef9e769f137",
+    "lib/src/shell/home_screen.dart": "cc49de989c94b100923c623f54145ae16a8830926b62e5dd884132d183311912",
+    "lib/src/shell/library.dart": "b8f98be937688c7bfe9d1166540ed82bb6cc836724a986d3ad4a117441d07e52",
+    "lib/src/shell/model.dart": "9f68c437d36f4d6dbc8a651672a3e9ca4ed98b73fad5c207cc583e71bfd995f9",
+    "lib/src/shell/onboarding.dart": "3508e612b201909396b80230ebf04213c348f7908d0ac24c357d7ea0bfeaf203",
+    "lib/src/shell/settings_screen.dart": "af428937f21e80a1fbfc0974ca41123cfd9e14174794bfa93cde505dffdccc5e",
+    "lib/src/shell/storage.dart": "b0bfa8039123c0159e4725eaac9d645e60268cc12814e4606bc72fada7f88309",
+    "lib/src/shell/store_screen.dart": "b92d57617d06fb73126912689bfb5aad27910e3cf7a07e0f938b61e86b2105e3",
+    "lib/src/widgets/controller_tester.dart": "dceb3c5c56eac629feaca1b0f1bdfb0c28cc6f039c4e4d170a3e0161e6e38165",
+    "lib/src/widgets/motion_tester.dart": "e6384fd4ed9ac6b53a96d65d2888f2594fa1ff47fab8a976139aa70f5ca95f16",
+    "lib/src/widgets/pairing_screen.dart": "79941584c17e658d4fc3577564876557932c5498e3df7f9319b879e134920911",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "test/controller_mapping_test.dart": "c0c7e8e73e4f9446904d2fd4eca16b83ea69fd2db33f6a95b92d504e7339be55",
+    "test/game_launch_test.dart": "f4e30f13f41609d4032aef91f925da0850bfeeb0f2068602d37f006a8542520c",
+    "test/game_session_screen_test.dart": "907d5cecd5daca7e29a84dbe1aa990030d76dab470d99e4237deeba7dec0b0ea",
+    "test/library_download_test.dart": "152ff626182df7741b588ef79c2c4bf0e6bced000394a6abf52503c8446e9c35",
+    "test/managed_emulators_test.dart": "821dbd1850137f1ad84f8c2333607a7dfe3b33156f14c449a807751459f781aa",
+    "test/motion_test.dart": "5f1e509a4279109118c558f8e4f2e0d87fb6130378f4984b59fafa38db230840",
+    "test/overlay_state_test.dart": "9895a25490cb44013780ec865d4c3fa9c43a8ebda91b5b051c28f8d017fe04a9",
+    "test/pairing_gestures_test.dart": "3ad97782628b3998020b578c89da7b3b17f84ad1c943369f7f9de767e093cb09",
+    "test/pairing_test.dart": "703b3cc269dd552bc62dd27140e1ad56163ab14d3e4cf50efc98d8c42385d24d",
+    "test/romm_client_test.dart": "a3adb335cf55ee7e76887f13757befb7db3a8bb70084a3c34ded791c80d44457",
+    "test/session_commands_test.dart": "78054a57b6f1ca5883a9b93250eebbad4a6fbf67033700fe63315e0c34598e27",
+    "test/session_log_test.dart": "5f4ab4149a14e90274d4028ad0063f04d42f254478c00847554f27494870fe85",
+    "test/shell_model_test.dart": "fd35278b81d41e623ccb1668e476a9bcbd083fe7654c6ef0a56db948034e338c",
+    "test/shell_storage_test.dart": "cdb8b884f9fce6629d3d6c227409b80b9866dd1d0b6cfc95167500ad0e263757",
+    "test/shell_widget_test.dart": "8349eb3d3d77a9ebc8b89e6967cc11e024cedc7fa44e36e99d4c0ff3b65b043a",
+    "test/support/hold_library_lock.dart": "3242885b42001f7e5a58f500a7b42d1d6bf8d766e1a397fe2859b3a38505bd70",
+    "test/widget_test.dart": "74faafa57c1e5d71132bf656218c523b65d4075bdecc17b4554715d5f16f505a",
+    "tool/capture_tested_setup.dart": "e1b63912baa1d4ef14ceed861bad533d484b31a5febc1dfe9894eace54508499",
+    "tool/render_managed_test.dart": "66e50f60fd57bbaf3649de11f52a1c2592890c63e0ca7cce1938f8aa0f095a67",
+    "tool/smoke_home_test.dart": "e809bdcbb8a15bf80b291b2477613cf5d7fa15a4d23436d5600c94ea00092851",
+    "tool/smoke_managed_test.dart": "cecaef472a0d8624cd7dc599b88d90b11c6ec966247ad15fef74464a90b1f6b8"
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "recordedAt": "2026-10-16T23:52:19.676501Z",
+  "sourceIdentity": "No Git repository; SHA-256 fingerprints identify the tested files.",
+  "host": {
+    "os": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64",
+    "hardware": "Apple M1 Pro",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.0"
+  },
+  "sourceFingerprint": {
+    "android/app/src/main/AndroidManifest.xml": "369cc86340d441e7800987f1c94e89d92f9793417e173873309ec04cee43367a",
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": "7e1e2a64cce7b5ede912dfd9a2309b9cd81c802f51e398aff3fb1b5a009b09d0",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "lib/controller_lab.dart": "f66b8071a47f6adeddec58fbb534b4fd90a9ca1da906e8c90d1b388628979a4b",
+    "lib/main.dart": "f99fd13fffc075164c6e690796bf44b8b1fdb8841f75584bcd8a362e1a97bb0c",
+    "lib/src/app_model.dart": "447afd9746141d33e979b8610c0ba0fdee45f33395910cf3a7973beb15eea6e0",
+    "lib/src/catalogue.dart": "59df22a0c496b8206659f80d81b1e58f4ea9bc5e96d03df900ac829368bf2ac6",
+    "lib/src/controller_mapping.dart": "b8351de23c7d059079c37efaca3ac801aeb10806e71776cc396338ae4f3b92d2",
+    "lib/src/emulators.dart": "b868e10ac548896774365b43d366eb876f82c3b2a1c4855a54eec9ca3c39484b",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "lib/src/pairing.dart": "e05e7ef0ce5312c150a9fa386708a04b2dc04018989b56d002466ae6394f1252",
+    "lib/src/pairing_gestures.dart": "9562063e3e6d72e14f99c3a5e4415ab853584b1ff24bafd4c3e1938785427325",
+    "lib/src/romm/client.dart": "bf8e2134019fe500f5286e83de236744f37ccc07ef2b9619aa20acf19810ebd0",
+    "lib/src/romm/models.dart": "926fc81f7eb9224ad9b65001c7ce71a5034fb0ff8ed4cf6675ae6db3d63f6c4f",
+    "lib/src/session.dart": "8ec79b4630d37dfbc5da3b458ca0f82bb8d80bf591b7f844c6b43f2c6545d761",
+    "lib/src/session_log.dart": "0b7b941f660f98bc57b36c55f5e4a9fe1aafb19ec54492a75bf54238e34166fc",
+    "lib/src/shell/app.dart": "52f0f7a59b7ffc8cf85b3c54837107f63f879089f775ce91321fbc41377d373e",
+    "lib/src/shell/artwork.dart": "f3bb815c4ada3bb4526d36bb5980daf829335fc1616ee8fa5a3686ef7192d63f",
+    "lib/src/shell/controller_input.dart": "0c19d697abb1b2a9d97217f228374c5047683fc5a2cab3ba54ffc5133d3fd263",
+    "lib/src/shell/controls.dart": "d9d7cca5eed4195483bc89564032d889d1de611e63bdf89a8c8a4c5f16b0598d",
+    "lib/src/shell/home_screen.dart": "2779c34d0c31f9f7ea133ffbaddd658a95af3e343bd969013cfdef513978c6ad",
+    "lib/src/shell/model.dart": "e5183fa7d995a072a241a54b4ad8fc3d8f617b5f5c2c794a7af1fcd49c2ec42d",
+    "lib/src/shell/onboarding.dart": "3508e612b201909396b80230ebf04213c348f7908d0ac24c357d7ea0bfeaf203",
+    "lib/src/shell/settings_screen.dart": "568e8f46c87f70663560585076850862281368c63eca333918251609d54d92ee",
+    "lib/src/shell/storage.dart": "b0bfa8039123c0159e4725eaac9d645e60268cc12814e4606bc72fada7f88309",
+    "lib/src/shell/store_screen.dart": "0fc6fc2e5472a866b6d8695c1e72123d734bb95ecc6b9277a442eb810b78428e",
+    "lib/src/widgets/controller_tester.dart": "dceb3c5c56eac629feaca1b0f1bdfb0c28cc6f039c4e4d170a3e0161e6e38165",
+    "lib/src/widgets/motion_tester.dart": "e6384fd4ed9ac6b53a96d65d2888f2594fa1ff47fab8a976139aa70f5ca95f16",
+    "lib/src/widgets/pairing_screen.dart": "859e5149fa11812f59180ed2fda1feff68b9a9f1c941733bf7e2a426666a3074",
+    "macos/Runner/AppDelegate.swift": "a6dfe47f624ea22355cd83f9ef16bb8b9e147dfbc3db14ed550fde3e0ca26b18",
+    "macos/Runner/MainFlutterWindow.swift": "ceb0be091b36ca4eefd4c49117f39129fbcaf7efc304419000727d1757adeabb",
+    "native/motion.inc": "dbce4636d98e2cae39cd2656a15ad7b3fb93d0b3099171bcc181b1809e647f9a",
+    "native/session.inc": "916fecac262349d92f846b53b34f0d063b9bdd3954387e2aac8b4e6673868f60",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "pubspec.yaml": "02544bdb1e708e4d5eed50d03791f80114744676f8c00ae93c237ff466fda30b",
+    "test/controller_mapping_test.dart": "c0c7e8e73e4f9446904d2fd4eca16b83ea69fd2db33f6a95b92d504e7339be55",
+    "test/motion_test.dart": "5f1e509a4279109118c558f8e4f2e0d87fb6130378f4984b59fafa38db230840",
+    "test/overlay_state_test.dart": "9895a25490cb44013780ec865d4c3fa9c43a8ebda91b5b051c28f8d017fe04a9",
+    "test/pairing_gestures_test.dart": "3ad97782628b3998020b578c89da7b3b17f84ad1c943369f7f9de767e093cb09",
+    "test/pairing_test.dart": "703b3cc269dd552bc62dd27140e1ad56163ab14d3e4cf50efc98d8c42385d24d",
+    "test/romm_client_test.dart": "a3adb335cf55ee7e76887f13757befb7db3a8bb70084a3c34ded791c80d44457",
+    "test/session_commands_test.dart": "78054a57b6f1ca5883a9b93250eebbad4a6fbf67033700fe63315e0c34598e27",
+    "test/session_log_test.dart": "5f4ab4149a14e90274d4028ad0063f04d42f254478c00847554f27494870fe85",
+    "test/shell_model_test.dart": "fd35278b81d41e623ccb1668e476a9bcbd083fe7654c6ef0a56db948034e338c",
+    "test/shell_storage_test.dart": "cdb8b884f9fce6629d3d6c227409b80b9866dd1d0b6cfc95167500ad0e263757",
+    "test/shell_widget_test.dart": "d26ea39bd79d90fdc70cb9d6c23711a50c779afa047ce2826bae1951c935b487",
+    "test/widget_test.dart": "74faafa57c1e5d71132bf656218c523b65d4075bdecc17b4554715d5f16f505a",
+    "tool/render_shell_test.dart": "e09e45c4d5d3992e4bedbb458653beb0ca8396b0f1cdada8caf708591ca0c2dc"
+  },
+  "application": {
+    "bundle": "build/macos/Build/Products/Debug/broomm.app",
+    "entryPoint": "lib/main.dart (RomM application)",
+    "executableSha256": "8ef7b8985aa2a5a72191183eb95db5e63fc95adc758fde8dc181bb4e31e1881f",
+    "dartKernelSha256": "189853fe3c271efd69abff213730a0b3bc8cfa5f21b165a74adcf6ab7f04eca7"
+  },
+  "bridges": {
+    "SDL2": {
+      "built": "acdbfbc258b61a18df97f10b8057e41353ec5325008ab6d9d08208c0133fa967",
+      "packaged": "acdbfbc258b61a18df97f10b8057e41353ec5325008ab6d9d08208c0133fa967"
+    },
+    "SDL3": {
+      "built": "13c9d5e6d955afd0a18790692071590400706bdf58beef4389246430a971d118",
+      "packaged": "13c9d5e6d955afd0a18790692071590400706bdf58beef4389246430a971d118"
+    }
+  },
+  "commands": {
+    "checks": "devbox run app-check",
+    "build": "devbox run app-build",
+    "nativeWindow": "devbox run prototype-check-macos",
+    "labRegression": "devbox run -- dart tool/smoke_prototype.dart brawl",
+    "visual": "devbox run -- flutter test tool/render_shell_test.dart"
+  },
+  "flutter": {
+    "analyze": "passed",
+    "testsPassed": 67,
+    "priorControllerTestsRetained": 49
+  },
+  "nativeWindow": {
+    "devicesAndConfigurations": [
+      {
+        "device": {
+          "architecture": "arm64",
+          "deviceId": "00006000-001850303EC3401E",
+          "deviceName": "My Mac",
+          "modelName": "MacBook Pro",
+          "osBuildNumber": "26A434",
+          "osVersion": "27.0.1",
+          "platform": "macOS"
+        },
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "passedTests": 2,
+        "skippedTests": 0,
+        "testPlanConfiguration": {
+          "configurationId": "1",
+          "configurationName": "Test Scheme Action"
+        }
+      }
+    ],
+    "environmentDescription": "Runner · Built with macOS 27.0.1",
+    "expectedFailures": 0,
+    "failedTests": 0,
+    "finishTime": 1792194206.82,
+    "passedTests": 2,
+    "result": "Passed",
+    "runtimeWarnings": [],
+    "skippedTests": 0,
+    "startTime": 1792194191.701,
+    "statistics": [],
+    "testFailures": [],
+    "title": "Test - Runner",
+    "topInsights": [],
+    "totalTestCount": 2
+  },
+  "controllerLab": {
+    "timestamp": "2026-10-16T23:44:48.004413Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "brawl",
+        "emulator": "Dolphin",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 7470,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "inputDiscoveryReady": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "livePublicServer": {
+    "timestamp": "2026-10-16T23:42:25.261115Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "server": "https://romm.docubi.casa",
+    "version": "5.4.0",
+    "transport": "HTTPS, certificate validation enabled, direct SDK HttpClient",
+    "endpoint": "GET /api/heartbeat",
+    "authenticationAttempted": false,
+    "authenticatedCatalogueVerified": false
+  },
+  "logs": {
+    "checks": ".tool-cache/research/romm-shell/check-final.log",
+    "build": ".tool-cache/research/romm-shell/build-final.log",
+    "nativeWindow": ".tool-cache/research/romm-shell/native-window-tests.log",
+    "lab": ".tool-cache/research/romm-shell/controller-lab-regression.log",
+    "visual": ".tool-cache/research/romm-shell/visual.log",
+    "live": ".tool-cache/research/romm-shell/live-check.log"
+  },
+  "visualArtifacts": [
+    ".tool-cache/research/romm-shell/previews/server.png",
+    ".tool-cache/research/romm-shell/previews/profiles.png",
+    ".tool-cache/research/romm-shell/previews/home.png",
+    ".tool-cache/research/romm-shell/previews/store.png",
+    ".tool-cache/research/romm-shell/previews/settings.png",
+    ".tool-cache/research/romm-shell/previews/emulators.png",
+    ".tool-cache/research/romm-shell/previews/home-phone.png"
+  ],
+  "artifactInspection": {
+    "inspected": [
+      "server",
+      "home",
+      "store",
+      "settings",
+      "home-phone"
+    ],
+    "source": "Actual Flutter widget rendering with isolated explicit fixtures",
+    "computerUseToolsUsed": false,
+    "ownerPhysicalAcceptance": false
+  },
+  "securityAndEffects": {
+    "applicationDependenciesAdded": [],
+    "credentialsPersisted": false,
+    "ownerAuthenticationAttempted": false,
+    "serverMutationDuringVerification": false,
+    "gameOrEmulatorInstallationImplemented": false,
+    "saveSyncImplemented": false,
+    "originalRomsAndEmulatorSettingsModified": false,
+    "privateLabSessionUsed": true,
+    "goCodeImported": false
+  },
+  "limits": [
+    "Login session/token refresh, catalogue and artwork are tested with local real-HTTP fixtures, not owner credentials.",
+    "Only public HTTPS heartbeat is verified on the actual server. Physical controller and live catalogue/artwork acceptance need owner input.",
+    "Native Linux/Steam/gamescope, Windows and Android runtime/packaging checks are pending.",
+    "Credentials are memory-only. Servers/profile metadata/preferences persist; restart requires sign-in.",
+    "Emulator Settings is a future setup entry point. RomM installation, sync and named collection filters remain unimplemented.",
+    "Controller lab still has its earlier single local prototype profile and no RomM ownership binding."
+  ],
+  "retainedInitialFailures": [
+    "Initial malformed URL/narrow-layout assertions failed and were corrected.",
+    "One widget run was interrupted because its fake-async test awaited real file I/O; the harness now dispatches that action in runAsync without increasing timeouts."
+  ]
+}

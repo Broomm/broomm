@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-23",
+  "utc": "2026-10-23T14:46:34.142943+00:00",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "uncommittedSourcePreserved": true,
+  "scope": "macOS CLI package/firmware installer abort notification; catalogue matrix is documentation only",
+  "initialCrash": {
+    "file": "rpcs3-2026-10-23-111447.ips",
+    "pid": 84191,
+    "signal": "SIGABRT",
+    "context": "Matched native successful package checkpoint and uninitialized typemap destructor/process-teardown fatal diagnostic"
+  },
+  "protocol": {
+    "optInEnvironmentKey": "BROOMM_INSTALLER_ABORT_MODE",
+    "optInValue": "rpcs3-cli-v1",
+    "status": 86,
+    "marker": "BROOMM_RPCS3_CLI_ABORT_V1",
+    "nativeWriterRequired": true,
+    "successNeedsCompletionAndKnownTeardownAndIndependentOutputVerification": true,
+    "nonOptedInOriginalAbortVerified": true,
+    "globalCrashPreferencesChanged": false
+  },
+  "checks": {
+    "flutterTests": 257,
+    "nativeGuardTests": 5,
+    "nativeAdapterFixtures": 3,
+    "realPackageArchitectures": [
+      "arm64",
+      "x86_64 via existing Rosetta"
+    ],
+    "realFirmwareImportAndReuse": true,
+    "installerResults": {
+      "utc": "2026-10-23T14:30:05.730243Z",
+      "results": [
+        {
+          "case": "completed-fixture",
+          "accepted": true
+        },
+        {
+          "case": "failed-fixture",
+          "rejected": true
+        },
+        {
+          "case": "forged-fixture",
+          "rejected": true
+        },
+        {
+          "case": "rpcs3",
+          "pid": 85581,
+          "files": 11,
+          "durationMs": 1460,
+          "bridgeMarker": true,
+          "outputInventoryMatches": true,
+          "crashReportFound": false
+        },
+        {
+          "case": "rpcs3-intel",
+          "pid": 85583,
+          "files": 11,
+          "durationMs": 1785,
+          "bridgeMarker": true,
+          "outputInventoryMatches": true,
+          "crashReportFound": false
+        }
+      ]
+    },
+    "analysis": "clean",
+    "gitDiffCheck": "pass"
+  },
+  "logs": {
+    "unit": "full-tests.log",
+    "guard": "native-guard-final-2.log",
+    "installer": "native-installer-managed-2.log",
+    "firmware": "native-firmware-final.log",
+    "analysis": "analyze-final-2.log",
+    "build": "build-release.log",
+    "failedPrototypeRun": "native-installer-tests.log",
+    "bridgeBuild": "build-bridges.log",
+    "preseal": "preseal-verification.log",
+    "signature": "signature.log",
+    "archive": "zip-integrity.log",
+    "extractedSignature": "extracted-signature.log"
+  },
+  "sources": {
+    "native/installer_guard.c": "88054f262e1683bde68c9bff78d059ef1aa6ff7f8be5b47ca979f0e168d93a0b",
+    "lib/src/addons/rpcs3_import.dart": "24d0c894f2f160b1eca7b872e1e61a94b18cd6502d2217f705ca54c135fb928a",
+    "tool/fixtures/installer_wait.c": "83a7dbc2d77886be16f41aca9bc5359344d1216bc7143b3edb36ffa15f960d8b",
+    "tool/fixtures/rpcs3_installer_exit.c": "1ebe1f49c9b9dd08925507ae1f48092be21feb6e98c84561646465ad1f0fefab",
+    "tool/check_installer_guard_test.dart": "b9befd62a724273aa59bc1fbc3a87720d7c99b7b1813c001f01d421a79b7f925",
+    "tool/check_rpcs3_installer_exit_test.dart": "33869bbc94acb1f77e954a3b2e0633d9d459efe5ff26aa382b418355dabf9fdc",
+    "lib/src/game_launch.dart": "e15704efcfed7bbd8f831437cc09d8be1c20270e13a15bd5283b4ec0a054276c",
+    "lib/src/progress/layout.dart": "7424cf2e77896d9d53117834d625e224f4b76562430a7a2ff1990ab29163a32d",
+    "assets/setup/tested-builds.json": "601aef891850cbc0cd4eb629f114f8e322cca41eff8f3c8e860458fba27c3eaf",
+    "docs/platform-support-matrix.md": "f2ddb2fcf342146c6c7b0ed300745e00a2f9c92764b6621789e444cc06ee7c39",
+    "docs/platform-support-matrix.json": "1e606c44aa632858e1c83eb6f812f475a5379533040d4a95b8be67b1899f0c6c"
+  },
+  "nativeLibraries": {
+    "broomm-installer-guard.dylib": {
+      "sha256": "309a87efc4751a2f85505904efe745df27ce944c9cdfac41f507927307f6ffdb",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "bundledBytesMatch": true
+    },
+    "broomm-sdl2.dylib": {
+      "sha256": "e234f5ece4d9c361030e20e5827c77238dd51f045d8a3253c256f924057e8897",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "bundledBytesMatch": true
+    },
+    "broomm-sdl3.dylib": {
+      "sha256": "1c44463181125811d10050fb0c3240a0e6c8e02bc81adcc8e096e55b01395331",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "bundledBytesMatch": true
+    }
+  },
+  "nativeDependencies": "Guard uses only pre-provisioned Apple SDK/libSystem; no new third-party source or dependency",
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-installer-fix.zip",
+    "bytes": 19515204,
+    "sha256": "e66516df85e9b629ac5de9abd0af1ab3a7103d63c3d3443f548f19317d62c76a",
+    "build": "macOS Release / Apple Silicon checkout-bound development distribution",
+    "outerSealRefreshed": true,
+    "nestedFrameworksVerified": true,
+    "zipIntegrity": true,
+    "extractedDeepStrictSignature": true,
+    "unpacked": ".tool-cache/research/platform-support/release-unpacked-5zbhqpne"
+  },
+  "signatureNote": "Incremental outer seal referenced old native resource/App.framework hashes. Both nested frameworks verified; refreshed only the outer ad-hoc seal before packaging.",
+  "limits": [
+    "No physical visual/controller test; native process status and per-PID crash-report checks establish the scoped notification correction",
+    "Linux/Windows/Android native installer/overlay verification remains pending",
+    "No new emulator/core recipe installed or update applied; proposed matrix rows remain pending",
+    "Catalogue/API reads only, with ordinary remembered-token refresh; no owner game/progress/server asset mutation"
+  ]
+}

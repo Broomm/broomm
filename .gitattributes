@@ -1,0 +1,7 @@
+# Bash entry points must keep LF on native Windows checkouts too.
+*.sh text eol=lf
+tool/ci/linux-tools/* text eol=lf
+tool/apple_tools/* text eol=lf
+*.dart text eol=lf
+*.yml text eol=lf
+version.txt text eol=lf

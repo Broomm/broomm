@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "host": "macos-arm64",
+  "launchers": {
+    "retroarch": {
+      "source": "tested:retroarch",
+      "core": "tested:snes9x",
+      "cores": {
+        "fbneo": "tested:fbneo",
+        "flycast": "tested:flycast",
+        "gambatte": "tested:gambatte",
+        "genesis_plus_gx": "tested:genesis_plus_gx",
+        "mednafen_lynx": "tested:mednafen_lynx",
+        "mednafen_pce_fast": "tested:mednafen_pce_fast",
+        "mednafen_saturn": "tested:mednafen_saturn",
+        "mesen": "tested:mesen",
+        "mgba": "tested:mgba",
+        "mupen64plus_next": "tested:mupen64plus_next",
+        "opera": "tested:opera",
+        "picodrive": "tested:picodrive",
+        "stella": "tested:stella",
+        "virtualjaguar": "tested:virtualjaguar"
+      }
+    },
+    "dolphin": {
+      "source": "tested:dolphin"
+    },
+    "rpcs3": {
+      "source": "tested:rpcs3",
+      "resources": {
+        "ps3_firmware": "tested:ps3_firmware"
+      }
+    },
+    "azahar": {
+      "source": "tested:azahar"
+    },
+    "ryubing": {
+      "source": "tested:ryubing",
+      "resources": {
+        "switch_firmware": "tested:switch_firmware",
+        "prod_keys": "tested:prod_keys",
+        "title_keys": "tested:title_keys"
+      }
+    },
+    "melonds": {
+      "source": "tested:melonds"
+    },
+    "rpcs3-intel": {
+      "source": "tested:rpcs3-intel",
+      "resources": {
+        "ps3_firmware": "tested:ps3_firmware"
+      }
+    },
+    "duckstation": {
+      "source": "tested:duckstation"
+    },
+    "pcsx2": {
+      "source": "tested:pcsx2"
+    },
+    "armsx2": {
+      "source": "tested:armsx2"
+    },
+    "ppsspp": {
+      "source": "tested:ppsspp"
+    },
+    "eden": {
+      "source": "tested:eden",
+      "resources": {
+        "switch_firmware": "tested:switch_firmware",
+        "prod_keys": "tested:prod_keys",
+        "title_keys": "tested:title_keys"
+      }
+    }
+  }
+}

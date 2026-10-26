@@ -1,0 +1,7 @@
+000000010ab32008 g_main_window
+000000010003f890 _ZNK10MainWindow10metaObjectEv
+000000010ab32010 g_emu_thread
+00000001000677d4 _ZN9EmuThread11setVMPausedEb
+0000000100067f34 _ZN9EmuThread15saveStateToSlotEi
+0000000100067bbc _ZN9EmuThread17loadStateFromSlotEib
+00000001002e40dc _ZN9VMManager8GetStateEv

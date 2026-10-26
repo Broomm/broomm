@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": {"kotlin": "2.4.0"},
+  "shell": {"scripts": {"check": "bash check_bridge.sh"}},
+  "env": {"GRADLE_USER_HOME": "$PWD/../../.tool-cache/android/gradle"}
+}

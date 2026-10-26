@@ -1,0 +1,32 @@
+.devbox/
+roms/
+experiments/injection/artifacts/
+experiments/injection/reference/
+experiments/injection/build/
+experiments/injection/sessions/
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+build/
+prototype-data/
+.tool-cache/
+.idea/
+*.iml
+.DS_Store
+android/.gradle/
+android/local.properties
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
+# Local servers/profiles/preferences; never commit user account data.
+broomm-data/
+# CI outputs, signing material and local crash reports.
+dist/
+release-notes.txt
+android/key.properties
+android/app/release.jks
+android/app/debug.keystore
+flutter_*.log
+*.jks
+*.keystore
+*.p12

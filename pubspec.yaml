@@ -1,0 +1,16 @@
+name: broomm
+description: A controller-first RomM game library and launcher.
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: ^3.13.0
+dependencies:
+  flutter:
+    sdk: flutter
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/setup/

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": [
+    "flutter@3.47.0-sdk-links",
+    "github:NixOS/nixpkgs/aa48d347080940b8a2b8d2f48228674e280a3514#jdk21"
+  ],
+  "env": {"FLUTTER_SUPPRESS_ANALYTICS": "true", "DART_SUPPRESS_ANALYTICS": "true"}
+}

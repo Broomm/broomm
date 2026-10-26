@@ -1,0 +1,159 @@
+{
+  "utc": "2026-10-23T22:22:59.594049Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "Uncommitted cumulative work; exact source hashes below.",
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64"
+  },
+  "sourceSha256": {
+    "tool/check_retroarch_saves_test.dart": "4e96bff1bd6903045f8acb784baf3b8e4769e83882314eccc76ecf8511f1211d",
+    "lib/src/retroarch_firmware.dart": "fa83c708048974a062728309b473abd95544b85a3e00f4fe2ab6e62e78b16936",
+    "lib/src/retroarch.dart": "ff08b6a27718a973d69223a6f8dd39c339ca67700b6b600fe553ff287b3d59eb",
+    "lib/src/emulators.dart": "cdd38d02323045fafbf890257cfd65af443274de048aaf241b41ae99ceb3cd9d",
+    "lib/src/managed_emulators.dart": "4661d7ecaefd2198ecaafffdfaced929a674793678dbbe5f73b6f26eac111a9a",
+    "lib/src/progress/layout.dart": "b99368f0bc3ebf2f4e989bac815e6e17c3a40845548a4516ab2df37406720daf",
+    "lib/src/progress/store.dart": "b866ce72f4be7d26f9be0349d317d55cdf3ba5a03fc42d7b1a063cd5056f08a2",
+    "lib/src/progress/native_export.dart": "0f9f9ace7c4aeceef3879482c0d0e82bbc812b298923f34c77701b915c65ebe8",
+    "lib/src/progress/service.dart": "6f98db08d27a0fa1a15e373f1c68633c41eee7620c34b40fb249fe9545becef9",
+    "assets/setup/tested-builds.json": "601aef891850cbc0cd4eb629f114f8e322cca41eff8f3c8e860458fba27c3eaf",
+    "assets/setup/retroarch-cores.json": "a3cafd6d99d9a839422cc64c2f847cf0f713b7339b152d32e97527611574cfb7",
+    "docs/platform-support-matrix.md": "f90a467f55a97c716df9be6888fbdd0a04a41a3b1698ac8d941264439aecccef",
+    "docs/platform-support-matrix.json": "00f920997bc748a5348dfc761c6380bc94ef55c9c20c0b576cdf1d7b26aba081",
+    "docs/saturn-verification.md": "2b95ba2e2c3df2927eeef3877b1bf7ba885cacecdbe9f6f26e899d164d3a495e",
+    "docs/retroarch-save-followup.md": "0ebefa552c5cd541554e55473b5154ceab64b062ef2296087420ed53b4a356f3",
+    "README.md": "f0692fcb6c651deee2b654bdbd568a9c9414d315a54b258fdfe0ca4cb8ff1a79",
+    "IMPLEMENTATION.md": "845e0c5ac851862964dfcd6431296616abcd4fa256f61b8d536e6e169ca03dc5",
+    ".tool-cache/research/saturn/inspect.dart": "e77614f94359c1777f1dc6b226c9d08323db3ff8619c7d01f68eabc6469ab6b9",
+    ".tool-cache/research/saturn/prepare.dart": "677f4309c6ee34834b3e7583796a16729190cea99e0cc79d6c4d3c7eac436c15",
+    ".tool-cache/research/saturn/prepare_test.dart": "e7b03dd3ba24dc2bf0bd5971abdfc2625054290df5abcbf1e30b251ec7eb30e2"
+  },
+  "frontend": {
+    "version": "1.22.2 / 20261001",
+    "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45"
+  },
+  "core": {
+    "id": "mednafen_saturn",
+    "version": "v1.32.1",
+    "sha256": "ad016e8f789fdee9280f32c198da72e7bf0e1727c4af272298ba78f82ba27449"
+  },
+  "preparation": {
+    "utc": "2026-10-23T22:18:14.482955Z",
+    "slug": "saturn",
+    "rom": 6727,
+    "name": "The Story of Thor 2",
+    "path": ".tool-cache/research/saturn/media/Legend of Oasis, The.chd",
+    "bytes": 50023761,
+    "sha256": "f87d9beacd494f6a44753a09acddcb4b505d338ff225ef20351e24b12992f768",
+    "bios": [
+      {
+        "name": "mpr-17933.bin",
+        "path": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/saturn/firmware-M38IHc/data/profiles/a123456789abcdef0123456789abcdef/emulators/retroarch/system/mpr-17933.bin",
+        "bytes": 524288,
+        "md5": "3240872c70984b6cbfda1586cab68dbe",
+        "sha256": "96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f"
+      },
+      {
+        "name": "sega_101.bin",
+        "path": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/saturn/firmware-M38IHc/data/profiles/a123456789abcdef0123456789abcdef/emulators/retroarch/system/sega_101.bin",
+        "bytes": 524288,
+        "md5": "85ec9ca47d8f6807718151cbcca8b964",
+        "sha256": "dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac"
+      }
+    ],
+    "automaticFirmwarePhases": [
+      "Downloading sega_101.bin from RomM",
+      "Downloading mpr-17933.bin from RomM"
+    ],
+    "repeatDownloadPhases": [],
+    "remoteSavesModified": false
+  },
+  "native": {
+    "passed": true,
+    "fixtureCases": 1,
+    "resultPath": ".tool-cache/research/ra-save-followup/native-8oNcaN/results.json",
+    "result": {
+      "slug": "saturn",
+      "rom": 6727,
+      "title": "The Story of Thor 2",
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-8oNcaN/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+      "saveFiles": {
+        "save/Legend of Oasis, The.srm": {
+          "sha256": "d162c7f629ec2d7cb36c552f698cfd314570e81226a389c6807837dc230ad016",
+          "bytes": 32768
+        },
+        "save/Legend of Oasis, The.smpc": {
+          "sha256": "9c6e31e5b276b302bdca47c0b96ceec978514e8b3bed5b4d217ddc680115b73a",
+          "bytes": 12
+        },
+        "save/Legend of Oasis, The.bcr": {
+          "sha256": "4f8250fcab72ad2941f2e3d7410f90d1d1be55b6f3dead9dfced86f2c1063037",
+          "bytes": 524288
+        }
+      },
+      "stateKeys": [
+        "states-549fb4803c410797-macos-arm64/game"
+      ],
+      "uploaded": [
+        {
+          "name": "Broomm [2026-10-22_00-00-00].zip",
+          "bytes": 1178
+        }
+      ],
+      "pending": false,
+      "nativeExportRestoreVerified": true,
+      "pauseAndLiveRemapVerified": true,
+      "matchedStateRestoreVerified": true
+    },
+    "nativeLog": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-8oNcaN/data/profiles/00000000000000000000000000000001/emulators/retroarch/broomm.log",
+    "nativeLogSha256": "7ced8d6b3ebab8f06ca4ff9d304f9605c60bd9a472be40a5889b41494733df5e",
+    "observedDiscProductId": "MK-81302",
+    "observedDiscRegion": "USA",
+    "nativeUncompressedStateBytes": 6847080,
+    "loadStateCommandReadWithoutReportedFailure": true,
+    "cloudEndpoint": "In-memory RomM contract fixture; no owner-server save writes",
+    "controllerSource": "In-process synthetic SDL sources; not physical controller verification",
+    "inGameSavePointSequencePerformed": false
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter test .tool-cache/research/saturn/prepare_test.dart --reporter expanded",
+      "log": ".tool-cache/research/saturn/prepare-flutter.log",
+      "passed": true
+    },
+    {
+      "command": "BROOMM_SAVE_PLATFORMS=saturn devbox run -- flutter test tool/check_retroarch_saves_test.dart --reporter expanded",
+      "log": ".tool-cache/research/saturn/native-final.log",
+      "passed": true
+    },
+    {
+      "command": "devbox run -- flutter analyze tool/check_retroarch_saves_test.dart",
+      "log": ".tool-cache/research/saturn/analyze.log",
+      "passed": true
+    }
+  ],
+  "sourceInputSha256": {
+    "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+    "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+    "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+    "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+    "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+    "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+  },
+  "ownerSourceHashesVerifiedUnchanged": true,
+  "externalEffects": {
+    "biosAndMediaDownloadedFromOwnerRomm": true,
+    "biosInstalledInDisposableProfile": true,
+    "serverSavesChanged": false,
+    "ownerProgressChanged": false,
+    "systemEmulatorConfigurationChanged": false,
+    "applicationOrNativeBridgeChanged": false,
+    "newDependencies": [],
+    "releaseRebuilt": false
+  },
+  "scope": "USA single-disc boot, native backup-memory flush/round-trip, pause/live remap and matched state handling on macOS ARM64. No completed in-game save-point, physical input, cross-device or non-macOS claim.",
+  "earlierNativeEvidence": "docs/retroarch-save-followup.json"
+}

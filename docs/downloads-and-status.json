@@ -1,0 +1,274 @@
+{
+  "dateUtc": "2026-10-23",
+  "host": {
+    "os": "macOS 27.0.1",
+    "architecture": "arm64",
+    "flutter": "3.47.0 via pinned Devbox",
+    "nativeEmulators": [
+      "arm64",
+      "x86_64 through existing Rosetta"
+    ]
+  },
+  "git": {
+    "head": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+    "uncommittedChanges": true,
+    "newCommitCreated": false
+  },
+  "features": {
+    "maxDownloads": {
+      "default": 3,
+      "min": 1,
+      "max": 6,
+      "independentStages": true,
+      "serializedPublicationAndAddonMutations": true
+    },
+    "fullGameChecksumDefault": false,
+    "transferSizesStillValidated": true,
+    "nativeFirmwareAddonSaveExecutableChecksUnchanged": true,
+    "keyboard": {
+      "shift": "hold L2",
+      "enter": "R2",
+      "alternateSubmit": "Start"
+    },
+    "cloudBadges": [
+      "last confirmed sync",
+      "pending/first check",
+      "needs attention"
+    ],
+    "configurationQuit": "user quits native emulator normally; Broomm awaits actual process exit",
+    "windowCapture": "canceled by owner",
+    "rpcs3GraphicsSettingsChanged": false
+  },
+  "checks": {
+    "analysis": {
+      "passed": true,
+      "log": "analyze-final.log"
+    },
+    "flutter": {
+      "passed": true,
+      "tests": 247,
+      "log": "full-tests-final.log"
+    },
+    "nativeKeyboard": {
+      "passed": true,
+      "tests": [
+        "testGameControllerKeyboardShortcutEvents",
+        "testHeldShiftWaitsForEveryControllerRelease"
+      ],
+      "log": "macos-keyboard-1.log",
+      "physicalDevices": false
+    },
+    "nativeConfigurationAndGuard": {
+      "passed": true,
+      "namedTests": 4,
+      "emulatorChoices": 7,
+      "normalUserQuitAcceptance": false,
+      "log": "native-configuration-5.log",
+      "details": {
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/downloads-status/native-configuration-CtKsB4",
+        "results": [
+          {
+            "emulator": "RetroArch",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 3176
+          },
+          {
+            "emulator": "Dolphin",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 4935
+          },
+          {
+            "emulator": "RPCS3",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 4341
+          },
+          {
+            "emulator": "Azahar",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 4100
+          },
+          {
+            "emulator": "Ryubing",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 3960
+          },
+          {
+            "emulator": "melonDS",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 3490
+          },
+          {
+            "emulator": "RPCS3 Intel",
+            "noGameProcess": true,
+            "competingSessionExcluded": true,
+            "elapsedMs": 3951
+          }
+        ],
+        "ownerProfilesWritten": false,
+        "visualSettingsAcceptance": false,
+        "cleanup": "signals to disposable native fixtures only; user quits normally in production",
+        "nativeNormalQuitAcceptance": false
+      }
+    },
+    "nativeLoading": {
+      "passed": true,
+      "namedTests": 2,
+      "elapsedSeconds": 699,
+      "normalSupervisedClose": true,
+      "inputPauseReady": true,
+      "gameplayAcceptance": false,
+      "remoteWrites": false,
+      "log": "native-loading-4.log",
+      "details": {
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/downloads-status/native-loading-7w0ZD7",
+        "architectures": [
+          {
+            "emulator": "RPCS3",
+            "distinctCounterTuples": 271,
+            "normalClose": true
+          },
+          {
+            "emulator": "RPCS3 Intel",
+            "distinctCounterTuples": 293,
+            "normalClose": true
+          }
+        ]
+      }
+    },
+    "gt6": {
+      "titleId": "BCUS98296",
+      "bytes": 25293815808,
+      "metadataMs": 16,
+      "sizeAndMtimeUnchanged": true
+    },
+    "checksumBenchmark": {
+      "fixture": "local stream copy, warm filesystem; not network throughput",
+      "results": [
+        {
+          "checksum": true,
+          "bytes": 67108864,
+          "verificationUs": 226896,
+          "totalMs": 419
+        },
+        {
+          "checksum": false,
+          "bytes": 67108864,
+          "verificationUs": 128,
+          "totalMs": 141
+        },
+        {
+          "checksum": true,
+          "bytes": 67108864,
+          "verificationUs": 211259,
+          "totalMs": 334
+        }
+      ]
+    },
+    "renders": {
+      "passed": true,
+      "logs": [
+        "render-1.log",
+        "render-home-2.log"
+      ],
+      "inspected": [
+        "previews/managed/emulators-configured.png",
+        "previews/managed/emulators-compact.png",
+        "previews/library/keyboard-store.png",
+        "previews/home/home-cloud-status.png"
+      ],
+      "offscreenOnly": true
+    },
+    "release": {
+      "buildPassed": true,
+      "buildLog": "macos-release-1.log",
+      "signaturePassed": true,
+      "signatureLog": "release-signature-1.log",
+      "zipIntegrityPassed": true,
+      "zipLog": "archive-integrity.log",
+      "extractedDeepStrictSignaturePassed": true,
+      "extractedSignatureLog": "extracted-signature.log",
+      "outerSignatureRepairRequired": false
+    }
+  },
+  "sources": {
+    "experiments/injection/src/probe.c": "77a0004eeaa7183bfbab831dfba4363411777acdc316e70c012659bd567c19b3",
+    "native/session.inc": "9e584e965f2a90125defe013f376e5a17500467d1718a14541d76d131cfc0839",
+    "native/installer_guard.c": "7c061c1cf9afbd67936282d85ef2d515f27fc06474d85477c1f56cd8703df135",
+    "assets/setup/rpcs3.symbols": "35c1c2b9a3170f3a93cb85bcc563f5de9bde4056aedd22ba89738387ec7bd44a",
+    "assets/setup/rpcs3-intel.symbols": "7532fc7e6d8249daf93f4b21d328b76ca2389da5ac990287ee383c5b61aea8dd",
+    "lib/src/ps3_disc.dart": "71b6fe0b022d646a741795eb0cbb024cd0903cf94a369d2fad5bc70974dd7ff9",
+    "lib/src/progress/status.dart": "e85fa9b4de1e222c97a4a22e7c8d29a1e1c45f501bf4a0b97a9b672443fc165f",
+    "lib/src/shell/downloads_model.dart": "e2b55fca700058821daa26e0bc5cb280fd1122a28ce2fb215ac4216263101707",
+    "lib/src/shell/library.dart": "187c51ab40255256029e7bd559329ffaaaeaa600b8b66845d84b16a0df1f155b",
+    "lib/src/emulator_configuration.dart": "63c1f039d4bba9171b7eeeaff1a35421e11b75f25f3beb9815f5f5f8112412ad"
+  },
+  "components": {
+    "broomm-installer-guard.dylib": {
+      "sha256": "50bcc01ac0e7806310030663d65e1a4e0f860b8284cf0272415b45c53f6d8909",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "bundledSha256": "50bcc01ac0e7806310030663d65e1a4e0f860b8284cf0272415b45c53f6d8909"
+    },
+    "broomm-sdl2.dylib": {
+      "sha256": "85d25b1cdb974d0b2f3db86dc2a23fcc27f20c48c9f99c85546bdcf36b4137e8",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "bundledSha256": "85d25b1cdb974d0b2f3db86dc2a23fcc27f20c48c9f99c85546bdcf36b4137e8"
+    },
+    "broomm-sdl3.dylib": {
+      "sha256": "61e24574c8645ee1b2192eaf233a581b918021ae28e38481c5980143d9a26823",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "bundledSha256": "61e24574c8645ee1b2192eaf233a581b918021ae28e38481c5980143d9a26823"
+    }
+  },
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-arm64-downloads-status.zip",
+    "bytes": 19472865,
+    "sha256": "77b1803adc47552c3c9b2556ce281d651ea08488cb2f80f07c1fed811c308d9c",
+    "developmentBuild": true,
+    "checkoutBound": true,
+    "notarized": false
+  },
+  "retainedFailedLogs": [
+    "focused-1.log",
+    "focused-2.log",
+    "full-tests-1.log",
+    "home-play-2.log",
+    "home-play-3.log",
+    "native-loading-1.log",
+    "native-loading-2.log",
+    "native-loading-3.log",
+    "native-configuration-1.log",
+    "native-configuration-2.log",
+    "native-configuration-3.log",
+    "native-configuration-4.log",
+    "configuration-widget-1.log",
+    "render-home-1.log"
+  ],
+  "terminatedStalledRuns": [
+    "focused-4.log",
+    "addon-shell-2.log"
+  ],
+  "remainingAcceptance": [
+    "normal native emulator UI preference changes and quit",
+    "physical controller typing/gameplay",
+    "owner cloud badge/offline/conflict flow",
+    "actual Gran Turismo 6 DLC installation and gameplay visibility",
+    "Linux/Windows/Android native execution",
+    "Steam/gamescope",
+    "standalone notarized distribution"
+  ]
+}

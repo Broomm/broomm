@@ -1,0 +1,125 @@
+{
+  "recordedAtUtc": "2026-10-18T14:01:20.155991Z",
+  "host": {
+    "os": "macOS",
+    "version": "27.0.1 (26A434)",
+    "architecture": "arm64",
+    "xcode": "27.1 (27A9275)"
+  },
+  "toolchain": {
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "engine": "5f77625673"
+  },
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "revision": "Uncommitted workspace changes identified by SHA-256 fingerprints below.",
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "result": "passed",
+      "analysis": "passed",
+      "testsPassed": 130,
+      "log": ".tool-cache/research/navigation/app-check-complete.log"
+    },
+    {
+      "command": "BROOMM_RENDER_ROOT=\"$PWD/.tool-cache/research/navigation/previews\" devbox run -- flutter test tool/render_shell_test.dart tool/render_managed_test.dart --concurrency=1",
+      "result": "passed",
+      "testsPassed": 2,
+      "log": ".tool-cache/research/navigation/renders.log",
+      "previews": ".tool-cache/research/navigation/previews",
+      "scope": "Isolated fixture widget artifacts; PNG inspection, no computer control or physical input acceptance"
+    },
+    {
+      "command": "devbox run app-build",
+      "result": "passed",
+      "log": ".tool-cache/research/navigation/build-macos-final.log",
+      "artifact": "build/macos/Build/Products/Debug/broomm.app"
+    },
+    {
+      "command": "devbox run prototype-check-macos",
+      "result": "Passed",
+      "testsPassed": 3,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": ".tool-cache/research/navigation/native-macos.log",
+      "summary": ".tool-cache/research/navigation/native-summary.json",
+      "scope": "Existing disposable Keychain test and two window regressions; tests compiled and executed on macOS"
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_home_test.dart",
+      "result": "passed",
+      "testsPassed": 1,
+      "log": ".tool-cache/research/navigation/home-native.log",
+      "syntheticInput": true,
+      "fixtureData": ".tool-cache/research/managed-play/home-data",
+      "scope": "Real managed RetroArch/Snes9x with supplied SNES ROM: Home/loading/pairing/play/normal close/return. Fixture RomM catalogue, no owner login"
+    }
+  ],
+  "sourceFingerprints": {
+    "lib/controller_lab.dart": "e01c950e6406c5572195ee589fc4594d63de192e6abf81f7cfb938ece2ff8e84",
+    "lib/src/app_model.dart": "904780c7a2249fa443b13694696dddfc048abe9915da7de74051c625e223cf19",
+    "lib/src/shell/app.dart": "1a1951670c1d0e610dc289f0ab37e709812ba126be5c4f7c7e9d09c3602d9bcd",
+    "lib/src/shell/artwork.dart": "26adb63ea2265ae230cdb5748828b37bc077f44f2c1f962c1c866b4811de8005",
+    "lib/src/shell/controls.dart": "c34693469197de6d1ada9b32e9d239fd28d48e1754f632b988e26e2721a2a1fe",
+    "lib/src/shell/emulator_settings_screen.dart": "d5b0b8b1887a1589a5144b517a3b37d392b96390e14b08fd9e1f8d2a1e3758aa",
+    "lib/src/shell/game_session_screen.dart": "99ffb7d6903b07e44bee271239e30833d05cfbc9bd35ead2db40bd9639ec7d22",
+    "lib/src/shell/home_screen.dart": "2475c2807e5ed5f8935095d750464de75ab43083d15828a3c0791d80d9bcbf91",
+    "lib/src/shell/navigation.dart": "85ab6a1428e48ed8797f1c8a69695cd4dc86294970071f2bbdaf7171a88b9914",
+    "lib/src/shell/onboarding.dart": "fe629f3bc63ca3fd6e5316b9caef442dc60d44dbfff7aeea0d7e387c4c49d554",
+    "lib/src/shell/store_screen.dart": "3f2657138370c659ee8dffe7317a17dbcee9c5501feeef55b785af3b471dd4ae",
+    "lib/src/widgets/pairing_screen.dart": "9c1b1a5d9024e34f2ded29018d301a284b370e23f2b92aede342723860e93995",
+    "test/navigation_test.dart": "cc8124a8188fbcad458c3769d66432e7a1b3eb41f45d98dcfe4b0b378b1dd755",
+    "test/emulator_settings_navigation_test.dart": "af951e797d2d74a32c0e56c1227d91847f781cef7077481e84dfe2f73d8bd41b",
+    "test/game_session_screen_test.dart": "28eec75231bf7a035f93ecef9d6163e9d0740b88030dd1b1ff8163f781f40768",
+    "test/widget_test.dart": "74faafa57c1e5d71132bf656218c523b65d4075bdecc17b4554715d5f16f505a",
+    "macos/RunnerTests/RunnerTests.swift": "81b7cabcae4403877cd0177f54e91f975f2c40389f13c76b499af319a5083111",
+    "tool/render_shell_test.dart": "4aaa550ae7640fde8c26073aff580b0c007ab22eb92b8d36f19ae9d5f9000523",
+    "tool/render_managed_test.dart": "45e984a5f020314a5ea009c66d14f611df80bb856a5d8af4b835ee36026da40b",
+    "tool/smoke_home_test.dart": "e809bdcbb8a15bf80b291b2477613cf5d7fa15a4d23436d5600c94ea00092851",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "PROJECT.md": "c998c8998a21647e7ccd8a01788a2b15177bcdcbf680687ed8b5053656604770",
+    "IMPLEMENTATION.md": "ee5bf394eeef149e7686bb1828551077c30c418fc27700d1977e298514ac1fec",
+    "README.md": "88a51070f72ecba7cee12d5799acb493620121a0d704a1e7d15fb80dd4defec6",
+    "docs/navigation-and-motion.md": "a928f5e8984a137df2c04d874f05244d789eea99c61ec9217216c3bd0f216e8d"
+  },
+  "buildFingerprints": {
+    "build/macos/Build/Products/Debug/broomm.app/Contents/MacOS/broomm": "fcc1af2fab43a3bc71c24477b17c6938b54d676328dfc09ef244db68100f5ed7",
+    "build/macos/Build/Products/Debug/broomm.app/Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/kernel_blob.bin": "79e758a5a69b3ad138d5df9cf18fba934aed961e394af9f17d1e4e0219556475"
+  },
+  "logFingerprints": {
+    ".tool-cache/research/navigation/app-check-complete.log": "6e36500c2b6430027557a9ab65ea268e7aa801a9f8f324766426b5aa2f3171f5",
+    ".tool-cache/research/navigation/renders.log": "a9ca5eb95d67d1c4aad25818b6e631fd247d9eae83f7622ebba72eeb81ffed1c",
+    ".tool-cache/research/navigation/build-macos-final.log": "f9eccec19a730bc31d4b6d6ae2e8d79b7792b57e8b09135cd80b2afa3f70fca6",
+    ".tool-cache/research/navigation/native-macos.log": "407cdd9ba75d9f51e49d090652867192e70e812157eeea08e37a451bf5590a3b",
+    ".tool-cache/research/navigation/home-native.log": "d12365ab74bcb3bba2a6e341e254c32f8d82061d70d20c3d14fff840bcaef50b"
+  },
+  "inspectedPreviews": [
+    ".tool-cache/research/navigation/previews/home.png",
+    ".tool-cache/research/navigation/previews/home-phone.png",
+    ".tool-cache/research/navigation/previews/store.png",
+    ".tool-cache/research/navigation/previews/settings.png",
+    ".tool-cache/research/navigation/previews/emulators-inline-review.png",
+    ".tool-cache/research/navigation/previews/emulators-configured.png",
+    ".tool-cache/research/navigation/previews/emulators-remove-confirmation.png",
+    ".tool-cache/research/navigation/previews/emulators-compact.png",
+    ".tool-cache/research/navigation/previews/pairing-wii.png",
+    ".tool-cache/research/navigation/previews/pairing-compact.png"
+  ],
+  "investigations": [
+    "Initial restricted Flutter test attempts could not bind a loopback socket. The unchanged runner was executed with local socket access.",
+    "Rapid directions exposed disposal of the focused grid source. Cards now retain the focus owner/remembered scope selection; pending destinations supersede older scrolls.",
+    "Final-page loading removed the focused footer. It remains until the first appended card can receive focus.",
+    "A 640x480 pairing check exposed a 35-pixel fixed-footer overflow. A compact outer scrolling layout preserves controls.",
+    "Failed harness attempts included clipped pointer targets, real filesystem waits inside fake widget time, and animation sampling before the ticker first frame. These were corrected without relaxing behavior assertions.",
+    "Quiet XCTest result extraction required access to Xcode TestReport cache. The successful summary is retained."
+  ],
+  "limitations": [
+    "No physical-controller feel, owner input/visual verification, owner-server authentication, or new six-ROM acceptance claimed.",
+    "No native Linux/Steam/gamescope, Windows, or Android build/runtime executed on this host.",
+    "Gameplay bridge protocol, save ownership, emulator configuration and synchronization are unchanged; pairing D-pad/buttons remain live tester inputs.",
+    "No new dependency, OS package, global SDK selection, automatic update, reference-project code import, or owner save deletion."
+  ]
+}

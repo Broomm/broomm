@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": {
+    "flutter": "3.47.0-sdk-links"
+  },
+  "shell": {
+    "scripts": {
+      "probe-build": "bash experiments/injection/tools/build.sh",
+      "prototype-prepare": "bash tool/build_bridges.sh && dart tool/prepare_prototype.dart",
+      "app-run": "bash tool/run_prototype.sh",
+      "app-build": "bash tool/build_app.sh",
+      "app-check": "flutter --suppress-analytics analyze && flutter --suppress-analytics test",
+      "prototype-run": "bash tool/run_prototype.sh --dart-define=BROOMM_CONTROLLER_LAB=true",
+      "prototype-check": "flutter --suppress-analytics analyze && flutter --suppress-analytics test",
+      "prototype-check-macos": "bash tool/test_macos.sh",
+      "prototype-build": "bash tool/build_app.sh",
+      "prototype-smoke": "dart tool/smoke_prototype.dart"
+    }
+  },
+  "env": {
+    "PUB_CACHE": "$PWD/.tool-cache/pub",
+    "FLUTTER_SUPPRESS_ANALYTICS": "true",
+    "DART_SUPPRESS_ANALYTICS": "true"
+  }
+}

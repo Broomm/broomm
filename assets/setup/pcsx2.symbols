@@ -1,0 +1,6 @@
+0000000100df1040 g_main_window
+00000001000398f0 _ZNK10MainWindow10metaObjectEv
+0000000100df10c0 g_emu_thread
+000000010005c620 _ZN9EmuThread11setVMPausedEb
+000000010005ce70 _ZN9EmuThread15saveStateToSlotEi
+000000010005ca50 _ZN9EmuThread17loadStateFromSlotEib

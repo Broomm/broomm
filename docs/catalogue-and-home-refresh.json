@@ -1,0 +1,210 @@
+{
+  "recordedAtUtc": "2026-10-19T21:48:51.676401Z",
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64",
+    "dart": "3.13.0 (stable) (Wed Aug 5 00:28:05 2026 -0700) on \"macos_arm64\""
+  },
+  "revision": {
+    "baseCommit": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+    "workspace": "Uncommitted follow-up over previous uncommitted artwork/navigation work; full Dart application/test source fingerprints identify the tested state."
+  },
+  "changes": [
+    "RomM group_by_meta_id=true for recent/filter/search/page queries; exact sibling identities and tagged version selection before download.",
+    "Optional third SGDB logo step, static PNG/WebP validation and local atomic persistence, Home title replacement with text/accessibility fallback.",
+    "Larger Home tiles without captions, adjacent actions, removed top branding, bottom-right profile/tagline and reachable footer navigation.",
+    "Timed top-left cards without content/focus movement; retained progress cancellation and error state; gameplay-return feedback refresh.",
+    "Responsive background details cannot autofocus over the active version modal."
+  ],
+  "checks": [
+    {
+      "command": "devbox run app-check",
+      "result": "passed",
+      "analysis": "No issues found",
+      "testsPassed": 155,
+      "log": ".tool-cache/research/home-refresh/check-final.log"
+    },
+    {
+      "command": "devbox run -- flutter test --concurrency=1 tool/render_home_artwork_test.dart tool/render_versions_test.dart tool/smoke_home_test.dart",
+      "result": "passed",
+      "testsPassed": 3,
+      "rendererTestsPassed": 2,
+      "nativeSmokeTestsPassed": 1,
+      "log": ".tool-cache/research/home-refresh/final-ui-and-play.log",
+      "inspectedPreviews": 12,
+      "syntheticInput": true,
+      "scope": "Real widgets and decoded generated images, desktop/compact layouts, initial/resized modal focus; then the supplied SNES ROM with real managed RetroArch/Snes9x loading/pairing/play and normal Home return. No computer-control tools.",
+      "fixtureData": ".tool-cache/research/managed-play/home-data"
+    },
+    {
+      "command": "devbox run -- bash tool/build_app.sh --release",
+      "result": "passed",
+      "log": ".tool-cache/research/home-refresh/build-release.log",
+      "artifact": "build/macos/Build/Products/Release/broomm.app"
+    },
+    {
+      "result": "passed",
+      "log": ".tool-cache/research/home-refresh/package-verification.log",
+      "scope": "Built/extracted bundle deep strict signature verification, ZIP CRC integrity and launcher architecture inspection."
+    }
+  ],
+  "regressions": [
+    "Real HTTP grouped query preserves scoped auth, search/platform/recent and page offset, with returned sibling fields.",
+    "Controller selects the second tagged version from one Store card; only that ROM ID reaches transfer/publication.",
+    "Cancel, permission failure, wrong returned identity and held selection after profile switch do not write a game.",
+    "Modal first selection retains focus across resize even when the background detail layout is rebuilt.",
+    "Logo endpoint/mime/dimension filtering, round-trip and partial-artwork replacement preserve other images and ROM bytes.",
+    "Home paints the decoded selected logo instead of text; disabled artwork restores text and poster/background fallbacks.",
+    "Notification expiry/newer timers, page geometry, unchanged focus, ongoing progress, account reset and game-active return."
+  ],
+  "investigations": [
+    "Initial fixture compile used the wrong DownloadProgress import; corrected without changing production behavior.",
+    "Initial version Cancel autofocus captured loading focus; it now autofocuses only an idle error/no-selection state.",
+    "Renderer showed resize moving focus to the underlying Download button; route-aware autofocus and a deterministic resize assertion fixed it.",
+    "Final feedback observation found a silent game-active field transition; emitting the changed state ensures return errors appear.",
+    "The renderer imports Flutter-exported typed data; an unnecessary import analyzer finding was corrected.",
+    "Initial package verification reported a modified nested App.framework while both nested frameworks validated independently. The generated development bundle was explicitly re-sealed with the existing Release entitlements and the final built/extracted archive verified; no framework or application code was changed by signing. The precise Xcode incremental-build cause is not established. See signature-repair.json."
+  ],
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-arm64-home-refresh.zip",
+    "bytes": 18704993,
+    "sha256": "08000686f07b32994bbc394192ec0c64e2cdbe4d946c2e46e5a9b6a3a2d04ac3",
+    "bundle": "build/macos/Build/Products/Release/broomm.app",
+    "executableSha256": "6599390ac37cb8bcd09902d6bfd861c91ea2d0a9f994e18f141e75ec825648c7",
+    "launcherArchitectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "verifiedManagedPackArchitecture": "arm64",
+    "distribution": "Ad-hoc-signed checkout-aware development build; no notarized/standalone/Intel-emulator claim."
+  },
+  "sourceSha256": {
+    "devbox.json": "30f5ac2779abf59218e9288421340ed4a0c089d0a15212895fde86a3feee5151",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "lib/controller_lab.dart": "8afaa14512065b54c3ff1f53db52fbc93b62e75d184d465bfc7db01f54767453",
+    "lib/main.dart": "cd02ff6493c7088c8448041afc132e2e96bc33787849c4a09c1ea7269c1a8ef0",
+    "lib/src/app_model.dart": "904780c7a2249fa443b13694696dddfc048abe9915da7de74051c625e223cf19",
+    "lib/src/catalogue.dart": "968a9ad1d28f3dfce6a88fce83638b32feccbe52276b4653b3f8d5d7c84c4dd2",
+    "lib/src/controller_mapping.dart": "b8351de23c7d059079c37efaca3ac801aeb10806e71776cc396338ae4f3b92d2",
+    "lib/src/emulators.dart": "1f3ff76bf9e1116ad63bb4520e28cf7a0fb481278399c47302991668b0b46c77",
+    "lib/src/game_launch.dart": "341d49bd5edb0c194c53e194b234e81d5d4ec3d47041631f5d97a15313ccdc8b",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "lib/src/managed_emulators.dart": "db0e974ab5a2ce8e68b3db1910209eb53b84d1f61c153114329e6c98bb90de58",
+    "lib/src/managed_profile.dart": "f3577622532b313d3940d899a580b58449bd7eb18b0184c974ccd32c276cd7c8",
+    "lib/src/pairing.dart": "e05e7ef0ce5312c150a9fa386708a04b2dc04018989b56d002466ae6394f1252",
+    "lib/src/pairing_gestures.dart": "9562063e3e6d72e14f99c3a5e4415ab853584b1ff24bafd4c3e1938785427325",
+    "lib/src/romm/client.dart": "526ab09a6939dad01b7cc2134a33fb7694b2c4d0d1a1d7865155e436c6a160c2",
+    "lib/src/romm/credential.dart": "1bd1e29c15264e01c506ea1ef2c55610b5239e3c2bb8ddd38d65bbee50754789",
+    "lib/src/romm/models.dart": "a59dd068e9a70b34328fa41f5cfb85ca4afa50cba5260aa7f18ba1ffbb714e50",
+    "lib/src/romm/transfer.dart": "b56c04f87f4643aad0bdc2c0e93cf9673e80184a9a0e28b7eb4751a3fe2b9ecb",
+    "lib/src/session.dart": "c896a10c32a3f979e8387dd3b0667c3c7d32dceadec39fe623d620e0d2fb68a7",
+    "lib/src/session_lease.dart": "c6223b4da3f5e59f3269c86dbc289b0ed00e98ccf3bec7499717c71eee37d081",
+    "lib/src/session_log.dart": "0b7b941f660f98bc57b36c55f5e4a9fe1aafb19ec54492a75bf54238e34166fc",
+    "lib/src/shell/app.dart": "8bdccc9b1e8459ca6b1448e0dd526ba75bf0ee85faf1b3df3b1e50cc28a8d48c",
+    "lib/src/shell/artwork.dart": "37e8e2462e3d15683d999ef05f7b6b969e5eed5abff9e5d75172c1aa03e0729f",
+    "lib/src/shell/artwork_picker.dart": "4da4f901abfc2fdfdd345d41b5c386c55880fe6e77ac0101315617a3f0e98c92",
+    "lib/src/shell/controller_input.dart": "f20bd76e94b176f85e2e1ac38a43108f633cc98e437fc73f9c6198fdd16ce97e",
+    "lib/src/shell/controls.dart": "e306fb1057c89526c822f8db6b9f52f27004a131e7f5ddea755888df8cb03c4a",
+    "lib/src/shell/credentials.dart": "caeddc58b46527dac14d7104f5877b111672709da1876e0ccc649eda18b2d6a7",
+    "lib/src/shell/download_status.dart": "c96b82f36345c49a3e9836385b8d4a10c2712e61ff5b695e2fb70bb39bffc652",
+    "lib/src/shell/emulator_settings_screen.dart": "8cdadb9e26730b166c10a391994f06d8d035ed3feadd3834b718f9c2ee5f9421",
+    "lib/src/shell/game_session_screen.dart": "99ffb7d6903b07e44bee271239e30833d05cfbc9bd35ead2db40bd9639ec7d22",
+    "lib/src/shell/home_screen.dart": "9a87dbaa3e5ea4a74a9519774c9e8a408590ce1a5f8efc618532ac667e661096",
+    "lib/src/shell/library.dart": "6e7cf5fb5fd870114963a08589b9d649e02cf1c1f155f6f3f6c6c394b0ac70b8",
+    "lib/src/shell/library_management.dart": "6ab7798bade49c283c215683e976408ee1d9e152208b38206348a37542a407b5",
+    "lib/src/shell/model.dart": "7e260f65618a0d27b927b7379aaea7d4832e7974bb5e6b6723cc7a3b72afdee2",
+    "lib/src/shell/navigation.dart": "e35ec13faf216f2be61dcc8803cef81e76bf785f7c6a69e31545f3778dc0ac66",
+    "lib/src/shell/notifications.dart": "ba79ba85f047286c6f8da6547381983cdf0857352f04f714a6f242a4ee7297a0",
+    "lib/src/shell/onboarding.dart": "187003f704b1451bab845313467ec57c510d64c11b19c7cfbab1f0c396ee8636",
+    "lib/src/shell/settings_screen.dart": "f080e052a4d52115a90622787ba4aef6a36ea33b220c4f441fdedf84dc4d4804",
+    "lib/src/shell/steamgrid_credentials.dart": "f11a08f3f7a274acc4eaf16519065dc9cce666c12d3e4b052dc325bf7b649289",
+    "lib/src/shell/storage.dart": "8bde9408dde1444c54977fc1843b6a830b7b5914d2daca8b02ea1198ed428bbd",
+    "lib/src/shell/store_screen.dart": "624dc4a3fe3f05b948e9a63101f9a088cb6bfdadbc323e9203b47203ad848afb",
+    "lib/src/shell/version_picker.dart": "05aaf0d08bb2feda8b3af74cdb0bfca00409802fb8c8e0bc70345829601a8dc1",
+    "lib/src/steamgrid.dart": "6416ba8cdbefeb290f11719671922b0e550fd5da03ba9172a7a64fbbcd5899bb",
+    "lib/src/widgets/controller_tester.dart": "dceb3c5c56eac629feaca1b0f1bdfb0c28cc6f039c4e4d170a3e0161e6e38165",
+    "lib/src/widgets/motion_tester.dart": "e6384fd4ed9ac6b53a96d65d2888f2594fa1ff47fab8a976139aa70f5ca95f16",
+    "lib/src/widgets/pairing_screen.dart": "e55e9ae963e132de219bc07fdff018838835fe0f35b6440a34359b047dc9f971",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "pubspec.yaml": "6c57e99f01896f72ad90f94689ca3964854e0f22538801ca2ef78754eea24e4f",
+    "test/console_field_navigation_test.dart": "146627d589e9e21cf9ca417c8d9fef45b4c96a68477804e00b0206c1190b93b4",
+    "test/controller_mapping_test.dart": "c0c7e8e73e4f9446904d2fd4eca16b83ea69fd2db33f6a95b92d504e7339be55",
+    "test/emulator_settings_navigation_test.dart": "50f87434e0cfe95309c4e3cdebc607229ae3c3b20e2c261c37b513cf0ca156f4",
+    "test/emulator_setup_flow_macos_test.dart": "280fc7d3707092a58786ce03f9e2c9ba7664b8a338425d12012a7e329ffc699a",
+    "test/game_launch_test.dart": "f4e30f13f41609d4032aef91f925da0850bfeeb0f2068602d37f006a8542520c",
+    "test/game_session_screen_test.dart": "28eec75231bf7a035f93ecef9d6163e9d0740b88030dd1b1ff8163f781f40768",
+    "test/game_versions_test.dart": "f5ccffcd1ab8a40a1539f5ec9174ed9fd3b17fcc5c5ef5317c858f396f2a893e",
+    "test/home_artwork_library_test.dart": "fb07e138a95040e8209d2520d9d0848723da2d57a1ad5647f8480449614b7def",
+    "test/home_artwork_widget_test.dart": "56ab643be1c882af528f52ad03c52a7a6f694bd03adc50a5f2b2208326286c4a",
+    "test/library_download_test.dart": "152ff626182df7741b588ef79c2c4bf0e6bced000394a6abf52503c8446e9c35",
+    "test/managed_emulators_test.dart": "f3b8a3a34139dcf1269526ea4c20e93147e89cd005c6e6f42a412c7321eea6a7",
+    "test/motion_test.dart": "5f1e509a4279109118c558f8e4f2e0d87fb6130378f4984b59fafa38db230840",
+    "test/navigation_test.dart": "04c33026bed142bbffc35d5f34566e68d58fa8e338c7b32acca6df2da437c7e2",
+    "test/overlay_state_test.dart": "9895a25490cb44013780ec865d4c3fa9c43a8ebda91b5b051c28f8d017fe04a9",
+    "test/pairing_gestures_test.dart": "3ad97782628b3998020b578c89da7b3b17f84ad1c943369f7f9de767e093cb09",
+    "test/pairing_test.dart": "703b3cc269dd552bc62dd27140e1ad56163ab14d3e4cf50efc98d8c42385d24d",
+    "test/remembered_signin_test.dart": "1b3c9a1125777864c482c05f000e66ee9489153292f37f30bf803f7606ba71bf",
+    "test/romm_client_test.dart": "852184f54b163e1d6ab4a743e2a1be9631e90286d6108a3b7e72906a7f2b32b6",
+    "test/session_commands_test.dart": "78054a57b6f1ca5883a9b93250eebbad4a6fbf67033700fe63315e0c34598e27",
+    "test/session_log_test.dart": "5f4ab4149a14e90274d4028ad0063f04d42f254478c00847554f27494870fe85",
+    "test/shell_model_test.dart": "fd35278b81d41e623ccb1668e476a9bcbd083fe7654c6ef0a56db948034e338c",
+    "test/shell_notifications_test.dart": "61a233d73ac240294a599346c6e43d23ebece6aa507d2a48a76d7adaa8094145",
+    "test/shell_storage_test.dart": "cdb8b884f9fce6629d3d6c227409b80b9866dd1d0b6cfc95167500ad0e263757",
+    "test/shell_widget_test.dart": "1b9534d4710cc5600a66885447c8fce5cf7b8140c0b00080341d8c85139ee980",
+    "test/steamgrid_client_test.dart": "e0460efa79fb71253d298eb04abddf431fba0421916f6f49651a3a222edb7e7a",
+    "test/steamgrid_credentials_test.dart": "b2b93c0ce42825ae601624d258cf1e367243fa681a56743ba6258ce81c8f4029",
+    "test/support/artwork_fixtures.dart": "af1473209c6f3abea1f0b3d1dcffd8322a93316bc07a4ce06bef98bbefc00347",
+    "test/support/hold_library_lock.dart": "3242885b42001f7e5a58f500a7b42d1d6bf8d766e1a397fe2859b3a38505bd70",
+    "test/widget_test.dart": "74faafa57c1e5d71132bf656218c523b65d4075bdecc17b4554715d5f16f505a",
+    "tool/build_app.sh": "8e79ee1c3bd8f86af0fa994a99669ddaf4dfbed2f0309c14479e3d906754bbc3",
+    "tool/render_home_artwork_test.dart": "06c758d85b899a20ee24e001d28c76b9332627b5b9e551c1ac9d19b2d06b6b87",
+    "tool/render_versions_test.dart": "7f753f51e1578a265cf5969431cd1968b99f54d3214ed0df8a2ec8956807cd9d",
+    "tool/smoke_home_test.dart": "e809bdcbb8a15bf80b291b2477613cf5d7fa15a4d23436d5600c94ea00092851"
+  },
+  "logSha256": {
+    ".tool-cache/research/home-refresh/check-final.log": "73b111c6326e6c8983026b6cce5c07078f3950eec7e292b94bb02d454b15e73e",
+    ".tool-cache/research/home-refresh/final-ui-and-play.log": "bfcee60fff81948620e7a3c4dfb6a0a213d1e15189d25c427f05fe3ac04e283f",
+    ".tool-cache/research/home-refresh/chooser-resize.log": "c247b8fb58000b353c927f2e4993d0852a29ac33626cdf4062360c87956681c1",
+    ".tool-cache/research/home-refresh/build-release.log": "440d1b0f225ea05cedc2c3196e230f89400082f3e83bdaf0f79b357f2988747b",
+    ".tool-cache/research/home-refresh/package-verification.log": "1b87224e02c17c058421a96fc1b85749fbbc297606209076e52444d34555c3c0",
+    ".tool-cache/research/home-refresh/signature-repair.json": "9e3224dbc7a656922a00b92cf365e14ea153e21988de8f2bc38fbe951a47f45c"
+  },
+  "previewSha256": {
+    ".tool-cache/research/home-refresh/previews/api-key-setting.png": "35ab66fc3faa467fa665df6cf61b90fe3592bd7647eedc6b28e3bb1ed7578aa0",
+    ".tool-cache/research/home-refresh/previews/grouped-store.png": "540549540704615eeeff36d6b8fbfbaf6c1ab53b17c37a1b48261825f880dd39",
+    ".tool-cache/research/home-refresh/previews/hero-picker.png": "35729c3559aeb0b48da85b3bbe78b518717a824792d946a3cb757c54764e3670",
+    ".tool-cache/research/home-refresh/previews/home-compact.png": "10f9b34db40aac180244badfc9b034b29b8415ff6412e3a45fa4ea576441259c",
+    ".tool-cache/research/home-refresh/previews/home-hero.png": "b1d37e7c5fd78c9f80ddaf58c253775e71d50653d9148e7f56008b057c529786",
+    ".tool-cache/research/home-refresh/previews/logo-picker.png": "0f88e09e8e585f4805f5359f2c54b73608558324cc9fab978362138a0f9b7868",
+    ".tool-cache/research/home-refresh/previews/notification-card.png": "2dccd9cf154e77521199e570514b8f0ecd5d868ad85457e911424a9a039cdf4a",
+    ".tool-cache/research/home-refresh/previews/square-picker-compact.png": "812b413d67d8d34fafc532194d670d8b51236712d80ca100100fdf0bf01a0883",
+    ".tool-cache/research/home-refresh/previews/square-picker.png": "592d5ee6abb7d9f783c552594d14b60a674f2bb90b129f574b35b6ca778473db",
+    ".tool-cache/research/home-refresh/previews/title-options.png": "134db807c5cae4be0ce17a0f20f104bb8e8e9d0f9ec1b7e31fb2eb30bc87d7fb",
+    ".tool-cache/research/home-refresh/previews/version-chooser-compact.png": "68387382a954349a4a2f579cecaea252e5b4f070c91b621f82c4c8e41dff0a70",
+    ".tool-cache/research/home-refresh/previews/version-chooser.png": "ee6196fc5e4d48b87379fe2395d01eeae2d54bface0b71cece363c152c444993"
+  },
+  "publicContractSha256": {
+    ".tool-cache/research/home-refresh/roms-init.py": "e5cebed8527a25ccb3bbdf0ee3a3351dbf7ab24206430a6d179d820f964920f5",
+    ".tool-cache/research/home-refresh/rom-response.py": "c6ed7c0d49195ec0fcf61e678c0259a71e3b54ac0aa4f5176ad49a7ab02ab892",
+    ".tool-cache/research/home-artwork/sgdb-openapi.yml": "7d390f6e6f52b0eb048cafc2bfe230039d5852c6254a31a78a420a7a2ea5631d",
+    "docs/reference/romm-5.4.0-openapi.json": "ce59cca7062a05d7e63a93f3f6da896dd42604e87494055ca05e473b5287d43b"
+  },
+  "dependencies": {
+    "addedPackages": [],
+    "osInstallations": [],
+    "unchangedFiles": [
+      "pubspec.yaml",
+      "pubspec.lock",
+      "devbox.json",
+      "devbox.lock"
+    ]
+  },
+  "limitations": [
+    "Grouping follows RomM metadata relationships; no fuzzy display-name grouping or remote metadata updates.",
+    "No owner credentials were read; authenticated live grouped catalogue/SGDB logo retrieval and owner physical/visual acceptance were not performed.",
+    "Native Linux/Steam, Windows and Android verification remains pending; shared Dart/widget tests do not establish those runtimes.",
+    "Native credential/window adapters and emulator bridges are unchanged; their previous native evidence is historical, not a new run.",
+    "No new six-emulator run, save synchronization, automatic emulator update or standalone installer is claimed."
+  ]
+}

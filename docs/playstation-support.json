@@ -1,0 +1,386 @@
+{
+  "utc": "2026-10-23T23:22:03.354181Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "Uncommitted cumulative work; exact source fingerprints below.",
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "cpu": "Apple M1 Pro"
+  },
+  "sourceSha256": {
+    "lib/src/playstation.dart": "7f91bf825bfdcfc488276fb2f99b5a5dc626c139d4c5ace1ac3a2df2bc074cb0",
+    "lib/src/playstation_adapters.dart": "34e3d318975fdba85f24b722669550135d6e8c3c49cfb0805c3675244b0f5a7a",
+    "lib/src/playstation_firmware.dart": "33e0e4646b37dc3ef5b3bbb70d71195c3337637eb1122ca45ab731e908901cfb",
+    "lib/src/emulators.dart": "f56f1a596b445805664fb063ea17ef575f894ed3e164f2a49fb0b1921f7bc9d7",
+    "lib/src/game_launch.dart": "dcbb1e2cbe58449472e0000144d8661de44149ed56045d71e6b674b1175ae140",
+    "lib/src/managed_emulators.dart": "6bba2f23d2ac9400cfe492b0d492eab82bae2afe1ec2ebccfbae89e6cc504156",
+    "lib/src/managed_profile.dart": "e5548c1d3ebc5fe354ff5fefb45ef416a0ed2c7d805bb5dade286afa3801e1b7",
+    "lib/src/session.dart": "2049a879e1d58d5558f72097517655adae611dbfdfc126d7b1b02e855c213d4b",
+    "lib/src/pairing.dart": "c9ec005e7857098415abc34677934af4b774129c92ee1cebc6b06b3616e01bd4",
+    "lib/src/controller_mapping.dart": "84799b986af418b0886b1e1af49ecb61f67153b2f08ef030dae1c444f8a47c03",
+    "lib/src/widgets/controller_tester.dart": "1dc750587759ca2f68ad62b1599340adde48900df711e4cac276d7cd2fe97829",
+    "lib/src/progress/layout.dart": "144ca31c2888e01d87a081c8493745331f34f3cd3ab9321afb13a4b7cc2af6d2",
+    "lib/src/progress/store.dart": "c229dddb1972015d8add1cfd8fa354a768e34fa4324064b7b0662c282ae55e16",
+    "lib/src/romm/saves.dart": "9133a866382758b4735c7fefd514f65d4a8fc935a5532c41d4af86128364c175",
+    "lib/src/shell/app.dart": "0e2ca17cc1bd7acf3e2dd20cb29644a90d545fff6204c2604324b8714b03e1c7",
+    "lib/src/shell/model.dart": "4a00ce03aa0aa35aec7a3babad21e2fcac1356adc0a79600d973b3107f7bd6bc",
+    "lib/src/shell/emulator_settings_screen.dart": "90b3d6d884e0de6d7c2c652cdb655a3ecef2b4e1c0399d95adee43e1803f2942",
+    "native/playstation.inc": "d6f13e19d654a1641fbe01409da9f7e223209de0c33a561b18995267a449a4e2",
+    "native/session.inc": "46e2860b6d8d07a3779c86cddff5d37772e28b001860ddc531bfc2d3b7982e5b",
+    "native/test_sources.inc": "4e18598ba3960f277fb99bdda0b408780ea7e2f0d614ad0a10fe3ac609a89807",
+    "experiments/injection/src/probe.c": "d149a41e0feea06229bb556fc06375c6b445896b0afe051780e5a424395ae2c3",
+    "experiments/injection/src/cache_redirect.c": "34a0f8925900f6c176e3016b628fc26fcb3e62e3c54f170a43164d4be7203a01",
+    "tool/capture_playstation_setup.dart": "9e44c8abb5119fb678621743f68e48f92303076da5d8592f4a4e9b618c4780f1",
+    "tool/check_playstation_test.dart": "888028ff9a635026b54f2e075fc8fa8a06efa00e2209478ac458e076db0d7536",
+    "test/playstation_test.dart": "e0cc23777dc1e2edb9ccbdb569d0f363d82d6a886c45e200e16fdd94dbc4c676",
+    "tool/build_bridges.sh": "c4d522759516700c8f65584a8787bf82ee48768beb6c7470367ae7ac22f8a6aa",
+    "tool/build_app.sh": "8e79ee1c3bd8f86af0fa994a99669ddaf4dfbed2f0309c14479e3d906754bbc3",
+    "assets/setup/setup.json": "e82f778edf89921f888426be6942272dfbc97adbb4b37d833291f7ab7a87a10a",
+    "assets/setup/tested-builds.json": "9709dbe4e2b8eec60a3f826654789b1ae731cf6ec5013a2b68728470e8a6ef42",
+    "assets/setup/duckstation.integrity.json": "5509bc03a3fc55528d3806be9b274adb7f680bef91c5fcb9416fce15cc676370",
+    "assets/setup/duckstation.symbols": "d395db46b473739e31a2224a01be80cec8892d35f212dba0be6df80e9cfc1192",
+    "assets/setup/pcsx2.integrity.json": "e5647ec0bdf94b15d0d557c98f7db6c0581ebae0d61dae746cb21e77ddff39c6",
+    "assets/setup/pcsx2.symbols": "6278aac6e75590436b2a0a932115e2ebda48f90a8d19627beb15431d4fa83e4d",
+    "assets/setup/armsx2.integrity.json": "26bc31a1bed9a7a74bf31c61f642eee960931f8befaf807c46ecec4dbdfd6582",
+    "assets/setup/armsx2.symbols": "d7e3554c6534c1eb5a6011f6ce9728c83222583ecd4b0b670c8118f4632166a7",
+    "PROJECT.md": "46f7413cf73f723c2f9b93f82150af64c2e74e0329cb9a378131943fdd019d2e",
+    "IMPLEMENTATION.md": "17d4150545d44ba9047fa08650210f2f4c7cfcd3ff233a0b4a1125b31c0a2d9d",
+    "README.md": "08645e2bf6d97ea205eb828f69ec292ea227f838a5e757a3bdf20e800aa7bd4b",
+    "docs/playstation-support.md": "781d3671193a2b17539f83692acaa89de9e9a4054055c51e50657dd452d1ea1e",
+    "docs/platform-support-matrix.md": "d2da6e6808c35dc1228cc31ef1cc6302243f9d024b29c06832bdbd5a98a45577",
+    "docs/platform-support-matrix.json": "16ef9acc4a34c0672a20d978721189e41b2ff34fcf8a997c73fc34417faaed83",
+    "native/README.md": "7dff32ca9359ec2e90bb7cfb9f8283849bf5a0d0f4426a728644525733c69873",
+    "experiments/injection/SOURCES.md": "f8c5d94d0b6474422792203820f6ff0bff5da7ae86c8347c7ac84af471ce0f1d"
+  },
+  "builds": [
+    {
+      "id": "duckstation",
+      "name": "DuckStation",
+      "bundle": "prototype-data/duckstation/DuckStation.app",
+      "architecture": "arm64",
+      "version": "0.1-12083-g00e299795",
+      "originalExecutableSha256": "5c879677051cfb173002df22baee741c96fa8071c6fe1dd7e5454092bf128173",
+      "preparedExecutableSha256": "9d81c03e32e864a6b27ddab039556a1708306b952066171a51c0befc3273b06e",
+      "archiveUrl": "https://github.com/stenzek/duckstation/releases/download/latest/duckstation-mac-release.zip",
+      "archiveBytes": 95159712,
+      "archiveSha256": "cd77d80b55276f15340efa1c65df250f8f4d413b68d1c136e48615d780f1249c",
+      "sourceArchiveSha256": "e83409ee08d6bf1a5ae052ec28273e0e3bcdadbf6a1395e26dbd2858a0c8d807",
+      "upstreamLicense": "CC BY-NC-ND 4.0",
+      "privateSigningOnly": true,
+      "implementationSourceCopied": false,
+      "emulatorSourcePatched": false,
+      "shippedInApplicationZip": false
+    },
+    {
+      "id": "pcsx2",
+      "name": "PCSX2",
+      "bundle": "prototype-data/pcsx2/PCSX2.app",
+      "architecture": "x86_64",
+      "version": "2.8.2 / fd9d310",
+      "originalExecutableSha256": "10e7cc1b3180b5a9f48923f3dfc3900019cc8c0df7e280a0ea61190b86961390",
+      "preparedExecutableSha256": "b6c2cd600ddee34a50a0637b4a6f4188b5a9e29b7d8ab4aca7078c8e6f90911d",
+      "archiveUrl": "https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-macos-Qt.tar.xz",
+      "archiveBytes": 24377200,
+      "archiveSha256": "3ed9eb40a33eae67134142c24255a079be444f0616ca29575a04a37981f7d426",
+      "sourceArchiveSha256": "50d0fd3731abdaa2559577814cd59e2f596892fe1492c295c386e38f17f1cba1",
+      "upstreamLicense": "GPLv3",
+      "privateSigningOnly": true,
+      "implementationSourceCopied": false,
+      "emulatorSourcePatched": false,
+      "shippedInApplicationZip": false
+    },
+    {
+      "id": "armsx2",
+      "name": "ARMSX2",
+      "bundle": "prototype-data/armsx2/ARMSX2.app",
+      "architecture": "arm64",
+      "version": "nightly-20261023 / 90126bdfea",
+      "originalExecutableSha256": "75385dec7d661f20253b9ac1f0592eb1d0a7b26fa9d1006068a5b07d7be3c6d5",
+      "preparedExecutableSha256": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
+      "archiveUrl": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261023/ARMSX2-nightly-20261023-90126bdfea-macOS-arm64.tar.xz",
+      "archiveBytes": 35215476,
+      "archiveSha256": "a0101807ffd44bab39deb62e4b2150e44c7f4b40371cab7d8dbe38879afda1b8",
+      "sourceArchiveSha256": "35d7f187a018af3a728de962a8570c3ae3e7dcefc0764bb6ccb6673e168487dc",
+      "upstreamLicense": "GPLv3",
+      "privateSigningOnly": true,
+      "implementationSourceCopied": false,
+      "emulatorSourcePatched": false,
+      "shippedInApplicationZip": false
+    }
+  ],
+  "biosAndMedia": [
+    {
+      "slug": "psx",
+      "rom": 6506,
+      "title": "Crash Bash",
+      "path": ".tool-cache/research/playstation/media/psx/Crash Bash.chd",
+      "bytes": 61147370,
+      "sha256": "d83c7f7b57f343859823c047cdb23c39c3bee099f1daa09020c4d2e166938d0a",
+      "bios": {
+        "path": ".tool-cache/research/playstation/media/psx/bios.bin",
+        "bytes": 524288,
+        "md5": "924e392ed05558ffdb115408c263dccf",
+        "sha256": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3"
+      }
+    },
+    {
+      "slug": "ps2",
+      "rom": 7075,
+      "title": "Harvest Moon: Save the Homeland",
+      "path": ".tool-cache/research/playstation/media/ps2/Harvest Moon - Save the Homeland (USA).chd",
+      "bytes": 62979170,
+      "sha256": "cc6aeee1c35a39a0b069b5c93c3eac175fdbcfd1768ad0d6c88535e9b51e500e",
+      "bios": {
+        "path": ".tool-cache/research/playstation/media/ps2/bios.bin",
+        "bytes": 4194304,
+        "md5": "d5ce2c7d119f563ce04bc04dbc3a323e",
+        "sha256": "f4c948e61a291d4b3f92a141e550cf8357204287a31ff784caccbedaef910c9d"
+      }
+    }
+  ],
+  "native": {
+    "command": "devbox run -- flutter test tool/check_playstation_test.dart --reporter expanded",
+    "passed": true,
+    "log": ".tool-cache/research/playstation/native-accepted.log",
+    "resultPath": ".tool-cache/research/playstation/native-WNSSva/results.json",
+    "results": [
+      {
+        "emulator": "DuckStation",
+        "slug": "psx",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/playstation/native-WNSSva/data/profiles/11111111111111111111111111111111/emulators/duckstation",
+        "saveFiles": {
+          "save/card1.mcd": {
+            "sha256": "3eb75d0be15aa48327f9ed0b8bba8cc3e38f1d5921163cfde5f1eb1a58cf8636",
+            "bytes": 131072
+          }
+        },
+        "stateKeys": [
+          "states-615ae26a29b4db04-macos-arm64/SCUS-94570_1.sav",
+          "states-615ae26a29b4db04-macos-arm64/SCUS-94570_resume.sav"
+        ],
+        "uploaded": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].mcd",
+            "bytes": 131072
+          }
+        ],
+        "uploadedStates": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].zip",
+            "bytes": 1600779
+          }
+        ],
+        "firmwareDownloads": 1,
+        "pending": false,
+        "nativeExportRestoreVerified": true,
+        "pauseAndLiveRemapVerified": true,
+        "disconnectAndReassignmentVerified": true,
+        "nativeLogSha256": "fc7dee375dba7dca4e1ba8f1a2daa6dabc4dfd763a400fa70b39f0fd26dc1fe5",
+        "ordinaryCardScope": "Native game-created/formatted .mcd; no completed in-game save-point claim",
+        "nativeStateLoadRequested": false
+      },
+      {
+        "emulator": "ARMSX2",
+        "slug": "ps2",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/playstation/native-WNSSva/data/profiles/22222222222222222222222222222222/emulators/ps2",
+        "saveFiles": {
+          "save/slot2.ps2": {
+            "sha256": "47ebe237a3987f843fc19b0f801ce1edc1690768ef6b18e4b03a12ca6b298358",
+            "bytes": 8650752
+          },
+          "save/slot1.ps2": {
+            "sha256": "47ebe237a3987f843fc19b0f801ce1edc1690768ef6b18e4b03a12ca6b298358",
+            "bytes": 8650752
+          }
+        },
+        "stateKeys": [
+          "states-cb9611224119770d-macos-arm64/SLUS-20251 (F0A6D880).01.p2s"
+        ],
+        "uploaded": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].zip",
+            "bytes": 17090
+          }
+        ],
+        "uploadedStates": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].zip",
+            "bytes": 5411137
+          }
+        ],
+        "firmwareDownloads": 1,
+        "pending": false,
+        "nativeExportRestoreVerified": true,
+        "pauseAndLiveRemapVerified": true,
+        "disconnectAndReassignmentVerified": true,
+        "nativeLogSha256": "6e71238d623bcd858c67e3a51b2e21a124759793145ce49c5409da15fb9bc178",
+        "ordinaryCardScope": "Native blank ECC cards; no completed in-game save-point claim",
+        "nativeStateLoadRequested": true
+      },
+      {
+        "emulator": "PCSX2",
+        "slug": "ps2",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/playstation/native-WNSSva/data/profiles/22222222222222222222222222222222/emulators/ps2",
+        "saveFiles": {
+          "save/slot2.ps2": {
+            "sha256": "47ebe237a3987f843fc19b0f801ce1edc1690768ef6b18e4b03a12ca6b298358",
+            "bytes": 8650752
+          },
+          "save/slot1.ps2": {
+            "sha256": "47ebe237a3987f843fc19b0f801ce1edc1690768ef6b18e4b03a12ca6b298358",
+            "bytes": 8650752
+          }
+        },
+        "stateKeys": [
+          "states-ed0e7d6842f9cd68-macos-arm64/SLUS-20251 (F0A6D880).01.p2s"
+        ],
+        "uploaded": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].zip",
+            "bytes": 17090
+          },
+          {
+            "name": "Broomm [2026-10-22_00-00-02].zip",
+            "bytes": 17090
+          }
+        ],
+        "uploadedStates": [
+          {
+            "name": "Broomm [2026-10-22_00-00-00].zip",
+            "bytes": 5411137
+          },
+          {
+            "name": "Broomm [2026-10-22_00-00-02].zip",
+            "bytes": 10105264
+          }
+        ],
+        "firmwareDownloads": 1,
+        "pending": false,
+        "nativeExportRestoreVerified": true,
+        "pauseAndLiveRemapVerified": true,
+        "disconnectAndReassignmentVerified": true,
+        "nativeLogSha256": "6e71238d623bcd858c67e3a51b2e21a124759793145ce49c5409da15fb9bc178",
+        "ordinaryCardScope": "Native blank ECC cards; no completed in-game save-point claim",
+        "nativeStateLoadRequested": true
+      }
+    ],
+    "cloudEndpoint": "In-memory RomM contract fixture; no owner-server save writes",
+    "firmwareEndpoint": "Production provisioning with actual owner RomM BIOS bytes through a fixture catalogue",
+    "controllerSource": "Synthetic SDL sources preconnected before logical routes; not physical input acceptance",
+    "samePs2ProfileAndCloudCheckpointAcrossEngines": true,
+    "nativeEmulatedSocketCountFollowsAssignments": false
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter analyze",
+      "passed": true,
+      "log": ".tool-cache/research/playstation/analyze-delivery.log"
+    },
+    {
+      "command": "devbox run -- flutter test test --reporter expanded",
+      "passed": true,
+      "tests": 299,
+      "log": ".tool-cache/research/playstation/tests-delivery.log"
+    },
+    {
+      "command": "devbox run -- flutter test test/playstation_test.dart --reporter expanded",
+      "passed": true,
+      "tests": 8,
+      "log": ".tool-cache/research/playstation/unit-alternatives-lifecycle.log"
+    },
+    {
+      "command": "devbox run -- bash tool/build_bridges.sh",
+      "passed": true,
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "log": ".tool-cache/research/playstation/bridges-ui-state.log"
+    },
+    {
+      "command": "Clang static analyzer on SDL3 bridge, independently for ARM64 and x86_64",
+      "passed": true,
+      "analyzerFindings": 0,
+      "runtimeSanitizerExecuted": false,
+      "logs": [
+        ".tool-cache/research/playstation/bridge-analysis-arm64.log",
+        ".tool-cache/research/playstation/bridge-analysis-x86_64.log"
+      ],
+      "notes": "Only unused wrapper linker-argument warnings; native linking also reported the existing incompatible Nix clang runtime warning."
+    },
+    {
+      "command": "devbox run -- flutter test tool/smoke_managed_test.dart --reporter expanded",
+      "passed": true,
+      "log": ".tool-cache/research/playstation/existing-six-games.log",
+      "gameCases": 6
+    },
+    {
+      "command": "devbox run -- bash tool/build_app.sh --release --no-pub",
+      "passed": true,
+      "log": ".tool-cache/research/playstation/macos-release.log"
+    }
+  ],
+  "nativeLibraries": {
+    "build/native/broomm-sdl2.dylib": "fc0485e58942c1dd47f9a74571a9899c8ff8f9ad9d0e91ba95e65c7aa519f420",
+    "build/native/broomm-sdl3.dylib": "c7105a5fd6d2983abc0c4de1a501b70e1dc664bf5e9bdb8cb05ae4c094c2cbde",
+    "build/native/broomm-installer-guard.dylib": "8727d3f149b3d9b9ba57b1eecf89f182d17275840c66a33a194c88a9d41e42c9"
+  },
+  "diagnosticFailures": [
+    {
+      "log": ".tool-cache/research/playstation/native-armsx2.log",
+      "cause": "Native -datapath appends product directory; adapter/config root corrected and directly asserted in regression."
+    },
+    {
+      "log": ".tool-cache/research/playstation/native-duckstation-saveflow.log",
+      "cause": "Native .mcd upload readback rejected by old managed-version extension list; .mcd/.ps2 added and raw cloud regressions pass."
+    },
+    {
+      "log": ".tool-cache/research/playstation/native-all.log",
+      "cause": "Test asserted pause before disconnect acknowledgment and cleanup used busy UI stop; held readiness barrier and direct supervisor cleanup added. Owned fixture closed through private normal-quit IPC."
+    },
+    {
+      "log": ".tool-cache/research/playstation/native-final.log",
+      "cause": "Test sent join before first enabled neutral sample and erased the save baseline during restore; deterministic sample barrier and retained checkpoint corrected."
+    },
+    {
+      "log": ".tool-cache/research/playstation/unit-alternatives.log",
+      "cause": "Test wrote unprovenanced state files outside the play lifecycle; corrected to native before/after-play lifecycle without weakening provenance policy."
+    },
+    {
+      "log": ".tool-cache/research/playstation/tests-sandbox-denied.log",
+      "cause": "Test runner local socket denied in sandbox; unchanged tests executed successfully with the required permission."
+    }
+  ],
+  "release": {
+    "artifact": "build/releases/Broomm-macOS-arm64-playstation.zip",
+    "bytes": 19844753,
+    "sha256": "4e080d905846af5692a90b02ec1cf46195b23519a1154bb91b4013b0b33ccff6",
+    "app": "build/macos/Build/Products/Release/broomm.app",
+    "archiveIntegrityPassed": true,
+    "freshlyExtractedDeepStrictSignaturePassed": true,
+    "signing": "Ad-hoc development build; not notarized; checkout-bound setup sources",
+    "emulatorBiosRomPayloadIncluded": false
+  },
+  "externalEffects": {
+    "officialEmulatorArchivesAndSourcesDownloaded": true,
+    "ownerRommBiosAndTwoGamesDownloadedReadOnly": true,
+    "isolatedManagedInstallationsCreated": true,
+    "serverSavesChanged": false,
+    "ownerProgressChanged": false,
+    "systemEmulatorConfigurationChanged": false,
+    "osDependenciesInstalled": false,
+    "newDartDependencies": [],
+    "rosettaInstalledByBroomm": false
+  },
+  "remainingLimits": [
+    "Native packages/input acceptance for Linux/Steam/gamescope, Windows and Android",
+    "Physical controllers and completed in-game save-point/cross-device acceptance",
+    "Dynamic unplugging of unassigned emulated Sony sockets (both normal pads remain configured)",
+    "Multitap, pressure-sensitive face buttons and special peripherals",
+    "Multidisc switching and shared identity across separate RomM disc records",
+    "PS1 in-emulator state load; this run covers native creation and exact snapshot restoration",
+    "Headered/individual-game memory-card container conversion",
+    "Remote emulator provisioning recipes and system-executable selection remain pending"
+  ]
+}

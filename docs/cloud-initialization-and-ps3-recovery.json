@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-23",
+  "utc": "2026-10-23T14:12:46.134857+00:00",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "existing uncommitted work preserved; exact changed source fingerprints below",
+  "sources": {
+    "lib/src/addons/rpcs3_profile.dart": "7419e98221d485cefab11493a3c5e84f49db8b99f2679e8cff6bc4cd45442e3e",
+    "lib/src/addons/profile.dart": "86995175735effb51cba4a9e48fbc525c39fa27a7087d6ce086d106fa18717fc",
+    "lib/src/addons/ps3.dart": "e583cf0da0726d322e7094357f8ab00b1cd0474d00c0635fc4015452d017c356",
+    "lib/src/managed_emulators.dart": "4d6c42e98eb01f453281b58c18de291e6d7b7a5e3d2942cf2d80c6654b675dcf",
+    "lib/src/shell/cloud_model.dart": "fc4d9ac30be042bfc1c98a050c44ac662d74255c9e25d3e7666cca53f47df25c",
+    "lib/src/shell/model.dart": "711389225ecc0f51ad35a2e73dc2c8a0a457ad71f49de8b0bd960a0274ec2dbd",
+    "lib/src/shell/download_queue.dart": "c8fbcdca213693ef6aab3c83165c0ab89c0ae4278c6fff5512e3197d7720a1be",
+    "lib/src/shell/downloads_model.dart": "a81e8650c72ad3e0da03e77f64e0338f238268bdf5536fa1e0c184f5b6eac717",
+    "lib/src/shell/downloads_screen.dart": "c1c98a61ae3f91e6bd1a4e866563d358d8bf5fb41fb6d544ccdc8d2e7a35e6cb",
+    "lib/src/shell/emulator_settings_screen.dart": "9ec20c48400be56d075cb8f6378dedcc2a52268eb651c787cae0fbb293c118e1",
+    "lib/src/shell/home_screen.dart": "6360b6a0676d61dbffd65bf17c44f52a3782c4344a3ac9784e7a5db513705b7f",
+    "test/cloud_initial_sync_test.dart": "f86188b2783cc1f338cae96559f1c64c74f0a0096f1d400edfa17325d31778b9",
+    "test/download_queue_test.dart": "34b89162e64833e75c9a67686774f45bede6bb0f76c7e4baa48c0fe95d4dabe5",
+    "test/ps3_addons_test.dart": "4c855de8a3aa1609e31884e624a5c3ca64e8ae3e2f2828f5dbfd8d728aa22067",
+    "tool/check_gt6_addon_recovery_test.dart": "abbf1dc3def48c8882865f09fd9380a562513ab73aa020ee527ac5b9031450d7"
+  },
+  "checks": {
+    "flutterTests": 257,
+    "analyze": "no issues",
+    "gitDiffCheck": "pass",
+    "macOSCopiedGT6AndQueueTests": 2,
+    "gt6": {
+      "utc": "2026-10-23T14:06:38.722486Z",
+      "host": "macos",
+      "title": "BCUS98296",
+      "rom": 8010,
+      "isolatedData": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/cloud-queue-gt6/gt6-files-cG9h6j",
+      "originalFiles": 579,
+      "installedFiles": 588,
+      "originalInventorySha256": "ab397fa228bce2d9d0b8cd342b9fe20c3919527a39bfaa3665121eb876dc5d86",
+      "metadataRestored": true,
+      "ownerInventoryAndRegistryUnchanged": true,
+      "usesCachedNativePkgOutput": true,
+      "timings": {
+        "installMs": 254,
+        "reuseMs": 73,
+        "uninstallMs": 367
+      }
+    },
+    "finalOwnerQueueObservation": {
+      "utc": "2026-10-23T14:06:38.742599Z",
+      "liveWriter": false,
+      "gt6CheckpointReadable": true,
+      "mutated": false
+    }
+  },
+  "initialLockInspection": {
+    "pid": 77106,
+    "executable": "build/releases/broomm 9.app/Contents/MacOS/broomm",
+    "observedOpenQueueLock": true,
+    "action": "read-only process/fd inspection; no signal or lock deletion"
+  },
+  "evidenceDirectory": ".tool-cache/research/cloud-queue-gt6",
+  "logs": [
+    "full-tests-final.log",
+    "analyze-final.log",
+    "build.log",
+    "signature.log",
+    "zip-test.log",
+    "gt6-integration-final.log",
+    "first-targeted-compile-failure.log",
+    "initial-sync-targeted.log",
+    "ps3-recovery-targeted.log"
+  ],
+  "signatureRepair": "Incremental outer seal referenced the earlier App.framework. Both nested frameworks verified independently; refreshed only the outer ad-hoc signature before repackaging.",
+  "release": {
+    "path": "build/releases/Broomm-macOS-arm64-cloud-queue-recovery.zip",
+    "bytes": 19512122,
+    "sha256": "5f75694c15827d03a8bb1721fc899fb603ee84d37afc4ae0aee51edf4d54017a",
+    "build": "macOS Release, Apple Silicon development distribution",
+    "outerSignatureRefreshed": true,
+    "nestedFrameworksVerifiedBeforeRefresh": true,
+    "deepStrictSignature": true,
+    "zipIntegrity": true,
+    "extractedDeepStrictSignature": true
+  },
+  "limits": [
+    "No live-profile PS3 deployment, server save upload, game launch or in-game DLC visibility acceptance in this follow-up",
+    "Linux/Windows/Android native behavior and physical controller UI remain separate checks",
+    "Initial sync defers until a configured adapter can identify native save storage; Switch cold initialization remains session-supervised",
+    "Original PS3 overlapping files remain private recovery material; close older app versions before registry migration"
+  ]
+}

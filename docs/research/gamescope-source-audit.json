@@ -1,0 +1,52 @@
+{
+  "reviewedAt": "2026-10-16",
+  "evidenceType": "primary-source inspection only",
+  "nativeLinuxExecution": false,
+  "bazziteInstalledBuild": "unavailable; not inferred from upstream",
+  "tag": {
+    "name": "3.16.31",
+    "commit": "6867f509874f9bc52e12d6f4c4596cdf0d5be6b4"
+  },
+  "master": {
+    "commit": "2b5cf191d1047d6895516a834de8a72ac1c342f3",
+    "committedAt": "2026-10-14T02:37:15Z"
+  },
+  "sources": [
+    {
+      "path": "src/steamcompmgr.cpp",
+      "commit": "6867f509874f9bc52e12d6f4c4596cdf0d5be6b4",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/6867f509874f9bc52e12d6f4c4596cdf0d5be6b4/src/steamcompmgr.cpp",
+      "sha256": "061c38a5ea0bedb1e230cb37bedd484df18333950ef8d0c224510ee823778b42"
+    },
+    {
+      "path": "src/wlserver.cpp",
+      "commit": "6867f509874f9bc52e12d6f4c4596cdf0d5be6b4",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/6867f509874f9bc52e12d6f4c4596cdf0d5be6b4/src/wlserver.cpp",
+      "sha256": "9260b7b744a01e56b0a0e80f37953f2fa678bea448f65209a752468e7c531df9"
+    },
+    {
+      "path": "src/steamcompmgr.cpp",
+      "commit": "2b5cf191d1047d6895516a834de8a72ac1c342f3",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/2b5cf191d1047d6895516a834de8a72ac1c342f3/src/steamcompmgr.cpp",
+      "sha256": "d0b195cb304dff80b4637df925c508e8c43c7bc65fb6a9dddc002ed7c03f0b45"
+    },
+    {
+      "path": "src/wlserver.cpp",
+      "commit": "2b5cf191d1047d6895516a834de8a72ac1c342f3",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/2b5cf191d1047d6895516a834de8a72ac1c342f3/src/wlserver.cpp",
+      "sha256": "5f1a4beadefad461f593e5243e2420f76eb52c94d2d28132affc96d6d0771ef7"
+    },
+    {
+      "path": "src/Utils/Process.cpp",
+      "commit": "2b5cf191d1047d6895516a834de8a72ac1c342f3",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/2b5cf191d1047d6895516a834de8a72ac1c342f3/src/Utils/Process.cpp",
+      "sha256": "ac070ad50d48f71b486a3cec16ceb5f4f56e0da6b34286105ee67294d3d043d7"
+    },
+    {
+      "path": "protocol/gamescope-control.xml",
+      "commit": "2b5cf191d1047d6895516a834de8a72ac1c342f3",
+      "url": "https://github.com/ValveSoftware/gamescope/blob/2b5cf191d1047d6895516a834de8a72ac1c342f3/protocol/gamescope-control.xml",
+      "sha256": "f3d88f4643a38d39107c63dc5cb9d37ea12a30f0f53a5181935c4ab28bbb95ba"
+    }
+  ]
+}

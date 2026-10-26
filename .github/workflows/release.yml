@@ -1,0 +1,258 @@
+name: Broomm releases
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+# Teddy's shared release train: builds must finish before a version is consumed.
+# PRs have independent groups and never receive publishing/signing permissions.
+concurrency:
+  group: broomm-releases-${{ github.event_name == 'pull_request' && github.run_id || 'publish' }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      core: ${{ steps.version.outputs.core }}
+      tag: ${{ steps.version.outputs.tag }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      publish: ${{ steps.version.outputs.publish }}
+      promote: ${{ steps.version.outputs.promote }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        with:
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      - id: version
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash tool/ci/run.sh dart tool/release/version.dart
+
+  workflow-lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        with:
+          project-path: tool/ci/lint
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      - run: devbox --config tool/ci/lint run check
+
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux
+            devbox: tool/ci/linux
+          - os: macos-26
+            platform: macos
+            devbox: .
+          - os: windows-2025
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    env:
+      TARGET_PLATFORM: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        if: runner.os != 'Windows'
+        with:
+          project-path: ${{ matrix.devbox }}
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      # Devbox has no native Windows backend. Match the root Devbox Flutter pin,
+      # installing only into this workspace, with pre-provisioned MSVC/Windows SDK.
+      - id: windows-pin
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $config = Get-Content devbox.json -Raw | ConvertFrom-Json
+          $version = $config.packages.flutter -replace '-sdk-links$', ''
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        if: runner.os == 'Windows'
+        with:
+          flutter-version: ${{ steps.windows-pin.outputs.version }}
+          cache: true
+          cache-path: ${{ github.workspace }}/.tool-cache/flutter
+          pub-cache-path: ${{ github.workspace }}/.tool-cache/pub
+      - name: Resolve locked packages
+        run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Analyze
+        run: bash tool/ci/run.sh flutter --suppress-analytics analyze --no-pub
+      - name: Check Dart formatting
+        if: matrix.platform == 'linux'
+        run: bash tool/ci/run.sh dart format --output=none --set-exit-if-changed lib test tool
+      - name: Test
+        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded
+
+  native-macos:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        with:
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      - run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Compile bridges and host test application
+        run: |
+          bash tool/ci/run.sh bash tool/build_bridges.sh
+          bash tool/ci/run.sh bash tool/build_app.sh --portable --no-pub
+      - name: Native host tests
+        run: bash tool/ci/run.sh bash tool/test_macos.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: broomm-native-macos-results
+          path: build/macos/Logs/Test/*.xcresult
+          if-no-files-found: warn
+          retention-days: 14
+
+  build:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos
+            os: macos-26
+            arch: universal
+            devbox: .
+          - platform: windows
+            os: windows-2025
+            arch: x64
+          - platform: linux
+            os: ubuntu-24.04
+            arch: x64
+            devbox: tool/ci/linux
+          - platform: linux
+            os: ubuntu-24.04-arm
+            arch: arm64
+            devbox: tool/ci/linux
+          - platform: android
+            os: ubuntu-24.04
+            arch: universal
+            devbox: tool/ci/android
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_VERSION: ${{ needs.version.outputs.version }}
+      BUILD_CORE: ${{ needs.version.outputs.core }}
+      BUILD_NUMBER: ${{ needs.version.outputs.build_number }}
+      TARGET_PLATFORM: ${{ matrix.platform }}
+      TARGET_ARCH: ${{ matrix.arch }}
+      PUBLISH_RELEASE: ${{ needs.version.outputs.publish }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        if: runner.os != 'Windows'
+        with:
+          project-path: ${{ matrix.devbox }}
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      - id: windows-pin
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $config = Get-Content devbox.json -Raw | ConvertFrom-Json
+          "version=$($config.packages.flutter -replace '-sdk-links$', '')" >> $env:GITHUB_OUTPUT
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        if: runner.os == 'Windows'
+        with:
+          flutter-version: ${{ steps.windows-pin.outputs.version }}
+          cache: true
+          cache-path: ${{ github.workspace }}/.tool-cache/flutter
+          pub-cache-path: ${{ github.workspace }}/.tool-cache/pub
+      - name: Prepare private Android SDK/cache
+        if: matrix.platform == 'android'
+        run: bash tool/ci/prepare_android.sh
+      - name: Resolve locked packages
+        run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Build and package (PR/local Android signing)
+        if: matrix.platform != 'android' || needs.version.outputs.publish != 'true'
+        run: bash tool/ci/run.sh dart tool/release/package.dart
+      - name: Build and package (Android release signing)
+        if: matrix.platform == 'android' && needs.version.outputs.publish == 'true'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          umask 077
+          bash tool/ci/run.sh dart tool/release/package.dart
+      - name: Remove signing material
+        if: always() && matrix.platform == 'android'
+        run: rm -f android/key.properties android/app/release.jks
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: broomm-build-${{ matrix.platform }}-${{ matrix.arch }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: [version, workflow-lint, checks, native-macos, build]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        with:
+          devbox-version: '0.18.4'
+          disable-nix-access-token: 'true'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          # Excludes native test results, which are never release assets.
+          pattern: broomm-build-*
+          merge-multiple: true
+          path: dist
+      - name: Publish complete release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+          PROMOTE: ${{ needs.version.outputs.promote }}
+        run: bash tool/ci/run.sh dart tool/release/publish.dart

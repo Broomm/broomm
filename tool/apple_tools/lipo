@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Keep Nix framework sources immutable. Thin only generated project copies, into
+# a private output first (Xcode 27's lipo rejects existing output files).
+set -euo pipefail
+project="$(cd "$(dirname "$0")/../.." && pwd -P)"
+args=("$@")
+for ((i=0;i<${#args[@]}-1;i++)); do
+  if [ "${args[$i]}" != '-output' ]; then continue; fi
+  target="${args[$((i+1))]}"
+  if [ ! -f "$target" ] || [ -L "$target" ]; then break; fi
+  parent="$(cd "$(dirname "$target")" && pwd -P)"
+  case "$parent" in
+    "$project"/build/*)
+      chmod u+w "$parent" "$target"
+      stage="$(mktemp -d "$parent/.broomm-lipo.XXXXXX")"
+      trap 'rm -f "$stage/output"; rmdir "$stage"' EXIT
+      args[$((i+1))]="$stage/output"
+      /usr/bin/lipo "${args[@]}"
+      mv "$stage/output" "$target"
+      exit 0 ;;
+  esac
+done
+exec /usr/bin/lipo "$@"

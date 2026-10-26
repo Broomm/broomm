@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-23",
+  "upstream": [
+    {
+      "url": "https://github.com/rommapp/romm/blob/5.4.0/backend/utils/client_tokens.py",
+      "sha256": "1491e812cd7da2a00b1d60299b772867219e572bb5e2c6ea9029193694720cc7"
+    },
+    {
+      "url": "https://github.com/rommapp/romm/blob/5.4.0/backend/endpoints/client_tokens.py",
+      "sha256": "33d73295341b96da7588d54ab7c1593394e3a639bb5935dda16a93ee8966f053"
+    }
+  ],
+  "pairingLength": 8,
+  "pairingAlphabet": "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
+  "ttlSeconds": 60,
+  "normalization": "Remove hyphens and uppercase before exchange",
+  "host": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "newDependencies": false,
+  "sourceBaseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "sourceTreeIncludesPreexistingChanges": true,
+  "sourceHashes": {
+    "lib/src/romm/client.dart": "0f9760a51d61527baabdead063e46adcd001936dfc8c65a9f9d74c7ebd2deb4a",
+    "lib/src/shell/onboarding.dart": "0e389783003999e55710539892d4346bd196135d4bcb036d0daaf083abe2b0e3",
+    "test/romm_client_test.dart": "9025417da50cb7a90b084550aed634b47c20e0314416e9d5918101d4a5b51d9a"
+  },
+  "checks": [
+    {
+      "command": "devbox run -- dart format lib/src/romm/client.dart lib/src/shell/onboarding.dart test/romm_client_test.dart",
+      "result": "passed"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test test/romm_client_test.dart test/shell_widget_test.dart",
+      "result": "22 passed"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics analyze lib/src/romm/client.dart lib/src/shell/onboarding.dart test/romm_client_test.dart",
+      "result": "No issues found"
+    }
+  ],
+  "logs": {
+    ".tool-cache/research/pairing-code-format.log": "93d965b4ba4f517f2e963cf4d2783424a916e50fa26800332b77acdfb68f235e",
+    ".tool-cache/research/pairing-code-tests.log": "69f225a2948f2b8fdb9425487edf6c139766593c5ac54d5c5436f2a84bc3150b",
+    ".tool-cache/research/pairing-code-analysis.log": "0d8ab33284f66197d28eb43b441593b7d46960b8238ebab2092fb0e1db39c87f"
+  },
+  "regressionCases": [
+    "Generated alphabet and lowercase/hyphenated forms complete real local HTTP exchange and authenticated identity checks",
+    "Malformed codes fail without network requests",
+    "Expired/rejected exchange has one attempt and creates no session"
+  ],
+  "remoteCredentialsUsed": false,
+  "desktopReleaseRebuilt": false,
+  "nativeVerification": "No new native Linux/Windows/Android or owner-server pairing acceptance",
+  "switchEvidence": "../broomm-nsw/docs/pairing-code-build.json"
+}

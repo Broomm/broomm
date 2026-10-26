@@ -1,0 +1,463 @@
+{
+  "recordedAt": "2026-10-16T20:42:47.946342Z",
+  "host": {
+    "os": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64",
+    "hardware": "Apple M1 Pro",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "sourceFingerprint": {
+    "lib/main.dart": "6a2f49cfb25bd265f24ccbfcc0ad4f7c7bac398e1fa875979d380657131c0ca0",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "macos/Runner/MainFlutterWindow.swift": "18a014ff10ba1f1d6ae07e4056e16268bc40ee91f2d4316d549b69e2349adb5c",
+    "macos/Runner/AppDelegate.swift": "a6dfe47f624ea22355cd83f9ef16bb8b9e147dfbc3db14ed550fde3e0ca26b18",
+    "macos/Runner/Info.plist": "776dc92b69bb5446127d40ca8cc53d96fabc2d14c73b08c1b2a0939693028704",
+    "macos/RunnerTests/RunnerTests.swift": "c6e7762a72cf5dcf9f05de85d569f53b15ca860e2d58fe127858d4004899f7fc",
+    "native/ownership.inc": "7478a3d9411be03bdfc3a205676c6f44f378d9d994176e1541c271e23860fe33",
+    "experiments/injection/src/cache_redirect.c": "34a0f8925900f6c176e3016b628fc26fcb3e62e3c54f170a43164d4be7203a01",
+    "tool/build_app.sh": "0b42cf94662e9086f73837755ab19cc2f2bdda733639e5dfc684ae251bc9c96c",
+    "tool/build_bridges.sh": "1fc5dd2a6c6590bbce040fa36899fb15a3c2c9fdb5090be01da54626aa65606c",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "devbox.json": "d8fc69e9c3dfb2486d6ab58d86c4e7572973851b32b959911a9b95dd37c18a2d",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "test/pairing_test.dart": "aeef0fcb6e21a59bb3fcd75f9731632fc2c6449631e8e8b8e72b4995404a0d47",
+    "lib/src/app_model.dart": "577567a7363c65b610912e107d87e2bba5760f65e1e637b47e984c6f51becf4e",
+    "lib/src/pairing.dart": "1751761616c068c87868b85512a9133447f35b9e716008a8e0512341a63c9bd1",
+    "lib/src/pairing_gestures.dart": "9a60d2b5895c76e45d44e81e42683ba9903afc62a225e6a3f9d4209fc16122f1",
+    "lib/src/controller_mapping.dart": "32f64985042f3a28cabe271319953905eda8ad911fc033b125e0ff2bef51905f",
+    "lib/src/catalogue.dart": "59df22a0c496b8206659f80d81b1e58f4ea9bc5e96d03df900ac829368bf2ac6",
+    "lib/src/emulators.dart": "1b8360efd5726b45b97bea1dadfcf3bee502828af962008fdedcdc246b32806b",
+    "lib/src/session.dart": "c8d94f176e5bb4f9d9beffccd8af9af728317d53c8dd8db169feb4e8ff8d30b4",
+    "lib/src/widgets/controller_tester.dart": "ff15e793c7c37e58d6ad1c0e3444071ee54741d3827f9b82e126750f0312ead7",
+    "lib/src/widgets/pairing_screen.dart": "e602be9b31587f7e9ed784529d04ce6a2381de1ed704bb05ae69934864ac2dc9",
+    "native/session.inc": "b3bbedb7f34451e5e2b3b94c025e00a85ba7413761533e317798e048593aec57",
+    "native/wii.inc": "99001b08b43e5a9bd6ef86fbf1791ab18768ca6f21e4a5bd2333ce0d37d09f13",
+    "native/test_sources.inc": "b1d8659be42257b2ec12453580ff1bf49900b3bfb33feebdd47523cab635c94a",
+    "experiments/injection/src/probe.c": "b8052f5ed1c0d6813f9bd35cf85c23d99cbd34afecb381f981f3ba7267507d8b",
+    "experiments/injection/src/abi_slots.h": "089603b0fd30c8ce50a1b339ebf31e461bf4b9e308b1c9ee0f4814fab265b615",
+    "experiments/injection/tools/derive-slots.dart": "7c94ffe5a4325cc2340fec6b18440037292e297cf863a0d36d8a46eab1150d75",
+    "test/controller_mapping_test.dart": "a759a68db969391411960343bc5bbf465f54b53b0b6f80f0ca60b481e10d57fd",
+    "test/pairing_gestures_test.dart": "53aa90cecd9a9c9fc3bdb793c145b1dd44e856dbb715a2159f4c7b4943ad7a72",
+    "test/widget_test.dart": "816e3965e08284087d6ef124851b30dab39c5859b04ade326f38b8a8ec47c5cf",
+    "test/overlay_state_test.dart": "21ce9e101440c3c1c18c77f9830bcf44290e737c46451a663f7045dad525bdac",
+    "test/session_commands_test.dart": "eb9f17b3b69d3e80c3491f9d7de9d9a6b9ce9813d17fdf697971f3ed1d5466d4",
+    "tool/smoke_prototype.dart": "d292ab5875bd3c653437b31483a26aeb0c0962c56f2573f54521b8f3108362fe",
+    "tool/smoke_wii.dart": "4e980b42d39b968fbbcb53cd62eee83519030f0262ab62dd74a07820497cf059"
+  },
+  "bridges": {
+    "sdl2": {
+      "sha256": "3d4de528a9155a91b239d654017cbaf6e52759edfd8e3d88a51b4794dbc295ff",
+      "packagedCopyMatches": true
+    },
+    "sdl3": {
+      "sha256": "027c960c41f54fcf44d84670ff40841e5a6e8697469e32d49d4ac8a49d5ed29c",
+      "packagedCopyMatches": true
+    }
+  },
+  "emulators": {
+    "RetroArch": {
+      "executableSha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45"
+    },
+    "Dolphin": {
+      "executableSha256": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e"
+    },
+    "RPCS3": {
+      "executableSha256": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5"
+    },
+    "Azahar": {
+      "executableSha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21"
+    },
+    "Ryubing": {
+      "executableSha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4"
+    }
+  },
+  "flutter": {
+    "analyze": "passed",
+    "testsPassed": 26,
+    "log": ".tool-cache/research/pairing-flutter-check-final.log"
+  },
+  "nativeWindowTests": {
+    "result": "Passed",
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "includesThirtyForegroundCycles": true,
+    "sourceFingerprintPhase": "Window code unchanged; ran before final Dart hold-reset and C diagnostic-counter refinements."
+  },
+  "sixRoms": {
+    "timestamp": "2026-10-16T20:41:27.735885Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "smw",
+        "emulator": "RetroArch",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 5786,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "nativeDriverSlotInput": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "melee",
+        "emulator": "Dolphin",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 8624,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "consoleSocketCounts": [
+          0,
+          1,
+          2
+        ],
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "brawl",
+        "emulator": "Dolphin",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 6104,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "rayman",
+        "emulator": "RPCS3",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 1176012,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "watchDeferralVerified": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 2710,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "3dworld",
+        "emulator": "Ryubing",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 125091,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "wii": {
+    "timestamp": "2026-10-16T20:41:50.001734Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "mode": "upright",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 1,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "upright",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 1,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "classic",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "selectedExtension": 2,
+        "activeExtension": 2,
+        "orientation": 0,
+        "remoteFaceGetterVerified": false,
+        "classicGameInputOwnerVerificationRequired": true,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "classic",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "selectedExtension": 2,
+        "activeExtension": 2,
+        "orientation": 0,
+        "remoteFaceGetterVerified": false,
+        "classicGameInputOwnerVerificationRequired": true,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "nunchuk",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "selectedExtension": 1,
+        "activeExtension": 1,
+        "orientation": 0,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "nunchuk",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "selectedExtension": 1,
+        "activeExtension": 1,
+        "orientation": 0,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "sideways",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 2,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mode": "sideways",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 2,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 21720
+      },
+      {
+        "mixedPlayers": true,
+        "wiiSourceMask": 3,
+        "activeExtensions": [
+          1,
+          2
+        ],
+        "gamecubeSocketMask": 0
+      }
+    ],
+    "source": "in-process SDL virtual test sources",
+    "physicalControllerAcceptance": false
+  },
+  "azaharPreconnected": {
+    "timestamp": "2026-10-16T20:32:44.854662Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "watchDeferralVerified": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 1232,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": true,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "watchDeferralVerified": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 2100,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": true,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "earlierAzaharRelaunch": {
+    "timestamp": "2026-10-16T20:30:24.568509Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 3906,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 2534,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 1610,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "staticAnalysis": {
+    "sdl2Log": ".tool-cache/research/pairing-native-sdl2-analysis.log",
+    "sdl3Log": ".tool-cache/research/pairing-native-sdl3-analysis.log",
+    "sdl2Diagnostics": [],
+    "sdl3Diagnostics": [],
+    "sanitizersRun": false
+  },
+  "failedDiagnosticPhases": [
+    {
+      "issue": "Azahar SDL watcher startup deadlock before ROM boot",
+      "sample": ".tool-cache/research/azahar-pairing-stall.sample.txt",
+      "corrected": true
+    },
+    {
+      "issue": "Old protocol guard rejected the new protocol during development",
+      "corrected": true
+    },
+    {
+      "issue": "Wii smoke attempted live configuration changes without releasing held buttons",
+      "correctedTestFlow": true
+    }
+  ],
+  "acceptance": {
+    "physicalControllerGameplay": false,
+    "classicGameActionReadback": false,
+    "hardwareMotion": false,
+    "steamGamescope": false,
+    "linux": false,
+    "windows": false,
+    "android": false,
+    "visuals": "Flutter-rendered artifacts inspected, not owner-performed acceptance"
+  }
+}

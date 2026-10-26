@@ -1,0 +1,896 @@
+{
+  "recordedAt": "2026-10-16T21:25:28.172706+00:00",
+  "host": {
+    "os": "Version 27.0.1 (Build 26A434)",
+    "architecture": "arm64",
+    "hardware": "Apple M1 Pro",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "revisionIdentity": "No Git repository; source SHA-256 fingerprints below identify the tested files.",
+  "sourceFingerprint": {
+    "devbox.json": "d8fc69e9c3dfb2486d6ab58d86c4e7572973851b32b959911a9b95dd37c18a2d",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "experiments/injection/src/abi_slots.h": "5f9bc3b738b912c5b5d0485840e93068e3b4e5c8eefd06bdd4a9cd0e151722b0",
+    "experiments/injection/src/cache_redirect.c": "34a0f8925900f6c176e3016b628fc26fcb3e62e3c54f170a43164d4be7203a01",
+    "experiments/injection/src/probe.c": "ea98175ba73226ba1a15dd2eaf68dbb4f48770e891f2fe5033dd7e13b276fe0f",
+    "experiments/injection/tools/derive-slots.dart": "a68e264a7f93bfe52043443e81282534a2d0be26d49f6e34894333f6f2b30b55",
+    "lib/main.dart": "6a2f49cfb25bd265f24ccbfcc0ad4f7c7bac398e1fa875979d380657131c0ca0",
+    "lib/src/app_model.dart": "d958f4c98573c61f665d6464cce3371cca48a02c77cdafa45a6879fd2751a00b",
+    "lib/src/catalogue.dart": "59df22a0c496b8206659f80d81b1e58f4ea9bc5e96d03df900ac829368bf2ac6",
+    "lib/src/controller_mapping.dart": "32f64985042f3a28cabe271319953905eda8ad911fc033b125e0ff2bef51905f",
+    "lib/src/emulators.dart": "aed9ab696858680a624ea5b11049204366cf2fe66c3651f84f7c5dab0fe9d2e6",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "lib/src/pairing.dart": "62d18a9b8bb553e0587b19f2fc08955492b78b2b1b9e06b0c9b36328cfc4c2b6",
+    "lib/src/pairing_gestures.dart": "3f49ce8008e0bb965286e69c9e66786ce69759d7638f79236d91f7fb2c87f4ee",
+    "lib/src/session.dart": "9c7ef8ee2536cb7b095dc2a3edb3077bf5f7f37076a1af59f4644a9c240774be",
+    "lib/src/widgets/controller_tester.dart": "ff15e793c7c37e58d6ad1c0e3444071ee54741d3827f9b82e126750f0312ead7",
+    "lib/src/widgets/motion_tester.dart": "927e1b0734f49c1fe984b852b06cebf6d7b745d41447baf2ab2227968549a9f0",
+    "lib/src/widgets/pairing_screen.dart": "f00c891298acaf4d70a9707eb75314df3f03aaa81564f3e31172f76ade4358fe",
+    "macos/Runner/AppDelegate.swift": "a6dfe47f624ea22355cd83f9ef16bb8b9e147dfbc3db14ed550fde3e0ca26b18",
+    "macos/Runner/Info.plist": "776dc92b69bb5446127d40ca8cc53d96fabc2d14c73b08c1b2a0939693028704",
+    "macos/Runner/MainFlutterWindow.swift": "18a014ff10ba1f1d6ae07e4056e16268bc40ee91f2d4316d549b69e2349adb5c",
+    "macos/RunnerTests/RunnerTests.swift": "c6e7762a72cf5dcf9f05de85d569f53b15ca860e2d58fe127858d4004899f7fc",
+    "native/motion.inc": "f6dec7cfe601d22b53707b52bf6b6da5349d73c5783bb44b84ea054719675774",
+    "native/ownership.inc": "7478a3d9411be03bdfc3a205676c6f44f378d9d994176e1541c271e23860fe33",
+    "native/session.inc": "840399ad39e157e73bf07f982a46d96ce1db7bb515faed432288f2447819bef2",
+    "native/test_sources.inc": "c5a6f50ea0abf7ef928e5972440fa0f8bf5586d4c1371f7fe351731bce8e08c2",
+    "native/wii.inc": "99001b08b43e5a9bd6ef86fbf1791ab18768ca6f21e4a5bd2333ce0d37d09f13",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "test/controller_mapping_test.dart": "40b57eac8493cc9c810e7946a55a5e5bf440bce84e6b2c4fbe2f6e3c23128cf8",
+    "test/motion_test.dart": "6de625127336f7a39781ebcfdfc02883d4ea66003ce662bdea241e7d7ee2da3f",
+    "test/overlay_state_test.dart": "1027bd8df60ffc2b314674afefe6378876ff138e0e4be372ed36b18cfa4ec9c1",
+    "test/pairing_gestures_test.dart": "7e9b9c5903129df3c0e9879a29ab0898b18c90c218ae9ce4cc432ebbd39fe378",
+    "test/pairing_test.dart": "48957871de5251adf6578bc56b22c3e029feb20bcfe5a0be80b9c410261038c1",
+    "test/session_commands_test.dart": "eb9f17b3b69d3e80c3491f9d7de9d9a6b9ce9813d17fdf697971f3ed1d5466d4",
+    "test/widget_test.dart": "74c756276dd0a04c41807e2fe9dd94b301638762f5cbf7abf36a33d3bd36627d",
+    "tool/build_app.sh": "0b42cf94662e9086f73837755ab19cc2f2bdda733639e5dfc684ae251bc9c96c",
+    "tool/build_bridges.sh": "1fc5dd2a6c6590bbce040fa36899fb15a3c2c9fdb5090be01da54626aa65606c",
+    "tool/check_motion_hardware.dart": "d7886d8612f335fb1c826434f31d86cb5d8a61142e109338308068505881ae95",
+    "tool/smoke_motion.dart": "7f77e0052f4c94096943c8f5ed05b08cfaf553a4a85087eee9c24951b633f08d",
+    "tool/smoke_prototype.dart": "d292ab5875bd3c653437b31483a26aeb0c0962c56f2573f54521b8f3108362fe",
+    "tool/smoke_wii.dart": "ac9077d0c1b707ac164012dbf9978868de3f461ef53a337124eb2a161750547b"
+  },
+  "bridges": {
+    "SDL2": {
+      "path": "build/native/broomm-sdl2.dylib",
+      "sha256": "573d962c703362692c799a0962853131b715ac39079421af930d2b558217d162",
+      "packagedSha256": "573d962c703362692c799a0962853131b715ac39079421af930d2b558217d162"
+    },
+    "SDL3": {
+      "path": "build/native/broomm-sdl3.dylib",
+      "sha256": "d1620f0847287ceb06b70167656242f0912a8627b59fc79da90b91354625bdb3",
+      "packagedSha256": "d1620f0847287ceb06b70167656242f0912a8627b59fc79da90b91354625bdb3"
+    }
+  },
+  "emulators": {
+    "RetroArch": {
+      "executableSha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sdlMajor": 3
+    },
+    "Dolphin": {
+      "executableSha256": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+      "sdlMajor": 3
+    },
+    "RPCS3": {
+      "executableSha256": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+      "sdlMajor": 3
+    },
+    "Azahar": {
+      "executableSha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+      "sdlMajor": 2
+    },
+    "Ryubing": {
+      "executableSha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+      "sdlMajor": 2
+    }
+  },
+  "flutter": {
+    "analyze": "passed",
+    "testsPassed": 37,
+    "log": ".tool-cache/research/motion-check-final.log"
+  },
+  "build": {
+    "result": "passed",
+    "log": ".tool-cache/research/motion-build-final.log",
+    "app": "build/macos/Build/Products/Debug/broomm.app"
+  },
+  "nativeStaticAnalysis": {
+    "result": "zero diagnostics",
+    "diagnostics": {
+      "SDL2": [],
+      "SDL3": []
+    },
+    "logs": ".tool-cache/research/pairing-native-sdl{2,3}-analysis.log",
+    "raceSanitizerExecuted": false
+  },
+  "sixRoms": {
+    "timestamp": "2026-10-16T21:21:52.568576Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "smw",
+        "emulator": "RetroArch",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 5258,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "nativeDriverSlotInput": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "melee",
+        "emulator": "Dolphin",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 8052,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "consoleSocketCounts": [
+          0,
+          1,
+          2
+        ],
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "brawl",
+        "emulator": "Dolphin",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 7644,
+        "consumedPorts": 3,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "rayman",
+        "emulator": "RPCS3",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 1157760,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "watchDeferralVerified": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 1330,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "3dworld",
+        "emulator": "Ryubing",
+        "liveRoute": true,
+        "liveSwap": true,
+        "bothFacePairs": true,
+        "hotkeyPause": true,
+        "disconnectPause": true,
+        "emulatorQueries": 118584,
+        "consumedPorts": 15,
+        "source": "in-process SDL virtual test sources",
+        "physicalControllerAcceptance": false,
+        "writerLockOwnedByEmulator": true,
+        "confirmationReleaseGate": true,
+        "preconnectedTestSources": false,
+        "foregroundBroommBeforeResume": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "wii": {
+    "timestamp": "2026-10-16T21:22:48.653593Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "mode": "upright",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 1,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "upright",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 1,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "classic",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 2,
+        "activeExtension": 2,
+        "orientation": 0,
+        "remoteFaceGetterVerified": false,
+        "classicGameInputOwnerVerificationRequired": true,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "classic",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 2,
+        "activeExtension": 2,
+        "orientation": 0,
+        "remoteFaceGetterVerified": false,
+        "classicGameInputOwnerVerificationRequired": true,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "nunchuk",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 1,
+        "activeExtension": 1,
+        "orientation": 0,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "nunchuk",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 1,
+        "activeExtension": 1,
+        "orientation": 0,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "sideways",
+        "swapFaces": false,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 2,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mode": "sideways",
+        "swapFaces": true,
+        "reloadAcknowledged": true,
+        "independentModeAndFaceSelection": true,
+        "selectedExtension": 0,
+        "activeExtension": 0,
+        "orientation": 2,
+        "remoteFaceGetterVerified": true,
+        "classicGameInputOwnerVerificationRequired": false,
+        "wiiSourceMask": 1,
+        "gamecubeSocketMask": 0,
+        "pid": 26030
+      },
+      {
+        "mixedPlayers": true,
+        "wiiSourceMask": 3,
+        "activeExtensions": [
+          1,
+          2
+        ],
+        "gamecubeSocketMask": 0
+      }
+    ],
+    "source": "in-process SDL virtual test sources",
+    "physicalControllerAcceptance": false
+  },
+  "motion": {
+    "timestamp": "2026-10-16T21:18:52.975349Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "results": [
+      {
+        "game": "brawl",
+        "emulator": "Dolphin",
+        "route": true,
+        "reassign": true,
+        "faceSwapDoesNotRotateMotion": true,
+        "failedSensorNeutral": true,
+        "unsupportedSourceNeutral": true,
+        "recovery": true,
+        "pauseGate": true,
+        "disconnectGate": true,
+        "consumerEvidence": "real emulator SDL getter returned routed values",
+        "motionReads": [
+          [
+            1164,
+            582
+          ],
+          [
+            948,
+            474
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "motionDelivered": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "physicalControllerAcceptance": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "rayman",
+        "emulator": "RPCS3",
+        "route": true,
+        "reassign": true,
+        "faceSwapDoesNotRotateMotion": true,
+        "failedSensorNeutral": true,
+        "unsupportedSourceNeutral": true,
+        "recovery": true,
+        "pauseGate": true,
+        "disconnectGate": true,
+        "consumerEvidence": "real emulator SDL getter returned routed values",
+        "motionReads": [
+          [
+            12239,
+            12239
+          ],
+          [
+            12239,
+            12239
+          ],
+          [
+            12239,
+            12239
+          ],
+          [
+            12239,
+            12239
+          ]
+        ],
+        "motionDelivered": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "physicalControllerAcceptance": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "mk7",
+        "emulator": "Azahar",
+        "route": true,
+        "reassign": true,
+        "faceSwapDoesNotRotateMotion": true,
+        "failedSensorNeutral": true,
+        "unsupportedSourceNeutral": true,
+        "recovery": true,
+        "pauseGate": true,
+        "disconnectGate": true,
+        "consumerEvidence": "SDL watcher callback returned (not game HID readback)",
+        "motionReads": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "motionDelivered": [
+          [
+            58,
+            58
+          ],
+          [
+            58,
+            58
+          ],
+          [
+            58,
+            58
+          ],
+          [
+            58,
+            58
+          ]
+        ],
+        "physicalControllerAcceptance": false,
+        "gracefulExit": true
+      },
+      {
+        "game": "3dworld",
+        "emulator": "Ryubing",
+        "route": true,
+        "reassign": true,
+        "faceSwapDoesNotRotateMotion": true,
+        "failedSensorNeutral": true,
+        "unsupportedSourceNeutral": true,
+        "recovery": true,
+        "pauseGate": true,
+        "disconnectGate": true,
+        "consumerEvidence": "real emulator SDL getter returned routed values",
+        "motionReads": [
+          [
+            950,
+            950
+          ],
+          [
+            950,
+            950
+          ],
+          [
+            950,
+            950
+          ],
+          [
+            950,
+            950
+          ]
+        ],
+        "motionDelivered": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "physicalControllerAcceptance": false,
+        "gracefulExit": true
+      }
+    ]
+  },
+  "physicalHardware": {
+    "timestamp": "2026-10-16T21:19:43.201059Z",
+    "host": "Version 27.0.1 (Build 26A434)",
+    "emulator": "Dolphin 2609",
+    "game": "brawl",
+    "syntheticSources": false,
+    "assignedSourceIds": [
+      1,
+      2
+    ],
+    "snapshot": {
+      "protocol": 2,
+      "pid": 25275,
+      "sample": 146,
+      "ack": 2,
+      "requestSerial": 0,
+      "request": "initial",
+      "blocked": false,
+      "paused": 0,
+      "window": [
+        436.0,
+        114.0,
+        800.0,
+        628.0
+      ],
+      "devices": [
+        {
+          "id": 1,
+          "name": "Nintendo Switch Pro Controller",
+          "buttons": 0,
+          "x": 0,
+          "y": 0,
+          "rx": 0,
+          "ry": 0,
+          "lt": 0,
+          "rt": 0,
+          "family": 3,
+          "sensors": 3,
+          "sensorReady": 3,
+          "motionTime": 1053969991361000,
+          "accel": [
+            0.3743,
+            10.052288,
+            0.48772
+          ],
+          "gyro": [
+            -0.013939,
+            -0.011734,
+            -0.007569
+          ]
+        },
+        {
+          "id": 2,
+          "name": "Nintendo Switch Pro Controller",
+          "buttons": 0,
+          "x": 0,
+          "y": 0,
+          "rx": 0,
+          "ry": 0,
+          "lt": 0,
+          "rt": 0,
+          "family": 3,
+          "sensors": 3,
+          "sensorReady": 3,
+          "motionTime": 1053969991366000,
+          "accel": [
+            0.113031,
+            9.964517,
+            1.573317
+          ],
+          "gyro": [
+            0.001078,
+            -0.009703,
+            -0.001075
+          ]
+        }
+      ],
+      "ports": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "logicalButtons": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "connectedPorts": 3,
+      "consolePorts": 0,
+      "appActive": true,
+      "wiiApplied": 2,
+      "wiiSources": 3,
+      "wiiSelected": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "wiiActive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "wiiOrientation": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "wiiButtons": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "motionEvents": 2320,
+      "motionReads": [
+        [
+          10176,
+          5088
+        ],
+        [
+          10176,
+          5088
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "motionDelivered": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "logicalMotion": [
+        [
+          [
+            0.3743,
+            10.052288,
+            0.48772
+          ],
+          [
+            -0.013939,
+            -0.011734,
+            -0.007569
+          ]
+        ],
+        [
+          [
+            0.113031,
+            9.964517,
+            1.573317
+          ],
+          [
+            0.001078,
+            -0.009703,
+            -0.001075
+          ]
+        ],
+        [
+          [
+            0.0,
+            9.80665,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            9.80665,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "consumedMotion": [
+        [
+          [
+            0.3743,
+            10.052288,
+            0.48772
+          ],
+          [
+            -0.013939,
+            -0.011734,
+            -0.007569
+          ]
+        ],
+        [
+          [
+            0.113031,
+            9.964517,
+            1.573317
+          ],
+          [
+            0.001078,
+            -0.009703,
+            -0.001075
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "deliveredMotion": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "queries": 50880,
+      "consumedPorts": 3
+    },
+    "physicalSensorsSampled": true,
+    "emulatorGetterConsumption": true,
+    "ownerMovementPointingGameplayAcceptance": false
+  },
+  "visualArtifacts": {
+    "result": "inspected Flutter-rendered PNGs, including active motion and bottom Wii choices",
+    "paths": ".tool-cache/research/pairing-motion-*.png",
+    "computerControlUsed": false,
+    "ownerVisualAcceptance": false
+  },
+  "historicalWindowTests": {
+    "snapshot": "docs/research/controller-pairing-testers.json",
+    "currentSourceUnchanged": true,
+    "rerunThisChange": false
+  },
+  "limits": [
+    "macOS arm64 implementation only; Linux/Steam/gamescope, Windows and Android native integrations pending",
+    "Azahar routed watcher delivery observed; final game HID state not inspected",
+    "Physical Switch Pro sensors and Dolphin getter consumption observed; owner movement, pointing and motion gameplay acceptance pending",
+    "MotionPlus, separate Nunchuk motion, split Joy-Con sensor variants and rumble pending"
+  ]
+}

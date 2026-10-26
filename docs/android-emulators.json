@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-26",
+  "timezone": "America/Sao_Paulo",
+  "recordedAtUtc": "2026-10-26T14:36:05.915239Z",
+  "baseRevision": "4c28719148e38863ca45f7e295ba7eebe86a0ac4",
+  "workingTree": "cumulative dirty checkout; source hashes below identify this slice",
+  "status": "partial Android implementation; not APK or native gameplay acceptance",
+  "verification": {
+    "analysis": {
+      "passed": true,
+      "log": ".tool-cache/research/android/analyze-final.log"
+    },
+    "flutter": {
+      "passed": true,
+      "tests": 328,
+      "newAndroidChecks": 15,
+      "log": ".tool-cache/research/android/flutter-full-final.log",
+      "scope": "controlled Dart workflows, filesystem, HTTP fixtures and Flutter widgets"
+    },
+    "native": {
+      "passed": true,
+      "kind": "Kotlin compilation",
+      "sources": 6,
+      "compiler": "Kotlin 2.4.0 / Devbox-managed JVM",
+      "jvmTarget": 17,
+      "api": 36,
+      "flutterEngine": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+      "lifecycle": "2.7.0",
+      "log": ".tool-cache/research/android/kotlin-compile-final.log"
+    },
+    "manifestXml": "xmllint --noout passed",
+    "nativeAndroidDevice": false,
+    "apkBuilt": false,
+    "androidEmulatorGameplay": false,
+    "physicalInput": false,
+    "actualSafFolderSelection": false,
+    "fullAndroidSdkConfigured": false
+  },
+  "commands": [
+    "devbox run -- flutter --suppress-analytics analyze --no-pub",
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+    "devbox --config tool/android run check",
+    "/usr/bin/xmllint --noout android/app/src/main/AndroidManifest.xml",
+    "git diff --check"
+  ],
+  "implementedPaths": {
+    "discoveryInstallAndLaunch": [
+      "retroarch",
+      "ppsspp",
+      "melonds",
+      "azahar",
+      "dolphin",
+      "duckstation",
+      "armsx2",
+      "eden"
+    ],
+    "connectedSaveRoots": [
+      "ppsspp",
+      "melonds",
+      "azahar"
+    ],
+    "states": [
+      "ppsspp",
+      "azahar"
+    ],
+    "packages": "PSP native folders/ZIP; existing limitations retained",
+    "controllerPairingOnAndroid": false,
+    "desktopInstallersOnAndroid": false
+  },
+  "remaining": [
+    "Full Android SDK/APK/device validation and actual retained save-folder selection",
+    "RetroArch ordinary saves/states, core discovery/configuration and BIOS",
+    "Dolphin ordinary saves/states and Wii package installation/removal",
+    "DuckStation and ARMSX2 per-game cards, states and BIOS",
+    "Eden external NAND/account saves, NSP installation/removal and firmware/keys",
+    "Android Azahar CIA installation/removal",
+    "Android melonDS state format",
+    "Actual native game save/state loading and physical input"
+  ],
+  "diagnostics": [
+    {
+      "issue": "Flutter widget fixture waited for fake-zone file IO inside runAsync",
+      "resolution": "UI launch-delegation check separated from the existing real filesystem session checks; no timeout relaxed",
+      "log": ".tool-cache/research/android/flutter-targeted-fixture-deadlock.log"
+    },
+    {
+      "issue": "Sandbox denied Flutter runner loopback socket",
+      "resolution": "Test runner executed with scoped tool permission",
+      "log": ".tool-cache/research/android/flutter-targeted-sandbox.log"
+    },
+    {
+      "issue": "Kotlin license directory collided with Flutter LICENSE on case-insensitive profile",
+      "resolution": "Isolated pinned tool/android Devbox; root environment restored",
+      "log": ".tool-cache/research/android/nix-profile.log"
+    },
+    {
+      "issue": "Manual compile classpath lacked Flutter lifecycle interface",
+      "resolution": "Included Flutter embedding POM-declared Lifecycle 2.7.0; no new runtime dependency"
+    },
+    {
+      "issue": "Public Android Os exposes remove rather than unlink",
+      "resolution": "Exclusive file publication uses link/remove; native compile passes",
+      "log": ".tool-cache/research/android/kotlin-unlink-diagnostic.log"
+    }
+  ],
+  "externalEffects": {
+    "ownerRomMReadOrWrite": false,
+    "ownerEmulatorLaunched": false,
+    "ownerProgressChanged": false,
+    "osPackagesInstalled": false,
+    "runtimePluginAdded": false,
+    "developmentPackages": "Pinned project Devbox Kotlin/JVM; hash-pinned compile API artifacts only"
+  },
+  "artifacts": {
+    "bridge.jar": {
+      "bytes": 49501,
+      "sha256": "5000525254fa738f68d8a95463649094d03a73b48338666080c9f687fa3ea264"
+    },
+    "api/android.jar": {
+      "bytes": 27783499,
+      "sha256": "2642c84655ceb87e009f04b279b4c60edcc1a869de80c707322f6c3da3b687fd"
+    },
+    "platform-36-ext19_r01.zip": {
+      "bytes": 66057671,
+      "sha256": "55bd3620999428ff13097c982c9f0d40de566d846f0bed153bf8d4e1491b90ff"
+    },
+    "flutter-embedding.jar": {
+      "bytes": 1584072,
+      "sha256": "99d41bef0e3aa240b310cdaf1df6406e606b841336826cee9c9a5159db58280f"
+    },
+    "lifecycle-common.jar": {
+      "bytes": 56617,
+      "sha256": "533ded8ee0645a18f6653da53fe1ec5a15430e7f36a737d45e410531f30f3318"
+    }
+  },
+  "sourceSha256": {
+    "android/app/src/main/AndroidManifest.xml": "563e78e8ad2a3d76e3e8e33dc35c71a766074c0f57353db477399eac41bff94e",
+    "android/app/src/main/kotlin/app/broomm/broomm/ApkContentProvider.kt": "6523820cf619cc9467bcb4ba9156e00215f8c9772724df76e614ae8bd3cce9f8",
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommCredentials.kt": "248277f30d9ad38fd556b88ab91161bfd8c68befcab672d17fca4297a24f332a",
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommEmulators.kt": "537036e293e4f7b01d1c760bf6062b209a71c1efd02c775c92fc65434304572c",
+    "android/app/src/main/kotlin/app/broomm/broomm/EmulatorDocumentsProvider.kt": "be7a7f687c3f59df8f5ed6110c998e85fd96ef0e82a5967a75bfe5eae4abdaea",
+    "android/app/src/main/kotlin/app/broomm/broomm/GameContentProvider.kt": "ff781cd75df3de7871fc20510f02804e68d1a4986c87ec10a5b79fc41deb7106",
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": "7a83b6a52eb9d7bfd50f661f445456a9c71b3d5f7b795a3ec59b70ba7834df51",
+    "lib/src/android/emulators.dart": "fe08bf45f974d5c961d0feee531c29e9c311cc287ac4fd415d56e336fb0e3355",
+    "lib/src/android/progress.dart": "77342fbb46a016123ddfbed35db356c4d1b20517e3b950c640a87e0fba6060d0",
+    "lib/src/android/session.dart": "83cdc1866fd05c4266e52819b7775552011b2200696c5bb4dde53d786b93e2e6",
+    "lib/src/shell/android_emulator_settings_screen.dart": "458540b6295a6ee99b06262a5fead07539ce80cec0895f02d02d773109fd6a48",
+    "lib/src/shell/android_session_screen.dart": "78ea93d7ad9c122d3dbbc730e7e92bdbdca15180c1d5aec298e9be6320f79455",
+    "lib/src/shell/app.dart": "e82194ad6cf40a04a85d9eaafb095c2d3bd8dce9cdc550006956425c7b156224",
+    "lib/src/shell/cloud_model.dart": "8734b0dca48a19000efc3aa218c7a5ab93de0ad66cdc7198643da206020cf853",
+    "lib/src/shell/cloud_saves_dialog.dart": "cbf06e1778cd97c2812175bdf670ca07c2a2a20e6c62e50c4769373878f9f57a",
+    "lib/src/shell/emulator_settings_screen.dart": "ed125eb905c470d2b4144f6fad0ab721e17f62ac98234a35e7631cabb1359057",
+    "lib/src/shell/model.dart": "384542738500231422d8ed7f1db8278814b53d6a4d02d06b092dc33c28dbc1c7",
+    "test/android_emulators_test.dart": "493bba8fbf4d1d7e9ed660338e6e845d91a3b6aa8435ce5a1d9020362cadd066",
+    "tool/android/check_bridge.sh": "090e10ad54d60d0da5a625cd3eb9036977405c6d951255b177ed098e36f545c0",
+    "tool/android/devbox.json": "45154fdcaa2c35fed761a2c690688aa959e51ddb54c5f4387d30cd79d4b35647",
+    "tool/android/devbox.lock": "bd93e01901a53cffc3b0d73868c90182fa36102dc00f6746e62aa539a8e51a76"
+  }
+}

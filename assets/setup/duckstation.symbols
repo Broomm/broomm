@@ -1,0 +1,6 @@
+00000001008100f0 g_main_window
+00000001000f6324 _ZNK10MainWindow10metaObjectEv
+0000000100810188 g_core_thread
+000000010014e750 _ZN10CoreThread15setSystemPausedEb
+00000001001503d0 _ZN10CoreThread9saveStateEbi
+000000010014ff38 _ZN10CoreThread9loadStateERK7QString

@@ -1,0 +1,484 @@
+{
+  "recordedAtUtc": "2026-10-16T19:17:06.398596Z",
+  "host": {
+    "os": "Version 27.0.1 (Build 26A434)",
+    "cpu": "Apple M1 Pro arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.0",
+    "renderer": "Skia Metal (FLTEnableImpeller=false)"
+  },
+  "scope": "Native automated tests with real supplied ROMs and opt-in SDL synthetic input sources. Physical input/gameplay, visual/fullscreen and Linux/Steam acceptance remain pending.",
+  "nativeRuns": [
+    {
+      "command": "devbox run -- dart tool/smoke_prototype.dart --focus-broomm",
+      "record": {
+        "timestamp": "2026-10-16T19:14:40.679686Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "smw",
+            "emulator": "RetroArch",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 4576,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "nativeDriverSlotInput": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "melee",
+            "emulator": "Dolphin",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 7898,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "consoleSocketCounts": [
+              0,
+              1,
+              2
+            ],
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "brawl",
+            "emulator": "Dolphin",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 7854,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "consoleSocketCounts": [
+              0,
+              1,
+              2
+            ],
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "rayman",
+            "emulator": "RPCS3",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 994140,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "mk7",
+            "emulator": "Azahar",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 1462,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 127440,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          }
+        ]
+      }
+    },
+    {
+      "command": "devbox run -- dart tool/smoke_prototype.dart smw --preconnected --repeat=3",
+      "record": {
+        "timestamp": "2026-10-16T19:04:32.769567Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "smw",
+            "emulator": "RetroArch",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 5464,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "nativeDriverSlotInput": true,
+            "preconnectedTestSources": true,
+            "foregroundBroommBeforeResume": false,
+            "gracefulExit": true
+          },
+          {
+            "game": "smw",
+            "emulator": "RetroArch",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 5920,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "nativeDriverSlotInput": true,
+            "preconnectedTestSources": true,
+            "foregroundBroommBeforeResume": false,
+            "gracefulExit": true
+          },
+          {
+            "game": "smw",
+            "emulator": "RetroArch",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 4986,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "nativeDriverSlotInput": true,
+            "preconnectedTestSources": true,
+            "foregroundBroommBeforeResume": false,
+            "gracefulExit": true
+          }
+        ]
+      }
+    },
+    {
+      "command": "devbox run -- dart tool/smoke_prototype.dart 3dworld --focus-broomm --repeat=3",
+      "record": {
+        "timestamp": "2026-10-16T19:13:19.718547Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 127926,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 112968,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 116208,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          }
+        ]
+      }
+    },
+    {
+      "command": "devbox run -- dart tool/smoke_prototype.dart 3dworld --close-game-window --repeat=2",
+      "record": {
+        "timestamp": "2026-10-16T19:16:14.166051Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "normalGameWindowClose": true,
+            "gracefulExit": true,
+            "physicalControllerAcceptance": false
+          },
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "normalGameWindowClose": true,
+            "gracefulExit": true,
+            "physicalControllerAcceptance": false
+          }
+        ]
+      }
+    },
+    {
+      "command": "devbox run -- dart tool/smoke_prototype.dart melee --bridge-outage",
+      "record": {
+        "timestamp": "2026-10-16T19:16:36.065750Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "melee",
+            "emulator": "Dolphin",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 7986,
+            "consumedPorts": 3,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "consoleSocketCounts": [
+              0,
+              1,
+              2
+            ],
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": false,
+            "bridgeOutageRecovery": true,
+            "gracefulExit": true
+          }
+        ]
+      }
+    }
+  ],
+  "checks": {
+    "dartFlutter": {
+      "command": "devbox run prototype-check",
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    "nativeWindows": {
+      "command": "devbox run prototype-check-macos",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "hideShowCycles": 30
+    }
+  },
+  "failedDiagnosticRuns": [
+    {
+      "stage": "Before Ryubing SDL GCController workaround",
+      "record": {
+        "timestamp": "2026-10-16T18:57:34.456223Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 108756,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "gracefulExit": true
+          },
+          {
+            "game": "3dworld",
+            "error": "Bad state: The emulator exited."
+          }
+        ]
+      },
+      "diagnosis": "GCController/HID/Avalonia reentrant wait. Owned synthetic test child stopped with SIGTERM after sampling."
+    },
+    {
+      "stage": "Captured-window shutdown",
+      "record": {
+        "timestamp": "2026-10-16T19:05:47.488739Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 129195,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": true
+          },
+          {
+            "game": "3dworld",
+            "error": "Bad state: The emulator did not acknowledge the controller/pause change (revision 5/5, paused -1, input blocked true). You can retry or close the game.",
+            "gracefulExit": false,
+            "exitError": "Bad state: Emulator exited with status -11. Its local progress and logs have been retained."
+          }
+        ]
+      },
+      "diagnosis": "Game window disappeared; delayed AvnWindow performClose crashed with status -11. Original game closure trigger unestablished."
+    },
+    {
+      "stage": "Rejected direct NSApplication termination",
+      "record": {
+        "timestamp": "2026-10-16T19:11:24.748722Z",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "results": [
+          {
+            "game": "3dworld",
+            "emulator": "Ryubing",
+            "liveRoute": true,
+            "liveSwap": true,
+            "hotkeyPause": true,
+            "disconnectPause": true,
+            "emulatorQueries": 104976,
+            "consumedPorts": 15,
+            "source": "in-process SDL virtual test sources",
+            "physicalControllerAcceptance": false,
+            "writerLockOwnedByEmulator": true,
+            "confirmationReleaseGate": true,
+            "preconnectedTestSources": false,
+            "foregroundBroommBeforeResume": true,
+            "gracefulExit": false,
+            "exitError": "Bad state: The emulator is still open. Close its window normally, then try again. Broomm has kept the game and its data in place."
+          }
+        ]
+      },
+      "diagnosis": ".NET waited for workers after main application loop ended. Owned synthetic child stopped with SIGTERM after sampling. Current live-window shutdown supersedes this experiment."
+    }
+  ],
+  "executables": {
+    "RetroArch": {
+      "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sdlMajor": 3
+    },
+    "Dolphin": {
+      "sha256": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+      "sdlMajor": 3
+    },
+    "RPCS3": {
+      "sha256": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+      "sdlMajor": 3
+    },
+    "Azahar": {
+      "sha256": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+      "sdlMajor": 2
+    },
+    "Ryubing": {
+      "sha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+      "sdlMajor": 2
+    }
+  },
+  "sourceSnapshotNote": "Hashes identify the delivered source and bundled bridges. The final six-ROM suite and native window run check that delivered behavior. Earlier targeted runs predate some later corrections; individual run records have timestamps but not their own source hashes. Diagnostic runs used the intermediate revisions identified above and are not retroactively treated as runs of the final source.",
+  "sha256": {
+    "build/macos/Build/Products/Debug/broomm.app/Contents/Resources/native/broomm-sdl2.dylib": "5c28b32176e2acdda71bf59f3c6cd05f05d4917970198dd7c5ba7d8d07153eac",
+    "build/macos/Build/Products/Debug/broomm.app/Contents/Resources/native/broomm-sdl3.dylib": "20a81771b587846bb4f62b97bac01f0c1634ef9e35150a12a5b3396e62778604",
+    "build/native/broomm-sdl2.dylib": "5c28b32176e2acdda71bf59f3c6cd05f05d4917970198dd7c5ba7d8d07153eac",
+    "build/native/broomm-sdl3.dylib": "20a81771b587846bb4f62b97bac01f0c1634ef9e35150a12a5b3396e62778604",
+    "devbox.json": "d8fc69e9c3dfb2486d6ab58d86c4e7572973851b32b959911a9b95dd37c18a2d",
+    "devbox.lock": "1b7f53080165cef465d96b91d42acc1c9850024744e5c99745671cb2041429e2",
+    "experiments/injection/src/abi_slots.h": "a7c5607ab487dcbf83818b681afc95d7b96ec0d2ef22efd05563a0e9952a782e",
+    "experiments/injection/src/cache_redirect.c": "34a0f8925900f6c176e3016b628fc26fcb3e62e3c54f170a43164d4be7203a01",
+    "experiments/injection/src/probe.c": "1f7d910adf5ef0d6b200bcefc63f570948a00fb55ef8e85620b15662509d71d4",
+    "lib/main.dart": "c78f1105c928194b48af22506e2f68b2ac95fcc879891fb416c6553e9cbe5060",
+    "lib/src/app_model.dart": "c4aafa269d30cf0c18f00c03c878f1bc773b0c6282857776ec40258c104623d4",
+    "lib/src/catalogue.dart": "a1443c67093a8c16f990fd49fff8508137edc9fadd1cde92eeb2427174500474",
+    "lib/src/emulators.dart": "634e99e3e24b624459a6187b8a6bd7baad09070ca9629d818d8218dad008b968",
+    "lib/src/host.dart": "bafb6e3841d1693c57744ee36621cb2ee07a0f8df621ed0381e99b8e56f43db3",
+    "lib/src/pairing.dart": "53a25aac113ff10a1d29d566b6fbca24f059af9f10dcb632615b90b915642546",
+    "lib/src/session.dart": "f1a445873970f600141075cd00231518168297b5907b655e1facf46125d096f4",
+    "macos/Runner/AppDelegate.swift": "a6dfe47f624ea22355cd83f9ef16bb8b9e147dfbc3db14ed550fde3e0ca26b18",
+    "macos/Runner/Info.plist": "776dc92b69bb5446127d40ca8cc53d96fabc2d14c73b08c1b2a0939693028704",
+    "macos/Runner/MainFlutterWindow.swift": "18a014ff10ba1f1d6ae07e4056e16268bc40ee91f2d4316d549b69e2349adb5c",
+    "macos/RunnerTests/RunnerTests.swift": "c6e7762a72cf5dcf9f05de85d569f53b15ca860e2d58fe127858d4004899f7fc",
+    "native/ownership.inc": "7478a3d9411be03bdfc3a205676c6f44f378d9d994176e1541c271e23860fe33",
+    "native/session.inc": "1d0215fb47b568c69fa4106d41987656daa9723b3ed1f76254daa9437332b80d",
+    "native/test_sources.inc": "dc6e7325dc37620b2b53bbd2a17b47fda7a474e2074e5862b2ad9a96b0663024",
+    "pubspec.lock": "11642d0a8a3008683648a0d151984a8b9eaed8cb7e58ca5987e962b149f67c04",
+    "test/overlay_state_test.dart": "af2220fee2cf8ad7ca2d0ed02b8341932a7196c692de28086d71f16818ad336e",
+    "test/pairing_test.dart": "ad9f9a00a87007864029eed5b61079a9c047a029cad801f042dc879759cef551",
+    "test/session_commands_test.dart": "58993cb357088d38d785c9d33e74e826b7ca16e052498436ad6d3b0535c15b2f",
+    "test/widget_test.dart": "74df89451c7a7c12eab5514fad6ba151b93b6d4a1855364074ee2042f44798c7",
+    "tool/apple_tools/lipo": "f8a3a9b7a797718e995211e38762a9169ec533028f468fe4181460ed34e32979",
+    "tool/apple_tools/rsync": "1fd05daf9ae1f3616f90e7eef36a53876bc62745fcacb38b6e2b4e7410d1032a",
+    "tool/build_app.sh": "0b42cf94662e9086f73837755ab19cc2f2bdda733639e5dfc684ae251bc9c96c",
+    "tool/build_bridges.sh": "1fc5dd2a6c6590bbce040fa36899fb15a3c2c9fdb5090be01da54626aa65606c",
+    "tool/check_writer_lock.dart": "e12d4795e62e8e03dd230a03fb26dffd67b68e53a1fe78b4d5102a4095d9f4b7",
+    "tool/prepare_prototype.dart": "01b1c34d730f1886103b8de2f86c03d1c6f1151c4b620b559efb2f349580b1bb",
+    "tool/run_prototype.sh": "2a05a41194a88f9bee6b62660b553a8342ffff8a3e4b35d6e49b2e990887ba73",
+    "tool/smoke_prototype.dart": "b3eb28ecf6808f0552f502d889d0b16ef51d4a385b1d3bd7c5e52764ecd671f2",
+    "tool/test_macos.sh": "b4e901de77a9ff941fd218ebf912fee46e085ba21ecbbf331820c90a62cfe5bb"
+  }
+}

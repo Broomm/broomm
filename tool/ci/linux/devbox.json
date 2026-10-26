@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": {
+    "flutter": "3.47.0-sdk-links",
+    "cmake": "3.31.7",
+    "ninja": "1.13.1",
+    "pkg-config": "0.29.2",
+    "gtk3": {"version": "3.24.43", "outputs": ["out", "dev"]},
+    "patchelf": "0.15.0",
+    "binutils": "2.42",
+    "ripgrep": "14.1.1"
+  },
+  "env": {"FLUTTER_SUPPRESS_ANALYTICS": "true", "DART_SUPPRESS_ANALYTICS": "true"}
+}
