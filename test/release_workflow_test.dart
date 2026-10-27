@@ -5,11 +5,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/progress/digest.dart';
 
 import '../tool/release/common.dart';
-import '../tool/release/package.dart' show javaProperty;
+import '../tool/release/package.dart' show javaProperty, writeBuildRecord;
 import '../tool/release/publish.dart';
 import '../tool/release/version.dart';
 
 void main() {
+  test('packaged application inventory retains the full release identity and every top-level bundle entry', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'broomm-release-inventory-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    await File('${root.path}/broomm.exe').writeAsString('fixture');
+    await Directory('${root.path}/data').create();
+    await writeBuildRecord(root, '0.1.1-rc2', '1010', 'a' * 40, 'windows-x64');
+    final record = jsonDecode(
+      await File('${root.path}/broomm-release.json').readAsString(),
+    ) as Map;
+    expect(record['version'], '0.1.1-rc2');
+    expect(record['target'], 'windows-x64');
+    expect(
+      (record['entries'] as List).toSet(),
+      (await root.list().toList())
+          .map((e) => e.uri.pathSegments.where((s) => s.isNotEmpty).last)
+          .toSet(),
+    );
+  });
   test('Teddy release channels advance from stable tags, with numeric candidate ordering', () {
     expect(nextVersion('0.1', 'main', []), '0.1.0');
     expect(nextVersion('0.1', 'develop', []), '0.1.0-rc1');

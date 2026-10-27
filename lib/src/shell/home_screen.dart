@@ -15,30 +15,35 @@ const homeTitles = [
   'Game Store',
   'Emulator Settings',
   'Downloads',
+  'Update Broomm',
 ];
 const homeDescriptions = [
   'Make yourself at home.\nYour display, your controls, your preferences.',
   'Your collection, rediscovered.\nFind your next adventure in RomM.',
   'Great games deserve a great setup.\nA home for your emulators.',
   'Your next games are on their way.\nManage downloads, retries and your queue.',
+  'A new Broomm release is ready.\nDownload, install and restart with your library intact.',
 ];
 const homeIcons = [
   Icons.tune_rounded,
   Icons.shopping_bag_outlined,
   Icons.memory_rounded,
   Icons.downloading_rounded,
+  Icons.system_update_alt_rounded,
 ];
 const homeColors = [
   Color(0xff6a657f),
   Color(0xff539388),
   Color(0xff566f97),
   Color(0xff497c91),
+  Color(0xff3d8b73),
 ];
 const homeScreens = [
   ShellScreen.settings,
   ShellScreen.store,
   ShellScreen.emulators,
   ShellScreen.downloads,
+  ShellScreen.update,
 ];
 
 class HomeScreen extends StatefulWidget {
@@ -50,7 +55,7 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   ShellModel get model => widget.model;
-  List<int> get apps => [0, 1, if (model.downloads.isNotEmpty) 3, 2];
+  List<int> get apps => model.homeApps;
   final tiles = <String, FocusNode>{};
   final primary = FocusNode(debugLabel: 'Home primary action');
   final options = FocusNode(debugLabel: 'Home game options');
@@ -127,7 +132,11 @@ class HomeScreenState extends State<HomeScreen> {
         installed != null &&
         model.downloading &&
         model.queuedGame(installed.game.id)?.state == DownloadState.active;
-    final title = installed?.game.name ?? homeTitles[apps[index]];
+    final title =
+        installed?.game.name ??
+        (apps[index] == 4
+            ? 'Broomm ${model.updates.available!.version}'
+            : homeTitles[apps[index]]);
     void open() => installed != null
         ? openGame(context, installed)
         : model.navigate(homeScreens[apps[index]]);

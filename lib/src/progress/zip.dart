@@ -14,10 +14,12 @@ class ProgressZipEntry {
     this.bytes,
     this.crc,
     this.method,
-    this.flags,
-  );
+    this.flags, {
+    this.symbolicLink = false,
+  });
   final String name;
   final int offset, compressed, bytes, crc, method, flags;
+  final bool symbolicLink;
 }
 
 class ProgressZip {
@@ -29,6 +31,7 @@ class ProgressZip {
     File file, {
     int maxBytes = progressMaxBytes,
     int maxEntryBytes = progressMaxFileBytes,
+    bool inspectLinks = false,
   }) async {
     if (maxBytes < 1 ||
         maxBytes > 2 * 1024 * 1024 * 1024 ||
@@ -93,7 +96,10 @@ class ProgressZip {
             names > 2048 ||
             (flags & ~0x080e) != 0 ||
             (method != 0 && method != 8) ||
-            unixType != 0 && unixType != 0x8000 && unixType != 0x4000 ||
+            unixType != 0 &&
+                unixType != 0x8000 &&
+                unixType != 0x4000 &&
+                !(inspectLinks && unixType == 0xa000) ||
             compressed > maxBytes ||
             bytes > maxEntryBytes ||
             cd.getUint16(pos + 34, Endian.little) != 0)
@@ -153,7 +159,16 @@ class ProgressZip {
           if (total > maxBytes)
             throw const FormatException('Expanded save exceeds 512 MiB');
           entries.add(
-            ProgressZipEntry(name, data, compressed, bytes, crc, method, flags),
+            ProgressZipEntry(
+              name,
+              data,
+              compressed,
+              bytes,
+              crc,
+              method,
+              flags,
+              symbolicLink: unixType == 0xa000,
+            ),
           );
         }
         pos += 46 + names + extra + comment;
@@ -177,6 +192,10 @@ class ProgressZip {
   Future<Map<String, Map<String, dynamic>>> extract(
     Directory destination,
   ) async {
+    if (entries.any((e) => e.symbolicLink))
+      throw const FormatException(
+        'Save extraction does not accept symbolic links',
+      );
     await progressDirectory(destination);
     final result = <String, Map<String, dynamic>>{};
     for (final entry in entries) {
@@ -223,6 +242,27 @@ class ProgressZip {
       };
     }
     return result;
+  }
+
+  /// Read-only inspection for signed application bundles. Save extraction still
+  /// rejects links even when a caller explicitly requests this metadata.
+  Future<String> linkTarget(ProgressZipEntry entry) async {
+    if (!entry.symbolicLink || entry.bytes > 2048)
+      throw const FormatException('Invalid archive link');
+    final input = file.openRead(entry.offset, entry.offset + entry.compressed);
+    final stream = entry.method == 8
+        ? input.transform(ZLibDecoder(raw: true))
+        : input;
+    final bytes = <int>[], crc = ProgressCrc();
+    await for (final chunk in stream) {
+      if (bytes.length + chunk.length > entry.bytes)
+        throw const FormatException('Archive link exceeds declared size');
+      bytes.addAll(chunk);
+      crc.add(chunk);
+    }
+    if (bytes.length != entry.bytes || crc.value != entry.crc)
+      throw const FormatException('Invalid archive link checksum');
+    return utf8.decode(bytes);
   }
 
   static Future<void> write(

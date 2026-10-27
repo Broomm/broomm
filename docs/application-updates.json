@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-27T02:43:04.839924Z",
+  "base_revision": "7d9f46e16bd70cb116295088022aff7425509d0c",
+  "revision_scope": "Cumulative uncommitted application updater and release metadata changes; source fingerprints below.",
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "devbox": "0.18.4",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "reference": {
+    "repository": "pedrotrschneider/teddy",
+    "revision": "989b212336743965e4e77ff8f744d6ad87c20b67",
+    "files": {
+      "lib/ted/teddy_updates.dart": {
+        "bytes": 4527,
+        "sha256": "fc659122c3f3ed88b9b38ff9e781bc3959ecc620b9fb96ea1de6609b4342e363"
+      },
+      "lib/ted/teddy_update_installer.dart": {
+        "bytes": 15045,
+        "sha256": "a80c33325bd5df49e5e0e9573c657a0317d34d8125648eb522df1616e05d01af"
+      },
+      "lib/ted/teddy_update_settings.dart": {
+        "bytes": 8274,
+        "sha256": "fa96208ef0ef44f1059b4f7f89d2e4d5a26d9bd3e4f0f27a6c6c2c5d4adb8742"
+      },
+      "lib/ted/teddy_update_cleanup.dart": {
+        "bytes": 8606,
+        "sha256": "38f866571eef9f5d2f14d01c4b87437879f80f07eab36729541d3d27df123066"
+      }
+    }
+  },
+  "implementation": {
+    "repository": "pedrotrschneider/broomm",
+    "checks": "Startup, six-hour interval, manual Settings action; latest stable plus recent release list.",
+    "channels": [
+      "auto",
+      "stable",
+      "rc"
+    ],
+    "targets": [
+      "macos-universal",
+      "windows-x64",
+      "linux-x64",
+      "linux-arm64",
+      "android-universal"
+    ],
+    "staging": "Private sibling directory on desktop; private application cache on Android.",
+    "integrity": "Expected repository/tag/asset, SHA-256, size, commit/version/target build record, bounded extraction, macOS deep signature, Android OS signing-key enforcement.",
+    "ownership": "Stable OS preparation lock, exclusive helper claim, full staging manifest, non-overwriting native directory moves, save/session lease and durable queue checkpoint.",
+    "recovery": "Cancellation before OS handoff; exit refusal removes commit; old bundle and installer logs retained; restore/relaunch attempted on immediate failure.",
+    "dependencies": "No new runtime package, service, OS installation or global SDK selection. Existing Dart mechanics and native platform tools only."
+  },
+  "verification_commands": [
+    "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded --exclude-tags full-size-save",
+    "devbox run -- flutter --suppress-analytics test --no-pub test/playstation_test.dart --tags full-size-save --concurrency=1 --reporter expanded",
+    "devbox run -- flutter --suppress-analytics analyze --no-pub",
+    "devbox run -- dart format --output=none --set-exit-if-changed lib test tool",
+    "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox run -- bash tool/build_app.sh --portable --debug --no-pub",
+    "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer devbox run -- bash tool/test_macos.sh",
+    "devbox --config tool/android run check",
+    "devbox --config tool/ci/lint run check",
+    "devbox --config tool/ci/lint run -- shellcheck --shell=sh /Users/ptrschneider/Projects/broomm/.tool-cache/application-update-install.sh",
+    "bash -n .tool-cache/application-update-install.sh",
+    "devbox run -- flutter --suppress-analytics test --no-pub .tool-cache/application_update_live_test.dart --reporter expanded",
+    "git diff --check"
+  ],
+  "results": {
+    "flutter_ordinary_passed": 371,
+    "flutter_full_size_passed": 2,
+    "flutter_total_passed": 373,
+    "macos_native_passed": 6,
+    "macos_native_failed": 0,
+    "macos_native_skipped": 0,
+    "android_kotlin_sources_compiled": 7,
+    "live_github_probe_passed": 1,
+    "native_mac_replacement": "Private headless native fixture actually replaced and relaunched through Launch Services; existing empty/nonempty destinations retained; Unicode/spaces covered.",
+    "concurrency_and_failure": "Independent Dart process lock, held lease, checksum contradictions, archive confinement, rollback, no-commit/cancel paths, handoff cancellation fence, rejected exit, cleanup ownership and durable queue retry.",
+    "ui": "Home insertion preserves selection; native controller command path opens/cancels flow; channel generation rejects stale checks.",
+    "live_package": {
+      "version": "0.1.0",
+      "target": "macos-universal",
+      "bytes": 20018724,
+      "payload_signature": "codesign --verify --deep --strict passed",
+      "installed": false,
+      "original_unchanged": true,
+      "progress_unchanged": true
+    },
+    "test_findings": "Infinite busy animation and fake-clock future scheduling in the initial widget fixture caused waits; explicit input-driven frames and draining corrected the fixture. No product failure suppressed, assertion relaxed or timeout increased."
+  },
+  "artifacts": {
+    "macos_delivery": {
+      "schema_version": 1,
+      "recorded_utc": "2026-10-27T02:42:23.263997Z",
+      "product": "Broomm",
+      "version": "0.1.0-dev",
+      "target": "macos-universal",
+      "source_base": "7d9f46e16bd70cb116295088022aff7425509d0c",
+      "source_dirty": true,
+      "distribution": "local-development",
+      "updater_enabled": false,
+      "data_root": "/Users/ptrschneider/Projects/broomm/broomm-data",
+      "artifact": "build/releases/Broomm-macOS-application-updates.zip",
+      "bytes": 20097507,
+      "sha256": "49908b5efa83ebc5499247338c78ac4763b66ded1b851a59f0b0804e69f31a05",
+      "architectures": {
+        "Contents/MacOS/broomm": "x86_64 arm64",
+        "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+        "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+        "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64"
+      },
+      "archive_integrity": "passed",
+      "signature_original": "strict/deep passed",
+      "signature_fresh_extraction": "strict/deep passed",
+      "payload": "application and precompiled bridges; no emulator, BIOS, ROM or progress payload"
+    },
+    "build/macos/Build/Products/Debug/broomm.app/Contents/MacOS/broomm": {
+      "bytes": 41472,
+      "sha256": "dbd5700342fa943b171396461653166475e549f1651d849cc98090366175789f"
+    },
+    ".tool-cache/research/android/bridge.jar": {
+      "bytes": 55508,
+      "sha256": "832e4aee34385b919f4971d7ef468142c696b90e3c4e0086465d5129140e6415"
+    },
+    "native_result_bundle": "build/macos/Logs/Test/Native-20261027T022055-53206.xcresult",
+    "development_version": "0.1.0-dev; automatic installation disabled"
+  },
+  "remaining_acceptance": [
+    "Real owner upgrade between two published updater-enabled releases; existing public v0.1.0 predates this code.",
+    "Native Windows full replacement/relaunch; its helper cancellation regression remains enabled on Windows CI.",
+    "Native Linux x64/ARM64 replacement/relaunch and Steam/gamescope behavior; shared Unix lifecycle ran on macOS.",
+    "Android device permissions, system installer, signing-key enforcement and return/Open behavior; compilation and Dart channel tests are not runtime evidence.",
+    "An OS-accepted app launch is not a post-launch application health check."
+  ],
+  "external_effects": "Read-only GitHub downloads and private fixture processes/files. No owner installation replaced, game/emulator/save data changed, RomM write, dependency installation, signing change or Git publication.",
+  "diagnostics": {
+    ".tool-cache/application-updates-delivery-build.log": {
+      "result": "Fresh release-mode macOS build succeeds; no SDK selections changed.",
+      "bytes": 509,
+      "sha256": "fdb7ea4c63c4bed27a6a91c2ef472840d3c8e7b1a5202e87cc25658bebe919a1"
+    },
+    ".tool-cache/application-updates-delivery-package.log": {
+      "result": "Universal app/bridges, ZIP integrity and fresh-extraction strict/deep code signatures pass.",
+      "bytes": 1104,
+      "sha256": "272ae6fb143b6e5cc55291a056af04734c2d2ecba54b76dda0f4ea57c88ba929"
+    },
+    ".tool-cache/package_application_updates.dart": {
+      "result": "Local delivery recipe; raw-map addAll type corrected before successful packaging.",
+      "bytes": 3986,
+      "sha256": "2d968593ab2810a01e9b3e62fd6539a80a3f4d82fc77758f30b027b1ecb7b726"
+    },
+    ".tool-cache/application-updates-suite-final.log": {
+      "result": "371 ordinary Flutter tests pass.",
+      "bytes": 68458,
+      "sha256": "a5d406c8652d3c77038a74ddee662e3aecbb827d76ec4fa424ff52a26c04e6b1"
+    },
+    ".tool-cache/application-updates-full-size.log": {
+      "result": "Two full-size PS2 save tests pass separately at concurrency 1.",
+      "bytes": 445,
+      "sha256": "912365d9e987880b054bdbe003fca23d73cc594e527229e25743f41ece0ff906"
+    },
+    ".tool-cache/application-updates-analyze-last.log": {
+      "result": "Static analysis: no issues found.",
+      "bytes": 250,
+      "sha256": "ba7db4f277f98087ea025ff91136e8e4b7dd27cf5c44f8cad29c81ff9eef7b37"
+    },
+    ".tool-cache/application-updates-format-last.log": {
+      "result": "228 Dart files formatted; zero changes.",
+      "bytes": 199,
+      "sha256": "35c9988f3daf5f9ec2f4e3f1d1db664621ff1303809d0a100c2ba506d58ad060"
+    },
+    ".tool-cache/application-updates-macos-build-last.log": {
+      "result": "Portable macOS debug application builds.",
+      "bytes": 269,
+      "sha256": "e005c981a71c53c9cb9fc4916486f854c224fd66e77272cbfb92954cb1dcdabd"
+    },
+    ".tool-cache/application-updates-native-macos.log": {
+      "result": "Native macOS test command exits 0; two existing XCTest SDK link warnings.",
+      "bytes": 1291,
+      "sha256": "5b93d8cf5944830d76d63d9461f16d8e3e660af349ee398bee5dc7280319372d"
+    },
+    ".tool-cache/application-updates-native-summary.json": {
+      "result": "Six XCTest passes, zero failures or skips.",
+      "bytes": 969,
+      "sha256": "58bf9503d1d910f8628d7bc5cbe5b5ffefe6c66da37d2ad4bc08cdf6282ce2a3"
+    },
+    ".tool-cache/application-updates-android-compile.log": {
+      "result": "Seven Kotlin sources compile; two versionCode fallback deprecation warnings.",
+      "bytes": 972,
+      "sha256": "9b3cd24547faec77c4a7ff7c54240bd62f75815880449fe53ad3a717747dcd95"
+    },
+    ".tool-cache/application-updates-workflow-lint.log": {
+      "result": "Workflow/actionlint and existing ShellCheck checks pass.",
+      "bytes": 164,
+      "sha256": "93c3b3d7aa74a515a4d739c8c64162351c186e7bf33673f49468b406527f0868"
+    },
+    ".tool-cache/application-updates-helper-shellcheck.log": {
+      "result": "Generated Unix installer passes ShellCheck.",
+      "bytes": 169,
+      "sha256": "853360b3d7655ba3a6fd05b718c7ffed70d1e0df63054de65ac3f03edd130b94"
+    },
+    ".tool-cache/application-update-install.sh": {
+      "result": "Generated Unix helper; bash syntax check also passes.",
+      "bytes": 1667,
+      "sha256": "75f9a2eaf78171bb215133e3596455c6efe9b388d017cb1d38f2a0cd2d54c955"
+    },
+    ".tool-cache/application-update-install.ps1": {
+      "result": "Generated Windows helper; native execution awaits Windows.",
+      "bytes": 1643,
+      "sha256": "831f11f45b3e69331f9bbaac4a742ae6f0d48e1b1f387afe421ad41b0db6c6f4"
+    },
+    ".tool-cache/application-update-rename.js": {
+      "result": "Generated native macOS exclusive rename adapter.",
+      "bytes": 271,
+      "sha256": "a41078d688d9cbf8708421fce2ddabe2074ae94ab5c9f81118636d29b4b40a09"
+    },
+    ".tool-cache/application-updates-live-final.log": {
+      "result": "One real public GitHub release preparation test passes; no installation.",
+      "bytes": 516,
+      "sha256": "6c83bc4873a13f66bdd0d6cc8e3c1dc6d5525cd96fa42eb5b2a73a931518179e"
+    },
+    ".tool-cache/application-update-live-result.json": {
+      "result": "Real package identity, size and signature-check outcome.",
+      "bytes": 196,
+      "sha256": "b71afab7a55c86ad5681edda2ba4d85858e610a19e9a4ea213ef902548bde36a"
+    },
+    ".tool-cache/application_update_live_test.dart": {
+      "result": "Private live GitHub probe source; fixtures are discarded after verification.",
+      "bytes": 2145,
+      "sha256": "f0311af846b0a6ab0479aab87b926f8cf96a1c81311e0decd410ed97561849a5"
+    },
+    ".tool-cache/application-updates-github-releases.json": {
+      "result": "Public release API snapshot; no credentials.",
+      "bytes": 33907,
+      "sha256": "9ffeaa07fb18175b37e98db97bde8a77966d88354269b211915f9ba17aa96399"
+    },
+    ".tool-cache/application-updates-widget-diagnostic.log": {
+      "result": "Retained fixture failure: fake-clock wait did not drain after cancellation.",
+      "bytes": 1657,
+      "sha256": "85102b895a5b4bbf0fcdbc9d53b3b103562ae0d2f6e2d7f5f46266ae9b4837ff"
+    },
+    ".tool-cache/application-updates-widget-recheck.log": {
+      "result": "Retained manually interrupted test-only runner; fixture scheduling corrected.",
+      "bytes": 794,
+      "sha256": "8668db591110085fe2d3d252964e40f948b025afb21d205dbd64e30274f3c229"
+    },
+    ".tool-cache/application-updates-widget-drained.log": {
+      "result": "Corrected controller/UI test and channel race test pass with drained work.",
+      "bytes": 492,
+      "sha256": "c1f8c521dface1dff7881e5fe8c7a03562e16e38aa6d055285c07b41f32885f7"
+    },
+    ".tool-cache/application-updates-analyze-final.log": {
+      "result": "Retained intentional-future lint; corrected with unawaited before final clean analysis.",
+      "bytes": 531,
+      "sha256": "9287c32bd929ce513f986f20bde9e614a82a5a6f53e82dee430df697b405e380"
+    },
+    ".tool-cache/application-updates-sdk.json": {
+      "result": "Exact Flutter/Dart toolchain identity.",
+      "bytes": 486,
+      "sha256": "cda9335a0f0f7d2f57c48a6f3c5efd827892f4637dab651d1908813b75ed4771"
+    }
+  },
+  "sources": {
+    "AGENTS.md": {
+      "bytes": 12955,
+      "sha256": "fa2edd806623020957d516fa45792090eb251f6edb1b72d11ed80e1b01c7833c"
+    },
+    "lib/src/updates/releases.dart": {
+      "bytes": 5142,
+      "sha256": "76fe59a7cbb2b517e069ac01bd6a9dd821d8f16bfc044464194b5e57c20678ce"
+    },
+    "lib/src/updates/transport.dart": {
+      "bytes": 5272,
+      "sha256": "3de394fc15fb79a9ee54a57c4c18fe8b73ae19e1a8b2bdf328cc2d285c688056"
+    },
+    "lib/src/updates/archive.dart": {
+      "bytes": 7107,
+      "sha256": "cb31ffa39eba074f0802e409147946b7031979370fb1be722ff71d8ad31cd93d"
+    },
+    "lib/src/updates/helpers.dart": {
+      "bytes": 4003,
+      "sha256": "dc080a7deb9260fed2b92be25aad60a09cc9cdb8d12613e0eb910c8ae7a6cb80"
+    },
+    "lib/src/updates/installation.dart": {
+      "bytes": 16508,
+      "sha256": "74f9e55f0cf38f610b712fd5d13bdf0cd760882c54b94bd0a07869dc8b2626a3"
+    },
+    "lib/src/updates/controller.dart": {
+      "bytes": 8159,
+      "sha256": "30dd995745496e69aeceac2df19465875baa6c71f419b71428b0eceab058f925"
+    },
+    "lib/src/shell/update_screen.dart": {
+      "bytes": 3675,
+      "sha256": "8bc83fc514051fbf8bb382b976a8b5c48af5dd5e08acff79e1bb6b3890b531a0"
+    },
+    "lib/src/shell/app.dart": {
+      "bytes": 37661,
+      "sha256": "d057cefd2007b16aa429bd57fbab66ea54c6fb5c8fe4ee9be0d1edf14759c2a4"
+    },
+    "lib/src/shell/model.dart": {
+      "bytes": 53435,
+      "sha256": "71c4bad08842ea3f598396a542eed3bec0c6e3425fdc564f6e3cc80bda7c3797"
+    },
+    "lib/src/shell/downloads_model.dart": {
+      "bytes": 9558,
+      "sha256": "d2a29a59a71ad1dd73ee0b38b7951809b18526f7d93ff08e62ebba30c337cf88"
+    },
+    "lib/src/shell/home_screen.dart": {
+      "bytes": 17934,
+      "sha256": "14cea2b859fed6c14ed219f915a5c7940a7f485156c0ab19288454357467f76d"
+    },
+    "lib/src/shell/settings_screen.dart": {
+      "bytes": 13288,
+      "sha256": "16bb7e858cfe81d5a026fa33e04dacdb7b33cd7ae94c2e4b319f599ecfd015d8"
+    },
+    "lib/src/shell/storage.dart": {
+      "bytes": 12036,
+      "sha256": "52b045007543e2452ac11aeb7049c648512a55f54d4128c30689e31ca90bd996"
+    },
+    "lib/src/progress/zip.dart": {
+      "bytes": 15050,
+      "sha256": "5402840326efff39ac328b4af77b6db12cd925a8c3d4309a350234e2fa59ed1a"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommUpdates.kt": {
+      "bytes": 5368,
+      "sha256": "40e93f10ce290b090aea3d359f154a5030ed25bbde6bfccbc81d7260aaf2839c"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": {
+      "bytes": 6668,
+      "sha256": "971a2954e41251028fc1e3b916bd393cf3349dabfa63b4c45168f2332bc05eea"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/ApkContentProvider.kt": {
+      "bytes": 2502,
+      "sha256": "340287aee56529adb636711e4d62152d16367bac2495e62442f1b0e894bc62f6"
+    },
+    "tool/release/package.dart": {
+      "bytes": 8554,
+      "sha256": "6e3572ec1272ab3586ba67a2c966f367bfe1c966585cba07316c5973aec56fe6"
+    },
+    "test/application_updates_test.dart": {
+      "bytes": 29549,
+      "sha256": "8cbd944a83f856378bd0b2a3b1f5e94ef4056ba8a2c495439cb57153dfc8e83e"
+    },
+    "test/application_update_archives_test.dart": {
+      "bytes": 5310,
+      "sha256": "0cfcc798123f1fcac4f2ab46d09a533ba04c54636d031e9451baa0fe035e3221"
+    },
+    "test/application_update_widget_test.dart": {
+      "bytes": 7616,
+      "sha256": "c007fe0fc714185d67f09837a512a901f83dc1c14388f16f2eb36a6785cfef9e"
+    },
+    "test/application_update_android_test.dart": {
+      "bytes": 4359,
+      "sha256": "aa180f0856fd00353251c56e182dec81160460151e7b9d48d4a756e1c3ffb915"
+    },
+    "test/release_workflow_test.dart": {
+      "bytes": 10515,
+      "sha256": "547c454f339034882f93dfb73eb5a1912bf9cc13f8da0efd2f00ff1df9ddceb7"
+    },
+    "PROJECT.md": {
+      "bytes": 34725,
+      "sha256": "8d3c6717133c11de47d605d3877e37aead1f37592e9909f22ee1b176ea3f150f"
+    },
+    "IMPLEMENTATION.md": {
+      "bytes": 73171,
+      "sha256": "714a663b65dfc645e98c94eee7a860b8a0f39954477a2369c8333c65450a7c3d"
+    },
+    "README.md": {
+      "bytes": 71486,
+      "sha256": "6bcba67a2c46474b2cde6d2703e1a9e2377b522d9d3770882f214438f1f953dc"
+    },
+    "docs/application-updates.md": {
+      "bytes": 11536,
+      "sha256": "9bd08bfdee220dad2fe1bc43340478d5effbc8f7075118524066da2d5fe53d64"
+    }
+  }
+}

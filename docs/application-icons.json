@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "recorded_utc": "2026-10-27T03:09:38.496977Z",
+  "base_revision": "7d9f46e16bd70cb116295088022aff7425509d0c",
+  "revision_scope": "Uncommitted native icon resources, renderer, Linux window/packaging integration and documentation, on top of the prior application updater work.",
+  "host": {
+    "os": "macOS 27.0.1",
+    "architecture": "arm64",
+    "devbox": "0.18.4",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "artwork": {
+    "glyph": "Icons.all_inclusive_rounded, Material Icons U+F55C",
+    "font_sha256": "d9865b671a09d683d13a863089d8825e0f61a37696ce5d7d448bc8023aa62453",
+    "license": "Apache-2.0; copied from the pinned Flutter SDK and bundled on all targets",
+    "foreground": "#BEF1E0",
+    "background": [
+      "#26494C",
+      "#14242F",
+      "#0B1320"
+    ],
+    "new_dependency": false
+  },
+  "verification_commands": [
+    "devbox run -- flutter --suppress-analytics test --no-pub tool/render_app_icons.dart --reporter expanded",
+    "devbox run -- flutter --suppress-analytics analyze --no-pub",
+    "devbox run -- dart format --output=none --set-exit-if-changed lib test tool",
+    "devbox run -- dart .tool-cache/app-icons-linux-cross.dart x64",
+    "devbox run -- dart .tool-cache/app-icons-linux-cross.dart arm64",
+    "devbox run -- bash tool/build_app.sh --release --no-pub",
+    "devbox run -- dart .tool-cache/package_app_icons.dart",
+    "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun assetutil --info build/macos/Build/Products/Release/broomm.app/Contents/Resources/Assets.car",
+    "iconutil -c iconset build/macos/Build/Products/Release/broomm.app/Contents/Resources/AppIcon.icns -o .tool-cache/app-icons-compiled.iconset",
+    "devbox run -- dart .tool-cache/record_app_icons.dart",
+    "git diff --check"
+  ],
+  "results": {
+    "native_pngs_checked": 20,
+    "windows_ico_frames": [
+      16,
+      20,
+      24,
+      32,
+      40,
+      48,
+      64,
+      128,
+      256
+    ],
+    "macos_source_catalog_entries_checked": 10,
+    "macos_compiled_catalog_sizes": [
+      16,
+      32,
+      64,
+      128,
+      256,
+      512,
+      1024
+    ],
+    "android_mask": "Renderer reads actual RGBA alpha at every density; all visible foreground pixels fit the 66 dp circular safe zone in the 108 dp layer.",
+    "analysis": "No issues found.",
+    "format": "229 Dart files; zero changes.",
+    "linux_cross_compile": "Actual CMake runner objects compile for x64 and ARM64 with -Wall -Werror; object-only on macOS, without native linking/execution.",
+    "macos_visual": "Master and compiled 256 px ICNS PNG inspected with local image-view tool; native Info.plist icon file/name both resolve AppIcon.",
+    "retained_failure": "The initial renderer could not overwrite the license copied with Nix read-only mode. Only the project-owned copy received user-write permission; regeneration passed. No test or timeout relaxed.",
+    "prior_suites": "Earlier 373 Flutter tests and six macOS host tests were not rerun or recounted for this artwork change."
+  },
+  "macos_delivery": {
+    "schema_version": 1,
+    "recorded_utc": "2026-10-27T03:06:45.202972Z",
+    "product": "Broomm",
+    "version": "0.1.0-dev",
+    "target": "macos-universal",
+    "source_base": "7d9f46e16bd70cb116295088022aff7425509d0c",
+    "source_dirty": true,
+    "distribution": "local-development",
+    "updater_enabled": false,
+    "data_root": "/Users/ptrschneider/Projects/broomm/broomm-data",
+    "artifact": "build/releases/Broomm-macOS-infinity-icon.zip",
+    "bytes": 20306518,
+    "sha256": "ae598ba5e3fa67f96381a35ec5864a00a5e8c59031d45dd112e5af04b5d8c13b",
+    "architectures": {
+      "Contents/MacOS/broomm": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64"
+    },
+    "icon_resources_sha256": {
+      "AppIcon.icns": "9146e4b6fa0da19f70f6c823818f4453b095dc47b838723a6b5be982400f1e6e",
+      "Assets.car": "cdd0e9afa203240cebf1cf725ed3a2690f4891c6e985c845468c87d651622f5f"
+    },
+    "archive_integrity": "passed",
+    "signature_original": "strict/deep passed",
+    "signature_fresh_extraction": "strict/deep passed",
+    "payload": "application and precompiled bridges; no emulator, BIOS, ROM or progress payload"
+  },
+  "remaining_acceptance": [
+    "Native Windows resource compilation and shell/window rendering.",
+    "Android APK/resource compilation and real launcher adaptive/themed rendering.",
+    "Linux native execution and desktop/Wayland icon lookup after normal desktop integration."
+  ],
+  "external_effects": "Generated project-owned assets and private build/probe outputs. No app launched, progress/server data written, global icon cache/desktop registration changed, SDK selection altered, dependencies installed or Git publication performed.",
+  "images": {
+    "assets/branding/broomm-icon.png": {
+      "width": 1024,
+      "height": 1024,
+      "bytes": 325634,
+      "sha256": "78b9d560717dfac016e4561d07197a777317036651961d2b174f991750cbb52a"
+    },
+    "assets/branding/broomm-mark.png": {
+      "width": 1024,
+      "height": 1024,
+      "bytes": 28772,
+      "sha256": "5683c87aeb24c868ba54763a110a161027f33dbfd0b6665902d355b20306e8f9"
+    },
+    "linux/runner/resources/broomm.png": {
+      "width": 512,
+      "height": 512,
+      "bytes": 91763,
+      "sha256": "e15c37d2205e564a94c811d3b0857a30283aecee7f50493e325eeba1130e48a0"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png": {
+      "width": 16,
+      "height": 16,
+      "bytes": 633,
+      "sha256": "b1107c9511d2c34a773c71a62740fbf43ba10ea69f2443db1c94987f017e4fdc"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png": {
+      "width": 32,
+      "height": 32,
+      "bytes": 1575,
+      "sha256": "51d2eef985f364203137f33f1c83a1a146ffc76a605a2666a5592f3f1c453983"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png": {
+      "width": 64,
+      "height": 64,
+      "bytes": 3291,
+      "sha256": "4d186aea7246448091a633345fe1dd2ba40d3746ea4cd5a1e41240984fe85bd6"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png": {
+      "width": 128,
+      "height": 128,
+      "bytes": 7909,
+      "sha256": "4b1f2b2cdf6bcc595578a081ff2d4397b90d547e0e29330c59b189ffb883a5c4"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png": {
+      "width": 256,
+      "height": 256,
+      "bytes": 22377,
+      "sha256": "71024c67dfae9b6fd825475ead0ca500594157e24bc250e56cec893ea963ff9d"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png": {
+      "width": 512,
+      "height": 512,
+      "bytes": 91763,
+      "sha256": "e15c37d2205e564a94c811d3b0857a30283aecee7f50493e325eeba1130e48a0"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png": {
+      "width": 1024,
+      "height": 1024,
+      "bytes": 325634,
+      "sha256": "78b9d560717dfac016e4561d07197a777317036651961d2b174f991750cbb52a"
+    },
+    "android/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+      "width": 48,
+      "height": 48,
+      "bytes": 2501,
+      "sha256": "0e326972f02a8ac77daed69ecc0d02aec2ddf6e7ead8b540f5f70bc27cf254ac"
+    },
+    "android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png": {
+      "width": 108,
+      "height": 108,
+      "bytes": 1967,
+      "sha256": "960d3c0d5a775501c373009ea554bd59e8bde42835812c8a7d2fd64eeb21e8de"
+    },
+    "android/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+      "width": 72,
+      "height": 72,
+      "bytes": 4119,
+      "sha256": "8fd4ba821fe6e7495000dab8dca4543a0b30afcf5cfc16e730ff70e681098ffa"
+    },
+    "android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png": {
+      "width": 162,
+      "height": 162,
+      "bytes": 2930,
+      "sha256": "64ee26432e1b4e68a3e9a973c4bae34416079a58db7ce02ce00b3d9d3d416148"
+    },
+    "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+      "width": 96,
+      "height": 96,
+      "bytes": 5675,
+      "sha256": "5563f418a19b789228a7ac30716cdc997a417575adef488a9698e9319a5e263f"
+    },
+    "android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png": {
+      "width": 216,
+      "height": 216,
+      "bytes": 3973,
+      "sha256": "bc2e8058236ec386737e5ff4405d6a8708599ece89af5e255891807f342701bf"
+    },
+    "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+      "width": 144,
+      "height": 144,
+      "bytes": 9437,
+      "sha256": "f6100b9ba0454271ebe36d3387b37d7fdc23368de734519e1a7ba8c5dfe1ce1a"
+    },
+    "android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png": {
+      "width": 324,
+      "height": 324,
+      "bytes": 6196,
+      "sha256": "82035d955abfa2adcc470630864fcc8cd7b17e042cbaa211307d3adb41a90ba2"
+    },
+    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+      "width": 192,
+      "height": 192,
+      "bytes": 13911,
+      "sha256": "fd2d9c47254587f1793e0d56f22b6154282b812a31c0e61d573acb44d68e78c8"
+    },
+    "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png": {
+      "width": 432,
+      "height": 432,
+      "bytes": 8401,
+      "sha256": "0a70af0d0bb826d83680a6419b3cdffee593ba0384e019696f3bbea39edb32ac"
+    }
+  },
+  "sources": {
+    "tool/render_app_icons.dart": {
+      "bytes": 6050,
+      "sha256": "62e424d97f40693ce28e6c5becc2df2ca75f508633d586be80769075cdf25e0f"
+    },
+    "pubspec.yaml": {
+      "bytes": 349,
+      "sha256": "a531d9c93d327d228e35439a3e89ced5c723488c39cbdeea0702364b4f88efc7"
+    },
+    "macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+      "bytes": 1291,
+      "sha256": "bc6ba8105ca69651aeeb77358851590de295dca04681a1d58c0f449641c242f3"
+    },
+    "windows/runner/Runner.rc": {
+      "bytes": 3019,
+      "sha256": "72e3eedd17ccd0b2abde06736e636c9dc8a6bf4f00f333164d5a6d8b68d02c67"
+    },
+    "windows/runner/resources/app_icon.ico": {
+      "bytes": 42373,
+      "sha256": "69185a17b61788c4c245d77869ed8e3658d48dfe657f022bd5b3b46b9b984208"
+    },
+    "linux/CMakeLists.txt": {
+      "bytes": 5659,
+      "sha256": "95c8bde722b6ae7f83982d789efbf819dfa509c1d709737d7bee2dc2e4213589"
+    },
+    "linux/runner/my_application.cc": {
+      "bytes": 6210,
+      "sha256": "7f3b0691a1865f6196d98e4e10b7d07b977b9d60d09966da511a0efd2f92f6b7"
+    },
+    "linux/runner/resources/app.broomm.broomm.desktop": {
+      "bytes": 175,
+      "sha256": "f94479a732a5702e419a950da0603960f1d471ab9620b2da1890683107556040"
+    },
+    "android/app/src/main/AndroidManifest.xml": {
+      "bytes": 3794,
+      "sha256": "563e78e8ad2a3d76e3e8e33dc35c71a766074c0f57353db477399eac41bff94e"
+    },
+    "android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml": {
+      "bytes": 271,
+      "sha256": "bca7d0d3b37ae14e0cf8dc766b1a5e9ef2e1d9771ff7115df6a87bb8c579b205"
+    },
+    "android/app/src/main/res/mipmap-anydpi-v33/ic_launcher.xml": {
+      "bytes": 340,
+      "sha256": "a21d4770d0ab7e093b1818cbdb72bba6a7509c65572baf8f39d1d35224040e66"
+    },
+    "android/app/src/main/res/drawable/broomm_icon_background.xml": {
+      "bytes": 272,
+      "sha256": "4d91b1bf062a2e698bbd8c12d4dc7ec7b367cce9f6fa0c6aa7fb426c71332879"
+    },
+    "assets/branding/MATERIAL-ICONS-LICENSE.txt": {
+      "bytes": 18531,
+      "sha256": "be698262aecd042c0de6f886cc0af622f8def446462026992cc530275d8a9e74"
+    },
+    "assets/branding/README.md": {
+      "bytes": 2260,
+      "sha256": "329d1718631e2f5709979e90f84a73f94a48c7d3a0797db730b8f728d6a1154f"
+    },
+    "PROJECT.md": {
+      "bytes": 35042,
+      "sha256": "c2d4f2df13b5654093c3042dbb7d79ec8c896d0cd9c66b1de169f288a03228d0"
+    },
+    "IMPLEMENTATION.md": {
+      "bytes": 75907,
+      "sha256": "48dcf6f96d7ba2a360a8e8697c0e4f254bc4d232087e328ec96c003ba3cf0e5b"
+    },
+    "README.md": {
+      "bytes": 71773,
+      "sha256": "3c81a2588704fe39c8759951537461ef97b4b3f8cf041c3ed2cbc9b6db1592f5"
+    }
+  },
+  "diagnostics": {
+    ".tool-cache/app-icons-render.log": {
+      "bytes": 1180,
+      "sha256": "e6c15547283bfae13caef0b311901e604c730b5bb00665980c76cfac39bb8a4c"
+    },
+    ".tool-cache/app-icons-render-final.log": {
+      "bytes": 476,
+      "sha256": "52c35a6b674118cca1d8197145ccfc5cd0daa76cd26deb2c2b438a6accb806a1"
+    },
+    ".tool-cache/app-icons-analyze-final.log": {
+      "bytes": 250,
+      "sha256": "d685271031f4a00bad8f01f26933e744aa4c447c752d00977418c991306e2b20"
+    },
+    ".tool-cache/app-icons-format-last.log": {
+      "bytes": 199,
+      "sha256": "7fc02244dccc0f7e81a66dc99aced15ea95cbc9c90feed19e3d1f1abd09495a8"
+    },
+    ".tool-cache/app-icons-macos-build.log": {
+      "bytes": 509,
+      "sha256": "1885b19c6d6b2aecd0a5d362dd66f110ff93ca975b91ffe38cfb4c8c0c27d9d7"
+    },
+    ".tool-cache/app-icons-package.log": {
+      "bytes": 1286,
+      "sha256": "b8c387d2ee4b78a8acab76084abe722062d124d7e95cece6013b58a60ed9324d"
+    },
+    ".tool-cache/app-icons-linux-x64.log": {
+      "bytes": 353,
+      "sha256": "db76ab68e7b1bd7b2c47e6e55e27ac38fd9f2d010b5c5fe143c0b41f09241e48"
+    },
+    ".tool-cache/app-icons-linux-arm64.log": {
+      "bytes": 357,
+      "sha256": "160c459d1f98d65a1f91d9b50baba3aa81cfcf7ca4151c99afce5ef946f12581"
+    },
+    ".tool-cache/app-icons-linux-cross.dart": {
+      "bytes": 5990,
+      "sha256": "960410967b6b851bcfb273a5773a8f08a8b3240bb3bb0d0ef13fb7b348e2badc"
+    },
+    ".tool-cache/package_app_icons.dart": {
+      "bytes": 4385,
+      "sha256": "40157e61cc3cca1ba95a95b8b1b55eb2d4ba3e8f00fd46d202a0b9931da95a3f"
+    },
+    ".tool-cache/app-icons-compiled-catalog.json": {
+      "bytes": 7130,
+      "sha256": "28b1bb33effbff27c443dcb73d1a007d25282c01e0e06dd9ee04f998ae2c6982"
+    },
+    ".tool-cache/app-icons-compiled.iconset/icon_128x128@2x.png": {
+      "bytes": 49441,
+      "sha256": "7163990a997708181d06af381cdbe33af42eb7d219cac17055cd47b237381347"
+    }
+  }
+}

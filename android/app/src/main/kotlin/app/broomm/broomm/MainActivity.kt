@@ -15,6 +15,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     private var controls: MethodChannel? = null
     private var credentials: BroommCredentials? = null
     private var emulators: BroommEmulators? = null
+    private var updates: BroommUpdates? = null
     private val handler = Handler(Looper.getMainLooper())
     private var held: String? = null
     private val shifts = mutableSetOf<String>()
@@ -40,6 +41,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         super.configureFlutterEngine(engine)
         credentials = BroommCredentials(this).also { it.register(engine) }
         emulators = BroommEmulators(this).also { it.register(engine) }
+        updates = BroommUpdates(this).also { it.register(engine) }
         controls = MethodChannel(engine.dartExecutor.binaryMessenger, "app.broomm/prototype")
         inputs = getSystemService(INPUT_SERVICE) as InputManager
         inputs?.registerInputDeviceListener(this, handler)
@@ -107,6 +109,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     override fun onInputDeviceAdded(deviceId: Int) {}
     @Deprecated("Android activity result adapter")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (updates?.activityResult(requestCode) == true) return
         if (emulators?.activityResult(requestCode, resultCode, data) == true) return
         super.onActivityResult(requestCode, resultCode, data)
     }
@@ -116,5 +119,5 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         enters.removeAll { it.startsWith("$deviceId-") }
     }
     override fun onPause() { held = null; handler.removeCallbacks(repeat); for (key in shifts.toList()) shift(key, false); enters.clear(); super.onPause() }
-    override fun onDestroy() { inputs?.unregisterInputDeviceListener(this); inputs = null; handler.removeCallbacks(repeat); credentials?.close(); credentials = null; emulators?.close(); emulators = null; controls = null; super.onDestroy() }
+    override fun onDestroy() { inputs?.unregisterInputDeviceListener(this); inputs = null; handler.removeCallbacks(repeat); credentials?.close(); credentials = null; emulators?.close(); emulators = null; updates?.close(); updates = null; controls = null; super.onDestroy() }
 }

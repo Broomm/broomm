@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Broomm
+Comment=Your games, together.
+Exec=broomm
+Icon=app.broomm.broomm
+Terminal=false
+Categories=Game;
+StartupWMClass=app.broomm.broomm

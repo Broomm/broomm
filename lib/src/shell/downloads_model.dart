@@ -1,7 +1,7 @@
 part of 'model.dart';
 
 extension DownloadsModel on ShellModel {
-  int get homeAppCount => downloads.isEmpty ? 3 : 4;
+  int get homeAppCount => homeApps.length;
   int get lastHomeIndex => homeAppCount - 1 + installed.length;
   DownloadJob? queuedGame(int id) =>
       downloads.where((j) => j.game.id == id).firstOrNull;
@@ -38,8 +38,10 @@ extension DownloadsModel on ShellModel {
       final wasEmpty = downloads.isEmpty;
       downloads.clear();
       downloads.addAll(loaded);
-      if (wasEmpty && downloads.isNotEmpty && homeIndex >= 2) ++homeIndex;
-      if (!wasEmpty && downloads.isEmpty && homeIndex >= 2) --homeIndex;
+      if (wasEmpty && downloads.isNotEmpty && homeIndex >= downloadHomeIndex)
+        ++homeIndex;
+      if (!wasEmpty && downloads.isEmpty && homeIndex >= downloadHomeIndex)
+        --homeIndex;
       _emit();
     } on DownloadQueueInUse catch (e) {
       try {
@@ -49,8 +51,10 @@ extension DownloadsModel on ShellModel {
         downloads
           ..clear()
           ..addAll(snapshot);
-        if (wasEmpty && downloads.isNotEmpty && homeIndex >= 2) ++homeIndex;
-        if (!wasEmpty && downloads.isEmpty && homeIndex >= 2) --homeIndex;
+        if (wasEmpty && downloads.isNotEmpty && homeIndex >= downloadHomeIndex)
+          ++homeIndex;
+        if (!wasEmpty && downloads.isEmpty && homeIndex >= downloadHomeIndex)
+          --homeIndex;
         downloadsReadOnly = true;
         downloadQueueNotice = e.toString();
         downloadError = null;
@@ -79,6 +83,7 @@ extension DownloadsModel on ShellModel {
 
   Future<void> enqueueDownload(RommGame game, {bool addons = false}) async {
     if (!authenticated ||
+        applicationUpdating ||
         disposed ||
         gameActive ||
         _stoppingDownloads ||
@@ -87,6 +92,7 @@ extension DownloadsModel on ShellModel {
     final generation = _context;
     await finishCloud();
     if (generation != _context ||
+        applicationUpdating ||
         !authenticated ||
         disposed ||
         gameActive ||
@@ -113,7 +119,7 @@ extension DownloadsModel on ShellModel {
     if (registered != null) downloads.remove(registered);
     final job = DownloadJob(game, addons: addons);
     downloads.add(job);
-    if (wasEmpty && homeIndex >= 2) ++homeIndex;
+    if (wasEmpty && homeIndex >= downloadHomeIndex) ++homeIndex;
     try {
       await _saveDownloads();
     } catch (e) {
@@ -130,7 +136,11 @@ extension DownloadsModel on ShellModel {
   }
 
   void _startQueue() {
-    if (_stoppingDownloads || downloadsReadOnly || !authenticated || disposed)
+    if (applicationUpdating ||
+        _stoppingDownloads ||
+        downloadsReadOnly ||
+        !authenticated ||
+        disposed)
       return;
     while (_downloadWorkers.length < preferences.maxDownloads) {
       final job = downloads
@@ -161,7 +171,8 @@ extension DownloadsModel on ShellModel {
             if (generation != _context || disposed) return;
             if (job.problem == null && !cancellation.cancelled) {
               downloads.remove(job);
-              if (downloads.isEmpty && homeIndex >= 2) --homeIndex;
+              if (downloads.isEmpty && homeIndex >= downloadHomeIndex)
+                --homeIndex;
             } else {
               job.state = DownloadState.failed;
               job.problem ??=
@@ -263,7 +274,7 @@ extension DownloadsModel on ShellModel {
       ];
     artworkRequests.removeWhere((g) => g.id == job.game.id);
     downloads.remove(job);
-    if (downloads.isEmpty && homeIndex >= 2) --homeIndex;
+    if (downloads.isEmpty && homeIndex >= downloadHomeIndex) --homeIndex;
     await _saveDownloads();
     if (!job.done.isCompleted) job.done.complete();
     _emit();

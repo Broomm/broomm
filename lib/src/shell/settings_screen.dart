@@ -34,6 +34,66 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             if (model.error != null) ProblemNotice(model.error!),
+            const Eyebrow('Application updates', color: muted),
+            const SizedBox(height: 12),
+            Text(
+              'Installed: ${model.updates.current}',
+              style: const TextStyle(color: muted),
+            ),
+            const SizedBox(height: 10),
+            ConsoleButton(
+              onPressed: model.busy
+                  ? null
+                  : () {
+                      const channels = ['auto', 'stable', 'rc'];
+                      model.savePreferences(
+                        model.preferences.copy(
+                          updateChannel:
+                              channels[(channels.indexOf(
+                                        model.preferences.updateChannel,
+                                      ) +
+                                      1) %
+                                  channels.length],
+                        ),
+                      );
+                    },
+              child: ActionLabel(
+                'Update channel: ${switch (model.preferences.updateChannel) {
+                  'rc' => 'Release candidates',
+                  'stable' => 'Stable',
+                  _ => 'Match installed release',
+                }}',
+                icon: Icons.swap_horiz,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ConsoleButton(
+              onPressed: model.updates.checking || !model.updates.supported
+                  ? null
+                  : model.updates.check,
+              child: ActionLabel(
+                model.updates.checking
+                    ? 'Checking GitHub…'
+                    : 'Check for updates',
+                icon: Icons.refresh,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              model.updates.status,
+              style: const TextStyle(color: muted, height: 1.5),
+            ),
+            if (model.updates.available != null) ...[
+              const SizedBox(height: 10),
+              ConsoleButton(
+                onPressed: () => model.navigate(ShellScreen.update),
+                child: const ActionLabel(
+                  'Update Broomm',
+                  icon: Icons.system_update_alt,
+                ),
+              ),
+            ],
+            const SizedBox(height: 30),
             const Eyebrow('Appearance', color: muted),
             const SizedBox(height: 12),
             _toggle(
@@ -244,7 +304,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             const Text(
-              'BROOMM 0.1  /  ROMM COLLECTION PREVIEW',
+              'BROOMM  /  YOUR GAMES, TOGETHER.',
               style: TextStyle(color: muted, fontSize: 10, letterSpacing: 1.6),
             ),
             const SizedBox(height: 32),

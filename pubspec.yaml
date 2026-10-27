@@ -14,3 +14,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/setup/
+    - assets/branding/MATERIAL-ICONS-LICENSE.txt

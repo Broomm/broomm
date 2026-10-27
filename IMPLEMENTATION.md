@@ -283,3 +283,57 @@ At `087aaa1889f1c9fb46e7a04fcaee070054aa8ccf`, the supplied macOS native test co
 Bundle preparation now finishes for every ELF before any dependency tree is checked. SDK paths/interpreters, missing libraries and loader errors remain failures, with per-binary diagnostics. Three native regression cases are added to both Linux build jobs: forced traversal orders with relocation/execution, missing transitive dependencies and an SDK interpreter. All fixtures stay private and clean up on exit.
 
 Workflow/ShellCheck and shell syntax checks pass locally. Actual pinned x64/ARM64 ELF copies reproduce the old ordering failure and pass the corrected preparation/order checks through a modeled loader boundary on macOS; loader-error and SDK-interpreter failures remain visible. Source engine hashes remain unchanged. This is metadata/patch verification, not Linux execution: the new native tests, host `ldd` resolution and a complete hosted matrix await CI. Unchanged Flutter/native macOS application tests are not rerun or claimed anew. No tests are skipped, limits relaxed, OS dependencies installed, signing changed, owner data touched or Git publication performed. See [walkthrough and limits](docs/github-releases.md#sixth-hosted-ci-follow-up--2026-10-26) and [fingerprints](docs/github-ci-sixth-followup.json).
+
+## Application updates from GitHub — 2026-10-26
+
+The owner selected Teddy's updater as the reference. Official release builds check the public Broomm repository at startup and every six hours, with manual checks and stable/candidate channel selection in Settings. A newer complete release adds **Update Broomm** first on Home without changing the selected game's identity. Activating it starts a controller/keyboard-navigable download, checksum/build-record validation, private preparation and desktop replacement/restart. Development and PR builds stay manual. Release packaging embeds the full version/target and an installation inventory; emulator updates remain user-initiated setup imports.
+
+The Dart workflows use existing HTTP, digest and confined archive mechanics without new runtime dependencies. OS adapters perform only exclusive directory moves/relaunch or Android package inspection/installer handoff. The updater finishes save work, checkpoints the game download queue and obtains the session lease before exit. Failed checkpointing retains the queue and its ownership for retry. Cancellation is fenced before OS handoff, a rejected exit disarms the helper, and replacement/launch failures preserve recovery evidence and attempt to restore the old bundle. Games, emulator configuration, accounts and progress remain outside the replaced installation. Android requires OS permission/confirmation and controls the final Open action; silent installation or guaranteed automatic Android relaunch is not claimed.
+
+Local validation passes **371 ordinary + 2 full-size = 373 Flutter tests**, clean analysis, **228**-file formatting, workflow/ShellCheck and generated-helper shell checks. All **six native macOS host tests** pass with zero failures/skips; the two existing XCTest deployment-target link warnings remain. The portable macOS debug app builds, and all **seven Android Kotlin sources** compile with the pinned toolchain; the compatibility fallback emits two API deprecation warnings. Native macOS fixtures verify exclusive moves against occupied destinations and actual Launch Services replacement/relaunch, alongside independent-process locks, rollback, cancellation, queue persistence and controller navigation. A real public `v0.1.0` package (20,018,724 bytes) passes GitHub selection, checksum/build-record validation, private extraction and strict/deep signature checks without installing it or touching owner progress.
+
+The first published release containing this code is needed before later releases can be discovered automatically; the existing public `v0.1.0` predates the updater. A real owner upgrade between two updater-enabled releases, Windows/Linux native replacement/relaunch (including gamescope), and Android device installation remain acceptance work. Native-host-specific regressions remain enabled on their corresponding CI runners. Test-fixture scheduling/teardown findings and the corrected intentional-future lint are retained in ignored diagnostics; no assertion or timeout was relaxed to obtain a pass. No OS dependency/global SDK change, signing change, commit, push, tag or release is performed. See the [walkthrough and recovery notes](docs/application-updates.md), [verification record](docs/application-updates.json) and README actions.
+
+The requested current macOS delivery is [Broomm-macOS-application-updates.zip](build/releases/Broomm-macOS-application-updates.zip), **20,097,507 bytes**, SHA-256 `49908b5efa83ebc5499247338c78ac4763b66ded1b851a59f0b0804e69f31a05`. A fresh release-mode build and all three native bridges contain ARM64 and x86-64. ZIP integrity and source/fresh-extraction strict/deep code signatures pass. This ad-hoc-signed development package uses the checkout's existing data/setup paths, retains an explicit `0.1.0-dev` identity and contains no emulator, BIOS, ROM or progress payload. Automatic installation remains enabled only in official release builds. AGENTS.md now records the owner's standing requirement to include the current macOS build link in deliveries. Application sources are unchanged by this packaging follow-up; the preceding test results are retained rather than claimed as new runs.
+
+## Infinity application icon — 2026-10-27
+
+The owner selected the existing mint infinity mark for Broomm's application icon.
+The pinned Flutter renderer now produces a 1024 px master, transparent mark,
+seven macOS catalog sizes, nine Windows ICO sizes, a Linux window/theme PNG and
+five Android legacy/foreground densities. Android 8+ adaptive and Android 13+
+themed resources share the mark; generation checks every visible foreground
+pixel against the 66 dp circular safe zone. These are checked-in native resources
+used by every build mode, with no new renderer/plugin/runtime dependency. The
+existing Material Icons glyph's license is retained and bundled on every target.
+
+Linux loads the window icon relative to its executable rather than launch cwd.
+Its bundle also carries standard hicolor/desktop-entry assets; no host desktop
+registration or theme/cache changes are performed. Analysis is clean and all
+229 Dart files pass formatting. The existing object-only cross-check compiles
+all three actual Linux runner sources for x64 and ARM64 with `-Wall -Werror`.
+This is not native Linux execution or linking. The renderer completes with the
+expected PNG/ICO formats and density sizes; the first attempt retained the Nix
+license copy's read-only mode, corrected only on the project-owned copy before
+regeneration. No assertion, test or timeout is relaxed.
+
+The fresh [macOS build](build/releases/Broomm-macOS-infinity-icon.zip) is
+**20,306,518 bytes**, SHA-256
+`ae598ba5e3fa67f96381a35ec5864a00a5e8c59031d45dd112e5af04b5d8c13b`.
+The application and three bridges contain ARM64 and x86-64; ZIP integrity and
+strict/deep signatures pass before and after fresh extraction. The packaged
+ICNS and CoreUI catalog retain their hashes, both native icon metadata keys
+name AppIcon, and the compiled catalog includes every source size. The extracted
+256 px ICNS image was visually inspected through the image-view tool; no
+computer-control tools or owner app/progress data were used. This remains an
+ad-hoc-signed local development build using this checkout's existing data paths,
+without emulator/BIOS/ROM payload or enabled development self-updates.
+
+Native Windows resource compilation, Android APK/launcher rendering and Linux
+desktop/Wayland icon lookup remain host acceptance checks. The earlier Flutter
+and macOS host suites are not recounted as new runs for this artwork change.
+The [artwork walkthrough](assets/branding/README.md) documents regeneration,
+licensing, outputs and cleanup; [the verification record](docs/application-icons.json)
+retains source/asset fingerprints, exact commands, diagnostics and platform limits.
+No OS dependency, global SDK, emulator configuration, signing identity or Git
+publication is changed.

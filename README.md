@@ -6,9 +6,21 @@ The default Flutter application connects to RomM 5.4.0, signs in, and opens a co
 
 For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CSO v1 or PBP; no BIOS is required. For the additional Switch choice, set up **Eden**, then select **Set as default**. Both use the normal controller-pairing flow and profile-private cloud saves. The [PPSSPP/Eden walkthrough](docs/psp-and-eden-support.md) covers native DLC directories, firmware/keys, cleanup, test commands and the experimental Eden macOS limits. The current [colored support matrix](docs/platform-support-matrix.md) includes both.
 
-The latest local macOS test build is [Broomm with PPSSPP and Eden](build/releases/Broomm-macOS-arm64-psp-eden.zip). The emulator pack targets Apple Silicon and uses the pinned local bundles described in the walkthrough.
+The latest local macOS test build is [Broomm with the infinity app icon](build/releases/Broomm-macOS-infinity-icon.zip). It includes the current application changes and precompiled bridges, uses this checkout's existing data/setup paths, and contains no emulator, BIOS or game payload. The local emulator pack targets Apple Silicon. This development build keeps automatic app installation disabled; official GitHub release builds enable it.
+
+![Broomm application icon](macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png)
+
+The mint infinity icon is included in macOS, Windows, Linux and Android debug,
+profile and release builds. See the [artwork source, native resources and rendering command](assets/branding/README.md).
 
 ## Run Broomm
+
+Official release builds now check GitHub for Broomm updates. An available release
+adds **Update Broomm** as the first Home tile. Activate it with A/Enter or a click
+to download, verify, install and restart. **Broomm settings → Application updates**
+contains the channel and manual check. Development/PR builds stay manual; the
+first packaged release containing this updater can update to subsequent releases.
+See the [application update walkthrough and recovery notes](docs/application-updates.md).
 
 The native Nintendo Switch homebrew app lives in the sibling [broomm-nsw project](../broomm-nsw/README.md), with its own requirements, implementation status and build environment. General Broomm decisions, the Flutter application and Switch emulator integration remain here.
 
@@ -118,6 +130,7 @@ For CI failures and local reproduction, see the [latest hosted-run follow-up](do
 
 | Document | Purpose |
 | --- | --- |
+| [Application updates](docs/application-updates.md) | GitHub checks, first Home tile, verified installation, restart, recovery and platform validation |
 | [PROJECT.md](PROJECT.md) | Product requirements, user journeys, and deferred scope |
 | [AGENTS.md](AGENTS.md) | Engineering practices adapted from PGCS |
 | [IMPLEMENTATION.md](IMPLEMENTATION.md) | Staged work, acceptance gates, and current status |
@@ -187,7 +200,7 @@ codesign --force --sign - --preserve-metadata=identifier,entitlements,flags,runt
 codesign --verify --deep --strict build/macos/Build/Products/Release/broomm.app
 ```
 
-The latest archive is `build/releases/Broomm-macOS-arm64-installer-fix.zip`. Unzip it and open `broomm.app` after closing every previous Broomm game/app normally. A running older copy can still own the download queue. This is an Apple Silicon development build tied to this checkout's data/setup paths, with the existing local emulator pack; it is not a notarized standalone emulator installer. The default `devbox run app-build` remains a debug build. See the [RPCS3 installer notification fix](docs/rpcs3-installer-exit.md), [live platform/coverage matrix](docs/platform-support-matrix.md), [automatic first-sync/GT6 recovery checks](docs/cloud-initialization-and-ps3-recovery.md) and [download/status checks](docs/downloads-and-status.md).
+The latest archive is [Broomm with the infinity app icon](build/releases/Broomm-macOS-infinity-icon.zip). Unzip it and open `broomm.app` after closing every previous Broomm game/app normally. A running older copy can still own the download queue. This is a development build tied to this checkout's data/setup paths, with the existing local emulator pack; it is not a notarized standalone emulator installer. The default `devbox run app-build` remains a debug build. See the [application updater](docs/application-updates.md), [RPCS3 installer notification fix](docs/rpcs3-installer-exit.md), [live platform/coverage matrix](docs/platform-support-matrix.md), [automatic first-sync/GT6 recovery checks](docs/cloud-initialization-and-ps3-recovery.md) and [download/status checks](docs/downloads-and-status.md).
 
 For the Intel PS3 option, open Emulator Settings → PlayStation 3 → RPCS3 Intel → Set up, confirm the reviewed source, then choose Set as default. The verified source is available in this checkout; Rosetta must already be installed. Both RPCS3 builds keep this profile’s existing PS3 saves, firmware and add-ons, with separate compilation caches. See [the Intel walkthrough and checks](docs/rpcs3-intel.md). The [Flutter capture-library comparison](docs/flutter-window-capture.md) is historical research; window capture has been canceled in favor of native loading counters.
 

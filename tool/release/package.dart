@@ -50,6 +50,8 @@ Future<void> main() async {
     core,
     '--build-number',
     number,
+    '--dart-define=BROOMM_RELEASE_VERSION=$version',
+    '--dart-define=BROOMM_RELEASE_TARGET=$target',
   ];
   if (target == 'macos-universal') {
     if (!Platform.isMacOS) throw StateError('A native macOS host is required.');
@@ -113,6 +115,7 @@ Future<void> main() async {
     await buildCommand('bash', ['tool/ci/check_linux_bundle.sh', bundle.path]);
     await writeBuildRecord(bundle, version, number, sha, target);
     await command('tar', [
+      '--format=ustar',
       '-czf',
       artifact.path,
       '-C',
@@ -183,11 +186,19 @@ Future<void> writeBuildRecord(
   String sha,
   String target,
 ) async {
-  await File('${directory.path}/broomm-release.json').writeAsString(
-    '${jsonEncode({'product': 'Broomm', 'version': version, 'build_number': number, 'sha': sha, 'target': target})}\n',
-  );
   await File('experiments/injection/SOURCES.md')
       .copy('${directory.path}/NATIVE-SOURCES.md');
+  final entries = [
+    'broomm-release.json',
+    await for (final e in directory.list(followLinks: false))
+      if (e.uri.pathSegments.where((s) => s.isNotEmpty).last !=
+          'broomm-release.json')
+        e.uri.pathSegments.where((s) => s.isNotEmpty).last,
+  ]..sort();
+  await File('${directory.path}/broomm-release.json').writeAsString(
+    '${jsonEncode({'product': 'Broomm', 'version': version, 'build_number': number, 'sha': sha, 'target': target, 'entries': entries})}\n',
+    flush: true,
+  );
 }
 
 String javaProperty(String value) => value

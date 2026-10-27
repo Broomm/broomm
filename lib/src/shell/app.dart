@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' show AppExitType, AppExitResponse;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app_model.dart';
 import '../catalogue.dart';
@@ -35,6 +37,9 @@ import 'cloud_saves_dialog.dart';
 import '../android/emulators.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
+import 'update_screen.dart';
+import '../updates/installation.dart';
+import '../session_lease.dart';
 
 class BroommApp extends StatefulWidget {
   const BroommApp({
@@ -59,6 +64,63 @@ class _BroommAppState extends State<BroommApp> {
   bool lab = false;
   PrototypeModel? _activeGameModel;
   bool startingGame = false;
+  SessionLease? _updateLease;
+
+  Future<void> _installApplicationUpdate() async {
+    if (m.applicationUpdating || m.updates.handedOff) return;
+    if (lab || m.gameActive || startingGame) {
+      m.updates.status = 'Close the game or emulator before updating Broomm.';
+      m.updates.emit();
+      return;
+    }
+    m.applicationUpdating = true;
+    m.busy = true;
+    try {
+      await m.updates.install(
+        m.storage.directory,
+        quiesce: () async {
+          if (m.isAndroid && await m.androidSession.pending() != null)
+            throw StateError(
+              'Finish the Android game session before updating.',
+            );
+          await m.finishConfiguration();
+          await m.finishCloud();
+          await m.emulators.finishSetup();
+          await m.finishDownloads(requireCheckpoint: true);
+          _updateLease = await SessionLease.acquire(m.storage.directory);
+        },
+        exit: () async {
+          m.log?.write(
+            'Application update prepared; closing for verified installer handoff.',
+          );
+          await m.log?.flush().timeout(
+            const Duration(seconds: 2),
+            onTimeout: () {},
+          );
+          if (Platform.isMacOS) {
+            await DesktopHost().close();
+          } else if (await ServicesBinding.instance.exitApplication(
+                AppExitType.required,
+              ) ==
+              AppExitResponse.cancel) {
+            throw StateError(
+              'The operating system cancelled application exit.',
+            );
+          }
+        },
+      );
+    } finally {
+      if (!m.updates.handedOff || m.isAndroid) {
+        await _updateLease?.release();
+        _updateLease = null;
+        m.applicationUpdating = false;
+        m.busy = false;
+        m.updates.emit();
+        if (m.authenticated) await m.loadDownloads();
+      }
+    }
+  }
+
   final contentFocus = FocusScopeNode(
     debugLabel: 'Main content',
     traversalEdgeBehavior: TraversalEdgeBehavior.parentScope,
@@ -175,7 +237,13 @@ class _BroommAppState extends State<BroommApp> {
   }
 
   Future<void> _playGame(int id) async {
-    if (startingGame || lab || m.gameActive || !m.authenticated) return;
+    if (startingGame ||
+        lab ||
+        m.busy ||
+        m.applicationUpdating ||
+        m.gameActive ||
+        !m.authenticated)
+      return;
     if (m.queuedGame(id)?.state == DownloadState.active) {
       m.showNotice(
         'This game is still being installed. Wait for its download and updates/DLC to finish.',
@@ -581,6 +649,11 @@ class _BroommAppState extends State<BroommApp> {
     super.initState();
     _bind();
     input.start();
+    if (m.isAndroid)
+      updateChannel.setMethodCallHandler((call) async {
+        if (call.method == 'installerReturned')
+          m.updates.androidInstallerReturned();
+      });
     m.addListener(_scheduleArtwork);
     _scheduleArtwork();
     cloudRetry = Timer.periodic(
@@ -598,6 +671,7 @@ class _BroommAppState extends State<BroommApp> {
         m.artworkRequests.isEmpty ||
         lab ||
         m.gameActive ||
+        m.applicationUpdating ||
         !mounted)
       return;
     artworkScheduled = true;
@@ -608,6 +682,7 @@ class _BroommAppState extends State<BroommApp> {
           showingOptions ||
           m.artworkRequests.isEmpty ||
           lab ||
+          m.applicationUpdating ||
           m.gameActive)
         return;
       final context = navigator.currentContext;
@@ -617,6 +692,7 @@ class _BroommAppState extends State<BroommApp> {
         while (mounted &&
             m.artworkRequests.isNotEmpty &&
             m.authenticated &&
+            !m.applicationUpdating &&
             !m.gameActive) {
           final game = m.artworkRequests.removeFirst();
           await selectGameArtwork(context, m, game);
@@ -666,6 +742,10 @@ class _BroommAppState extends State<BroommApp> {
       if (call.method == 'controller' && !lab)
         _dispatch(call.arguments as String);
       if (call.method == 'closeRequested' && !lab) {
+        if (m.applicationUpdating) {
+          if (m.updates.handedOff) return;
+          await m.updates.finish();
+        }
         try {
           await m.finishConfiguration();
         } catch (e) {
@@ -709,6 +789,10 @@ class _BroommAppState extends State<BroommApp> {
   }
 
   void _back() {
+    if (m.applicationUpdating) {
+      if (!m.updates.handedOff) m.updates.cancel();
+      return;
+    }
     if (m.busy) return;
     if (navigator.currentState?.canPop() ?? false) {
       navigator.currentState!.maybePop();
@@ -718,7 +802,7 @@ class _BroommAppState extends State<BroommApp> {
   }
 
   Future<void> _lab() async {
-    if (widget.project == null) {
+    if (widget.project == null || m.applicationUpdating || m.busy) {
       return;
     }
     lab = true;
@@ -746,6 +830,7 @@ class _BroommAppState extends State<BroommApp> {
     homeFocus.dispose();
     profileFocus.dispose();
     input.dispose();
+    if (m.isAndroid) updateChannel.setMethodCallHandler(null);
     DesktopHost.channel.setMethodCallHandler(null);
     super.dispose();
   }
@@ -826,14 +911,16 @@ class _BroommAppState extends State<BroommApp> {
               ),
               HomeIntent: CallbackAction<HomeIntent>(
                 onInvoke: (_) {
-                  if (!(navigator.currentState?.canPop() ?? true))
+                  if (!m.applicationUpdating &&
+                      !(navigator.currentState?.canPop() ?? true))
                     m.navigate(ShellScreen.home);
                   return null;
                 },
               ),
               SearchIntent: CallbackAction<SearchIntent>(
                 onInvoke: (_) {
-                  if (m.authenticated &&
+                  if (!m.applicationUpdating &&
+                      m.authenticated &&
                       !(navigator.currentState?.canPop() ?? true))
                     searchStore(navigator.currentContext!, m);
                   return null;
@@ -916,6 +1003,10 @@ class _BroommAppState extends State<BroommApp> {
                               ShellScreen.store => StoreScreen(model: m),
                               ShellScreen.downloads => DownloadsScreen(
                                 model: m,
+                              ),
+                              ShellScreen.update => UpdateScreen(
+                                model: m,
+                                install: _installApplicationUpdate,
                               ),
                               ShellScreen.settings => SettingsScreen(
                                 model: m,

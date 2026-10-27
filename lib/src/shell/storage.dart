@@ -46,6 +46,7 @@ class ShellPreferences {
     this.pageSize = 24,
     this.maxDownloads = 3,
     this.verifyDownloads = false,
+    this.updateChannel = 'auto',
   });
   factory ShellPreferences.fromJson(Map j) {
     final size = j['pageSize'] as int? ?? 24;
@@ -54,28 +55,35 @@ class ShellPreferences {
     final maxDownloads = j['maxDownloads'] as int? ?? 3;
     if (maxDownloads < 1 || maxDownloads > 6)
       throw const FormatException('Invalid simultaneous download limit');
+    final channel = j['updateChannel'] as String? ?? 'auto';
+    if (!{'auto', 'stable', 'rc'}.contains(channel))
+      throw const FormatException('Invalid application update channel');
     return ShellPreferences(
       reduceMotion: j['reduceMotion'] as bool? ?? false,
       showArtwork: j['showArtwork'] as bool? ?? true,
       pageSize: size,
       maxDownloads: maxDownloads,
       verifyDownloads: j['verifyDownloads'] as bool? ?? false,
+      updateChannel: channel,
     );
   }
   final bool reduceMotion, showArtwork, verifyDownloads;
   final int pageSize, maxDownloads;
+  final String updateChannel;
   ShellPreferences copy({
     bool? reduceMotion,
     bool? showArtwork,
     int? pageSize,
     int? maxDownloads,
     bool? verifyDownloads,
+    String? updateChannel,
   }) => ShellPreferences(
     reduceMotion: reduceMotion ?? this.reduceMotion,
     showArtwork: showArtwork ?? this.showArtwork,
     pageSize: pageSize ?? this.pageSize,
     maxDownloads: maxDownloads ?? this.maxDownloads,
     verifyDownloads: verifyDownloads ?? this.verifyDownloads,
+    updateChannel: updateChannel ?? this.updateChannel,
   );
   Map<String, dynamic> toJson() => {
     'reduceMotion': reduceMotion,
@@ -83,6 +91,7 @@ class ShellPreferences {
     'pageSize': pageSize,
     'maxDownloads': maxDownloads,
     'verifyDownloads': verifyDownloads,
+    'updateChannel': updateChannel,
   };
 }
 

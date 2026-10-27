@@ -31,6 +31,7 @@ import '../host.dart';
 import '../android/emulators.dart';
 import '../android/session.dart';
 import '../android/progress.dart';
+import '../updates/controller.dart';
 
 part 'cloud_model.dart';
 part 'downloads_model.dart';
@@ -44,6 +45,7 @@ enum ShellScreen {
   store,
   emulators,
   downloads,
+  update,
 }
 
 class ShellNotice {
@@ -64,12 +66,52 @@ class ShellModel extends ChangeNotifier {
     AndroidEmulators? androidManager,
     SteamGridClient Function(String)? gridFactory,
     GameAddons? gameAddons,
+    ApplicationUpdates? applicationUpdates,
   }) : clientFactory = clientFactory ?? ((uri) => RommClient(uri)),
        credentialBackend = credentials ?? PlatformCredentials(),
        _emulatorManager = emulatorManager,
        _androidManager = androidManager,
        _gameAddons = gameAddons,
-       gridFactory = gridFactory ?? SteamGridClient.new;
+       gridFactory = gridFactory ?? SteamGridClient.new,
+       updates = applicationUpdates ?? ApplicationUpdates() {
+    updates.addListener(_updatesChanged);
+  }
+  final ApplicationUpdates updates;
+  bool _updateCardShown = false;
+  String _updatePhase = '';
+  int _updateProgressBucket = -1;
+  bool applicationUpdating = false;
+  void _updatesChanged() {
+    final phase = updates.status;
+    final bucket = updates.progress == null
+        ? -1
+        : (updates.progress! * 10).floor();
+    if (phase != _updatePhase ||
+        bucket >= 0 && bucket != _updateProgressBucket) {
+      log?.write(
+        'Application update: $phase${bucket < 0 ? '' : ' (${bucket * 10}%)'}',
+      );
+      _updatePhase = phase;
+      _updateProgressBucket = bucket;
+    }
+    final shown = updates.available != null;
+    if (shown != _updateCardShown) {
+      homeIndex = shown
+          ? homeIndex + 1
+          : (homeIndex - 1).clamp(0, lastHomeIndex);
+      _updateCardShown = shown;
+    }
+    _emit();
+  }
+
+  List<int> get homeApps => [
+    if (updates.available != null) 4,
+    0,
+    1,
+    if (downloads.isNotEmpty) 3,
+    2,
+  ];
+  int get downloadHomeIndex => updates.available != null ? 3 : 2;
   final SteamGridClient Function(String) gridFactory;
   late final steamGridCredentials = SteamGridCredentials(credentials);
   final artworkRequests = Queue<RommGame>();
@@ -592,6 +634,22 @@ class ShellModel extends ChangeNotifier {
     _emit();
     try {
       records = await storage.load();
+      updates.start(preferences.updateChannel);
+      unawaited(
+        updates
+            .cleanup(storage.directory)
+            .then((_) {
+              final notice = updates.completionNotice;
+              if (!disposed && notice != null)
+                showNotice(notice.message, problem: notice.problem);
+            })
+            .catchError((Object _) {
+              log?.write(
+                'Old application-update staging could not be inspected; recovery files were kept.',
+                level: 'warning',
+              );
+            }),
+      );
       if (isAndroid) {
         await android.load();
       } else {
@@ -876,7 +934,7 @@ class ShellModel extends ChangeNotifier {
   }
 
   void navigate(ShellScreen target) {
-    if (busy || gameActive || !authenticated) return;
+    if (busy || applicationUpdating || gameActive || !authenticated) return;
     error = null;
     screen = target;
     _emit();
@@ -1528,16 +1586,26 @@ class ShellModel extends ChangeNotifier {
     }
   }
 
-  Future<void> finishDownloads() {
-    if (_finishingDownloads case final work?) return work;
-    final work = _finishDownloads();
+  Future<void> finishDownloads({bool requireCheckpoint = false}) {
+    if (_finishingDownloads case final work?) {
+      if (requireCheckpoint)
+        throw StateError(
+          'A download shutdown is already in progress. Retry the update when it finishes.',
+        );
+      return work;
+    }
+    if (requireCheckpoint && downloadsReadOnly)
+      throw StateError(
+        'Quit the other Broomm instance managing downloads before updating.',
+      );
+    final work = _finishDownloads(requireCheckpoint: requireCheckpoint);
     _finishingDownloads = work;
     return work.whenComplete(() {
       if (identical(_finishingDownloads, work)) _finishingDownloads = null;
     });
   }
 
-  Future<void> _finishDownloads() async {
+  Future<void> _finishDownloads({bool requireCheckpoint = false}) async {
     _stoppingDownloads = true;
     try {
       await _queueLoading;
@@ -1549,10 +1617,17 @@ class ShellModel extends ChangeNotifier {
       /* The owning boundary reports the result. */
     }
     try {
+      if (requireCheckpoint && _queueStore != null) await _saveDownloads();
       await _queueWrite;
     } catch (_) {
       downloadError = 'The last queue checkpoint could not be saved. Interrupted downloads may need a retry when you return.';
       log?.write(downloadError!, level: 'warning');
+      if (requireCheckpoint) {
+        _stoppingDownloads = false;
+        throw StateError(
+          'The download queue could not be saved. Broomm stayed open with its queue and data retained. Fix storage access and retry.',
+        );
+      }
     }
     try {
       await _queueStore?.close();
@@ -1586,6 +1661,8 @@ class ShellModel extends ChangeNotifier {
     try {
       final previous = preferences;
       records = await storage.preferences(next);
+      if (previous.updateChannel != next.updateChannel)
+        unawaited(updates.setChannel(next.updateChannel));
       _startQueue();
       if (previous.pageSize != next.pageSize && authenticated) {
         _hasMore = null;
@@ -1602,6 +1679,8 @@ class ShellModel extends ChangeNotifier {
   @override
   void dispose() {
     disposed = true;
+    updates.removeListener(_updatesChanged);
+    updates.dispose();
     cloud.cancel();
     emulators.dispose();
     androidSession.dispose();
