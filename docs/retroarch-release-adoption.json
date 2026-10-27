@@ -1,0 +1,709 @@
+{
+  "date": "2026-10-27",
+  "base_revision": "14528f23d048823d9c450709a9b74b760ccf8f63",
+  "working_tree_changes": true,
+  "release": {
+    "url": "https://github.com/Broomm/retroarch/releases/tag/v0.1.0",
+    "tag": "v0.1.0",
+    "id": 426021107,
+    "published_at": "2026-10-27T21:48:04Z"
+  },
+  "sources": {
+    "retroarch": {
+      "directory": "RetroArch-1b8917df23625bcf40b67ba6476d9bfb0d30dc65",
+      "license": "GPL-3.0-or-later",
+      "revision": "1b8917df23625bcf40b67ba6476d9bfb0d30dc65",
+      "sha256": "5b8137495f12cf26ee3d2f12ade7eefe0517ff6d610da9a420739246be0cc325",
+      "url": "https://codeload.github.com/libretro/RetroArch/tar.gz/1b8917df23625bcf40b67ba6476d9bfb0d30dc65"
+    },
+    "sdl": {
+      "directory": "SDL-release-3.4.0",
+      "license": "Zlib",
+      "revision": "release-3.4.0",
+      "sha256": "9614b9696abc4597ffce6b888829dc6537ae500423474c342ac4a67222c5654c",
+      "url": "https://codeload.github.com/libsdl-org/SDL/tar.gz/refs/tags/release-3.4.0"
+    }
+  },
+  "targets": {
+    "linux-arm64": {
+      "archive": {
+        "bytes": 9759303,
+        "file": "RetroArch-1.22.2-broomm-0.1.0-linux-arm64.zip",
+        "sha256": "2f41f700f6898d26cfb6e05cccfc8aa04a0f85a3bdb40ee91b886fb35e9179c3"
+      },
+      "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-linux-arm64.zip",
+      "manifest_sha256": "7093a334cb294f5fc6bd9124a0a33401fff9d98f00aa75baaf75ea6fb2fa152f",
+      "binary": "RetroArch/retroarch",
+      "binary_sha256": "55b827c3a7ed276e028ec6c95a73583dcf580cabdc49ccb7865b133724ea08f7",
+      "sdl": "RetroArch/lib/libSDL3.so.0",
+      "sdl_sha256": "826b175b09244a48e97c747ffd23bdbf09768bff7dd49aebf2d7aa5613cfbb9e",
+      "files": 27,
+      "recipe_sha": "21155499eb04bc5c47645d497dd11cd3300c4d3d",
+      "reported_native_checks": {
+        "frontend": {
+          "binary_sha256": "55b827c3a7ed276e028ec6c95a73583dcf580cabdc49ccb7865b133724ea08f7",
+          "cases": [
+            "relocated runtime dependencies",
+            "SDL3 feature readback",
+            "original synthetic core/content",
+            "UDP playing/pause acknowledgment",
+            "normal QUIT",
+            "explicit private writable paths"
+          ],
+          "passed": true
+        },
+        "sdl": {
+          "cases": [
+            "SDL 3.4 ABI",
+            "virtual gamepad discovery",
+            "button route and neutral release",
+            "SDL3 dummy audio stream"
+          ],
+          "library_sha256": "826b175b09244a48e97c747ffd23bdbf09768bff7dd49aebf2d7aa5613cfbb9e",
+          "passed": true
+        }
+      },
+      "local_artifact_verification": "GitHub asset digest, checksum file and complete production packaging manifest verifier passed",
+      "broomm_native_execution_here": false
+    },
+    "linux-x64": {
+      "archive": {
+        "bytes": 10085773,
+        "file": "RetroArch-1.22.2-broomm-0.1.0-linux-x64.zip",
+        "sha256": "5822d9c90cee8ef4af8a994c563bd426fcaa8ae70e0eda07eeb512f31cbadfbf"
+      },
+      "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-linux-x64.zip",
+      "manifest_sha256": "f1513853c61c378c3e4327e220bc79d497f9ce420b19180d36336bbffacf63df",
+      "binary": "RetroArch/retroarch",
+      "binary_sha256": "a6e405d589d423bbf566eaa760702dbe98dd179fe0cebeb16ebaba024d379339",
+      "sdl": "RetroArch/lib/libSDL3.so.0",
+      "sdl_sha256": "cd1e2e0c2b789ef0190311b4f3af73961947bc2a919c62037a9156a356448c0d",
+      "files": 27,
+      "recipe_sha": "21155499eb04bc5c47645d497dd11cd3300c4d3d",
+      "reported_native_checks": {
+        "frontend": {
+          "binary_sha256": "a6e405d589d423bbf566eaa760702dbe98dd179fe0cebeb16ebaba024d379339",
+          "cases": [
+            "relocated runtime dependencies",
+            "SDL3 feature readback",
+            "original synthetic core/content",
+            "UDP playing/pause acknowledgment",
+            "normal QUIT",
+            "explicit private writable paths"
+          ],
+          "passed": true
+        },
+        "sdl": {
+          "cases": [
+            "SDL 3.4 ABI",
+            "virtual gamepad discovery",
+            "button route and neutral release",
+            "SDL3 dummy audio stream"
+          ],
+          "library_sha256": "cd1e2e0c2b789ef0190311b4f3af73961947bc2a919c62037a9156a356448c0d",
+          "passed": true
+        }
+      },
+      "local_artifact_verification": "GitHub asset digest, checksum file and complete production packaging manifest verifier passed",
+      "broomm_native_execution_here": false
+    },
+    "macos-arm64": {
+      "archive": {
+        "bytes": 8128584,
+        "file": "RetroArch-1.22.2-broomm-0.1.0-macos-arm64.zip",
+        "sha256": "a09b7284cad1672010f9baa50a05d100c3c7102889b984d6f8315fc1798d449e"
+      },
+      "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-macos-arm64.zip",
+      "manifest_sha256": "897acbd7dfc5956222c5aaf0945f1f932f83a97b9a4cc1fb0b0745aa1a3f2474",
+      "binary": "RetroArch.app/Contents/MacOS/RetroArch",
+      "binary_sha256": "a9ac06b90a9a4374e29ac6e6fc3bbd5634df73316e9c32592e60f8dd43df1a76",
+      "sdl": "RetroArch.app/Contents/Frameworks/libSDL3.0.dylib",
+      "sdl_sha256": "9b62f106db99f83d5485b38c1f2b68cdb96e4186dfce177cff895e385c2bd7aa",
+      "files": 29,
+      "recipe_sha": "21155499eb04bc5c47645d497dd11cd3300c4d3d",
+      "reported_native_checks": {
+        "frontend": {
+          "binary_sha256": "a9ac06b90a9a4374e29ac6e6fc3bbd5634df73316e9c32592e60f8dd43df1a76",
+          "cases": [
+            "relocated runtime dependencies",
+            "SDL3 feature readback",
+            "original synthetic core/content",
+            "UDP playing/pause acknowledgment",
+            "normal QUIT",
+            "explicit private writable paths"
+          ],
+          "passed": true
+        },
+        "sdl": {
+          "cases": [
+            "SDL 3.4 ABI",
+            "virtual gamepad discovery",
+            "button route and neutral release",
+            "SDL3 dummy audio stream"
+          ],
+          "library_sha256": "9b62f106db99f83d5485b38c1f2b68cdb96e4186dfce177cff895e385c2bd7aa",
+          "passed": true
+        }
+      },
+      "local_artifact_verification": "GitHub asset digest, checksum file and complete production packaging manifest verifier passed",
+      "broomm_native_execution_here": true
+    },
+    "macos-x64": {
+      "archive": {
+        "bytes": 8768049,
+        "file": "RetroArch-1.22.2-broomm-0.1.0-macos-x64.zip",
+        "sha256": "b84664580393ee4171c7938591ddd0639c3fa493512b0a38dd53815c272dbbd9"
+      },
+      "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-macos-x64.zip",
+      "manifest_sha256": "fa5bc21d682e1b79608f52e6fbe8515b3781adbe5443c7aab1cbd66f78b73849",
+      "binary": "RetroArch.app/Contents/MacOS/RetroArch",
+      "binary_sha256": "ded0695c29fc572190fbd9940b01c1cd6458897e6467a4973f08f3ff2288eb26",
+      "sdl": "RetroArch.app/Contents/Frameworks/libSDL3.0.dylib",
+      "sdl_sha256": "95f3587cc633e55168bfd0a3e8af8d30fa3b00e75daba37abd798de2e72b014e",
+      "files": 29,
+      "recipe_sha": "21155499eb04bc5c47645d497dd11cd3300c4d3d",
+      "reported_native_checks": {
+        "frontend": {
+          "binary_sha256": "ded0695c29fc572190fbd9940b01c1cd6458897e6467a4973f08f3ff2288eb26",
+          "cases": [
+            "relocated runtime dependencies",
+            "SDL3 feature readback",
+            "original synthetic core/content",
+            "UDP playing/pause acknowledgment",
+            "normal QUIT",
+            "explicit private writable paths"
+          ],
+          "passed": true
+        },
+        "sdl": {
+          "cases": [
+            "SDL 3.4 ABI",
+            "virtual gamepad discovery",
+            "button route and neutral release",
+            "SDL3 dummy audio stream"
+          ],
+          "library_sha256": "95f3587cc633e55168bfd0a3e8af8d30fa3b00e75daba37abd798de2e72b014e",
+          "passed": true
+        }
+      },
+      "local_artifact_verification": "GitHub asset digest, checksum file and complete production packaging manifest verifier passed",
+      "broomm_native_execution_here": false
+    },
+    "windows-x64": {
+      "archive": {
+        "bytes": 10748642,
+        "file": "RetroArch-1.22.2-broomm-0.1.0-windows-x64.zip",
+        "sha256": "878a7c68097c709da5c3f1b98ac75ce8d59050d5a84bb766e95277c2dd08fc6e"
+      },
+      "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-windows-x64.zip",
+      "manifest_sha256": "3230bf26d8026630e9e02e0679a2ea875d8513c9899056f05145358e35a9b6c6",
+      "binary": "RetroArch/retroarch.exe",
+      "binary_sha256": "a1f3ffb170d258f820e79272c17266d29569955fac52088fa2e96ff2cee20a62",
+      "sdl": "RetroArch/SDL3.dll",
+      "sdl_sha256": "9cdd96a1258e2b8f43b9220d51a8d31da249740bbbbb17be3a9fbdb9cf09b230",
+      "files": 28,
+      "recipe_sha": "21155499eb04bc5c47645d497dd11cd3300c4d3d",
+      "reported_native_checks": {
+        "frontend": {
+          "binary_sha256": "a1f3ffb170d258f820e79272c17266d29569955fac52088fa2e96ff2cee20a62",
+          "cases": [
+            "relocated runtime dependencies",
+            "SDL3 feature readback",
+            "original synthetic core/content",
+            "UDP playing/pause acknowledgment",
+            "normal QUIT",
+            "explicit private writable paths"
+          ],
+          "passed": true
+        },
+        "sdl": {
+          "cases": [
+            "SDL 3.4 ABI",
+            "virtual gamepad discovery",
+            "button route and neutral release",
+            "SDL3 dummy audio stream"
+          ],
+          "library_sha256": "9cdd96a1258e2b8f43b9220d51a8d31da249740bbbbb17be3a9fbdb9cf09b230",
+          "passed": true
+        }
+      },
+      "local_artifact_verification": "GitHub asset digest, checksum file and complete production packaging manifest verifier passed",
+      "broomm_native_execution_here": false
+    }
+  },
+  "selection_policy": "Current recipe chooses release only after explicit successful setup. Exact previous build/integrity and prior reviewed pack source remain recognized. Unknown selected hashes remain errors. Profile paths and ordinary save data unchanged; exact frontend/core state fingerprints retained.",
+  "state_path_fix": {
+    "trigger": "Deprecated -S file bypasses configured savestate_directory in released frontend; protected write to macOS Documents fails",
+    "correction": "Release uses private savestate_directory and native outer content basename; prior frontend retains game.state. Native SRAM/arcade ZIP conventions and old/new state identities remain distinct."
+  },
+  "checks": {
+    "analyze": "flutter analyze --no-pub: no issues",
+    "regressions": {
+      "passed": 52,
+      "log": ".tool-cache/retroarch-release/adoption/regression-final.log",
+      "commands": [
+        "flutter test --no-pub test/managed_build_upgrade_test.dart test/managed_emulators_test.dart test/emulator_setup_flow_macos_test.dart test/retroarch_systems_test.dart test/retroarch_save_recovery_test.dart test/setup_delivery_test.dart test/setup_downloads_test.dart test/setup_archives_test.dart --reporter expanded"
+      ]
+    },
+    "native_delivery": {
+      "host": "Version 27.0.1 (Build 26A434)",
+      "fixture": "/Users/ptrschneider/Projects/broomm/.tool-cache/setup-source-replacements/native-hkgdTu",
+      "project_root": null,
+      "public_application_downloads": [
+        "dolphin",
+        "ryubing",
+        "retroarch"
+      ],
+      "unchanged_core_downloads": 8,
+      "offline_archives": [
+        "core-fbneo.tar.gz",
+        "core-flycast.tar.gz",
+        "core-gambatte.tar.gz",
+        "core-genesis_plus_gx.tar.gz",
+        "core-mednafen_saturn.tar.gz",
+        "core-opera.tar.gz",
+        "core-virtualjaguar.tar.gz"
+      ],
+      "installed": {
+        "dolphin": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+        "ryubing": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+        "retroarch": "a9ac06b90a9a4374e29ac6e6fc3bbd5634df73316e9c32592e60f8dd43df1a76"
+      },
+      "cores": [
+        "fbneo",
+        "flycast",
+        "gambatte",
+        "genesis_plus_gx",
+        "mednafen_lynx",
+        "mednafen_pce_fast",
+        "mednafen_saturn",
+        "mesen",
+        "mgba",
+        "mupen64plus_next",
+        "opera",
+        "picodrive",
+        "stella",
+        "virtualjaguar"
+      ],
+      "full_inventories": "passed",
+      "old_pack_compatibility": "passed",
+      "restart_without_sources": "passed"
+    },
+    "native_play": [
+      {
+        "platform": "gb",
+        "core": "gambatte",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-44d8bc8bf999f34b-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "gba",
+        "core": "mgba",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-ca740fbaae4be801-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "nes",
+        "core": "mesen",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-d7c0b8cd37346aba-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "genesis",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-bd8ab39ad46c40df-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "atari2600",
+        "core": "stella",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-cde51198f15f979e-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "jaguar",
+        "core": "virtualjaguar",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-724d5f5b4a096e7e-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "n64",
+        "core": "mupen64plus_next",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-58b808aecd39b4f5-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "sega32",
+        "core": "picodrive",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-d5d41439a7c67a0b-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "gamegear",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-bd8ab39ad46c40df-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "sms",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-bd8ab39ad46c40df-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "tg16",
+        "core": "mednafen_pce_fast",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-bdac4c631c3c89a9-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "arcade",
+        "core": "fbneo",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-cbd230654e6dfc2a-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "gbc",
+        "core": "gambatte",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-44d8bc8bf999f34b-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      }
+    ],
+    "native_snes": [
+      {
+        "game": "smw",
+        "emulator": "RetroArch",
+        "profileRoot": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/managed-play/native-data/profiles/ccca456789abcdef0123456789abcdef/emulators/retroarch",
+        "pairing": true,
+        "resumed": true,
+        "liveRemap": true,
+        "closed": true
+      }
+    ],
+    "native_bios_core_attempt": {
+      "fixtures": [
+        {
+          "slug": "lynx",
+          "rom": 6460,
+          "title": "Eye of the Beholder",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-VjTzkT/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+          "saveFiles": {},
+          "stateKeys": [
+            "states-1eea39b8870e5ad4-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 30127
+            }
+          ],
+          "pending": false,
+          "matchedStateVerified": true
+        },
+        {
+          "slug": "saturn",
+          "rom": 6727,
+          "error": "Expected: <true>\n  Actual: <false>\n",
+          "stack": "#0      fail (package:matcher/src/expect/expect.dart:187:31)\n#1      _expect (package:matcher/src/expect/expect.dart:182:3)\n#2      expect (package:matcher/src/expect/expect.dart:65:3)\n#3      expect (package:flutter_test/src/widget_tester.dart:473:18)\n#4      main.<anonymous closure> (file:///Users/ptrschneider/Projects/broomm/tool/check_retroarch_saves_test.dart:322:15)\n<asynchronous suspension>\n#5      Declarer.test.<anonymous closure>.<anonymous closure> (package:test_api/src/backend/declarer.dart:253:15)\n<asynchronous suspension>\n#6      Declarer.test.<anonymous closure> (package:test_api/src/backend/declarer.dart:250:11)\n<asynchronous suspension>\n#7      Invoker._waitForOutstandingCallbacks.<anonymous closure> (package:test_api/src/backend/invoker.dart:318:9)\n<asynchronous suspension>\n"
+        },
+        {
+          "slug": "3do",
+          "rom": 6027,
+          "title": "Crash 'n Burn",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-VjTzkT/data/profiles/00000000000000000000000000000003/emulators/retroarch",
+          "saveFiles": {
+            "save/opera/per_game/Crash n Burn.0.srm": {
+              "sha256": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e",
+              "bytes": 32768
+            }
+          },
+          "stateKeys": [
+            "states-31eb807b8276e619-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 32768
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].srm",
+              "bytes": 32768
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-VjTzkT/data/profiles/00000000000000000000000000000004/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-e96ef57dd77d066b-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 3297
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].zip",
+              "bytes": 3281
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi (fresh VMUs)",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-VjTzkT/data/profiles/00000000000000000000000000000005/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-e96ef57dd77d066b-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 1590
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        }
+      ],
+      "sourceHashes": {
+        "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+        "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+        "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+        "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+        "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+      }
+    },
+    "native_saturn_final": {
+      "fixtures": [
+        {
+          "slug": "saturn",
+          "rom": 6727,
+          "title": "The Story of Thor 2",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-KRAyl0/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+          "saveFiles": {
+            "save/Legend of Oasis, The.srm": {
+              "sha256": "1389558da3a042497267abf376b2b825eb517a7cbded5abd46ed1256520d6c70",
+              "bytes": 32768
+            },
+            "save/Legend of Oasis, The.smpc": {
+              "sha256": "11797d2edb48943c8d63c8c88e27dceae87d6f76c68a7459215097465c4486eb",
+              "bytes": 12
+            },
+            "save/Legend of Oasis, The.bcr": {
+              "sha256": "4f8250fcab72ad2941f2e3d7410f90d1d1be55b6f3dead9dfced86f2c1063037",
+              "bytes": 524288
+            }
+          },
+          "stateKeys": [
+            "states-fcab752e68245d41-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 1180
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true,
+          "pauseAndLiveRemapVerified": true,
+          "matchedStateRestoreVerified": true
+        }
+      ],
+      "sourceHashes": {
+        "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+        "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+        "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+        "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+        "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+      }
+    },
+    "native_bios_command": "BROOMM_SAVE_PLATFORMS=3do,dc,saturn,lynx devbox run -- flutter test --no-pub tool/check_retroarch_saves_test.dart; final Saturn-only rerun uses BROOMM_SAVE_PLATFORMS=saturn",
+    "native_commands": [
+      "devbox run -- flutter test --no-pub tool/check_setup_source_replacements_test.dart",
+      "devbox run -- flutter test --no-pub tool/check_retroarch_play_test.dart",
+      "BROOMM_SMOKE_GAMES=smw BROOMM_SMOKE_PROFILE=ccca456789abcdef0123456789abcdef BROOMM_SMOKE_RECORD=.tool-cache/retroarch-release/adoption/snes-result.json devbox run -- flutter test --no-pub tool/smoke_managed_test.dart"
+    ],
+    "build": "devbox run -- bash tool/build_app.sh --release --portable --no-pub",
+    "build_and_extracted_signature": "codesign --verify --deep --strict: passed after refreshing outer ad-hoc seal; both nested frameworks independently valid",
+    "archive_integrity": "unzip -tq: passed for both ZIPs",
+    "architectures": "Broomm executable and all three bundled native bridges: x86_64 arm64",
+    "packaged_assets": {
+      "assets/setup/setup.json": "bcbc4bc4d636aaf0adc3296fc64327388e12d542be89833b959a4eac7885249f",
+      "assets/setup/tested-builds.json": "7779d2a91e561162f82b735bca8cf3439c06093cb64b1881902121471a05e189",
+      "assets/setup/retroarch.integrity.json": "8a78a193359421e5779d3ebb27d1423436b6d5d79b976d286fece3a4843f0193",
+      "assets/setup/retroarch-20261001.integrity.json": "617ca4e5c4c47396800b82cecaa3229bfbc048bda590331fe7d1c650d0b5c484"
+    },
+    "initial_failures_retained": [
+      ".tool-cache/retroarch-release/adoption/native-play.log: deprecated -S state path failure, corrected and all 13 rerun",
+      ".tool-cache/retroarch-release/adoption/native-bios-cores.log: Saturn test hard-coded the previous game.state filename; changed to the resolved native boundary and final state load/restore passes. Lynx, 3DO and both Dreamcast cases passed in the initial run.",
+      "Archive export rejected differing USTAR metadata; seven original reviewed core archives copied and independently reverified",
+      "Initial outer app signature referenced the previous App.framework; nested signatures valid, outer seal refreshed before packaging"
+    ]
+  },
+  "artifacts": {
+    "build/releases/Broomm-macOS-retroarch-release.zip": {
+      "bytes": 20478761,
+      "sha256": "c1fa26728bd71462abbbdda7add169aa849bd079fdf84719365bddaab5b9cffc"
+    },
+    "build/releases/Broomm-setup-macOS-arm64-retroarch-v0.1.0.zip": {
+      "bytes": 23137062,
+      "sha256": "33c1a6c436c6113c3422ef05a1908718cfe7a4e82c72d5c34346bf122b141ab6"
+    }
+  },
+  "source_fingerprints": {
+    "assets/setup/setup.json": "bcbc4bc4d636aaf0adc3296fc64327388e12d542be89833b959a4eac7885249f",
+    "assets/setup/tested-builds.json": "7779d2a91e561162f82b735bca8cf3439c06093cb64b1881902121471a05e189",
+    "assets/setup/retroarch.integrity.json": "8a78a193359421e5779d3ebb27d1423436b6d5d79b976d286fece3a4843f0193",
+    "assets/setup/retroarch-20261001.integrity.json": "617ca4e5c4c47396800b82cecaa3229bfbc048bda590331fe7d1c650d0b5c484",
+    "lib/src/managed_emulators.dart": "c41e0dc5599b51341b15861aec52f544783feac3cdf05432206e3273118b97be",
+    "lib/src/emulators.dart": "39063e4683af5de4232ce781b71acb2ae775551fd71c634fcbfe478940d3bfe6",
+    "lib/src/retroarch.dart": "2c6e332ee63787c3588ab20424878ae29aa8a2551b73aebfb8d50dd14e145858",
+    "lib/src/progress/layout.dart": "fdb9ae50ccc0fd7fb3606c3e27097d6690b32af93c80d0809f432818a2b82a3c",
+    "test/managed_build_upgrade_test.dart": "f98379753eb4613037acc3964d6396915b7d0776934de79ab5f4aae903e4d074",
+    "test/retroarch_systems_test.dart": "796123e19c48041b4833778d9fa2158300e4af351ffddf7d858fab872c47fd70",
+    "test/setup_delivery_test.dart": "45752a9cb301a2ce88b3b4c46644bd1062ea6768cc3fe50505ac62a75a5b2049",
+    "tool/setup-development.json": "bf5a85848c1e11c551cd577f376609b37c070d62665bd0cbc2af4c04db01b28b",
+    "tool/check_setup_source_replacements_test.dart": "a8bcf408d175350e5ba0077d3350f884c12486c700bda7a7813d5f71d31e58cf",
+    "tool/check_retroarch_play_test.dart": "da7c0db5cc58642b043105f11ca0a6faa913de682d01bf18e26b7c4e34c8723e",
+    "tool/check_retroarch_saves_test.dart": "a1224f2dc885948b4d96b1fcc706f455c7a5284698aa88f94a36cb7bc7978e0f"
+  },
+  "limits": [
+    "Managed Broomm host remains macOS ARM64. Other release artifacts verified but not run here; native Broomm cores/bridges and Steam/gamescope acceptance remain pending.",
+    "Frontend only: seven cores still use the reviewed companion pack; eight core recipes retain unchanged binary fingerprints.",
+    "No physical-controller/visual acceptance, other-host gameplay, new RomM transfer acceptance or automatic emulator update is claimed.",
+    "No user profile/game/save mutation, global dependency installation, commit, push, tag or release publication performed."
+  ],
+  "current_core_delivery": {
+    "date": "2026-10-27",
+    "evidence": "retroarch-public-cores.json",
+    "default_cores": 15,
+    "core_companion_archives": 0,
+    "requires_import": false
+  }
+}

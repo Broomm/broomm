@@ -59,7 +59,12 @@ void main() {
         return File(p).readAsString();
       },
     );
-    await manager.install(await manager.readPlan(only: {'ryubing'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'ryubing'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final firmware = Directory(
       'prototype-data/ryubing/user/bis/system/Contents/registered',

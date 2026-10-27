@@ -20,7 +20,7 @@ Future<void> main() async {
   };
   final buildFile = File('assets/setup/tested-builds.json');
   final inventory = jsonDecode(await buildFile.readAsString()) as Map;
-  final setupFile = File('assets/setup/setup.json');
+  final setupFile = File('tool/setup-development.json');
   final setup = jsonDecode(await setupFile.readAsString()) as Map;
   for (final (id, name) in [
     ('duckstation', 'DuckStation'),

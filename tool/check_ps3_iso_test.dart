@@ -21,7 +21,12 @@ void main() {
       asset: (p) => File(p).readAsString(),
     );
     await manager.load();
-    await manager.install(await manager.readPlan(only: {'rpcs3'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'rpcs3'},
+      ),
+    );
     expect(manager.error, isNull);
     final rom =
         '$project/broomm-data/library/506d439865d8f46267001bdd3a1fe0e5/8002/content/3D Dot Game Heroes (USA).iso';

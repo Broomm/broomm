@@ -68,7 +68,10 @@ void main() {
       asset: (p) => File(p).readAsString(),
     );
     await manager.install(
-      await manager.readPlan(only: {'duckstation', 'armsx2', 'pcsx2'}),
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'duckstation', 'armsx2', 'pcsx2'},
+      ),
     );
     expect(manager.error, isNull, reason: manager.error);
     final media = (jsonDecode(

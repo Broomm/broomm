@@ -1,74 +1,226 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "host": "macos-arm64",
   "launchers": {
     "retroarch": {
-      "source": "tested:retroarch",
-      "core": "tested:snes9x",
+      "source": {
+        "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-macos-arm64.zip",
+        "sha256": "a09b7284cad1672010f9baa50a05d100c3c7102889b984d6f8315fc1798d449e",
+        "bytes": 8128584,
+        "format": "zip",
+        "entry": "RetroArch.app"
+      },
+      "core": {
+        "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/snes9x_libretro.dylib.zip",
+        "sha256": "41ff11f87d5bbc9747882475c675ec2fa8a2039f39d97fb439e7d96de2c72409",
+        "bytes": 796467,
+        "format": "zip",
+        "entry": "snes9x_libretro.dylib"
+      },
       "cores": {
-        "fbneo": "tested:fbneo",
-        "flycast": "tested:flycast",
-        "gambatte": "tested:gambatte",
-        "genesis_plus_gx": "tested:genesis_plus_gx",
-        "mednafen_lynx": "tested:mednafen_lynx",
-        "mednafen_pce_fast": "tested:mednafen_pce_fast",
-        "mednafen_saturn": "tested:mednafen_saturn",
-        "mesen": "tested:mesen",
-        "mgba": "tested:mgba",
-        "mupen64plus_next": "tested:mupen64plus_next",
-        "opera": "tested:opera",
-        "picodrive": "tested:picodrive",
-        "stella": "tested:stella",
-        "virtualjaguar": "tested:virtualjaguar"
+        "fbneo": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/fbneo_libretro.dylib.zip",
+          "sha256": "da28743a1387c695af240a8c8953f9ecc3d4e67a9f3e61946885bf13224d1d6b",
+          "bytes": 14821557,
+          "format": "zip",
+          "entry": "fbneo_libretro.dylib"
+        },
+        "flycast": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/flycast_libretro.dylib.zip",
+          "sha256": "0b6048a630f0bda7d6e183181d242b80032fbe63343c417e04ba0ad6c113aebf",
+          "bytes": 4741683,
+          "format": "zip",
+          "entry": "flycast_libretro.dylib"
+        },
+        "gambatte": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/gambatte_libretro.dylib.zip",
+          "sha256": "b205c1f8ab566627ffad4f8c7847ad749bcd2a60dfe2bb7a0f078eaf439689e9",
+          "bytes": 388324,
+          "format": "zip",
+          "entry": "gambatte_libretro.dylib"
+        },
+        "genesis_plus_gx": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/genesis_plus_gx_libretro.dylib.zip",
+          "sha256": "8e2e080510b84115c2649e1c7e854d2a118c465529aa43ae3865fc4ded8f0df9",
+          "bytes": 868871,
+          "format": "zip",
+          "entry": "genesis_plus_gx_libretro.dylib"
+        },
+        "mednafen_lynx": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_lynx_libretro.dylib.zip",
+          "sha256": "d2422306e65925d8977e6569d88cc70a3d9ecad75526fc9d7e809e0a9e2f042e",
+          "bytes": 65563,
+          "format": "zip",
+          "entry": "mednafen_lynx_libretro.dylib"
+        },
+        "mednafen_pce_fast": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_pce_fast_libretro.dylib.zip",
+          "sha256": "07a1346d121756f1aca92dc31702565e6effb161e6931af219377e8f299e85c7",
+          "bytes": 413008,
+          "format": "zip",
+          "entry": "mednafen_pce_fast_libretro.dylib"
+        },
+        "mednafen_saturn": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_saturn_libretro.dylib.zip",
+          "sha256": "606eb6f0621a43393b7be233d4bd1401cb0778d4d03d511c41effb82753c26e7",
+          "bytes": 1645297,
+          "format": "zip",
+          "entry": "mednafen_saturn_libretro.dylib"
+        },
+        "mesen": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mesen_libretro.dylib.zip",
+          "sha256": "b0eab7fb9ec5d726c7d3ac2d95f03bc207adb74c811481c4b1f40f506717c74d",
+          "bytes": 1085067,
+          "format": "zip",
+          "entry": "mesen_libretro.dylib"
+        },
+        "mgba": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mgba_libretro.dylib.zip",
+          "sha256": "af37dd2c8f6fcfb32e6b7ab7c2d14a89e16ab2766fb58c0138331c558b6f13de",
+          "bytes": 453573,
+          "format": "zip",
+          "entry": "mgba_libretro.dylib"
+        },
+        "mupen64plus_next": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mupen64plus_next_libretro.dylib.zip",
+          "sha256": "cb9600249cd3d15300e2455ec74953da781a31c7feb2bcb546af3b8050f068aa",
+          "bytes": 2313909,
+          "format": "zip",
+          "entry": "mupen64plus_next_libretro.dylib"
+        },
+        "opera": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/opera_libretro.dylib.zip",
+          "sha256": "a6810529e2f50208566ec45de8f0a0a9843192b08c621276fbe424a284ab5590",
+          "bytes": 273488,
+          "format": "zip",
+          "entry": "opera_libretro.dylib"
+        },
+        "picodrive": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/picodrive_libretro.dylib.zip",
+          "sha256": "bfe983d2eeecbb9fe9a5ddf6edd9b52c5ad942747f0e0001c8d0431998c531d4",
+          "bytes": 707013,
+          "format": "zip",
+          "entry": "picodrive_libretro.dylib"
+        },
+        "stella": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/stella_libretro.dylib.zip",
+          "sha256": "362dd7f8d0e1baad72a45f1946277b0075d5d7140a840d4878595debbf76f787",
+          "bytes": 923539,
+          "format": "zip",
+          "entry": "stella_libretro.dylib"
+        },
+        "virtualjaguar": {
+          "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/virtualjaguar_libretro.dylib.zip",
+          "sha256": "a6abc7c8423d9ea2c1331fa5b857cf546ceeecd7391d2eebb8cada00c6760f0b",
+          "bytes": 787548,
+          "format": "zip",
+          "entry": "virtualjaguar_libretro.dylib"
+        }
       }
     },
     "dolphin": {
-      "source": "tested:dolphin"
+      "source": {
+        "url": "https://dl.dolphin-emu.org/releases/2609/dolphin-2609-universal.dmg",
+        "sha256": "b8910a6f8710cbe93b916f5b3867a46e67e49aa8272657d282d4accae359cd6b",
+        "bytes": 41965559,
+        "format": "dmg",
+        "entry": "Dolphin.app",
+        "prepare": "macos-dolphin"
+      }
+    },
+    "ryubing": {
+      "source": {
+        "url": "https://archive.org/download/ryujinx-1.3.3-stable/Ryujinx%201.3.3%20%28stable%29.zip",
+        "sha256": "f258953e0380a9d1b332607673e413215af9683966225f8cca7f8facb4e445d4",
+        "bytes": 70570489,
+        "format": "zip",
+        "entry": "Ryujinx 1.3.3 (stable).app"
+      }
     },
     "rpcs3": {
-      "source": "tested:rpcs3",
-      "resources": {
-        "ps3_firmware": "tested:ps3_firmware"
+      "source": {
+        "url": "https://github.com/RPCS3/rpcs3-binaries-mac-arm64/releases/download/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3-v0.0.42-20031-d08d568d_macos_aarch64.7z",
+        "sha256": "482cbb8183d1931c6b3f577eb7b182a054967fcb35d57ead0e042d5958b6d754",
+        "bytes": 34383595,
+        "format": "7z",
+        "entry": "RPCS3.app"
       }
     },
     "azahar": {
-      "source": "tested:azahar"
+      "source": {
+        "url": "https://github.com/azahar-emu/azahar/releases/download/2126.1.2/azahar-macos-arm64-2126.1.2.zip",
+        "sha256": "38a4515cd979d5293d66cac38197f14d69c311368f3a0fcb547fe5b658ef1ca7",
+        "bytes": 99723974,
+        "format": "zip",
+        "entry": "azahar-macos-arm64-2126.1.2/Azahar.app"
+      }
     },
-    "ryubing": {
-      "source": "tested:ryubing",
-      "resources": {
-        "switch_firmware": "tested:switch_firmware",
-        "prod_keys": "tested:prod_keys",
-        "title_keys": "tested:title_keys"
+    "rpcs3-intel": {
+      "source": {
+        "url": "https://github.com/RPCS3/rpcs3-binaries-mac/releases/download/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3-v0.0.42-20031-d08d568d_macos.7z",
+        "sha256": "06312f8d2b3c921eb9eb2e96c0e671b77283f8f65a276dc60833bd99ff7e2967",
+        "bytes": 42447907,
+        "format": "7z",
+        "entry": "RPCS3.app"
       }
     },
     "melonds": {
-      "source": "tested:melonds"
-    },
-    "rpcs3-intel": {
-      "source": "tested:rpcs3-intel",
-      "resources": {
-        "ps3_firmware": "tested:ps3_firmware"
+      "source": {
+        "url": "https://github.com/melonDS-emu/melonDS/releases/download/1.1/melonDS-1.1-macOS-universal.zip",
+        "sha256": "79843a5e5cab93188bd11942bff5440b9505ee91c6f526f7e90c22e3cff6718d",
+        "bytes": 24378474,
+        "format": "zip",
+        "entry": "melonDS.app"
       }
     },
     "duckstation": {
-      "source": "tested:duckstation"
+      "source": {
+        "url": "https://github.com/stenzek/duckstation/releases/download/v0.1-12083/duckstation-mac-release.zip",
+        "sha256": "cd77d80b55276f15340efa1c65df250f8f4d413b68d1c136e48615d780f1249c",
+        "bytes": 95159712,
+        "format": "zip",
+        "entry": "DuckStation.app",
+        "prepare": "macos-adhoc"
+      }
     },
     "pcsx2": {
-      "source": "tested:pcsx2"
+      "source": {
+        "url": "https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-macos-Qt.tar.xz",
+        "sha256": "3ed9eb40a33eae67134142c24255a079be444f0616ca29575a04a37981f7d426",
+        "bytes": 24377200,
+        "format": "tar.xz",
+        "entry": "PCSX2-v2.8.2.app",
+        "prepare": "macos-adhoc"
+      }
     },
     "armsx2": {
-      "source": "tested:armsx2"
+      "source": {
+        "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261023/ARMSX2-nightly-20261023-90126bdfea-macOS-arm64.tar.xz",
+        "sha256": "a0101807ffd44bab39deb62e4b2150e44c7f4b40371cab7d8dbe38879afda1b8",
+        "bytes": 35215476,
+        "format": "tar.xz",
+        "entry": "armsx2-macos-arm64-sha[90126bdfea].app",
+        "prepare": "macos-adhoc"
+      }
     },
     "ppsspp": {
-      "source": "tested:ppsspp"
+      "source": {
+        "url": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPPSDL-macOS-v1.20.4.zip",
+        "sha256": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+        "bytes": 37389023,
+        "format": "zip",
+        "entry": "PPSSPPSDL.app",
+        "prepare": "macos-adhoc"
+      }
     },
     "eden": {
-      "source": "tested:eden",
-      "resources": {
-        "switch_firmware": "tested:switch_firmware",
-        "prod_keys": "tested:prod_keys",
-        "title_keys": "tested:title_keys"
+      "source": {
+        "url": "https://stable.eden-emu.dev/v0.2.1/Eden-macOS-v0.2.1.dmg",
+        "sha256": "40575fc79a61550fbb9e332cbae94ccd20f5de20ff61b4b60fe1d42f2525c0b5",
+        "bytes": 24259461,
+        "format": "dmg",
+        "entry": "eden.app",
+        "prepare": "macos-adhoc"
       }
     }
   }

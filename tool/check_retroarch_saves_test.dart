@@ -38,7 +38,12 @@ void main() {
       project: Directory.current.path,
       asset: (p) => File(p).readAsString(),
     );
-    await manager.install(await manager.readPlan(only: {'retroarch'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'retroarch'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final media = (jsonDecode(
       await File('.tool-cache/research/ra-save-followup/media.json')
@@ -311,8 +316,11 @@ void main() {
           try {
             await Future<void>.delayed(const Duration(seconds: 1));
             if (slug == 'saturn') {
+              final area = cloudGame.layout.areas.singleWhere(
+                (a) => a.id.startsWith('states-'),
+              );
               final state = File(
-                '${session.emulator!.root}/${retroGameDirectory(spec.core, game.id)}/states/game.state',
+                '${session.emulator!.root}/${area.path}/${area.native('game')}',
               );
               expect(await state.exists(), true);
               expect(await state.length(), greaterThan(0));

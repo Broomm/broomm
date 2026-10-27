@@ -26,6 +26,8 @@ class PreparedEmulator {
     this.cacheDirectory,
     this.coreId,
     this.contentId,
+    this.retroNativeStateNames = false,
+    this.retroStateDirectory,
   });
   final String name, root, executable;
   final String? sdlLibrary, core;
@@ -33,6 +35,10 @@ class PreparedEmulator {
   final String? userDirectory;
   final String? cacheDirectory;
   final String? coreId, contentId;
+  // The released frontend uses savestate_directory and the content basename.
+  // Keep the previous frontend's explicit game.state contract for reuse.
+  final bool retroNativeStateNames;
+  final String? retroStateDirectory;
   String get user =>
       userDirectory ?? '$root/${name == 'RPCS3' ? 'portable' : 'user'}';
   factory PreparedEmulator.fromJson(Map<String, dynamic> j) => PreparedEmulator(
@@ -249,6 +255,15 @@ class RetroArchAdapter extends EmulatorAdapter {
     String rom,
     int commandPort,
   ) async {
+    final contentDirectory = e.coreId == null
+        ? null
+        : retroGameDirectory(e.coreId!, e.contentId!);
+    final saveDirectory = contentDirectory == null
+        ? 'saves'
+        : '$contentDirectory/saves';
+    final stateDirectory =
+        e.retroStateDirectory ??
+        (contentDirectory == null ? 'states' : '$contentDirectory/states');
     final lines = <String, String>{
       'config_save_on_exit': 'false',
       'video_driver': 'glcore',
@@ -266,12 +281,8 @@ class RetroArchAdapter extends EmulatorAdapter {
       'network_cmd_enable': 'true',
       'network_cmd_port': '$commandPort',
       'stdin_cmd_enable': 'false',
-      'savefile_directory': e.coreId == null
-          ? '${e.root}/saves'
-          : '${e.root}/${retroGameDirectory(e.coreId!, e.contentId!)}/saves',
-      'savestate_directory': e.coreId == null
-          ? '${e.root}/states'
-          : '${e.root}/${retroGameDirectory(e.coreId!, e.contentId!)}/states',
+      'savefile_directory': '${e.root}/$saveDirectory',
+      'savestate_directory': '${e.root}/$stateDirectory',
       'sort_savefiles_enable': e.coreId == null ? 'true' : 'false',
       'sort_savestates_enable': e.coreId == null ? 'true' : 'false',
       if (e.coreId != null) ...{
@@ -319,10 +330,8 @@ class RetroArchAdapter extends EmulatorAdapter {
       lines['input_player${p}_r_y_minus_axis'] = '-3';
     }
     if (e.coreId != null) {
-      for (final kind in ['saves', 'states']) {
-        await Directory(
-          '${e.root}/${retroGameDirectory(e.coreId!, e.contentId!)}/$kind',
-        ).create(recursive: true);
+      for (final directory in [saveDirectory, stateDirectory]) {
+        await Directory('${e.root}/$directory').create(recursive: true);
       }
     }
     String? sessionOptions;
@@ -370,9 +379,11 @@ class RetroArchAdapter extends EmulatorAdapter {
       if (sessionOptions != null) ...['--appendconfig', sessionOptions],
       // The deprecated -s option bypasses save-directory initialization in
       // this frontend. Save RAM uses its private directory and native name.
-      if (e.coreId != null) ...[
+      // The release build also bypasses the state directory with -S; only
+      // the previous reviewed frontend retains the explicit file contract.
+      if (e.coreId != null && !e.retroNativeStateNames) ...[
         '-S',
-        '${e.root}/${retroGameDirectory(e.coreId!, e.contentId!)}/states/game.state',
+        '${e.root}/$stateDirectory/game.state',
       ],
       rom,
     ];

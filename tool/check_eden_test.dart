@@ -31,7 +31,12 @@ void main() {
       project: Directory.current.path,
       asset: (p) => File(p).readAsString(),
     );
-    await manager.install(await manager.readPlan(only: {'eden'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'eden'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     const profile = '0123456789abcdef0123456789abcdef';
     final game = LaunchGame(
@@ -129,12 +134,12 @@ void main() {
       await session.waitFor((s) => s.paused == 1 && s.request == 'disconnect');
       final program = session.nativeProgramId!,
           resolved = await manager.resolveProgress(game, profile);
-      final hash = await sha256File(resolved.rom);
+      final identity = (await switchSourceIdentity(resolved)).$1;
       await session.stop();
       expect(problems, isEmpty, reason: problems.join('\n'));
       final lease = await SessionLease.acquire(data);
       try {
-        await recordRyubingGame(resolved, program, hash);
+        await recordRyubingGame(resolved, program, identity);
         final layout = await gameProgressLayout(resolved, 'switch');
         g = CloudGame(
           server: serverId,

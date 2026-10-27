@@ -1,5 +1,11 @@
 # Implementation plan
 
+Automatic core delivery and running macOS icon (2026-10-27): all twelve frontends and all fifteen RetroArch cores now have bundled HTTPS recipes; normal setup needs no companion pack or JSON import. Seven available official Libretro core builds replace the old offline dependencies, with retained legacy fingerprints and explicit-setup-only selection. Ordinary saves remain shared across core upgrades; incompatible states have physically separate frontend/core-hash folders and exact-build cloud identities. The 55-case targeted suite, native fresh setup/restart and ABI checks, thirteen game/state sessions, BIOS-core save checks and four additional cartridge/arcade native-data round trips pass. All ten macOS native app tests pass, including restoring the bundled infinity icon after a placeholder and retaining the current icon when its resource is absent. Startup assigns the icon directly; the owner's original Dock/cache trigger remains unproven and actual Dock appearance needs owner confirmation. See [walkthrough, versions and scoped evidence](docs/retroarch-public-cores.md).
+
+RetroArch release adoption (2026-10-27): the bundled macOS ARM64 recipe now downloads Broomm/retroarch v0.1.0 with its exact ZIP, executable, SDL3 and complete 29-file inventory. All five published desktop artifacts/manifests were verified; this does not expand the existing managed core/bridge host boundary. Previous selected frontends and old setup packs retain their exact identities, profile paths and state naming until explicit setup. The release uses private native state paths after a real `-S` regression was diagnosed and corrected. The 52-case targeted suite, native public delivery/restart, thirteen supplied game/state checks, four BIOS-based platform routes (Lynx, Saturn, 3DO and Dreamcast) and SNES pairing/pause/remap pass, exercising all fifteen current cores. Seven remaining offline cores have an updated companion pack; eight retain direct tested downloads. The fresh macOS app/archive and extracted signatures pass. See [current distribution and host limits](docs/retroarch-distribution.md) and [exact fingerprints, retained failures and artifacts](docs/retroarch-release-adoption.json).
+
+Launch/quit recovery (2026-10-27): repeated whole-ROM hashing has been removed from Ryubing/Eden save discovery and launch. Native title observations bind to the installed publication's server/ROM/file identity and file metadata; old checksum records and saves stay intact. The owner's 14.64 GB Smash installation now takes 11.113 ms for read-only receipt/identity lookup, with no ROM payload read. Explicit save actions cancel/drain idle sync instead of refusing it as a game. Launch cancellation includes cold-start children and retains the lease until writer exit. A pinned Ryubing early-quit race now waits for confirmed native pause before close. Quit acknowledges immediately, displays shutdown phases and offers an explicit exit if work stalls; macOS also has a no-Dart-response fallback and verified surviving-writer recovery. **405 Flutter tests**, **8 native macOS XCTest checks**, the real Ryubing initialize/reopen/cancel fixture and AppKit process-identity checks pass. The current macOS ZIP passes archive and extracted signature checks. Owner gameplay and Linux/Windows/Android native recovery acceptance remain separate. See [details and retained failures](docs/session-recovery.md) and [source/build evidence](docs/session-recovery.json).
+
 Saturn verification (2026-10-23): both owner-provided regional BIOS files now pass checksum verification and real RomM automatic provisioning/reuse in a disposable profile. The Legend of Oasis boots through native pairing, pause/live remap and normal exit. Internal backup RAM, backup cartridge and console settings pass cloud-fixture export/upload-readback/restore; native state creation/loading and exact-build snapshot restore pass. The [Saturn record](docs/saturn-verification.md) separates this macOS automated evidence from physical gameplay, cross-device and other-host acceptance. No application or bridge change was needed. The current matrix now has 17 of 18 additional RetroArch routes natively checked, with 14 ordinary native-data round trips plus the separately seeded 32X case; Jaguar CD remains owner-deferred. Earlier dated counts below are historical.
 
 Pairing-format correction (2026-10-23): the main RomM client now accepts the actual eight-character alphanumeric API key pairing code, including lowercase/hyphenated input, and the onboarding hint uses the correct terminology. The tagged 5.4.0 generator/exchange supersedes the prose documentation's numeric example. Three new HTTP regression cases cover accepted forms, malformed input without network effects and rejected/expired exchange without retry. The HTTP/onboarding suites pass 22 tests and targeted analysis passes; [exact evidence](docs/pairing-code-format.json) records the source hashes and remaining native acceptance. The matching Switch keyboard/build/deployment evidence stays in the sibling companion; its version 0.2.2 was transferred with hash readback. No main desktop release binary was rebuilt for this correction.
@@ -44,7 +50,7 @@ The preceding library/progress milestone passed 217 Flutter tests, offscreen des
 | RomM baseline | 5.4.0 selected and confirmed by the public instance schema retrieved through the supplied HTTP proxy; authenticated DS native save upload/readback is now verified separately |
 | Controller injection / desktop overlays | C bridge built and exercised in five private macOS emulator copies with supplied ROMs; see the [measured findings](docs/research/injection-validation.md). Renderer/fullscreen/physical-controller and Linux/Steam acceptance remain separate |
 | Flutter app / Devbox bootstrap | Flutter 3.47.0/Dart 3.13.0 and pub lockfile; onboarding, Home/Store downloads, preferences and explicit text editing. Current checks are recorded in the [sign-in/platform follow-up](docs/remembered-signins-and-platform-settings.md); the earlier managed milestone passed 94 tests and all six native ROM sessions. The local controller lab remains; other native hosts remain pending |
-| Managed setup and Home launch | Seven pinned local macOS choices across six emulator engines, including melonDS and Intel RPCS3 through Rosetta; staged verified copies, setup JSON review, private profile data, native readiness and redesigned pairing. Remote archives, arbitrary newer builds and system-executable selection remain pending; managed saves have their separate slice below |
+| Managed setup and Home launch | Twelve pinned macOS choices and all fifteen selected RetroArch cores download through bundled HTTPS recipes, including RetroArch from Broomm/retroarch v0.1.0 and seven refreshed official cores. Normal setup requires no external pack or import. Prior recognized frontend/core installations remain usable until explicit setup. Ordinary saves are retained and incompatible states are physically isolated. Private extraction, cancellation, verified publication/reuse and inline review work without a checkout root. Other native desktop core/bridge packages, arbitrary newer builds and system-executable selection remain pending; see [delivery evidence](docs/managed-setup-downloads.md) |
 | Host coverage | macOS/Linux first; Windows later; Android uses simple external-app handoff |
 | Remembered sign-ins and platform settings | Per-profile secure refresh/client credentials, Enter/Escape editing, all-server-platform sections, default routing, inline setup and shared managed uninstall with retained profile data; see [scoped evidence](docs/remembered-signins-and-platform-settings.md) |
 | Keyboard/controller navigation and motion | Animated full-card/field reveal, first/last-row scroll edges, spatial emulator actions with ordered Tab traversal, Home/header return paths, indexed lazy catalogue traversal, retained modal focus, scrollable descriptions and compact session screens, reduced motion and held-key activation guards; see [current checks and owner walkthrough](docs/navigation-and-motion.md) |
@@ -93,6 +99,49 @@ Implement the selected 5.4.0 auth/account/capability contract, catalogue paginat
 Acceptance: browse a real authorized catalogue; install a complete game; cancel or interrupt without exposing a playable partial entry; reuse shared payload for another eligible profile without sharing its saves/states. Network failures retain the installed library. Cover traversal/collisions, partial HTTP responses, integrity and disk-full errors.
 
 ## Stage 3 — Managed setup and one complete desktop game session
+
+**2026-10-27 delivery follow-up:** bundled schema-2 recipes no longer depend on
+`BROOMM_PROJECT_ROOT`. All twelve pinned macOS choices download reviewed HTTPS
+archives. Dolphin's official 2609 DMG now reproduces all 2,667 files and nine
+links through a fixed Dart signing recipe. An archived Ryubing 1.3.3 ZIP matches
+all 16 tested files; only its empty root Finder icon marker is ignored. RetroArch
+uses the published Broomm SDL3 frontend and all fifteen cores now download;
+seven have newly validated official builds and eight retain their library hashes.
+Normal setup requires no companion pack or import. First installs,
+private archive extraction, checksum/inventory checks, bounded cancellation,
+receipt publication and verified reuse work through the existing inline cards.
+Version-1 local imports remain supported; capture tools and native gameplay
+fixtures now explicitly use `tool/setup-development.json`.
+
+The earlier delivery milestone passed its analyzer and **392 Flutter tests**.
+Two full fresh native installs passed for its **12 choices and 14 additional cores**
+with `project: null`. Current core-refresh checks are recorded separately in
+[the public-core evidence](docs/retroarch-public-cores.json).
+A subsequent GitHub Azahar stream disconnect retained four completed choices and
+discarded the partial transfer; safe diagnostic regressions were added, and the
+same fixture explicitly resumed to all 12 choices/14 cores with default-manifest
+reuse passing. The source-replacement check then freshly downloaded Dolphin,
+Ryubing and eight unchanged cores, installed all 14 additional cores, accepted
+the earlier complete pack and verified restart/reuse after removing its private
+source directory. It passed in 47 seconds with exact full inventories. Logs
+preserve the original redacted failure. These checks verify
+delivery and existing binary identities, rather than new gameplay/input or other
+host acceptance. See [recipes, source evidence and limitations](docs/managed-setup-downloads.md)
+and [machine-readable results](docs/managed-setup-downloads.json).
+
+The fresh [macOS build](build/releases/Broomm-macOS-setup-fixes.zip) is
+**20,346,293 bytes**, SHA-256
+`1233d40d8883bb5c39b1cdb29c9417eb53692ae40cb619908861322f0ca39934`.
+The application and three existing bridges contain ARM64/x86-64; ZIP integrity,
+the bundled manifest hash and strict/deep signatures pass before and after fresh
+extraction. This ad-hoc local development build uses the normal
+`~/Library/Application Support/Broomm` folder, with self-updates disabled. The
+[companion setup pack](build/releases/Broomm-setup-macOS-arm64.zip) is
+**148,651,975 bytes**, SHA-256
+`80712dce859de91ea7bf7c05b22931e1d734c81502c3d4ff87116e8388737654`.
+It contains no firmware, keys, games, profile settings or progress. README.md
+documents first setup, explicit effects, output folders and cleanup. No owner
+data migration, OS dependency installation or GitHub publication was performed.
 
 Implement the [setup JSON workflow](docs/emulator-support.md#setup-json-contract) in Dart. Generate the install/update plan and execute only when the user starts it. All configuration is Broomm-local, even for a selected system executable. No automatic updates or mutation of external installations.
 
@@ -337,3 +386,114 @@ licensing, outputs and cleanup; [the verification record](docs/application-icons
 retains source/asset fingerprints, exact commands, diagnostics and platform limits.
 No OS dependency, global SDK, emulator configuration, signing identity or Git
 publication is changed.
+
+
+## Standalone RetroArch desktop release pipeline — 2026-10-27
+
+The owner-selected sibling `broomm-retroarch` now contains an independent native
+GitHub Actions build/release workflow for macOS ARM64/Intel, Linux x64/ARM64 and
+Windows x64. Android is explicitly excluded. Exact RetroArch 1.22.2/SDL 3.4.0
+source pins, shared SDL3/OpenGL Core/Slang/network control configuration, private
+toolchains, notices, native probes, per-file inventories/checksums and complete
+corresponding sources are implemented. The queued release train uses
+`version.txt` plus automatic stable/candidate tags; only a complete checked
+artifact set can be published through a draft. Existing tags/releases are
+preserved, and failed GitHub access is never treated as confirmed absence.
+
+On macOS 27.0.1/Apple Silicon, 17 packaging/release regressions and workflow/
+ShellCheck pass. A native frontend build passes SDL virtual-gamepad input,
+feature/architecture/minimum-OS/relocation/signature checks, actual playing/
+paused network command readback and clean QUIT. All 29 files, permissions,
+signatures and standalone feature startup pass after fresh ZIP extraction.
+Pinned Linux SDK metadata is verified for both architectures; native Windows,
+Linux and macOS Intel execution, the first hosted release and Broomm physical
+controller/gameplay adoption remain pending.
+
+No project commit, push, GitHub release, Flutter change or trusted setup-hash
+replacement was performed. The current Broomm macOS application stays unchanged;
+a separate 8,119,704-byte ARM64 RetroArch ZIP is available. See
+[distribution status, artifacts and adoption steps](docs/retroarch-distribution.md)
+and the sibling project's README/IMPLEMENTATION for exact source/tool versions,
+commands, failure corrections, local test effects, logs and cleanup.
+
+
+### RetroArch first hosted SDK correction — 2026-10-27
+
+The initial `Broomm/retroarch` version/source jobs fail before their logic runs
+because pinned Linux libXScrnSaver has only `out`, while its Devbox selector
+requested `out,dev`. The sibling recipe/lock now request `^out`; token
+permissions and caches are unchanged. An independent lint-job SDK audit covers
+all four Unix architectures with retained diagnostics. The original fails on
+both Linux targets, the fixed 64 selectors pass, all 17 regressions and workflow
+lint pass, and actual version/source commands plus readback pass locally. A
+new hosted/native Linux run is still required. Existing macOS artifacts and
+Flutter/native application sources are unchanged. See
+[distribution follow-up](docs/retroarch-distribution.md) and sibling evidence.
+
+### RetroArch Linux/Windows correction and macOS timeout — 2026-10-27
+
+The next hosted run reaches Linux SDL configuration and fails on missing XTest;
+the sibling SDK/lock now include the verified `libXtst^out` on both architectures.
+Windows tool paths no longer replace Git Bash with BusyBox in the runner; child
+processes resolve their private tools explicitly. All 25 regressions, lint, 66
+Unix SDK selectors and repeated local native macOS probes pass. The hosted macOS
+ARM64 build/SDL probe succeeds but its frontend GET_STATUS times out; the cause
+is still unconfirmed. Flushed frontend logging, owned-child failure sampling
+and retained failed runtimes now provide evidence for the next run. Checks and
+timeouts remain strict. See [the distribution record](docs/retroarch-distribution.md).
+Existing macOS artifacts, Flutter application sources and trusted hashes are
+unchanged. No hosted pass, commit, push or publication is claimed.
+
+The subsequent Windows run confirms shell isolation, then fails one regression
+fixture with WinError 206: its large inline diagnostic exceeds the Windows
+command-line limit. The fixture now reads the same payload from a temporary
+file and enforces the UTF-16 command-line bound on every host. All 25 tests pass
+locally with the original diagnostic assertions retained. No production/build
+code or native artifact changed; hosted Windows acceptance and the separate
+macOS timeout remain pending. See the distribution record and sibling evidence.
+
+The latest Linux jobs compile both upstreams and pass SDL input, then fail on a
+hard PulseAudio startup dependency. The sibling Linux recipe now disables the
+standalone Pulse backend, retaining native ALSA and SDL3's dynamic PulseAudio
+route; loader auditing precedes startup and retains all missing-library data.
+The exact hosted macOS binary passes locally, while its VM timeout remains
+unconfirmed. Explicit loopback client binding, reply identity/full bounded
+traces and owned-child UDP inventory improve that transport boundary without
+relaxing checks. All 31 regressions, lint and local/exact-CI macOS native probes
+pass, including new SDL dummy audio. Build/native results now remain independent
+of packaging-test failure, which still blocks release. Native Linux rerun and
+hosted macOS acceptance remain pending. No Flutter change, new macOS binary,
+OS dependency installation or Git publication occurred. See the distribution
+record and sibling `docs/ci-followup-4.json` for exact evidence and limitations.
+
+The next hosted run `40575998429` confirms native probes and packaging pass on
+both macOS architectures. Windows reaches RetroArch configure after SDL builds;
+the recipe now bypasses its Unix-style executable lookup with explicit private
+compiler/resource/pkg-config `.exe` paths. Linux's only remaining loader failure
+is headless-host EGL: the probe conditionally provisions the existing locked EGL
+loader in a private test directory, strips its SDK RPATH and retains strict
+host-dependency auditing. Native Wayland/EGL and shipped packages are unchanged.
+All 37 regressions and lint pass locally; corrected native Linux/Windows checks
+await a hosted rerun. No Flutter change, new binary or Git publication occurred.
+See the distribution record and sibling `docs/ci-followup-5.json`.
+
+Run `40579927392` confirms native checks and packaging pass on both Linux
+architectures and macOS ARM64. Windows compiles and passes SDL/feature checks;
+its first UDP query receives Winsock 10054 before the emulator binds its port.
+The probe now handles only that Windows port-unreachable response within the
+existing deadline, retaining actual acknowledgment and live-child requirements.
+All 41 regressions, lint and the actual local macOS frontend check pass. Intel
+macOS failed earlier during Nix package-cache DNS/downloads; its recipe is
+unchanged and needs a hosted rerun. Windows native frontend acceptance also
+remains pending. No Flutter change, new binary or Git publication occurred.
+See the distribution record and sibling `docs/ci-followup-6.json`.
+
+Run `40582896434` passes all Unix jobs and both Windows native probes. The
+remaining Windows failure is package metadata using native backslashes against
+a forward-slash ZIP inventory. The recipe now serializes portable references
+and explicitly rejects unsafe or missing entries. Real nested target fixtures
+and a Windows-path roundtrip cover the boundary on every host. All 44 regressions,
+lint and existing real macOS package verification pass locally. Exact Windows
+artifact readback confirms the corrected references. New native Windows packaging
+and publication remain pending. No Flutter or binary change occurred. See the
+distribution record and sibling `docs/ci-followup-7.json`.

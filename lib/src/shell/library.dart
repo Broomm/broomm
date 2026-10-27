@@ -52,6 +52,53 @@ class GameLibrary {
   static final _artSerial = <String, Future<void>>{};
   static final _metadataSerial = <String, Future<void>>{};
 
+  /// Identity of this published installation and selected media, without reading
+  /// ROM contents. A redownload/replacement receives a new installation identity.
+  Future<String> installationIdentity(
+    InstalledGame entry,
+    String selected,
+  ) async {
+    final receipt = File('${entry.directory.path}/receipt.json');
+    await _regularFile(receipt, maxBytes: 12 * 1024 * 1024);
+    final j = jsonDecode(await receipt.readAsString()) as Map;
+    final prefix = '${entry.directory.path}/content/';
+    if (j['version'] != 1 ||
+        j['serverId'] is! String ||
+        j['game'] is! Map ||
+        j['game']['id'] != entry.game.id ||
+        j['completedAt'] is! String ||
+        !selected.startsWith(prefix))
+      throw StateError(
+        'The selected game installation identity changed. Reload the library.',
+      );
+    final relative = selected.substring(prefix.length);
+    final matches = (j['files'] as List)
+        .cast<Map>()
+        .where((f) => f['path'] == relative)
+        .toList();
+    if (matches.length != 1)
+      throw StateError(
+        'The selected media does not belong to this game installation.',
+      );
+    final file = await _payload(
+      Directory('${entry.directory.path}/content'),
+      relative,
+      create: false,
+    );
+    await _regularFile(file);
+    if (await file.length() != matches.single['bytes'])
+      throw StateError(
+        'The selected game file is incomplete. Existing files were kept.',
+      );
+    return jsonEncode({
+      'server': j['serverId'],
+      'rom': entry.game.id,
+      'installed': j['completedAt'],
+      'file': relative,
+      'bytes': matches.single['bytes'],
+    });
+  }
+
   Future<List<String>> contentFiles(
     InstalledGame entry, {
     bool excludeAddons = false,

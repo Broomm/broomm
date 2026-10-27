@@ -1,5 +1,7 @@
 # RomM platform and emulator support matrix
 
+**Setup delivery, 2026-10-27:** all twelve macOS frontends and all fifteen RetroArch cores now download through bundled recipes; no external pack/import is required. RetroArch uses Broomm/retroarch v0.1.0. Seven official Libretro builds replace the offline core inputs; the other eight libraries retain their hashes. Native ABI, thirteen game/state cases, four BIOS-based routes and Genesis/Master System/Game Gear/Arcade native save round trips pass. Existing cores remain usable until explicit setup; ordinary saves are retained and incompatible states have separate physical and cloud identities. Earlier per-platform evidence below retains its stated scope. Other desktop frontends are published and verified, but their Broomm core/bridge acceptance is pending. See [delivery status](managed-setup-downloads.md) and [new core versions](retroarch-public-cores.md).
+
 **Android update, 2026-10-26:** the [separate Android table](android-emulators.md#coverage) records installed-app/direct-launch wiring, the initial connected-folder saves and remaining native storage/package gaps. Android native acceptance is outstanding. The green cells below retain their stated macOS scope.
 
 Snapshot: **2026-10-23**, **romm.docubi.casa / RomM 5.4.0**: **29 platforms, 7,660 ROM records**, including versions/regions. The earlier authenticated inventory is retained; read-only test media downloads did not modify the catalogue or server saves.

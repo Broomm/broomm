@@ -7,6 +7,9 @@ Future<void> main() async {
   final inventory = jsonDecode(
     await File('prototype-data/installations.json').readAsString(),
   ) as Map;
+  final previousBuilds = jsonDecode(
+    await File('assets/setup/tested-builds.json').readAsString(),
+  ) as Map;
   const versions = {
     'RetroArch': '1.22.2 / 20261001 + Snes9x 1.63',
     'Dolphin': '2609',
@@ -19,6 +22,10 @@ Future<void> main() async {
   for (final name in versions.keys) {
     final j = inventory['emulators'][name] as Map;
     final id = name.toLowerCase(), source = j['bundle'] as String;
+    final previous = (previousBuilds['builds'] as List)
+        .cast<Map>()
+        .where((b) => b['id'] == id && b['sha256'] == j['executable_sha256'])
+        .firstOrNull;
     final files = <String, String>{}, links = <String, String>{};
     final paths = <String>[];
     await for (final entry in Directory(
@@ -63,6 +70,8 @@ Future<void> main() async {
           source.length + 1,
         ),
       'native': j['native'],
+      if (previous != null && previous['compatible_setup_packages'] is Map)
+        'compatible_setup_packages': previous['compatible_setup_packages'],
       if (name == 'RetroArch')
         'core_sha256':
             '8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6',
@@ -82,7 +91,7 @@ Future<void> main() async {
   await File('assets/setup/tested-builds.json').writeAsString(
     '${const JsonEncoder.withIndent('  ').convert({'schema_version': 1, 'builds': builds})}\n',
   );
-  await File('assets/setup/setup.json').writeAsString(
+  await File('tool/setup-development.json').writeAsString(
     '${const JsonEncoder.withIndent('  ').convert({'schema_version': 1, 'host': 'macos-arm64', 'launchers': launchers})}\n',
   );
   stdout.writeln(

@@ -147,6 +147,66 @@ void main() {
       throwsFormatException,
     );
   });
+  test('released frontend uses private native state names and keeps previous-build states separate', () async {
+    for (final (slug, core, rom) in [
+      ('gb', 'gambatte', '/content/Pokemon.gb'),
+      ('arcade', 'fbneo', '/content/konami88.zip'),
+    ]) {
+      final e = PreparedEmulator(
+        'RetroArch',
+        root.path,
+        'unused',
+        3,
+        null,
+        '/unused/core.dylib',
+        coreId: core,
+        contentId: '123',
+        retroNativeStateNames: true,
+      );
+      final game = LaunchGame(
+        '123',
+        slug,
+        slug,
+        'RetroArch',
+        rom,
+        1,
+        0,
+        target: retroSystem(slug)!.target,
+        retroCore: core,
+      );
+      final args = await const RetroArchAdapter().prepare(e, game, rom, 9999);
+      expect(args, isNot(contains('-S')));
+      final current = await gameProgressLayout(
+        ResolvedSession(e, rom, 'c' * 64, {}, coreHash: 'b' * 64),
+        slug,
+      );
+      final old = await gameProgressLayout(
+        ResolvedSession(
+          emulator(core, '123'),
+          rom,
+          'a' * 64,
+          {},
+          coreHash: 'b' * 64,
+        ),
+        slug,
+      );
+      final state = current.areas.singleWhere(
+        (a) => a.id.startsWith('states-'),
+      );
+      final previous = old.areas.singleWhere((a) => a.id.startsWith('states-'));
+      expect(state.id, isNot(previous.id));
+      await File('${root.path}/${state.path}/${retroStateStem(rom)}.state1')
+          .writeAsString('new state');
+      await File('${root.path}/${state.path}/game.state1')
+          .writeAsString('old state');
+      final files = await current.files(), oldFiles = await old.files();
+      expect(await files['${state.id}/game1']!.readAsString(), 'new state');
+      expect(
+        await oldFiles['${previous.id}/game1']!.readAsString(),
+        'old state',
+      );
+    }
+  });
   test('compressed Sega games capture existing native outer-name SRAM and ignore unrelated inner-name files', () async {
     final source = Directory('${root.path}/zip-source');
     await source.create();
@@ -284,6 +344,7 @@ void main() {
         await File('${release.path}/receipt.json')
             .writeAsString(jsonEncode({'id': 'retroarch', 'hash': build.hash}));
         final hash = (ProgressDigest.sha256()..add([1, 2, 3])).finish();
+        manager.coreBuilds['gambatte']!['sha256'] = hash;
         final core = Directory('${release.path}/cores/gambatte-$hash');
         await core.create(recursive: true);
         await File('${core.path}/receipt.json')

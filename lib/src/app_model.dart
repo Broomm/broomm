@@ -41,6 +41,8 @@ class PrototypeModel extends ChangeNotifier {
   bool _initialPresentation = false;
   bool _gyroPending = false;
   bool _disposed = false;
+  Future<void>? _stopWork;
+  bool get stopping => _stopWork != null;
   @override
   void notifyListeners() {
     if (!_disposed) super.notifyListeners();
@@ -379,13 +381,35 @@ class PrototypeModel extends ChangeNotifier {
     }
   }
 
-  Future<void> stop({bool close = false}) async {
-    if (busy) return;
+  Future<void> stop({bool close = false}) {
+    if (_stopWork case final work?) return work;
+    final work = _stop(close: close);
+    _stopWork = work;
+    return work.whenComplete(() {
+      if (identical(_stopWork, work)) _stopWork = null;
+    });
+  }
+
+  Future<void> _stop({required bool close}) async {
+    // Stop takes precedence over launch, pause and resume work. Their pending
+    // continuations cannot restore a cancelled loading/pairing screen.
+    ++_lifetime;
+    _initialPresentation = false;
+    _opening = false;
+    _gyroPending = false;
+    session.cancelPreparation();
     busy = true;
+    notice = 'Stopping the game and keeping local progress…';
     error = null;
     notifyListeners();
     try {
       await session.stop();
+      if (!session.running && !session.preparing) {
+        screen = Screen.library;
+        pairing = null;
+        devices = [];
+        gestures.reset();
+      }
       if (close) await host.close();
     } catch (e) {
       error = '$e';

@@ -83,6 +83,7 @@ extension DownloadsModel on ShellModel {
 
   Future<void> enqueueDownload(RommGame game, {bool addons = false}) async {
     if (!authenticated ||
+        closing ||
         applicationUpdating ||
         disposed ||
         gameActive ||
@@ -137,6 +138,7 @@ extension DownloadsModel on ShellModel {
 
   void _startQueue() {
     if (applicationUpdating ||
+        closing ||
         _stoppingDownloads ||
         downloadsReadOnly ||
         !authenticated ||

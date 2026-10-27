@@ -47,7 +47,12 @@ void main() {
         ),
         client = _Cache(),
         library = GameLibrary(data);
-    await manager.install(await manager.readPlan(only: {'eden'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'eden'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final raw = jsonDecode(
           await File('.tool-cache/research/ra-wii-switch/media/8082.json')

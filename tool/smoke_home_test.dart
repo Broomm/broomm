@@ -79,7 +79,10 @@ void main() {
         await shell.addServer('https://fixture.example');
         await shell.login('Home test', 'fixture');
         await settleModel(shell);
-        final plan = await shell.emulators.readPlan(only: {'retroarch'});
+        final plan = await shell.emulators.readPlan(
+          file: 'tool/setup-development.json',
+          only: {'retroarch'},
+        );
         await shell.emulators.install(plan);
         expect(shell.emulators.error, isNull);
         if (shell.installation(9001) == null) {

@@ -35,7 +35,12 @@ void main() {
       project: Directory.current.path,
       asset: (p) => File(p).readAsString(),
     );
-    await manager.install(await manager.readPlan(only: {'retroarch'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'retroarch'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final results = <Map<String, dynamic>>[], failures = <String>[];
     for (final fixture in [

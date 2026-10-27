@@ -1,24 +1,28 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../managed_emulators.dart' show sha256File;
 import '../session.dart' show ResolvedSession;
+import '../romm/transfer.dart';
 import 'files.dart';
 import 'layout.dart';
-import 'ryubing.dart' show SwitchNeedsInitialization;
+import 'ryubing.dart' show SwitchNeedsInitialization, switchSourceIdentity;
 
 Future<ProgressLayout> edenProgressLayout(
   ResolvedSession session,
-  String user,
-) async {
+  String user, {
+  DownloadCancellation? cancellation,
+}) async {
   final root = Directory(session.emulator.root),
-      hash = await sha256File(session.rom);
-  final identity = File('${root.path}/progress-identities/$hash.json');
+      source = await switchSourceIdentity(session);
+  cancellation?.check();
+  final identity = File(
+    '${root.path}/progress-identities/installed-${source.$1}.json',
+  );
   if (!await progressExists(identity.path))
-    throw SwitchNeedsInitialization(hash);
+    throw SwitchNeedsInitialization(source.$1);
   final j = await progressJson(identity);
-  if (j['version'] != 1 ||
-      j['romSha256'] != hash ||
+  if (j['version'] != 2 ||
+      j['source'] != source.$2 ||
       j['emulator'] != session.executableHash ||
       j['program'] is! String ||
       !RegExp(r'^010[0-9a-f]{13}$').hasMatch(j['program'] as String)) {

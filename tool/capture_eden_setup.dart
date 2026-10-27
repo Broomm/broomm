@@ -77,9 +77,9 @@ Future<void> main() async {
     'native': <String, String>{},
   });
   await build.writeAsString('${json.convert(inventory)}\n');
-  final setup = File('assets/setup/setup.json'),
+  final setup = File('tool/setup-development.json'),
       manifest = jsonDecode(
-        await File('assets/setup/setup.json').readAsString(),
+        await File('tool/setup-development.json').readAsString(),
       ) as Map;
   manifest['launchers']['eden'] = {
     'source': 'tested:eden',

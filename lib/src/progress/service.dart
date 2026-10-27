@@ -103,6 +103,7 @@ class CloudSaves {
   }
 
   void cancel() => _transfer?.cancel();
+  DownloadCancellation? get cancellation => _transfer;
   Future<List<RommSave>> list(CloudGame g) async {
     _transfer?.check();
     if ((await g.client.currentUser()).id != g.user)

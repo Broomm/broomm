@@ -1,0 +1,192 @@
+{
+  "date": "2026-10-27",
+  "baseRevision": "14528f23d048823d9c450709a9b74b760ccf8f63",
+  "localChanges": true,
+  "host": {
+    "os": "macos",
+    "version": "Version 27.0.1 (Build 26A434)",
+    "nativeTestArchitecture": "arm64"
+  },
+  "sourceSha256": {
+    "lib/src/session.dart": "f2666ef512ee251cbc4d504c8014460953ac1f1d97a0f292df8833d656dff555",
+    "lib/src/app_model.dart": "bcb58e2b6592d5ca4cc9253d128219fedad4400eb32a18088a971b2fe2387b2d",
+    "lib/src/host.dart": "bb9fe7d22dd1f6ea7cff720c2d70c0627f48615d7e7fde4a51fb848949f9f1e3",
+    "lib/src/managed_emulators.dart": "8d4c129e78d15dc6a13070d70150728011b35fd81f84d6c6c6f537388d5f2e43",
+    "lib/src/progress/file_hash.dart": "ffc858fb0eb098fccd31fe5db1cc6b57041186fc0910e966f933a5d1d745ca86",
+    "lib/src/progress/ryubing.dart": "9544d48f80cfa45abf5c99a9b7ed5252fc4c449dc6c2f17692b7f8cc78ba09fa",
+    "lib/src/progress/eden.dart": "58cc0fd668d17688a32ade3a522f810682a95ba6656d50bbb34a870d85728dc7",
+    "lib/src/progress/layout.dart": "89b029b3f77b60a9cb0352c353542a24e6d1cd136f84098557290ce27ef7dcc7",
+    "lib/src/progress/service.dart": "880441aa40406444d4956fe82e847c1156f553fc988d3c4a898ac02031f76309",
+    "lib/src/shell/app.dart": "c379d2e968b0699ea3f2190aa820ea45307288dfba98727cf80f9a3249f6547d",
+    "lib/src/shell/cloud_model.dart": "e25efa4543f28ccef49ece78944630f5ad58d25c31ccaa8996907f1714aaf588",
+    "lib/src/shell/downloads_model.dart": "fa3ab0044b7945c3dce2b0d9eb0e78da1008872afe7d765d9a596cde2680442c",
+    "lib/src/shell/model.dart": "0d3b691471e888567e5a5807d208707f6aad50ca2323019216c5b80cb7803cb3",
+    "lib/src/shell/library.dart": "49837f7d4eb199f3bb9c4ad35e4a94ff3ef39eeccb55338ebd7152cf75eb62a4",
+    "lib/src/shell/game_session_screen.dart": "30b1e2bcbb0a495aa56a66a1fddec8887785083eb485da04e029bc8c6d6ae30b",
+    "lib/src/shell/quit_dialog.dart": "d833d717926e460563e2a9f901ae5d536f6e5a8b24cce2ee93775cc7838fed8e",
+    "lib/src/shell/session_recovery_dialog.dart": "48519f8dcf1b19fe0f592d5d4fef9f47e02b18aa7e3d782b3a3638b0a7c74dbf",
+    "macos/Runner/AppDelegate.swift": "8814e8b32b46b0669f58547dfb8389b75699371a3c4e56c7f83fda51d112476b",
+    "macos/Runner/MainFlutterWindow.swift": "a5cb5c51ca2580a44a6af2bc4c8cf6fe9756fb313533b46ce6a116ffa90a17bb",
+    "macos/Runner/SessionRecovery.swift": "4a8f92936fdeda7faa401447af2ad9251795f9acb8ab8268d24353d52b68ff11",
+    "macos/RunnerTests/RunnerTests.swift": "035b6c1ad7c112643c6d76923ae20a9a8ee9009225bfca77289571c04c1e4036",
+    "macos/Runner.xcodeproj/project.pbxproj": "0e30d4c081c1d1529c6e0bf67c9bf963d50fa4921b6ccf28d0fd212048cfad22",
+    "test/switch_installation_identity_test.dart": "8acc21399908c99e3ae47f1735a9ca42475280f08b097afc31519ae0776e5bd8",
+    "test/cloud_initial_sync_test.dart": "64cf57b0e083ec003bf4724ea895b7ee1504785577903d53b32dac4ac4761005",
+    "test/file_hash_test.dart": "d11361b3869b7f91862d6c16693ccb5591815cced368755d5868cf947698e87f",
+    "test/launch_cancellation_macos_test.dart": "25e60fa2cb625975524bd4d745ed74f20bfafc9b2f705a6515bbc3532e6d2279",
+    "test/quit_dialog_test.dart": "145545a65013c87c44aea4089592caa16e8d35dd311b7ac21da2252168433f36",
+    "test/game_session_screen_test.dart": "0c21d7d70f4397c73d58e9ce4bd0d6efcc57ac9ee446b97641befbe0cfbb61f5",
+    "test/session_recovery_dialog_test.dart": "9d68e8c22c33652f15e3534a34d62c951574631adce452b52a7e7f5fcc0ee030",
+    "test/shell_widget_test.dart": "46f79978bcf8ee2486879edeff84a2ed824159e0344dfb9b5541e6e74b02034a",
+    "test/addon_shell_test.dart": "e128067c71cea0a7f0753f5369129711784fc43867648049657d245694bc94ce",
+    "test/home_artwork_widget_test.dart": "2b75a586b5666fe41cee8a34c49620f82d44d59baa247db8049bacd6f36ff0dd",
+    "test/eden_test.dart": "14e0c62070c8791ff41acd1d43cd22a1fbebc38dacb650bad302def06ea18151",
+    "tool/check_switch_progress_test.dart": "30ed6b8bd7ba81715c24b5011f6a9fa3d6ef82ea5816e1b321f9bc0bac375b1c",
+    "tool/check_session_recovery.sh": "67e3a4928e9b1d219b4666ac3d672ad318a3dcd34ac5faa0f80a99f0f4dfdbdc",
+    "tool/check_session_recovery.swift": "b958720292cb12877dda719bf7b06cba7f6c9c30c3cb3dffd0044be198bcb362",
+    "tool/fixtures/session_writer.m": "8ad09c7705dcfddf80f5e49ac795f6367996dffac5d5110b0a0f1717f07a335d",
+    "tool/check_eden_test.dart": "d9d96762addb52401c3a999a9dd1e8cc5c630c1403a05934e6faaf953546e711"
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter analyze --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/session-recovery/analysis-final.log"
+    },
+    {
+      "command": "devbox run -- flutter test --no-pub",
+      "result": "passed",
+      "tests": 405,
+      "log": ".tool-cache/session-recovery/full-tests-final.log"
+    },
+    {
+      "command": "devbox run -- bash tool/test_macos.sh",
+      "result": "passed",
+      "tests": 8,
+      "summary": ".tool-cache/session-recovery/native-host-summary-final.json",
+      "log": ".tool-cache/session-recovery/native-host-tests-final.log",
+      "testResult": "build/macos/Logs/Test/Native-20261027T161429-26943.xcresult",
+      "dataRoot": "project-private fixture; never owner Application Support"
+    },
+    {
+      "command": "devbox run -- flutter test --no-pub tool/check_switch_progress_test.dart",
+      "result": "passed",
+      "seconds": 24,
+      "log": ".tool-cache/session-recovery/native-switch-paused.log",
+      "nativeEvidence": {
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/library-followup/native-switch-QYkYaD",
+        "build": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+        "program": "010028600ebda000",
+        "phases": [
+          "native-initialization",
+          "initial-writer-stopped",
+          "restore-before-gameplay"
+        ],
+        "committed0RestoredToWorking1": true,
+        "nativeZipRoundTrip": true,
+        "cancelledColdChildStoppedBeforeLeaseRelease": true,
+        "physicalGameplay": false
+      }
+    },
+    {
+      "command": "devbox run -- bash tool/check_session_recovery.sh",
+      "result": "passed",
+      "log": ".tool-cache/session-recovery/native-recovery-final.log",
+      "cases": [
+        "LaunchServices AppKit writer normal quit",
+        "directly spawned AppKit writer kernel identity",
+        "normal quit refusal then confirmed force",
+        "stale handle cannot signal replacement",
+        "writer lock release",
+        "linked lock refusal",
+        "progress sentinel retained"
+      ]
+    },
+    {
+      "command": "recover retained actual Ryubing fixture with final native adapter",
+      "result": "passed",
+      "log": ".tool-cache/session-recovery/orphan-fixture-cleanup-final.log",
+      "identity": "kernel process birth plus uid and actual executable path, captured NSRunningApplication and current device/inode/PID lock owner",
+      "effect": "only disposable test writer force-terminated; kernel lock release confirmed"
+    },
+    {
+      "command": "read-only owner receipt/metadata lookup",
+      "result": "passed",
+      "record": {
+        "rom": 8103,
+        "bytes": 14638743603,
+        "metadataLookupMilliseconds": 11.113,
+        "nativeInitializationNeeded": true,
+        "romContentBytesRead": 0,
+        "ownerWrites": false,
+        "nativeLaunch": false
+      },
+      "log": ".tool-cache/session-recovery/owner-lookup.log"
+    },
+    {
+      "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/session-recovery/release-build-final.log"
+    }
+  ],
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-session-recovery.zip",
+    "bytes": 20429530,
+    "sha256": "10d1be1312a16fc083532811bf64d71f38e245e38c5d339ddaf72d8993763fbb",
+    "revision": "14528f23d048823d9c450709a9b74b760ccf8f63",
+    "local_changes": true,
+    "version": "0.1.0-dev",
+    "application_updates": false,
+    "architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "universal_bridges": 3,
+    "bundled_setup_assets": "match",
+    "zip_integrity": "passed",
+    "deep_strict_signature": "passed before and after extraction",
+    "data_root": "~/Library/Application Support/Broomm"
+  },
+  "corrections": [
+    {
+      "failure": "Early close of Ryubing during renderer startup aborted with ObjectDisposedException, exit -6",
+      "log": ".tool-cache/session-recovery/native-switch.log",
+      "correction": "Wait for confirmed pause/input/native title before normal close; do not increase the shutdown deadline"
+    },
+    {
+      "failure": "A subsequent close during the initial resume transition retained its native window",
+      "log": ".tool-cache/session-recovery/native-switch-corrected.log",
+      "sample": ".tool-cache/session-recovery/ryubing-early-stop.sample.txt",
+      "correction": "Require paused==1, the same boundary as successful cold initialization, rather than any known pause value"
+    },
+    {
+      "failure": "Home/options widget tests had no new native-writer method fixture and injected the next event before real I/O handoff completed",
+      "log": ".tool-cache/session-recovery/full-tests.log",
+      "correction": "Explicitly return no writer from the native adapter fixture; drain the real I/O event handoff without increasing timeouts or changing behavior assertions"
+    },
+    {
+      "failure": "Directly spawned pinned Ryubing has nil AppKit launchDate and was initially unidentified by recovery",
+      "log": ".tool-cache/session-recovery/orphan-info.log",
+      "correction": "Verify kernel process birth, uid and proc_pidpath as well as the retained AppKit application and current lock owner; final adapter recovered that exact retained writer"
+    },
+    {
+      "failure": "Restricted test process could not bind the required localhost server or start LaunchServices fixtures",
+      "correction": "Reran the same tests with approved scoped execution outside the sandbox; no app assertion was relaxed"
+    }
+  ],
+  "ownerDataEffects": {
+    "reset": false,
+    "gameWrites": false,
+    "saveWrites": false,
+    "remoteWrites": false,
+    "credentialReads": false,
+    "romPayloadReadsInFinalLookup": false
+  },
+  "notClaimed": [
+    "physical controller or owner visual acceptance",
+    "live owner cloud upload or cross-device gameplay",
+    "native Linux/Windows/Android recovery verification",
+    "notarized distribution",
+    "every possible native emulator shutdown failure eliminated"
+  ]
+}

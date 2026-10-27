@@ -165,6 +165,21 @@ Future<void> decodeArtworkImages(WidgetTester t) async {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          (call) async => null,
+        );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          null,
+        );
+  });
   late Directory root;
   late ShellModel model;
   late FixtureSteamGrid grid;

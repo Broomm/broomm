@@ -24,4 +24,20 @@ class DesktopHost {
       await channel.invokeMethod<void>('close');
     } on MissingPluginException {}
   }
+
+  Future<Map<String, dynamic>?> gameWriter(String root) async {
+    try {
+      return await channel.invokeMapMethod<String, dynamic>('gameWriter', {
+        'root': root,
+      });
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  Future<void> controlGameWriter(String token, String action) =>
+      channel.invokeMethod<void>('controlGameWriter', {
+        'token': token,
+        'action': action,
+      });
 }

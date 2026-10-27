@@ -67,6 +67,7 @@ void main() {
         );
         await manager.install(
           await manager.readPlan(
+            file: 'tool/setup-development.json',
             only: {platform == 'wii' ? 'dolphin' : 'ryubing'},
           ),
         );

@@ -8,6 +8,12 @@ from the pinned Flutter SDK is retained in `MATERIAL-ICONS-LICENSE.txt` and bund
 as a Flutter asset on every target. This is an existing SDK asset, not a newly
 added icon library or runtime dependency.
 
+On macOS, native startup also assigns the packaged `AppIcon.icns` directly to
+`NSApplication.applicationIconImage`, so the running Dock icon uses the same
+artwork as Finder. Explicit plist icon keys and asset-catalog compilation remain
+in place. The [native icon checks and owner-verification limits](../../docs/retroarch-public-cores.md#macos-running-icon)
+separate AppKit readback from actual Dock appearance.
+
 `broomm-icon.png` is the 1024 px desktop/legacy master. `broomm-mark.png` is the
 1024 px transparent mark. All native variants are rendered directly from the
 same glyph rather than repeatedly resizing compressed images.

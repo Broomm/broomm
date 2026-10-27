@@ -35,7 +35,12 @@ void main() {
       project: Directory.current.path,
       asset: (p) => File(p).readAsString(),
     );
-    await manager.install(await manager.readPlan(only: {'ppsspp'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'ppsspp'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final media = (jsonDecode(
       await File('.tool-cache/research/psp/media.json').readAsString(),

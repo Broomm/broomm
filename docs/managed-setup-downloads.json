@@ -1,0 +1,276 @@
+{
+  "date": "2026-10-27",
+  "base_revision": "14528f23d048823d9c450709a9b74b760ccf8f63",
+  "working_tree_changes": true,
+  "toolchain": {
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "environment": "project Devbox; pre-provisioned Xcode/Apple SDK",
+    "host": "macOS 27.0.1 (26A434), arm64"
+  },
+  "implemented": {
+    "schema_versions": [
+      1,
+      2
+    ],
+    "default_requires_project_root": false,
+    "upstream_download_choices": [
+      "rpcs3",
+      "rpcs3-intel",
+      "azahar",
+      "melonds",
+      "duckstation",
+      "pcsx2",
+      "armsx2",
+      "ppsspp",
+      "eden",
+      "dolphin"
+    ],
+    "snapshot_choices": [
+      "retroarch"
+    ],
+    "retroarch_additional_cores": 14,
+    "download_integrity": "exact size plus SHA-256, including fresh cache verification",
+    "application_integrity": "existing complete pinned file/link inventories, copied bundle/core verification, receipt and selection readback",
+    "new_dependencies": [],
+    "automatic_emulator_updates": false,
+    "archived_download_choices": [
+      "ryubing"
+    ],
+    "retroarch_download_cores": [
+      "snes9x",
+      "mednafen_lynx",
+      "mednafen_pce_fast",
+      "mesen",
+      "mgba",
+      "mupen64plus_next",
+      "picodrive",
+      "stella"
+    ],
+    "retroarch_snapshot_cores": [
+      "fbneo",
+      "flycast",
+      "gambatte",
+      "genesis_plus_gx",
+      "mednafen_saturn",
+      "opera",
+      "virtualjaguar"
+    ],
+    "legacy_pack_compatibility": "only trusted exact archives in the same emulator/package slot"
+  },
+  "verification": {
+    "static_analysis": "flutter analyze --no-pub: passed; updated export tool separately analyzed",
+    "flutter_suite": {
+      "command": "devbox run -- flutter test --no-pub",
+      "passed": 392,
+      "log": ".tool-cache/setup-source-replacements/flutter-full.log"
+    },
+    "native_installation": {
+      "command": "devbox run -- flutter test --no-pub tool/check_setup_delivery_test.dart",
+      "log": ".tool-cache/setup-downloads/native-install-final.log",
+      "result": {
+        "host": "Version 27.0.1 (Build 26A434)",
+        "data": "/Users/ptrschneider/Projects/broomm/.tool-cache/setup-downloads/native-install-nJFKNB",
+        "project_root": null,
+        "resumed_fixture": true,
+        "installed": {
+          "retroarch": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+          "dolphin": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+          "ryubing": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+          "rpcs3": "27ba7aec9bfbf151175c43a29c548f83c5534fe9e7927eb5a70aa46dead37cc5",
+          "azahar": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+          "rpcs3-intel": "6149f4458f3de4b087dc9aa7e8d0e951ce2ad64527d8ac545f30ff16a01f0a42",
+          "melonds": "b76167f554bb6b50a712cbf025c6872159318afb12d840fadc885785f6bc35c4",
+          "duckstation": "9d81c03e32e864a6b27ddab039556a1708306b952066171a51c0befc3273b06e",
+          "pcsx2": "b6c2cd600ddee34a50a0637b4a6f4188b5a9e29b7d8ab4aca7078c8e6f90911d",
+          "armsx2": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
+          "ppsspp": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
+          "eden": "18de303111bf6181d80af8b365f27aa5b04f9ee7d28f13ce4eaa161d85cc00b7"
+        },
+        "cores": [
+          "fbneo",
+          "flycast",
+          "gambatte",
+          "genesis_plus_gx",
+          "mednafen_lynx",
+          "mednafen_pce_fast",
+          "mednafen_saturn",
+          "mesen",
+          "mgba",
+          "mupen64plus_next",
+          "opera",
+          "picodrive",
+          "stella",
+          "virtualjaguar"
+        ],
+        "default_reverification": "passed"
+      },
+      "upstream_transfers": "real HTTPS with production HttpClient, including provider redirects",
+      "profile_data": "isolated fixture storage only",
+      "provider_disconnect": {
+        "emulator": "Azahar",
+        "observed": "GitHub closed response while receiving payload",
+        "retained_completed_choices": [
+          "retroarch",
+          "dolphin",
+          "ryubing",
+          "rpcs3"
+        ],
+        "redacted_log": ".tool-cache/setup-downloads/native-install-azahar-disconnect.log",
+        "explicit_resume": "passed; all 12 inventories and 14 additional cores, followed by default-manifest reuse"
+      }
+    },
+    "macos_build": {
+      "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub",
+      "log": ".tool-cache/setup-source-replacements/macos-build.log",
+      "data_root": "~/Library/Application Support/Broomm",
+      "identity": "0.1.0-dev; automatic application installation disabled",
+      "signature": "ad-hoc; deep/strict verification before and after ZIP extraction",
+      "architectures": [
+        "arm64",
+        "x86_64"
+      ],
+      "universal_components": [
+        "application",
+        "SDL2 bridge",
+        "SDL3 bridge",
+        "installer guard"
+      ],
+      "setup_asset": "both setup.json and tested-builds.json SHA-256 match checked-in assets",
+      "package_log": ".tool-cache/setup-source-replacements/package.log"
+    },
+    "native_source_replacements": {
+      "command": "devbox run -- flutter test --no-pub tool/check_setup_source_replacements_test.dart",
+      "log": ".tool-cache/setup-source-replacements/native.log",
+      "elapsed_seconds": 47,
+      "result": {
+        "host": "Version 27.0.1 (Build 26A434)",
+        "fixture": "/Users/ptrschneider/Projects/broomm/.tool-cache/setup-source-replacements/native-TNY5gO",
+        "project_root": null,
+        "public_application_downloads": [
+          "dolphin",
+          "ryubing"
+        ],
+        "unchanged_core_downloads": 8,
+        "offline_archives": [
+          "retroarch.tar.gz",
+          "core-fbneo.tar.gz",
+          "core-flycast.tar.gz",
+          "core-gambatte.tar.gz",
+          "core-genesis_plus_gx.tar.gz",
+          "core-mednafen_saturn.tar.gz",
+          "core-opera.tar.gz",
+          "core-virtualjaguar.tar.gz"
+        ],
+        "installed": {
+          "dolphin": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+          "ryubing": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+          "retroarch": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45"
+        },
+        "cores": [
+          "fbneo",
+          "flycast",
+          "gambatte",
+          "genesis_plus_gx",
+          "mednafen_lynx",
+          "mednafen_pce_fast",
+          "mednafen_saturn",
+          "mesen",
+          "mgba",
+          "mupen64plus_next",
+          "opera",
+          "picodrive",
+          "stella",
+          "virtualjaguar"
+        ],
+        "full_inventories": "passed",
+        "old_pack_compatibility": "passed",
+        "restart_without_sources": "passed"
+      }
+    },
+    "native_ryubing_download": {
+      "command": "devbox run -- flutter test --no-pub tool/check_ryubing_delivery_test.dart",
+      "log": ".tool-cache/setup-ryubing-fix/native.log",
+      "result": {
+        "data": "/Users/ptrschneider/Projects/broomm/.tool-cache/setup-ryubing-fix/native-6kkxn9",
+        "host": "Version 27.0.1 (Build 26A434)",
+        "source": "https://archive.org/download/ryujinx-1.3.3-stable/Ryujinx%201.3.3%20%28stable%29.zip",
+        "archive_sha256": "f258953e0380a9d1b332607673e413215af9683966225f8cca7f8facb4e445d4",
+        "executable_sha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
+        "full_inventory_verified": true,
+        "no_project_root": true,
+        "no_companion_package": true,
+        "restart_reuse": "passed"
+      }
+    },
+    "retroarch_current_official_nightly": {
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/universal/RetroArch_Metal.dmg",
+      "archive_sha256": "23a193be336d32b2162fa26aebd5ae1fcfd29baf5691935d18cca4141ba72944",
+      "archive_bytes": 247192157,
+      "executable_sha256": "2d3b008afa1a96c1b0e1c52aa092977b7a3f3227f8c0eb0374a673d9661ec77b",
+      "exit_code": 0,
+      "features": [
+        "  SDL2            - SDL2 input/audio/video drivers: yes"
+      ]
+    },
+    "retained_snapshot_export": {
+      "command": "devbox run -- dart tool/export_setup_packages.dart --output build/setup-packages/current-macos-arm64",
+      "result": "8 reviewed archives verified and current manifest exported",
+      "log": ".tool-cache/setup-source-replacements/export-retained.log",
+      "regeneration": "attempted tar regeneration did not reproduce original archive metadata; refused without publication or trust changes; reviewed archives explicitly copied and reverified",
+      "refused_regeneration_log": ".tool-cache/setup-source-replacements/export.log"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "build/releases/Broomm-macOS-setup-fixes.zip",
+      "bytes": 20346293,
+      "sha256": "1233d40d8883bb5c39b1cdb29c9417eb53692ae40cb619908861322f0ca39934"
+    },
+    {
+      "path": "build/releases/Broomm-setup-macOS-arm64.zip",
+      "bytes": 148651975,
+      "sha256": "80712dce859de91ea7bf7c05b22931e1d734c81502c3d4ff87116e8388737654"
+    }
+  ],
+  "source_sha256": {
+    "lib/src/setup/package.dart": "4335120fc9608219c039e61125bceec362ec5905178e1a085ca1b6c3f3a824ae",
+    "lib/src/setup/archive.dart": "9a2fa8c744703f958b6bd94ad56aba68f7f0eb7d3656f5749bb079f294661d82",
+    "lib/src/managed_emulators.dart": "c7aa389474a867f3c11d11a5e7ac072b5a8d0268b5f5e054e3dddefd0fdc6d26",
+    "lib/src/shell/emulator_settings_screen.dart": "63e69713411864fa24f681fca264c7b86063fd8d8190d677d3d8e57bf37a32c2",
+    "assets/setup/setup.json": "119964d12ca651a1c0f443df870a0c5f22a11a73e6cac22ae0ecd7a300af5521",
+    "test/setup_downloads_test.dart": "5c718fcc4d6a025067a66c921b2dc6ba23472c4954a374aae71f78a3f696fefb",
+    "test/setup_archives_test.dart": "3198242fb588d9720bfc3f62a24173b8017b85ac35e96645402e3a2a9e24a434",
+    "test/setup_delivery_test.dart": "98c47ee3b1a847004d70b38b92adf0124fc3451fbcb13b70dbdfa54cf6bc7560",
+    "tool/check_setup_delivery_test.dart": "0351a07ad1f41722a29f4133c3b005ff728f522402cd8f0ea25bfa9d4e3b3b88",
+    "tool/export_setup_packages.dart": "9cd6e432247b425f3516c50eb8cbfbc7c9b4737d76b4db6ae68012f154356f38",
+    "tool/setup-development.json": "89f2e8dd74dd2ae62c0ca6ac215b84c90b77244500d5a428834d8c986d4e67de",
+    "assets/setup/tested-builds.json": "c69314a1cf27287c03200cb19208b8f041a14699e565b1b97bd36dfc18bc7526",
+    "lib/src/setup/dolphin.dart": "7dc66195929657a028f0e6b62af903cd40c7ba8202dfff66b5cd8b80cfe7b765",
+    "tool/check_ryubing_delivery_test.dart": "b179d56b04ddf6401fb52549e22327a96cee405fd876ca25e816873665392ca8",
+    "tool/check_setup_source_replacements_test.dart": "d667b524b4b18825865696cadf9bcea55392ae676b55fc468063d160e67c41ec",
+    "tool/capture_tested_setup.dart": "635692091e010c99d7f27dd0ae1c485900b7f95150c96c52efad0a67da65d819"
+  },
+  "remaining": [
+    "RetroArch custom SDL3 frontend and seven changed upstream cores still require the exact reviewed companion pack; immutable hosting and complete redistribution/source provenance remain pending. No release was published.",
+    "The eight official core URLs use mutable latest archives; changed size/checksum is rejected, and the reviewed older offline pack remains compatible. Immutable mirrors remain preferable.",
+    "Other desktop host emulator packages and native Linux/Windows/Android acceptance remain at their existing staged scope.",
+    "Delivery checks establish existing exact binary identities, not new gameplay, physical controller, screen/focus or cross-device save acceptance."
+  ],
+  "current_adoption": {
+    "date": "2026-10-27",
+    "release": "https://github.com/Broomm/retroarch/releases/tag/v0.1.0",
+    "evidence": "retroarch-release-adoption.json",
+    "managed_host": "macos-arm64",
+    "retroarch_frontend_companion_required": false,
+    "core_companion_archives": 0,
+    "core_followup": "retroarch-public-cores.json"
+  },
+  "current_core_delivery": {
+    "date": "2026-10-27",
+    "evidence": "retroarch-public-cores.json",
+    "default_cores": 15,
+    "core_companion_archives": 0,
+    "requires_import": false
+  }
+}

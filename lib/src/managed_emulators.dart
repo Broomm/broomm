@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +14,9 @@ import 'session_lease.dart';
 import 'managed_profile.dart';
 import 'retroarch.dart';
 import 'retroarch_saves.dart';
-import 'progress/digest.dart';
+import 'progress/file_hash.dart';
+import 'setup/archive.dart';
+import 'setup/package.dart';
 
 class TestedBuild {
   TestedBuild(Map j)
@@ -31,9 +32,26 @@ class TestedBuild {
       sdl = j['sdl'] as int,
       sdlLibrary = j['sdl_library'] as String?,
       coreHash = j['core_sha256'] as String?,
+      retroNativeStateNames = j['retro_native_state_names'] == true,
+      integrityAsset =
+          j['integrity_asset'] as String? ??
+          'assets/setup/${j['id']}.integrity.json',
+      sourcePackage = j['source_package'] == null
+          ? null
+          : SetupPackage.fromJson(j['source_package'] as Map),
+      compatibleSetupPackages = {
+        for (final entry
+            in (j['compatible_setup_packages'] as Map? ?? {}).entries)
+          entry.key as String: [
+            for (final value in entry.value as List)
+              SetupPackage.fromJson(value as Map),
+          ],
+      },
       native = (j['native'] as Map).cast<String, String>();
   final String id, name, version, host, bundle, executable, hash;
   final String architecture;
+  final String integrityAsset;
+  final SetupPackage? sourcePackage;
   // Both RPCS3 distributions consume the same native PS3 data format. Keep
   // saves, firmware, licenses and add-on ownership in the existing profile.
   bool get isRpcs3 => id == 'rpcs3' || id == 'rpcs3-intel';
@@ -45,8 +63,10 @@ class TestedBuild {
       : id;
   String get engine => isRpcs3 ? 'RPCS3' : name;
   final String? sdlLibrary, coreHash;
+  final bool retroNativeStateNames;
   final int sdl;
   final Map<String, String> native;
+  final Map<String, List<SetupPackage>> compatibleSetupPackages;
 }
 
 class SetupItem {
@@ -56,12 +76,22 @@ class SetupItem {
     this.core,
     this.resources, {
     this.cores = const {},
+    this.downloads = const {},
+    this.packageRoot,
   });
   final TestedBuild build;
   final String source;
   final String? core;
   final Map<String, String> resources;
   final Map<String, String> cores;
+  final Map<String, SetupPackage> downloads;
+  final Directory? packageRoot;
+  String describe(String source) {
+    final package = downloads[source];
+    return package == null
+        ? source
+        : package.url?.toString() ?? 'Setup package: ${package.file}';
+  }
 }
 
 class SetupPlan {
@@ -75,22 +105,45 @@ class ManagedEmulators extends ChangeNotifier {
     this.project,
     this.log,
     Future<String> Function(String)? asset,
-  }) : asset = asset ?? rootBundle.loadString;
+    SetupDownloads? downloads,
+  }) : asset = asset ?? rootBundle.loadString,
+       downloads = downloads ?? SetupDownloads(data);
   final Directory data;
   final String? project;
   final SessionLog? log;
+  final SetupDownloads downloads;
+  double? progress;
+  int _progressBucket = -1;
   void setPhase(String value) {
     phase = value;
+    progress = null;
+    _progressBucket = -1;
     log?.write(value);
+    emit();
+  }
+
+  void transferProgress(String value, double? fraction) {
+    final bucket = fraction == null ? -1 : (fraction * 10).floor();
+    if (phase != value || bucket != _progressBucket) {
+      log?.write(
+        '$value${fraction == null ? '' : ' ${(fraction * 100).floor()}%'}',
+      );
+      _progressBucket = bucket;
+    }
+    phase = value;
+    progress = fraction;
     emit();
   }
 
   final Future<String> Function(String) asset;
   final builds = <TestedBuild>[];
+  final previousBuilds = <TestedBuild>[];
   final installed = <String, String>{};
   final removals = <String, String>{};
   final resourceProblems = <String, String>{};
   final coreBuilds = <String, Map>{};
+  final previousCoreBuilds = <Map>[];
+  final installedCoreBuilds = <String, Map>{};
   final installedCores = <String>{};
   bool readyFor(String emulator, String slug) =>
       ready(emulator) &&
@@ -117,20 +170,40 @@ class ManagedEmulators extends ChangeNotifier {
       if (builds.isEmpty) {
         final j =
             jsonDecode(await asset('assets/setup/tested-builds.json')) as Map;
-        builds.addAll((j['builds'] as List).map((e) => TestedBuild(e as Map)));
+        final current = (j['builds'] as List)
+            .map((e) => TestedBuild(e as Map))
+            .toList();
+        final previous = (j['previous_builds'] as List? ?? const [])
+            .map((e) => TestedBuild(e as Map))
+            .toList();
+        if (previous.any(
+          (old) => !current.any(
+            (current) => current.id == old.id && current.host == old.host,
+          ),
+        )) {
+          throw const FormatException('Unknown previous emulator identity');
+        }
+        builds.addAll(current);
+        previousBuilds.addAll(previous);
       }
       if (coreBuilds.isEmpty && builds.any((b) => b.id == 'retroarch')) {
         final j =
             jsonDecode(await asset('assets/setup/retroarch-cores.json')) as Map;
-        for (final c in (j['cores'] as List).cast<Map>()) {
+        final current = (j['cores'] as List).cast<Map>();
+        final previous = (j['previous_cores'] as List? ?? const []).cast<Map>();
+        for (final c in [...current, ...previous]) {
           if (!retroSystems.any((s) => s.core == c['id']) ||
               !RegExp(r'^[a-f0-9]{64}$').hasMatch(c['sha256'] as String)) {
             throw const FormatException('Invalid RetroArch core build');
           }
+        }
+        for (final c in current) {
           coreBuilds[c['id'] as String] = c;
         }
+        previousCoreBuilds.addAll(previous);
       }
       installedCores.clear();
+      installedCoreBuilds.clear();
       final file = File('${root.path}/selected.json');
       final type = await FileSystemEntity.type(file.path, followLinks: false);
       if (type == FileSystemEntityType.notFound) {
@@ -150,7 +223,7 @@ class ManagedEmulators extends ChangeNotifier {
       if (selected.keys.any(pending.containsKey))
         throw const FormatException('Conflicting emulator selection/removal');
       for (final entry in [...selected.entries, ...pending.entries]) {
-        if (!builds.any((b) => b.id == entry.key && b.hash == entry.value))
+        if (_knownBuild(entry.key, entry.value) == null)
           throw const FormatException('Unknown managed build');
       }
       installed
@@ -160,14 +233,26 @@ class ManagedEmulators extends ChangeNotifier {
         ..clear()
         ..addAll(pending);
       resourceProblems.clear();
-      for (final b in builds.where((b) => selected[b.id] == b.hash)) {
+      for (final entry in selected.entries) {
+        final b = _knownBuild(entry.key, entry.value)!;
         if (b.id == 'retroarch') {
-          for (final c in coreBuilds.entries) {
-            final path =
-                '${root.path}/${b.id}/${b.hash}/cores/${c.key}-${c.value['sha256']}/core.dylib';
-            if (await FileSystemEntity.type(path, followLinks: false) ==
-                FileSystemEntityType.file) {
-              installedCores.add(c.key);
+          for (final id in coreBuilds.keys) {
+            // Updating Broomm does not replace an installed core. Prefer a new
+            // version only after explicit setup has published that exact file.
+            for (final c in _coreVersions(id)) {
+              final path =
+                  '${root.path}/${b.id}/${b.hash}/cores/$id-${c['sha256']}/core.dylib';
+              final type = await FileSystemEntity.type(
+                path,
+                followLinks: false,
+              );
+              if (type == FileSystemEntityType.notFound) continue;
+              if (type != FileSystemEntityType.file) {
+                throw const FormatException('Invalid managed core file');
+              }
+              installedCores.add(id);
+              installedCoreBuilds[id] = c;
+              break;
             }
           }
         }
@@ -211,7 +296,9 @@ class ManagedEmulators extends ChangeNotifier {
       base = f.absolute.parent;
     }
     final j = jsonDecode(source) as Map;
-    if (j['schema_version'] != 1 || j['host'] != host || j['launchers'] is! Map)
+    if (![1, 2].contains(j['schema_version']) ||
+        j['host'] != host ||
+        j['launchers'] is! Map)
       throw const FormatException(
         'This setup JSON does not match the current host or schema.',
       );
@@ -224,7 +311,21 @@ class ManagedEmulators extends ChangeNotifier {
     final items = <SetupItem>[];
     for (final entry in entries.entries) {
       if (only != null && !only.contains(entry.key)) continue;
-      final b = builds.firstWhere((b) => b.id == entry.key);
+      var b = builds.firstWhere((b) => b.id == entry.key);
+      // Importing an older reviewed setup pack explicitly selects its build.
+      // The bundled recipe always selects the current release instead.
+      if (j['schema_version'] == 2 && entry.value['source'] is Map) {
+        final source = SetupPackage.fromJson(entry.value['source'] as Map);
+        b =
+            previousBuilds
+                .where(
+                  (old) =>
+                      old.id == b.id &&
+                      old.sourcePackage?.samePayload(source) == true,
+                )
+                .firstOrNull ??
+            b;
+      }
       await requireRuntime(b);
       if (entry.value.keys.any(
         (k) => !['source', 'core', 'cores', 'resources'].contains(k),
@@ -232,7 +333,18 @@ class ManagedEmulators extends ChangeNotifier {
         throw const FormatException(
           'Setup files cannot supply commands, bridges or environment values.',
         );
-      String path(Object? value) {
+      final packages = <String, SetupPackage>{};
+      Future<String> path(
+        Object? value,
+        String slot, {
+        bool localOnly = false,
+      }) async {
+        if (value is Map && !localOnly && j['schema_version'] == 2) {
+          final package = SetupPackage.fromJson(value);
+          await _trustPackage(b, slot, package);
+          packages[package.reference] = package;
+          return package.reference;
+        }
         if (value is! String ||
             value.isEmpty ||
             value.contains(RegExp(r'[\x00\r\n]')))
@@ -263,7 +375,7 @@ class ManagedEmulators extends ChangeNotifier {
           throw const FormatException(
             'Unsupported resource type for this emulator.',
           );
-        final source = path(r.value);
+        final source = await path(r.value, 'resources', localOnly: true);
         if (await FileSystemEntity.type(source, followLinks: false) !=
             FileSystemEntityType.notFound)
           resources[r.key as String] = source;
@@ -273,15 +385,19 @@ class ManagedEmulators extends ChangeNotifier {
         if (b.id != 'retroarch' || !coreBuilds.containsKey(c.key)) {
           throw const FormatException('Unknown RetroArch core');
         }
-        cores[c.key as String] = path(c.value);
+        cores[c.key as String] = await path(c.value, 'cores:${c.key}');
       }
       items.add(
         SetupItem(
           b,
-          path(entry.value['source']),
-          entry.value['core'] == null ? null : path(entry.value['core']),
+          await path(entry.value['source'], 'source'),
+          entry.value['core'] == null
+              ? null
+              : await path(entry.value['core'], 'core'),
           resources,
           cores: cores,
+          downloads: packages,
+          packageRoot: base,
         ),
       );
     }
@@ -289,9 +405,34 @@ class ManagedEmulators extends ChangeNotifier {
       throw const FormatException('No emulators were selected.');
     plan = SetupPlan(items);
     error = null;
-    notice = 'Review the local sources and resources, then start setup.';
+    notice = 'Review the sources and resources, then start setup.';
     emit();
     return plan!;
+  }
+
+  Future<void> _trustPackage(
+    TestedBuild build,
+    String slot,
+    SetupPackage package,
+  ) async {
+    final j = jsonDecode(await asset('assets/setup/setup.json')) as Map;
+    final entry = (j['launchers'] as Map)[build.id] as Map?;
+    Object? value;
+    if (entry != null) {
+      value = slot.startsWith('cores:')
+          ? (entry['cores'] as Map? ?? {})[slot.substring(6)]
+          : entry[slot];
+    }
+    final accepted =
+        value is Map && package.samePayload(SetupPackage.fromJson(value)) ||
+        slot == 'source' && build.sourcePackage?.samePayload(package) == true ||
+        (build.compatibleSetupPackages[slot] ?? const <SetupPackage>[]).any(
+          package.samePayload,
+        );
+    if (!accepted)
+      throw const FormatException(
+        'This archive is not a reviewed delivery recipe for this emulator. Import a compatible extracted local build, or use the bundled recipe.',
+      );
   }
 
   String testedSource(String key) {
@@ -353,11 +494,18 @@ class ManagedEmulators extends ChangeNotifier {
     await ownedDirectory(parent);
     for (final entry in item.cores.entries) {
       cancellation.check();
-      final c = coreBuilds[entry.key]!;
       setPhase('Installing RetroArch / ${retroSystemByCore(entry.key)}');
       if (await FileSystemEntity.type(entry.value, followLinks: false) !=
-              FileSystemEntityType.file ||
-          await sha256File(entry.value) != c['sha256']) {
+          FileSystemEntityType.file) {
+        throw StateError(
+          'The ${entry.key} core differs from the pinned build.',
+        );
+      }
+      final hash = await sha256File(entry.value);
+      final c = _coreVersions(entry.key)
+          .where((c) => c['sha256'] == hash)
+          .firstOrNull;
+      if (c == null) {
         throw StateError(
           'The ${entry.key} core differs from the pinned build.',
         );
@@ -403,7 +551,7 @@ class ManagedEmulators extends ChangeNotifier {
       final id = receipt['id'], hash = receipt['sha256'];
       if (!coreBuilds.containsKey(id) ||
           hash is! String ||
-          !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
+          !_coreVersions(id as String).any((c) => c['sha256'] == hash))
         throw StateError('Unrecognized core ownership was kept.');
       final name = entry.uri.pathSegments.where((p) => p.isNotEmpty).last;
       final staged = RegExp(r'^\.core-[a-zA-Z0-9_-]+$').hasMatch(name);
@@ -424,6 +572,84 @@ class ManagedEmulators extends ChangeNotifier {
     }
   }
 
+  Future<SetupItem> _prepareItem(
+    SetupItem item,
+    Directory release,
+    Directory working,
+    DownloadCancellation cancellation,
+  ) async {
+    final reuse =
+        await FileSystemEntity.type(release.path, followLinks: false) ==
+        FileSystemEntityType.directory;
+    Future<String> resolve(
+      String value,
+      String slot,
+      String installed,
+      String? hash,
+    ) async {
+      final package = item.downloads[value];
+      if (package == null) return value;
+      await _trustPackage(item.build, slot, package);
+      cancellation.check();
+      if (reuse &&
+          (hash == null ||
+              await FileSystemEntity.type(installed, followLinks: false) ==
+                      FileSystemEntityType.file &&
+                  await sha256File(installed) == hash))
+        return installed;
+      return downloads.prepare(
+        package,
+        working,
+        cancellation,
+        (phase, fraction) => transferProgress(
+          '${item.build.name}${slot.startsWith('cores:') ? ' / ${slot.substring(6)}' : ''}: $phase',
+          fraction,
+        ),
+        localRoot: item.packageRoot,
+      );
+    }
+
+    final b = item.build;
+    final source = await resolve(
+      item.source,
+      'source',
+      '${release.path}/${b.bundle}',
+      null,
+    );
+    final core = item.core == null
+        ? null
+        : await resolve(
+            item.core!,
+            'core',
+            '${release.path}/snes9x_libretro.dylib',
+            b.coreHash,
+          );
+    final cores = <String, String>{};
+    for (final entry in item.cores.entries) {
+      final package = item.downloads[entry.value];
+      final version = package == null
+          ? coreBuilds[entry.key]!
+          : _coreVersions(entry.key)
+                    .where(
+                      (c) =>
+                          c['setup_package'] is Map &&
+                          package.samePayload(
+                            SetupPackage.fromJson(c['setup_package'] as Map),
+                          ),
+                    )
+                    .firstOrNull ??
+                coreBuilds[entry.key]!;
+      final hash = version['sha256'] as String;
+      cores[entry.key] = await resolve(
+        entry.value,
+        'cores:${entry.key}',
+        '${release.path}/cores/${entry.key}-$hash/core.dylib',
+        hash,
+      );
+    }
+    return SetupItem(b, source, core, item.resources, cores: cores);
+  }
+
   Future<void> _install(SetupPlan selected) async {
     if (busy) return;
     busy = true;
@@ -431,20 +657,35 @@ class ManagedEmulators extends ChangeNotifier {
     final cancellation = _cancel = DownloadCancellation();
     emit();
     SessionLease? lease;
+    Directory? working;
+    var retainWorking = false;
     try {
       lease = await SessionLease.acquire(data);
       await ownedDirectory(root);
       // Reload under the cross-process lease before modifying selections.
       await load();
       if (error != null) throw StateError(error!);
-      for (final item in selected.items) {
+      for (final requested in selected.items) {
         cancellation.check();
-        final b = item.build;
+        final b = requested.build;
         await requireRuntime(b);
         if (removals.containsKey(b.id))
           throw StateError(
             'Finish removing ${b.name} before setting it up again.',
           );
+        final parent = Directory('${root.path}/${b.id}');
+        await ownedDirectory(parent);
+        final destination = Directory('${parent.path}/${b.hash}');
+        var item = requested;
+        if (requested.downloads.isNotEmpty) {
+          working ??= await root.createTemp('.packages-');
+          item = await _prepareItem(
+            requested,
+            destination,
+            working,
+            cancellation,
+          );
+        }
         setPhase('Checking ${b.name} ${b.version}');
         await verifyBundle(b, item.source, cancellation);
         if (b.coreHash != null &&
@@ -452,9 +693,6 @@ class ManagedEmulators extends ChangeNotifier {
           throw StateError(
             'The Snes9x core does not match the tested build. Select the tested core.',
           );
-        final parent = Directory('${root.path}/${b.id}');
-        await ownedDirectory(parent);
-        final destination = Directory('${parent.path}/${b.hash}');
         if (await FileSystemEntity.type(destination.path, followLinks: false) ==
             FileSystemEntityType.notFound) {
           final staging = await parent.createTemp('.staging-');
@@ -528,6 +766,12 @@ class ManagedEmulators extends ChangeNotifier {
             '${destination.path}/${b.bundle}',
             cancellation,
           );
+          if (b.coreHash != null &&
+              await sha256File('${destination.path}/snes9x_libretro.dylib') !=
+                  b.coreHash)
+            throw StateError(
+              'The installed Snes9x core changed. Its files and profile progress were kept.',
+            );
         }
         await _addResources(item, destination, cancellation);
         await _addRetroCores(item, destination, cancellation);
@@ -543,6 +787,7 @@ class ManagedEmulators extends ChangeNotifier {
       plan = null;
       await load();
     } catch (e) {
+      retainWorking = e is SetupWriterUncertain;
       log?.write(
         'Emulator setup did not complete. Prior installations and profile progress were preserved.',
         level: 'warning',
@@ -551,10 +796,29 @@ class ManagedEmulators extends ChangeNotifier {
           ? 'Setup cancelled. Completed installations and profile data have been kept.'
           : '$e';
     } finally {
+      if (working != null && !retainWorking) {
+        // An interrupted disk-image attachment remains private. Never walk or
+        // recursively delete a mount whose detach was not acknowledged.
+        try {
+          var pending = false;
+          await for (final entry in working.list(followLinks: false)) {
+            if (entry is Directory &&
+                await File('${entry.path}/mount-pending').exists())
+              pending = true;
+          }
+          if (!pending) await working.delete(recursive: true);
+        } catch (_) {
+          log?.write(
+            'Private setup staging was retained because cleanup could not be confirmed.',
+            level: 'warning',
+          );
+        }
+      }
       await lease?.release();
       busy = false;
       _cancel = null;
       phase = '';
+      progress = null;
       emit();
     }
   }
@@ -594,7 +858,7 @@ class ManagedEmulators extends ChangeNotifier {
       lease = await SessionLease.acquire(data);
       await load();
       if (error != null) throw StateError(error!);
-      if (!builds.any((b) => b.id == build.id && b.hash == build.hash))
+      if (_knownBuild(build.id, build.hash) == null)
         throw StateError('Unknown managed emulator');
       if (installed[build.id] != build.hash && removals[build.id] != build.hash)
         throw StateError('This managed emulator is not installed.');
@@ -687,8 +951,22 @@ class ManagedEmulators extends ChangeNotifier {
     }
   }
 
-  TestedBuild? buildFor(String name) =>
-      builds.where((b) => b.name == name).firstOrNull;
+  TestedBuild? _knownBuild(String id, String hash) => [
+    ...builds,
+    ...previousBuilds,
+  ].where((b) => b.id == id && b.hash == hash).firstOrNull;
+
+  Iterable<Map> _coreVersions(String id) sync* {
+    if (coreBuilds[id] case final Map current) yield current;
+    yield* previousCoreBuilds.where((c) => c['id'] == id);
+  }
+
+  TestedBuild? buildFor(String name) {
+    final current = builds.where((b) => b.name == name).firstOrNull;
+    if (current == null) return null;
+    return _knownBuild(current.id, installed[current.id] ?? '') ?? current;
+  }
+
   bool ready(String name) {
     final b = buildFor(name);
     return b != null && installed[b.id] == b.hash;
@@ -969,13 +1247,13 @@ class ManagedEmulators extends ChangeNotifier {
         throw StateError('Unknown RetroArch core');
       }
       retroGameDirectory(coreId, contentId!);
-      coreHash = coreBuilds[coreId]!['sha256'] as String;
-      core = '${release.path}/cores/$coreId-$coreHash/core.dylib';
       if (!installedCores.contains(coreId)) {
         throw StateError(
           'Set up RetroArch / ${retroSystemByCore(coreId)} in Emulator Settings first.',
         );
       }
+      coreHash = installedCoreBuilds[coreId]!['sha256'] as String;
+      core = '${release.path}/cores/$coreId-$coreHash/core.dylib';
     }
     if (core != null && await sha256File(core) != coreHash)
       throw StateError(
@@ -998,6 +1276,12 @@ class ManagedEmulators extends ChangeNotifier {
         core,
         coreId: coreId,
         contentId: contentId,
+        retroNativeStateNames: b.retroNativeStateNames,
+        retroStateDirectory:
+            coreId != null &&
+                installedCoreBuilds[coreId]?['isolated_states'] == true
+            ? '${retroGameDirectory(coreId, contentId!)}/states/${b.hash}-$coreHash'
+            : null,
         cacheDirectory: b.id == 'rpcs3-intel'
             ? '${runtime.path}/cache-intel'
             : null,
@@ -1027,8 +1311,7 @@ class ManagedEmulators extends ChangeNotifier {
     String path,
     DownloadCancellation cancellation,
   ) async {
-    final expected =
-        jsonDecode(await asset('assets/setup/${b.id}.integrity.json')) as Map;
+    final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
     await inspectTree(path, allowLinks: true);
     final actual = <String>{};
     final links = <String>{};
@@ -1184,14 +1467,11 @@ Future<String> runOwnedTool(String executable, List<String> args) async {
   return utf8.decode(out);
 }
 
-Future<String> sha256File(String path) async {
-  if (!Platform.isMacOS) return Isolate.run(() => progressFileHash(File(path)));
-  return (await runOwnedTool('/usr/bin/shasum', [
-    '-a',
-    '256',
-    path,
-  ])).split(' ').first;
-}
+Future<String> sha256File(
+  String path, {
+  DownloadCancellation? cancellation,
+  void Function(int)? progress,
+}) => gameFileHash(path, cancellation: cancellation, progress: progress);
 
 Future<void> copyTree(
   String source,

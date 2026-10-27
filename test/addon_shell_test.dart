@@ -16,6 +16,21 @@ import 'package:broomm/src/session_lease.dart';
 import 'support/addon_fixtures.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          (call) async => null,
+        );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          null,
+        );
+  });
   late Directory root;
   late ShellModel model;
   late AddonFiles client;

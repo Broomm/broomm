@@ -161,9 +161,7 @@ String retroGameDirectory(String core, String content) {
 /// This pinned frontend names save RAM after the supplied outer archive even
 /// when it loads an inner ROM. Inspect ZIP members only to reject ambiguity.
 Future<String> retroSaveStem(String rom, String core) async {
-  String stem(String name) =>
-      name.split('/').last.replaceFirst(RegExp(r'\.[^.]+$'), '');
-  if (!rom.toLowerCase().endsWith('.zip')) return stem(rom);
+  if (!rom.toLowerCase().endsWith('.zip')) return retroStateStem(rom);
   final extensions =
       retroSystems
           .where((s) => s.core == core)
@@ -182,5 +180,13 @@ Future<String> retroSaveStem(String rom, String core) async {
     throw const FormatException(
       'Use one playable ROM per ZIP or unpack this game before enabling its save integration.',
     );
-  return stem(rom);
+  return retroStateStem(rom);
 }
+
+// State files use the outer content basename, including multi-chip arcade ZIPs.
+// They do not require the single-ROM inspection used for ordinary SRAM import.
+String retroStateStem(String rom) => rom
+    .replaceAll('\\', '/')
+    .split('/')
+    .last
+    .replaceFirst(RegExp(r'\.[^.]+$'), '');

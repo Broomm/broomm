@@ -7,6 +7,7 @@ import 'emulators.dart';
 import 'pairing.dart';
 import 'session_log.dart';
 import 'session_lease.dart';
+import 'romm/transfer.dart';
 export 'session_log.dart';
 
 class ResolvedSession {
@@ -18,12 +19,24 @@ class ResolvedSession {
     this.home,
     this.readOnly = const [],
     this.coreHash,
+    this.installationIdentity,
   });
   final PreparedEmulator emulator;
   final String rom, executableHash;
   final Map<String, String> native;
   final String? home;
   final String? coreHash;
+  final String? installationIdentity;
+  ResolvedSession withInstallationIdentity(String identity) => ResolvedSession(
+    emulator,
+    rom,
+    executableHash,
+    native,
+    home: home,
+    readOnly: readOnly,
+    coreHash: coreHash,
+    installationIdentity: identity,
+  );
   final List<String> readOnly;
 }
 
@@ -184,12 +197,17 @@ class GameSession {
   void Function()? cancelProgressTransfer;
   bool finalizingProgress = false;
   Process? _process;
+  Future<void>? _launchWork, _stopWork;
+  DownloadCancellation _cancellation = DownloadCancellation();
+  DownloadCancellation get cancellation => _cancellation;
+  bool get preparing => _launchWork != null;
   Future<void>? _exitDone;
   Future<void> _commands = Future<void>.value();
   SessionLease? _guard;
   Timer? _timer;
   bool _polling = false, _stopping = false;
   bool _bridgeLost = false;
+  bool _nativeGameReady = false;
   int _revision = 0, _sample = -1, _generation = 0;
   DateTime _lastUpdate = DateTime.now();
   PreparedEmulator? emulator;
@@ -206,14 +224,31 @@ class GameSession {
   String get dataRoot => managedRoot ?? '$project/prototype-data';
   SessionLease get ownerLease =>
       _guard ?? (throw StateError('No active game session owner'));
-  bool get running => _process != null;
-  int? get processId => _process?.pid;
+  bool get running => _process != null || (_preparation?.running ?? false);
+  int? get processId => _process?.pid ?? _preparation?.processId;
 
-  Future<void> launch(TestGame selected) async {
+  void cancelPreparation() {
+    _cancellation.cancel();
+    _preparation?.cancelPreparation();
+    cancelProgressTransfer?.call();
+  }
+
+  Future<void> launch(TestGame selected) {
+    if (_launchWork != null)
+      return Future.error(StateError('Game preparation is already active'));
+    final work = _launch(selected);
+    _launchWork = work;
+    return work.whenComplete(() {
+      if (identical(_launchWork, work)) _launchWork = null;
+    });
+  }
+
+  Future<void> _launch(TestGame selected) async {
     if (running) throw StateError('A game is already running');
     if (_guard != null)
       throw StateError('The previous session is still closing');
     final generation = ++_generation;
+    _cancellation = DownloadCancellation();
     _retroPaused = -1;
     _retroBusy = false;
     _retroMessage = null;
@@ -222,6 +257,7 @@ class GameSession {
     status = null;
     nativeProgramId = null;
     _bridgeLost = false;
+    _nativeGameReady = false;
     if (!Platform.isMacOS)
       throw UnsupportedError(
         'This prototype’s native bridge currently supports macOS arm64.',
@@ -243,10 +279,12 @@ class GameSession {
       _guard = await SessionLease.acquire(Directory(dataRoot));
     }
     try {
+      cancellation.check();
       final Map<String, dynamic> raw;
       final PreparedEmulator e;
       if (resolve != null) {
         _resolved = await resolve!(selected);
+        cancellation.check();
         if (_stopping || generation != _generation)
           throw StateError('Game preparation cancelled');
         e = _resolved!.emulator;
@@ -323,6 +361,7 @@ class GameSession {
       }
       final args = await EmulatorAdapter.forName(e.name)
           .prepare(e, selected, rom.path, _retroPort);
+      cancellation.check();
       _revision = 0;
       _sample = -1;
       status = null;
@@ -500,7 +539,16 @@ class GameSession {
         (_) => unawaited(_poll(generation)),
       );
     } catch (_) {
-      await _release();
+      final child = _preparation;
+      if (child != null && child.running) {
+        // A cold-initialization emulator can outlive a failed stop. Keep the
+        // parent's writer exclusion and supervision until that exact child exits.
+        child.onExit = (code) {
+          unawaited(_release().whenComplete(() => onExit?.call(code)));
+        };
+      } else if (_process == null) {
+        await _release();
+      }
       rethrow;
     }
   }
@@ -530,6 +578,11 @@ class GameSession {
             json['paused'] = _retroPaused;
           }
           status = BridgeStatus(json);
+          if (emulator?.name == 'Ryubing' &&
+              status!.inputReady &&
+              status!.paused == 1 &&
+              nativeProgramId != null)
+            _nativeGameReady = true;
           if (emulator?.name == 'Eden' &&
               RegExp(r'^010[0-9a-f]{13}$')
                   .hasMatch(status?.nativeProgram ?? ''))
@@ -675,6 +728,7 @@ class GameSession {
     while (DateTime.now().isBefore(until) &&
         process != null &&
         identical(process, _process)) {
+      cancellation.check();
       if (status != null && status!.pid == process.pid && ready(status!))
         return;
       await Future<void>.delayed(const Duration(milliseconds: 32));
@@ -688,15 +742,53 @@ class GameSession {
     );
   }
 
-  Future<void> stop() async {
+  Future<void> stop() {
+    if (_stopWork case final work?) return work;
+    final work = _stop();
+    _stopWork = work;
+    return work.whenComplete(() {
+      if (identical(_stopWork, work)) _stopWork = null;
+    });
+  }
+
+  Future<void> _stop() async {
+    cancelPreparation();
+    _stopping = true;
+    await _preparation?.stop();
+    if (_process == null && _launchWork != null) {
+      try {
+        await _launchWork;
+      } catch (_) {
+        /* launch reports its own cancellation */
+      }
+    }
     final process = _process;
     if (process == null) {
-      _stopping = true;
-      await _preparation?.stop();
       await _exitDone;
+      if (_guard != null && !running) await _release();
       return;
     }
     _stopping = true;
+    final deadline = DateTime.now().add(const Duration(seconds: 20));
+    // Avalonia can create a visible window before its renderer cancellation
+    // source exists. Closing at that point aborts the pinned Ryubing build.
+    // Wait for the same native game observation used by cold initialization;
+    // keep sampling and writer exclusion while cancellation is visible in UI.
+    if (emulator!.name == 'Ryubing') {
+      while (identical(process, _process) &&
+          !_nativeGameReady &&
+          DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 32));
+      }
+      if (identical(process, _process) && !_nativeGameReady)
+        throw StateError(
+          'Ryubing is still initializing and cannot close safely yet. Retry Cancel launch when it finishes, or quit Broomm and recover the emulator on return. Local progress was kept.',
+        );
+      if (!identical(process, _process)) {
+        await _exitDone;
+        return;
+      }
+    }
     await command([], active: false, quit: true);
     if (emulator!.name == 'RetroArch')
       _retro?.send(
@@ -705,7 +797,7 @@ class GameSession {
         _retroPort,
       );
     final result = await process.exitCode.timeout(
-      const Duration(seconds: 20),
+      deadline.difference(DateTime.now()),
       onTimeout: () => throw StateError(
         'The emulator is still open. Close its window normally, then try again. Broomm has kept the game and its data in place.',
       ),
@@ -763,6 +855,7 @@ class GameSession {
     );
     _preparation = child;
     try {
+      cancellation.check();
       await child.launch(game);
       await child.waitFor(
         (s) => s.inputReady && s.paused == 1 && child.nativeProgramId != null,
@@ -774,10 +867,11 @@ class GameSession {
           'The Switch emulator did not acknowledge the loaded game identity.',
         );
       await child.stop();
+      cancellation.check();
       return program;
     } finally {
       if (child.running) await child.stop();
-      _preparation = null;
+      if (!child.running && identical(_preparation, child)) _preparation = null;
     }
   }
 }

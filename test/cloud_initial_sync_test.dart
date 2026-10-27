@@ -207,4 +207,25 @@ void main() {
     expect(model.cloudStatus(42), CloudSaveStatus.waiting);
     expect(api.records, isEmpty);
   });
+  test('an explicit save action cancels and drains idle first sync instead of refusing it as a current game', () async {
+    api.savesHeld = Completer<void>();
+    api.savesEntered = Completer<void>();
+    await model.downloadGame(api.detail);
+    await api.savesEntered!.future;
+    var ran = false;
+    final action = model.cloudAction(() async {
+      ran = true;
+      return 'explicit';
+    });
+    await Future<void>(() {});
+    expect(model.busy, true);
+    expect(ran, false);
+    await expectLater(model.cloudAction(() async {}), throwsStateError);
+    api.savesHeld!.complete();
+    expect(await action, 'explicit');
+    expect(ran, true);
+    expect(model.busy, false);
+    final lease = await SessionLease.acquire(data);
+    await lease.release();
+  });
 }

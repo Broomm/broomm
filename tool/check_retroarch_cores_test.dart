@@ -39,13 +39,22 @@ void main() {
         void Function(Pointer<Void>)
       >('free');
   test('all pinned expansion cores load their real native ABI and report media contracts', () async {
+    final root = await Directory('.tool-cache/research/ra-wii-switch')
+        .createTemp('native-public-abi-');
+    final manager = ManagedEmulators(
+      Directory('${root.path}/data'),
+      asset: (p) => File(p).readAsString(),
+    );
+    addTearDown(manager.dispose);
+    await manager.install(await manager.readPlan(only: {'retroarch'}));
+    expect(manager.error, isNull, reason: manager.error);
     final j = jsonDecode(
       await File('assets/setup/retroarch-cores.json').readAsString(),
     ) as Map;
     final report = <Map>[];
     for (final core in (j['cores'] as List).cast<Map>()) {
       final path = File(
-        'prototype-data/retroarch/cores/${core['id']}_libretro.dylib',
+        '${manager.root.path}/retroarch/${manager.buildFor('RetroArch')!.hash}/cores/${core['id']}-${core['sha256']}/core.dylib',
       ).absolute.path;
       expect(await sha256File(path), core['sha256']);
       final lib = DynamicLibrary.open(path);

@@ -46,7 +46,7 @@ Future<void> main(List<String> args) async {
   await file.writeAsString(
     '${const JsonEncoder.withIndent('  ').convert(j)}\n',
   );
-  final setup = File('assets/setup/setup.json');
+  final setup = File('tool/setup-development.json');
   final s = jsonDecode(await setup.readAsString()) as Map;
   s['launchers']['melonds'] = {'source': 'tested:melonds'};
   await setup.writeAsString(

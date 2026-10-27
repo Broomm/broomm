@@ -521,6 +521,7 @@ class ShellModel extends ChangeNotifier {
   SavedProfile? profile;
   RommClient? client;
   bool busy = false, storeBusy = false, moreBusy = false, disposed = false;
+  bool closing = false;
   bool _gameActive = false;
   bool get gameActive => _gameActive;
   EmulatorConfiguration? _configuration;

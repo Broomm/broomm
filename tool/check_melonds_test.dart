@@ -23,7 +23,10 @@ void main() {
       asset: (path) => File(path).readAsString(),
     );
     await manager.load();
-    final plan = await manager.readPlan(only: {'melonds'});
+    final plan = await manager.readPlan(
+      file: 'tool/setup-development.json',
+      only: {'melonds'},
+    );
     await manager.install(plan);
     expect(manager.error, isNull);
     final game = LaunchGame(

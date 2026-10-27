@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import '../addons/three_ds.dart';
 import '../session.dart';
+import '../romm/transfer.dart';
 import 'files.dart';
 import 'digest.dart';
 import 'ryubing.dart';
@@ -156,8 +157,10 @@ class ProgressLayout {
 
 Future<ProgressLayout> gameProgressLayout(
   ResolvedSession session,
-  String platform,
-) async {
+  String platform, {
+  DownloadCancellation? cancellation,
+}) async {
+  cancellation?.check();
   final e = session.emulator;
   final root = Directory(e.root);
   final ownership = await progressJson(File('${root.path}/profile.json'));
@@ -260,9 +263,9 @@ Future<ProgressLayout> gameProgressLayout(
     case 'Eden':
       if (platform != 'switch')
         throw const FormatException('Switch game platform differs');
-      return edenProgressLayout(session, u);
+      return edenProgressLayout(session, u, cancellation: cancellation);
     case 'Ryubing':
-      return ryubingProgressLayout(session, u);
+      return ryubingProgressLayout(session, u, cancellation: cancellation);
     case 'melonDS':
       final file = File(session.rom);
       final id = await dsSaveIdentity(session.rom);
@@ -320,8 +323,10 @@ Future<ProgressLayout> gameProgressLayout(
             ),
             ProgressArea(
               state,
-              '$dir/states',
-              prefix: e.coreId == 'flycast'
+              e.retroStateDirectory ?? '$dir/states',
+              prefix: e.retroNativeStateNames
+                  ? '${retroStateStem(session.rom)}.state'
+                  : e.coreId == 'flycast'
                   ? '${await retroSaveStem(session.rom, e.coreId!)}.state'
                   : 'game.state',
             ),

@@ -31,7 +31,6 @@ import '../ps3_firmware.dart';
 import '../playstation_firmware.dart';
 import '../retroarch_firmware.dart';
 import '../switch_firmware.dart';
-import '../romm/transfer.dart';
 import '../progress/ryubing.dart';
 import 'cloud_saves_dialog.dart';
 import '../android/emulators.dart';
@@ -40,6 +39,8 @@ import 'library.dart';
 import 'update_screen.dart';
 import '../updates/installation.dart';
 import '../session_lease.dart';
+import 'quit_dialog.dart';
+import 'session_recovery_dialog.dart';
 
 class BroommApp extends StatefulWidget {
   const BroommApp({
@@ -65,6 +66,50 @@ class _BroommAppState extends State<BroommApp> {
   PrototypeModel? _activeGameModel;
   bool startingGame = false;
   SessionLease? _updateLease;
+  Future<void>? _quitting;
+
+  Future<void> _requestClose() {
+    if (_quitting case final work?) return work;
+    if (!mounted) return Future.value();
+    final context = navigator.currentContext;
+    if (context == null) return Future.value();
+    m.closing = true;
+    final work = showQuitDialog(
+      context,
+      finish: (phase) async {
+        m.cancelDownload();
+        m.cloud.cancel();
+        final active = _activeGameModel;
+        if (active != null) {
+          phase('Stopping the game and keeping local progress…');
+          await active.stop();
+          if (active.session.running || active.session.preparing)
+            throw StateError(active.error ?? 'The emulator is still open.');
+        }
+        if (m.applicationUpdating && !m.updates.handedOff) {
+          phase('Stopping the application download…');
+          await m.updates.finish();
+        }
+        phase('Checking emulator configuration…');
+        await m.finishConfiguration();
+        phase('Finishing cloud saves…');
+        await m.finishCloud();
+        phase('Stopping emulator setup…');
+        await m.emulators.finishSetup();
+        phase('Keeping the download queue…');
+        await m.finishDownloads();
+        m.client?.close();
+        phase('Closing logs…');
+        await m.log?.close();
+      },
+      exit: DesktopHost().close,
+    );
+    _quitting = work;
+    return work.whenComplete(() {
+      if (identical(_quitting, work)) _quitting = null;
+      m.closing = false;
+    });
+  }
 
   Future<void> _installApplicationUpdate() async {
     if (m.applicationUpdating || m.updates.handedOff) return;
@@ -254,6 +299,14 @@ class _BroommAppState extends State<BroommApp> {
     m.gameActive = true;
     try {
       await m.finishCloud();
+      if (_quitting != null) return;
+      if (!m.isAndroid &&
+          !await recoverGameSession(
+            navigator.currentContext!,
+            m.storage.directory.path,
+          ))
+        return;
+      if (_quitting != null) return;
       if (m.isAndroid && await m.androidSession.pending() != null) {
         await _recoverAndroidSession();
         return;
@@ -343,6 +396,7 @@ class _BroommAppState extends State<BroommApp> {
               ),
             );
       if (selected == null) return;
+      if (_quitting != null) return;
       if (m.isAndroid) {
         await _playAndroid(entry, platform, selected);
         return;
@@ -354,13 +408,14 @@ class _BroommAppState extends State<BroommApp> {
       late final PrototypeModel model;
       late final GameSession session;
       Future<ResolvedSession> resolve(LaunchGame g) async {
+        final cancellation = session.cancellation;
         if (platform.slug == 'ps3') {
           await ensurePs3Firmware(
             m.emulators,
             profile.id,
             entry.game.platformId,
             m.client!,
-            DownloadCancellation(),
+            cancellation,
             (phase) {
               model.notice = phase;
               model.notifyListeners();
@@ -376,7 +431,7 @@ class _BroommAppState extends State<BroommApp> {
             profile.id,
             entry.game.platformId,
             m.client!,
-            DownloadCancellation(),
+            cancellation,
             (phase) {
               model.notice = phase;
               model.notifyListeners();
@@ -386,13 +441,18 @@ class _BroommAppState extends State<BroommApp> {
             emulator: platform.emulator,
           );
         }
-        final resolved = await m.emulators.resolve(g, profile.id);
+        var resolved = await m.emulators.resolve(g, profile.id);
+        cancellation.check();
+        if (platform.slug == 'switch')
+          resolved = resolved.withInstallationIdentity(
+            await m.library.installationIdentity(entry, resolved.rom),
+          );
         if (platform.slug == 'psx' || platform.slug == 'ps2') {
           await ensurePlayStationFirmware(
             resolved,
             entry.game.platformId,
             m.client!,
-            DownloadCancellation(),
+            cancellation,
             (phase) {
               model.notice = phase;
               model.notifyListeners();
@@ -406,7 +466,7 @@ class _BroommAppState extends State<BroommApp> {
             resolved,
             entry.game.platformId,
             m.client!,
-            DownloadCancellation(),
+            cancellation,
             (phase) {
               model.notice = phase;
               model.notifyListeners();
@@ -441,7 +501,7 @@ class _BroommAppState extends State<BroommApp> {
               entry: entry,
               game: entry.game,
               client: m.client!,
-              cancellation: DownloadCancellation(),
+              cancellation: cancellation,
               owner: session.ownerLease,
               progress: (value) {
                 model.notice = value.phase;
@@ -458,20 +518,36 @@ class _BroommAppState extends State<BroommApp> {
             entry: entry,
           );
         }
+        cancellation.check();
+
         try {
           try {
-            cloudGame = await m.cloudGame(id, resolved: resolved);
+            cloudGame = await m.cloudGame(
+              id,
+              resolved: resolved,
+              cancellation: cancellation,
+            );
           } on SwitchNeedsInitialization catch (needed) {
             model.notice =
                 'Initializing this game’s private Switch save storage…';
             model.notifyListeners();
             final program = await session.initializeSwitchStorage(resolved, g);
-            await recordRyubingGame(resolved, program, needed.hash);
-            cloudGame = await m.cloudGame(id, resolved: resolved);
+            await recordRyubingGame(
+              resolved,
+              program,
+              needed.identity,
+              cancellation: cancellation,
+            );
+            cloudGame = await m.cloudGame(
+              id,
+              resolved: resolved,
+              cancellation: cancellation,
+            );
           }
         } on UnsupportedError catch (e) {
           m.showNotice('${e.message}', problem: true);
         }
+        cancellation.check();
         if (cloudGame != null) {
           model.notice = 'Checking the current profile’s broomm cloud save…';
           model.notifyListeners();
@@ -515,6 +591,7 @@ class _BroommAppState extends State<BroommApp> {
               model: model,
               game: game,
               launcherController: _dispatch,
+              closeRequested: _requestClose,
               beforeClose: () async {
                 await m.emulators.finishSetup();
                 await m.finishDownloads();
@@ -671,6 +748,7 @@ class _BroommAppState extends State<BroommApp> {
         m.artworkRequests.isEmpty ||
         lab ||
         m.gameActive ||
+        m.closing ||
         m.applicationUpdating ||
         !mounted)
       return;
@@ -724,6 +802,12 @@ class _BroommAppState extends State<BroommApp> {
           revision != m.contextRevision ||
           (navigator.currentState?.canPop() ?? true))
         return;
+      if (!m.isAndroid &&
+          !await recoverGameSession(
+            navigator.currentContext!,
+            m.storage.directory.path,
+          ))
+        return;
       await homeGameOptions(navigator.currentContext!, m, game);
     } finally {
       showingOptions = false;
@@ -742,28 +826,15 @@ class _BroommAppState extends State<BroommApp> {
       if (call.method == 'controller' && !lab)
         _dispatch(call.arguments as String);
       if (call.method == 'closeRequested' && !lab) {
-        if (m.applicationUpdating) {
-          if (m.updates.handedOff) return;
-          await m.updates.finish();
-        }
-        try {
-          await m.finishConfiguration();
-        } catch (e) {
-          m.reportProblem('$e');
-          return;
-        }
-        await m.finishCloud();
-        await m.emulators.finishSetup();
-        await m.finishDownloads();
-        m.client?.close();
-        await m.log?.close();
-        await DesktopHost().close();
+        unawaited(_requestClose());
+        return true;
       }
     });
   }
 
   void _dispatch(String value) {
     if (lab &&
+        _quitting == null &&
         (_activeGameModel?.screen != Screen.loading ||
             _activeGameModel!.session.running))
       return;

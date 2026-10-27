@@ -28,7 +28,9 @@ void main() {
     final results = <Map<String, Object>>[];
     const profile = 'f323456789abcdef0123456789abcdef';
     await manager.load();
-    await manager.install(await manager.readPlan());
+    await manager.install(
+      await manager.readPlan(file: 'tool/setup-development.json'),
+    );
     expect(manager.error, isNull, reason: manager.error);
     try {
       for (final build in manager.builds) {

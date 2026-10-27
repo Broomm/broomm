@@ -21,7 +21,12 @@ void main() {
       asset: (p) => File(p).readAsString(),
     );
     await manager.load();
-    await manager.install(await manager.readPlan(only: {'rpcs3-intel'}));
+    await manager.install(
+      await manager.readPlan(
+        file: 'tool/setup-development.json',
+        only: {'rpcs3-intel'},
+      ),
+    );
     expect(manager.error, isNull, reason: manager.error);
     final game = LaunchGame(
       '8002',

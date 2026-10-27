@@ -55,6 +55,7 @@ void main() {
     );
     await manager.load();
     final source = await manager.readPlan(
+      file: 'tool/setup-development.json',
       only: {intel ? 'rpcs3-intel' : 'rpcs3'},
     );
     final item = source.items.single;

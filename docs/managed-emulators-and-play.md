@@ -1,6 +1,12 @@
 # Managed emulators and Home play
 
+Current setup needs no external pack/import: all twelve managed frontends and
+all fifteen RetroArch cores download through bundled recipes. See the
+[public-core setup walkthrough and current macOS build](retroarch-public-cores.md).
+
 The following records the original managed-play milestone. The current pack also includes [melonDS/cloud progress](library-and-progress-followup.md), [RetroArch/Wii/Switch expansion](retroarch-wii-switch.md), [DuckStation/PCSX2/ARMSX2](playstation-support.md) and [PPSSPP/Eden](psp-and-eden-support.md). Consult the [current matrix](platform-support-matrix.md) for implemented routes and remaining limits.
+
+The 2026-10-27 [delivery follow-up](managed-setup-downloads.md) replaces the bundled checkout-only paths with reviewed downloads and a companion snapshot pack. Local-only provisioning and remote-delivery limits below describe this original milestone, rather than the current installer.
 
 Updated 2026-10-17. This slice connects the existing RomM download library to the five tested native emulator integrations. It does not implement save sync or change the wider product roster. Automated native checks use the supplied ROMs and explicit synthetic SDL sources. Physical gameplay, owner-authenticated RomM transfers and Steam/gamescope acceptance remain separate.
 

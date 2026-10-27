@@ -1,0 +1,969 @@
+{
+  "date": "2026-10-27",
+  "base_revision": "14528f23d048823d9c450709a9b74b760ccf8f63",
+  "working_tree_changes": true,
+  "scope": "Available official core versions replace all seven local default dependencies; macOS running Dock image assigned directly from packaged ICNS.",
+  "default_delivery": {
+    "frontends": 12,
+    "cores": 15,
+    "https_recipes": 27,
+    "external_archives": 0,
+    "requires_import": false
+  },
+  "new_core_artifacts": {
+    "fbneo": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/fbneo_libretro.dylib.zip",
+      "archive_sha256": "da28743a1387c695af240a8c8953f9ecc3d4e67a9f3e61946885bf13224d1d6b",
+      "archive_bytes": 14821557,
+      "sha256": "04461e35aaf900378c08d843bf101ccd74f5e65e4fb8931104b60d68f29f0bc8",
+      "bytes": 58893425,
+      "name": "FinalBurn Neo",
+      "version": "v1.0.0.03  GIT32958a8",
+      "extensions": "zip|7z|cue|ccd|chd",
+      "fullPath": true,
+      "blockExtract": true,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/fbneo/fbneo_libretro.dylib:\n\tfbneo_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 904.4.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1292.0.0)\n"
+    },
+    "flycast": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/flycast_libretro.dylib.zip",
+      "archive_sha256": "0b6048a630f0bda7d6e183181d242b80032fbe63343c417e04ba0ad6c113aebf",
+      "archive_bytes": 4741683,
+      "sha256": "d2679fddc8468f6f7ba27affe85dde9fc5336447d39d3724b95efa178ac27ce5",
+      "bytes": 18434728,
+      "name": "Flycast",
+      "version": "1b63c8a",
+      "extensions": "chd|cdi|elf|cue|gdi|lst|bin|dat|zip|7z|m3u",
+      "fullPath": true,
+      "blockExtract": true,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/flycast/flycast_libretro.dylib:\n\t@rpath/flycast_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL (compatibility version 1.0.0, current version 1.0.0)\n\t/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3038.1.255)\n\t/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1800.101.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    },
+    "gambatte": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/gambatte_libretro.dylib.zip",
+      "archive_sha256": "b205c1f8ab566627ffad4f8c7847ad749bcd2a60dfe2bb7a0f078eaf439689e9",
+      "archive_bytes": 388324,
+      "sha256": "c1ddae2647fb3952b09d5bf964df00275ef375dd22fc01727bb4e504638616f8",
+      "bytes": 3916168,
+      "name": "Gambatte",
+      "version": "v0.5.0-netlink 7809bb6",
+      "extensions": "gb|gbc|dmg",
+      "fullPath": false,
+      "blockExtract": false,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/gambatte/gambatte_libretro.dylib:\n\tgambatte_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1800.101.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    },
+    "genesis_plus_gx": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/genesis_plus_gx_libretro.dylib.zip",
+      "archive_sha256": "8e2e080510b84115c2649e1c7e854d2a118c465529aa43ae3865fc4ded8f0df9",
+      "archive_bytes": 868871,
+      "sha256": "1d08b724cf975de17af146f9ba4292946a609b26d03da3d0d9414c90983095da",
+      "bytes": 9040096,
+      "name": "Genesis Plus GX",
+      "version": "v1.7.4 60bee4c",
+      "extensions": "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg|68k|sgd",
+      "fullPath": true,
+      "blockExtract": false,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/genesis_plus_gx/genesis_plus_gx_libretro.dylib:\n\tgenesis_plus_gx_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    },
+    "mednafen_saturn": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_saturn_libretro.dylib.zip",
+      "archive_sha256": "606eb6f0621a43393b7be233d4bd1401cb0778d4d03d511c41effb82753c26e7",
+      "archive_bytes": 1645297,
+      "sha256": "5aa4e5301a6c5fddd92de8e7c320fb7483c9ec20c3a71061425eb8a3ae15e3dd",
+      "bytes": 10003072,
+      "name": "Beetle Saturn",
+      "version": "v1.32.1",
+      "extensions": "cue|ccd|chd|toc|m3u|zip",
+      "fullPath": true,
+      "blockExtract": true,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/mednafen_saturn/mednafen_saturn_libretro.dylib:\n\tmednafen_saturn_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 1800.101.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    },
+    "opera": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/opera_libretro.dylib.zip",
+      "archive_sha256": "a6810529e2f50208566ec45de8f0a0a9843192b08c621276fbe424a284ab5590",
+      "archive_bytes": 273488,
+      "sha256": "2466d53d9dd1eada6cf6bc06ff70c37073125b1a31fe81d4174d8d38522b6200",
+      "bytes": 601384,
+      "name": "Opera",
+      "version": "1.0.0 370d9a2",
+      "extensions": "iso|bin|chd|cue",
+      "fullPath": true,
+      "blockExtract": false,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/opera/opera_libretro.dylib:\n\topera_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    },
+    "virtualjaguar": {
+      "source_url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/virtualjaguar_libretro.dylib.zip",
+      "archive_sha256": "a6abc7c8423d9ea2c1331fa5b857cf546ceeecd7391d2eebb8cada00c6760f0b",
+      "archive_bytes": 787548,
+      "sha256": "f3d2ce0ec19763e94ebbceefcb1993ca037e903a9d1a71cf61514ea44ee934c7",
+      "bytes": 2424544,
+      "name": "Virtual Jaguar",
+      "version": "v3.10.0 ffea7893",
+      "extensions": "j64|jag|rom|abs|cof|bin|prg|cue|cdi|chd",
+      "fullPath": false,
+      "blockExtract": false,
+      "architecture": "arm64",
+      "dependencies": "/Users/ptrschneider/Projects/broomm/.tool-cache/retroarch-public-cores/virtualjaguar/virtualjaguar_libretro.dylib:\n\tvirtualjaguar_libretro.dylib (compatibility version 0.0.0, current version 0.0.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)\n"
+    }
+  },
+  "core_sources_and_licenses": [
+    {
+      "id": "fbneo",
+      "sha256": "04461e35aaf900378c08d843bf101ccd74f5e65e4fb8931104b60d68f29f0bc8",
+      "archive_sha256": "da28743a1387c695af240a8c8953f9ecc3d4e67a9f3e61946885bf13224d1d6b",
+      "version": "v1.0.0.03  GIT32958a8",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/fbneo_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/FBNeo",
+      "license": "Non-commercial"
+    },
+    {
+      "id": "flycast",
+      "sha256": "d2679fddc8468f6f7ba27affe85dde9fc5336447d39d3724b95efa178ac27ce5",
+      "archive_sha256": "0b6048a630f0bda7d6e183181d242b80032fbe63343c417e04ba0ad6c113aebf",
+      "version": "1b63c8a",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/flycast_libretro.dylib.zip",
+      "source_repository": "https://github.com/flyinghead/flycast",
+      "license": "GPLv2"
+    },
+    {
+      "id": "gambatte",
+      "sha256": "c1ddae2647fb3952b09d5bf964df00275ef375dd22fc01727bb4e504638616f8",
+      "archive_sha256": "b205c1f8ab566627ffad4f8c7847ad749bcd2a60dfe2bb7a0f078eaf439689e9",
+      "version": "v0.5.0-netlink 7809bb6",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/gambatte_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/gambatte-libretro",
+      "license": "GPLv2"
+    },
+    {
+      "id": "genesis_plus_gx",
+      "sha256": "1d08b724cf975de17af146f9ba4292946a609b26d03da3d0d9414c90983095da",
+      "archive_sha256": "8e2e080510b84115c2649e1c7e854d2a118c465529aa43ae3865fc4ded8f0df9",
+      "version": "v1.7.4 60bee4c",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/genesis_plus_gx_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/Genesis-Plus-GX",
+      "license": "Non-commercial"
+    },
+    {
+      "id": "mednafen_lynx",
+      "sha256": "bcec96d1efe6c21e3904db37f818376831f22943eecd7e4327244258f7aee500",
+      "archive_sha256": "d2422306e65925d8977e6569d88cc70a3d9ecad75526fc9d7e809e0a9e2f042e",
+      "version": "v1.24.0 fcdefcf",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_lynx_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/beetle-lynx-libretro",
+      "license": "Zlib|GPLv2"
+    },
+    {
+      "id": "mednafen_pce_fast",
+      "sha256": "b3648673596b6d7ffcf02418e202cec55f21d214319a2cdafc4336be6f9c0f69",
+      "archive_sha256": "07a1346d121756f1aca92dc31702565e6effb161e6931af219377e8f299e85c7",
+      "version": "v1.31.0.0",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_pce_fast_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+      "license": "GPLv2"
+    },
+    {
+      "id": "mednafen_saturn",
+      "sha256": "5aa4e5301a6c5fddd92de8e7c320fb7483c9ec20c3a71061425eb8a3ae15e3dd",
+      "archive_sha256": "606eb6f0621a43393b7be233d4bd1401cb0778d4d03d511c41effb82753c26e7",
+      "version": "v1.32.1",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mednafen_saturn_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/beetle-saturn-libretro",
+      "license": "GPLv2"
+    },
+    {
+      "id": "mesen",
+      "sha256": "3849098df9baf3b37fb58e27049c05d39ff4c4ffa63f0d739294188ba601c5d5",
+      "archive_sha256": "b0eab7fb9ec5d726c7d3ac2d95f03bc207adb74c811481c4b1f40f506717c74d",
+      "version": "0.9.9",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mesen_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/Mesen",
+      "license": "GPLv3"
+    },
+    {
+      "id": "mgba",
+      "sha256": "54ae92e80b012013f6d777fb3158b9f925be22c97896049b8549614d7514f505",
+      "archive_sha256": "af37dd2c8f6fcfb32e6b7ab7c2d14a89e16ab2766fb58c0138331c558b6f13de",
+      "version": "0.11-212-7a12d6d",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mgba_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/mgba",
+      "license": "MPLv2.0"
+    },
+    {
+      "id": "mupen64plus_next",
+      "sha256": "17f38964f0537451dadeed7e8d602f0c1ffc23acd8e58d994621690acac17755",
+      "archive_sha256": "cb9600249cd3d15300e2455ec74953da781a31c7feb2bcb546af3b8050f068aa",
+      "version": "3.0-Vulkan 15bada8",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/mupen64plus_next_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/mupen64plus-libretro-nx",
+      "license": "GPLv2"
+    },
+    {
+      "id": "opera",
+      "sha256": "2466d53d9dd1eada6cf6bc06ff70c37073125b1a31fe81d4174d8d38522b6200",
+      "archive_sha256": "a6810529e2f50208566ec45de8f0a0a9843192b08c621276fbe424a284ab5590",
+      "version": "1.0.0 370d9a2",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/opera_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/opera-libretro",
+      "license": "LGPL/Non-commercial"
+    },
+    {
+      "id": "picodrive",
+      "sha256": "0646e8d7896e27ee65073851bbd1daf713fb95fb63b7684103ed008518e84512",
+      "archive_sha256": "bfe983d2eeecbb9fe9a5ddf6edd9b52c5ad942747f0e0001c8d0431998c531d4",
+      "version": "2.05-1890c29",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/picodrive_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/picodrive",
+      "license": "MAME"
+    },
+    {
+      "id": "stella",
+      "sha256": "8ba747d971903b297e8071d891746a6ec8886005d7d5817de440ddc420c80923",
+      "archive_sha256": "362dd7f8d0e1baad72a45f1946277b0075d5d7140a840d4878595debbf76f787",
+      "version": "8.0_pre b52ccb02e",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/stella_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/stella",
+      "license": "GPLv2"
+    },
+    {
+      "id": "virtualjaguar",
+      "sha256": "f3d2ce0ec19763e94ebbceefcb1993ca037e903a9d1a71cf61514ea44ee934c7",
+      "archive_sha256": "a6abc7c8423d9ea2c1331fa5b857cf546ceeecd7391d2eebb8cada00c6760f0b",
+      "version": "v3.10.0 ffea7893",
+      "url": "https://buildbot.libretro.com/nightly/apple/osx/arm64/latest/virtualjaguar_libretro.dylib.zip",
+      "source_repository": "https://github.com/libretro/virtualjaguar-libretro",
+      "license": "GPLv3"
+    }
+  ],
+  "previous_cores": [
+    {
+      "id": "fbneo",
+      "sha256": "b8d92b66661a1b52a91b6e43e1d493374b82dfa56ea3b1f9eabf703848c28a3d",
+      "version": "v1.0.0.03  GIT2b0c1c0"
+    },
+    {
+      "id": "flycast",
+      "sha256": "3cf572d477094be831106110d82e4bb3c6b8ae0db9f75106f0e2fff3ec881b61",
+      "version": "6d81b99"
+    },
+    {
+      "id": "gambatte",
+      "sha256": "19f088f910a89ffef80a26766f682dd01aa5ae81c95adca6926a3d9c10733a50",
+      "version": "v0.5.0-netlink d9d6cd0"
+    },
+    {
+      "id": "genesis_plus_gx",
+      "sha256": "e5561450dfd55fda99b176d504cd28fd7fa08746c9864f626cea0e3006490536",
+      "version": "v1.7.4 aa74d79"
+    },
+    {
+      "id": "mednafen_saturn",
+      "sha256": "ad016e8f789fdee9280f32c198da72e7bf0e1727c4af272298ba78f82ba27449",
+      "version": "v1.32.1"
+    },
+    {
+      "id": "opera",
+      "sha256": "a78f731b019146e60e345488a4ea7f97df93706be054c67e67b2de7e4bb8077f",
+      "version": "1.0.0 2d03e48"
+    },
+    {
+      "id": "virtualjaguar",
+      "sha256": "5fbdc1943a7f46f767d726b3875f3e8779a916cdc826c01ae144cc655a0f9d39",
+      "version": "v3.10.0 e7db5367"
+    }
+  ],
+  "selection": "Known installed previous cores remain usable. Current hashes take effect only when explicit setup has published them. Native saves share the same directory. Changed cores isolate physical state directories with full frontend/core hashes; cloud state fingerprints remain exact.",
+  "checks": {
+    "regressions": {
+      "passed": 55,
+      "log": ".tool-cache/retroarch-public-cores/regressions-final.log",
+      "cases": "startup/upgrade, failed verification, cancellation/retry, ordinary-save retention, physical state isolation/fingerprints, removal and download/archive boundaries"
+    },
+    "native_https_delivery": {
+      "host": "Version 27.0.1 (Build 26A434)",
+      "fixture": "/Users/ptrschneider/Projects/broomm/.tool-cache/setup-source-replacements/native-yiGy4c",
+      "project_root": null,
+      "public_application_downloads": [
+        "dolphin",
+        "ryubing",
+        "retroarch"
+      ],
+      "core_downloads": 15,
+      "offline_archives": [],
+      "installed": {
+        "retroarch": "a9ac06b90a9a4374e29ac6e6fc3bbd5634df73316e9c32592e60f8dd43df1a76",
+        "dolphin": "cfbfb74e5a1c3191fb33a135ee5e258b33bff1b7a02e7d3e6d4710c0fcd8286e",
+        "ryubing": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4"
+      },
+      "cores": [
+        "fbneo",
+        "flycast",
+        "gambatte",
+        "genesis_plus_gx",
+        "mednafen_lynx",
+        "mednafen_pce_fast",
+        "mednafen_saturn",
+        "mesen",
+        "mgba",
+        "mupen64plus_next",
+        "opera",
+        "picodrive",
+        "stella",
+        "virtualjaguar"
+      ],
+      "full_inventories": "passed",
+      "restart_without_sources": "passed"
+    },
+    "native_abi": [
+      {
+        "id": "fbneo",
+        "sha256": "04461e35aaf900378c08d843bf101ccd74f5e65e4fb8931104b60d68f29f0bc8",
+        "name": "FinalBurn Neo",
+        "version": "v1.0.0.03  GIT32958a8",
+        "extensions": "zip|7z|cue|ccd|chd",
+        "fullPath": true,
+        "blockExtract": true
+      },
+      {
+        "id": "flycast",
+        "sha256": "d2679fddc8468f6f7ba27affe85dde9fc5336447d39d3724b95efa178ac27ce5",
+        "name": "Flycast",
+        "version": "1b63c8a",
+        "extensions": "chd|cdi|elf|cue|gdi|lst|bin|dat|zip|7z|m3u",
+        "fullPath": true,
+        "blockExtract": true
+      },
+      {
+        "id": "gambatte",
+        "sha256": "c1ddae2647fb3952b09d5bf964df00275ef375dd22fc01727bb4e504638616f8",
+        "name": "Gambatte",
+        "version": "v0.5.0-netlink 7809bb6",
+        "extensions": "gb|gbc|dmg",
+        "fullPath": false,
+        "blockExtract": false
+      },
+      {
+        "id": "genesis_plus_gx",
+        "sha256": "1d08b724cf975de17af146f9ba4292946a609b26d03da3d0d9414c90983095da",
+        "name": "Genesis Plus GX",
+        "version": "v1.7.4 60bee4c",
+        "extensions": "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg|68k|sgd",
+        "fullPath": true,
+        "blockExtract": false
+      },
+      {
+        "id": "mednafen_lynx",
+        "sha256": "bcec96d1efe6c21e3904db37f818376831f22943eecd7e4327244258f7aee500",
+        "name": "Beetle Lynx",
+        "version": "v1.24.0 fcdefcf",
+        "extensions": "lnx|lyx|bll|o",
+        "fullPath": false,
+        "blockExtract": false
+      },
+      {
+        "id": "mednafen_pce_fast",
+        "sha256": "b3648673596b6d7ffcf02418e202cec55f21d214319a2cdafc4336be6f9c0f69",
+        "name": "Beetle PCE Fast",
+        "version": "v1.31.0.0",
+        "extensions": "pce|cue|ccd|chd|toc|m3u",
+        "fullPath": true,
+        "blockExtract": false
+      },
+      {
+        "id": "mednafen_saturn",
+        "sha256": "5aa4e5301a6c5fddd92de8e7c320fb7483c9ec20c3a71061425eb8a3ae15e3dd",
+        "name": "Beetle Saturn",
+        "version": "v1.32.1",
+        "extensions": "cue|ccd|chd|toc|m3u|zip",
+        "fullPath": true,
+        "blockExtract": true
+      },
+      {
+        "id": "mesen",
+        "sha256": "3849098df9baf3b37fb58e27049c05d39ff4c4ffa63f0d739294188ba601c5d5",
+        "name": "Mesen",
+        "version": "0.9.9",
+        "extensions": "nes|fds|unf|unif",
+        "fullPath": true,
+        "blockExtract": false
+      },
+      {
+        "id": "mgba",
+        "sha256": "54ae92e80b012013f6d777fb3158b9f925be22c97896049b8549614d7514f505",
+        "name": "mGBA",
+        "version": "0.11-212-7a12d6d",
+        "extensions": "gba|gb|gbc|sgb",
+        "fullPath": false,
+        "blockExtract": false
+      },
+      {
+        "id": "mupen64plus_next",
+        "sha256": "17f38964f0537451dadeed7e8d602f0c1ffc23acd8e58d994621690acac17755",
+        "name": "Mupen64Plus-Next",
+        "version": "3.0-Vulkan 15bada8",
+        "extensions": "n64|v64|z64|bin|u1",
+        "fullPath": false,
+        "blockExtract": false
+      },
+      {
+        "id": "opera",
+        "sha256": "2466d53d9dd1eada6cf6bc06ff70c37073125b1a31fe81d4174d8d38522b6200",
+        "name": "Opera",
+        "version": "1.0.0 370d9a2",
+        "extensions": "iso|bin|chd|cue",
+        "fullPath": true,
+        "blockExtract": false
+      },
+      {
+        "id": "picodrive",
+        "sha256": "0646e8d7896e27ee65073851bbd1daf713fb95fb63b7684103ed008518e84512",
+        "name": "PicoDrive",
+        "version": "2.05-1890c29",
+        "extensions": "bin|gen|smd|md|32x|cue|iso|chd|m3u|sms|gg|sg|sc|68k|sgd|pco|vgm|vgz",
+        "fullPath": true,
+        "blockExtract": false
+      },
+      {
+        "id": "stella",
+        "sha256": "8ba747d971903b297e8071d891746a6ec8886005d7d5817de440ddc420c80923",
+        "name": "Stella",
+        "version": "8.0_pre b52ccb02e",
+        "extensions": "a26|bin",
+        "fullPath": false,
+        "blockExtract": false
+      },
+      {
+        "id": "virtualjaguar",
+        "sha256": "f3d2ce0ec19763e94ebbceefcb1993ca037e903a9d1a71cf61514ea44ee934c7",
+        "name": "Virtual Jaguar",
+        "version": "v3.10.0 ffea7893",
+        "extensions": "j64|jag|rom|abs|cof|bin|prg|cue|cdi|chd",
+        "fullPath": false,
+        "blockExtract": false
+      }
+    ],
+    "native_play": [
+      {
+        "platform": "gb",
+        "core": "gambatte",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-0a674aac73f9623a-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "gba",
+        "core": "mgba",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-ca740fbaae4be801-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "nes",
+        "core": "mesen",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-d7c0b8cd37346aba-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "genesis",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-13f32c62bf131d8d-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "atari2600",
+        "core": "stella",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-cde51198f15f979e-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "jaguar",
+        "core": "virtualjaguar",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-de6697b699c1ed0b-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "n64",
+        "core": "mupen64plus_next",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-58b808aecd39b4f5-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "sega32",
+        "core": "picodrive",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-d5d41439a7c67a0b-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "gamegear",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-13f32c62bf131d8d-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "sms",
+        "core": "genesis_plus_gx",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-13f32c62bf131d8d-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "tg16",
+        "core": "mednafen_pce_fast",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-bdac4c631c3c89a9-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      },
+      {
+        "platform": "arcade",
+        "core": "fbneo",
+        "saveKeys": [],
+        "stateKeys": [
+          "states-02c2a1dfe5d45acc-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": false
+      },
+      {
+        "platform": "gbc",
+        "core": "gambatte",
+        "saveKeys": [
+          "save/game.srm"
+        ],
+        "stateKeys": [
+          "states-0a674aac73f9623a-macos-arm64/game"
+        ],
+        "play": true,
+        "liveRemap": true,
+        "cloudNativeRoundTrip": true
+      }
+    ],
+    "native_bios_cores": {
+      "fixtures": [
+        {
+          "slug": "lynx",
+          "rom": 6460,
+          "title": "Eye of the Beholder",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-6hlOa1/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+          "saveFiles": {},
+          "stateKeys": [
+            "states-1eea39b8870e5ad4-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 30176
+            }
+          ],
+          "pending": false,
+          "matchedStateVerified": true
+        },
+        {
+          "slug": "saturn",
+          "rom": 6727,
+          "title": "The Story of Thor 2",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-6hlOa1/data/profiles/00000000000000000000000000000002/emulators/retroarch",
+          "saveFiles": {
+            "save/Legend of Oasis, The.srm": {
+              "sha256": "98f4b4b306194f9ad92446b6d867e29d4511f21706e017a509ec4feb6695ff8c",
+              "bytes": 32768
+            },
+            "save/Legend of Oasis, The.smpc": {
+              "sha256": "64d06a9b17f9d76003095c9e36bef5eac323bd37f47894b9cc25a2d84272e921",
+              "bytes": 12
+            },
+            "save/Legend of Oasis, The.bcr": {
+              "sha256": "4f8250fcab72ad2941f2e3d7410f90d1d1be55b6f3dead9dfced86f2c1063037",
+              "bytes": 524288
+            }
+          },
+          "stateKeys": [
+            "states-b641bc8f2a297e27-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 1181
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true,
+          "pauseAndLiveRemapVerified": true,
+          "matchedStateRestoreVerified": true
+        },
+        {
+          "slug": "3do",
+          "rom": 6027,
+          "title": "Crash 'n Burn",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-6hlOa1/data/profiles/00000000000000000000000000000003/emulators/retroarch",
+          "saveFiles": {
+            "save/opera/per_game/Crash n Burn.0.srm": {
+              "sha256": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e",
+              "bytes": 32768
+            }
+          },
+          "stateKeys": [
+            "states-e2b94fa5ebc13726-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 32768
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].srm",
+              "bytes": 32768
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-6hlOa1/data/profiles/00000000000000000000000000000004/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-c149d5dbbb856966-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 3297
+            },
+            {
+              "name": "Broomm [2026-10-22_00-00-01].zip",
+              "bytes": 3281
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "dc",
+          "rom": 6900,
+          "title": "Crazy Taxi (fresh VMUs)",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-6hlOa1/data/profiles/00000000000000000000000000000005/emulators/retroarch",
+          "saveFiles": {
+            "save/MK-51035.A1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.C1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.B1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            },
+            "save/MK-51035.D1.bin": {
+              "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+              "bytes": 131072
+            }
+          },
+          "stateKeys": [
+            "states-c149d5dbbb856966-macos-arm64/game"
+          ],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 1590
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        }
+      ],
+      "sourceHashes": {
+        "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+        "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+        "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+        "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+        "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+      }
+    },
+    "native_cartridge_arcade_saves": {
+      "fixtures": [
+        {
+          "slug": "genesis",
+          "rom": 6401,
+          "title": "Sonic the Hedgehog 3",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-YYPONH/data/profiles/00000000000000000000000000000001/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "89cc446564133aef5509268dc91923bdc429eef11704b2c84c36919d506ddfa1",
+              "bytes": 604
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 604
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "gamegear",
+          "rom": 6276,
+          "title": "Shining Force: The Sword of Hajya",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-YYPONH/data/profiles/00000000000000000000000000000002/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "aa8b8470e34095b032697afdc6294baed35e1ed83edf321b5457fad88091a9fc",
+              "bytes": 26752
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 26752
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "sms",
+          "rom": 6850,
+          "title": "Phantasy Star",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-YYPONH/data/profiles/00000000000000000000000000000003/emulators/retroarch",
+          "saveFiles": {
+            "save/game.srm": {
+              "sha256": "36e3b29df6c67e3bedadf20fc0f09aa0ec0479f484a303aa49e3426b36ec1034",
+              "bytes": 8188
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].srm",
+              "bytes": 8188
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        },
+        {
+          "slug": "arcade",
+          "rom": 718,
+          "title": "The Simpsons",
+          "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/ra-save-followup/native-YYPONH/data/profiles/00000000000000000000000000000004/emulators/retroarch",
+          "saveFiles": {
+            "save/fbneo/simpsons2p.nv": {
+              "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c",
+              "bytes": 128
+            }
+          },
+          "stateKeys": [],
+          "uploaded": [
+            {
+              "name": "Broomm [2026-10-22_00-00-00].zip",
+              "bytes": 282
+            }
+          ],
+          "pending": false,
+          "nativeExportRestoreVerified": true
+        }
+      ],
+      "sourceHashes": {
+        "system/panafz1.bin": "41b5b8e7c44e55eaf5cfd4f2a58df42f4a1bbc776723368fb25bf118dd631b1b",
+        "system/panafz1-kanji.bin": "303cd0812f2d2f3e703fe901c5d54e1e94c5c78f7e6c9321c2ca66fafa4f9bc6",
+        "system/lynxboot.img": "c26a36c1990bcf841155e5a6fea4d2ee1a4d53b3cc772e70f257a962ad43b383",
+        "system/dc/vmu_save_A1.bin": "3e6960ebed9326825f2edb7fd474b550d102b7474a9af59a7ed8095108d911b4",
+        "system/dc/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "system/dc/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+        "core-data/opera/6027/saves/opera/per_game/Crash n Burn.0.srm": "c7be917c33adf64c212f8e19c2b3f9bb1d085052ccb8883e0c70a39988da004e"
+      }
+    },
+    "native_app": {
+      "devicesAndConfigurations": [
+        {
+          "device": {
+            "architecture": "arm64",
+            "deviceId": "00006000-001850303EC3401E",
+            "deviceName": "My Mac",
+            "modelName": "MacBook Pro",
+            "osBuildNumber": "26A434",
+            "osVersion": "27.0.1",
+            "platform": "macOS"
+          },
+          "expectedFailures": 0,
+          "failedTests": 0,
+          "passedTests": 10,
+          "skippedTests": 0,
+          "testPlanConfiguration": {
+            "configurationId": "1",
+            "configurationName": "Test Scheme Action"
+          }
+        }
+      ],
+      "environmentDescription": "Runner · Built with macOS 27.0.1",
+      "expectedFailures": 0,
+      "failedTests": 0,
+      "finishTime": 1793141319.648,
+      "passedTests": 10,
+      "result": "Passed",
+      "runtimeWarnings": [],
+      "skippedTests": 0,
+      "startTime": 1793141305.55,
+      "statistics": [],
+      "testFailures": [],
+      "title": "Test - Runner",
+      "topInsights": [],
+      "totalTestCount": 10
+    },
+    "analyze": "No issues; .tool-cache/retroarch-public-cores/analyze-final.log",
+    "build": "devbox run -- bash tool/build_app.sh --release --portable --no-pub",
+    "archive_and_signatures": "unzip -tq and codesign --verify --deep --strict pass on source and fresh extraction. Incremental Xcode outer seal was stale after asset regeneration; both nested frameworks independently valid, outer ad-hoc signature refreshed before packaging.",
+    "architectures": "Broomm executable and all three bridges: x86_64 arm64",
+    "packaged_assets": {
+      "assets/setup/setup.json": "20e6e160a7318f8b0a19c4014ca6fd9627d5bd8317144728c9d23058e7547da5",
+      "assets/setup/tested-builds.json": "83898ba41a9e823006616e08a949dd8c77320dab12dbd3e2e1d1aba702c11cc5",
+      "assets/setup/retroarch-cores.json": "498bb7d624fa58b7725af99987c8f6d2f6693b3796674bda536eabd8bf938cbb",
+      "assets/setup/retroarch.integrity.json": "8a78a193359421e5779d3ebb27d1423436b6d5d79b976d286fece3a4843f0193",
+      "assets/setup/retroarch-20261001.integrity.json": "617ca4e5c4c47396800b82cecaa3229bfbc048bda590331fe7d1c650d0b5c484"
+    },
+    "release_root_overrides": false
+  },
+  "dock_icon": {
+    "prior_bundle": "Contains the correct ICNS and generated plist keys; no startup assignment. Original Launch Services/cache trigger not reproduced.",
+    "fix": "Explicit source plist keys; AppDelegate loads AppIcon.icns and assigns NSApplication.applicationIconImage at applicationWillFinishLaunching.",
+    "native_assertions": [
+      "placeholder replaced by bundled artwork",
+      "missing ICNS preserves current image"
+    ],
+    "image_comparison": "8-bit source ICNS vs AppKit color-managed 16-bit image; diagnostic PNGs render matching artwork with 0.005956 mean normalized channel difference. Fixed-size native bitmap comparison bounded to 0.01.",
+    "diagnostic_images": ".tool-cache/retroarch-public-cores/icon-attachments/",
+    "owner_dock_visual_check": "pending"
+  },
+  "retained_initial_failures": [
+    "Core removal fixture lacked its trusted hash; corrected fixture to supply production contract, unchanged retention assertions pass.",
+    "Strict icon TIFF and rendered byte equality failed; exported source/readback PNGs show matching artwork but AppKit converts 8-bit to 16-bit and applies color/alpha conversion. Native comparison now bounds measured rendered error to 1%."
+  ],
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-automatic-cores.zip",
+    "bytes": 20475516,
+    "sha256": "39dffc43d3ac6aea38ab560a52a7c9cb73e9d8159de84f77f12b2d305c0e13f9",
+    "signing": "ad hoc; not an official self-updating release"
+  },
+  "source_fingerprints": {
+    "assets/setup/setup.json": "20e6e160a7318f8b0a19c4014ca6fd9627d5bd8317144728c9d23058e7547da5",
+    "assets/setup/tested-builds.json": "83898ba41a9e823006616e08a949dd8c77320dab12dbd3e2e1d1aba702c11cc5",
+    "assets/setup/retroarch-cores.json": "498bb7d624fa58b7725af99987c8f6d2f6693b3796674bda536eabd8bf938cbb",
+    "assets/setup/retroarch.integrity.json": "8a78a193359421e5779d3ebb27d1423436b6d5d79b976d286fece3a4843f0193",
+    "assets/setup/retroarch-20261001.integrity.json": "617ca4e5c4c47396800b82cecaa3229bfbc048bda590331fe7d1c650d0b5c484",
+    "lib/src/managed_emulators.dart": "ae2df284caa466c34f7ae10236ec6a02e3856668a965f123ed2b7b2d41ef6540",
+    "lib/src/emulators.dart": "6f7c52254c7d1a12ba14010be211a3af330b85e0ed0cb5997ddf62ffcc3bc442",
+    "lib/src/progress/layout.dart": "76da3e9667afc7c5373bfaa76d5b701cb5b06722c72dfc87d9b9714db84b8b2d",
+    "lib/src/setup/package.dart": "b3ceb80220098a7cfe52135cea06eaad01d347c62f6c65b55b31d4c446960edc",
+    "lib/src/shell/emulator_settings_screen.dart": "61fc03ea771abf5183d1f30f53a772e1a017251f7525c41def64a85d7794f5a9",
+    "test/retroarch_core_upgrade_test.dart": "78d1f6e3a88c9a915d866f5c0261b292b5b1bf53a9dcffa91a220644b4fac714",
+    "test/setup_delivery_test.dart": "9359c886e6d08cc03bab01095451ff61f0e7ae6883b215d725ef578403ea780a",
+    "test/retroarch_systems_test.dart": "5acc3afd877b2546c5635084b76e6842f8914bff82fe4ffb02bfbc8e80485432",
+    "tool/check_setup_source_replacements_test.dart": "a0284e4cb2f9998d4fed926d48be7287fdce4598649b18ab15cb69c81c60445a",
+    "tool/check_retroarch_cores_test.dart": "f91be37a21bef5a2a28ddfd7ff82d12036d2a3b96d6509f125238a095da28d87",
+    "tool/check_retroarch_saves_test.dart": "a1224f2dc885948b4d96b1fcc706f455c7a5284698aa88f94a36cb7bc7978e0f",
+    "tool/check_retroarch_play_test.dart": "da7c0db5cc58642b043105f11ca0a6faa913de682d01bf18e26b7c4e34c8723e",
+    "tool/setup-development.json": "d52b142b15082d18431da9a8e8a3d993d13ec9249558ab4129541c9374e0343f",
+    "macos/Runner/AppDelegate.swift": "f6ab3f643dd375aac4559edb4f02093d4d31474bbdce3ab187dbfc42a7bb1bad",
+    "macos/Runner/Info.plist": "798f84ae9d1f33bff026857d925e5780e90e9ff2af41867e0862469242542246",
+    "macos/RunnerTests/RunnerTests.swift": "b52bb38feedc8354cda21bfb64a217db76149879c9a04c90089dd25f03ffedad"
+  },
+  "limits": [
+    "Native Broomm core/bridge delivery remains macOS ARM64; other desktop frontend releases exist but their Broomm integration is not established here. Android external-app behavior is unchanged.",
+    "Libretro latest URLs are mutable; unexpected archive bytes require a reviewed setup/Broomm refresh and never silently replace an installed core.",
+    "Native automated synthetic-controller and fixture-server checks do not establish physical-controller, every-game, cross-device or actual Dock visual acceptance.",
+    "No owner progress changes, global dependency/cache changes, Git publication or new dependency introduced."
+  ]
+}

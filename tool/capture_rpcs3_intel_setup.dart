@@ -71,7 +71,7 @@ Future<void> main(List<String> args) async {
   });
   const encoder = JsonEncoder.withIndent('  ');
   await tested.writeAsString('${encoder.convert(j)}\n');
-  final setup = File('assets/setup/setup.json');
+  final setup = File('tool/setup-development.json');
   final plan = jsonDecode(await setup.readAsString()) as Map;
   plan['launchers']['rpcs3-intel'] = {
     'source': 'tested:rpcs3-intel',

@@ -9,6 +9,11 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   private var credentialChannel: FlutterMethodChannel!
   private let credentialQueue = DispatchQueue(label: "app.broomm.credentials")
   var permitClose = false
+  private(set) var closeRequestPending = false
+  private var closeRequestGeneration = 0
+  private var quitRecoveryVisible = false
+  private let sessionRecovery = BroommSessionRecovery()
+  var closeReplyTimeout: TimeInterval { 5 }
   private var heldDirections: [String: (String, TimeInterval)] = [:]
   private var shiftControllers = Set<String>()
   private var navigationTimer: Timer?
@@ -62,6 +67,19 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
         self.permitClose = true
         reply(nil)
         NSApp.terminate(nil)
+      case "gameWriter":
+        do {
+          reply(try self.sessionRecovery.inspect(root: args["root"] as? String ?? ""))
+        } catch {
+          reply(FlutterError(code: "game_writer", message: error.localizedDescription, details: nil))
+        }
+      case "controlGameWriter":
+        do {
+          try self.sessionRecovery.control(token: args["token"] as? String ?? "", action: args["action"] as? String ?? "")
+          reply(nil)
+        } catch {
+          reply(FlutterError(code: "game_writer", message: error.localizedDescription, details: nil))
+        }
       default: reply(FlutterMethodNotImplemented)
       }
     }
@@ -145,8 +163,45 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   }
   func windowShouldClose(_ sender: NSWindow) -> Bool {
     if permitClose { return true }
-    channel.invokeMethod("closeRequested", arguments: nil)
+    requestClose()
     return false
+  }
+  func sendCloseRequest(_ reply: @escaping (Any?) -> Void) {
+    channel.invokeMethod("closeRequested", arguments: nil, result: reply)
+  }
+  func requestClose() {
+    guard !closeRequestPending, !quitRecoveryVisible else { return }
+    closeRequestPending = true
+    closeRequestGeneration += 1
+    let generation = closeRequestGeneration
+    sendCloseRequest { [weak self] result in
+      guard let self = self, self.closeRequestPending,
+            self.closeRequestGeneration == generation else { return }
+      self.closeRequestPending = false
+      if result as? Bool != true { self.presentQuitRecovery() }
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + closeReplyTimeout) { [weak self] in
+      guard let self = self, self.closeRequestPending,
+            self.closeRequestGeneration == generation, !self.permitClose else { return }
+      self.closeRequestPending = false
+      self.presentQuitRecovery()
+    }
+  }
+  func presentQuitRecovery() {
+    guard !quitRecoveryVisible else { return }
+    quitRecoveryVisible = true
+    let alert = NSAlert()
+    alert.messageText = "Broomm is not responding to Quit"
+    alert.informativeText = "You can quit the launcher now. An emulator may remain open. Local progress, interrupted transfers and recovery files will be kept."
+    alert.addButton(withTitle: "Keep Broomm Open")
+    alert.addButton(withTitle: "Quit Broomm")
+    alert.beginSheetModal(for: self) { [weak self] result in
+      guard let self = self else { return }
+      self.quitRecoveryVisible = false
+      guard result == .alertSecondButtonReturn else { return }
+      self.permitClose = true
+      NSApp.terminate(nil)
+    }
   }
 }
 

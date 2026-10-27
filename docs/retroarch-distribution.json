@@ -1,0 +1,194 @@
+{
+  "archive": {
+    "bytes": 8119704,
+    "file": "RetroArch-1.22.2-broomm-0.1.0-local-macos-arm64.zip",
+    "sha256": "15f9ced835ca428255952dac32fcc5d5e3d6664dabcaf64ed670f88382099f7c"
+  },
+  "base_nixpkgs_commit": "b134951a4c9f3c995fd7be05f3243f8ecd65d798",
+  "binary": {
+    "bytes": 18588976,
+    "mode": 493,
+    "sha256": "fc66d124bc8a3933d5ebf112a0f9bf4b9794f91602dacdfb970189b1483343ca"
+  },
+  "checks": {
+    "actionlint": "1.7.12: passed",
+    "fresh_zip": {
+      "codesign_deep_strict": true,
+      "files": 29,
+      "hashes": true,
+      "permissions": true,
+      "standalone_features": true
+    },
+    "native": {
+      "frontend": {
+        "binary_sha256": "fc66d124bc8a3933d5ebf112a0f9bf4b9794f91602dacdfb970189b1483343ca",
+        "cases": [
+          "relocated runtime dependencies",
+          "SDL3 feature readback",
+          "original synthetic core/content",
+          "UDP playing/pause acknowledgment",
+          "normal QUIT",
+          "explicit private writable paths"
+        ],
+        "passed": true
+      },
+      "sdl": {
+        "cases": [
+          "SDL 3.4 ABI",
+          "virtual gamepad discovery",
+          "button route and neutral release"
+        ],
+        "library_sha256": "8da52527edaedd4a59fe2371a0333320dcae9e075da2c300d5f4af7622463556",
+        "passed": true
+      }
+    },
+    "regressions": {
+      "failed": 0,
+      "passed": 17
+    },
+    "shellcheck": "0.10.0: passed"
+  },
+  "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+  "date": "2026-10-27",
+  "host": {
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "os": "macOS 27.0.1"
+  },
+  "hosted_followup_2": {
+    "artifacts_unchanged": true,
+    "checks": {
+      "linux_arm64_xtest_header_elf_soname": true,
+      "linux_x64_xtest_header_elf_soname": true,
+      "native_frontend_play_pause_quit_with_flushed_log": true,
+      "native_owned_child_stack_sampling": true,
+      "native_sdl_input": true,
+      "regressions": 25,
+      "sdk_selectors": {
+        "aarch64-darwin": 7,
+        "aarch64-linux": 26,
+        "x86_64-darwin": 7,
+        "x86_64-linux": 26
+      },
+      "workflow_shell_lint": true
+    },
+    "evidence": "../../broomm-retroarch/docs/ci-followup-2.json",
+    "macos_arm64_status": "Hosted GET_STATUS timeout unresolved; native diagnostics added; local strict probe passes",
+    "run": "https://github.com/Broomm/retroarch/actions/runs/40565107398"
+  },
+  "hosted_followup_4": {
+    "evidence": "../../broomm-retroarch/docs/ci-followup-4.json",
+    "linux": "Hosted compilation and SDL pass; direct PulseAudio runtime dependency corrected; native rerun pending",
+    "macos_arm64": "Exact hosted binary passes locally; hosted timeout root cause unresolved; explicit loopback binding and complete trace added",
+    "macos_packages_unchanged": true,
+    "regressions": 31,
+    "run": "https://github.com/Broomm/retroarch/actions/runs/40571405429"
+  },
+  "hosted_followup_5": {
+    "base_commit": "76d7b2cda179a8b2b314e62fbb434e7ca6dd05f1",
+    "evidence": "../../broomm-retroarch/docs/ci-followup-5.json",
+    "linux": "Missing headless EGL provisioned in private probe fixture; native rerun pending",
+    "local_regressions": 37,
+    "macos": "Both native CI jobs, probes and packaging passed",
+    "macos_packages_unchanged": true,
+    "run": "https://github.com/Broomm/retroarch/actions/runs/40575998429",
+    "windows": "Compiler lookup corrected; native rerun pending"
+  },
+  "hosted_followup_6": {
+    "base_commit": "c118770fe80286964fcc42d32977130e67e09eb9",
+    "evidence": "../../broomm-retroarch/docs/ci-followup-6.json",
+    "linux": "Both native CI jobs, probes and packaging pass",
+    "local_native_frontend": "Passed",
+    "local_regressions": 41,
+    "macos_arm64": "Native CI probes and packaging pass",
+    "macos_packages_unchanged": true,
+    "macos_x64": "Devbox package-cache DNS/download failure before compilation; rerun needed",
+    "run": "https://github.com/Broomm/retroarch/actions/runs/40579927392",
+    "windows": "Compilation, SDL and feature checks pass; UDP startup handling corrected; native frontend rerun needed"
+  },
+  "hosted_followup_7": {
+    "base_commit": "a1c3961f3636ef93672f6d3fa8366f464f1e61d7",
+    "evidence": "../../broomm-retroarch/docs/ci-followup-7.json",
+    "local_regressions": 44,
+    "macos_packages_unchanged": true,
+    "real_macos_manifest_verified": true,
+    "run": "https://github.com/Broomm/retroarch/actions/runs/40582896434",
+    "unix": "All four native jobs, probes and packaging pass",
+    "windows": "Native build, SDL and frontend probes pass; manifest separator mismatch corrected; new packaging run pending"
+  },
+  "pending": [
+    "hosted matrix",
+    "macOS Intel native",
+    "Linux x64 and ARM64 native",
+    "Windows x64 native",
+    "actual GitHub publication",
+    "Broomm physical controller and gameplay adoption"
+  ],
+  "sdl": {
+    "bytes": 2801120,
+    "mode": 493,
+    "sha256": "8da52527edaedd4a59fe2371a0333320dcae9e075da2c300d5f4af7622463556"
+  },
+  "source_files": {
+    ".gitattributes": "1909350648389fe1704aa1438e99644821184adba2727ac65580d6f247b732c0",
+    ".github/workflows/release.yml": "4db48a759790bd5e84f7c8022923de6fa639d3ae8099f35213eb3d1255c9d021",
+    ".gitignore": "985039aa4a28098b2fd6c3ed96d6251ca76542256205dc81c73f4e2c7ebd7e11",
+    "AGENTS.md": "88928ac4036c342b12188acc306559a5e4915afa937f8701adac661d8625b99c",
+    "IMPLEMENTATION.md": "e848e51b102d4c0453c30c4b5a3982fec06a460303cf7c42500f4c5d74e82877",
+    "LICENSE": "7c22a0e3974ec2496bb850d109ebe4f7a4d444c644a30f67a0c53dbcf34a1615",
+    "NOTICE.md": "280068281ff4cc5d14d68e1de584c2c97e13aa30bad572fd6b90ac7fc3ec00b0",
+    "PROJECT.md": "65f2421822604a54a52688ed86dae5be1aca1fa8aeb082bf2bf400574371e5e9",
+    "README.md": "4ffb35dcb377cc883aee9f616c2d610672176b2d17ae3e21ea6fb06060f14e1b",
+    "ci/lint/devbox.json": "1eff1ab133ab531ce5e989881b1614f077ff700316356b6efd35e29ad2e07304",
+    "ci/lint/devbox.lock": "7e487650dc50497e40f0cdce4089c7f864d4f635ccbaf8471baa04a325d6aeff",
+    "devbox.json": "5d9e080cdef4e8309794e12390a7455327064ab9530e2b9ea7728889207c780c",
+    "devbox.lock": "078d57ff4b99bf54e6a53961eab2de329379064691064d7b38f6153e343d06a6",
+    "notices/GCC-Runtime-Library-Exception.txt": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+    "sources.lock.json": "ad5aef27f4f9bd77d1ff11db51fe500fa9e5a8759cc03a977bf6ecdbfb7c880a",
+    "tests/control_core.c": "6bda5dd891126719a2a04332af33cb88e4fc5a43860793d1f2819714a44f3078",
+    "tests/sdl_probe.c": "e2d99de91d50e378d115311db71902a18da13eb63caa10961f9c33f6f8eb85ac",
+    "tests/test_ci.py": "21a5a2d0fe99d0420afe7521fc54b47376c2e962bd88640ca30dbf0ae93e320c",
+    "tool/ci.py": "cd44348ee43786f16dca6cbdca33f2438a8d1ba455204e80b5276636a6b2e888",
+    "tool/lint.sh": "1b35b6724220ba5ba9ea636f547887b47d605234353ffa654f7289ea0a730ea2",
+    "tool/run.sh": "bdb7cea76e4456ef329e965a096f693b0b8f0f810c9d66dd70af5a77055030a7",
+    "tool/windows.ps1": "9c3e0606ca95b2dd8baedf658cf926d322b05ba2cc41d2ad62808dc5844bc851",
+    "version.txt": "7a8607f9aa1ae08732d25a986afb56637da53067544e805e3df0cdd8edf0c490"
+  },
+  "sources": {
+    "retroarch": {
+      "directory": "RetroArch-1b8917df23625bcf40b67ba6476d9bfb0d30dc65",
+      "license": "GPL-3.0-or-later",
+      "revision": "1b8917df23625bcf40b67ba6476d9bfb0d30dc65",
+      "sha256": "5b8137495f12cf26ee3d2f12ade7eefe0517ff6d610da9a420739246be0cc325",
+      "url": "https://codeload.github.com/libretro/RetroArch/tar.gz/1b8917df23625bcf40b67ba6476d9bfb0d30dc65"
+    },
+    "sdl": {
+      "directory": "SDL-release-3.4.0",
+      "license": "Zlib",
+      "revision": "release-3.4.0",
+      "sha256": "9614b9696abc4597ffce6b888829dc6537ae500423474c342ac4a67222c5654c",
+      "url": "https://codeload.github.com/libsdl-org/SDL/tar.gz/refs/tags/release-3.4.0"
+    }
+  },
+  "toolchain": {
+    "cmake": "cmake version 3.29.2",
+    "make": "GNU Make 4.4.1",
+    "pkg-config": "0.29.2"
+  },
+  "current_adoption": {
+    "date": "2026-10-27",
+    "release": "https://github.com/Broomm/retroarch/releases/tag/v0.1.0",
+    "evidence": "retroarch-release-adoption.json",
+    "managed_host": "macos-arm64",
+    "retroarch_frontend_companion_required": false,
+    "core_companion_archives": 0,
+    "core_followup": "retroarch-public-cores.json"
+  },
+  "current_core_delivery": {
+    "date": "2026-10-27",
+    "evidence": "retroarch-public-cores.json",
+    "default_cores": 15,
+    "core_companion_archives": 0,
+    "requires_import": false
+  }
+}

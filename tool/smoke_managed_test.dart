@@ -41,6 +41,7 @@ void main() {
         .toList();
     expect(games, isNotEmpty, reason: 'No matching test ROM IDs selected');
     final plan = await manager.readPlan(
+      file: 'tool/setup-development.json',
       only: games.map((g) => g.emulator.toLowerCase()).toSet(),
     );
     await manager.install(plan);

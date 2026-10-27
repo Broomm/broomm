@@ -9,6 +9,7 @@ import '../host.dart';
 import '../widgets/pairing_screen.dart';
 import 'controls.dart';
 import 'navigation.dart';
+import 'quit_dialog.dart';
 
 class GameSessionScreen extends StatefulWidget {
   const GameSessionScreen({
@@ -17,11 +18,13 @@ class GameSessionScreen extends StatefulWidget {
     required this.game,
     this.beforeClose,
     this.launcherController,
+    this.closeRequested,
   });
   final PrototypeModel model;
   final LaunchGame game;
   final Future<void> Function()? beforeClose;
   final void Function(String)? launcherController;
+  final Future<void> Function()? closeRequested;
   @override
   State<GameSessionScreen> createState() => _GameSessionScreenState();
 }
@@ -29,22 +32,42 @@ class GameSessionScreen extends StatefulWidget {
 class _GameSessionScreenState extends State<GameSessionScreen> {
   PrototypeModel get m => widget.model;
   bool leaving = false;
+  bool closing = false;
   @override
   void initState() {
     super.initState();
     m.addListener(changed);
     DesktopHost.channel.setMethodCallHandler((call) async {
       if (call.method == 'closeRequested') {
-        await widget.beforeClose?.call();
-        if (m.session.finalizingProgress) await m.session.stop();
-        await m.stop(close: true);
+        if (closing) return true;
+        closing = true;
+        if (widget.closeRequested != null) {
+          unawaited(
+            widget.closeRequested!().whenComplete(() => closing = false),
+          );
+        } else {
+          unawaited(
+            showQuitDialog(
+              context,
+              finish: (phase) async {
+                phase('Stopping the game…');
+                await m.stop();
+                if (m.session.running || m.session.preparing)
+                  throw StateError(m.error ?? 'The emulator is still open.');
+                phase('Finishing background work…');
+                await widget.beforeClose?.call();
+              },
+              exit: m.host.close,
+            ).whenComplete(() => closing = false),
+          );
+        }
+        return true;
       }
       // Pairing buttons belong to the live tester/chords, not UI shortcuts.
       // Before startup and after writer exit, console dialogs/cancel actions
       // need launcher navigation while there is no emulator SDL event source.
       if (call.method == 'controller' &&
-          m.screen == Screen.loading &&
-          !m.session.running)
+          (closing || m.screen == Screen.loading && !m.session.running))
         widget.launcherController?.call(call.arguments as String);
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -59,7 +82,15 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
         !m.busy) {
       leaving = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) Navigator.pop(context);
+        if (!mounted) return;
+        final route = ModalRoute.of(context);
+        if (route?.isCurrent == true) {
+          Navigator.pop(context);
+        } else if (route != null) {
+          // A quit/conflict dialog may be above this route. Never dismiss that
+          // dialog instead of completing the session route beneath it.
+          Navigator.of(context).removeRoute(route);
+        }
       });
     }
   }
@@ -308,7 +339,7 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                                   ConsoleButton(
                                     onPressed: m.session.finalizingProgress
                                         ? m.session.cancelProgressTransfer
-                                        : m.busy
+                                        : m.stopping
                                         ? null
                                         : () => m.stop(),
                                     child: Text(

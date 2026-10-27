@@ -44,7 +44,9 @@ extension ShellCloudSaves on ShellModel {
     int id, {
     ResolvedSession? resolved,
     String? androidRom,
+    DownloadCancellation? cancellation,
   }) async {
+    cancellation?.check();
     final s = server, p = profile, c = client, entry = installation(id);
     if (s == null ||
         p == null ||
@@ -63,6 +65,7 @@ extension ShellCloudSaves on ShellModel {
         !isAndroid &&
         androidRom == null &&
         cached != null &&
+        platform.slug != 'switch' &&
         cached.profile == p.id &&
         identical(cached.client, c))
       return cached;
@@ -106,7 +109,18 @@ extension ShellCloudSaves on ShellModel {
         p.id,
       );
     }
-    final layout = await gameProgressLayout(resolved, platform.slug);
+    if (!isAndroid && platform.slug == 'switch') {
+      resolved = resolved.withInstallationIdentity(
+        await library.installationIdentity(entry, resolved.rom),
+      );
+    }
+    cancellation?.check();
+    final layout = await gameProgressLayout(
+      resolved,
+      platform.slug,
+      cancellation: cancellation,
+    );
+    cancellation?.check();
     if (profile != p || client != c)
       throw StateError('The active profile changed.');
     final result = CloudGame(
@@ -127,12 +141,15 @@ extension ShellCloudSaves on ShellModel {
       throw StateError(
         'Close the Android emulator and finish its session before managing cloud saves.',
       );
-    if (busy || gameActive || downloading || _cloudWork != null)
+    if (busy || gameActive || downloading)
       throw StateError(
         'Finish the current game, download or save operation first.',
       );
     busy = true;
     _emit();
+    // An explicit action takes priority over the idle initial-sync worker.
+    // Reserve busy before yielding so another timer cannot restart it.
+    await finishCloud();
     T? value;
     final work = () async {
       try {
@@ -166,6 +183,7 @@ extension ShellCloudSaves on ShellModel {
 
   Future<void> retryCloud() async {
     if (!authenticated ||
+        closing ||
         busy ||
         gameActive ||
         downloading ||
@@ -296,7 +314,7 @@ extension ShellCloudSaves on ShellModel {
           if (_cloudCancelled || client != c || profile != p || disposed)
             return;
           if (bootstrap) {
-            final game = await cloudGame(id);
+            final game = await cloudGame(id, cancellation: cloud.cancellation);
             if (_cloudCancelled || client != c || profile != p || disposed)
               return;
             await cloud.sync(game);

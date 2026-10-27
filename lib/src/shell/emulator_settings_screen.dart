@@ -507,7 +507,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                 if (m.busy && plan == null) ...[
                   Text(m.phase),
                   const SizedBox(height: 12),
-                  const LinearProgressIndicator(),
+                  LinearProgressIndicator(value: m.progress),
                 ],
                 if (plan != null) ...[
                   const Text('Ready to set up', style: TextStyle(fontSize: 18)),
@@ -516,7 +516,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                     (i) => i.build.id == build.id,
                   )) ...[
                     Text(
-                      'Application: ${item.source}',
+                      'Application: ${item.describe(item.source)}',
                       style: const TextStyle(
                         color: muted,
                         fontSize: 12,
@@ -525,13 +525,31 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                     ),
                     if (item.core != null)
                       Text(
-                        'Core: ${item.core}',
+                        'Core: ${item.describe(item.core!)}',
                         style: const TextStyle(color: muted, fontSize: 12),
                       ),
                     if (item.cores.isNotEmpty)
                       Text(
                         'Includes ${item.cores.length} additional console cores.',
                         style: const TextStyle(color: muted, fontSize: 12),
+                      ),
+                    if (item.cores.isNotEmpty)
+                      const Text(
+                        'Core updates keep ordinary saves. Save states remain separate between core versions.',
+                        style: TextStyle(color: muted, fontSize: 12),
+                      ),
+                    if (!ready &&
+                        item.packageRoot == null &&
+                        item.downloads.values.any((p) => p.file != null))
+                      const Padding(
+                        padding: EdgeInsets.only(top: 10),
+                        child: Text(
+                          'This exact build uses the companion setup package. Import its setup.json before first installation. Verified installed copies can be reused without the package.',
+                          style: TextStyle(
+                            color: Color(0xffefd3aa),
+                            height: 1.7,
+                          ),
+                        ),
                       ),
                     for (final entry in item.resources.entries)
                       Text(
@@ -548,7 +566,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                         'Missing firmware will be downloaded from this platform’s RomM BIOS catalogue before play, when available.',
                         style: TextStyle(color: Color(0xffefd3aa)),
                       ),
-                    if (build.id == 'ryubing' &&
+                    if ({'ryubing', 'eden'}.contains(build.id) &&
                         (!item.resources.containsKey('prod_keys') ||
                             !item.resources.containsKey('title_keys') ||
                             !item.resources.containsKey('switch_firmware')))
@@ -566,7 +584,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                   if (m.busy) ...[
                     Text(m.phase),
                     const SizedBox(height: 12),
-                    const LinearProgressIndicator(),
+                    LinearProgressIndicator(value: m.progress),
                     const SizedBox(height: 12),
                     ConsoleButton(
                       onPressed: m.cancel,

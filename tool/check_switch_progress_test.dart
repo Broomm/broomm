@@ -10,6 +10,7 @@ import 'package:broomm/src/managed_emulators.dart';
 import 'package:broomm/src/progress/layout.dart';
 import 'package:broomm/src/progress/ryubing.dart';
 import 'package:broomm/src/progress/store.dart';
+import 'package:broomm/src/romm/transfer.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -84,7 +85,7 @@ void main() {
           phases.add('native-initialization');
           final program = await session.initializeSwitchStorage(resolved, g);
           phases.add('initial-writer-stopped');
-          await recordRyubingGame(resolved, program, needed.hash);
+          await recordRyubingGame(resolved, program, needed.identity);
           layout = await gameProgressLayout(resolved, 'switch');
         }
         sentinel = await layout.target('save/broomm-probe');
@@ -174,6 +175,43 @@ void main() {
       } finally {
         await lease.release();
       }
+      // Cancel while a real cold-initialization child owns the writer. The
+      // parent must not release its lease before that exact child has exited.
+      late GameSession cancelled;
+      cancelled = GameSession(
+        project,
+        managedRoot: data.path,
+        resolve: (g) async {
+          final resolved = await manager.resolve(g, profile);
+          await cancelled.initializeSwitchStorage(resolved, g);
+          cancelled.cancellation.check();
+          return resolved;
+        },
+      );
+      final launch = cancelled.launch(game);
+      final expected = expectLater(launch, throwsA(isA<DownloadCancelled>()));
+      try {
+        final deadline = DateTime.now().add(const Duration(seconds: 45));
+        while (!cancelled.running && DateTime.now().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+        expect(
+          cancelled.running,
+          true,
+          reason: 'Observe the actual preparation writer before cancellation',
+        );
+        expect(cancelled.processId, isNotNull);
+        await expectLater(SessionLease.acquire(data), throwsStateError);
+        await Future.wait([cancelled.stop(), cancelled.stop()]);
+        await expected;
+        expect(cancelled.running, false);
+        expect(cancelled.preparing, false);
+        final after = await SessionLease.acquire(data);
+        await after.release();
+        expect(await sentinel.readAsString(), 'committed-snapshot');
+      } finally {
+        if (cancelled.running || cancelled.preparing) await cancelled.stop();
+      }
       await File('${evidence.path}/native-switch-progress.json').writeAsString(
         jsonEncode({
           'root': data.path,
@@ -182,6 +220,7 @@ void main() {
           'phases': phases,
           'committed0RestoredToWorking1': true,
           'nativeZipRoundTrip': true,
+          'cancelledColdChildStoppedBeforeLeaseRelease': true,
           'physicalGameplay': false,
         }),
       );

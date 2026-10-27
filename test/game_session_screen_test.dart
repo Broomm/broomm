@@ -5,6 +5,7 @@ import 'package:broomm/src/catalogue.dart';
 import 'package:broomm/src/pairing.dart';
 import 'package:broomm/src/shell/game_session_screen.dart';
 import 'package:broomm/src/shell/controls.dart';
+import 'package:broomm/src/shell/quit_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +31,75 @@ class PreparingSession extends PausedSession {
 }
 
 void main() {
+  testWidgets(
+    'native Quit is acknowledged immediately and game exit leaves the closing dialog available above Home',
+    (t) async {
+      final session = NavigationSession()..alive = false;
+      final model = PrototypeModel(
+        '/unused',
+        host: RecordingHost(),
+        gameSession: session,
+      );
+      final finish = Completer<void>();
+      var exits = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push<void>(
+                context,
+                MaterialPageRoute(
+                  builder: (routeContext) => GameSessionScreen(
+                    model: model,
+                    game: testGames.first,
+                    closeRequested: () => showQuitDialog(
+                      context,
+                      finish: (_) => finish.future,
+                      exit: () async {
+                        exits++;
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              child: const Text('Home game'),
+            ),
+          ),
+        ),
+      );
+      await t.tap(find.text('Home game'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      session.emit();
+      await t.pumpAndSettle();
+      final reply = Completer<Object?>();
+      await t.binding.defaultBinaryMessenger.handlePlatformMessage(
+        'app.broomm/prototype',
+        const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('closeRequested'),
+        ),
+        (data) =>
+            reply.complete(const StandardMethodCodec().decodeEnvelope(data!)),
+      );
+      expect(await reply.future, true);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('Closing Broomm'), findsOneWidget);
+      session.exit(0);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 400));
+      expect(find.text('Closing Broomm'), findsOneWidget);
+      expect(exits, 0);
+      finish.complete();
+      await t.pumpAndSettle();
+      expect(find.text('Home game'), findsOneWidget);
+      expect(exits, 1);
+      expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox());
+      model.dispose();
+    },
+  );
+
   testWidgets(
     'RPCS3 loading shows native phase progress and returns to indeterminate between phases without enabling pairing',
     (t) async {

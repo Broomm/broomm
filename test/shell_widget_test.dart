@@ -15,6 +15,21 @@ import 'shell_model_test.dart' show FixtureRomm, settleModel;
 import 'support/review_emulators.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          (call) async => null,
+        );
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('app.broomm/prototype'),
+          null,
+        );
+  });
   late Directory root;
   late ShellModel model;
   setUp(() async {
@@ -429,9 +444,19 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Set up tested emulators'), findsNothing);
+      // Native writer inspection and setup-source reads complete in the real
+      // I/O zone. Drain that handoff before injecting the next hardware event.
+      await t.runAsync(() => Future<void>.delayed(Duration.zero));
       await press(t, LogicalKeyboardKey.gameButtonB);
       await nativeInput(t, 'accept');
-      expect(model.screen, ShellScreen.emulators);
+      await t.runAsync(() => Future<void>.delayed(Duration.zero));
+      await t.pumpAndSettle();
+      expect(
+        model.screen,
+        ShellScreen.emulators,
+        reason:
+            'active=${model.gameActive}; busy=${model.busy}; home=${model.homeIndex}; focus=${FocusManager.instance.primaryFocus?.debugLabel}; ${model.error}; ${model.notice?.message}',
+      );
       expect(t.takeException(), isNull);
       await t.pumpWidget(const SizedBox());
     },

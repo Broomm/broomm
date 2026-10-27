@@ -4,15 +4,160 @@
     {
       "id": "retroarch",
       "name": "RetroArch",
-      "version": "1.22.2 / 20261001 + Snes9x 1.63",
+      "version": "1.22.2 / Broomm 0.1.0 + Snes9x 1.63",
+      "retro_native_state_names": true,
       "host": "macos-arm64",
       "bundle": "RetroArch.app",
       "executable": "Contents/MacOS/RetroArch",
-      "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sha256": "a9ac06b90a9a4374e29ac6e6fc3bbd5634df73316e9c32592e60f8dd43df1a76",
       "sdl": 3,
       "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
       "native": {},
-      "core_sha256": "8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6"
+      "core_sha256": "8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6",
+      "compatible_setup_packages": {
+        "core": [
+          {
+            "file": "core-snes9x.tar.gz",
+            "sha256": "ca1a377b6b6c12cbbb41bc786872745024107a1f99c9dcc1bb34ca3d2a763e74",
+            "bytes": 796463,
+            "format": "tar.gz",
+            "entry": "snes9x_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_lynx": [
+          {
+            "file": "core-mednafen_lynx.tar.gz",
+            "sha256": "17105d986f29fec17ff669b115f7ddc2199b9dd289473732d8319db18d779996",
+            "bytes": 65465,
+            "format": "tar.gz",
+            "entry": "mednafen_lynx_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_pce_fast": [
+          {
+            "file": "core-mednafen_pce_fast.tar.gz",
+            "sha256": "4261aca29ff60c500d463bb30787f6d2e4508aa2a4d282d8f234a1e7ef847dce",
+            "bytes": 412884,
+            "format": "tar.gz",
+            "entry": "mednafen_pce_fast_libretro.dylib"
+          }
+        ],
+        "cores:mesen": [
+          {
+            "file": "core-mesen.tar.gz",
+            "sha256": "6ff4c787cfb23b0e8a07b70ad998ea43e342802f448153ce1f2da0ecaf36d0a2",
+            "bytes": 1084948,
+            "format": "tar.gz",
+            "entry": "mesen_libretro.dylib"
+          }
+        ],
+        "cores:mgba": [
+          {
+            "file": "core-mgba.tar.gz",
+            "sha256": "c767ea7c6c9faaeb62d9f5e1ecdba99e556f5ddc375f589430fb3c31b2f29720",
+            "bytes": 453543,
+            "format": "tar.gz",
+            "entry": "mgba_libretro.dylib"
+          }
+        ],
+        "cores:mupen64plus_next": [
+          {
+            "file": "core-mupen64plus_next.tar.gz",
+            "sha256": "3fd11313f27d4409a96d89c7be00f2fdb82c1fc547315b441146f6350de3f498",
+            "bytes": 2313845,
+            "format": "tar.gz",
+            "entry": "mupen64plus_next_libretro.dylib"
+          }
+        ],
+        "cores:picodrive": [
+          {
+            "file": "core-picodrive.tar.gz",
+            "sha256": "94f15a576427768ef7fd7ea7cd5b2804aa2f1172aa54575af0f274c3dcf7e4bd",
+            "bytes": 706940,
+            "format": "tar.gz",
+            "entry": "picodrive_libretro.dylib"
+          }
+        ],
+        "cores:stella": [
+          {
+            "file": "core-stella.tar.gz",
+            "sha256": "409e147bbcfbfb1fb3886f6e91d98e8069c25882791bf311e026c808222deaa6",
+            "bytes": 923418,
+            "format": "tar.gz",
+            "entry": "stella_libretro.dylib"
+          }
+        ],
+        "cores:fbneo": [
+          {
+            "file": "core-fbneo.tar.gz",
+            "sha256": "5ed5f272a0e89a9e310b92fb3386bb893e5c4d2696a03dece7e2f0a18d361680",
+            "bytes": 14803136,
+            "format": "tar.gz",
+            "entry": "fbneo_libretro.dylib"
+          }
+        ],
+        "cores:flycast": [
+          {
+            "file": "core-flycast.tar.gz",
+            "sha256": "f3f49cadc89b6659bad3049e9a09ac850535d25cb5c13137a5f8f0ed15a93b0c",
+            "bytes": 4741465,
+            "format": "tar.gz",
+            "entry": "flycast_libretro.dylib"
+          }
+        ],
+        "cores:gambatte": [
+          {
+            "file": "core-gambatte.tar.gz",
+            "sha256": "9604e29830ba392a6ce73a41b56e6fa5a8174bd7a6e81a59706313a4f5e1281c",
+            "bytes": 388126,
+            "format": "tar.gz",
+            "entry": "gambatte_libretro.dylib"
+          }
+        ],
+        "cores:genesis_plus_gx": [
+          {
+            "file": "core-genesis_plus_gx.tar.gz",
+            "sha256": "478a6e485d656c4384694a1311d2b06f1635898c39846e77b2e2eb9d94aca943",
+            "bytes": 868573,
+            "format": "tar.gz",
+            "entry": "genesis_plus_gx_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_saturn": [
+          {
+            "file": "core-mednafen_saturn.tar.gz",
+            "sha256": "2037344434df42a7f796ea91f854ed2590b78c3f8dd6da15ac8cce3845de02e0",
+            "bytes": 1629804,
+            "format": "tar.gz",
+            "entry": "mednafen_saturn_libretro.dylib"
+          }
+        ],
+        "cores:opera": [
+          {
+            "file": "core-opera.tar.gz",
+            "sha256": "08a68ac57494ee05c955bf1a6298d7f81f40b52525902060b461f1c1ebc3148f",
+            "bytes": 273305,
+            "format": "tar.gz",
+            "entry": "opera_libretro.dylib"
+          }
+        ],
+        "cores:virtualjaguar": [
+          {
+            "file": "core-virtualjaguar.tar.gz",
+            "sha256": "5100597d7a72fddda87cba8231c6139acf4a621b796e6b75732948f890f5d44d",
+            "bytes": 787443,
+            "format": "tar.gz",
+            "entry": "virtualjaguar_libretro.dylib"
+          }
+        ]
+      },
+      "source_package": {
+        "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-macos-arm64.zip",
+        "sha256": "a09b7284cad1672010f9baa50a05d100c3c7102889b984d6f8315fc1798d449e",
+        "bytes": 8128584,
+        "format": "zip",
+        "entry": "RetroArch.app"
+      }
     },
     {
       "id": "dolphin",
@@ -27,6 +172,17 @@
         "BROOMM_CORE_SYSTEM": "0000000100172cb8",
         "BROOMM_CORE_STATE": "0000000100204d50",
         "BROOMM_CORE_SET_STATE": "0000000100204ba8"
+      },
+      "compatible_setup_packages": {
+        "source": [
+          {
+            "file": "dolphin.tar.gz",
+            "sha256": "bc8503e25cdd2702e6d08313f72653eedfb318685032cbd359d5db9e2827a5fb",
+            "bytes": 42189147,
+            "format": "tar.gz",
+            "entry": "Dolphin.app"
+          }
+        ]
       }
     },
     {
@@ -64,7 +220,18 @@
       "sha256": "13571b902014eb732f69a13cf62c0bc3d9da0ab1542a52cca337ad0f8299ebe4",
       "sdl": 2,
       "sdl_library": "Contents/Frameworks/libSDL2.dylib",
-      "native": {}
+      "native": {},
+      "compatible_setup_packages": {
+        "source": [
+          {
+            "file": "ryubing.tar.gz",
+            "sha256": "7ff20967263f56d1023ef8fc7ceaffc39eb02e373d1ce1b36c24d873eb4e8138",
+            "bytes": 69330417,
+            "format": "tar.gz",
+            "entry": "Ryujinx.app"
+          }
+        ]
+      }
     },
     {
       "id": "melonds",
@@ -161,6 +328,166 @@
       "sdl": 2,
       "sdl_library": "Contents/Frameworks/SDL2.framework/Versions/A/SDL2",
       "native": {}
+    }
+  ],
+  "previous_builds": [
+    {
+      "id": "retroarch",
+      "name": "RetroArch",
+      "version": "1.22.2 / 20261001 + Snes9x 1.63",
+      "host": "macos-arm64",
+      "bundle": "RetroArch.app",
+      "executable": "Contents/MacOS/RetroArch",
+      "sha256": "bc77ed642a6ef0ab2891ca411cb55803155d670c508f8b127998bb0cd6735c45",
+      "sdl": 3,
+      "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
+      "native": {},
+      "core_sha256": "8ed333ac04544cc6ab67ceb445d095f7600bb17586d4887d99117fbd1ef776f6",
+      "compatible_setup_packages": {
+        "core": [
+          {
+            "file": "core-snes9x.tar.gz",
+            "sha256": "ca1a377b6b6c12cbbb41bc786872745024107a1f99c9dcc1bb34ca3d2a763e74",
+            "bytes": 796463,
+            "format": "tar.gz",
+            "entry": "snes9x_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_lynx": [
+          {
+            "file": "core-mednafen_lynx.tar.gz",
+            "sha256": "17105d986f29fec17ff669b115f7ddc2199b9dd289473732d8319db18d779996",
+            "bytes": 65465,
+            "format": "tar.gz",
+            "entry": "mednafen_lynx_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_pce_fast": [
+          {
+            "file": "core-mednafen_pce_fast.tar.gz",
+            "sha256": "4261aca29ff60c500d463bb30787f6d2e4508aa2a4d282d8f234a1e7ef847dce",
+            "bytes": 412884,
+            "format": "tar.gz",
+            "entry": "mednafen_pce_fast_libretro.dylib"
+          }
+        ],
+        "cores:mesen": [
+          {
+            "file": "core-mesen.tar.gz",
+            "sha256": "6ff4c787cfb23b0e8a07b70ad998ea43e342802f448153ce1f2da0ecaf36d0a2",
+            "bytes": 1084948,
+            "format": "tar.gz",
+            "entry": "mesen_libretro.dylib"
+          }
+        ],
+        "cores:mgba": [
+          {
+            "file": "core-mgba.tar.gz",
+            "sha256": "c767ea7c6c9faaeb62d9f5e1ecdba99e556f5ddc375f589430fb3c31b2f29720",
+            "bytes": 453543,
+            "format": "tar.gz",
+            "entry": "mgba_libretro.dylib"
+          }
+        ],
+        "cores:mupen64plus_next": [
+          {
+            "file": "core-mupen64plus_next.tar.gz",
+            "sha256": "3fd11313f27d4409a96d89c7be00f2fdb82c1fc547315b441146f6350de3f498",
+            "bytes": 2313845,
+            "format": "tar.gz",
+            "entry": "mupen64plus_next_libretro.dylib"
+          }
+        ],
+        "cores:picodrive": [
+          {
+            "file": "core-picodrive.tar.gz",
+            "sha256": "94f15a576427768ef7fd7ea7cd5b2804aa2f1172aa54575af0f274c3dcf7e4bd",
+            "bytes": 706940,
+            "format": "tar.gz",
+            "entry": "picodrive_libretro.dylib"
+          }
+        ],
+        "cores:stella": [
+          {
+            "file": "core-stella.tar.gz",
+            "sha256": "409e147bbcfbfb1fb3886f6e91d98e8069c25882791bf311e026c808222deaa6",
+            "bytes": 923418,
+            "format": "tar.gz",
+            "entry": "stella_libretro.dylib"
+          }
+        ],
+        "cores:fbneo": [
+          {
+            "file": "core-fbneo.tar.gz",
+            "sha256": "5ed5f272a0e89a9e310b92fb3386bb893e5c4d2696a03dece7e2f0a18d361680",
+            "bytes": 14803136,
+            "format": "tar.gz",
+            "entry": "fbneo_libretro.dylib"
+          }
+        ],
+        "cores:flycast": [
+          {
+            "file": "core-flycast.tar.gz",
+            "sha256": "f3f49cadc89b6659bad3049e9a09ac850535d25cb5c13137a5f8f0ed15a93b0c",
+            "bytes": 4741465,
+            "format": "tar.gz",
+            "entry": "flycast_libretro.dylib"
+          }
+        ],
+        "cores:gambatte": [
+          {
+            "file": "core-gambatte.tar.gz",
+            "sha256": "9604e29830ba392a6ce73a41b56e6fa5a8174bd7a6e81a59706313a4f5e1281c",
+            "bytes": 388126,
+            "format": "tar.gz",
+            "entry": "gambatte_libretro.dylib"
+          }
+        ],
+        "cores:genesis_plus_gx": [
+          {
+            "file": "core-genesis_plus_gx.tar.gz",
+            "sha256": "478a6e485d656c4384694a1311d2b06f1635898c39846e77b2e2eb9d94aca943",
+            "bytes": 868573,
+            "format": "tar.gz",
+            "entry": "genesis_plus_gx_libretro.dylib"
+          }
+        ],
+        "cores:mednafen_saturn": [
+          {
+            "file": "core-mednafen_saturn.tar.gz",
+            "sha256": "2037344434df42a7f796ea91f854ed2590b78c3f8dd6da15ac8cce3845de02e0",
+            "bytes": 1629804,
+            "format": "tar.gz",
+            "entry": "mednafen_saturn_libretro.dylib"
+          }
+        ],
+        "cores:opera": [
+          {
+            "file": "core-opera.tar.gz",
+            "sha256": "08a68ac57494ee05c955bf1a6298d7f81f40b52525902060b461f1c1ebc3148f",
+            "bytes": 273305,
+            "format": "tar.gz",
+            "entry": "opera_libretro.dylib"
+          }
+        ],
+        "cores:virtualjaguar": [
+          {
+            "file": "core-virtualjaguar.tar.gz",
+            "sha256": "5100597d7a72fddda87cba8231c6139acf4a621b796e6b75732948f890f5d44d",
+            "bytes": 787443,
+            "format": "tar.gz",
+            "entry": "virtualjaguar_libretro.dylib"
+          }
+        ]
+      },
+      "integrity_asset": "assets/setup/retroarch-20261001.integrity.json",
+      "source_package": {
+        "file": "retroarch.tar.gz",
+        "sha256": "10d294d7c9a420dc3c3265d80d0af99aca6bfb1094ea523d735f6fb358aa5625",
+        "bytes": 7874927,
+        "format": "tar.gz",
+        "entry": "RetroArch.app"
+      }
     }
   ]
 }

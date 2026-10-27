@@ -9,7 +9,102 @@ private class InputTestWindow: MainFlutterWindow {
   override func input(_ value: String) { events.append(value) }
 }
 
+private class QuitTestWindow: MainFlutterWindow {
+  var replies: [(Any?) -> Void] = []
+  var fallbacks = 0
+  override var closeReplyTimeout: TimeInterval { 0.04 }
+  override func sendCloseRequest(_ reply: @escaping (Any?) -> Void) { replies.append(reply) }
+  override func presentQuitRecovery() { fallbacks += 1 }
+}
+
 class RunnerTests: XCTestCase {
+  @MainActor
+  private func iconPixels(_ image: NSImage) throws -> Data {
+    let bitmap = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil,
+      pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
+      hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+      bytesPerRow: 256, bitsPerPixel: 32))
+    let context = try XCTUnwrap(NSGraphicsContext(bitmapImageRep: bitmap))
+    try XCTUnwrap(bitmap.bitmapData).initialize(repeating: 0, count: 64 * 256)
+    NSGraphicsContext.saveGraphicsState()
+    defer { NSGraphicsContext.restoreGraphicsState() }
+    NSGraphicsContext.current = context
+    image.draw(in: NSRect(x: 0, y: 0, width: 64, height: 64), from: .zero,
+      operation: .copy, fraction: 1)
+    return Data(bytes: try XCTUnwrap(bitmap.bitmapData), count: 64 * 256)
+  }
+
+  @MainActor
+  func testRunningIconUsesThePackagedArtworkEvenAfterAPlaceholder() throws {
+    let application = NSApplication.shared
+    let before = application.applicationIconImage
+    defer { application.applicationIconImage = before }
+    let placeholder = NSImage(size: NSSize(width: 16, height: 16))
+    application.applicationIconImage = placeholder
+    let url = try XCTUnwrap(Bundle.main.url(forResource: "AppIcon", withExtension: "icns"))
+    let expected = try XCTUnwrap(NSImage(contentsOf: url))
+    XCTAssertTrue(AppDelegate.applyApplicationIcon(to: application))
+    let actual = try XCTUnwrap(application.applicationIconImage)
+    for (name, image) in [("Dock icon readback", actual), ("Bundled icon", expected)] {
+      let attachment = XCTAttachment(image: image)
+      attachment.name = name
+      attachment.lifetime = .keepAlways
+      add(attachment)
+      print("\(name): \(image.size); representations: \(image.representations.map { "\($0.pixelsWide)x\($0.pixelsHigh)" })")
+    }
+    // AppKit converts this 8-bit ICNS into a color-managed 16-bit icon. Native
+    // diagnostic PNGs confirm the same artwork, with ~0.6% mean channel error.
+    // Bound rendered image error to 1%, rather than comparing TIFF encodings
+    // or requiring equality through that system color/alpha conversion.
+    let actualPixels = try iconPixels(actual), expectedPixels = try iconPixels(expected)
+    let meanError = zip(actualPixels, expectedPixels).reduce(0.0) {
+      $0 + Double(abs(Int($1.0) - Int($1.1)))
+    } / Double(actualPixels.count * 255)
+    XCTAssertLessThan(meanError, 0.01, "The running icon must render the bundled infinity artwork")
+    XCTAssertEqual(Bundle.main.object(forInfoDictionaryKey: "CFBundleIconFile") as? String, "AppIcon")
+  }
+
+  @MainActor
+  func testMissingIconResourcePreservesTheCurrentRunningIcon() throws {
+    let application = NSApplication.shared
+    let before = application.applicationIconImage
+    defer { application.applicationIconImage = before }
+    let expected = try XCTUnwrap(before?.tiffRepresentation)
+    XCTAssertFalse(AppDelegate.applyApplicationIcon(to: application, bundle: Bundle(for: RunnerTests.self)))
+    XCTAssertEqual(application.applicationIconImage?.tiffRepresentation, expected)
+  }
+
+  @MainActor
+  func testUnansweredQuitHasBoundedFallbackAndIgnoresStaleReply() {
+    let window = QuitTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+    window.requestClose()
+    window.requestClose()
+    XCTAssertEqual(window.replies.count, 1, "Repeated Quit requests coalesce while Dart has not replied")
+    RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.08))
+    XCTAssertEqual(window.fallbacks, 1)
+    window.requestClose()
+    XCTAssertTrue(window.closeRequestPending)
+    window.replies[0](true)
+    XCTAssertTrue(window.closeRequestPending, "A late response cannot acknowledge the newer request")
+    window.replies[1](true)
+    RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.08))
+    XCTAssertEqual(window.fallbacks, 1)
+    XCTAssertFalse(window.closeRequestPending)
+  }
+
+  @MainActor
+  func testQuitAcknowledgementOwnsDartFlowAndUnsupportedHandlerFallsBack() {
+    let window = QuitTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+    window.requestClose()
+    window.replies[0](true)
+    RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.08))
+    XCTAssertEqual(window.fallbacks, 0)
+    window.requestClose()
+    window.replies[1](FlutterMethodNotImplemented)
+    RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.08))
+    XCTAssertEqual(window.fallbacks, 1)
+  }
+
   @MainActor
   func testGameControllerKeyboardShortcutEvents() throws {
     let window = InputTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)

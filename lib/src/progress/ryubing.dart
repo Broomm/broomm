@@ -2,40 +2,65 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../managed_emulators.dart' show sha256File;
 import '../session.dart' show ResolvedSession;
+import '../romm/transfer.dart';
+import 'digest.dart';
 import 'files.dart';
 import 'layout.dart';
 
 class SwitchNeedsInitialization extends UnsupportedError {
-  SwitchNeedsInitialization(this.hash)
+  SwitchNeedsInitialization(this.identity)
     : super(
         'Launch this Switch game once to initialize and identify its private save storage.',
       );
-  final String hash;
+  final String identity;
 }
 
-/// Bind a native Loader Start observation to the actual launched ROM bytes.
+/// A cheap binding to the installed media, never a digest of the ROM contents.
+/// RomM installation identity includes server, ROM, selected file and publication
+/// generation. Native/prototype inputs additionally use their canonical path.
+Future<(String, String)> switchSourceIdentity(ResolvedSession session) async {
+  final file = File(session.rom), stat = await File(session.rom).stat();
+  if (stat.type != FileSystemEntityType.file)
+    throw const FileSystemException(
+      'The selected Switch game file is missing.',
+    );
+  final source = jsonEncode({
+    'installation': session.installationIdentity,
+    if (session.installationIdentity == null)
+      'path': await file.resolveSymbolicLinks(),
+    'bytes': stat.size,
+    'modified': stat.modified.toUtc().toIso8601String(),
+    'changed': stat.changed.toUtc().toIso8601String(),
+  });
+  final key = ProgressDigest.sha256()..add(utf8.encode(source));
+  return (key.finish(), source);
+}
+
+/// Bind a native Loader Start observation to the selected installed media.
 /// Titles, filenames, enumeration order and a different game's newest folder
 /// never select a Switch save. No console/save index is written by Broomm.
 Future<void> recordRyubingGame(
   ResolvedSession session,
   String program,
-  String expectedHash,
-) async {
+  String expectedIdentity, {
+  DownloadCancellation? cancellation,
+}) async {
   if (!RegExp(r'^010[0-9a-f]{13}$').hasMatch(program))
     throw const FormatException('Invalid native Switch program identity');
-  if (await sha256File(session.rom) != expectedHash)
+  cancellation?.check();
+  final identity = await switchSourceIdentity(session);
+  if (identity.$1 != expectedIdentity)
     throw const FormatException('The Switch ROM changed during initialization');
   final root = Directory(session.emulator.root);
   final file = await progressFile(
     root,
-    'progress-identities/$expectedHash.json',
+    'progress-identities/installed-$expectedIdentity.json',
     createParents: true,
   );
   await progressWrite(file, {
-    'version': 1,
-    'romSha256': expectedHash,
+    'version': 2,
+    'source': identity.$2,
     'program': program,
     'emulator': session.executableHash,
   });
@@ -43,15 +68,20 @@ Future<void> recordRyubingGame(
 
 Future<ProgressLayout> ryubingProgressLayout(
   ResolvedSession session,
-  String user,
-) async {
+  String user, {
+  DownloadCancellation? cancellation,
+}) async {
   final root = Directory(session.emulator.root),
-      hash = await sha256File(session.rom);
-  final file = File('${root.path}/progress-identities/$hash.json');
-  if (!await progressExists(file.path)) throw SwitchNeedsInitialization(hash);
+      identity = await switchSourceIdentity(session);
+  cancellation?.check();
+  final file = File(
+    '${root.path}/progress-identities/installed-${identity.$1}.json',
+  );
+  if (!await progressExists(file.path))
+    throw SwitchNeedsInitialization(identity.$1);
   final j = await progressJson(file);
-  if (j['version'] != 1 ||
-      j['romSha256'] != hash ||
+  if (j['version'] != 2 ||
+      j['source'] != identity.$2 ||
       j['emulator'] != session.executableHash ||
       j['program'] is! String ||
       !RegExp(r'^010[0-9a-f]{13}$').hasMatch(j['program'] as String))

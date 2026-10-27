@@ -101,7 +101,11 @@ void main() {
       gameProgressLayout(r, 'switch'),
       throwsA(isA<SwitchNeedsInitialization>()),
     );
-    await recordRyubingGame(r, '01005d100807a000', await sha256File(rom.path));
+    await recordRyubingGame(
+      r,
+      '01005d100807a000',
+      (await switchSourceIdentity(r)).$1,
+    );
     final account = File(
           '${e.user}/nand/system/save/8000000000000010/su/avators/profiles.dat',
         ),
