@@ -1,0 +1,92 @@
+{
+  "recordedAtUtc": "2026-10-28T16:49:35.434256Z",
+  "sourceBaseRevision": "9d205b93799b6542caa614fbe87a3c1446d112cb",
+  "uncommittedHotfix": true,
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "xcode": "27.1 (27A9275)",
+    "flutter": "3.47.0"
+  },
+  "reportedIssue": "Valid local re-signing was compared against full file fingerprints captured on the development Mac.",
+  "friendHostInspected": false,
+  "reproduction": "Pinned original archives; a second valid ad-hoc signing layout with SHA-1 plus SHA-256 makes each executable differ from its captured hash.",
+  "verification": {
+    "analysis": "passed",
+    "flutterTests": 417,
+    "flutterFailures": 0,
+    "targetedRegressions": 26,
+    "nativeSetup": [
+      {
+        "id": "pcsx2",
+        "build": "b6c2cd600ddee34a50a0637b4a6f4188b5a9e29b7d8ab4aca7078c8e6f90911d",
+        "localExecutable": "8f5604a9d20805bd70be76b803953c07e9e8b8bfa5a3a47a908d2a221cb3f606",
+        "archive": "3ed9eb40a33eae67134142c24255a079be444f0616ca29575a04a37981f7d426",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "elapsedMs": 3200
+      },
+      {
+        "id": "armsx2",
+        "build": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
+        "localExecutable": "c820c245e85a47f051307b233f697632319c272c84e50f5b13249ac7e7c947ef",
+        "archive": "a0101807ffd44bab39deb62e4b2150e44c7f4b40371cab7d8dbe38879afda1b8",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "elapsedMs": 3248
+      },
+      {
+        "id": "ppsspp",
+        "build": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
+        "localExecutable": "00df714b36b654ed2dd51fdd4a106ad9a97c72437146a8c5b4c426d77e523434",
+        "archive": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "elapsedMs": 3193
+      }
+    ],
+    "nativeGameLaunchTested": false,
+    "ownerDataWritten": false,
+    "remoteSaveWrites": false,
+    "otherHostExecutionTested": false
+  },
+  "commands": [
+    "devbox run -- flutter analyze",
+    "devbox run -- flutter test --no-pub --reporter expanded",
+    "devbox run -- flutter test --no-pub tool/check_setup_portability_test.dart --reporter expanded",
+    "devbox run -- bash tool/build_bridges.sh",
+    "devbox run -- bash tool/build_app.sh --release --portable --no-pub"
+  ],
+  "diagnostics": ".tool-cache/research/setup-portability/",
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-portable-emulator-setup.zip",
+    "bytes": 20477225,
+    "sha256": "c6732b81b0cf422756fe7b9f3b9f2221ecc93f2cdfaf12334f89c880cc4e28cc",
+    "applicationArchitectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "allThreeBridgeArchitectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "zipIntegrity": "passed",
+    "sourceSignature": "deep/strict/all-architectures passed",
+    "freshExtractionSignature": "deep/strict/all-architectures passed",
+    "packagedSetupAndBridgeReadback": "passed",
+    "signing": "ad-hoc, not notarized",
+    "dataRoot": "production Application Support/Broomm",
+    "applicationSelfInstallEnabled": false
+  },
+  "pending": [
+    "Retry on the friend's actual MacBook",
+    "Fresh gameplay acceptance",
+    "Other native hosts"
+  ],
+  "pausedWork": "Astris, Citra MMJ and associated default selection work remain in the named Git stash and are excluded.",
+  "publicationFollowupAtUtc": "2026-10-28T16:56:14.333138Z",
+  "updaterRepository": "Broomm/broomm",
+  "legacyUpdaterMigration": "Existing builds pointing at pedrotrschneider/broomm require one manual organization release installation; subsequent official builds check Broomm/broomm.",
+  "incrementalPackagingCorrection": "After incremental Flutter compilation invalidated App.framework signing, its project-owned signature and the outer app signature were refreshed with preserved metadata. Strict/deep/all-architecture source and fresh-extraction checks passed."
+}

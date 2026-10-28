@@ -497,3 +497,74 @@ lint and existing real macOS package verification pass locally. Exact Windows
 artifact readback confirms the corrected references. New native Windows packaging
 and publication remain pending. No Flutter or binary change occurred. See the
 distribution record and sibling `docs/ci-followup-7.json`.
+
+## Owner-requested local development cleanup — 27 October 2026
+
+Removed the obsolete checkout-local library, accounts/settings, profile progress,
+managed emulator copies, prototype data, supplied test ROMs, research sessions,
+download/tool caches and generated build state. Retained the source tree, locked
+environment definitions, signing material and current
+`build/releases/Broomm-macOS-automatic-cores.zip`. Historical committed native
+evidence remains; its deleted ignored fixtures need reprovisioning for reruns.
+No application behavior changed and no new binary was necessary.
+
+Before removal, the process inventory showed no Broomm/emulator/build writers,
+seven existing development runtime locks were acquired, and production
+configuration/symlink inspection found no references into the deleted roots.
+Production's 1,546-file path/type/size/modification-time inventory was identical
+before and after (SHA-256
+`21457af55770f1bc3790ab0553a620ab38fe3930020004b268701808b80d087c`).
+No production files, installed Applications bundle, Keychain entries or remote
+RomM data were modified. The retained macOS ZIP still hashes to
+`39dffc43d3ac6aea38ab560a52a7c9cb73e9d8159de84f77f12b2d305c0e13f9`.
+Available disk space increased by approximately 131 GB; nominal deleted directory
+sizes were larger because of shared/cloned storage. These are filesystem checks,
+not a new application or gameplay verification run.
+
+## macOS emulator setup portability — 28 October 2026
+
+The owner reported PCSX2, ARMSX2 and PPSSPP setup rejecting valid downloads on
+another MacBook. Their local re-signing was followed by exact comparisons with
+signature bytes captured on the development Mac. Fresh official downloads match
+here; deliberately different valid code-signing output reproduces the rejection
+class. The friend's exact signing difference remains uninspected.
+
+Reviewed archives retain mandatory source size/SHA-256 validation. Privately
+re-signed output now uses macOS deep/strict/all-architecture validation, expected
+file/link structure and its locally recorded executable hash, instead of a
+separate SHA-256 inventory comparison with another Mac's signatures. Receipts
+bind the result to the specific build's reviewed source archive. Existing raw
+imports and receipts remain compatible. Logical emulator/state/Switch progress
+identities stay stable across signature variations; cancellation, writer locks,
+private staging, copy/receipt/publication readbacks and progress retention remain.
+The shared correction also covers Dolphin, DuckStation and Eden signing recipes.
+
+Static analysis and all **415 Flutter tests** pass on macOS 27.0.1 / Xcode 27.1.
+Three new signing regressions and an expanded state-compatibility case cover
+different valid signatures, restart/source-free reuse, damaged resources,
+unreviewed provenance, bad downloads and cancellation. Real pinned PCSX2 2.8.2,
+ARMSX2 nightly-20261023 and PPSSPP 1.20.4 install with alternate valid signatures,
+open private no-game configuration processes and exclude competing writers.
+These are native setup/process checks, not fresh gameplay or friend-host
+acceptance. No owner data or RomM progress is modified. Astris/Citra MMJ and
+their default-selection work remain stashed. See the [walkthrough and evidence](docs/macos-emulator-signing.md).
+
+The fresh [macOS package](build/releases/Broomm-macOS-portable-emulator-setup.zip)
+is **20,477,225 bytes**, SHA-256
+`c6732b81b0cf422756fe7b9f3b9f2221ecc93f2cdfaf12334f89c880cc4e28cc`.
+The app and three bridges are universal; archive integrity, source and
+fresh-extraction deep/strict/all-architecture signatures, and exact setup/bridge
+readbacks pass. This portable local build uses production Application Support
+storage and ad-hoc signing, with development self-installation disabled.
+No emulator, game, firmware, credential or progress payload is bundled.
+
+Before the requested Git publication, the updater was also corrected to use the
+actual `Broomm/broomm` origin. Public API inspection showed distinct release IDs
+and revisions in the old personal and organization repositories. Older installed
+clients remain pointed at the personal repository and need one manual
+organization-release installation before using this update stream. Two new
+regressions verify organization API discovery/asset selection and rejection of
+old or unrelated publishers. Analysis and all **417 tests** pass. The local
+package was rebuilt; incremental compilation required refreshing the
+project-owned App.framework and outer ad-hoc signatures before source and fresh
+ZIP extraction signature checks passed. This does not change CI signing policy.

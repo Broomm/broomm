@@ -132,13 +132,18 @@ void main() {
       null,
       null,
     );
-    Future<ProgressLayout> layout(String? core) => gameProgressLayout(
+    Future<ProgressLayout> layout(
+      String? core, {
+      String? signedHash,
+      String? buildHash,
+    }) => gameProgressLayout(
       ResolvedSession(
         emulator,
         '/unused/game.sfc',
-        'a' * 64,
+        signedHash ?? 'a' * 64,
         {},
         coreHash: core,
+        buildHash: buildHash,
       ),
       'snes',
     );
@@ -150,5 +155,20 @@ void main() {
     expect(a, isNot(b));
     expect(first.identity, second.identity);
     expect(unknown.areas.any((a) => a.id.startsWith('states-')), false);
+    final resigned = await layout(
+      'b' * 64,
+      signedHash: 'd' * 64,
+      buildHash: 'a' * 64,
+    );
+    expect(resigned.areas.singleWhere((a) => a.id.startsWith('states-')).id, a);
+    final newBuild = await layout(
+      'b' * 64,
+      signedHash: 'd' * 64,
+      buildHash: 'e' * 64,
+    );
+    expect(
+      newBuild.areas.singleWhere((a) => a.id.startsWith('states-')).id,
+      isNot(a),
+    );
   });
 }

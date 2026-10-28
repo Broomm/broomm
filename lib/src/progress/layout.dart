@@ -179,7 +179,7 @@ Future<ProgressLayout> gameProgressLayout(
   final stateBuild = ProgressDigest.sha256()
     ..add(
       utf8.encode(
-        '${session.executableHash}:${session.coreHash ?? 'integrated'}${psp == null ? '' : ':${psp['DISC_VERSION']}'}',
+        '${session.buildHash}:${session.coreHash ?? 'integrated'}${psp == null ? '' : ':${psp['DISC_VERSION']}'}',
       ),
     );
   final state =

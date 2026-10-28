@@ -23,7 +23,7 @@ Future<ProgressLayout> edenProgressLayout(
   final j = await progressJson(identity);
   if (j['version'] != 2 ||
       j['source'] != source.$2 ||
-      j['emulator'] != session.executableHash ||
+      j['emulator'] != session.buildHash ||
       j['program'] is! String ||
       !RegExp(r'^010[0-9a-f]{13}$').hasMatch(j['program'] as String)) {
     throw const FormatException(

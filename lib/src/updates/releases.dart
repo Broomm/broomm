@@ -5,7 +5,7 @@ const broommReleaseVersion = String.fromEnvironment(
   defaultValue: '0.1.0-dev',
 );
 const broommReleaseTarget = String.fromEnvironment('BROOMM_RELEASE_TARGET');
-const broommRepository = 'pedrotrschneider/broomm';
+const broommRepository = 'Broomm/broomm';
 
 class UpdateFailure implements Exception {
   const UpdateFailure(this.message);

@@ -20,13 +20,18 @@ class ResolvedSession {
     this.readOnly = const [],
     this.coreHash,
     this.installationIdentity,
-  });
+    String? buildHash,
+  }) : _buildHash = buildHash;
   final PreparedEmulator emulator;
   final String rom, executableHash;
   final Map<String, String> native;
   final String? home;
   final String? coreHash;
   final String? installationIdentity;
+  final String? _buildHash;
+  // Save/state compatibility follows the reviewed build, not locally generated
+  // code-signature bytes. executableHash still guards the installed executable.
+  String get buildHash => _buildHash ?? executableHash;
   ResolvedSession withInstallationIdentity(String identity) => ResolvedSession(
     emulator,
     rom,
@@ -36,6 +41,7 @@ class ResolvedSession {
     readOnly: readOnly,
     coreHash: coreHash,
     installationIdentity: identity,
+    buildHash: buildHash,
   );
   final List<String> readOnly;
 }

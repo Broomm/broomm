@@ -62,7 +62,7 @@ Future<void> recordRyubingGame(
     'version': 2,
     'source': identity.$2,
     'program': program,
-    'emulator': session.executableHash,
+    'emulator': session.buildHash,
   });
 }
 
@@ -82,7 +82,7 @@ Future<ProgressLayout> ryubingProgressLayout(
   final j = await progressJson(file);
   if (j['version'] != 2 ||
       j['source'] != identity.$2 ||
-      j['emulator'] != session.executableHash ||
+      j['emulator'] != session.buildHash ||
       j['program'] is! String ||
       !RegExp(r'^010[0-9a-f]{13}$').hasMatch(j['program'] as String))
     throw const FormatException(

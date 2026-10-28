@@ -183,6 +183,14 @@
             "entry": "Dolphin.app"
           }
         ]
+      },
+      "source_package": {
+        "url": "https://dl.dolphin-emu.org/releases/2609/dolphin-2609-universal.dmg",
+        "sha256": "b8910a6f8710cbe93b916f5b3867a46e67e49aa8272657d282d4accae359cd6b",
+        "bytes": 41965559,
+        "format": "dmg",
+        "entry": "Dolphin.app",
+        "prepare": "macos-dolphin"
       }
     },
     {
@@ -273,6 +281,14 @@
       "native": {
         "BROOMM_DUCK_VALID": "00000001008100e5",
         "BROOMM_DUCK_PAUSED": "00000001008100e6"
+      },
+      "source_package": {
+        "url": "https://github.com/stenzek/duckstation/releases/download/v0.1-12083/duckstation-mac-release.zip",
+        "sha256": "cd77d80b55276f15340efa1c65df250f8f4d413b68d1c136e48615d780f1249c",
+        "bytes": 95159712,
+        "format": "zip",
+        "entry": "DuckStation.app",
+        "prepare": "macos-adhoc"
       }
     },
     {
@@ -288,6 +304,14 @@
       "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
       "native": {
         "BROOMM_PS2_STATE": "00000001031553cc"
+      },
+      "source_package": {
+        "url": "https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-macos-Qt.tar.xz",
+        "sha256": "3ed9eb40a33eae67134142c24255a079be444f0616ca29575a04a37981f7d426",
+        "bytes": 24377200,
+        "format": "tar.xz",
+        "entry": "PCSX2-v2.8.2.app",
+        "prepare": "macos-adhoc"
       }
     },
     {
@@ -301,7 +325,15 @@
       "sha256": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
       "sdl": 3,
       "sdl_library": "Contents/Frameworks/libSDL3.0.dylib",
-      "native": {}
+      "native": {},
+      "source_package": {
+        "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261023/ARMSX2-nightly-20261023-90126bdfea-macOS-arm64.tar.xz",
+        "sha256": "a0101807ffd44bab39deb62e4b2150e44c7f4b40371cab7d8dbe38879afda1b8",
+        "bytes": 35215476,
+        "format": "tar.xz",
+        "entry": "armsx2-macos-arm64-sha[90126bdfea].app",
+        "prepare": "macos-adhoc"
+      }
     },
     {
       "id": "eden",
@@ -314,7 +346,15 @@
       "sha256": "18de303111bf6181d80af8b365f27aa5b04f9ee7d28f13ce4eaa161d85cc00b7",
       "sdl": 2,
       "sdl_library": null,
-      "native": {}
+      "native": {},
+      "source_package": {
+        "url": "https://stable.eden-emu.dev/v0.2.1/Eden-macOS-v0.2.1.dmg",
+        "sha256": "40575fc79a61550fbb9e332cbae94ccd20f5de20ff61b4b60fe1d42f2525c0b5",
+        "bytes": 24259461,
+        "format": "dmg",
+        "entry": "eden.app",
+        "prepare": "macos-adhoc"
+      }
     },
     {
       "id": "ppsspp",
@@ -327,7 +367,15 @@
       "sha256": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
       "sdl": 2,
       "sdl_library": "Contents/Frameworks/SDL2.framework/Versions/A/SDL2",
-      "native": {}
+      "native": {},
+      "source_package": {
+        "url": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPPSDL-macOS-v1.20.4.zip",
+        "sha256": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+        "bytes": 37389023,
+        "format": "zip",
+        "entry": "PPSSPPSDL.app",
+        "prepare": "macos-adhoc"
+      }
     }
   ],
   "previous_builds": [

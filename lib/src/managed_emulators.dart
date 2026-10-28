@@ -78,6 +78,7 @@ class SetupItem {
     this.cores = const {},
     this.downloads = const {},
     this.packageRoot,
+    this.preparation,
   });
   final TestedBuild build;
   final String source;
@@ -86,6 +87,9 @@ class SetupItem {
   final Map<String, String> cores;
   final Map<String, SetupPackage> downloads;
   final Directory? packageRoot;
+  // Created only after a reviewed archive has been verified and privately
+  // re-signed. The logical build identity is independent of local signatures.
+  final Map<String, String>? preparation;
   String describe(String source) {
     final package = downloads[source];
     return package == null
@@ -581,6 +585,7 @@ class ManagedEmulators extends ChangeNotifier {
     final reuse =
         await FileSystemEntity.type(release.path, followLinks: false) ==
         FileSystemEntityType.directory;
+    Map<String, String>? preparation;
     Future<String> resolve(
       String value,
       String slot,
@@ -595,9 +600,12 @@ class ManagedEmulators extends ChangeNotifier {
           (hash == null ||
               await FileSystemEntity.type(installed, followLinks: false) ==
                       FileSystemEntityType.file &&
-                  await sha256File(installed) == hash))
+                  await sha256File(installed) == hash)) {
+        if (slot == 'source')
+          preparation = await _installedPreparation(item.build);
         return installed;
-      return downloads.prepare(
+      }
+      final path = await downloads.prepare(
         package,
         working,
         cancellation,
@@ -607,6 +615,16 @@ class ManagedEmulators extends ChangeNotifier {
         ),
         localRoot: item.packageRoot,
       );
+      if (slot == 'source' && package.prepare != 'none') {
+        preparation = {
+          'archive_sha256': package.sha256,
+          'executable_sha256': await sha256File(
+            '$path/${item.build.executable}',
+            cancellation: cancellation,
+          ),
+        };
+      }
+      return path;
     }
 
     final b = item.build;
@@ -647,7 +665,14 @@ class ManagedEmulators extends ChangeNotifier {
         hash,
       );
     }
-    return SetupItem(b, source, core, item.resources, cores: cores);
+    return SetupItem(
+      b,
+      source,
+      core,
+      item.resources,
+      cores: cores,
+      preparation: preparation,
+    );
   }
 
   Future<void> _install(SetupPlan selected) async {
@@ -687,7 +712,12 @@ class ManagedEmulators extends ChangeNotifier {
           );
         }
         setPhase('Checking ${b.name} ${b.version}');
-        await verifyBundle(b, item.source, cancellation);
+        await verifyBundle(
+          b,
+          item.source,
+          cancellation,
+          preparation: item.preparation,
+        );
         if (b.coreHash != null &&
             (item.core == null || await sha256File(item.core!) != b.coreHash))
           throw StateError(
@@ -723,7 +753,12 @@ class ManagedEmulators extends ChangeNotifier {
               );
             }
             setPhase('Verifying ${b.name}');
-            await verifyBundle(b, '${staging.path}/${b.bundle}', cancellation);
+            await verifyBundle(
+              b,
+              '${staging.path}/${b.bundle}',
+              cancellation,
+              preparation: item.preparation,
+            );
             if (b.coreHash != null &&
                 await sha256File('${staging.path}/snes9x_libretro.dylib') !=
                     b.coreHash)
@@ -736,6 +771,7 @@ class ManagedEmulators extends ChangeNotifier {
               'host': host,
               'resources': item.resources.keys.toList(),
               'installedAt': DateTime.now().toUtc().toIso8601String(),
+              if (item.preparation != null) 'preparation': item.preparation,
             });
             final f = File('${staging.path}/receipt.json');
             await f.writeAsString(receipt, flush: true);
@@ -1189,7 +1225,7 @@ class ManagedEmulators extends ChangeNotifier {
       throw StateError(
         '${resourceProblems[b.id]}. Add the required local resources in Emulator Settings before playing.',
       );
-    await verifyBundle(
+    final executableHash = await verifyBundle(
       b,
       '${release.path}/${b.bundle}',
       DownloadCancellation(),
@@ -1298,19 +1334,66 @@ class ManagedEmulators extends ChangeNotifier {
             : null,
       ),
       rom,
-      b.hash,
+      executableHash,
       b.native,
+      buildHash: b.hash,
       home: home,
       coreHash: coreHash,
       readOnly: [root.path, '${data.path}/library'],
     );
   }
 
-  Future<void> verifyBundle(
+  Future<Map<String, String>?> _installedPreparation(TestedBuild b) async {
+    final file = File('${root.path}/${b.id}/${b.hash}/receipt.json');
+    if (await FileSystemEntity.type(file.path, followLinks: false) !=
+            FileSystemEntityType.file ||
+        await file.length() > 65536)
+      throw StateError(
+        '${b.name} installation receipt is missing or invalid. Retry setup.',
+      );
+    final record = jsonDecode(await file.readAsString()) as Map;
+    if (record['schema_version'] != 1 ||
+        record['id'] != b.id ||
+        record['hash'] != b.hash)
+      throw StateError(
+        '${b.name} installation identity changed. Existing settings were kept.',
+      );
+    return record['preparation'] == null
+        ? null
+        : (record['preparation'] as Map).cast<String, String>();
+  }
+
+  Future<void> _trustPreparation(
+    TestedBuild b,
+    Map<String, String> preparation,
+  ) async {
+    if (preparation.length != 2 ||
+        !['archive_sha256', 'executable_sha256'].every(
+          (key) => RegExp(r'^[a-f0-9]{64}$').hasMatch(preparation[key] ?? ''),
+        ))
+      throw const FormatException(
+        'Invalid prepared emulator identity. Retry setup.',
+      );
+    final candidates = [
+      if (b.sourcePackage != null) b.sourcePackage!,
+      ...?b.compatibleSetupPackages['source'],
+    ];
+    if (!candidates.any(
+      (p) => p.prepare != 'none' && p.sha256 == preparation['archive_sha256'],
+    ))
+      throw const FormatException(
+        'The prepared emulator does not belong to a reviewed archive. Existing files were kept.',
+      );
+  }
+
+  Future<String> verifyBundle(
     TestedBuild b,
     String path,
-    DownloadCancellation cancellation,
-  ) async {
+    DownloadCancellation cancellation, {
+    Map<String, String>? preparation,
+  }) async {
+    if (path == '${root.path}/${b.id}/${b.hash}/${b.bundle}')
+      preparation = await _installedPreparation(b);
     final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
     await inspectTree(path, allowLinks: true);
     final actual = <String>{};
@@ -1337,6 +1420,28 @@ class ManagedEmulators extends ChangeNotifier {
       throw StateError(
         '${b.name} does not match the tested application bundle.',
       );
+    if (preparation != null) {
+      await _trustPreparation(b, preparation);
+      // The pinned source archive was checked before re-signing. Signatures
+      // legitimately differ across macOS versions; validate Apple's seal and
+      // this installation's executable, not another machine's signature bytes.
+      await setupTool('/usr/bin/codesign', [
+        '--verify',
+        '--deep',
+        '--strict',
+        '--all-architectures',
+        path,
+      ], cancellation);
+      final hash = await sha256File(
+        '$path/${b.executable}',
+        cancellation: cancellation,
+      );
+      if (hash != preparation['executable_sha256'])
+        throw StateError(
+          '${b.name} executable changed after setup. Existing settings were kept. Retry setup.',
+        );
+      return hash;
+    }
     final paths = files.keys.toList();
     for (var i = 0; i < paths.length; i += 64) {
       cancellation.check();
@@ -1352,10 +1457,11 @@ class ManagedEmulators extends ChangeNotifier {
       for (var n = 0; n < batch.length; n++) {
         if (lines[n].substring(0, 64) != files[batch[n]])
           throw StateError(
-            '${b.name} files changed or are not the tested build. Existing settings have been kept.',
+            '${b.name} files changed or are not the tested build (${batch[n]}). Existing settings have been kept.',
           );
       }
     }
+    return b.hash;
   }
 
   @override

@@ -65,6 +65,24 @@ class MemoryUpdateTransport extends UpdateTransport {
   }
 }
 
+class RepositoryUpdateTransport extends UpdateTransport {
+  RepositoryUpdateTransport(this.release);
+  final Map<String, dynamic> release;
+  final requests = <Uri>[];
+  @override
+  Future<List<int>> bytes(
+    Uri uri, {
+    required int limit,
+    bool api = false,
+    bool missing = false,
+  }) async {
+    requests.add(uri);
+    return utf8.encode(
+      jsonEncode(uri.path.endsWith('/latest') ? release : [release]),
+    );
+  }
+}
+
 class HandoffFixture extends PreparedAppUpdate {
   HandoffFixture(super.stage, super.location, super.lease, this.starting);
   final Future<bool> Function() starting;
@@ -170,6 +188,33 @@ Future<void> waitFor(File file) async {
 }
 
 void main() {
+  test('update discovery queries the organization repository and accepts its canonical release assets', () async {
+    final release = updateRelease('0.1.2', target: 'macos-universal');
+    for (final asset in release['assets'] as List) {
+      asset['browser_download_url'] =
+          'https://github.com/Broomm/broomm/releases/download/v0.1.2/${asset['name']}';
+    }
+    final transport = RepositoryUpdateTransport(release);
+    final update = await transport.latest('0.1.1', false, 'macos-universal');
+    expect(update?.version.toString(), '0.1.2');
+    expect(transport.requests.map((uri) => uri.toString()), [
+      'https://api.github.com/repos/Broomm/broomm/releases?per_page=100',
+      'https://api.github.com/repos/Broomm/broomm/releases/latest',
+    ]);
+  });
+  test('the old personal repository and unrelated publishers cannot supply organization updates', () {
+    for (final repository in ['pedrotrschneider/broomm', 'unrelated/broomm']) {
+      final release = updateRelease('0.1.2', target: 'macos-universal');
+      for (final asset in release['assets'] as List) {
+        asset['browser_download_url'] =
+            'https://github.com/$repository/releases/download/v0.1.2/${asset['name']}';
+      }
+      expect(
+        selectUpdate([release], '0.1.1', false, 'macos-universal'),
+        isNull,
+      );
+    }
+  });
   for (final early in [true, false]) {
     test(early ? 'cancellation before OS handoff prevents installer startup' : 'OS handoff fences cancellation and rejected exit disarms the committed helper', () async {
       final root = await Directory.systemTemp.createTemp(

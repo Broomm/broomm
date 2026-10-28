@@ -128,11 +128,17 @@ not automatically recovered or treated as evidence that a writer exited.
 
 Reviewed DuckStation, PCSX2, ARMSX2, PPSSPP and Eden archives require local ad-hoc
 signing in private staging. Dolphin uses the fixed signing recipe above. RPCS3,
-Azahar, Ryubing and melonDS retain their downloaded signatures. In every case the complete resulting file/link inventory must match
-Broomm's existing trusted inventory, followed by the existing copied-bundle,
-receipt and selection readbacks. Symbols, controller hooks, firmware handling,
-profile configuration and saves retain their previous identities. Recognized
-installed applications/cores are verified and reused without source archives.
+Azahar, Ryubing and melonDS retain their downloaded signatures. After the
+[2026-10-28 portability correction](macos-emulator-signing.md), re-signed archives
+retain their pinned source identity, expected file/link structure and macOS
+deep/strict/all-architecture signature validation. Their receipt records the
+locally generated executable hash. They no longer require another Mac's exact
+signature bytes or a separate SHA-256 comparison for every re-signed file.
+Unmodified downloads and legacy extracted imports retain their existing full
+inventory checks. Copied-bundle, receipt and selection readbacks remain.
+Symbols, controller hooks, firmware handling, profile configuration and saves
+retain their previous logical build identities. Recognized installed
+applications/cores are verified and reused without source archives.
 
 Emulator updates remain explicit. The JSON cannot introduce commands, bridge
 libraries, environments, hook addresses or arbitrary executable versions.

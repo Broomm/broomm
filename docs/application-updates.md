@@ -8,10 +8,16 @@ and Android installer handoff. The inspected Teddy revision is
 `lib/ted/teddy_updates.dart`, `teddy_update_installer.dart`,
 `teddy_update_settings.dart` and `teddy_update_cleanup.dart`.
 
-Broomm's public source is `pedrotrschneider/broomm`, with the existing five release
+Broomm's public source is `Broomm/broomm`, with the existing five release
 targets and `version.txt`/tag-ledger policy. It has no Teddy/TED server version
 family constraint. A newer major/minor application release can be offered.
 RomM authentication and emulator setup/update policy are unchanged.
+
+The updater was corrected to this organization repository on 2026-10-28. Older
+builds still check the separate `pedrotrschneider/broomm` repository, so they may
+need one manual installation of an organization release before the normal
+in-app update flow can discover later builds. Keep existing Application Support
+data; this change requires no account, library or progress reset.
 
 ## Use it
 
