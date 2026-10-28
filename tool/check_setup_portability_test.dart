@@ -2,7 +2,9 @@
 library;
 
 import 'dart:convert';
-import 'dart:async';
+
+import 'fixtures/configuration_cleanup.dart';
+
 import 'dart:io';
 
 import 'package:broomm/src/emulator_configuration.dart';
@@ -31,30 +33,34 @@ class _AlternateSignatures extends SetupDownloads {
       progress,
       localRoot: localRoot,
     );
-    await setupTool('/usr/bin/codesign', [
-      '--force',
-      '--deep',
-      '--sign',
-      '-',
-      '--digest-algorithm=sha1,sha256',
-      path,
-    ], cancellation);
+    if (package.prepare != 'none')
+      await setupTool('/usr/bin/codesign', [
+        '--force',
+        '--deep',
+        '--sign',
+        '-',
+        '--digest-algorithm=sha1,sha256',
+        path,
+      ], cancellation);
     return path;
   }
 }
 
 void main() {
-  test('real PS2 and PSP archives install and open privately with valid signatures different from the captured Mac', () async {
+  test('real PS2, PSP and Azahar bundles open independently with private storage and a Launch Services parent', () async {
     final parent = Directory('.tool-cache/research/setup-portability').absolute;
     final data = await parent.createTemp('verified installation ');
     final setup =
         jsonDecode(await File('assets/setup/setup.json').readAsString()) as Map;
     final entries = setup['launchers'] as Map;
-    entries.removeWhere((id, _) => !{'pcsx2', 'armsx2', 'ppsspp'}.contains(id));
+    entries.removeWhere(
+      (id, _) => !{'pcsx2', 'armsx2', 'ppsspp', 'azahar'}.contains(id),
+    );
     for (final id in entries.keys) {
       final source = entries[id]['source'] as Map;
       source.remove('url');
-      source['file'] = '$id.${id == 'ppsspp' ? 'zip' : 'tar.xz'}';
+      source['file'] =
+          '$id.${{'ppsspp', 'azahar'}.contains(id) ? 'zip' : 'tar.xz'}';
     }
     final json = await File('${parent.path}/offline.json')
         .writeAsString(jsonEncode(setup));
@@ -87,7 +93,10 @@ void main() {
     for (final item in plan.items) {
       final build = item.build;
       final resolved = await manager.resolveConfiguration(build.name, profile);
-      expect(resolved.executableHash, isNot(build.hash));
+      expect(
+        resolved.executableHash,
+        build.id == 'azahar' ? build.hash : isNot(build.hash),
+      );
       expect(resolved.buildHash, build.hash);
       final configuration = EmulatorConfiguration(
         data,
@@ -98,13 +107,18 @@ void main() {
       await configuration.start(
         () => manager.resolveConfiguration(build.name, profile),
       );
+      final pid = await configurationFixturePid(resolved.emulator.executable);
       try {
+        await configurationFixtureReady(data, pid);
         await Future<void>.delayed(const Duration(seconds: 3));
-        expect(
-          configuration.pid,
-          isNotNull,
-          reason: '${build.name} exited before configuration',
-        );
+        final parent = await Process.run('/bin/ps', [
+          '-p',
+          '$pid',
+          '-o',
+          'ppid=',
+        ]);
+        expect(parent.exitCode, 0);
+        expect((parent.stdout as String).trim(), '1');
         await expectLater(SessionLease.acquire(data), throwsStateError);
         rows.add({
           'id': build.id,
@@ -113,23 +127,15 @@ void main() {
           'archive': item.downloads[item.source]!.sha256,
           'privateConfigurationProcess': true,
           'competingWriterBlocked': true,
+          'launchServicesParent': 1,
+          if (build.id == 'azahar') 'terminalWarningPredicate': false,
           'elapsedMs': clock.elapsedMilliseconds,
         });
         stdout.writeln(
           '${build.name}: alternate signatures accepted; private configuration process alive',
         );
       } finally {
-        if (configuration.pid case final pid?) {
-          Process.killPid(pid, ProcessSignal.sigterm);
-          try {
-            await configuration.done!.timeout(const Duration(seconds: 3));
-          } on TimeoutException {
-            Process.killPid(pid, ProcessSignal.sigkill);
-            await configuration.done;
-          }
-        }
-        final lease = await SessionLease.acquire(data);
-        await lease.release();
+        await closeConfigurationFixture(pid, data);
       }
     }
     await File('${parent.path}/verified.json').writeAsString(

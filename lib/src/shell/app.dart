@@ -90,7 +90,7 @@ class _BroommAppState extends State<BroommApp> {
           phase('Stopping the application download…');
           await m.updates.finish();
         }
-        phase('Checking emulator configuration…');
+        phase('Finishing emulator launch…');
         await m.finishConfiguration();
         phase('Finishing cloud saves…');
         await m.finishCloud();

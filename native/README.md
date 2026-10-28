@@ -8,7 +8,14 @@ the pinned melonDS 1.1 SDL2/Qt pause path and
 `writer.lock` inside an RPCS3 installation process through native teardown and
 parent death. Dart owns installation policy, validation and publication.
 The same guard protects no-game configuration processes until native exit;
-their normal emulator UI owns shutdown. The session bridge additionally exposes
+their normal emulator UI owns shutdown. Independent configuration launches now
+take the coordinator and writer locks inside the child, with nonblocking refusal
+of conflicts, and apply the existing Dart-supplied private write policy through
+macOS's sandbox API. This lets Launch Services own the process without Broomm
+polling its readiness/lifetime or retaining a lease. Installer-only invocations
+retain their original writer-lock behavior. No new helper service or runtime is
+shipped. See [Open emulator behavior](../docs/emulator-opening.md).
+The session bridge additionally exposes
 optional hash-pinned RPCS3 file/module loading counters in protocol 4, with
 bounded atomic snapshots. See [current evidence](../docs/downloads-and-status.md).
 The guard also translates `abort()` to non-success status 86 only for the

@@ -476,9 +476,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                           ? null
                           : () => model.openEmulator(build.name),
                       child: ActionLabel(
-                        model.configurationEmulator == build.name
-                            ? 'Quit emulator to return'
-                            : 'Open emulator',
+                        'Open emulator',
                         icon: Icons.open_in_new,
                       ),
                     ),

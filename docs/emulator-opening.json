@@ -1,0 +1,122 @@
+{
+  "recordedAtUtc": "2026-10-28T18:03:36.576660Z",
+  "sourceBaseRevision": "176ca1e954fcc9ed776ee9dbbdec084ac480b724",
+  "uncommittedAtVerification": true,
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "xcode": "27.1 (27A9275)",
+    "flutter": "3.47.0"
+  },
+  "behavior": {
+    "configurationLaunch": "OS-owned, no readiness/lifetime watcher",
+    "broommWindow": "never hidden/restored by this action",
+    "gameSession": "not activated",
+    "privateData": "unchanged profile HOME/XDG/native arguments",
+    "nativeLocking": "nonblocking coordinator and writer lock ownership inside the independent child",
+    "azaharParent": 1,
+    "azaharWarningPredicate": false,
+    "gameplayLaunchChanged": false
+  },
+  "verification": {
+    "analysis": "passed",
+    "flutterTests": 421,
+    "failures": 0,
+    "nativeConfigurationTests": 4,
+    "ubsanConfigurationTests": 4,
+    "installerRegressionTests": 5,
+    "clangStaticAnalysis": "no findings",
+    "realApplications": [
+      {
+        "id": "azahar",
+        "build": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+        "localExecutable": "3dfdfbed147cfb420f224385e832191833d07b0951d4b86326ab193e2deb3b21",
+        "archive": "38a4515cd979d5293d66cac38197f14d69c311368f3a0fcb547fe5b658ef1ca7",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "launchServicesParent": 1,
+        "terminalWarningPredicate": false,
+        "elapsedMs": 4716
+      },
+      {
+        "id": "pcsx2",
+        "build": "b6c2cd600ddee34a50a0637b4a6f4188b5a9e29b7d8ab4aca7078c8e6f90911d",
+        "localExecutable": "8f5604a9d20805bd70be76b803953c07e9e8b8bfa5a3a47a908d2a221cb3f606",
+        "archive": "3ed9eb40a33eae67134142c24255a079be444f0616ca29575a04a37981f7d426",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "launchServicesParent": 1,
+        "elapsedMs": 12868
+      },
+      {
+        "id": "armsx2",
+        "build": "ef4a528270a035080428af6a8c5c1065a35b5383952e6e7f656f8490bffe80a7",
+        "localExecutable": "c820c245e85a47f051307b233f697632319c272c84e50f5b13249ac7e7c947ef",
+        "archive": "a0101807ffd44bab39deb62e4b2150e44c7f4b40371cab7d8dbe38879afda1b8",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "launchServicesParent": 1,
+        "elapsedMs": 4007
+      },
+      {
+        "id": "ppsspp",
+        "build": "eb7b2c26a2796176249cefcc5f83991d054ca16e029a45a95ea9dc09b3b294d1",
+        "localExecutable": "00df714b36b654ed2dd51fdd4a106ad9a97c72437146a8c5b4c426d77e523434",
+        "archive": "fb32a215861a293c28f641bf47f3164766ba512214025f4457796c8d14242665",
+        "privateConfigurationProcess": true,
+        "competingWriterBlocked": true,
+        "launchServicesParent": 1,
+        "elapsedMs": 4036
+      }
+    ],
+    "ownerDataWritten": false,
+    "remoteSaveWrites": false
+  },
+  "commands": [
+    "devbox run -- flutter analyze --no-pub",
+    "devbox run -- flutter test --no-pub --reporter expanded",
+    "devbox run -- flutter test test/emulator_configuration_test.dart test/open_emulator_test.dart --reporter expanded",
+    "devbox run -- env BROOMM_CONFIGURATION_SANITIZERS=1 flutter test test/emulator_configuration_test.dart --reporter expanded",
+    "devbox run -- flutter test tool/check_installer_guard_test.dart --reporter expanded",
+    "devbox run -- flutter test tool/check_setup_portability_test.dart --reporter expanded",
+    "devbox run -- bash tool/build_bridges.sh",
+    "devbox run -- bash tool/build_app.sh --release --portable --no-pub"
+  ],
+  "diagnostics": ".tool-cache/research/emulator-opening/",
+  "azaharSource": {
+    "revision": "9e6f523a57fac9564ac0bf8286db3c3702d301ec",
+    "release": "2126.1.2",
+    "warning": "src/citra_qt/citra_qt.cpp:497",
+    "predicate": "src/common/apple_utils.cpp:9; getppid() != 1"
+  },
+  "failedExperiments": [
+    "An initial five-second readiness acknowledgment timed out during cold Rosetta startup. File timestamps showed nine seconds; production readiness polling was removed entirely.",
+    "macOS lsof did not expose the record-lock state. A separate read-only F_GETLK test fixture replaced it; this avoided introducing lock contention from the observation itself.",
+    "The coordinator test uses a private compiled executable because SIP strips injected libraries from /usr/bin/true. It includes a successful unlocked control."
+  ],
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-independent-emulator-launch.zip",
+    "bytes": 20480144,
+    "sha256": "efc4bef497e693c297e4d52efd7770af77473101ce809519905f6ed017c9b4c4",
+    "architecture": "universal arm64/x86_64",
+    "zipIntegrity": "passed",
+    "sourceSignature": "deep/strict/all-architectures passed",
+    "freshExtractionSignature": "deep/strict/all-architectures passed",
+    "guardReadback": "identical before/after packaging",
+    "dataRoot": "production Application Support/Broomm",
+    "signing": "ad-hoc, not notarized",
+    "applicationSelfInstallEnabled": false
+  },
+  "nativeGuard": {
+    "sourceSha256": "a8ef7597a992b97ac780b2515a26b31aa2f553eeaace3b25d6b70e58252cfd94",
+    "librarySha256": "1dac01fe784b27d54dcc2bba2783115b84902f8d06d631f5e68807be808582f7"
+  },
+  "pending": [
+    "Owner visual/controller verification",
+    "Camera functionality",
+    "Other supported no-game emulators and native hosts",
+    "Gameplay unchanged; no new gameplay validation"
+  ],
+  "pausedWork": "Astris/Citra MMJ/default-selection work remains stashed and excluded."
+}

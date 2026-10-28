@@ -568,3 +568,42 @@ old or unrelated publishers. Analysis and all **417 tests** pass. The local
 package was rebuilt; incremental compilation required refreshing the
 project-owned App.framework and outer ad-hoc signatures before source and fresh
 ZIP extraction signature checks passed. This does not change CI signing policy.
+
+## Independent Open emulator and Azahar bundle launch — 28 October 2026
+
+Open emulator now hands the no-game application to the OS and leaves Broomm
+visible and navigable. It retains no emulator process, output subscription,
+readiness/exit polling or game-active state, does not restore focus on exit,
+and does not require that app to close before Broomm quits. Repeated activation
+coalesces only a pending launch request; request failures are visible and allow
+retry. Private profile settings and all gameplay supervision remain unchanged.
+
+Complete macOS bundles use Launch Services with literal arguments and explicit
+private environment values; the portable melonDS executable uses detached
+startup. Azahar 2126.1.2 warns when its parent is not PID 1 and recommends opening
+its app bundle. Its actual corrected launch has parent PID 1. Existing native
+interop acquires both file locks inside the independent configuration process,
+refuses conflicts nonblockingly and applies the existing private write policy
+through the macOS sandbox API. No emulator monitoring or new dependency/service
+is introduced. Installer-only lock and RPCS3 teardown behavior are preserved.
+
+Analysis and all **421 Flutter tests** pass. Three UI/model regressions cover
+window/session/shutdown behavior, retry and pending-request coalescing. Native
+fixtures verify private writes and coordinator conflicts/linked paths; the latter
+uses a held production lock plus a successful unlocked control. The four native
+configuration tests also pass under UBSan trap instrumentation, and Clang static
+analysis reports no findings. Five existing native installer regressions pass
+independently. Real Azahar, PCSX2, ARMSX2 and PPSSPP apps open in disposable
+profiles, with Launch Services parenting and actual native lock ownership
+verified through read-only POSIX queries. Other emulators/hosts, camera behavior,
+gameplay and owner visual/controller acceptance are not newly established.
+
+The fresh universal macOS package is
+[Broomm-macOS-independent-emulator-launch.zip](build/releases/Broomm-macOS-independent-emulator-launch.zip),
+**20,480,144 bytes**, SHA-256
+`efc4bef497e693c297e4d52efd7770af77473101ce809519905f6ed017c9b4c4`.
+ZIP integrity, source/fresh-extraction deep/strict/all-architecture signatures and
+exact guard readbacks pass. It uses production Application Support storage,
+ad-hoc signing and disabled development self-installation; no owner or RomM
+progress was modified. Paused Astris/Citra MMJ/default-selection work remains
+excluded. See [walkthrough and evidence](docs/emulator-opening.md).

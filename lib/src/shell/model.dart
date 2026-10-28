@@ -27,7 +27,6 @@ import '../progress/status.dart';
 export '../progress/status.dart' show CloudSaveStatus;
 import '../session.dart';
 import '../emulator_configuration.dart';
-import '../host.dart';
 import '../android/emulators.dart';
 import '../android/session.dart';
 import '../android/progress.dart';
@@ -67,11 +66,13 @@ class ShellModel extends ChangeNotifier {
     SteamGridClient Function(String)? gridFactory,
     GameAddons? gameAddons,
     ApplicationUpdates? applicationUpdates,
+    EmulatorConfiguration? configurationLauncher,
   }) : clientFactory = clientFactory ?? ((uri) => RommClient(uri)),
        credentialBackend = credentials ?? PlatformCredentials(),
        _emulatorManager = emulatorManager,
        _androidManager = androidManager,
        _gameAddons = gameAddons,
+       _configurationLauncher = configurationLauncher,
        gridFactory = gridFactory ?? SteamGridClient.new,
        updates = applicationUpdates ?? ApplicationUpdates() {
     updates.addListener(_updatesChanged);
@@ -524,45 +525,33 @@ class ShellModel extends ChangeNotifier {
   bool closing = false;
   bool _gameActive = false;
   bool get gameActive => _gameActive;
-  EmulatorConfiguration? _configuration;
-  String? configurationEmulator;
+  final EmulatorConfiguration? _configurationLauncher;
   Future<void>? _configurationWork;
 
   Future<void> openEmulator(String emulator) async {
-    if (!authenticated || busy || gameActive || emulators.busy || downloading)
+    if (!authenticated ||
+        closing ||
+        busy ||
+        gameActive ||
+        emulators.busy ||
+        downloading ||
+        _configurationWork != null)
       return;
     final selected = profile!;
-    final configuration = EmulatorConfiguration(
-      storage.directory,
-      project,
-      log: log,
-    );
-    _configuration = configuration;
-    configurationEmulator = emulator;
-    gameActive = true;
+    final configuration =
+        _configurationLauncher ??
+        EmulatorConfiguration(storage.directory, project, log: log);
     final work = () async {
       try {
         await finishCloud();
         await configuration.start(
           () => emulators.resolveConfiguration(emulator, selected.id),
         );
-        log?.write('Opening private $emulator configuration without a game.');
-        if (configuration.pid case final pid?) await DesktopHost().hide(pid);
-        final code = await configuration.done!;
-        if (code != 0)
-          throw StateError(
-            '$emulator closed unexpectedly (status $code). Private settings and progress were kept.',
-          );
         showNotice(
-          '$emulator closed. Its settings stay private to this Broomm profile.',
+          'Opening $emulator. Its settings stay private to this Broomm profile.',
         );
       } catch (e) {
         reportProblem('$e');
-      } finally {
-        await DesktopHost().show();
-        _configuration = null;
-        configurationEmulator = null;
-        gameActive = false;
       }
     }();
     _configurationWork = work;
@@ -574,10 +563,8 @@ class ShellModel extends ChangeNotifier {
   }
 
   Future<void> finishConfiguration() async {
-    if (_configuration != null)
-      throw StateError(
-        'Quit $configurationEmulator from its own menu before closing Broomm. Its private settings are still in use.',
-      );
+    // Finish only a pending launch request. Open applications are OS-owned;
+    // Broomm neither waits for nor closes them during its own shutdown.
     await _configurationWork;
   }
 

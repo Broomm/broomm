@@ -1,5 +1,7 @@
 import 'dart:convert';
-import 'dart:async';
+
+import 'fixtures/configuration_cleanup.dart';
+
 import 'dart:io';
 
 import 'package:broomm/src/emulator_configuration.dart';
@@ -36,16 +38,17 @@ void main() {
       for (final build in manager.builds) {
         final child = EmulatorConfiguration(data, project, log: log);
         final clock = Stopwatch()..start();
+        final resolved = await manager.resolveConfiguration(
+          build.name,
+          profile,
+        );
         await child.start(
           () => manager.resolveConfiguration(build.name, profile),
         );
+        final pid = await configurationFixturePid(resolved.emulator.executable);
         try {
+          await configurationFixtureReady(data, pid);
           await Future<void>.delayed(const Duration(seconds: 3));
-          expect(
-            child.pid,
-            isNotNull,
-            reason: '${build.name} closed before configuration.',
-          );
           await expectLater(SessionLease.acquire(data), throwsStateError);
           results.add({
             'emulator': build.name,
@@ -57,17 +60,7 @@ void main() {
             '${build.name} private configuration started without a game.',
           );
         } finally {
-          if (child.pid case final pid?) {
-            Process.killPid(pid, ProcessSignal.sigterm);
-            try {
-              await child.done!.timeout(const Duration(seconds: 3));
-            } on TimeoutException {
-              Process.killPid(pid, ProcessSignal.sigkill);
-              await child.done;
-            }
-          }
-          final lease = await SessionLease.acquire(data);
-          await lease.release();
+          await closeConfigurationFixture(pid, data);
         }
       }
       await File('${evidence.path}/native-configuration.json').writeAsString(
