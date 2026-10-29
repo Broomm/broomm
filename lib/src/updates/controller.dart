@@ -38,6 +38,7 @@ class ApplicationUpdates extends ChangeNotifier {
   bool checking = false, busy = false, handedOff = false, disposed = false;
   bool checkFailed = false;
   String status = '';
+  String? failureDiagnostic;
   double? progress;
   String channel = 'auto';
   int _generation = 0;
@@ -148,6 +149,7 @@ class ApplicationUpdates extends ChangeNotifier {
     ++_generation;
     checking = false;
     _cancelRequested = false;
+    failureDiagnostic = null;
     busy = true;
     status = 'Preparing update…';
     progress = null;
@@ -207,6 +209,14 @@ class ApplicationUpdates extends ChangeNotifier {
       emit();
       await exit();
     } catch (e) {
+      final failedPhase = status;
+      // Do not stringify transport errors or captured object graphs: they can
+      // include signed redirect URLs or credentials held by UI callbacks.
+      if (_installer?.transport.cancelled != true) {
+        failureDiagnostic =
+            'updates/controller.dart: ${e.runtimeType} during $failedPhase'
+            '${e is FileSystemException && e.osError != null ? ' (OS error ${e.osError!.errorCode})' : ''}';
+      }
       handedOff = false;
       var cleanupFailed = false;
       if (_prepared != null) {
@@ -224,7 +234,7 @@ class ApplicationUpdates extends ChangeNotifier {
           ? e.message
           : e is StateError
           ? '${e.message}'
-          : 'The update could not be installed. Your existing application and data were kept. Retry when ready.';
+          : 'The update could not be installed during this step: $failedPhase Your existing application and data were kept. Retry when ready.';
       if (cleanupFailed) status += ' Recovery files could not be removed and were kept in the installation folder.';
     } finally {
       if (!handedOff || target == 'android-universal') busy = false;

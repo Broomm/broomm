@@ -19,6 +19,52 @@ need one manual installation of an organization release before the normal
 in-app update flow can discover later builds. Keep existing Application Support
 data; this change requires no account, library or progress reset.
 
+## Update preparation correction (2026-10-29)
+
+The owner's production 0.1.2 log completed the 0.1.3 download at
+13:29:38 UTC, entered verification and failed two milliseconds later. The public
+20,493,670-byte ZIP and its checksum/build record agree; its extracted code
+signature passes. Preparation succeeds with a simple callback but fails with a
+callback retaining a native receive port, as the real UI/logging graph does:
+`ArgumentError: Illegal argument in isolate message (object is a ReceivePort)`.
+The hashing closure inside `ApplicationInstaller.prepare` implicitly captured
+that progress callback. The extraction closure shared the same unsafe scope.
+This is a callback-capture bug, not evidence of a corrupt release or lost data.
+
+Both operations now enter separate top-level, path-only worker scopes. UI state,
+listeners, log ports, leases and HTTP clients stay on the caller's isolate.
+Full download hashing, signature validation, archive confinement, ownership,
+cancellation and recovery remain required. Unexpected failures show their phase;
+the operational log records error type and any OS error code at error severity.
+It does not stringify exceptions that may contain signed URLs or a captured
+account object graph. Dart's [Isolate.run documentation](https://api.dart.dev/dart-isolate/Isolate/run.html)
+describes this closure-context limitation and the separate-scope remedy.
+
+The [current macOS recovery ZIP](../build/releases/Broomm-macOS-updater-recovery.zip)
+is built from the corrected sources, with both native architectures and the
+three bundled bridges. It retains version 0.1.3 and enables subsequent official
+GitHub updates. This is a local, ad-hoc-signed recovery build, not a replacement
+of the published 0.1.3 assets. Quit Broomm, unzip and replace only the installed
+`/Applications/broomm.app`, then reopen. Keep Application Support intact. The
+installed broken updater cannot install its own correction; this one manual
+replacement bootstraps future normal updates. Checking while only 0.1.3 is
+published correctly shows up to date; a newer official release is required for
+an update offer. Delete the ZIP when no longer needed; app data is independent.
+
+Verification on macOS ARM64: clean analysis; 37 targeted updater/release checks;
+424 total Flutter checks, including two full-size saves scheduled separately;
+real 0.1.3 HTTPS preparation with the previously failing callback; and compiled
+release-mode preparation through `ApplicationUpdates` with a native listener
+on both ARM64 and Intel/Rosetta. The compiled probes intentionally refuse
+quiescence after verification/extraction and before helper replacement. Existing
+native fixtures separately verify replacement, Launch Services relaunch and
+rollback. Production app, account, ROM and progress files were not modified.
+Native Windows, Linux and Android upgrade execution and the owner's real upgrade
+remain unverified by this check. The
+[correction record](application-update-preparation.json) retains exact source,
+release and artifact identities; ignored logs are in
+`.tool-cache/research/updater-013/`.
+
 ## Use it
 
 1. Install an official packaged Broomm release containing this updater. Keep the

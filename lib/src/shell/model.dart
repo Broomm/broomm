@@ -81,8 +81,14 @@ class ShellModel extends ChangeNotifier {
   bool _updateCardShown = false;
   String _updatePhase = '';
   int _updateProgressBucket = -1;
+  String? _updateFailure;
   bool applicationUpdating = false;
   void _updatesChanged() {
+    final failure = updates.failureDiagnostic;
+    if (failure != null && failure != _updateFailure) {
+      log?.write(failure, level: 'error');
+    }
+    _updateFailure = failure;
     final phase = updates.status;
     final bucket = updates.progress == null
         ? -1

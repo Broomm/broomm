@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-29T13:41:29.490900+00:00",
+  "sourceBaseRevision": "07d45fc72e6a92f51ab54705eda668888c6de0ec",
+  "sourceFiles": {
+    "lib/src/updates/installation.dart": "3ca6c38bda8698024d9394b9347f000ac0e4852e79c8ccf633558ce0ac92b371",
+    "lib/src/updates/controller.dart": "5721e3a1e0d4af0689f1367b35d62788a073daf881bd160995aec8102ceff990",
+    "lib/src/shell/model.dart": "223e7f6b53dc14d5c8659b9eb11ba1bb539b122e8aeacf1244cfec2403620005",
+    "test/application_updates_test.dart": "0161a7deae173cb92e99d3bb59218e777993ff132fb9b008b6be57ac35cb595b"
+  },
+  "host": {
+    "os": "macOS 27.0.1",
+    "build": "26A434",
+    "architecture": "arm64",
+    "xcode": "27.1 (27A9275)",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "productionObservation": {
+    "installedVersion": "0.1.2",
+    "offeredVersion": "0.1.3",
+    "phase": "Verifying application download",
+    "failureAtUtc": "2026-10-29T13:29:38.525365Z",
+    "productionFilesModified": false
+  },
+  "cause": "Isolate.run closures in ApplicationInstaller.prepare share a context with the native UI progress callback; a ReceivePort in that graph cannot be sent to the worker.",
+  "beforeFix": {
+    "simpleCallbackPreparation": "passed in JIT and AOT",
+    "nativeResourceCallbackPreparation": "ArgumentError: Illegal argument in isolate message (object is a ReceivePort)",
+    "sourceFrame": "updates/installation.dart:346"
+  },
+  "publicRelease": {
+    "repository": "Broomm/broomm",
+    "version": "0.1.3",
+    "sourceRevision": "07d45fc72e6a92f51ab54705eda668888c6de0ec",
+    "target": "macos-universal",
+    "bytes": 20493670,
+    "sha256": "ebb91fc4f2d1ad8a1711043ec3485ab7b7f9397073866b5e6317749e8225189d",
+    "verifiedChecksumBuildRecordAndSignature": true,
+    "installed": false
+  },
+  "verification": {
+    "analysis": "passed",
+    "targetedUpdaterReleaseTests": 37,
+    "ordinaryFlutterTests": 422,
+    "separatelyScheduledFullSizeSaveTests": 2,
+    "totalFlutterTests": 424,
+    "newRegressionTests": 3,
+    "nativeMacReplacementRollbackAndRelaunchFixtures": "passed",
+    "realHttpsPreparationWithNativeCallback": "passed after correction",
+    "releaseModeControllerPreparation": {
+      "arm64": "passed",
+      "x86_64Rosetta": "passed",
+      "nativeUiListener": true,
+      "intentionalStop": "quiesce; before helper replacement"
+    },
+    "ownerProductionUpgrade": "pending",
+    "otherNativeHosts": "not executed"
+  },
+  "recoveryBuild": {
+    "version": "0.1.3",
+    "target": "macos-universal",
+    "officialPublishedAsset": false,
+    "gitHubUpdatesEnabled": true,
+    "archive": "../build/releases/Broomm-macOS-updater-recovery.zip",
+    "finalChecksumAndCommitManifest": "../build/releases/Broomm-macOS-updater-recovery.json",
+    "signature": "ad hoc; strict deep verification including all architectures required",
+    "notarized": false,
+    "oneManualReplacementRequired": true,
+    "productionDataDirectory": "~/Library/Application Support/Broomm"
+  },
+  "commands": [
+    "devbox run -- flutter analyze --no-pub",
+    "devbox run -- flutter test --no-pub test/application_updates_test.dart test/application_update_archives_test.dart test/application_update_widget_test.dart test/application_update_android_test.dart test/release_workflow_test.dart --reporter expanded",
+    "devbox run -- flutter test --no-pub --exclude-tags full-size-save --reporter expanded",
+    "devbox run -- flutter test --no-pub test/playstation_test.dart --tags full-size-save --concurrency=1 --reporter expanded",
+    "devbox run -- flutter test --no-pub .tool-cache/research/updater-013/probe_test.dart --reporter expanded",
+    "devbox run -- bash tool/build_app.sh --release --portable --no-pub --target .tool-cache/research/updater-013/probe.dart",
+    "BROOMM_UPDATE_PROBE=\"$PWD/.tool-cache/research/updater-013\" build/macos/Build/Products/Release/broomm.app/Contents/MacOS/broomm",
+    "BROOMM_UPDATE_PROBE=\"$PWD/.tool-cache/research/updater-013\" arch -x86_64 build/macos/Build/Products/Release/broomm.app/Contents/MacOS/broomm",
+    "RELEASE_VERSION=0.1.3 BUILD_CORE=0.1.3 BUILD_NUMBER=1004 TARGET_PLATFORM=macos TARGET_ARCH=universal GITHUB_SHA=<source-revision> devbox run -- dart tool/release/package.dart"
+  ],
+  "retainedLogs": ".tool-cache/research/updater-013/",
+  "reference": "https://api.dart.dev/dart-isolate/Isolate/run.html"
+}

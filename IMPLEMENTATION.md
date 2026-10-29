@@ -1,5 +1,21 @@
 # Implementation plan
 
+Updater preparation correction (2026-10-29): the production 0.1.2 → 0.1.3
+failure is reproduced with a progress callback holding a native receive port.
+Both worker closures unintentionally captured the UI callback. Dedicated
+path-only worker scopes now keep UI/logging resources on their owning isolate;
+checksums, extraction, locks, cancellation and publication checks remain intact.
+Unexpected failures identify their phase and log an error type/OS code without
+stringifying sensitive callback graphs or HTTP URLs. All **424 Flutter tests**
+pass (422 ordinary plus two separately scheduled full-size save cases), including
+three new regressions and native macOS replacement/rollback fixtures. Real public
+0.1.3 preparation passes with the original failing callback and in compiled
+ARM64 and Intel/Rosetta runtimes. The compiled probes stop before production
+replacement. Existing broken updaters need one manual app replacement; the local
+0.1.3 recovery build enables later GitHub updates. Other native hosts and the
+owner's production upgrade remain separate acceptance. See
+[recovery, evidence and commands](docs/application-updates.md#update-preparation-correction-2026-10-29).
+
 Automatic core delivery and running macOS icon (2026-10-27): all twelve frontends and all fifteen RetroArch cores now have bundled HTTPS recipes; normal setup needs no companion pack or JSON import. Seven available official Libretro core builds replace the old offline dependencies, with retained legacy fingerprints and explicit-setup-only selection. Ordinary saves remain shared across core upgrades; incompatible states have physically separate frontend/core-hash folders and exact-build cloud identities. The 55-case targeted suite, native fresh setup/restart and ABI checks, thirteen game/state sessions, BIOS-core save checks and four additional cartridge/arcade native-data round trips pass. All ten macOS native app tests pass, including restoring the bundled infinity icon after a placeholder and retaining the current icon when its resource is absent. Startup assigns the icon directly; the owner's original Dock/cache trigger remains unproven and actual Dock appearance needs owner confirmation. See [walkthrough, versions and scoped evidence](docs/retroarch-public-cores.md).
 
 RetroArch release adoption (2026-10-27): the bundled macOS ARM64 recipe now downloads Broomm/retroarch v0.1.0 with its exact ZIP, executable, SDL3 and complete 29-file inventory. All five published desktop artifacts/manifests were verified; this does not expand the existing managed core/bridge host boundary. Previous selected frontends and old setup packs retain their exact identities, profile paths and state naming until explicit setup. The release uses private native state paths after a real `-S` regression was diagnosed and corrected. The 52-case targeted suite, native public delivery/restart, thirteen supplied game/state checks, four BIOS-based platform routes (Lynx, Saturn, 3DO and Dreamcast) and SNES pairing/pause/remap pass, exercising all fifteen current cores. Seven remaining offline cores have an updated companion pack; eight retain direct tested downloads. The fresh macOS app/archive and extracted signatures pass. See [current distribution and host limits](docs/retroarch-distribution.md) and [exact fingerprints, retained failures and artifacts](docs/retroarch-release-adoption.json).

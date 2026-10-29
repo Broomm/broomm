@@ -6,7 +6,15 @@ The default Flutter application connects to RomM 5.4.0, signs in, and opens a co
 
 For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CSO v1 or PBP; no BIOS is required. For the additional Switch choice, set up **Eden**, then select **Set as default**. Both use the normal controller-pairing flow and profile-private cloud saves. The [PPSSPP/Eden walkthrough](docs/psp-and-eden-support.md) covers native DLC directories, firmware/keys, cleanup, test commands and the experimental Eden macOS limits. The current [colored support matrix](docs/platform-support-matrix.md) includes both.
 
-The latest local macOS test build is [Broomm with independent emulator settings launch](build/releases/Broomm-macOS-independent-emulator-launch.zip). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All twelve managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This local development build keeps automatic app installation disabled; official GitHub release builds enable it. See [core versions, native verification and Dock-icon behavior](docs/retroarch-public-cores.md).
+The latest local macOS build is [Broomm with the updater recovery fix](build/releases/Broomm-macOS-updater-recovery.zip). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All twelve managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This local recovery build retains the 0.1.3 version and enables GitHub updates so the next newer official release can be installed normally. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
+
+If the installed updater fails immediately after **Verifying application download**,
+quit Broomm, unzip this recovery build and replace only `/Applications/broomm.app`.
+Reopen that copy. Keep `~/Library/Application Support/Broomm` intact: accounts,
+games, emulator settings and progress need no reset. The old updater cannot
+install its own fix, so this one manual replacement is required. Subsequent
+newer releases use **Broomm settings → Application updates → Check for updates**
+or the Home update tile. Removing the downloaded ZIP does not remove app data.
 
 If PCSX2, ARMSX2 or PPSSPP setup previously reported that its files were not the
 tested build, replace Broomm with this build and retry **Emulator Settings →

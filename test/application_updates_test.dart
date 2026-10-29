@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/progress/digest.dart';
@@ -109,6 +110,18 @@ class PreparedFixtureInstaller extends ApplicationInstaller {
     Directory data,
     void Function(String, double?) progress,
   ) async => fixture;
+}
+
+class FailedFixtureInstaller extends ApplicationInstaller {
+  @override
+  Future<PreparedAppUpdate> prepare(
+    AppUpdate update,
+    Directory data,
+    void Function(String, double?) progress,
+  ) async {
+    progress('Verifying application download…', null);
+    throw ArgumentError('https://example.invalid/?token=private-fixture');
+  }
 }
 
 Future<(AppUpdate, MemoryUpdateTransport, Directory)> updateFixture(
@@ -503,6 +516,137 @@ void main() {
     expect(await prepared.stage.exists(), isFalse);
     final lease = await UpdateLease.acquire(root);
     await lease.close();
+  });
+
+  test(
+    'verification and extraction do not send the native UI callback to workers',
+    () async {
+      final root = await Directory.systemTemp.createTemp('broomm-update-ui-');
+      addTearDown(() => root.delete(recursive: true));
+      final (update, transport, current) = await updateFixture(root);
+      // Native UI/logging owns receive ports. The callback must stay on its
+      // isolate even when Dart shares closure contexts inside preparation.
+      final native = RawReceivePort();
+      addTearDown(native.close);
+      final phases = <String>[];
+      final prepared =
+          await ApplicationInstaller(
+            transport: transport,
+            location: UpdateLocation(root, 'windows', target: current.path),
+          ).prepare(update, root, (phase, _) {
+            native.sendPort.send(phase);
+            phases.add(phase);
+          });
+      try {
+        expect(
+          phases,
+          containsAllInOrder([
+            'Verifying application download…',
+            'Preparing installation…',
+          ]),
+        );
+        expect(
+          await File('${prepared.payload}/broomm.exe').readAsString(),
+          contains('0.1.1'),
+        );
+        expect(
+          await File('${current.path}/broomm.exe').readAsString(),
+          contains('0.1.0'),
+        );
+      } finally {
+        await prepared.discard();
+      }
+    },
+  );
+
+  test('UI callbacks preserve checksum rejection and cancellation, then allow a clean retry', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'broomm-update-ui-retry-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final (update, originalTransport, current) = await updateFixture(root);
+    originalTransport.close();
+    final native = RawReceivePort();
+    addTearDown(native.close);
+    for (final scenario in ['corrupt', 'cancel', 'retry']) {
+      final transport = MemoryUpdateTransport()
+        ..responses.addAll(originalTransport.responses)
+        ..corrupt = scenario == 'corrupt';
+      final work =
+          ApplicationInstaller(
+            transport: transport,
+            location: UpdateLocation(root, 'windows', target: current.path),
+          ).prepare(update, root, (phase, _) {
+            native.sendPort.send(phase);
+            if (scenario == 'cancel' &&
+                phase == 'Verifying application download…') {
+              transport.cancel();
+            }
+          });
+      if (scenario == 'retry') {
+        await (await work).discard();
+      } else {
+        await expectLater(
+          work,
+          throwsA(
+            isA<UpdateFailure>().having(
+              (e) => e.message,
+              'reason',
+              contains(
+                scenario == 'corrupt' ? 'checksum mismatch' : 'cancelled',
+              ),
+            ),
+          ),
+        );
+      }
+      expect(
+        await File('${current.path}/broomm.exe').readAsString(),
+        contains('0.1.0'),
+      );
+      final lease = await UpdateLease.acquire(root);
+      await lease.close();
+      expect(
+        (await root.list().toList()).where(
+          (e) => e.path.contains('/.broomm-update-'),
+        ),
+        isEmpty,
+      );
+    }
+  });
+
+  test('unexpected update failures report the phase without exposing captured secrets', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'broomm-update-diagnostics-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final updates = ApplicationUpdates(
+      current: '0.1.0',
+      target: 'windows-x64',
+      installer: FailedFixtureInstaller.new,
+    );
+    addTearDown(updates.dispose);
+    updates.available = selectUpdate(
+      [updateRelease('0.1.1')],
+      '0.1.0',
+      false,
+      'windows-x64',
+    );
+    await updates.install(
+      root,
+      quiesce: () async => fail('must not hand off'),
+      exit: () async => fail('must not exit'),
+    );
+    expect(updates.busy, isFalse);
+    expect(updates.status, contains('Verifying application download'));
+    expect(updates.failureDiagnostic, contains('ArgumentError'));
+    expect(
+      '${updates.status} ${updates.failureDiagnostic}',
+      isNot(contains('private-fixture')),
+    );
+    expect(
+      '${updates.status} ${updates.failureDiagnostic}',
+      isNot(contains('example.invalid')),
+    );
   });
 
   test('corrupt downloads and contradictory metadata retain installation and release ownership', () async {

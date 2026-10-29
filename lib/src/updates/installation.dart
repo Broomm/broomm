@@ -279,6 +279,14 @@ class PreparedAppUpdate {
   }
 }
 
+// Give each worker its own scope: closures created inside prepare can also
+// capture its UI progress callback, including unsendable native resources.
+Future<String> _hashUpdate(String path) =>
+    Isolate.run(() => progressFileHash(File(path)));
+
+Future<void> _extractUpdate(String archive, String output, String os) =>
+    Isolate.run(() => extractUpdate(File(archive), Directory(output), os));
+
 class ApplicationInstaller {
   ApplicationInstaller({UpdateTransport? transport, this.location})
     : transport = transport ?? UpdateTransport();
@@ -343,7 +351,7 @@ class ApplicationInstaller {
       );
       transport.check();
       progress('Verifying application download…', null);
-      final actual = await Isolate.run(() => progressFileHash(archive));
+      final actual = await _hashUpdate(archive.path);
       if (actual != hash)
         throw const UpdateFailure(
           'Update checksum mismatch. Nothing was installed.',
@@ -355,7 +363,7 @@ class ApplicationInstaller {
       final keep = File('${stage.path}/keep');
       await keep.writeAsString('native-preparation', flush: true);
       final output = Directory('${stage.path}/new'), os = loc.os;
-      await Isolate.run(() => extractUpdate(archive, output, os));
+      await _extractUpdate(archive.path, output.path, os);
       transport.check();
       final payload = Directory(
         '${output.path}${os == 'macos'
