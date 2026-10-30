@@ -622,3 +622,20 @@ No tests are disabled and no workflow test timeout is increased. Application
 code is unchanged, so the verified [current macOS package](../build/releases/Broomm-macOS-android-saves.zip)
 still contains the current runtime. Ignored `.tool-cache/research/windows-document-paths/`
 contains logs and may be removed after testing; no owner data was touched.
+
+The native follow-up run for `d314d27` still reports a Windows failure; its
+full-size save step passes. The public job API exposes incomplete step details,
+and downloading detailed logs requires repository authorization unavailable to
+the normal credential helper. No Windows pass is inferred from the local result.
+
+CI now uses Flutter's built-in GitHub reporter together with its JSON file
+reporter for the main, full-size and updater suites. A small SDK-only reader
+publishes bounded failure names, error details and stacks as check annotations;
+JSON reports are retained as failure artifacts. It escapes workflow commands,
+retains late errors and missing-detail failures, and leaves the original test
+commands' exit statuses intact. A disposable deliberate failure verifies exit
+status 1 and a detailed annotation; a complete passing run verifies no failure
+annotations. All **461 tests** pass locally with this reporting path, including
+three annotation regressions. Analysis, formatting and workflow lint pass. This
+reporting change provides diagnostics for the next native run; it does not claim
+to fix an unidentified failure or establish Windows acceptance.

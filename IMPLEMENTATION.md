@@ -741,3 +741,12 @@ macOS success is not Windows acceptance. No retries, skips or timeout increases
 mask the supplied failures. See the [diagnosis and reproduction](docs/github-releases.md#android-provider-fixture-corrections--2026-10-30)
 and [evidence](docs/windows-test-paths.json). The runtime sources and verified
 [macOS package](build/releases/Broomm-macOS-android-saves.zip) are unchanged.
+
+The native `d314d27` follow-up still reports Windows failure, with full-size save
+checks passing. Detailed log access is unavailable through the normal repository
+credential helper. CI now retains Flutter JSON reports and emits bounded public
+failure annotations with its built-in GitHub reporter plus a small SDK-only
+reader. A deliberate failure preserves exit status 1; all **461 tests** pass
+locally with the new reporting path. Three reader regressions, analysis,
+formatting and workflow lint pass. No unidentified Windows failure is treated
+as fixed by that local result; the next native run owns that evidence.

@@ -89,5 +89,93 @@
       "bytes": 27627,
       "sha256": "82584c09ddd110588f78016d12a0c447de69db6093fff51848d7e47423850459"
     }
+  },
+  "reportingFollowup": {
+    "nativeRun": "https://github.com/Broomm/broomm/actions/runs/41113558235/job/124261841948",
+    "conclusion": "failure; exact remaining failure not available from public annotations",
+    "fullSizeSaveStep": "success",
+    "detailedLogHttpStatus": 403,
+    "normalCredentialHelper": "unavailable; no credential was printed or stored",
+    "alternateCredentialProbe": "automatic approval rejected; not executed or retried",
+    "safeAlternative": "Future runs emit test errors from standard Flutter JSON reports as check annotations, without credential access.",
+    "verification": {
+      "fullFlutterSuitePassed": 461,
+      "affectedAndDiagnosticTestsPassed": 36,
+      "expectedFailingFixtureExit": 1,
+      "expectedFailingFixtureAnnotation": "test name, actual/expected and stack",
+      "passingReportAnnotations": 0,
+      "analysis": "pass",
+      "format": "pass",
+      "workflowLint": "pass",
+      "newRuntimeDependencies": [],
+      "productionCodeChanged": false
+    },
+    "files": {
+      ".github/workflows/release.yml": {
+        "path": ".github/workflows/release.yml",
+        "bytes": 12611,
+        "sha256": "a4b66bc5d9002584736ac40eca9176a96e63725a85d40c259142bf9fe8ec307e"
+      },
+      "tool/ci/annotate_tests.dart": {
+        "path": "tool/ci/annotate_tests.dart",
+        "bytes": 2934,
+        "sha256": "0cd45f2617a6d0c02d26791e6710e6d98008ef1e05c008bbc5c1edc71878613e"
+      },
+      "test/ci_test_annotations_test.dart": {
+        "path": "test/ci_test_annotations_test.dart",
+        "bytes": 2375,
+        "sha256": "8f8d481c2250ae081530ca51ee30904a08f4fcb4929673d2be928f4df6e7f209"
+      },
+      ".tool-cache/research/windows-document-paths/annotation-expected-failure.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotation-expected-failure.log",
+        "bytes": 769,
+        "sha256": "e5895c102469e1749fb9b2803c9405dab3bf18b7fbb136118e8ca0fa10226ac5"
+      },
+      ".tool-cache/research/windows-document-paths/annotation-expected-failure.json": {
+        "path": ".tool-cache/research/windows-document-paths/annotation-expected-failure.json",
+        "bytes": 1805,
+        "sha256": "816b35fde14b2f7db0a618e0c86c91897b846a0a391e864bfdf650c60ae1b56a"
+      },
+      ".tool-cache/research/windows-document-paths/annotation-output.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotation-output.log",
+        "bytes": 541,
+        "sha256": "91d10e90259183be3b3c08e899e4e8d713cb2673a27bb6d65f8380a07e4f56cf"
+      },
+      ".tool-cache/research/windows-document-paths/annotation-passing-output.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotation-passing-output.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-analysis.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-analysis.log",
+        "bytes": 249,
+        "sha256": "8bc6d649d82b1ac91e26802a5a64067d2809a2cb1080da589873d415248ac4d5"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-workflow-lint.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-workflow-lint.log",
+        "bytes": 164,
+        "sha256": "8f696814d0953eea92f671ba904f1de2a34c70a086aeefc8dedb12b149455ca1"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-format.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-format.log",
+        "bytes": 199,
+        "sha256": "85636ce08d1df8b5f1bec2796eb804d7ffbcc46d5f5753590f831c031946b405"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-tests.log": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-tests.log",
+        "bytes": 6158,
+        "sha256": "8c5f1be1451b859965ed77631016dca4b555d4fd0a8dcaa8bc3875ae763bef98"
+      },
+      ".tool-cache/research/windows-document-paths/complete-annotated-suite.log": {
+        "path": ".tool-cache/research/windows-document-paths/complete-annotated-suite.log",
+        "bytes": 75981,
+        "sha256": "e16b255b067c9113f1bbd816886d7953c516aa4851e4201362fdc939a7ef4c62"
+      },
+      ".tool-cache/research/windows-document-paths/ci-windows.json": {
+        "path": ".tool-cache/research/windows-document-paths/ci-windows.json",
+        "bytes": 3112,
+        "sha256": "6950df0cd5d6f9e58f13cd04657c53aea3cdba8a71f0cb26dd7c4cbf4f784bdc"
+      }
+    }
   }
 }
