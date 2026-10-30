@@ -195,7 +195,7 @@ void main() {
   }
 
   setUp(() async {
-    fixture = await Directory.systemTemp.createTemp('broomm-mmj-');
+    fixture = await Directory.systemTemp.createTemp('mmj-');
     data = await Directory('${fixture.path}/data').create();
     shared = SharedFolderFixture(
       await Directory('${fixture.path}/shared').create(),

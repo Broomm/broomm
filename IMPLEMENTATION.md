@@ -750,3 +750,10 @@ reader. A deliberate failure preserves exit status 1; all **461 tests** pass
 locally with the new reporting path. Three reader regressions, analysis,
 formatting and workflow lint pass. No unidentified Windows failure is treated
 as fixed by that local result; the next native run owns that evidence.
+
+The `1d4b545` diagnostic run exposes two MMJ capture/recovery failures at Windows'
+directory-enumeration path limit (276 characters), with the original separator
+failures absent and full-size saves/native updater passing. The checks job now
+uses the runner-owned short `TEMP`/`TMP`, with a shorter MMJ fixture prefix;
+the observed deepest listing becomes 252 characters. This affects test scratch
+storage only, without system changes, relaxed validation or larger timeouts.

@@ -3,7 +3,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 broomm_cache_root="$PWD"
-if [[ "${RUNNER_OS:-}" == Windows ]]; then broomm_cache_root="$(pwd -W)"; fi
+if [[ "${RUNNER_OS:-}" == Windows ]]; then
+  broomm_cache_root="$(pwd -W)"
+  # Nested Android captures exceed MAX_PATH beneath the user-profile Temp.
+  # This is child-scoped runner scratch storage, never a system setting.
+  if [[ -n "${RUNNER_TEMP:-}" ]]; then
+    export TEMP="$RUNNER_TEMP" TMP="$RUNNER_TEMP"
+  fi
+fi
 export PUB_CACHE="$broomm_cache_root/.tool-cache/pub"
 export GRADLE_USER_HOME="$broomm_cache_root/.tool-cache/android/gradle"
 export FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true CI=true

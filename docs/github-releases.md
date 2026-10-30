@@ -639,3 +639,15 @@ annotations. All **461 tests** pass locally with this reporting path, including
 three annotation regressions. Analysis, formatting and workflow lint pass. This
 reporting change provides diagnostics for the next native run; it does not claim
 to fix an unidentified failure or establish Windows acceptance.
+
+The diagnostic run `1d4b545` identifies the remaining two failures precisely:
+Windows directory enumeration rejects the MMJ capture directory's **276-character**
+wildcard path under `C:\Users\RUNNER~1\AppData\Local\Temp`. The formerly failing
+separator cases are no longer present; full-size saves and the native updater
+both pass. The checks job now sets child-scoped `TEMP`/`TMP` to GitHub's
+runner-owned short temporary root, and the MMJ fixture uses a shorter prefix.
+For the reported hierarchy this reduces the wildcard path to **243 characters**
+and its nested child listing to **252**, below the Windows enumeration limit.
+No registry, system temp setting, runtime save layout, test timeout or assertion
+is changed. The two existing MMJ capture/recovery cases remain the native
+regressions; the subsequent Windows job establishes the final result.

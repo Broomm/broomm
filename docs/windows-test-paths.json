@@ -177,5 +177,62 @@
         "sha256": "6950df0cd5d6f9e58f13cd04657c53aea3cdba8a71f0cb26dd7c4cbf4f784bdc"
       }
     }
+  },
+  "shortTempCorrection": {
+    "diagnosticRun": "https://github.com/Broomm/broomm/actions/runs/41115282216/job/124267780065",
+    "failed": 2,
+    "cause": "MMJ capture directory enumeration reached a 276-character Windows wildcard path beneath the user profile temporary folder.",
+    "originalSeparatorFailuresAbsent": true,
+    "fullSizeSaveStep": "success",
+    "nativeWindowsUpdaterStep": "success",
+    "change": "The existing Windows command adapter uses RUNNER_TEMP as child-scoped TEMP/TMP; MMJ fixture prefix is mmj-.",
+    "observedShortenedWildcardCharacters": 243,
+    "observedNestedWildcardCharacters": 252,
+    "systemRegistryOrGlobalTempChanges": false,
+    "verification": {
+      "mmjCasesPassed": 5,
+      "workflowLint": "pass",
+      "shellSyntax": "pass",
+      "diffCheck": "pass",
+      "nativeResult": "next Windows run"
+    },
+    "retainedLocalCorrection": "Workflow lint rejected runner.temp in job-level env before publication. The existing Windows child-process adapter supplies RUNNER_TEMP instead; workflow lint then passes.",
+    "files": {
+      "tool/ci/in_env.sh": {
+        "path": "tool/ci/in_env.sh",
+        "bytes": 1143,
+        "sha256": "e2a3e7bb3bddaef7f9ddad420f8ec89339d40963f529688a6285ce826078af5d"
+      },
+      "test/mmj_shared_saves_test.dart": {
+        "path": "test/mmj_shared_saves_test.dart",
+        "bytes": 16017,
+        "sha256": "941b0c601b8fdfc1ff12f752e5469f4a758e990bb80413fe8f5e596d11351bf0"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-124267780065.json": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-124267780065.json",
+        "bytes": 3880,
+        "sha256": "6d9bd10a605a6b4fe93935c0253a4b834198fc0f659e55dbd253f9c68df1ffce"
+      },
+      ".tool-cache/research/windows-document-paths/job-124267780065.json": {
+        "path": ".tool-cache/research/windows-document-paths/job-124267780065.json",
+        "bytes": 3777,
+        "sha256": "98a03a30d16556d22123d9abc0078e2e0e49c68a08d286efc3b700295ef948a9"
+      },
+      ".tool-cache/research/windows-document-paths/short-temp-mmj.log": {
+        "path": ".tool-cache/research/windows-document-paths/short-temp-mmj.log",
+        "bytes": 661,
+        "sha256": "62759cba40b509c51ca622763760c17b7ea69ea3437201f0e49f649578dcff1b"
+      },
+      ".tool-cache/research/windows-document-paths/short-temp-lint.log": {
+        "path": ".tool-cache/research/windows-document-paths/short-temp-lint.log",
+        "bytes": 948,
+        "sha256": "4a33a1740e3e2f32f046b2f2523ff94005d7ae80653058f1377e9377868662c0"
+      },
+      ".tool-cache/research/windows-document-paths/short-temp-lint-fixed.log": {
+        "path": ".tool-cache/research/windows-document-paths/short-temp-lint-fixed.log",
+        "bytes": 164,
+        "sha256": "8f696814d0953eea92f671ba904f1de2a34c70a086aeefc8dedb12b149455ca1"
+      }
+    }
   }
 }
