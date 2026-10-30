@@ -16,6 +16,7 @@ import 'package:broomm/src/progress/service.dart';
 import 'cloud_saves_test.dart' show SaveServer, profileId, serverId;
 import 'psp_test.dart' show pspPbp;
 import 'support/addon_fixtures.dart' show base3ds, baseTitle;
+import 'support/android_document_paths.dart';
 
 /// Filesystem model of the SAF boundary, with explicit failures. This exercises
 /// real Dart transactions/cloud persistence, not Android provider acceptance.
@@ -109,7 +110,7 @@ class AndroidFolderFixture {
         );
         await for (final e in dir.list(recursive: true, followLinks: false)) {
           if (e is! File) continue;
-          final relative = e.path.substring(dir.path.length + 1);
+          final relative = androidDocumentRelativePath(dir.uri, e.uri);
           if (!selector.accepts(relative) ||
               selector.gciId != null &&
                   !await progressGciMatches(e, selector.gciId!))

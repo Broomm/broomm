@@ -14,6 +14,7 @@ import 'package:broomm/src/session_lease.dart';
 
 import 'cloud_saves_test.dart' show SaveServer, serverId, profileId;
 import 'support/addon_fixtures.dart' show base3ds, baseTitle;
+import 'support/android_document_paths.dart';
 
 const _tree =
     'content://com.android.externalstorage.documents/tree/primary%3Acitra-emu';
@@ -83,7 +84,7 @@ class SharedFolderFixture {
             followLinks: false,
           )) {
             if (file is! File) continue;
-            final relative = file.path.substring(dir.path.length + 1);
+            final relative = androidDocumentRelativePath(dir.uri, file.uri);
             if (area['prefix'] != null &&
                 (relative.contains('/') ||
                     !relative.startsWith(area['prefix'] as String) ||
@@ -321,7 +322,7 @@ void main() {
       await Future.wait(
         retained
             .cast<File>()
-            .where((e) => e.path.endsWith('/main'))
+            .where((e) => e.uri.pathSegments.last == 'main')
             .map((f) => f.readAsString()),
       ),
       contains('standalone'),

@@ -577,3 +577,48 @@ Primary references: [GitHub workflow concurrency and queue semantics](https://do
 [pinned GTK recipe](https://github.com/NixOS/nixpkgs/blob/5ed627539ac84809c78b2dd6d26a5cebeb5ae269/pkgs/development/libraries/gtk/3.x.nix),
 [pinned GLib recipe](https://github.com/NixOS/nixpkgs/blob/5ed627539ac84809c78b2dd6d26a5cebeb5ae269/pkgs/development/libraries/glib/default.nix),
 [Dart Windows truncate implementation](https://github.com/dart-lang/sdk/blob/3.13.0/runtime/bin/file_win.cc#L236).
+
+### Android provider fixture corrections — 2026-10-30
+
+The supplied Windows Server 2025 log for `d870e0a` contains five failures:
+four MMJ shared-save tests and the Astris content-isolation test. MMJ's fake
+DocumentsProvider enumerated native host paths by substring, leaking Windows
+backslashes into its Android document keys. Production correctly rejected these
+unsafe keys. Astris's assertion compared a native Windows filename against the
+literal `/switch-astris/` substring. Neither failure requires a runtime change.
+
+Both Android folder fixtures now derive relative document names from decoded URI
+segments. They emit the same slash-separated transport as the actual provider,
+while preserving names containing spaces, Unicode, percent and hash characters.
+The retained-MMJ-file check uses its URI leaf. Switch checks compare native file
+leaves and the exact owned Astris package-directory URI, and verify the selected
+file exists. Production path validation, assertions about ownership/restoration,
+timeouts and native-runner coverage remain intact.
+
+Three new host-independent cases explicitly construct Windows drive and UNC
+URIs, preserve POSIX names and verify outside-root/unsafe-path rejection. These
+run on every checks host, so the Windows separator contract is exercised on the
+development host as well. The affected suites pass **33 tests**; all **458 Flutter
+tests** pass on macOS ARM64, analysis is clean and formatting leaves all 270
+source files unchanged. The first sandboxed attempt failed before loading tests
+because Flutter could not bind loopback; the authorized network-enabled run
+passes. [Evidence and retained log hashes](windows-test-paths.json) distinguish
+these checks from actual Windows execution.
+
+Reproduce locally:
+
+```sh
+devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded \
+  test/android_document_paths_test.dart test/mmj_shared_saves_test.dart \
+  test/android_folder_sync_test.dart test/native_packages_test.dart
+devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded
+devbox run -- flutter --suppress-analytics analyze --no-pub
+devbox run -- dart format --output=none --set-exit-if-changed lib test tool
+```
+
+Actual Windows acceptance remains the existing `checks (windows-2025, windows)`
+job, including its separately scheduled full-size-save and native-updater steps.
+No tests are disabled and no workflow test timeout is increased. Application
+code is unchanged, so the verified [current macOS package](../build/releases/Broomm-macOS-android-saves.zip)
+still contains the current runtime. Ignored `.tool-cache/research/windows-document-paths/`
+contains logs and may be removed after testing; no owner data was touched.

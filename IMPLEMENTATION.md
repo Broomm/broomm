@@ -723,3 +723,21 @@ Version **0.1.4 (1006)** uses production Application Support storage. Archive
 integrity and source/fresh-extraction deep/strict/all-architecture signatures
 pass; all seven Mach-O payloads contain ARM64 and x86_64. The build is ad-hoc
 signed, not notarized, and does not establish Android device acceptance.
+
+## Windows test fixture portability correction — 2026-10-30
+
+The owner-supplied Windows log for `d870e0a` exposed four MMJ fixture failures
+and one Astris assertion failure. Fake Android inventory keys used Windows
+separators; a native package filename assertion assumed POSIX separators. Both
+fake providers now use decoded URI segments, retained-file checks use URI leaves,
+and the Astris check verifies the exact owned directory URI plus file existence.
+No application behavior or production validation changed.
+
+Three new portable cases exercise drive-letter and UNC Windows paths, encoded
+names, POSIX names and rejection boundaries on every host. All **33 affected
+tests** and **458 total Flutter tests** pass locally, with clean analysis and
+formatting. Native Windows execution remains owned by its existing CI job; local
+macOS success is not Windows acceptance. No retries, skips or timeout increases
+mask the supplied failures. See the [diagnosis and reproduction](docs/github-releases.md#android-provider-fixture-corrections--2026-10-30)
+and [evidence](docs/windows-test-paths.json). The runtime sources and verified
+[macOS package](build/releases/Broomm-macOS-android-saves.zip) are unchanged.

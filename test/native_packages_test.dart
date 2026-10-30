@@ -185,8 +185,11 @@ void main() {
       );
       expect(await library.contentFiles(entry), hasLength(2));
       expect(
-        (await library.contentFiles(entry, excludeAddons: true)).single,
-        endsWith('/game.nsp'),
+        File((await library.contentFiles(entry, excludeAddons: true)).single)
+            .uri
+            .pathSegments
+            .last,
+        'game.nsp',
       );
     } finally {
       client.close();
@@ -429,9 +432,8 @@ void main() {
       expect(restored.game.files, isEmpty);
       client.problem = const RommFailure('Offline');
       expect(await service.needsSwitchSelection(addonServer, restored), false);
-      expect(await library.contentFiles(restored, excludeAddons: true), [
-        endsWith('/game.nsp'),
-      ]);
+      final files = await library.contentFiles(restored, excludeAddons: true);
+      expect(files.map((f) => File(f).uri.pathSegments.last), ['game.nsp']);
     });
     test('restarted Switch content reuses its checkpoint for both profiles without a remote manifest and rejects a damaged checkpoint', () async {
       final entry = await install(1);
@@ -616,7 +618,14 @@ void main() {
       final selected =
           (jsonDecode(await selection.readAsString()) as List).single['path']
               as String;
-      expect(selected, contains('/switch-astris/'));
+      final packageRoot = Directory(
+        '${root.path}/addons/$addonServer/1/switch-astris',
+      );
+      expect(
+        File(selected).uri.toString(),
+        startsWith(packageRoot.uri.toString()),
+      );
+      expect(await File(selected).exists(), true);
       final save = File('$native/user/bis/user/save/retained');
       await save.parent.create(recursive: true);
       await save.writeAsString('progress');

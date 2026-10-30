@@ -154,6 +154,8 @@ The [responsiveness/loading follow-up](docs/research/pairing-responsiveness.md) 
 
 ## Read the documentation
 
+The latest Windows test correction is the [Android provider fixture follow-up](docs/github-releases.md#android-provider-fixture-corrections--2026-10-30), covering drive-letter/UNC document paths and Astris package assertions. Its reproduction commands and evidence distinguish local checks from native Windows CI.
+
 For CI failures and local reproduction, see the [latest hosted-run follow-up](docs/github-releases.md#sixth-hosted-ci-follow-up--2026-10-26). Linux ARM64 now compiles and links; the remaining packaging failure came from checking the launcher before preparing its engine's SDK search paths. The correction prepares all binaries before auditing dependencies, with native regressions scheduled on both Linux architectures. Local checks inspect actual x64/ARM64 engines on macOS; native Linux loader checks still require CI. The supplied macOS native test command succeeds; its result upload fails on GitHub artifact-storage DNS and needs a rerun. Android signing already built successfully according to the owner; device acceptance remains separate.
 
 | Document | Purpose |

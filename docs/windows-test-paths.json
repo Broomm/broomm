@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-30",
+  "failingRevision": "d870e0a345e69f5fe6dd343137d2ce8ed8190038",
+  "sourceWorkingTree": true,
+  "runner": "Windows Server 2025, image windows-2025-vs2026 20261021.278.1; Flutter 3.47.0",
+  "originalFailures": {
+    "count": 5,
+    "mmjSharedSaves": "Four failures: the fake provider returned native Windows backslashes inside Android transport keys; strict progressRelative correctly rejected them.",
+    "astrisPackages": "One failure: a native Windows filename was compared with a slash-delimited substring."
+  },
+  "corrections": [
+    "Both fake providers derive Android document paths from decoded URI segments.",
+    "Retained-file lookup uses its URI leaf; native content checks use file URIs and exact leaves.",
+    "The Astris assertion verifies the full owned package-directory URI and actual existence."
+  ],
+  "verification": {
+    "host": "macOS ARM64",
+    "focusedPassed": 33,
+    "newPortablePathCases": 3,
+    "fullFlutterSuitePassed": 458,
+    "analysis": "pass",
+    "formatFilesUnchanged": 270,
+    "productionCodeChanged": false,
+    "productionValidationRelaxed": false,
+    "testsSkippedOrTimeoutsIncreased": false,
+    "nativeWindowsLocalExecuted": false,
+    "nativeWindowsGate": ".github/workflows/release.yml checks (windows-2025, windows), main suite plus independent full-size-save and native-updater steps",
+    "runtimeMacosBuild": "build/releases/Broomm-macOS-android-saves.zip; application source unchanged"
+  },
+  "regressionCoverage": [
+    "Windows drive path with nested Android 3DS document names",
+    "UNC source with spaces, Unicode, hash and percent names; different server rejected",
+    "POSIX source; literal backslash remains invalid in production; sibling root rejected"
+  ],
+  "retainedFailure": "First local runner could not bind loopback inside sandbox. The authorized network-enabled rerun passed without assertion/timeout changes.",
+  "files": {
+    ".tool-cache/research/windows-document-paths/windows-d870e0a.log": {
+      "path": ".tool-cache/research/windows-document-paths/windows-d870e0a.log",
+      "bytes": 113665,
+      "sha256": "a1a02f7f548062ba07544cc1a93920d2eeb424751d9cc3873ef5ed63281a06ee"
+    },
+    ".tool-cache/research/windows-document-paths/focused.log": {
+      "path": ".tool-cache/research/windows-document-paths/focused.log",
+      "bytes": 5977,
+      "sha256": "a9f685cf4a3e0f7f5cae3c5203b52f15fdea577942b76f2b0849c115251236a4"
+    },
+    ".tool-cache/research/windows-document-paths/focused-network.log": {
+      "path": ".tool-cache/research/windows-document-paths/focused-network.log",
+      "bytes": 6003,
+      "sha256": "85d8b5a48ba97b39f33c9fd4fbb2833d55c07b400a09d0b05840acba855bb013"
+    },
+    ".tool-cache/research/windows-document-paths/flutter-suite.log": {
+      "path": ".tool-cache/research/windows-document-paths/flutter-suite.log",
+      "bytes": 81493,
+      "sha256": "088ae611004a9804308cd0fb4209e072c1e4434e38106b773c856c4364fd8fd8"
+    },
+    ".tool-cache/research/windows-document-paths/analyze.log": {
+      "path": ".tool-cache/research/windows-document-paths/analyze.log",
+      "bytes": 249,
+      "sha256": "126176b03c7ec49fb7abd5a2dff80c75401354a67d815159027d142d56c6cf2f"
+    },
+    ".tool-cache/research/windows-document-paths/format.log": {
+      "path": ".tool-cache/research/windows-document-paths/format.log",
+      "bytes": 199,
+      "sha256": "d18f26fd1a2d1af8c288f3ff30fa2a997c10f5a802e0c104fbc7895299581c2a"
+    },
+    "test/support/android_document_paths.dart": {
+      "path": "test/support/android_document_paths.dart",
+      "bytes": 807,
+      "sha256": "61f2193adb83acc8b3ba47061ecc52d67ae05608acd35984f15ab376f36865e1"
+    },
+    "test/android_document_paths_test.dart": {
+      "path": "test/android_document_paths_test.dart",
+      "bytes": 1898,
+      "sha256": "a60c238bdd55860fdb8c408425cd618015b0e098c6dccfd8bf5ce8bdc1df74d2"
+    },
+    "test/mmj_shared_saves_test.dart": {
+      "path": "test/mmj_shared_saves_test.dart",
+      "bytes": 16024,
+      "sha256": "fa43f88a387292c854a7afad049c7349fb74d29e55b17c367f4c3ad66675863e"
+    },
+    "test/android_folder_sync_test.dart": {
+      "path": "test/android_folder_sync_test.dart",
+      "bytes": 21632,
+      "sha256": "9a35233b5ca5d3ebc07810a6c782189033d5f25aa404aaa4504e3f444cde208e"
+    },
+    "test/native_packages_test.dart": {
+      "path": "test/native_packages_test.dart",
+      "bytes": 27627,
+      "sha256": "82584c09ddd110588f78016d12a0c447de69db6093fff51848d7e47423850459"
+    }
+  }
+}
