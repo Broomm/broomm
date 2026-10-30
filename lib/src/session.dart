@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'catalogue.dart';
+import 'astris_process.dart';
 import 'emulators.dart';
 import 'pairing.dart';
 import 'session_log.dart';
@@ -321,11 +322,14 @@ class GameSession {
           'The prepared ${e.name} executable changed. Re-run prototype-prepare before using its bridge.',
         );
       }
+      final bridgeName = e.name == 'Astris'
+          ? 'broomm-astris.dylib'
+          : 'broomm-sdl${e.sdlMajor}.dylib';
       final bundled =
-          '${File(Platform.resolvedExecutable).parent.parent.path}/Resources/native/broomm-sdl${e.sdlMajor}.dylib';
+          '${File(Platform.resolvedExecutable).parent.parent.path}/Resources/native/$bridgeName';
       final bridge = Platform.isMacOS && await File(bundled).exists()
           ? bundled
-          : '$project/build/native/broomm-sdl${e.sdlMajor}.dylib';
+          : '$project/build/native/$bridgeName';
       if (!await File(bridge).exists())
         throw StateError(
           'Native bridge missing. Run devbox run prototype-prepare.',
@@ -404,66 +408,90 @@ class GameSession {
                   '(require-not (subpath ${quoted(await Directory.systemTemp.resolveSymbolicLinks())})) '
                   '(require-not (literal ${quoted('$dataRoot/writer.lock')}))))\n',
       );
-      final process = await Process.start(
-        '/usr/bin/sandbox-exec',
-        [
-          '-f',
-          '${e.root}/readonly.sb',
-          '/usr/bin/env',
-          'DYLD_INSERT_LIBRARIES=$bridge',
-          e.executable,
-          ...args,
-        ],
-        workingDirectory: e.root,
-        environment: {
-          if (_resolved?.home != null) 'HOME': _resolved!.home!,
-          'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
-          'BROOMM_SESSION': '1',
-          'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',
-          if (testInputs) 'BROOMM_SESSION_TEST': '1',
-          if (testInputs && testPreconnected) 'BROOMM_TEST_PRECONNECTED': '1',
-          if (testInputs) 'BROOMM_TEST_INPUT': '${e.root}/test-input.txt',
-          if (testInputs && testMotion)
-            'BROOMM_TEST_MOTION': '${e.root}/test-motion.txt',
-          'BROOMM_SESSION_COMMAND': '${e.root}/bridge-command.txt',
-          'BROOMM_SESSION_STATUS': snapshot.path,
-          'BROOMM_SYMBOL_FILE': '${e.root}/local-symbols.txt',
-          if (e.sdlLibrary != null) 'BROOMM_SDL_LIBRARY': e.sdlLibrary!,
-          'SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS': '1',
-          'SDL_GAMECONTROLLER_USE_BUTTON_LABELS': '0',
-          if (selected.controllerTarget == ControllerTarget.wii) ...{
-            'BROOMM_DOLPHIN_WII': '1',
-            'BROOMM_WII_CONFIG': '${e.user}/Config/WiimoteNew.ini',
-          },
-          'XDG_CONFIG_HOME': '${e.root}/config',
-          'XDG_CACHE_HOME': e.cacheDirectory ?? '${e.root}/cache',
-          'XDG_DATA_HOME': '${e.root}/data',
-          if (e.name == 'RPCS3') ...{
-            'BROOMM_CACHE_FROM':
-                '${Platform.environment['HOME']}/Library/Caches/rpcs3',
-            'BROOMM_CACHE_TO': e.cacheDirectory ?? '${e.root}/cache',
-          },
-          if (e.name == 'RetroArch') 'BROOMM_RETROARCH': '1',
-          if (e.name == 'Azahar' || e.name == 'Eden')
-            'BROOMM_DEFER_SDL_WATCHES': '1',
-          if (e.name == 'melonDS') 'BROOMM_MELONDS': '1',
-          if (e.name == 'Eden') 'BROOMM_EDEN': '1',
-          if (e.name == 'PPSSPP') ...{
-            'BROOMM_PPSSPP': '1',
-            'BROOMM_PSP_MEMSTICK': e.user,
-          },
-          if (e.name == 'DuckStation' ||
-              e.name == 'PCSX2' ||
-              e.name == 'ARMSX2')
-            'BROOMM_PLAYSTATION': '1',
-          if (e.name == 'Ryubing') 'BROOMM_PAUSE_APPKIT_F5': '1',
-          // SDL 2.30's GCController notification can pump Avalonia reentrantly
-          // from HID enumeration and deadlock the UI/SDL threads on macOS 27.
-          // Keep HIDAPI/IOKit enabled; scope this workaround to this child.
-          if (e.name == 'Ryubing') 'SDL_JOYSTICK_MFI': '0',
-          ...Map<String, String>.from(raw['native'] as Map),
+      final environment = <String, String>{
+        if (_resolved?.home != null) 'HOME': _resolved!.home!,
+        if (e.name == 'Astris') ...{
+          'PATH': '/usr/bin:/bin',
+          'LANG': 'en_US.UTF-8',
+          'BROOMM_ASTRIS_ROOT': e.root,
+          'BROOMM_ASTRIS_USER': e.user,
+          'BROOMM_ASTRIS_ROM': rom.path,
+          'BROOMM_LAUNCHER_PID': '$pid',
         },
-      );
+        'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
+        'BROOMM_SESSION': '1',
+        'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',
+        if (testInputs) 'BROOMM_SESSION_TEST': '1',
+        if (testInputs && testPreconnected) 'BROOMM_TEST_PRECONNECTED': '1',
+        if (testInputs) 'BROOMM_TEST_INPUT': '${e.root}/test-input.txt',
+        if (testInputs && testMotion)
+          'BROOMM_TEST_MOTION': '${e.root}/test-motion.txt',
+        'BROOMM_SESSION_COMMAND': '${e.root}/bridge-command.txt',
+        'BROOMM_SESSION_STATUS': snapshot.path,
+        'BROOMM_SYMBOL_FILE': '${e.root}/local-symbols.txt',
+        if (e.sdlLibrary != null) 'BROOMM_SDL_LIBRARY': e.sdlLibrary!,
+        'SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS': '1',
+        'SDL_GAMECONTROLLER_USE_BUTTON_LABELS': '0',
+        if (selected.controllerTarget == ControllerTarget.wii) ...{
+          'BROOMM_DOLPHIN_WII': '1',
+          'BROOMM_WII_CONFIG': '${e.user}/Config/WiimoteNew.ini',
+        },
+        'XDG_CONFIG_HOME': '${e.root}/config',
+        'XDG_CACHE_HOME': e.cacheDirectory ?? '${e.root}/cache',
+        'XDG_DATA_HOME': '${e.root}/data',
+        if (e.name == 'RPCS3') ...{
+          'BROOMM_CACHE_FROM':
+              '${Platform.environment['HOME']}/Library/Caches/rpcs3',
+          'BROOMM_CACHE_TO': e.cacheDirectory ?? '${e.root}/cache',
+        },
+        if (e.name == 'RetroArch') 'BROOMM_RETROARCH': '1',
+        if (e.name == 'Azahar' || e.name == 'Eden')
+          'BROOMM_DEFER_SDL_WATCHES': '1',
+        if (e.name == 'melonDS') 'BROOMM_MELONDS': '1',
+        if (e.name == 'Eden') 'BROOMM_EDEN': '1',
+        if (e.name == 'PPSSPP') ...{
+          'BROOMM_PPSSPP': '1',
+          'BROOMM_PSP_MEMSTICK': e.user,
+        },
+        if (e.name == 'DuckStation' || e.name == 'PCSX2' || e.name == 'ARMSX2')
+          'BROOMM_PLAYSTATION': '1',
+        if (e.name == 'Ryubing') 'BROOMM_PAUSE_APPKIT_F5': '1',
+        // Keep this existing native input workaround local to Ryubing.
+        if (e.name == 'Ryubing') 'SDL_JOYSTICK_MFI': '0',
+        ...Map<String, String>.from(raw['native'] as Map),
+      };
+      final guard = '${File(bridge).parent.path}/broomm-installer-guard.dylib';
+      final process = e.name == 'Astris'
+          ? await AstrisProcess.start(
+              executable: e.executable,
+              rom: rom.path,
+              root: e.root,
+              writer: '$dataRoot/writer.lock',
+              guard: guard,
+              environment: {
+                ...environment,
+                'DYLD_INSERT_LIBRARIES': '$guard:$bridge',
+                'BROOMM_INSTALLER_WRITER_LOCK': '$dataRoot/writer.lock',
+                'BROOMM_CONFIGURATION_ROOT': e.root,
+                'BROOMM_CONFIGURATION_SANDBOX': await File(
+                  '${e.root}/readonly.sb',
+                ).readAsString(),
+              },
+              onProblem: onProblem,
+            )
+          : await Process.start(
+              '/usr/bin/sandbox-exec',
+              [
+                '-f',
+                '${e.root}/readonly.sb',
+                '/usr/bin/env',
+                'DYLD_INSERT_LIBRARIES=$bridge',
+                e.executable,
+                ...args,
+              ],
+              workingDirectory: e.root,
+              environment: environment,
+            );
       _process = process;
       _lastUpdate = DateTime.now();
       final sessionLog = log!;
@@ -474,7 +502,7 @@ class GameSession {
 
       void stdoutOutput(List<int> bytes) {
         output(bytes);
-        if (e.name == 'Ryubing' && nativeProgramId == null) {
+        if ({'Ryubing', 'Astris'}.contains(e.name) && nativeProgramId == null) {
           identityOutput =
               '$identityOutput${String.fromCharCodes(bytes.take(32768))}';
           final match = RegExp(
@@ -849,7 +877,7 @@ class GameSession {
     if (guard == null ||
         !guard.active ||
         running ||
-        !{'Ryubing', 'Eden'}.contains(resolved.emulator.name))
+        !{'Ryubing', 'Eden', 'Astris'}.contains(resolved.emulator.name))
       throw StateError(
         'Switch save initialization needs the launch session owner',
       );

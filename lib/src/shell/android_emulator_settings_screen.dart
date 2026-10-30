@@ -36,7 +36,8 @@ class _AndroidEmulatorSettingsScreenState
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !model.gameActive) manager.load();
+    if (state == AppLifecycleState.resumed && !model.gameActive && !working)
+      manager.load();
   }
 
   Future<void> run(Future<void> Function() action) async {
@@ -57,23 +58,27 @@ class _AndroidEmulatorSettingsScreenState
   Future<void> configure(AndroidEmulator emulator) async {
     if (await model.androidSession.pending() != null)
       throw StateError(
-        'Close the Android emulator and finish its session before changing save folders.',
+        'Finish the previous game before changing save folders.',
       );
-    final profile = model.profile!;
-    final uri = await manager.exposeStorage(profile.id, profile.name, emulator);
-    if (!mounted) return;
-    final location = switch (emulator.id) {
-      'ppsspp' => 'Memory Stick folder',
-      'melonds' => 'custom save folder',
-      _ => 'user data folder',
+    final instructions = switch (emulator.id) {
+      'ppsspp' => 'In PPSSPP, select a shared Memory Stick folder. Select that same folder here; it contains PSP/SAVEDATA and PSP/PPSSPP_STATE.',
+      'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
+      'azahar' => 'In Azahar, select a shared user-data folder. Select that same folder here, containing sdmc and states.',
+      'citra-mmj' => 'Use MMJ’s normal shared citra-emu folder, usually Internal storage/citra-emu. Select that folder here. Private Android/data / Storage Access builds are unsupported. Verify MMJ actually uses shared storage; Broomm cannot read that private setting.',
+      'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder in Dolphin.',
+      'retroarch' => 'Install the needed cores in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root (the one containing cores and files). Broomm uses a separate session configuration; your normal settings remain available.',
+      'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game memory cards. Close ARMSX2, then select its full custom data folder here. Stable and nightly keep separate connections.',
+      'duckstation' => 'Use a DuckStation version with configurable data locations. Put memory cards in memcards and states in savestates under one shared folder. Set both slots to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder here. Broomm swaps a separate card per profile/game and restores standalone cards afterward.',
+      'eden' => 'Initialize Eden and configure its keys/firmware in Eden. Select Eden from the Android picker’s sidebar and grant its full data root. Broomm reads its console account to find game saves. Eden does not support save states.',
+      _ => throw StateError('No save-folder instructions for this emulator.'),
     };
-    final confirmed = await showConsoleDialog<bool>(
+    final yes = await showConsoleDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
         scrollable: true,
         title: Text('Connect ${emulator.name} saves'),
         content: Text(
-          'In ${emulator.name}, choose “Broomm · ${profile.name} · ${emulator.name}” from Android’s folder picker as its $location. You may need to open the picker’s sidebar to find Broomm.\n\nThen save and close the emulator and confirm here. This folder belongs only to ${profile.name}; choose this profile’s folder again when changing profiles. Existing saves can be imported from RomM using Use existing save file.',
+          '$instructions\n\nClose the emulator before continuing. This connection is shared by Broomm profiles; no folder reselection is needed when switching profiles. Each profile’s game progress stays separate. Existing standalone saves are preserved and restored after play; use Use existing save file to import progress from RomM.',
         ),
         actions: [
           ConsoleButton(
@@ -93,17 +98,23 @@ class _AndroidEmulatorSettingsScreenState
           ),
           ConsoleButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Folder selected · emulator closed'),
+            child: const Text('Emulator closed · Select folder'),
           ),
         ],
       ),
     );
-    if (confirmed == true && model.profile == profile) {
-      await manager.confirmStorage(profile.id, emulator, uri);
-      model.showNotice(
-        '${emulator.name} cloud save folder connected for ${profile.name}.',
+    if (yes != true) return;
+    final package = manager.app(emulator)?.package;
+    final uri = await manager.chooseFolder(emulator);
+    if (uri == null) return;
+    if (manager.app(emulator)?.package != package)
+      throw StateError(
+        'The installed emulator changed. Select its folder again.',
       );
-    }
+    await manager.confirmSharedStorage(emulator, uri);
+    model.showNotice(
+      '${emulator.name} save folder connected for all Broomm profiles.',
+    );
   }
 
   Future<void> recover() async {
@@ -170,6 +181,21 @@ class _AndroidEmulatorSettingsScreenState
             ),
             const SizedBox(height: 20),
             if (working || manager.busy) const LinearProgressIndicator(),
+            if (manager.installing != null) ...[
+              LinearProgressIndicator(
+                value:
+                    manager.downloadBytes == null || manager.downloadBytes == 0
+                    ? null
+                    : manager.downloadedBytes / manager.downloadBytes!,
+              ),
+              Text(
+                'Downloading emulator APK · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+              ),
+              ConsoleButton(
+                onPressed: manager.cancelDownload,
+                child: const Text('Cancel download'),
+              ),
+            ],
             FutureBuilder<Map<String, dynamic>?>(
               future: model.androidSession.pending(),
               builder: (_, snapshot) {
@@ -225,7 +251,11 @@ class _AndroidEmulatorSettingsScreenState
         model.profile != null &&
         manager.tree(model.profile!.id, emulator) != null;
     final disabled =
-        working || manager.busy || model.gameActive || app?.enabled == false;
+        working ||
+        manager.busy ||
+        manager.installing != null ||
+        model.gameActive ||
+        app?.enabled == false;
     return ConsoleFocusRegion(
       child: Container(
         key: ValueKey('android-emulator-${platform.id}:${emulator.id}'),
@@ -258,6 +288,11 @@ class _AndroidEmulatorSettingsScreenState
               style: TextStyle(color: app == null ? muted : accent),
             ),
             const SizedBox(height: 12),
+            if (emulator.id == 'armsx2')
+              Text(
+                'Detected channels: ${[if (manager.installed.containsKey('com.armsx2')) 'Stable', if (manager.installed.containsKey('com.armsx2.nightly')) 'Nightly'].join(' · ')}${app?.package == 'com.armsx2' ? ' · Stable preferred' : ''}',
+                style: const TextStyle(color: muted),
+              ),
             Text(
               emulator.saveNote ?? '',
               style: const TextStyle(color: muted, height: 1.5),
@@ -265,7 +300,11 @@ class _AndroidEmulatorSettingsScreenState
             if (manager.progressSupported(emulator)) ...[
               const SizedBox(height: 8),
               Text(
-                configured ? 'Broomm save folder connected for this profile.' : 'Cloud saves require connecting this profile’s Broomm folder once.',
+                manager.folder(emulator) != null
+                    ? 'Save folder connected for all Broomm profiles. Finish and sync after closing the emulator.'
+                    : configured
+                    ? 'Legacy profile folder connected. Configure saves to use one folder across profiles.'
+                    : 'Connect a save folder once to enable cloud saves.',
                 style: TextStyle(color: configured ? accent : muted),
               ),
             ],
@@ -277,13 +316,32 @@ class _AndroidEmulatorSettingsScreenState
                 ConsoleButton(
                   onPressed: disabled
                       ? null
-                      : () => run(() => manager.install(emulator)),
-                  child: Text(app == null ? 'Install' : 'Download installer'),
+                      : () => run(
+                          () => manager.install(
+                            emulator,
+                            server: model.server!.id,
+                          ),
+                        ),
+                  child: Text(
+                    emulator.id == 'duckstation'
+                        ? 'Open Play Store'
+                        : emulator.id == 'ppsspp' &&
+                              app?.package == 'org.ppsspp.ppssppgold'
+                        ? 'Download free PPSSPP'
+                        : app == null
+                        ? 'Install'
+                        : 'Download installer',
+                  ),
                 ),
                 ConsoleButton(
                   onPressed: disabled
                       ? null
-                      : () => run(() => manager.installApk(emulator)),
+                      : () => run(
+                          () => manager.installApk(
+                            emulator,
+                            server: model.server!.id,
+                          ),
+                        ),
                   child: const Text('Install APK…'),
                 ),
                 if (app != null) ...[

@@ -1,0 +1,222 @@
+{
+  "date": "2026-10-29",
+  "scope": "Astris macOS ARM64 and Citra MMJ Android handoff; configured-only defaults",
+  "host": {
+    "os": "macOS 27.0.1 26A434",
+    "cpu": "Apple M1 Pro ARM64",
+    "sdk": "pre-provisioned Xcode 27.1",
+    "flutter": "3.47.0",
+    "dart": "3.13.0"
+  },
+  "source": {
+    "product": "Broomm",
+    "version": "0.1.3",
+    "build_number": "3",
+    "target": "macos-universal",
+    "sha": "81877fd13be0bed9b505b09d3755faa1cc54a498",
+    "working_tree": true,
+    "source_tree_sha256": "91e5e68a76980b3c66c6e11eb8bd92e9be52f5142141dff9dfe27b7d342bb031",
+    "entries": [
+      "AppIcon.icns",
+      "Assets.car",
+      "Base.lproj",
+      "NATIVE-SOURCES.md",
+      "broomm-release.json",
+      "native"
+    ]
+  },
+  "verification": {
+    "flutterOrdinaryPassed": 429,
+    "fullSizeSavePassed": 2,
+    "analyzer": "pass",
+    "nativeStaticAnalysis": "pass after missing-command guard",
+    "androidKotlinCompilation": "pass; existing versionCode deprecation warnings only",
+    "androidApkBuild": false,
+    "androidDeviceExecution": false,
+    "nativePhysicalControllerAcceptance": false,
+    "nativeAstris": {
+      "version": "1.0.32+2398e7c80",
+      "game": "Super Smash Bros Ultimate",
+      "program": "01006a800016e000",
+      "launchServicesDocumentLaunch": true,
+      "readinessPauseResume": true,
+      "twoSyntheticSources": true,
+      "nativeBackendButtonReadback": true,
+      "liveFaceOrientation": true,
+      "menuChord": true,
+      "disconnectionPause": true,
+      "normalTeardown": true,
+      "gameCreatedNativeSaveZipRoundTrip": true,
+      "updateVersion": 2031616,
+      "nativeUpdateAndDlcInspection": true,
+      "nativeMetadataPublicationRepeatRemoval": true,
+      "progressPreserved": true,
+      "inGameDlcRecognition": false,
+      "states": "unavailable"
+    },
+    "processFixtures": [
+      "failed OS launch revokes admission and releases FIFO readers",
+      "helper loss retains actual writer until normal exit",
+      "process birth mismatch and foreign executable rejected",
+      "crash cannot become successful finalization"
+    ],
+    "defaults": [
+      "no configured installation means no default",
+      "new successful setup replaces previous configured default",
+      "Android pending installation/default survives restart; cancellation/failed scan is not success"
+    ],
+    "nativeSignedDeliveryChecksPassed": 2
+  },
+  "remaining": [
+    "Physical controller/gyro and extended gameplay acceptance",
+    "Android MMJ native app install/launch acceptance",
+    "MMJ cloud saves, states, per-profile storage and CIA installation unsupported",
+    "Astris older macOS versions not natively verified",
+    "Other native host delivery/acceptance remains scoped separately"
+  ],
+  "retainedFailures": [
+    "Direct Astris executable launch/startup before supported Launch Services handoff",
+    "Virtual-source destruction raced retained native input readers",
+    "Synthetic-source disconnection was initially not detected",
+    "3DS addon adapter lookup assumed one emulator",
+    "Cocoa atomic publication required existing gameplay temporary-directory allowance",
+    "Native NULL command-path analyzer finding fixed",
+    "Archive per-file verification found unsigned bridge slices; build and release verification now sign/check every bridge"
+  ],
+  "productionProgressModified": false,
+  "newRuntimeDependencies": [],
+  "logs": {
+    "flutter-suite-delivery.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/flutter-suite-delivery.log",
+      "sha256": "c68db9bfe11e7fe9dc892f2c17313958a9cea6c00eb66da7aebcf7eeda5666a2"
+    },
+    "full-size-saves.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/full-size-saves.log",
+      "sha256": "f2ef2bc79783a88764b5b8b7e3ae7b4ccd73ed95a144ec0963ffe1d5b082aaf5"
+    },
+    "android-compile-final.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/android-compile-final.log",
+      "sha256": "9b3cd24547faec77c4a7ff7c54240bd62f75815880449fe53ad3a717747dcd95"
+    },
+    "analysis-delivery.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/analysis-delivery.log",
+      "sha256": "522ccfcf16a1442dc11fdc19116b0ec2587194f499b05bdb9c750cd146fd5475"
+    },
+    "native-analysis.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/native-analysis.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "process-failures-final.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/process-failures-final.log",
+      "sha256": "4a4577d832d209c4d79ce90c682714b8585fc8a23851c2c09453b7e1909ebde9"
+    },
+    "native-delivery.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/native-delivery.log",
+      "sha256": "1986c01229f2d5a8b0be0afd41265d960128c8570096f60d82d900d3f63c57be"
+    },
+    "native-packages-delivery.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/native-packages-delivery.log",
+      "sha256": "9ed25a75202b37a790c82596a29469ddb43585d2f819adc03a860c609c87c2f4"
+    },
+    "macos-build-signed.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/macos-build-signed.log",
+      "sha256": "4fc0319b7cb27e23ee2084f6fe1559daf54fba58185a53ba6cc3ce2164c61d49"
+    },
+    "bridges-signed.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/bridges-signed.log",
+      "sha256": "e11ea3996abd2d1a14d40fb29329079fc2f96131fa3871727a8a175a43b30c65"
+    },
+    "native-signed-delivery.log": {
+      "path": ".tool-cache/research/astris-citra/resumed/native-signed-delivery.log",
+      "sha256": "33732d83bb24de1f1650edb75be34aecdf411d578d7aedf9f6c1192d6e638d7f"
+    }
+  },
+  "build": {
+    "file": "build/releases/Broomm-macOS-astris-citra.zip",
+    "bytes": 20612171,
+    "sha256": "175f95f08f67752b1f04fcb411df78a80f6d8bf0de0dd68e20f315d5f36c11f5",
+    "version": "0.1.3",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.3",
+      "build_number": "3",
+      "target": "macos-universal",
+      "sha": "81877fd13be0bed9b505b09d3755faa1cc54a498",
+      "working_tree": true,
+      "source_tree_sha256": "91e5e68a76980b3c66c6e11eb8bd92e9be52f5142141dff9dfe27b7d342bb031",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zipVerified": true,
+    "sourceSignatureVerified": true,
+    "extractedSignatureVerified": true,
+    "allArchitecturesVerified": true,
+    "binaries": [
+      {
+        "path": "Contents/MacOS/broomm",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "73e3a6bcfdc4184955eca4121e8a69c20707149d309f25841f8781280481adbb"
+      },
+      {
+        "path": "Contents/Frameworks/App.framework/Versions/A/App",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "8354fd0123fc8e662b4de1dcc71abcaf98f933673690022ff5da8e2ec0ddff11"
+      },
+      {
+        "path": "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl2.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "e9aff00e32966f8aa02ee4f60b678013596d5bc6a8cf1271dce520275cc1c4e1"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl3.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "edf3d3784512b54cf25d94447adab2d55c8d502de623c11d1d26c2facafadaa5"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-installer-guard.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "e7da5b7fd6e4b1180869598e28c3383a75c39d1716f849a041b34e3342a48814"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-astris.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "5c486b7758ccd17c77bcab8eb8d6e421317e778ca08a59ce4bce57838da0a4cd"
+      }
+    ],
+    "verificationDirectory": "build/releases/.verify-signed-astris-cpunc4up",
+    "notarized": false,
+    "dataRoot": "~/Library/Application Support/Broomm"
+  }
+}

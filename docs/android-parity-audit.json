@@ -1,0 +1,952 @@
+{
+  "date": "2026-10-30",
+  "kind": "research_only",
+  "application_behavior_changed": false,
+  "android_runtime_executed": false,
+  "new_dependencies": [],
+  "broomm_head": "4561de6bf6cfe60d5eca2e71b5d9b9241c103d53",
+  "working_tree": true,
+  "scope": "All nine built-in Android adapters; installed package on owner device is unknown.",
+  "refs": {
+    "armsx2": {
+      "repository": "ARMSX2/ARMSX2",
+      "requested_ref": "2.9",
+      "resolved_tree_sha": "023224576867a3846faedc7640911772c7783529",
+      "tree_truncated": false
+    },
+    "dolphin": {
+      "repository": "dolphin-emu/dolphin",
+      "requested_ref": "2609",
+      "resolved_tree_sha": "f84df02055ab9610feec48e65648cac5a3c098fa",
+      "tree_truncated": false
+    },
+    "ppsspp": {
+      "repository": "hrydgard/ppsspp",
+      "requested_ref": "v1.20.4",
+      "resolved_tree_sha": "fa50bb1976065c4f8b1b47af227d367fe9771555",
+      "tree_truncated": false
+    },
+    "melonds": {
+      "repository": "rafaelvcaetano/melonDS-android",
+      "requested_ref": "master",
+      "resolved_tree_sha": "c42995caff0144f37ad9791dc9bc96d82e8a6f65",
+      "tree_truncated": false
+    },
+    "azahar": {
+      "repository": "azahar-emu/azahar",
+      "requested_ref": "master",
+      "resolved_tree_sha": "01623d2fb707317410225c0eced82e3e0c84edc1",
+      "tree_truncated": false
+    },
+    "mmj": {
+      "repository": "weihuoya/citra",
+      "requested_ref": "master",
+      "resolved_tree_sha": "302b0c3bc4312bc96489c11584a97664894b343f",
+      "tree_truncated": false
+    },
+    "retroarch": {
+      "repository": "libretro/RetroArch",
+      "requested_ref": "master",
+      "resolved_tree_sha": "715d38f57745409f7b97b4f1eb70b848d3c2e4c8",
+      "tree_truncated": false
+    },
+    "duckstation": {
+      "repository": "stenzek/duckstation",
+      "requested_ref": "master",
+      "resolved_tree_sha": "b058817a70142aa7ac80e746fab7e7369d8a2c05",
+      "tree_truncated": false
+    },
+    "argosy": {
+      "repository": "rommapp/argosy-launcher",
+      "requested_ref": "main",
+      "resolved_tree_sha": "68f1368b61707f8c4ad001b89eb095a705a46143",
+      "tree_truncated": false
+    }
+  },
+  "known_collection_limits": [
+    "Dolphin download page returned 403 to the Dart HTTP client; read through web tool instead.",
+    "Eden tag-name recursive tree endpoint returned 400; manifest/provider/install sources fetched through official raw/tag/v0.2.1 URLs.",
+    "Guessed PPSSPP UI/MemoryStickScreen.cpp and Dolphin utils/UserData.kt paths returned 404 and are not evidence.",
+    "Current public DuckStation source tree has no Android frontend; beta capabilities are advertised by its official page, not native execution.",
+    "ARMSX2 state-folder issue describes 2.6.8; current 2.9.1 source and owner device behavior must be distinguished.",
+    "Branches and latest-release metadata can move; recorded source bytes/refs describe this audit only."
+  ],
+  "sources": [
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/release.json",
+      "url": "https://api.github.com/repos/rommapp/argosy-launcher/releases/latest",
+      "bytes": 7062,
+      "sha256": "e07910cc4be5232c61980cf8c1c3bfc55b18817f969bd5ad41d84257a7fe0d05"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/core/emulator/EmulatorDownloadState.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/core/emulator/EmulatorDownloadState.kt",
+      "bytes": 381,
+      "sha256": "6103f4eb396d4ca8bea9ef39e6a4d8d938696ea2f2f58f02ee04342ea0fab522"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/emulator/BiosPathRegistry.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/BiosPathRegistry.kt",
+      "bytes": 22741,
+      "sha256": "43d8303180beca43e655e76e5e1abb5f895b40e5693b74e9c51c15aae12fa649"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDownloadManager.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDownloadManager.kt",
+      "bytes": 12754,
+      "sha256": "87bd8ce30bf4b335d4a5822ce9be0851d2a322a30254739fd0629f37a285ac56"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorRegistry.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorRegistry.kt",
+      "bytes": 92794,
+      "sha256": "e860aa70b2bd5f0894db2155ed1b085fdfd7c454a877f62dfd6420e9832be73c"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/emulator/SavePathRegistry.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/SavePathRegistry.kt",
+      "bytes": 40348,
+      "sha256": "06d55b76c58edeee3f3e66da9b8fe841b6d7170fd0fcda80ac13f4eed16a52d4"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/SavePathAuthority.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/SavePathAuthority.kt",
+      "bytes": 13964,
+      "sha256": "d7d30f86ed9d4a9f3aa7a182bbfd4c97d97ae453d83eec6d5552d5d151d24b8b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/local/dao/FirmwareDao.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/local/dao/FirmwareDao.kt",
+      "bytes": 4543,
+      "sha256": "55ff02c866a2847d9ba9ca3f64a7424dc930e150c9736a11e9afbe2edee54ccb"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/local/entity/FirmwareEntity.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/local/entity/FirmwareEntity.kt",
+      "bytes": 1007,
+      "sha256": "18344691a94ce318e92f5a7b19e2e0088c96356d114617161e07182b51cbc349"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/data/repository/BiosRepository.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/BiosRepository.kt",
+      "bytes": 46265,
+      "sha256": "3cc30d535a467c1348e5023d28f2f7d4f7620b3c2ee52497e493c34d7116ced8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/BiosSettingsDelegate.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/BiosSettingsDelegate.kt",
+      "bytes": 18033,
+      "sha256": "b1004597126523b37820383fefc0ddbe5ac8f86d84cc7f31915b369611c8402b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/sections/BiosSection.kt",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/sections/BiosSection.kt",
+      "bytes": 39776,
+      "sha256": "637efa2a9f2cb757cc94c9a721515b4bdc900025cb1074b1927ee574e109aac3"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/argosy/source/docs/save-id-to-path.md",
+      "url": "https://raw.githubusercontent.com/rommapp/argosy-launcher/68f1368b61707f8c4ad001b89eb095a705a46143/docs/save-id-to-path.md",
+      "bytes": 30650,
+      "sha256": "5b2b49d450ec372a3f4330219d693e79bcc919b3f5912857562906d337cfcc86"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/.github/workflows/nightly.yml",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/.github/workflows/nightly.yml",
+      "bytes": 24338,
+      "sha256": "a57e4fa29c70d82b0f6450b982cb6ec798c063e19510a1bfe37b9d0123224838"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/build.gradle.kts",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/build.gradle.kts",
+      "bytes": 26334,
+      "sha256": "3839b92e25bac3b82bb3a2aae19784055d71e3e7c9b979fc081d7cef65cb770c"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/AndroidManifest.xml",
+      "bytes": 12582,
+      "sha256": "300b7fa49422a12736c5c091830fcf5734f2c3a19c3e485be4c5a01c28e38f51"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/cpp/native-lib.cpp",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/cpp/native-lib.cpp",
+      "bytes": 329908,
+      "sha256": "b2493cc45574da2bfe4c6f53ac2f2d76b2689b0db4f74eb470330802b37d1cb5"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/java/com/armsx2/Main.kt",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/java/com/armsx2/Main.kt",
+      "bytes": 102,
+      "sha256": "6520daea296d881470888ff9b572be46b47166d5dd4a5c48d3c61963d499387e"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/java/com/armsx2/runtime/MainActivityRuntime.kt",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/java/com/armsx2/runtime/MainActivityRuntime.kt",
+      "bytes": 361715,
+      "sha256": "34583d286008b6c71e8921ea0cf0697a4897d5477b5f3ac3f8419638eeb36262"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/java/com/armsx2/ui/bios/BiosManagerViewModel.kt",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/java/com/armsx2/ui/bios/BiosManagerViewModel.kt",
+      "bytes": 13438,
+      "sha256": "21916e1cf925b7d867dc2875149b9f1cc736b36b90f05f3d90ce8611d112b8a8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2-2.9.1/platforms/android/app/src/main/java/com/armsx2/ui/onboarding/OnboardingViewModel.kt",
+      "url": "https://raw.githubusercontent.com/ARMSX2/ARMSX2/2.9.1/platforms/android/app/src/main/java/com/armsx2/ui/onboarding/OnboardingViewModel.kt",
+      "bytes": 19500,
+      "sha256": "b57585a9bc588314000894541f4d3151b97258dd34255422d1658b99a709e59e"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/armsx2/release.json",
+      "url": "https://api.github.com/repos/ARMSX2/ARMSX2/releases/latest",
+      "bytes": 16965,
+      "sha256": "876e02dd5c1640fb5f796ccfa36a626eda289f76cf6b1e15f6cb689c9cd01ae6"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/release.json",
+      "url": "https://api.github.com/repos/azahar-emu/azahar/releases/latest",
+      "bytes": 42401,
+      "sha256": "2d505839195cb5645be32bfd78d2687381e9febf7f150ed6aa671cd8bb4a2180"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/build.gradle.kts",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/build.gradle.kts",
+      "bytes": 11562,
+      "sha256": "f9445741d509a87224b0b70156d9b8c8a0e8270a9f53cf7601604c5e265d3347"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/googlePlay/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/googlePlay/AndroidManifest.xml",
+      "bytes": 459,
+      "sha256": "33cd7369e6fe11de6a61bbf3ffb2308ffecd20c9c6cb923563fd21ca57a11597"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/AndroidManifest.xml",
+      "bytes": 3737,
+      "sha256": "9e8a45a3c8fbd1011e651c6587a05f2cf145c705b89a56ec69aed17647412718"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/activities/EmulationActivity.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/activities/EmulationActivity.kt",
+      "bytes": 26021,
+      "sha256": "b4a205e8ca845aa01c777430c0cc02b1dd9af749046755feaf1c18af16d37155"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/fragments/SelectUserDirectoryDialogFragment.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/fragments/SelectUserDirectoryDialogFragment.kt",
+      "bytes": 2104,
+      "sha256": "3b8e0eccc40a82f0c20915423248c30ab095e639edf06008503133741656ff27"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/fragments/UpdateUserDirectoryDialogFragment.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/fragments/UpdateUserDirectoryDialogFragment.kt",
+      "bytes": 4765,
+      "sha256": "a5466241f62de8772c0bae19454c13444689de1d8c47581f80f32ab91eba2532"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/ui/main/MainActivity.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/ui/main/MainActivity.kt",
+      "bytes": 18565,
+      "sha256": "5060f21552d40ca6b0fd7bf58d54a758a55e02946e7650fb96a4ac06057253bd"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/ui/main/ThemeProvider.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/ui/main/ThemeProvider.kt",
+      "bytes": 341,
+      "sha256": "29d89e2eaa0a1b3238ed528f882e49334f10dbe6774a7623f4eb3c831eaf2295"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/utils/CiaInstallWorker.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/utils/CiaInstallWorker.kt",
+      "bytes": 7380,
+      "sha256": "683b445f15c0dce71083cde8c5a9700e7c7d48b506167a0080a86aaacdb04049"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/utils/DirectoryInitialization.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/utils/DirectoryInitialization.kt",
+      "bytes": 5823,
+      "sha256": "89dcc9aed90ce4696fc4c5737b2ed406548fa7d4098799f09194adeba9fea519"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/utils/FileBrowserHelper.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/utils/FileBrowserHelper.kt",
+      "bytes": 1573,
+      "sha256": "abe295a2043da3ced308868bad8f600f1e14f4b24f83d011cd2f04be2922aa71"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/azahar/source/src/android/app/src/main/java/org/citra/citra_emu/utils/FileUtil.kt",
+      "url": "https://raw.githubusercontent.com/azahar-emu/azahar/01623d2fb707317410225c0eced82e3e0c84edc1/src/android/app/src/main/java/org/citra/citra_emu/utils/FileUtil.kt",
+      "bytes": 21559,
+      "sha256": "543d56d64c6d5a7586e5076b4fa1bfb162ec9079cf00fa6ec92658fd7c1f0fbf"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/build.gradle.kts",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/build.gradle.kts",
+      "bytes": 7963,
+      "sha256": "c86f8c1650cd21a2180088ee23c84103bc51810bffe4898a73aceaaafa0e72a0"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/AndroidManifest.xml",
+      "bytes": 7125,
+      "sha256": "58b6d2b99cfb9c9f4480a2e20bcf5c305b12be42f0b8f090137c6376568cd693"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/DocumentProvider.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/features/DocumentProvider.kt",
+      "bytes": 9026,
+      "sha256": "624ee0f44dde9006ad655b9033c50cb7ed0a76405c21b34d6257640c29f05cda"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/MainActivity.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/MainActivity.kt",
+      "bytes": 10571,
+      "sha256": "32b4266668651bd085296ed50e476c0ab4d8d5ab2707b9a4112c23284d898b8a"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/MainPresenter.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/MainPresenter.kt",
+      "bytes": 13935,
+      "sha256": "71704a79a4c0e17d14e6229b336d1567496e625b809173802e5bc60bff85d5ab"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/ThemeProvider.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/ThemeProvider.kt",
+      "bytes": 251,
+      "sha256": "2444b46e4281226a6abeb07911f96deaec1bd0b19e26f26fca66607330b00997"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/TvMainActivity.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/ui/main/TvMainActivity.kt",
+      "bytes": 10575,
+      "sha256": "2d934e042d2b1035eda75491e162fd4081db1f3daf5523d66a399e5d424bf11c"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/DirectoryInitialization.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/DirectoryInitialization.kt",
+      "bytes": 13734,
+      "sha256": "825d8d0eafcc4b89fbb5c989b66212dab7500428357fb28135be9797378b11eb"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/FileBrowserHelper.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/FileBrowserHelper.kt",
+      "bytes": 4768,
+      "sha256": "e44d7003f7f0b518364d0dfaa9ed8e7aea97edd8f89bd22dfc39bb81c140dc2a"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/StartupHandler.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/StartupHandler.kt",
+      "bytes": 4457,
+      "sha256": "b0961d2b84228d970a6bbe834da4ce50c00b0a10a7af9492ffb51300c6d6988c"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/dolphin/source/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/WiiUtils.kt",
+      "url": "https://raw.githubusercontent.com/dolphin-emu/dolphin/f84df02055ab9610feec48e65648cac5a3c098fa/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/WiiUtils.kt",
+      "bytes": 1422,
+      "sha256": "ea25d0f283b33b3bac724d0d7b8f63000e94a370a1f139417efc27e792cf8c77"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/duckstation/release.json",
+      "url": "https://api.github.com/repos/stenzek/duckstation/releases/latest",
+      "bytes": 49724,
+      "sha256": "2337d3f298297d6ad9bfd484d1313ad95c174cfaab4598764f34d4a8a8d40714"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/duckstation/source/README.md",
+      "url": "https://raw.githubusercontent.com/stenzek/duckstation/b058817a70142aa7ac80e746fab7e7369d8a2c05/README.md",
+      "bytes": 22341,
+      "sha256": "52c0c0c65e3bd94c46cd60d827b2e2b5439aeb910255773f6af0d9ca1da34ee4"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/release.json",
+      "url": "https://git.eden-emu.dev/api/v1/repos/eden-emu/eden/releases/latest",
+      "bytes": 18343,
+      "sha256": "5728b985225f91b671214014bab2d60a6544e386430f56f4180b8e77b20e617e"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/build.gradle.kts",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/build.gradle.kts",
+      "bytes": 13412,
+      "sha256": "9a59004afc0bb67d04199f12a1cc52ef6c8a220980fba17243d40e29362800ca"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/AndroidManifest.xml",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/AndroidManifest.xml",
+      "bytes": 6647,
+      "sha256": "22a526ecdcad690c2dcd5a4e2f8b8ead6b03b0302e4d380858d743c1a0673b1f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/NativeLibrary.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/NativeLibrary.kt",
+      "bytes": 20198,
+      "sha256": "31b2001b1003e704aa77ed26c560a66b460852c863d3e430b72f8d3f2736cc17"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/activities/EmulationActivity.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/activities/EmulationActivity.kt",
+      "bytes": 34870,
+      "sha256": "31db75f58a3828d0b8fbfba7058ea3eff94f92519181b3204a1244b11f30970c"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/features/DocumentProvider.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/features/DocumentProvider.kt",
+      "bytes": 12612,
+      "sha256": "ecd9d2287c1449d6fdc38d9637c4ace6b50fc65e32320b87588998d9e813a015"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/InstallableFragment.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/fragments/InstallableFragment.kt",
+      "bytes": 16805,
+      "sha256": "a3bd04487890851892f855244571b62d5ff8f9d455d5457ffb749bbe30d7fbca"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/ui/main/MainActivity.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/ui/main/MainActivity.kt",
+      "bytes": 19785,
+      "sha256": "5874315a7e2644aa1f23b74001317f258556e61d31aa687974351da44968e87b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/DirectoryInitialization.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/DirectoryInitialization.kt",
+      "bytes": 9547,
+      "sha256": "4a6911a5981d47f05f679c74e8eb3d1ba385693639be4227ff0ec220aee48637"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/FileUtil.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/FileUtil.kt",
+      "bytes": 20142,
+      "sha256": "4c66b02a1e7e0abea9db94ae1fb4de5a1c3a313200da8bb64d96b58f33ffd4dc"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/eden/source/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/InstallableActions.kt",
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/android/app/src/main/java/org/yuzu/yuzu_emu/utils/InstallableActions.kt",
+      "bytes": 14769,
+      "sha256": "b092320622f06ad23fba0e6bc4b09c25951d6fc680edd6d6819ecd48da6653f5"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/release.json",
+      "url": "https://api.github.com/repos/rafaelvcaetano/melonDS-android/releases/latest",
+      "bytes": 4114,
+      "sha256": "0c3c29670c5bcb0bddcd54425b6f11aa064d954f87d00dd37425bd2c94a412e8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/build.gradle.kts",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/build.gradle.kts",
+      "bytes": 5770,
+      "sha256": "e072a8de4a5444a4bbf2d13dc97f54da26cff234a3c4492861b420915f3aea73"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/gitHub/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/gitHub/AndroidManifest.xml",
+      "bytes": 664,
+      "sha256": "91b48dae69cc9b658812e72984ec6d0e17bb11973c1f48d095d34977fdc1361b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/gitHub/java/me/magnum/melonds/common/providers/UpdateContentProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/gitHub/java/me/magnum/melonds/common/providers/UpdateContentProvider.kt",
+      "bytes": 1414,
+      "sha256": "991a4f8fd500c357b996571c96618e884ef8d8b64688f10a31cb443899d959b8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/AndroidManifest.xml",
+      "bytes": 7627,
+      "sha256": "53f94a03a7b2e5f6f5108ed2a2bf3e64854f038b502f3bd2e974e7a72e6c3d2d"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/common/DirectoryAccessValidator.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/common/DirectoryAccessValidator.kt",
+      "bytes": 2123,
+      "sha256": "ded2c015c3c797796749130e51ad0652fc01a65d089bcdc41a9309740e4769c0"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/common/contracts/DirectoryPickerContract.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/common/contracts/DirectoryPickerContract.kt",
+      "bytes": 1419,
+      "sha256": "9367dfae92e6aea2c5383fd5db432aa01f7c5e3f597a06657807b485cb98eafb"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/common/opengl/VideoFilterShaderProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/common/opengl/VideoFilterShaderProvider.kt",
+      "bytes": 859,
+      "sha256": "2d403cc264439ef47cf4eefbf23c452f813317d44eac4b98ef8df6cf3356f572"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/common/retroachievements/AndroidRASignatureProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/common/retroachievements/AndroidRASignatureProvider.kt",
+      "bytes": 1200,
+      "sha256": "a45d211bb7de7b07bb03139a745856bda8792c2e2aea95483913da68a388c43d"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/common/runtime/ScreenshotFrameBufferProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/common/runtime/ScreenshotFrameBufferProvider.kt",
+      "bytes": 1742,
+      "sha256": "897308092f37f691e02b9640da4c3aec1ade9213d107fdb6668a9b333ac6a267"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/FirmwareColour.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/FirmwareColour.kt",
+      "bytes": 262,
+      "sha256": "c6cf8dd3e1998182ca502bde2a7d694406e07cd664e33d02a390a1733287b90e"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/FirmwareConfiguration.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/FirmwareConfiguration.kt",
+      "bytes": 339,
+      "sha256": "5310bafd45bf1477fb34a532b4016853c7c1a87057525c1b837c309dd9014faf"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/SaveStateLocation.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/SaveStateLocation.kt",
+      "bytes": 116,
+      "sha256": "d0e97408744f3d952b72dacf429a6541c0c73a330f8fc2967003a34e95d8ab24"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/SaveStateSlot.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/SaveStateSlot.kt",
+      "bytes": 262,
+      "sha256": "cf91f82a0fded35d6914e9b9a5b60e0a9acc87925d898c2875de94363869bd84"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/emulator/FirmwareLaunchResult.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/emulator/FirmwareLaunchResult.kt",
+      "bytes": 278,
+      "sha256": "7d3f7c5c35dff1bdfd86a118c8f18aa1fe003e1c7ec3cac24629b85341ac258f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/model/emulator/validation/FirmwareLaunchPreconditionCheckResult.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/model/emulator/validation/FirmwareLaunchPreconditionCheckResult.kt",
+      "bytes": 463,
+      "sha256": "09e335e8718d91b91a63d2951835979870670dd3ce78f031ea596bc140a2b2b4"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/repositories/SaveStatesRepository.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/repositories/SaveStatesRepository.kt",
+      "bytes": 642,
+      "sha256": "58c5e8c60604e36425908a1215ad5adb918e086e761e5bb7848d01f4b891adb7"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/repositories/SettingsRepository.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/repositories/SettingsRepository.kt",
+      "bytes": 3602,
+      "sha256": "43c0b6fc054acec379687105f5d432ffe0410cbf855a37defc2028d7d1ea8e8f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/domain/services/ConfigurationDirectoryVerifier.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/domain/services/ConfigurationDirectoryVerifier.kt",
+      "bytes": 1728,
+      "sha256": "9dad95bfb26806772055dba5ffe8ce064b38aaab6a970b3f9f275d34ed07813f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/BackgroundThumbnailProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/BackgroundThumbnailProvider.kt",
+      "bytes": 3199,
+      "sha256": "a6baa90f924a16ab0f290b25af0229148ce32e97a6a39b870f6b870f56cce9a2"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/FileSystemConfigurationDirectoryVerifier.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/FileSystemConfigurationDirectoryVerifier.kt",
+      "bytes": 6685,
+      "sha256": "47e307981e68b178862ab14b537894635c63a0845d47aeccfaa02136d405f49b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/FileSystemSaveStatesRepository.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/FileSystemSaveStatesRepository.kt",
+      "bytes": 4979,
+      "sha256": "8ebf2ecad096f5b046f56b50251df7a2640bf16ee7f095da9edc0a45d2956ec8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/RomIconProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/RomIconProvider.kt",
+      "bytes": 3605,
+      "sha256": "657cc800899dacac49f4bdbd8be2e71d825033e85e39ce46ef670b7af34c0c44"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/SaveStateScreenshotProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/SaveStateScreenshotProvider.kt",
+      "bytes": 2209,
+      "sha256": "61e4157965c11373ca7cdd87c997d8165ef69856f87342ab05679727d097f4c9"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/SettingsBackupManager.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/SettingsBackupManager.kt",
+      "bytes": 9640,
+      "sha256": "225ac24267f9e841e2ac596e6fb98c5b31dc22152c5a8c3330457c2522e6b00e"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/SharedPreferencesSettingsRepository.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/SharedPreferencesSettingsRepository.kt",
+      "bytes": 24608,
+      "sha256": "edf4d6abc3492df2abc7118a2195d2f0702a76a2d3735926ab2e161facc929ee"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/emulator/LifecycleOwnerProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/emulator/LifecycleOwnerProvider.kt",
+      "bytes": 802,
+      "sha256": "035dbe5e9388a20e02ab41c9967c4730a33f93f2450168ac30aae518bb66d745"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/emulator/SramProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/emulator/SramProvider.kt",
+      "bytes": 1668,
+      "sha256": "626360c04ff0c9d7da0db109b960744756d81eb66e488507572d0ee8c888b4d1"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/layout/DefaultLayoutProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/layout/DefaultLayoutProvider.kt",
+      "bytes": 24444,
+      "sha256": "9f7739f89eb07642494d2c47578aa5d511e5527719f953f450ab4599a13e63f9"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/impl/layout/UILayoutProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/impl/layout/UILayoutProvider.kt",
+      "bytes": 11757,
+      "sha256": "d5b7d3919b38b3b24b3fe00216b8841b61554f90e40d3711a45d0df16df220de"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/emulator/EmulatorActivity.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/emulator/EmulatorActivity.kt",
+      "bytes": 45563,
+      "sha256": "61daf55dacc3c5832ab1970c82dcc5e06793d4d82b70dc06f05e8c2c2100f51d"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/emulator/exceptions/SaveSlotLoadException.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/emulator/exceptions/SaveSlotLoadException.kt",
+      "bytes": 115,
+      "sha256": "49501d8fea0e215986de4f60af63ba26c11089100c39649fa542ee75cbd5e3f8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/emulator/firmware/FirmwarePauseMenuOption.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/emulator/firmware/FirmwarePauseMenuOption.kt",
+      "bytes": 301,
+      "sha256": "98d411ce8d67979d60587aecdd0abb578c62cbb69994b078289d00cdd1a92a4b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/emulator/rewind/model/RewindSaveState.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/emulator/rewind/model/RewindSaveState.kt",
+      "bytes": 409,
+      "sha256": "7fdbd1d9b15bfb5b3081947d3dc50fe2c1c1fbb2400941059c48f6e84d0ab4ac"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/emulator/rom/SaveStateAdapter.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/emulator/rom/SaveStateAdapter.kt",
+      "bytes": 4498,
+      "sha256": "03a8f8e0d36d2c466786fe18e6344d0c9d601cf31db475f46e50eb420e76d799"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/PreferenceFragmentTitleProvider.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/PreferenceFragmentTitleProvider.kt",
+      "bytes": 111,
+      "sha256": "acc2e315b188d96637f231543bd01d11fc5f13f701c4ce07958358aca26c5edb"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/SettingsActivity.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/SettingsActivity.kt",
+      "bytes": 4771,
+      "sha256": "24e1a3b264eb81fb603b3b9f808e4724b8d7ebd9a3ccff8640635eff9d6cd85f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/fragments/CustomFirmwarePreferencesFragment.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/fragments/CustomFirmwarePreferencesFragment.kt",
+      "bytes": 3278,
+      "sha256": "184c3e95f171e21bc702c91a49d4cff042634b1edc77b2685e1a69b44d27d907"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/fragments/FirmwarePreferencesFragment.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/fragments/FirmwarePreferencesFragment.kt",
+      "bytes": 1269,
+      "sha256": "31cf1ec645e43218a92a306fc96df258620795aa8a7293f8e2a395331db915b4"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/fragments/SaveFilesPreferencesFragment.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/fragments/SaveFilesPreferencesFragment.kt",
+      "bytes": 1148,
+      "sha256": "4f3474b5ec2adf4aec09f68ef7981bc65415acb63b88bf6b2e4d985c937752a8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/preferences/BiosDirectoryPickerPreference.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/preferences/BiosDirectoryPickerPreference.kt",
+      "bytes": 4448,
+      "sha256": "7ca0ddf1d740cf9a8a0e469bd33cfd206d8c6792e8155a5e4a2a79b2bec960d5"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/preferences/FirmwareBirthdayPreference.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/preferences/FirmwareBirthdayPreference.kt",
+      "bytes": 4886,
+      "sha256": "58f8d4ff6eef1f07ee57a6c74766e476d525e2828d605158f3ee5b69fd71a9ec"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/preferences/FirmwareColourPickerPreference.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/preferences/FirmwareColourPickerPreference.kt",
+      "bytes": 3108,
+      "sha256": "64c5a501d1ddce68c2461721b70dc368f9fda1082cd190d7ea455857f8993982"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/preferences/StoragePickerPreference.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/preferences/StoragePickerPreference.kt",
+      "bytes": 2556,
+      "sha256": "1892d5548bec4976414003563a57d91f82c23e273d477b5c365f273997047627"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/viewmodel/CustomFirmwareViewModel.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/viewmodel/CustomFirmwareViewModel.kt",
+      "bytes": 962,
+      "sha256": "665c986d9300dd0cb23900903572a8dc2631c4f441626d4c23307c04459995b5"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/settings/viewmodel/RetroAchievementsSettingsViewModel.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/settings/viewmodel/RetroAchievementsSettingsViewModel.kt",
+      "bytes": 2492,
+      "sha256": "f82cbb3078c0499e425e9976bdce7623e847b45ce9e250f75b019ad6c15b1194"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/DSFirmwareShortcutSetupActivity.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/DSFirmwareShortcutSetupActivity.kt",
+      "bytes": 255,
+      "sha256": "376784d7de86a6bc45c5f5a1166436b3359c37bd70fc9bc5d5ae0b0b4a21fa49"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/DSiFirmwareShortcutSetupActivity.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/DSiFirmwareShortcutSetupActivity.kt",
+      "bytes": 257,
+      "sha256": "9f0819f4c7894d27609be6bc8cd81bbbfc3a21cb97ebf3d4c723645840639530"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/melonds/source/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/FirmwareShortcutSetupActivity.kt",
+      "url": "https://raw.githubusercontent.com/rafaelvcaetano/melonDS-android/c42995caff0144f37ad9791dc9bc96d82e8a6f65/app/src/main/java/me/magnum/melonds/ui/shortcutsetup/FirmwareShortcutSetupActivity.kt",
+      "bytes": 1926,
+      "sha256": "917bae40131598f7dce94a1563f5bab2ed4bb3761ec11749a02757c9ffc97d34"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/release.json",
+      "url": "https://api.github.com/repos/weihuoya/citra/releases/latest",
+      "bytes": 8615,
+      "sha256": "276ba3793fd0d6e45e4fb3fc5a683820b2fccb93f502a893ccffed091bdb2b36"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/build.gradle",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/build.gradle",
+      "bytes": 3557,
+      "sha256": "99a0b63db32f9b1db3cc970fa7390819bdbba6d78181b6bfdc1a9dd8fbfb5121"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/AndroidManifest.xml",
+      "bytes": 5407,
+      "sha256": "9bc9a9394350c823389e872148bc76de529320e946efbf4b8b275ceb807fe751"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/NativeLibrary.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/NativeLibrary.java",
+      "bytes": 15135,
+      "sha256": "03f2dfe2d757e50599346fa1d5bed313b182f11f78638dad9e6733a828e993e6"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/UserPathProvider.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/UserPathProvider.java",
+      "bytes": 9207,
+      "sha256": "86eeca5127960af03b3f267dcd0ac2c26f9097bfbd213ce8721e708ad7c38ac2"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/ui/EmulationActivity.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/ui/EmulationActivity.java",
+      "bytes": 16985,
+      "sha256": "d70ee9cdc150af1e18141b2b6aa6e6747922468555de8204b0465e98863197e2"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/ui/MainActivity.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/ui/MainActivity.java",
+      "bytes": 24751,
+      "sha256": "bf19cced4b155cb9107a99d992aee743ddf9e781e4a1cebd21067ca3a18d1593"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/utils/CitraDirectory.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/utils/CitraDirectory.java",
+      "bytes": 16236,
+      "sha256": "a9365d71492224dc97d98a176026d0cd3c6ce46b720a5754d75313a40614aae6"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/mmj/source/src/android/app/src/main/java/org/citra/emu/utils/FileBrowserHelper.java",
+      "url": "https://raw.githubusercontent.com/weihuoya/citra/302b0c3bc4312bc96489c11584a97664894b343f/src/android/app/src/main/java/org/citra/emu/utils/FileBrowserHelper.java",
+      "bytes": 4584,
+      "sha256": "c241dd9b55f175a81b2604887191159405d10270fc515ed42ed2323471f869b8"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/pages/duckstation.html",
+      "url": "https://downloads.duckstation.org/android-testing/",
+      "bytes": 13004,
+      "sha256": "b0b603d1f42f4824d7abcea566c94b6db8566cec4753ab28370d570919b423a3"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/pages/ppsspp-download.html",
+      "url": "https://www.ppsspp.org/download/",
+      "bytes": 234960,
+      "sha256": "c0468e8fe585a1f41072e06d155e6d81b104d033ae8941630e3b019258de6103"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/pages/retroarch-download.html",
+      "url": "https://www.retroarch.com/?page=platforms",
+      "bytes": 55030,
+      "sha256": "6586a6c4e0e3500d065ae2c108ebec72fd4a3e6c0bbcedc1b091dcf2f81a2fb4"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/release.json",
+      "url": "https://api.github.com/repos/hrydgard/ppsspp/releases/latest",
+      "bytes": 19049,
+      "sha256": "1fef4c2546a338df639a08ed82f3c20866ec00b2e095f8d27d8a8ea49bd68605"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/Common/File/AndroidContentURI.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/Common/File/AndroidContentURI.cpp",
+      "bytes": 5600,
+      "sha256": "c25ba79bda85d0fc00c3780f01fe48ed16c39bc1852dc5dff6e9082b5a98e22b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/Common/File/FileUtil.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/Common/File/FileUtil.cpp",
+      "bytes": 43142,
+      "sha256": "d179ec83b41c74efdd6e911ea19d40f07ebb86834cdb9bf065cf13f373aa8072"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/Common/File/Path.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/Common/File/Path.cpp",
+      "bytes": 13502,
+      "sha256": "4aa3c921fdd84afb272ca105b28c943d75616c08bbdfb4f8114af12c04af6336"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/Core/Config.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/Core/Config.cpp",
+      "bytes": 101723,
+      "sha256": "a5194cb540a5c50c5d91b3bbbf2a374a37055a8f348ccd9ba223551aa7557dc5"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/UI/NativeApp.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/UI/NativeApp.cpp",
+      "bytes": 53018,
+      "sha256": "ae89e5049ded104ba0f4b3da53389aa76dabb3c27f28d8c289e8decbf2110d2d"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/android/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/android/AndroidManifest.xml",
+      "bytes": 7151,
+      "sha256": "f98dfecfdebca2729a8b670bb217d70787739444c0f87e8bc1fa6940b3679c3f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/android/build.gradle.kts",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/android/build.gradle.kts",
+      "bytes": 8223,
+      "sha256": "649738ca3eda019ea951f8ce60636769098ae75b7e8750199c914c27d2747814"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/android/jni/app-android.cpp",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/android/jni/app-android.cpp",
+      "bytes": 61519,
+      "sha256": "811844187825b94f918b09ba5959f67e4343b607779aff30016cd720b48e6b5f"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/android/src/org/ppsspp/ppsspp/NativeApp.java",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/android/src/org/ppsspp/ppsspp/NativeApp.java",
+      "bytes": 7388,
+      "sha256": "ef21e94ddee1745fe81bee9eb32b09716d7d3f0440bfafd6947d65fb0befd380"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/ppsspp/source/android/src/org/ppsspp/ppsspp/PpssppActivity.java",
+      "url": "https://raw.githubusercontent.com/hrydgard/ppsspp/fa50bb1976065c4f8b1b47af227d367fe9771555/android/src/org/ppsspp/ppsspp/PpssppActivity.java",
+      "bytes": 70413,
+      "sha256": "67c857669e32ab4b4f0695f5f6f4c792cbccaf6b1a07d8b01539633f2f4d1b5b"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/release.json",
+      "url": "https://api.github.com/repos/libretro/RetroArch/releases/latest",
+      "bytes": 3664,
+      "sha256": "437d7d0b2f441d6edb959891bbd964a0b35e473d5e19dc492594eb8f77b4dc8d"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/frontend/drivers/platform_unix.c",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/frontend/drivers/platform_unix.c",
+      "bytes": 166058,
+      "sha256": "40ecda6df28ba390d6ec8cf4cd63c330bd8950ccf208f6879e0b95b89091cabb"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/libretro-common/vfs/vfs_implementation_saf.c",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/libretro-common/vfs/vfs_implementation_saf.c",
+      "bytes": 33608,
+      "sha256": "06e7443b05470c9099b32654290ff6a40628c6122ed0f5f965f70a160f5afeec"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/AndroidManifest.xml",
+      "bytes": 4625,
+      "sha256": "f2963ff7acaef79f998eb6cb7cee5ef5c6ceac4e5fa1ceafb7807ef3d0edf974"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/build.gradle",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/build.gradle",
+      "bytes": 6492,
+      "sha256": "5d523749a3d3be80977f70796e59802382d414cc9d28c820e74da32dadf740ac"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/module_template/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/module_template/AndroidManifest.xml",
+      "bytes": 683,
+      "sha256": "3a0a628b2006f77e59589b4f02d24d3d4efc8470c5efd351c428768094830e94"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/module_template/build.gradle",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/module_template/build.gradle",
+      "bytes": 931,
+      "sha256": "8a035954fd735d57c864569db8a9402891de67fd0ecfa77d605a764d83c6e4a7"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/res/values-v19/bools.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/res/values-v19/bools.xml",
+      "bytes": 78,
+      "sha256": "921aee9c4d106e9f662d5d55f684d9940fe5f667f0387f6de195328b4229fe42"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/res/values/bools.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/res/values/bools.xml",
+      "bytes": 79,
+      "sha256": "1a69493f6129b5166a0d7e3ead845a5b12db23ec0404d98bf4ac5d2377a1b936"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/com/retroarch/browser/debug/CoreSideloadActivity.java",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/com/retroarch/browser/debug/CoreSideloadActivity.java",
+      "bytes": 5496,
+      "sha256": "281812b489a6a050dec7e3f90278fabbab596631ad3647a0bd5c9a9dc9273dc7"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/com/retroarch/browser/provider/RetroDocumentsProvider.java",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/com/retroarch/browser/provider/RetroDocumentsProvider.java",
+      "bytes": 15502,
+      "sha256": "947d329a1fb730cc636315b9f78754e045a67fbf5ff1345cf07d9d8506dc5fcc"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/com/retroarch/browser/retroactivity/RetroActivityFuture.java",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/com/retroarch/browser/retroactivity/RetroActivityFuture.java",
+      "bytes": 12942,
+      "sha256": "3a6ea6ead20715938347762a0887d640c1064ca8f57d25984e8603273424f692"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/playStoreNormal/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/playStoreNormal/AndroidManifest.xml",
+      "bytes": 502,
+      "sha256": "46d40e5a62be6b8b95ad1ccfcebcd9b0a7845ecc2bbb6c259091438cfe7e5e77"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/playStorePlus/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/playStorePlus/AndroidManifest.xml",
+      "bytes": 502,
+      "sha256": "46d40e5a62be6b8b95ad1ccfcebcd9b0a7845ecc2bbb6c259091438cfe7e5e77"
+    },
+    {
+      "cache_path": ".tool-cache/research/android-parity-audit/retroarch/source/pkg/android/phoenix/src/quest/AndroidManifest.xml",
+      "url": "https://raw.githubusercontent.com/libretro/RetroArch/715d38f57745409f7b97b4f1eb70b848d3c2e4c8/pkg/android/phoenix/src/quest/AndroidManifest.xml",
+      "bytes": 3417,
+      "sha256": "7ce00cc33feae0d4802491aac388199a6ddd76ce110579d25036579f81ab0970"
+    }
+  ]
+}

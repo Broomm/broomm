@@ -230,6 +230,7 @@ region_value=-1
 [Data%20Storage]
 use_custom_storage=false
 ''', flush: true);
+      case 'astris':
       case 'ryubing':
         await resource(
           'switch_firmware',
@@ -238,23 +239,25 @@ use_custom_storage=false
         await resource('prod_keys', '$user/system/prod.keys');
         await resource('title_keys', '$user/system/title.keys');
         await ownedDirectory(Directory('$user/system'));
-        await File('$user/system/Profiles.json').writeAsString(
-          jsonEncode({
-            'profiles': [
-              {
-                'user_id': profileId,
-                'name': 'Player',
-                'image': '',
-                'account_state': 'Open',
-                'online_play_state': 'Closed',
-              },
-            ],
-            'last_opened': profileId,
-          }),
-          flush: true,
-        );
-        await File('$user/Config.json')
-            .writeAsString(jsonEncode(ryubingDefaults()), flush: true);
+        if (build.id == 'ryubing')
+          await File('$user/system/Profiles.json').writeAsString(
+            jsonEncode({
+              'profiles': [
+                {
+                  'user_id': profileId,
+                  'name': 'Player',
+                  'image': '',
+                  'account_state': 'Open',
+                  'online_play_state': 'Closed',
+                },
+              ],
+              'last_opened': profileId,
+            }),
+            flush: true,
+          );
+        if (build.id == 'ryubing')
+          await File('$user/Config.json')
+              .writeAsString(jsonEncode(ryubingDefaults()), flush: true);
     }
     // RPCS3's macOS config lookup uses HOME when no adjacent portable root
     // exists. These links are created by Broomm, never accepted from a manifest.

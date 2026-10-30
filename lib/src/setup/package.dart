@@ -7,6 +7,7 @@ import '../progress/files.dart';
 import '../romm/transfer.dart';
 import 'archive.dart';
 import 'dolphin.dart';
+import 'astris.dart';
 
 Future<String> _hashSetupFile(String path) =>
     Isolate.run(() => progressFileHash(File(path)));
@@ -64,7 +65,12 @@ class SetupPackage {
         bytes < 1 ||
         bytes > 2 * 1024 * 1024 * 1024 ||
         !{'zip', '7z', 'tar.xz', 'tar.gz', 'dmg'}.contains(format) ||
-        !{'none', 'macos-adhoc', 'macos-dolphin'}.contains(prepare))
+        !{
+          'none',
+          'macos-adhoc',
+          'macos-dolphin',
+          'macos-astris',
+        }.contains(prepare))
       throw const FormatException(
         'Unsupported or unsafe emulator download recipe.',
       );
@@ -338,6 +344,8 @@ class SetupDownloads {
       try {
         if (package.prepare == 'macos-dolphin') {
           await prepareDolphin(Directory(path));
+        } else if (package.prepare == 'macos-astris') {
+          await prepareAstris(Directory(path));
         } else {
           await setupTool('/usr/bin/codesign', [
             '--force',

@@ -265,6 +265,7 @@ Future<ProgressLayout> gameProgressLayout(
         throw const FormatException('Switch game platform differs');
       return edenProgressLayout(session, u, cancellation: cancellation);
     case 'Ryubing':
+    case 'Astris':
       return ryubingProgressLayout(session, u, cancellation: cancellation);
     case 'melonDS':
       final file = File(session.rom);
@@ -358,21 +359,7 @@ Future<ProgressLayout> gameProgressLayout(
           ProgressArea(state, 'states/Snes9x', prefix: '$stem.state'),
       ]);
     case 'Azahar':
-      final id = await readThreeDsGameId(session.rom);
-      const zeros = '00000000000000000000000000000000';
-      final sd = '$u/sdmc/Nintendo 3DS/$zeros/$zeros';
-      final ext = await _threeDsExtdata(session.rom, id);
-      return ProgressLayout(root.path, 'azahar-data-v1', id, [
-        ProgressArea('save', '$sd/title/00040000/${id.substring(8)}/data'),
-        for (final eid in ext)
-          ProgressArea('ext-$eid', '$sd/extdata/00000000/$eid'),
-        ProgressArea(
-          state,
-          '$u/states',
-          prefix: '${id.toUpperCase()}.',
-          suffix: '.cst',
-        ),
-      ]);
+      return threeDsProgressLayout(root.path, u, session.rom, state: state);
     case 'Dolphin':
       if (platform == 'wii' && session.rom.toLowerCase().endsWith('.wad')) {
         final wad = await readWiiWad(session.rom);
@@ -445,6 +432,32 @@ Future<ProgressLayout> gameProgressLayout(
         'Cloud save access is not yet validated for ${e.name}. Local progress is kept.',
       );
   }
+}
+
+/// Citra-family native title data and extdata. Save-state compatibility is
+/// supplied by the owning backend; sharing ordinary saves does not share states.
+Future<ProgressLayout> threeDsProgressLayout(
+  String root,
+  String user,
+  String rom, {
+  String? state,
+}) async {
+  final id = await readThreeDsGameId(rom);
+  const zeros = '00000000000000000000000000000000';
+  final sd = '$user/sdmc/Nintendo 3DS/$zeros/$zeros';
+  final ext = await _threeDsExtdata(rom, id);
+  return ProgressLayout(root, 'azahar-data-v1', id, [
+    ProgressArea('save', '$sd/title/00040000/${id.substring(8)}/data'),
+    for (final eid in ext)
+      ProgressArea('ext-$eid', '$sd/extdata/00000000/$eid'),
+    if (state != null)
+      ProgressArea(
+        state,
+        '$user/states',
+        prefix: '${id.toUpperCase()}.',
+        suffix: '.cst',
+      ),
+  ]);
 }
 
 Future<List<ProgressArea>> _wiiDlcAreas(

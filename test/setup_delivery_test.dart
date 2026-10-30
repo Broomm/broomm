@@ -196,7 +196,7 @@ void main() {
     );
     expect(retroarch.downloads.values.every((p) => p.file == null), true);
     final all = await shipping.readPlan();
-    expect(all.items, hasLength(12));
+    expect(all.items, hasLength(13));
     expect(
       all.items
           .expand((i) => i.downloads.values)

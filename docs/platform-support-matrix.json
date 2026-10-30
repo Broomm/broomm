@@ -3,12 +3,47 @@
   "server": "https://romm.docubi.casa",
   "version": "5.4.0",
   "android": {
-    "date": "2026-10-26",
-    "status": "partial; native Android acceptance outstanding",
-    "details": "android-emulators.md",
-    "launchRecipes": ["retroarch", "ppsspp", "melonds", "azahar", "dolphin", "duckstation", "armsx2", "eden"],
-    "connectedSaveRoots": ["ppsspp", "melonds", "azahar"],
-    "packages": "PSP native folders/ZIP only; other Android installers missing",
+    "date": "2026-10-30",
+    "status": "APK/folder/save adapters implemented; native Android acceptance outstanding",
+    "details": "android-installation-and-saves.md",
+    "evidence": "android-installation-and-saves.json",
+    "launchRecipes": [
+      "retroarch",
+      "ppsspp",
+      "melonds",
+      "azahar",
+      "dolphin",
+      "duckstation",
+      "armsx2",
+      "eden",
+      "citra-mmj"
+    ],
+    "connectedSaveRoots": [
+      "retroarch",
+      "ppsspp",
+      "melonds",
+      "azahar",
+      "dolphin",
+      "duckstation",
+      "armsx2",
+      "eden",
+      "citra-mmj"
+    ],
+    "sharedSaveAdapters": [
+      "retroarch",
+      "ppsspp",
+      "melonds",
+      "azahar",
+      "dolphin",
+      "duckstation",
+      "armsx2",
+      "eden",
+      "citra-mmj"
+    ],
+    "states": "All except Eden; exact APK/ABI/core groups, physically isolated; native acceptance pending",
+    "apkAcquisition": "Official APKs with Android confirmation; DuckStation store, PPSSPP free APK",
+    "packages": "New shared-folder content/firmware installers deferred; legacy PSP native-folder route retained",
+    "finish": "Explicit emulator-closure confirmation on return; own transfer locks retained",
     "nativeRuntimeVerified": false,
     "doesNotChangeMacosCells": true
   },
@@ -331,7 +366,8 @@
       "romCount": 76,
       "primary": "Ryubing",
       "alternatives": [
-        "Eden 0.2.1 ARM64 (experimental macOS)"
+        "Eden 0.2.1 ARM64 (experimental macOS)",
+        "Astris (macOS 15+ ARM64)"
       ],
       "broommLaunch": "implemented",
       "updatesDlcStatus": "implemented",
@@ -346,6 +382,13 @@
       "nativeBackends": {
         "Ryubing": "docs/retroarch-wii-switch.json",
         "Eden": "docs/psp-and-eden-support.json"
+      },
+      "astris": {
+        "launch": "native tested",
+        "controller": "synthetic sources and native backend readback; physical acceptance pending",
+        "packages": "native update + DLC inspection; private publication/removal",
+        "ordinarySave": "native ZIP round trip",
+        "states": "unavailable"
       }
     },
     {
@@ -665,5 +708,13 @@
     "playStationIntegration": "docs/playstation-support.json",
     "portableAndSwitchAlternative": "docs/psp-and-eden-support.json"
   },
-  "followupDate": "2026-10-23"
+  "followupDate": "2026-10-23",
+  "emulatorAdditions": {
+    "date": "2026-10-29",
+    "details": "astris-and-citra-mmj.md",
+    "astrisHost": "macos-arm64, macOS 15+",
+    "citraMmjHost": "android",
+    "citraMmjProgress": "ordinary saves implemented for shared citra-emu with journaled profile swaps; native Android acceptance pending; cloud states and CIA installer missing",
+    "defaultRule": "configured only; successful installation selects the newly installed emulator"
+  }
 }

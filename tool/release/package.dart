@@ -68,6 +68,7 @@ Future<void> main() async {
       'Contents/Resources/native/broomm-sdl2.dylib',
       'Contents/Resources/native/broomm-sdl3.dylib',
       'Contents/Resources/native/broomm-installer-guard.dylib',
+      'Contents/Resources/native/broomm-astris.dylib',
     ];
     for (final path in paths) {
       final arches = (await command('/usr/bin/lipo', [
@@ -77,6 +78,12 @@ Future<void> main() async {
       if (!arches.contains('arm64') || !arches.contains('x86_64')) {
         throw StateError('Missing universal architecture: $path');
       }
+      await command('/usr/bin/codesign', [
+        '--verify',
+        '--strict',
+        '--all-architectures',
+        '$app/$path',
+      ]);
     }
     await writeBuildRecord(
       Directory('$app/Contents/Resources'),

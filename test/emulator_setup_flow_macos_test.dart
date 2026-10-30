@@ -69,6 +69,12 @@ void main() {
         await model.login('Player', 'fixture');
         await settleModel(model);
         model.navigate(ShellScreen.emulators);
+        expect(
+          model.defaultEmulator(
+            model.platforms.singleWhere((p) => p.slug == 'ngc'),
+          ),
+          isNull,
+        );
         final save = File('${manager.data.path}/profiles/keep.sav');
         await save.parent.create(recursive: true);
         await save.writeAsString('progress');
@@ -101,6 +107,16 @@ void main() {
       await t.pump();
       await drive(() => manager.ready('Dolphin') && !manager.busy);
       expect(manager.error, isNull);
+      await drive(
+        () =>
+            model.records.emulatorDefaults['${model.server!.id}:ngc'] ==
+            'dolphin',
+      );
+      expect(
+        (await t.runAsync(model.storage.load))!
+            .emulatorDefaults['${model.server!.id}:wii'],
+        'dolphin',
+      );
       final remove = find.byKey(const ValueKey('remove-4:dolphin'));
       await Scrollable.ensureVisible(t.element(remove));
       await t.pumpAndSettle();
@@ -110,6 +126,12 @@ void main() {
       await t.pump();
       await drive(() => !manager.ready('Dolphin') && !manager.busy);
       expect(manager.error, isNull);
+      expect(
+        model.defaultEmulator(
+          model.platforms.singleWhere((p) => p.slug == 'ngc'),
+        ),
+        isNull,
+      );
       await t.runAsync(() async {
         expect(
           await File('${manager.data.path}/profiles/keep.sav').readAsString(),

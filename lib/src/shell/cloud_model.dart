@@ -86,12 +86,23 @@ extension ShellCloudSaves on ShellModel {
         final emulator = androidEmulators.singleWhere(
           (e) => e.id == platform.emulatorId,
         );
+        final pending = await androidSession.pending();
+        final sessionPackage =
+            pending != null &&
+                pending['server'] == s.id &&
+                pending['profile'] == p.id &&
+                pending['rom'] == id &&
+                pending['emulator'] == emulator.id
+            ? (pending['package'] as String?)
+            : null;
         final layout = await androidProgressLayout(
           android,
           p.id,
           emulator,
           platform,
           androidRom ?? files.single,
+          contentId: '$id',
+          package: sessionPackage,
         );
         final result = CloudGame(
           server: s.id,

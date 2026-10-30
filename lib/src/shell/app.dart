@@ -113,6 +113,12 @@ class _BroommAppState extends State<BroommApp> {
 
   Future<void> _installApplicationUpdate() async {
     if (m.applicationUpdating || m.updates.handedOff) return;
+    if (m.isAndroid && m.android.installing != null) {
+      m.updates.status =
+          'Finish or cancel the emulator APK download before updating Broomm.';
+      m.updates.emit();
+      return;
+    }
     if (lab || m.gameActive || startingGame) {
       m.updates.status = 'Close the game or emulator before updating Broomm.';
       m.updates.emit();
@@ -289,6 +295,12 @@ class _BroommAppState extends State<BroommApp> {
         m.gameActive ||
         !m.authenticated)
       return;
+    if (m.isAndroid && m.android.installing != null) {
+      m.showNotice(
+        'Finish or cancel the emulator APK download before starting a game.',
+      );
+      return;
+    }
     if (m.queuedGame(id)?.state == DownloadState.active) {
       m.showNotice(
         'This game is still being installed. Wait for its download and updates/DLC to finish.',
@@ -630,8 +642,17 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final cloudReady =
-        m.android.tree(profile.id, emulator) != null &&
+        m.android.folder(emulator) != null &&
         m.android.progressSupported(emulator);
+    if (!cloudReady) {
+      m.gameActive = false;
+      m.setupPlatformId = entry.game.platformId;
+      m.navigate(ShellScreen.emulators);
+      m.showNotice(
+        'Connect ${emulator.name}’s save folder in Emulator Settings, then launch this game again.',
+      );
+      return;
+    }
     await navigator.currentState!.push<void>(
       MaterialPageRoute(
         builder: (_) => AndroidSessionScreen(
@@ -657,7 +678,8 @@ class _BroommAppState extends State<BroommApp> {
                   (platform.slug == 'snes' ? 'snes9x' : null),
               prepare: () async {
                 if (!cloudReady) return null;
-                if (platform.slug == 'psp') {
+                if (platform.slug == 'psp' &&
+                    m.android.folder(emulator) == null) {
                   await m.pspPackages.applyForLaunch(
                     server.id,
                     entry.game.id,
@@ -673,7 +695,7 @@ class _BroommAppState extends State<BroommApp> {
                   resolveCloudConflict(navigator.currentContext!, conflict),
             );
           },
-          resume: () => m.android.open(emulator),
+          resume: () => m.android.open(emulator, package: app.package),
           finish: () async => m.androidSession.finish(
             emulatorClosed: true,
             recovery: cloudReady
@@ -701,7 +723,10 @@ class _BroommAppState extends State<BroommApp> {
           emulator: emulator.name,
           resume: m.android.app(emulator) == null
               ? null
-              : () => m.android.open(emulator),
+              : () => m.android.open(
+                  emulator,
+                  package: record['package'] as String?,
+                ),
           finish: () async {
             CloudGame? game;
             if (m.server?.id == record['server'] &&

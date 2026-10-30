@@ -150,11 +150,18 @@ jobs:
           bash tool/ci/run.sh bash tool/build_app.sh --portable --no-pub
       - name: Native host tests
         run: bash tool/ci/run.sh bash tool/test_macos.sh
+      - name: Shared save native file-lock tests
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/android-checks
+          devbox --config tool/android run check-shared-lock 2>&1 | tee build/android-checks/shared-document-lock.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: broomm-native-macos-results
-          path: build/macos/Logs/Test/*.xcresult
+          path: |
+            build/macos/Logs/Test/*.xcresult
+            build/android-checks/*.log
           if-no-files-found: warn
           retention-days: 14
 

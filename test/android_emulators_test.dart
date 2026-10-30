@@ -113,6 +113,8 @@ void main() {
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
           switch (call.method) {
+            case 'ioBusy':
+              return false;
             case 'installed':
               if (failure != null) throw failure!;
               return apps;
@@ -139,6 +141,78 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
     await data.delete(recursive: true);
+  });
+
+  test('Citra MMJ is an Android 3DS alternative with its own launch and storage contract', () async {
+    const platform = RommPlatform(9, 'Nintendo 3DS', '3ds', 1);
+    final choices = manager.choices(platform);
+    expect(choices.map((e) => e.id), containsAll(['azahar', 'citra-mmj']));
+    final mmj = emulator('citra-mmj');
+    expect(mmj.activity, 'org.citra.emu.ui.EmulationActivity');
+    expect(
+      mmj.packages,
+      containsAll(['org.citra.emu', 'com.antutu.ABenchMark']),
+    );
+    expect(manager.progressSupported(mmj), true);
+    final discovery =
+        calls.lastWhere((c) => c.method == 'installed').arguments as Map;
+    expect(discovery['requiredActivities'], {
+      'org.citra.emu': mmj.activity,
+      'com.antutu.ABenchMark': mmj.activity,
+    });
+    await manager.installApk(mmj);
+    final installation =
+        calls.lastWhere((c) => c.method == 'installApk').arguments as Map;
+    expect(installation['requiredActivity'], mmj.activity);
+    expect(installation['packages'], mmj.packages);
+    final m = ShellModel(ShellStorage(data), androidManager: manager);
+    expect(m.defaultEmulator(platform), isNull);
+    apps.add({
+      'package': 'org.citra.emu',
+      'version': '20251112',
+      'build': buildHash,
+    });
+    await manager.load();
+    expect(m.defaultEmulator(platform), 'citra-mmj');
+    await manager.launch(mmj, manager.app(mmj)!, [
+      '/fixture/Test.3ds',
+    ], '/fixture/Test.3ds');
+    final args = calls.lastWhere((c) => c.method == 'launch').arguments as Map;
+    expect(args['emulator'], 'citra-mmj');
+    expect(args['activity'], mmj.activity);
+    m.dispose();
+    managerDisposed = true;
+  });
+
+  test('Android install completion survives restart and requires observed installation', () async {
+    final defaults = <String>[];
+    manager.onInstalled = (server, e) async => defaults.add('$server:${e.id}');
+    final mmj = emulator('citra-mmj');
+    await manager.installApk(mmj, server: serverId);
+    await manager.load();
+    expect(defaults, isEmpty);
+    failure = PlatformException(code: 'query-failed');
+    await manager.load();
+    expect(defaults, isEmpty);
+    manager.dispose();
+    manager = AndroidEmulators(data, channel: channel, enabled: true)
+      ..onInstalled = (server, e) async => defaults.add('$server:${e.id}');
+    failure = null;
+    apps.add({
+      'package': 'org.citra.emu',
+      'version': '20251112',
+      'build': buildHash,
+    });
+    await manager.load();
+    expect(defaults, ['$serverId:citra-mmj']);
+    await manager.load();
+    expect(defaults.length, 1);
+    await manager.installApk(mmj, server: serverId);
+    await manager.load(); // Opening/cancelling an installer is not success.
+    expect(defaults.length, 1);
+    await manager.cancelInstallationDefault(serverId);
+    await manager.load(installationConfirmed: true);
+    expect(defaults.length, 1);
   });
 
   test(
@@ -331,38 +405,26 @@ void main() {
     api.close();
   });
 
-  test(
-    'open native writers and wrong-account recovery cannot finalize saves',
-    () async {
-      final api = SaveServer(),
-          cloud = RecordingCloud(data),
-          session = AndroidGameSession(manager, RecordingCloud(data));
-      writers = 1;
-      await expectLater(launch(session), throwsStateError);
-      expect(await session.pending(), isNull);
-      writers = 0;
-      await launch(session);
-      writers = 1;
-      await expectLater(session.finish(emulatorClosed: true), throwsStateError);
-      expect(await session.pending(), isNotNull);
-      writers = 0;
-      await expectLater(
-        session.finish(
-          emulatorClosed: true,
-          recovery: game(
-            cloud,
-            api,
-            profile: 'c123456789abcdef0123456789abcdef',
-          ),
-        ),
-        throwsStateError,
-      );
-      expect(await session.pending(), isNotNull);
-      await session.finish(emulatorClosed: true);
-      session.dispose();
-      api.close();
-    },
-  );
+  test('explicit closure confirmation permits sync; wrong-account recovery still preserves progress', () async {
+    final api = SaveServer(),
+        cloud = RecordingCloud(data),
+        session = AndroidGameSession(manager, RecordingCloud(data));
+    writers = 1;
+    await launch(session);
+    await expectLater(session.finish(emulatorClosed: false), throwsStateError);
+    await expectLater(
+      session.finish(
+        emulatorClosed: true,
+        recovery: game(cloud, api, profile: 'c123456789abcdef0123456789abcdef'),
+      ),
+      throwsStateError,
+    );
+    expect(await session.pending(), isNotNull);
+    await session.finish(emulatorClosed: true);
+    expect(await session.pending(), isNull);
+    session.dispose();
+    api.close();
+  });
 
   test('Android DS raw save uses existing BROOMM history and native .sav extension', () async {
     await configure('melonds');
@@ -433,9 +495,14 @@ void main() {
     }
     final files = await layout.files();
     expect(files.keys.toList(), ['save/ULUS10340DATA/DATA.BIN']);
-    final state = layout.areas.singleWhere((a) => a.id.startsWith('states-'));
-    expect(state.accepts('ULUS10340_1.02_0.ppst'), true);
-    expect(state.accepts('ULUS99999_1.02_0.ppst'), false);
+    final oldState = await progressFile(
+      root,
+      'user/PSP/PPSSPP_STATE/ULUS10340_1.02_0.ppst',
+      createParents: true,
+    );
+    await oldState.writeAsBytes([7]);
+    expect(layout.areas.where((a) => a.id.startsWith('states-')), isEmpty);
+    expect(await oldState.readAsBytes(), [7]);
     expect(calls.any((c) => c.method == 'fingerprint'), true);
     await expectLater(
       androidProgressLayout(
@@ -445,7 +512,7 @@ void main() {
         playablePlatforms.singleWhere((p) => p.emulatorId == 'eden'),
         rom.path,
       ),
-      throwsUnsupportedError,
+      throwsStateError,
     );
   });
 
@@ -502,6 +569,43 @@ void main() {
       expect(finishes, 1);
       expect(find.byType(AndroidSessionScreen), findsNothing);
       expect(find.text('Open recovery'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets(
+    'returning from an emulator offers sync and declining retains the active session',
+    (t) async {
+      final session = AndroidGameSession(manager, RecordingCloud(data));
+      await t.runAsync(() => launch(session));
+      var finishes = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: AndroidSessionScreen(
+            session: session,
+            recovering: true,
+            cloudReady: true,
+            title: 'A game',
+            emulator: 'PPSSPP',
+            finish: () async {
+              finishes++;
+            },
+          ),
+        ),
+      );
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(find.text('Finished? Sync progress'), findsOneWidget);
+      await t.tap(find.text('Not finished'));
+      await t.pumpAndSettle();
+      expect(finishes, 0);
+      expect(session.active, true);
+      await t.runAsync(() async {
+        expect(await session.pending(), isNotNull);
+        await session.finish(emulatorClosed: true);
+      });
       await t.pumpWidget(const SizedBox());
       session.dispose();
     },

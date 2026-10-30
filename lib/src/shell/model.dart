@@ -19,6 +19,7 @@ export 'download_queue.dart';
 import '../addons/service.dart';
 import '../addons/ps3.dart';
 import '../addons/packages.dart';
+import '../addons/astris.dart';
 import '../switch_firmware.dart';
 import '../progress/service.dart';
 import '../progress/layout.dart';
@@ -231,6 +232,7 @@ class ShellModel extends ChangeNotifier {
         if (!isAndroid && platform == 'switch') {
           await switchPackages.uninstall(selected.id, id);
           await edenPackages.uninstall(selected.id, id);
+          await astrisPackages.uninstall(selected.id, id);
         }
       },
     );
@@ -294,7 +296,21 @@ class ShellModel extends ChangeNotifier {
   late final emulators =
       _emulatorManager ??
       ManagedEmulators(storage.directory, project: project, log: log);
-  late final android = _androidManager ?? AndroidEmulators(storage.directory);
+  late final android = (_androidManager ?? AndroidEmulators(storage.directory))
+    ..onInstalled = _androidInstalled
+    ..phase = (message) => log?.write(message);
+  Future<void> _androidInstalled(
+    String serverId,
+    AndroidEmulator emulator,
+  ) async {
+    if (!records.servers.any((s) => s.id == serverId)) return;
+    records = await storage.emulatorDefaults(serverId, {
+      for (final slug in emulator.platforms) slug: emulator.id,
+    });
+    _cloudGames.clear();
+    _emit();
+  }
+
   late final androidSession = AndroidGameSession(android, cloud);
   bool get isAndroid => android.enabled;
   List<GamePlatform> emulatorChoices(RommPlatform platform) => !isAndroid
@@ -399,8 +415,36 @@ class ShellModel extends ChangeNotifier {
           emulator: 'Eden',
         ),
   );
+  late final astrisPackages = GamePackages(
+    storage.directory,
+    library,
+    'switch',
+    switchEmulator: 'Astris',
+    switchInspector: inspectAstrisPackages,
+    prepare: (profile, cancellation) => emulators.preparePackages(
+      'switch',
+      profile,
+      cancellation,
+      emulator: 'Astris',
+    ),
+    provision: (profile, platform, client, cancellation, lease, phase) =>
+        ensureSwitchFirmware(
+          emulators,
+          profile,
+          platform,
+          client,
+          cancellation,
+          phase,
+          lease: lease,
+          emulator: 'Astris',
+        ),
+  );
   GamePackages switchPackagesFor(RommGame game) =>
-      launchPlatform(game)?.emulator == 'Eden' ? edenPackages : switchPackages;
+      switch (launchPlatform(game)?.emulator) {
+        'Eden' => edenPackages,
+        'Astris' => astrisPackages,
+        _ => switchPackages,
+      };
   late final pspPackages = GamePackages(
     storage.directory,
     library,
@@ -425,6 +469,10 @@ class ShellModel extends ChangeNotifier {
   String get _ps3InstallerEmulator {
     const target = RommPlatform(0, 'PlayStation 3', 'ps3', 0);
     final preferred = defaultEmulator(target);
+    if (preferred == null)
+      throw StateError(
+        'Set up a PlayStation 3 emulator in Emulator Settings before installing its updates and DLC.',
+      );
     return platformEmulators(target)
         .firstWhere((e) => e.emulatorId == preferred)
         .emulator;
@@ -1097,12 +1145,45 @@ class ShellModel extends ChangeNotifier {
     final preferred =
         records.emulatorDefaults['${server?.id}:${choices.first.slug}'];
     final configured = choices.where(emulatorReady).toList();
-    final available = configured.isEmpty ? choices : configured;
-    return available
+    if (configured.isEmpty) return null;
+    return configured
             .where((p) => p.emulatorId == preferred)
             .firstOrNull
             ?.emulatorId ??
-        available.first.emulatorId;
+        configured.first.emulatorId;
+  }
+
+  Future<void> setupEmulators(SetupPlan plan) async {
+    final selectedServer = server;
+    if (selectedServer == null || gameActive || busy || emulators.busy) return;
+    await finishCloud();
+    await emulators.install(
+      plan,
+      onInstalled: (build) async {
+        final choices = {
+          for (final platform in playablePlatforms)
+            if (platform.emulatorId == build.id && emulatorReady(platform))
+              platform.slug: build.id,
+        };
+        if (choices.isEmpty) return;
+        try {
+          final saved = await storage.emulatorDefaults(
+            selectedServer.id,
+            choices,
+          );
+          if (!disposed) {
+            records = saved;
+            _cloudGames.clear();
+            _emit();
+          }
+        } catch (_) {
+          throw StateError(
+            '${build.name} was installed, but its default selection could not be saved. Use Set as default to retry.',
+          );
+        }
+      },
+    );
+    unawaited(retryCloud());
   }
 
   GamePlatform? launchPlatform(RommGame game) {
@@ -1128,6 +1209,7 @@ class ShellModel extends ChangeNotifier {
       return;
     }
     try {
+      if (isAndroid) await android.cancelInstallationDefault(server!.id);
       records = await storage.emulatorDefault(
         server!.id,
         choices.first.slug,

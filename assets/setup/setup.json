@@ -222,6 +222,16 @@
         "entry": "eden.app",
         "prepare": "macos-adhoc"
       }
+    },
+    "astris": {
+      "source": {
+        "url": "https://github.com/V380-Ori/Astris.Binaries/releases/download/astris-1.0.32/Astris-1.0.32%2B2398e7c80.dmg",
+        "sha256": "661f01a47816b3baeda5c6c924f92d32e7a2bf42db98483c259207f0eb5feb6f",
+        "bytes": 12924928,
+        "format": "dmg",
+        "entry": "Astris.app",
+        "prepare": "macos-astris"
+      }
     }
   }
 }

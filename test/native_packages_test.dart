@@ -577,6 +577,63 @@ void main() {
       );
       expect(await Directory('${root.path}/profiles').exists(), false);
     });
+    test('Astris content and removal stay separate from the Ryubing profile and packages', () async {
+      final entry = await install(1);
+      await sync(entry);
+      final ryubing = (await prepare(addonProfile, DownloadCancellation())).$2;
+      final original = File(
+        '${ryubing.path}/user/games/01005d100807a000/dlc.json',
+      );
+      final before = await original.readAsString();
+      final astris = GamePackages(
+        root,
+        library,
+        'switch',
+        switchEmulator: 'Astris',
+        prepare: (id, cancellation) async {
+          final profile = Directory(
+            '${root.path}/profiles/$id/emulators/astris',
+          );
+          await Directory('${profile.path}/user').create(recursive: true);
+          await File('${profile.path}/profile.json').writeAsString(
+            jsonEncode({'version': 1, 'profile': id, 'emulator': 'astris'}),
+          );
+          return ('unused', profile);
+        },
+        switchInspector: service.switchInspector,
+      );
+      await astris.sync(
+        serverId: addonServer,
+        profileId: addonProfile,
+        entry: entry,
+        game: await game(1),
+        client: client,
+        cancellation: DownloadCancellation(),
+        progress: (_) {},
+      );
+      final native = '${root.path}/profiles/$addonProfile/emulators/astris';
+      final selection = File('$native/user/games/01005d100807a000/dlc.json');
+      final selected =
+          (jsonDecode(await selection.readAsString()) as List).single['path']
+              as String;
+      expect(selected, contains('/switch-astris/'));
+      final save = File('$native/user/bis/user/save/retained');
+      await save.parent.create(recursive: true);
+      await save.writeAsString('progress');
+      final lease = await SessionLease.acquire(root);
+      try {
+        await astris.uninstall(addonServer, 1);
+      } finally {
+        await lease.release();
+      }
+      expect(await selection.exists(), false);
+      expect(await File(selected).exists(), false);
+      expect(await save.readAsString(), 'progress');
+      expect(await original.readAsString(), before);
+      final ryubingPackage =
+          (jsonDecode(before) as List).single['path'] as String;
+      expect(await File(ryubingPackage).exists(), true);
+    });
     test('empty API checksums permit transfer; repeat avoids it; package bytes survive another owner until its removal', () async {
       final a = await install(1), b = await install(2);
       await sync(a);

@@ -320,7 +320,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "export PATH=\"$PROJECT_DIR/../tool/apple_tools:$PATH\"; echo \"$PRODUCT_NAME.app\" > \"$PROJECT_DIR\"/Flutter/ephemeral/.app_filename && \"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh embed && mkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/native\" && cp \"$PROJECT_DIR/../build/native/\"broomm-sdl*.dylib \"$PROJECT_DIR/../build/native/broomm-installer-guard.dylib\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/native/\"\n";
+			shellScript = "export PATH=\"$PROJECT_DIR/../tool/apple_tools:$PATH\"; echo \"$PRODUCT_NAME.app\" > \"$PROJECT_DIR\"/Flutter/ephemeral/.app_filename && \"$FLUTTER_ROOT\"/packages/flutter_tools/bin/macos_assemble.sh embed && mkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/native\" && cp \"$PROJECT_DIR/../build/native/\"broomm-*.dylib \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/native/\"\n";
 		};
 		33CC111E2044C6BF0003C045 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;

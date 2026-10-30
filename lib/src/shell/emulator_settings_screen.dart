@@ -564,7 +564,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                         'Missing firmware will be downloaded from this platform’s RomM BIOS catalogue before play, when available.',
                         style: TextStyle(color: Color(0xffefd3aa)),
                       ),
-                    if ({'ryubing', 'eden'}.contains(build.id) &&
+                    if ({'ryubing', 'eden', 'astris'}.contains(build.id) &&
                         (!item.resources.containsKey('prod_keys') ||
                             !item.resources.containsKey('title_keys') ||
                             !item.resources.containsKey('switch_firmware')))
@@ -599,15 +599,13 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                           order: order + 3,
                           fill: const Color(0xff315b54),
                           onPressed: () async {
-                            await model.finishCloud();
-                            await m.install(
+                            await model.setupEmulators(
                               SetupPlan(
                                 plan.items
                                     .where((i) => i.build.id == build.id)
                                     .toList(),
                               ),
                             );
-                            unawaited(model.retryCloud());
                             if (mounted && m.error == null)
                               setState(() {
                                 completed = key;

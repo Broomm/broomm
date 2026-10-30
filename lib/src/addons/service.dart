@@ -177,7 +177,9 @@ class GameAddons {
       if (remote.isEmpty && previous == null) return const AddonResult(0, 0);
       final local = await library.contentFiles(entry);
       final baseFiles = gameCandidates(
-        playablePlatforms.singleWhere((p) => p.slug == '3ds'),
+        playablePlatforms.singleWhere(
+          (p) => p.slug == '3ds' && p.emulatorId == 'azahar',
+        ),
         local,
       );
       if (baseFiles.isEmpty)

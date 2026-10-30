@@ -1,0 +1,23 @@
+{
+  "files": {
+    "Contents/_CodeSignature/CodeResources": "ab6903975de8ce4cbc4eddf50910ba8fb1ca557c515762e3136b879d08455aa1",
+    "Contents/MacOS/Astris": "8c615787c5e79d95b0ad2167c4a8d3bce66918cf05b25e0601c78775b8ecef25",
+    "Contents/Resources/AppIcon.icns": "2d855c821bb23a13301ac71d27f2e70034084262ef574eac348cd72095d29713",
+    "Contents/Resources/Credits.rtf": "15be4d3a205f6b5f7b3364a866e9748ca3d691fe16630e65d21073aa9a6b5135",
+    "Contents/Resources/Assets.car": "fa9ca6d1ed23a20724e2135dd99688a366cb4514233c02552f8a6c6000d28639",
+    "Contents/Resources/vulkan/icd.d/libkosmickrisp_icd.json": "2841f2fffcf02dda0c5e2c96aa8ef42a6d9d9d12b481857f7a5e1c1ba47bb30e",
+    "Contents/Resources/vulkan/icd.d/MoltenVK_icd.json": "67ff821250d8e8b3c4adf3ecaf68a1f639dcc6f6a75916b30f339812074136bd",
+    "Contents/Frameworks/libavutil.57.dylib": "1a839081b1386dfb6504536164464c5fca6fa72c754715600778dcbbec244acf",
+    "Contents/Frameworks/libvulkan.dylib": "d32dbca498319e14ffbef8765baeda79d3a42ecbe520f43ef261ca1a966b5dc8",
+    "Contents/Frameworks/libamadeus_auhal.dylib": "c7a3c83b585df7159ae28d686dd382e00109cb98a966149f1ec06ed7f2af8311",
+    "Contents/Frameworks/libMoltenVK.dylib": "9349db44b2fb8d1ba64ed6f1b51843fc8b6583ebc73ec57498ee9b91871d4791",
+    "Contents/Frameworks/libzbic.dylib": "771238c7b2763546f02a2346db2d6c47e76b63ca5f319973aec37d60a8372632",
+    "Contents/Frameworks/libvulkan_kosmickrisp.dylib": "7203d7e50356fddff7a06d5583b31309df6476bce336ac8cb5a51eabdbb2ad9e",
+    "Contents/Frameworks/libavcodec.59.dylib": "9691068738bf586bfe56a715dd4d936befc7b6335160a2c329cc0c4ea48d6223",
+    "Contents/Frameworks/libopus.dylib": "b8f9275e5fddd6cb408bdf33ea844bd0e02cbc177d17b6e8f636f4bba3f1293b",
+    "Contents/Frameworks/libryujinx.dylib": "dc0d0e6c9fc6664897cbdb21f82a5987dceac5ff1bb926b3bbefb06266532088",
+    "Contents/Info.plist": "0ae44cab5e557a5f80ca6efd343230ca3ccf8198c21547e02d2745c6f9fbca61",
+    "Contents/PkgInfo": "82502191c9484b04d685374f9879a0066069c49b8acae7a04b01d38d07e8eca0"
+  },
+  "links": {}
+}

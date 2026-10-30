@@ -1,8 +1,10 @@
 # RomM platform and emulator support matrix
 
+**Emulator additions, 2026-10-29, Android follow-up 2026-10-30:** [Astris (macOS 15+ ARM64) and Citra MMJ (Android)](astris-and-citra-mmj.md) are now selectable. Astris has native launch/controller/update/DLC and ordinary-save ZIP checks. Android's nine adapters now have 🟡 [connected ordinary saves and matching states](android-installation-and-saves.md) (Eden has no states), plus official APK acquisition and stable/nightly ARMSX2 detection. Native Android acceptance and new content/firmware installers remain outstanding. Defaults require a configured emulator and successful setup changes the default. Older evidence remains scoped to its emulator/host.
+
 **Setup delivery, 2026-10-27:** all twelve macOS frontends and all fifteen RetroArch cores now download through bundled recipes; no external pack/import is required. RetroArch uses Broomm/retroarch v0.1.0. Seven official Libretro builds replace the offline core inputs; the other eight libraries retain their hashes. Native ABI, thirteen game/state cases, four BIOS-based routes and Genesis/Master System/Game Gear/Arcade native save round trips pass. Existing cores remain usable until explicit setup; ordinary saves are retained and incompatible states have separate physical and cloud identities. Earlier per-platform evidence below retains its stated scope. Other desktop frontends are published and verified, but their Broomm core/bridge acceptance is pending. See [delivery status](managed-setup-downloads.md) and [new core versions](retroarch-public-cores.md).
 
-**Android update, 2026-10-26:** the [separate Android table](android-emulators.md#coverage) records installed-app/direct-launch wiring, the initial connected-folder saves and remaining native storage/package gaps. Android native acceptance is outstanding. The green cells below retain their stated macOS scope.
+**Android update, 2026-10-30:** the [separate Android table](android-emulators.md#coverage) records APK acquisition, one-time folder setup, profile-isolated save/state swaps and remaining native storage/package gaps. Returning from an emulator offers explicit closure confirmation before synchronization. Android native acceptance is outstanding. The green cells below retain their stated macOS scope.
 
 Snapshot: **2026-10-23**, **romm.docubi.casa / RomM 5.4.0**: **29 platforms, 7,660 ROM records**, including versions/regions. The earlier authenticated inventory is retained; read-only test media downloads did not modify the catalogue or server saves.
 
@@ -29,7 +31,7 @@ Snapshot: **2026-10-23**, **romm.docubi.casa / RomM 5.4.0**: **29 platforms, 7,6
 | Nintendo DS (`nds`) | 539 | melonDS | 🟢 Integrated (macOS) | ⚪ No package pipeline | 🟢 Implemented | 🟢 Matched build |
 | Nintendo Entertainment System (`nes`) | 710 | RetroArch / Mesen | 🟢 Native game checked | ⚪ No package pipeline | 🟢 Native SRAM upload/readback/restore | 🟢 Matched build checked |
 | Nintendo GameCube (`ngc`) | 137 | Dolphin | 🟢 Integrated (macOS) | ⚪ No package pipeline | 🟢 Implemented | 🟢 Matched build |
-| Nintendo Switch (`switch`) | 76 | Ryubing / Eden (experimental macOS) | 🟢 Ryubing + Eden native checks (macOS) | 🟢 NSP / NAND; Eden one update NSP | 🟢 Implemented; Eden seeded directory check | ⚪ Unavailable |
+| Nintendo Switch (`switch`) | 76 | Ryubing / Eden / Astris (macOS 15+ ARM64) | 🟢 Native checks for all three (macOS) | 🟢 Native NSP selection / NAND | 🟢 Implemented; native Astris ZIP and seeded Eden checks | ⚪ Unavailable |
 | PlayStation (`psx`) | 248 | DuckStation ARM64 (macOS) | 🟢 Native game / pairing checked | ⚪ No package pipeline | 🟢 Native .mcd round trip | 🟢 Native state creation / snapshot restore |
 | PlayStation 2 (`ps2`) | 160 | ARMSX2 ARM64 / PCSX2 Intel through Rosetta (macOS) | 🟢 Both native game / pairing checked | ⚪ No package pipeline | 🟢 Shared native cards round trip | 🟢 Separate native state load / restore |
 | PlayStation 3 (`ps3`) | 30 | RPCS3 ARM / RPCS3 Intel / Rosetta (macOS) | 🟢 Integrated (macOS) | 🟢 Implemented: PKG + RAP | 🟢 Implemented | ⚪ Unavailable |

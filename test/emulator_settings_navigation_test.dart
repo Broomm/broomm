@@ -317,6 +317,27 @@ void main() {
       t.view.resetDevicePixelRatio();
     },
   );
+  testWidgets(
+    'unconfigured cards have no default badge, including stale saved preferences',
+    (t) async {
+      final p = model.platforms.first;
+      model.records = (await t.runAsync(
+        () => model.storage.emulatorDefault(model.server!.id, 'ngc', 'dolphin'),
+      ))!;
+      expect(model.defaultEmulator(p), isNull);
+      await open(t);
+      expect(find.text('Default'), findsNothing);
+      final b = model.emulators.buildFor('Dolphin')!;
+      model.emulators.installed[b.id] = b.hash;
+      expect(model.defaultEmulator(p), 'dolphin');
+      model.emulators.installed.clear();
+      expect(model.defaultEmulator(p), isNull);
+      await t.pumpWidget(const SizedBox());
+      await t.binding.setSurfaceSize(null);
+      t.view.resetPhysicalSize();
+      t.view.resetDevicePixelRatio();
+    },
+  );
   test('default selection is per server, survives other preference changes, and rejects unavailable choices', () async {
     final p = model.platforms.first;
     final b = model.emulators.buildFor('Dolphin')!;

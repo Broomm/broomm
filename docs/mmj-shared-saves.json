@@ -1,0 +1,208 @@
+{
+  "utc": "2026-10-30T16:52:56.924303Z",
+  "scope": "Citra MMJ Android ordinary saves through the explicitly selected shared citra-emu tree",
+  "host": {
+    "os": "macOS 27.0.1",
+    "cpu": "Apple M1 Pro ARM64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "kotlin": "2.4.0",
+    "appleSdk": "pre-provisioned Xcode 27.1"
+  },
+  "sources": {
+    "lib/src/android/emulators.dart": "2693698c4f719b324d193aac9a3148da22726d1786b810a64b7bf17dd3a99ee9",
+    "lib/src/android/progress.dart": "08a6e96a51bc34e496f2c8153788fd41e1a5d05fe74479f58353fece15d643fd",
+    "lib/src/android/session.dart": "2abbf5998b59e6d029389533b10ae29df3c893a0237eb3509922a054fc0224fe",
+    "lib/src/android/mmj_shared_saves.dart": "cf4d3674b1f8e4008cf9f5ba95f830d922a0eb056fcde0b2623ac4ded2f70b28",
+    "lib/src/progress/layout.dart": "721e22a0daf1e79e6947b7398f286e9e58e4d0d485f643b37f42e23aab638960",
+    "lib/src/shell/android_emulator_settings_screen.dart": "0816166bad76f11205aad396cbab21ce6345c1bc37d551528e11f68625197cbb",
+    "lib/src/shell/android_session_screen.dart": "add5d16cda1cf29fe04a8e2655e786054f22bcb88f0148a62059abd6681727ea",
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommEmulators.kt": "abcc1827d13be91df9664fef35d6812d1f30fdeb03e4488a31f83ec5b966a853",
+    "android/app/src/main/kotlin/app/broomm/broomm/SharedSaveFolder.kt": "d99be83a6c75de6bf85a69f8a62641c6d6fd9205cedec57d4af2fbe9aacd9382",
+    "android/app/src/main/kotlin/app/broomm/broomm/SharedDocumentLock.kt": "98f7a59b8fa723e8dcd3a5808792d7b463add1285cb8979420ca2af51297ff86",
+    "tool/android/devbox.json": "d40fa2bdd8a6d805a4a58774d3d5ba4ef480ce8b79141c5017f0ac9c73e8170d",
+    "tool/android/devbox.lock": "bd93e01901a53cffc3b0d73868c90182fa36102dc00f6746e62aa539a8e51a76",
+    "tool/android/check_shared_document_lock.kt": "90df2137c698c10988ad2dec207cb1a5eaa857e16e2470daa5b613162998d405",
+    "tool/android/check_shared_document_lock.sh": "a8594182873cceccb725fa9a5c5cfaa348fb58145ca2a3296581b63c02aef32a",
+    ".github/workflows/release.yml": "607f37a096eb739af68ebce3c6244d06d7c32350c29959a23f6121a9798a9f1e",
+    "test/mmj_shared_saves_test.dart": "ef8c7423596a85f6a2c5f00ab4ed84da4e39a0c325d03c044111c6ff6119b80e",
+    "test/android_emulators_test.dart": "de06cd8b2ddaa27b4a587840048dafe891fd454c3f4c87fafeeab094abdcd34e"
+  },
+  "verification": {
+    "flutterMainPassed": 440,
+    "fullSizeSavePassed": 2,
+    "mmjCasesIncluded": 5,
+    "finalAffectedAndroidPassed": 22,
+    "analysis": "pass",
+    "kotlinApiCompilation": "pass; existing versionCode deprecation warnings only",
+    "nativeJvmLockHost": "macOS; production file lock, concurrent callers, child process, release, links",
+    "workflowLint": "pass",
+    "shellSyntax": "pass",
+    "androidApkBuilt": false,
+    "androidDeviceRuntime": false,
+    "realMmjGameplay": false,
+    "realRomMSaveMutations": false,
+    "productionProgressModified": false,
+    "documentProviderBoundary": "controlled MethodChannel fixture, not Android DocumentsUI or SAF runtime"
+  },
+  "contracts": {
+    "privateAndroidDataSupported": false,
+    "actualMmjStorageSettingReadable": false,
+    "oneTimeSharedTreeGrant": true,
+    "profilePrivateOrdinarySaves": true,
+    "standaloneSavePreservation": true,
+    "BROOMMVersionHistory": true,
+    "durableSwapAndNativeIoLock": true,
+    "interruptedPublicationRecovery": true,
+    "orphanedSwapRecovery": true,
+    "explicitKeepFolderResolution": true,
+    "cloudStates": false,
+    "automaticCiaInstaller": false
+  },
+  "logs": {
+    "analysis": {
+      "path": ".tool-cache/research/mmj-shared-saves/analysis.log",
+      "bytes": 249,
+      "sha256": "db907177db4d85a2b9d0cfe76521ee42ef20dad70afafa3d5b6b88e0894bc365"
+    },
+    "flutter-suite": {
+      "path": ".tool-cache/research/mmj-shared-saves/flutter-suite.log",
+      "bytes": 80728,
+      "sha256": "9493d2334dc86a4d39576d08f85930ded69d389a1e544551ca2ec3ff1262e9dd"
+    },
+    "full-size-saves": {
+      "path": ".tool-cache/research/mmj-shared-saves/full-size-saves.log",
+      "bytes": 445,
+      "sha256": "b7fcdb7dbcb66697bc80e17b6f744b92768149bff8f59a7ebc19262abacecb54"
+    },
+    "final-recovery": {
+      "path": ".tool-cache/research/mmj-shared-saves/final-recovery.log",
+      "bytes": 4160,
+      "sha256": "2e5b2c4afb97f9f1aa8e24d376c1f1c739aa20bfa384fb2658d95c70adc9da57"
+    },
+    "android-kotlin": {
+      "path": ".tool-cache/research/mmj-shared-saves/android-kotlin.log",
+      "bytes": 1011,
+      "sha256": "32db71d5c147872e571f19ea8786ef0360a1edc9737bea310dabcff0ca388fce"
+    },
+    "native-document-lock": {
+      "path": ".tool-cache/research/mmj-shared-saves/native-document-lock.log",
+      "bytes": 286,
+      "sha256": "09216e4245a13cdbc20a680d8913658196b54fa6a710c050fb7db683851598fd"
+    },
+    "workflow-lint": {
+      "path": ".tool-cache/research/mmj-shared-saves/workflow-lint.log",
+      "bytes": 164,
+      "sha256": "8f696814d0953eea92f671ba904f1de2a34c70a086aeefc8dedb12b149455ca1"
+    },
+    "bridges": {
+      "path": ".tool-cache/research/mmj-shared-saves/bridges.log",
+      "bytes": 407,
+      "sha256": "59966c9a53ebd565ab6d99c027af01bd4bc45e948b2eab6a74eae6636e32a25d"
+    },
+    "macos-build": {
+      "path": ".tool-cache/research/mmj-shared-saves/macos-build.log",
+      "bytes": 509,
+      "sha256": "2235f02b675b32bbb2041d7f0ee0c9a2b0e04e44375d3a9243839d4b07e48634"
+    },
+    "package": {
+      "path": ".tool-cache/research/mmj-shared-saves/package.log",
+      "bytes": 2697,
+      "sha256": "84141e006c758f76c74f6763c8509b48b601600af1bbe090d2623dc0838cedab"
+    }
+  },
+  "retainedFailures": [
+    "Initial test fixture used an incorrect GamePlatform constructor; corrected before execution.",
+    "A new test was accidentally nested in another test, then used a Dart rather than platform-channel error assertion; both corrected, affected cases and full suite pass.",
+    "Sandboxed Xcode SwiftPM compilation lacked compiler-cache access; approved toolchain retry passed.",
+    "Devbox script hash change required Nix daemon access; approved project-environment retry passed."
+  ],
+  "archive": {
+    "file": "build/releases/Broomm-macOS-mmj-shared-saves.zip",
+    "bytes": 20613927,
+    "sha256": "efff017ec7c3bbade075622b46d4443540db4076f1d2e5d49889b4c6cf9bae63",
+    "version": "0.1.4",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.4",
+      "build_number": "1005",
+      "target": "macos-universal",
+      "sha": "4561de6bf6cfe60d5eca2e71b5d9b9241c103d53",
+      "working_tree": true,
+      "source_tree_sha256": "18c83fc3b949e02a5f0a52153dde2c8ccf187b105292bd19428e49ffe1c12187",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zipVerified": true,
+    "sourceSignatureVerified": true,
+    "extractedSignatureVerified": true,
+    "allArchitecturesVerified": true,
+    "binaries": [
+      {
+        "path": "Contents/MacOS/broomm",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "547c9ab1c59217fe4e19b142b1cdcf16d99dec05a5c1cab0d1a325fdbc7cb985"
+      },
+      {
+        "path": "Contents/Frameworks/App.framework/Versions/A/App",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "4728b7e1dd1a589edaf9991c598df5a941687b94ddebadb8657cc4dc36530f49"
+      },
+      {
+        "path": "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl2.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "2b79634186a0c2eefdbdbdd2cc7188febf899c5eeb493625264a31f7135a4b8b"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl3.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "8f2f43effcf4cc092df84b627849610b5d64f132956cb9b297903a0e45ff9f2e"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-installer-guard.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "b7d82481cddc53b8e36c33bd45486a026fbf94b0731f020bdaf8dfb8222affd2"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-astris.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "4f5a92e75ff5409cd943e7b80bfa9947f9921a6b7bc7d4719a9c35064a68c376"
+      }
+    ],
+    "verificationDirectory": "build/releases/.verify-mmj-shared-saves-lofgEj",
+    "notarized": false,
+    "dataRoot": "~/Library/Application Support/Broomm"
+  }
+}

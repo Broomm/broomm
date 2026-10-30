@@ -1,5 +1,18 @@
 # Implementation plan
 
+MMJ shared-folder saves (2026-10-30): Android MMJ now connects the shared
+`citra-emu` tree with persistent read/write access, explicit private-storage
+warnings and per-profile private saves. SessionLease and a durable copy/restore
+journal surround native title-data/extdata swaps; standalone saves and states
+are restored after capture. The normal BROOMM history/import/backup/offline
+contracts apply to ordinary saves. Denied grants, outside writes and interrupted
+publication preserve copies; an explicit keep-folder resolution can finish an
+uncertain session without further upload. MMJ states and CIA installation are
+still missing. All 440 main Flutter tests and two separately scheduled full-size
+save tests pass, including five new MMJ save/recovery cases. Static analysis and
+Android Kotlin compilation pass. These remain distinct from unexecuted Android
+device acceptance. See [setup and recovery](docs/mmj-shared-saves.md).
+
 Measured Windows full-card test budget (2026-10-30): after the native updater
 fixture passes independently, Windows reports a separate PS2 cloud round-trip
 timeout. Its retained phase trace completes all five workflow phases in 51.182
@@ -24,6 +37,8 @@ manifest request. A missing generation resolves real remote file identities
 before its first import; failed, incomplete or mismatched responses retain the
 installation. Legacy update/DLC folders are excluded from base-game selection
 even without API category fields. See [reproduction and verification](docs/switch-installed-launch.md).
+
+Astris/Citra MMJ follow-up (2026-10-29): Astris 1.0.32+2398e7c80 adds managed macOS 15+ ARM64 Switch launch, private preferences/accounts, native controller/pause interop, ordinary-save ZIPs and independent update/DLC ownership. Native checks cover live remap/menu/disconnect, shutdown, save export/import and package publication/reuse/removal. At that milestone Android Citra MMJ added package/activity discovery, installation and GamePath launch, with progress/CIA adapters missing. The 2026-10-30 shared-folder follow-up above implements ordinary saves without relying on MMJ's incomplete private-storage provider. Physical Astris input/gyro, Android runtime and other-host acceptance remain separate. Defaults are configured-only and successful setup selects the newly installed emulator. See [walkthrough and evidence](docs/astris-and-citra-mmj.md).
 
 Updater preparation correction (2026-10-29): the production 0.1.2 → 0.1.3
 failure is reproduced with a progress callback holding a native receive port.
@@ -648,3 +663,63 @@ exact guard readbacks pass. It uses production Application Support storage,
 ad-hoc signing and disabled development self-installation; no owner or RomM
 progress was modified. Paused Astris/Citra MMJ/default-selection work remains
 excluded. See [walkthrough and evidence](docs/emulator-opening.md).
+
+## Android parity investigation — 2026-10-30
+
+The owner requested investigation before implementation after finding Android
+cloud progress unavailable in practice. The [per-app audit](docs/android-parity-audit.md)
+covers all nine Android adapters, source-level storage/provider access, save and
+state formats, CIA/WAD/NSP installer boundaries, BIOS/firmware provisioning,
+APK acquisition and ARMSX2 package variants. It distinguishes the four existing
+unverified save routes from missing integrations and does not count downloads or
+launch-only support as parity. Stable-folder profile swaps and device acceptance
+are proposals; no behavior, dependency, emulator installation or user progress
+was changed by this audit. Android runtime verification remains outstanding.
+
+## Android APK installation and connected saves — 2026-10-30
+
+The owner authorized APK acquisition/detection and reliable save folders, and
+accepted explicit save/close confirmation on returning from an external app.
+The [walkthrough](docs/android-installation-and-saves.md) documents the exact
+one-time setup for all nine adapters and the remaining native prerequisites.
+ARMSX2 detects `com.armsx2` and `com.armsx2.nightly`, preferring enabled stable;
+recovery and folder identity retain the original package. Official APK downloads
+have bounded redirects, progress, cancellation and partial-file cleanup before
+Android's installer confirmation. DuckStation retains its official store flow;
+PPSSPP Gold is detected without downloading a paid entitlement. Actual package
+readback, rather than installer handoff, establishes success/default selection.
+
+One stable folder per emulator/package serves every Broomm profile. Disposable
+setup probes verify writable replacement. Private working/original snapshots,
+durable journals and checked publication isolate each profile/game while
+preserving standalone emulator data. All nine adapters now resolve ordinary
+saves, with matching states for the eight apps that provide them. APK/ABI/core
+identity separates both local and remote state groups; cached fingerprints avoid
+rechecking unchanged APK/core bytes on every launch. Ambiguous console identities,
+paths outside the grant and changed external data fail without adoption. Legacy
+MMJ journals remain recoverable; unprovenanced legacy states stay local.
+
+Returning offers **Finished? Sync progress**; explicit confirmation is enough
+without emulator-process checks. Broomm still serializes its own transfers.
+Offline capture uses existing sealed cloud pending data and BROOMM history.
+Restart recovery can reconnect the original revoked folder or explicitly finish
+without further native writes/upload, preserving recovery copies. New Play
+requires a connected save folder instead of silently starting local-only.
+BIOS/firmware provisioning and new content installers remain later work. No
+additional Wii update integration is required; existing desktop WAD/DLC remains.
+
+Analysis is clean; all **455 Flutter tests** pass, including **35 focused Android
+cases**. All nine Kotlin files compile against the pinned Android/Flutter APIs;
+only two existing `versionCode` deprecation warnings remain. These checks include
+controlled real Dart files/cloud history and recovery, not native Android SAF or
+emulator execution. No APK was built and no Android device was available. No new
+runtime dependency or OS package was installed, and production/RomM progress was
+not modified. See the [evidence record](docs/android-installation-and-saves.json).
+
+The fresh universal [macOS build](build/releases/Broomm-macOS-android-saves.zip)
+is **20,613,929 bytes**, SHA-256
+`f17604056100722f17096b6e62d4f25d321cac19f5a76e2d16da44409954a3a6`.
+Version **0.1.4 (1006)** uses production Application Support storage. Archive
+integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O payloads contain ARM64 and x86_64. The build is ad-hoc
+signed, not notarized, and does not establish Android device acceptance.

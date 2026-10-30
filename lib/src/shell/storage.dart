@@ -320,10 +320,18 @@ class ShellStorage {
     String serverId,
     String platform,
     String emulator,
+  ) => emulatorDefaults(serverId, {platform: emulator});
+
+  Future<ShellRecords> emulatorDefaults(
+    String serverId,
+    Map<String, String> choices,
   ) => _change((s) {
     if (!s.servers.any((server) => server.id == serverId) ||
-        !RegExp(r'^[a-z0-9_-]{1,80}$').hasMatch(platform) ||
-        !RegExp(r'^[a-z0-9_-]{1,80}$').hasMatch(emulator)) {
+        choices.entries.any(
+          (entry) =>
+              !RegExp(r'^[a-z0-9_-]{1,80}$').hasMatch(entry.key) ||
+              !RegExp(r'^[a-z0-9_-]{1,80}$').hasMatch(entry.value),
+        )) {
       throw const FormatException('Invalid emulator preference');
     }
     return ShellRecords(
@@ -333,7 +341,8 @@ class ShellStorage {
       preferences: s.preferences,
       emulatorDefaults: {
         ...s.emulatorDefaults,
-        '$serverId:$platform': emulator,
+        for (final entry in choices.entries)
+          '$serverId:${entry.key}': entry.value,
       },
     );
   });

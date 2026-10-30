@@ -102,7 +102,18 @@ final playablePlatforms = [
     'xci',
     'nro',
   ]),
+  GamePlatform('3ds', 'citra-mmj', 'Citra MMJ', ControllerTarget.n3ds, 1, [
+    'cci',
+    '3ds',
+    'cxi',
+    'app',
+  ]),
   GamePlatform('switch', 'eden', 'Eden', ControllerTarget.switchPro, 4, [
+    'nsp',
+    'xci',
+    'nro',
+  ]),
+  GamePlatform('switch', 'astris', 'Astris', ControllerTarget.switchPro, 4, [
     'nsp',
     'xci',
     'nro',
@@ -172,7 +183,8 @@ List<GamePlatform> platformEmulators(RommPlatform platform) {
             .where(
               (p) =>
                   p.slug == target.slug &&
-                  (p.emulatorId != 'rpcs3-intel' || Platform.isMacOS),
+                  (p.emulatorId != 'rpcs3-intel' || Platform.isMacOS) &&
+                  (p.emulatorId != 'astris' || Platform.isMacOS),
             )
             .toList();
 }

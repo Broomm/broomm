@@ -172,8 +172,9 @@ Future<List<SwitchArchiveEntry>> switchGameEntries(File game) async {
 Future<SwitchNcaHeader> switchNcaHeader(
   File archive,
   SwitchArchiveEntry entry,
-  Uint8List key,
-) async {
+  Uint8List key, {
+  Future<Uint8List> Function(Uint8List, Uint8List, int)? decryptSector,
+}) async {
   if (entry.bytes < 0xc00) throw const FormatException('Truncated Switch NCA');
   final f = await archive.open();
   late Uint8List b;
@@ -183,7 +184,9 @@ Future<SwitchNcaHeader> switchNcaHeader(
     await f.close();
   }
   if (ascii.decode(b.sublist(0, 4), allowInvalid: true) != 'NCA3')
-    b = switchXtsSector(b, key, 1);
+    b = decryptSector == null
+        ? switchXtsSector(b, key, 1)
+        : await decryptSector(b, key, 1);
   final d = ByteData.sublistView(b);
   if (ascii.decode(b.sublist(0, 4), allowInvalid: true) != 'NCA3' ||
       b[5] > 5 ||
@@ -226,11 +229,15 @@ Future<Uint8List> switchHeaderKey(File file) async {
   ]);
 }
 
-Future<String> switchBaseIdentity(File game, Uint8List key) async {
+Future<String> switchBaseIdentity(
+  File game,
+  Uint8List key, {
+  Future<Uint8List> Function(Uint8List, Uint8List, int)? decryptSector,
+}) async {
   final ids = <String>{};
   for (final e in await switchGameEntries(game)) {
     if (!e.name.toLowerCase().endsWith('.nca')) continue;
-    final h = await switchNcaHeader(game, e, key);
+    final h = await switchNcaHeader(game, e, key, decryptSector: decryptSector);
     if (h.type == 0 && (int.parse(h.title, radix: 16) & 0x1fff) == 0)
       ids.add(h.title);
   }

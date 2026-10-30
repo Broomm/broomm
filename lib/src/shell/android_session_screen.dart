@@ -25,10 +25,66 @@ class AndroidSessionScreen extends StatefulWidget {
   State<AndroidSessionScreen> createState() => _AndroidSessionScreenState();
 }
 
-class _AndroidSessionScreenState extends State<AndroidSessionScreen> {
+class _AndroidSessionScreenState extends State<AndroidSessionScreen>
+    with WidgetsBindingObserver {
   bool started = false;
   bool completed = false;
   String? error;
+  bool _leftForEmulator = false, _offerSync = false, _promptOpen = false;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && widget.session.active)
+      _leftForEmulator = true;
+    if (state == AppLifecycleState.resumed && _leftForEmulator) {
+      _leftForEmulator = false;
+      _offerSync = true;
+      _showReturnPrompt();
+    }
+  }
+
+  void _showReturnPrompt() {
+    if (!_offerSync ||
+        _promptOpen ||
+        widget.session.busy ||
+        !widget.session.active ||
+        !mounted)
+      return;
+    _offerSync = false;
+    _promptOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (mounted) await run(finishPrompt);
+      _promptOpen = false;
+    });
+  }
+
+  Future<void> finishPrompt() async {
+    final confirmed = await showConsoleDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Finished? Sync progress'),
+        content: const Text(
+          'Save your progress and close the emulator before syncing. Returning to Broomm can leave it running. Only continue when you have finished playing.',
+        ),
+        actions: [
+          ConsoleButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Not finished'),
+          ),
+          ConsoleButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Emulator closed · Sync progress'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.finish();
+    if (!mounted) return;
+    setState(() => completed = true);
+    Navigator.pop(context);
+  }
+
   Future<void> run(Future<void> Function() action) async {
     setState(() => error = null);
     try {
@@ -42,6 +98,8 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    widget.session.addListener(_showReturnPrompt);
     // With no shared save storage there is nothing to restore before handoff.
     if (!widget.recovering && !widget.cloudReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,6 +109,13 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen> {
         }
       });
     }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.session.removeListener(_showReturnPrompt);
+    super.dispose();
   }
 
   @override
@@ -103,6 +168,59 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen> {
                         ),
                       ],
                       if (error != null) ProblemNotice(error!),
+                      if (error != null && active)
+                        ConsoleButton(
+                          onPressed: session.busy
+                              ? null
+                              : () => run(session.reconnectFolder),
+                          child: const Text('Reconnect original save folder'),
+                        ),
+                      if (error != null && active)
+                        ConsoleButton(
+                          onPressed: session.busy
+                              ? null
+                              : () => run(() async {
+                                  final keep = await showConsoleDialog<bool>(
+                                    context: context,
+                                    builder: (c) => AlertDialog(
+                                      title: const Text(
+                                        'Leave the emulator’s saves unchanged?',
+                                      ),
+                                      content: const Text(
+                                        'Close the emulator first. Broomm will finish this session without changing its folder or uploading uncertain progress. Private recovery copies will be kept. Use this when folder access or an external save change prevents normal recovery.',
+                                      ),
+                                      actions: [
+                                        ConsoleButton(
+                                          autofocus: true,
+                                          onPressed: () =>
+                                              Navigator.pop(c, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        ConsoleButton(
+                                          onPressed: () =>
+                                              Navigator.pop(c, true),
+                                          child: const Text(
+                                            'Emulator closed · Keep folder unchanged',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (keep != true) return;
+                                  await session.keepMmjFolder(
+                                    emulatorClosed: true,
+                                  );
+                                  if (mounted) {
+                                    setState(() => completed = true);
+                                    Navigator.pop(context);
+                                  }
+                                }),
+                          child: Text(
+                            widget.emulator == 'Citra MMJ'
+                                ? 'Keep MMJ folder unchanged · Finish'
+                                : 'Keep emulator folder unchanged · Finish',
+                          ),
+                        ),
                       const SizedBox(height: 24),
                       if (!active && !started)
                         ConsoleButton(

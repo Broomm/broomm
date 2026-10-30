@@ -1,0 +1,375 @@
+{
+  "utc": "2026-10-30T18:44:07.445370Z",
+  "scope": "Android APK acquisition, installed-app discovery, connected profile-isolated ordinary saves and states",
+  "source": {
+    "product": "Broomm",
+    "version": "0.1.4",
+    "build_number": "1006",
+    "target": "macos-universal",
+    "sha": "4561de6bf6cfe60d5eca2e71b5d9b9241c103d53",
+    "working_tree": true,
+    "source_tree_sha256": "9654aca7d3db5785b2ecf20b0cf7177f9cf6633c52064e3580e9683a5fb35b6c",
+    "entries": [
+      "AppIcon.icns",
+      "Assets.car",
+      "Base.lproj",
+      "NATIVE-SOURCES.md",
+      "broomm-release.json",
+      "native"
+    ]
+  },
+  "sources": {
+    "lib/src/android/apk_download.dart": {
+      "path": "lib/src/android/apk_download.dart",
+      "bytes": 6908,
+      "sha256": "e296f111a4b4c6a5881ef8396016758326ecc7c627bab46add22bc89cb32cb35"
+    },
+    "lib/src/android/emulators.dart": {
+      "path": "lib/src/android/emulators.dart",
+      "bytes": 27890,
+      "sha256": "b95567526005c1cd712445489382422f54b16304c7ed8ef282522f81c99b85c6"
+    },
+    "lib/src/android/progress.dart": {
+      "path": "lib/src/android/progress.dart",
+      "bytes": 3210,
+      "sha256": "c468ad870dbec760ece29b2f295e5c3cf972d340f5b286ee145dd593986139da"
+    },
+    "lib/src/android/save_plan.dart": {
+      "path": "lib/src/android/save_plan.dart",
+      "bytes": 24675,
+      "sha256": "35932c5895f131bbc2b368e6cfe84bbbf27b03ef4bb9946a431721cd4b9c2c7e"
+    },
+    "lib/src/android/shared_saves.dart": {
+      "path": "lib/src/android/shared_saves.dart",
+      "bytes": 11960,
+      "sha256": "8e92d504055ea9bc13dd90421bb5035176058267719d63c717075d63ee99c895"
+    },
+    "lib/src/android/session.dart": {
+      "path": "lib/src/android/session.dart",
+      "bytes": 13350,
+      "sha256": "94c82f9b203b0aaa948506122ad4e701e3d63fb50bfd2ff6f11d3583e87655f3"
+    },
+    "lib/src/shell/android_emulator_settings_screen.dart": {
+      "path": "lib/src/shell/android_emulator_settings_screen.dart",
+      "bytes": 16015,
+      "sha256": "3ae0ce10038eabebe86868acce18a536c7e68badb0be50ae5184f71732a3887a"
+    },
+    "lib/src/shell/android_session_screen.dart": {
+      "path": "lib/src/shell/android_session_screen.dart",
+      "bytes": 13073,
+      "sha256": "b9eedb8745409bfc82e83c1079cfeedeb545ab8e3cf68f1cf292230f7a66b1ce"
+    },
+    "lib/src/shell/app.dart": {
+      "path": "lib/src/shell/app.dart",
+      "bytes": 40720,
+      "sha256": "4170f943b796fdceaa0364190de175e17a5bd92d6e9eb90d95336ff1e8329ee7"
+    },
+    "lib/src/shell/cloud_model.dart": {
+      "path": "lib/src/shell/cloud_model.dart",
+      "bytes": 11843,
+      "sha256": "d50bb9cc8da4e63e8fbcb8fdbe29d4c325b26a90bc2b0e867b090797a4ecd9b4"
+    },
+    "lib/src/shell/model.dart": {
+      "path": "lib/src/shell/model.dart",
+      "bytes": 55605,
+      "sha256": "e7c1533fc3c5ca5117694d0446d8c17c803de9ad44e4477351ce26d2ea1c8d67"
+    },
+    "lib/src/switch_content.dart": {
+      "path": "lib/src/switch_content.dart",
+      "bytes": 8461,
+      "sha256": "65fc21b3e20e5e4b42052299d4276ce676ddfa9a28fb023f375a0d4ca1621e04"
+    },
+    "android/app/src/main/AndroidManifest.xml": {
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "bytes": 3954,
+      "sha256": "f1d4a13c9ad171fa81810476898e3b5771b7f5d7b12457c4d1a78574a9d4a8e6"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/BroommEmulators.kt": {
+      "path": "android/app/src/main/kotlin/app/broomm/broomm/BroommEmulators.kt",
+      "bytes": 26200,
+      "sha256": "345b7c40aff000b1de66c840acae98e8d47ceed5caa55986ec8f260dae4bdf68"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/SharedSaveFolder.kt": {
+      "path": "android/app/src/main/kotlin/app/broomm/broomm/SharedSaveFolder.kt",
+      "bytes": 26400,
+      "sha256": "636ddd6e16dc42219826f2f3f5a419b4144804d77b84004ef3055d7c0e56e7ae"
+    },
+    "android/app/src/main/kotlin/app/broomm/broomm/ApkContentProvider.kt": {
+      "path": "android/app/src/main/kotlin/app/broomm/broomm/ApkContentProvider.kt",
+      "bytes": 2692,
+      "sha256": "baea82e4bc033f863997be45dc5d66e1dd175e1955e5f1caf2e2ada63afdc31d"
+    },
+    "test/android_apk_download_test.dart": {
+      "path": "test/android_apk_download_test.dart",
+      "bytes": 6562,
+      "sha256": "94e570a7d12557c8efe5c495d7412e9f467e78236ff06a53f75b1cbb8d2a2bbc"
+    },
+    "test/android_folder_sync_test.dart": {
+      "path": "test/android_folder_sync_test.dart",
+      "bytes": 21580,
+      "sha256": "a259775e880c2a1464572498d784f684662f85e8bc48dd2bcf909c3d1a79418e"
+    },
+    "test/android_emulators_test.dart": {
+      "path": "test/android_emulators_test.dart",
+      "bytes": 22339,
+      "sha256": "061c14ae709d8c3723e2a783efcff24e393551162fb3bc798aa3f106cccf3849"
+    },
+    "test/mmj_shared_saves_test.dart": {
+      "path": "test/mmj_shared_saves_test.dart",
+      "bytes": 15963,
+      "sha256": "1ee2aa314ce87c2e6217fd84d31947c23af458f09d1018493066b4407f333335"
+    }
+  },
+  "verification": {
+    "flutterTestsPassed": 455,
+    "focusedAndroidTestsPassed": 35,
+    "analysis": "pass",
+    "kotlinFilesCompiled": 9,
+    "kotlinWarnings": "Two existing BroommUpdates.kt versionCode deprecations",
+    "androidApkBuilt": false,
+    "androidRuntimeExecuted": false,
+    "actualEmulatorSafVerified": false,
+    "productionProgressModified": false,
+    "realRomMSaveMutations": false,
+    "newRuntimeDependencies": [],
+    "newOsPackagesInstalled": []
+  },
+  "contracts": {
+    "armsx2Packages": [
+      "com.armsx2",
+      "com.armsx2.nightly"
+    ],
+    "armsx2Activity": "com.armsx2.MainActivity",
+    "armsx2Preference": "enabled stable before nightly",
+    "oneFolderPerEmulatorPackage": true,
+    "explicitClosedConfirmationSuffices": true,
+    "emulatorProcessExitHooks": false,
+    "ownTransferLocksRetained": true,
+    "durableNativeSwaps": true,
+    "standaloneDataRestored": true,
+    "statePhysicalAndCloudGroups": true,
+    "fingerprintCachesUseFreshMetadata": true,
+    "edenStates": false,
+    "biosFirmwareProvisioning": "deferred",
+    "newContentInstallers": "deferred",
+    "duckstationAcquisition": "official store",
+    "ppssppGoldAcquisition": "paid entitlement; free APK download only"
+  },
+  "upstreamResearch": {
+    "priorAudit": "docs/android-parity-audit.json",
+    "edenTitlePathChoice": {
+      "url": "https://git.eden-emu.dev/eden-emu/eden/raw/tag/v0.2.1/src/core/file_sys/savedata_factory.cpp",
+      "path": ".tool-cache/research/android-parity-audit/eden/source/src/core/file_sys/savedata_factory.cpp",
+      "bytes": 7403,
+      "sha256": "689b286eb9dac2298199bbb79d182a9f2c47c284b573f5e709953ff44b524a57",
+      "finding": "Future save path only when that exact title path exists; otherwise legacy."
+    }
+  },
+  "logs": {
+    "android-tests-final-3.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-final-3.log",
+      "bytes": 6509,
+      "sha256": "e0aa4ea486a6056cbb09ab4c0fd22253cd062d3af6bfadcd1b914df709de6886"
+    },
+    "android-tests-final-2.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-final-2.log",
+      "bytes": 6158,
+      "sha256": "2dbb4094ec05179b28d5829de8f56cb1cc9d426ae239b3e1c51c3175af184e3a"
+    },
+    "folder-tests-fixed.log": {
+      "path": ".tool-cache/research/android-parity-audit/folder-tests-fixed.log",
+      "bytes": 8882,
+      "sha256": "47299c66d0ea9bfc19bd72a5f9f25b1955a47143f84e88356dab23535dd0432a"
+    },
+    "implementation-analyze.log": {
+      "path": ".tool-cache/research/android-parity-audit/implementation-analyze.log",
+      "bytes": 249,
+      "sha256": "c615b608d0f11d91f470217ba28a67be9451dcb5591fb6d88fc0f93a557f3d81"
+    },
+    "analyze-final.log": {
+      "path": ".tool-cache/research/android-parity-audit/analyze-final.log",
+      "bytes": 249,
+      "sha256": "cafe86eb3f397c61137c13152cb405c3db0d90f3b139b8b226a3e8867c36f5f9"
+    },
+    "kotlin-implementation.log": {
+      "path": ".tool-cache/research/android-parity-audit/kotlin-implementation.log",
+      "bytes": 972,
+      "sha256": "89eec0d9e6b1ab3f56deb28a76964b1104db3c6848c2e3ab71f5a8bf7725b7f0"
+    },
+    "android-tests-5.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-5.log",
+      "bytes": 6037,
+      "sha256": "0fd3b90b3e3445415a71865a6332c5742071fa60ea9c51f0d4e90942165190b5"
+    },
+    "android-tests-4.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-4.log",
+      "bytes": 8678,
+      "sha256": "16c3c11f0f2a9a7c747769ee564fc1b9e014bd793943504cb40e8c294fe31d45"
+    },
+    "kotlin-final.log": {
+      "path": ".tool-cache/research/android-parity-audit/kotlin-final.log",
+      "bytes": 972,
+      "sha256": "89eec0d9e6b1ab3f56deb28a76964b1104db3c6848c2e3ab71f5a8bf7725b7f0"
+    },
+    "android-tests-3.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-3.log",
+      "bytes": 5833,
+      "sha256": "70d745491e00b059bcc67433e28ebb825b269cf99e5cd6a3b9fa40e7393609a5"
+    },
+    "flutter-suite-final.log": {
+      "path": ".tool-cache/research/android-parity-audit/flutter-suite-final.log",
+      "bytes": 81349,
+      "sha256": "115f15c91cde3e10b9982fb157a2ad912f938ee493f3ef2c62555b696acbe9de"
+    },
+    "macos-build.log": {
+      "path": ".tool-cache/research/android-parity-audit/macos-build.log",
+      "bytes": 509,
+      "sha256": "2235f02b675b32bbb2041d7f0ee0c9a2b0e04e44375d3a9243839d4b07e48634"
+    },
+    "android-tests-final.log": {
+      "path": ".tool-cache/research/android-parity-audit/android-tests-final.log",
+      "bytes": 6235,
+      "sha256": "d734cc025305f80fba2ce9ffc0d2ba649d808afe776b46ff8556d05380f06cfd"
+    },
+    "implementation-analyze-2.log": {
+      "path": ".tool-cache/research/android-parity-audit/implementation-analyze-2.log",
+      "bytes": 713,
+      "sha256": "bfb331f4879d8da9a03ed6496a2369447e1d9190aeda69ea2b91672b48fb8847"
+    },
+    "source-fetch.log": {
+      "path": ".tool-cache/research/android-parity-audit/source-fetch.log",
+      "bytes": 414,
+      "sha256": "64784dcba52f1ed50ecd26f467a5855cce9dc7704ffde92686073ad97c308014"
+    },
+    "implementation-analyze-3.log": {
+      "path": ".tool-cache/research/android-parity-audit/implementation-analyze-3.log",
+      "bytes": 1719,
+      "sha256": "a7098bbcefab3c540e15ec4791811d8f06c3824f3abba5fe7ae67fb409be95f7"
+    },
+    "folder-tests-native.log": {
+      "path": ".tool-cache/research/android-parity-audit/folder-tests-native.log",
+      "bytes": 10902,
+      "sha256": "2cc40594a145a37d3c7edb645301a228b179eff4bedbfbebc9ae5ad92280fc46"
+    },
+    "macos-package.log": {
+      "path": ".tool-cache/research/android-parity-audit/macos-package.log",
+      "bytes": 2691,
+      "sha256": "ac582835984d1b2867baa4b2dddb24f694b7025d54c2d8eb1550625d325794c1"
+    },
+    "bridges.log": {
+      "path": ".tool-cache/research/android-parity-audit/bridges.log",
+      "bytes": 407,
+      "sha256": "59966c9a53ebd565ab6d99c027af01bd4bc45e948b2eab6a74eae6636e32a25d"
+    },
+    "folder-tests.log": {
+      "path": ".tool-cache/research/android-parity-audit/folder-tests.log",
+      "bytes": 5674,
+      "sha256": "66eab77d4c6a0fc08d108bc7f3f7546b2e25faaa4873322e9abbf7c1d305c85f"
+    },
+    "flutter-suite.log": {
+      "path": ".tool-cache/research/android-parity-audit/flutter-suite.log",
+      "bytes": 81668,
+      "sha256": "ec94112ab2f2dbb8330961a4323a017bb5d74c728d17b68271ec9dc847973812"
+    }
+  },
+  "retainedFailureNotes": [
+    "Sandbox loopback denial required the authorized network-enabled test run.",
+    "Corrected fixture root trailing slash and invalid tiny DS save; native import validation was retained.",
+    "Corrected Dart syntax/import diagnostics and legacy expectations for the owner-adopted explicit confirmation contract.",
+    "Final passing checks do not skip native-runner tests or relax timeouts/assertions to hide failures."
+  ],
+  "macosArtifact": {
+    "file": "build/releases/Broomm-macOS-android-saves.zip",
+    "bytes": 20613929,
+    "sha256": "f17604056100722f17096b6e62d4f25d321cac19f5a76e2d16da44409954a3a6",
+    "version": "0.1.4",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.4",
+      "build_number": "1006",
+      "target": "macos-universal",
+      "sha": "4561de6bf6cfe60d5eca2e71b5d9b9241c103d53",
+      "working_tree": true,
+      "source_tree_sha256": "9654aca7d3db5785b2ecf20b0cf7177f9cf6633c52064e3580e9683a5fb35b6c",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zipVerified": true,
+    "sourceSignatureVerified": true,
+    "extractedSignatureVerified": true,
+    "allArchitecturesVerified": true,
+    "binaries": [
+      {
+        "path": "Contents/MacOS/broomm",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "7d748b2fe8fab5c5931d4c3e4d9ddc75ab5311c81865605d6482354c1ae3524d"
+      },
+      {
+        "path": "Contents/Frameworks/App.framework/Versions/A/App",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "cf3d7158d4ad977862f7d3d8612a88029b3f7386964f1b741439d02613c401bf"
+      },
+      {
+        "path": "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl2.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "34b14bcac0e1584cb4c80628e982074be38bbf083f4c5cb37123d02f2fe74a2b"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-sdl3.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "3c232cfa147bc31a995b58c2f7cf742a979647a5976f56a070446aa14abf27e1"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-installer-guard.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "f0e19d656501182c8daf27ca1dedfa7076db37a446175ad352940c0b36e443a5"
+      },
+      {
+        "path": "Contents/Resources/native/broomm-astris.dylib",
+        "architectures": [
+          "x86_64",
+          "arm64"
+        ],
+        "sha256": "43da2e66d0d58cfc809fcdd1c2ea61319d4d411e661e57079c6db42022ba7841"
+      }
+    ],
+    "verificationDirectory": "build/releases/.verify-android-saves-sO5iTJ",
+    "notarized": false,
+    "dataRoot": "~/Library/Application Support/Broomm"
+  },
+  "remainingAcceptance": [
+    "Full APK build/manifest and resource merge on Android CI.",
+    "Actual install/upgrade/cancel, stable/nightly detection and retained SAF grants on device.",
+    "Real emulator save/state round trips across two profiles, offline capture and restart/revoked-grant recovery.",
+    "DuckStation beta and ARMSX2 custom-folder settings require native verification."
+  ]
+}

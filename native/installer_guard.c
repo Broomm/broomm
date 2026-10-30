@@ -7,6 +7,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <errno.h>
+#include <stdint.h>
+#include "process_identity.inc"
 #include "ppsspp_storage.inc"
 #include "eden_probe.inc"
 static int writer_fd = -1;
@@ -33,7 +36,7 @@ __attribute__((constructor)) static void guard_installer_writer(void) {
         fputs("Broomm installer writer lock could not be acquired.\n",stderr);
         _exit(78);
     }
-    if (coordinator) {
+    if (getenv("BROOMM_CONFIGURATION_ROOT") || getenv("BROOMM_CONFIGURATION_SANDBOX")) {
         // Launch Services creates the app outside the launcher's sandbox.
         // Apply the Dart-supplied child policy before native settings writers.
         const char *root = getenv("BROOMM_CONFIGURATION_ROOT");

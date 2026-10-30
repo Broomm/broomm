@@ -56,7 +56,12 @@ class GamePackages {
   final String platform;
   final String switchEmulator;
   String get packageEngine => engine == 'eden' ? 'eden' : platform;
-  String get storageId => engine == 'eden' ? 'switch-eden' : platform;
+  String get storageId => engine == 'eden'
+      ? 'switch-eden'
+      : engine == 'astris'
+      ? 'switch-astris'
+      : platform;
+  bool get _selectionPackages => platform == 'switch' && engine != 'eden';
   final PrepareAddonProfile prepare;
   final WiiImporter wiiImporter;
   final SwitchInspector switchInspector;
@@ -73,14 +78,20 @@ class GamePackages {
   String get engine => switch (platform) {
     'wii' => 'dolphin',
     'psp' => 'ppsspp',
-    _ => switchEmulator == 'Eden' ? 'eden' : 'ryubing',
+    _ =>
+      switchEmulator == 'Eden'
+          ? 'eden'
+          : switchEmulator == 'Astris'
+          ? 'astris'
+          : 'ryubing',
   };
 
   Future<Directory> _directory(String server, int game) async {
     if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(server) ||
         game < 1 ||
         !{'wii', 'switch', 'psp'}.contains(platform) ||
-        platform == 'switch' && !{'Ryubing', 'Eden'}.contains(switchEmulator)) {
+        platform == 'switch' &&
+            !{'Ryubing', 'Eden', 'Astris'}.contains(switchEmulator)) {
       throw const FormatException('Invalid native package owner');
     }
     return File(
@@ -815,7 +826,7 @@ class GamePackages {
         if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(id)) continue;
         if (p is! Directory)
           throw const FileSystemException('Linked profile was kept');
-        final native = Directory('${p.path}/emulators/ryubing');
+        final native = Directory('${p.path}/emulators/$engine');
         if (!await addonExists(native.path)) continue;
         await _profile(native, id);
         for (final rel in [
@@ -858,7 +869,7 @@ class GamePackages {
           if (gid == null || gid < 1) continue;
           if (game is! Directory)
             throw const FileSystemException('Linked add-on game was kept');
-          final dir = Directory('${game.path}/switch');
+          final dir = Directory('${game.path}/$storageId');
           if (!await addonExists(dir.path) ||
               await addonExists('${dir.path}/deleting.json'))
             continue;
@@ -896,7 +907,7 @@ class GamePackages {
           game.uri.pathSegments.where((s) => s.isNotEmpty).last,
         );
         if (gid == null || gid < 1 || game is! Directory) continue;
-        final dir = Directory('${game.path}/switch');
+        final dir = Directory('${game.path}/$storageId');
         final marker = File('${dir.path}/retained.json');
         if (!await addonExists(marker.path)) continue;
         final kept = await addonJson(marker);
@@ -1020,9 +1031,7 @@ class GamePackages {
     }
     final current = File('${dir.path}/current.json');
     if (await addonExists(current.path)) await current.delete();
-    final references = engine == 'ryubing'
-        ? await _switchReferences()
-        : <Uri>{};
+    final references = _selectionPackages ? await _switchReferences() : <Uri>{};
     final kept = <String>[];
     for (final name in (deleting['generations'] as List).cast<String>()) {
       if (!RegExp(r'^generation-[a-zA-Z0-9_-]+$').hasMatch(name))
@@ -1055,6 +1064,6 @@ class GamePackages {
     else if (await addonExists(retained.path))
       await retained.delete();
     await intent.delete();
-    if (engine == 'ryubing') await _collectRetained(references);
+    if (_selectionPackages) await _collectRetained(references);
   }
 }

@@ -17,4 +17,12 @@ done
   native/installer_guard.c -framework AppKit -o "$stage/broomm-installer-guard.dylib"
 for major in 2 3; do mv "$stage/broomm-sdl$major.dylib" "build/native/broomm-sdl$major.dylib"; done
 mv "$stage/broomm-installer-guard.dylib" build/native/broomm-installer-guard.dylib
+/usr/bin/xcrun clang -arch arm64 -arch x86_64 -dynamiclib -fobjc-arc -fblocks -std=c11 -g -O1 -Wall -Wextra -Werror \
+  native/astris_bridge.m -framework AppKit -framework GameController -Wl,-undefined,dynamic_lookup \
+  -o "$stage/broomm-astris.dylib"
+mv "$stage/broomm-astris.dylib" build/native/broomm-astris.dylib
+for library in build/native/broomm-*.dylib; do
+  /usr/bin/codesign --force --sign - "$library"
+  /usr/bin/codesign --verify --strict --all-architectures "$library"
+done
 shasum -a 256 build/native/*.dylib > build/native/SHA256SUMS

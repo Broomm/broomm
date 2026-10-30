@@ -58,9 +58,12 @@
         <package android:name="org.ppsspp.ppssppgold" />
         <package android:name="me.magnum.melonds" />
         <package android:name="org.azahar_emu.azahar" />
+        <package android:name="org.citra.emu" />
+        <package android:name="com.antutu.ABenchMark" />
         <package android:name="org.dolphinemu.dolphinemu" />
         <package android:name="dev.eden.eden_emulator" />
         <package android:name="com.armsx2" />
+        <package android:name="com.armsx2.nightly" />
         <package android:name="com.github.stenzek.duckstation" />
         <package android:name="com.retroarch" />
         <package android:name="com.retroarch.aarch64" />

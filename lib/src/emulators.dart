@@ -123,6 +123,7 @@ abstract class EmulatorAdapter {
     'PCSX2' || 'ARMSX2' => const Ps2Adapter(),
     'PPSSPP' => const PpssppAdapter(),
     'Eden' => const EdenAdapter(),
+    'Astris' => const AstrisAdapter(),
     _ => throw UnsupportedError('Unsupported emulator: $name'),
   };
 }
@@ -751,3 +752,71 @@ class RyubingAdapter extends EmulatorAdapter {
     return ['-r', e.user, rom];
   }
 }
+
+class AstrisAdapter extends EmulatorAdapter {
+  const AstrisAdapter();
+  @override
+  Future<List<String>> prepare(
+    PreparedEmulator e,
+    TestGame game,
+    String rom,
+    int commandPort,
+  ) async {
+    final seed = Map<String, dynamic>.from(
+      (astrisInputTemplate)['input'] as Map,
+    );
+    await atomicText(
+      '${e.root}/controller-config.json',
+      jsonEncode([
+        for (var p = 0; p < 4; p++)
+          {...seed, 'id': 'broomm-$p', 'player_index': 'Player${p + 1}'},
+      ]),
+    );
+    // The native adapter sends this process a normal open-document event.
+    return [];
+  }
+}
+
+const astrisInputTemplate = {
+  'input': {
+    'backend': 'Gamepad',
+    'id': '',
+    'controller_type': 'ProController',
+    'player_index': 'Player1',
+    'enable_motion': true,
+    'enable_rumble': false,
+    'enable_light': false,
+    'enable_sideways_orientation': true,
+    'enable_cemu_hook_motion': false,
+    'use_nintendo_layout': false,
+    'deadzone_left': 0.1,
+    'deadzone_right': 0.1,
+    'range_left': 1,
+    'range_right': 1,
+    'trigger_threshold': 0.5,
+    'left_joycon_stick': {'joystick': 'Left', 'stick_button': 'LeftStick'},
+    'right_joycon_stick': {'joystick': 'Right', 'stick_button': 'RightStick'},
+    'left_joycon': {
+      'button_minus': 'Back',
+      'button_l': 'LeftShoulder',
+      'button_zl': 'LeftTrigger',
+      'button_sl': 'Unbound',
+      'button_sr': 'Unbound',
+      'dpad_up': 'DpadUp',
+      'dpad_down': 'DpadDown',
+      'dpad_left': 'DpadLeft',
+      'dpad_right': 'DpadRight',
+    },
+    'right_joycon': {
+      'button_plus': 'Start',
+      'button_r': 'RightShoulder',
+      'button_zr': 'RightTrigger',
+      'button_sl': 'Unbound',
+      'button_sr': 'Unbound',
+      'button_a': 'B',
+      'button_b': 'A',
+      'button_x': 'Y',
+      'button_y': 'X',
+    },
+  },
+};

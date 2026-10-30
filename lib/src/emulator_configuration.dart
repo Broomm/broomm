@@ -37,6 +37,12 @@ class EmulatorConfiguration {
         throw StateError(
           'The native writer guard is missing. Use a complete Broomm build.',
         );
+      if (e.name == 'Astris' &&
+          !await File('${File(guard).parent.path}/broomm-astris.dylib')
+              .exists())
+        throw StateError(
+          'The Astris preference bridge is missing. Use a complete Broomm build.',
+        );
       final base = await data.resolveSymbolicLinks();
       final writer = '$base/writer.lock';
       final coordinator = '$base/session.lock';
@@ -52,12 +58,19 @@ class EmulatorConfiguration {
         'TMPDIR': temp.path,
         'PATH': '/usr/bin:/bin',
         'LANG': 'en_US.UTF-8',
-        'DYLD_INSERT_LIBRARIES': guard,
+        'DYLD_INSERT_LIBRARIES': e.name == 'Astris'
+            ? '$guard:${File(guard).parent.path}/broomm-astris.dylib'
+            : guard,
         'BROOMM_INSTALLER_WRITER_LOCK': writer,
         'BROOMM_CONFIGURATION_SESSION_LOCK': coordinator,
         'BROOMM_CONFIGURATION_ROOT': root,
         'BROOMM_CONFIGURATION_SANDBOX':
-            '(version 1)(allow default)(deny file-write* (require-all (require-not (subpath ${quote(root)})) (require-not (literal ${quote(writer)})) (require-not (literal ${quote(coordinator)}))))',
+            '(version 1)(allow default)(deny file-write* (require-all (require-not (subpath ${quote(root)})) ${e.name == 'Astris' ? '(require-not (subpath ${quote(await Directory.systemTemp.resolveSymbolicLinks())}))' : ''} (require-not (literal ${quote(writer)})) (require-not (literal ${quote(coordinator)}))))',
+        if (e.name == 'Astris') ...{
+          'BROOMM_ASTRIS_ROOT': root,
+          'BROOMM_ASTRIS_USER': e.user,
+          'BROOMM_WRITER_LOCK': writer,
+        },
         if (e.name == 'Eden') 'BROOMM_EDEN': '1',
         if (e.name == 'PPSSPP') 'BROOMM_PSP_MEMSTICK': e.user,
       };

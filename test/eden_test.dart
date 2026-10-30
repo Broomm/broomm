@@ -30,7 +30,11 @@ void main() {
     final choices = platformEmulators(
       const RommPlatform(30, 'Switch', 'switch', 1),
     );
-    expect(choices.map((c) => c.emulator).toList(), ['Ryubing', 'Eden']);
+    expect(choices.map((c) => c.emulator).toList(), [
+      'Ryubing',
+      'Eden',
+      if (Platform.isMacOS) 'Astris',
+    ]);
     final e = PreparedEmulator(
       'Eden',
       root.path,

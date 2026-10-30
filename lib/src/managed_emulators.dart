@@ -264,7 +264,7 @@ class ManagedEmulators extends ChangeNotifier {
         if (b.isRpcs3 &&
             !await File('$base/ps3_firmware/sys/external/liblv2.sprx').exists())
           resourceProblems[b.id] = 'PS3 firmware required';
-        if ({'ryubing', 'eden'}.contains(b.id) &&
+        if ({'ryubing', 'eden', 'astris'}.contains(b.id) &&
             (!await File('$base/prod_keys').exists() ||
                 !await File('$base/title_keys').exists() ||
                 !await Directory('$base/switch_firmware').exists()))
@@ -369,7 +369,7 @@ class ManagedEmulators extends ChangeNotifier {
       final resources = <String, String>{};
       final allowed = b.isRpcs3
           ? ['ps3_firmware']
-          : {'ryubing', 'eden'}.contains(b.id)
+          : {'ryubing', 'eden', 'astris'}.contains(b.id)
           ? ['switch_firmware', 'prod_keys', 'title_keys']
           : b.id == 'retroarch'
           ? ['bios']
@@ -474,9 +474,12 @@ class ManagedEmulators extends ChangeNotifier {
     };
   }
 
-  Future<void> install(SetupPlan selected) {
+  Future<void> install(
+    SetupPlan selected, {
+    Future<void> Function(TestedBuild)? onInstalled,
+  }) {
     if (busy) return _work ?? Future.value();
-    final work = _install(selected);
+    final work = _install(selected, onInstalled: onInstalled);
     _work = work;
     return work.whenComplete(() {
       if (identical(_work, work)) _work = null;
@@ -675,7 +678,10 @@ class ManagedEmulators extends ChangeNotifier {
     );
   }
 
-  Future<void> _install(SetupPlan selected) async {
+  Future<void> _install(
+    SetupPlan selected, {
+    Future<void> Function(TestedBuild)? onInstalled,
+  }) async {
     if (busy) return;
     busy = true;
     error = null;
@@ -818,6 +824,7 @@ class ManagedEmulators extends ChangeNotifier {
         ) as Map;
         if ((readback['selected'] as Map)[b.id] != b.hash)
           throw const FileSystemException('Setup selection readback failed');
+        await onInstalled?.call(b);
       }
       notice = 'Emulators are ready. Choose a downloaded game on Home to play.';
       plan = null;
@@ -1124,7 +1131,8 @@ class ManagedEmulators extends ChangeNotifier {
           _ => 'Ryubing',
         };
     if (emulator != null &&
-        (platform != 'switch' || !{'Ryubing', 'Eden'}.contains(emulator)))
+        (platform != 'switch' ||
+            !{'Ryubing', 'Eden', 'Astris'}.contains(emulator)))
       throw const FormatException('Unsupported package emulator');
     final b = buildFor(name);
     if (error != null) throw StateError(error!);
@@ -1212,7 +1220,7 @@ class ManagedEmulators extends ChangeNotifier {
             await File(
               '${data.path}/profiles/$profileId/emulators/rpcs3/portable/dev_flash/sys/external/liblv2.sprx',
             ).exists()) &&
-        !({'ryubing', 'eden'}.contains(b.id) &&
+        !({'ryubing', 'eden', 'astris'}.contains(b.id) &&
             await File(
               '${data.path}/profiles/$profileId/emulators/${b.profileId}/${b.id == 'eden' ? 'data/eden/keys' : 'user/system'}/prod.keys',
             ).exists() &&
