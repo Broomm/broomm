@@ -65,6 +65,43 @@ remain unverified by this check. The
 release and artifact identities; ignored logs are in
 `.tool-cache/research/updater-013/`.
 
+## Windows native cancellation fixture (2026-10-30)
+
+The Windows run for `efe599f` failed before the updater's `ready` checkpoint.
+The original test captured neither process exit nor PowerShell output, so its
+eight-second timeout alone cannot establish whether startup was delayed or the
+helper had already failed. No replacement was attempted in that test.
+
+CI now runs this fixture in a mandatory, sequential Windows step after the
+parallel Flutter suite. The suite excludes the `native-windows-updater` tag;
+the dedicated step explicitly selects it and preserves a failing exit status.
+It still runs if another test step fails. Startup and cancellation deadlines
+remain eight seconds, and the original executable and absence of a backup are
+checked after cancellation.
+
+The fixture watches early helper exit, drains bounded stdout/stderr, retains the
+native installer error on failure and emits it as a bounded GitHub annotation.
+Two portable regressions cover exit-before-ready and readiness while the writer
+remains alive. The existing native Windows test stays enabled. This changes
+test supervision/scheduling, not the application's updater or permissions.
+The initial log does not prove a production updater failure; Windows execution
+must be confirmed by the new native CI step.
+
+```sh
+# Run on Windows with the existing pinned Flutter/Windows host toolchain:
+flutter test --no-pub test/application_updates_test.dart --tags native-windows-updater --concurrency=1 --reporter expanded
+# Shared updater and lifecycle regressions on the development host:
+devbox run -- flutter test --no-pub test/application_updates_test.dart test/application_update_archives_test.dart test/release_workflow_test.dart --reporter expanded
+```
+
+Fixtures use disposable directories and child processes. They cancel before
+replacement, retain the original fixture executable and clean up after child
+exit. Set `BROOMM_NATIVE_UPDATER_DIAGNOSTICS` to a test-output path to retain a
+failure report outside the temporary directory; CI uses
+`build/native-updater-diagnostics.txt`. Application Support and RomM data are
+not used. Ignored local logs are under
+`.tool-cache/research/windows-updater-test/`.
+
 ## Use it
 
 1. Install an official packaged Broomm release containing this updater. Keep the

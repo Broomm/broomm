@@ -1,5 +1,13 @@
 # Implementation plan
 
+Windows updater test supervision (2026-10-30): the native PowerShell cancellation
+fixture runs in its own mandatory Windows step, separate from parallel Flutter
+tests, with unchanged eight-second deadlines. It reports early process exit,
+bounded output and the installer log instead of only a missing checkpoint.
+Portable regressions cover early exit and live-writer readiness. No application
+updater behavior changes; native Windows execution is checked by CI. See
+[reproduction and scope](docs/application-updates.md#windows-native-cancellation-fixture-2026-10-30).
+
 Installed Switch launch correction (2026-10-30): the package-selection preflight
 now reads the installed receipt and existing native package checkpoint instead
 of requiring the lightweight saved game metadata to contain a downloadable RomM

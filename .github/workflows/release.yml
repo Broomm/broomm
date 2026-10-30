@@ -110,12 +110,27 @@ jobs:
         if: matrix.platform == 'linux'
         run: bash tool/ci/run.sh dart format --output=none --set-exit-if-changed lib test tool
       - name: Test
-        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded --exclude-tags full-size-save
+        run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded --exclude-tags 'full-size-save || native-windows-updater'
       # Full native memory cards require repeated durable copies/readback. Give
       # those tests the runner without competing suites, with unchanged limits.
       - name: Test full-size save workflows
         if: ${{ !cancelled() }}
         run: bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded test/playstation_test.dart --tags full-size-save --concurrency=1
+      - name: Test native Windows updater
+        if: ${{ !cancelled() && matrix.platform == 'windows' }}
+        env:
+          BROOMM_NATIVE_UPDATER_DIAGNOSTICS: build/native-updater-diagnostics.txt
+        run: |
+          broomm_updater_status=0
+          bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter expanded test/application_updates_test.dart --tags native-windows-updater --concurrency=1 || broomm_updater_status=$?
+          if [[ "$broomm_updater_status" -ne 0 && -f "$BROOMM_NATIVE_UPDATER_DIAGNOSTICS" ]]; then
+            broomm_updater_details="$(tail -c 12000 "$BROOMM_NATIVE_UPDATER_DIAGNOSTICS")"
+            broomm_updater_details="${broomm_updater_details//'%'/'%25'}"
+            broomm_updater_details="${broomm_updater_details//$'\r'/'%0D'}"
+            broomm_updater_details="${broomm_updater_details//$'\n'/'%0A'}"
+            printf '::error title=Windows updater fixture::%s\n' "$broomm_updater_details"
+          fi
+          exit "$broomm_updater_status"
 
   native-macos:
     runs-on: macos-26

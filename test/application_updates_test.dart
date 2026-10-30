@@ -191,16 +191,63 @@ Future<(AppUpdate, MemoryUpdateTransport, Directory)> updateFixture(
   return (update, transport, target);
 }
 
-Future<void> waitFor(File file) async {
+Future<void> waitFor(File file, {Future<int>? helperExit}) async {
+  int? exited;
+  if (helperExit != null)
+    unawaited(helperExit.then<void>((code) => exited = code));
   final until = DateTime.now().add(const Duration(seconds: 8));
   while (!await file.exists()) {
+    if (exited != null)
+      fail('Helper exited with code $exited before checkpoint: ${file.path}');
     if (DateTime.now().isAfter(until))
       fail('Expected fixture checkpoint was not reached: ${file.path}');
     await Future<void>.delayed(const Duration(milliseconds: 20));
   }
 }
 
+Future<String> helperOutput(Stream<List<int>> stream) async {
+  final bytes = <int>[];
+  await for (final chunk in stream) {
+    bytes.addAll(chunk.take((16 * 1024 - bytes.length).clamp(0, chunk.length)));
+  }
+  return utf8.decode(bytes, allowMalformed: true);
+}
+
 void main() {
+  test('helper readiness reports an early exit instead of waiting for a missing checkpoint', () async {
+    final root = await Directory.systemTemp.createTemp('broomm-helper-exit-');
+    addTearDown(() => root.delete(recursive: true));
+    final exit = Completer<int>();
+    final ready = waitFor(File('${root.path}/ready'), helperExit: exit.future);
+    final failure = expectLater(
+      ready,
+      throwsA(
+        isA<TestFailure>().having(
+          (e) => e.message,
+          'diagnostic',
+          contains('exited with code 23'),
+        ),
+      ),
+    );
+    exit.complete(23);
+    await failure;
+  });
+  test(
+    'helper readiness completes while its acknowledged writer remains alive',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'broomm-helper-ready-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final exit = Completer<int>();
+      final marker = File('${root.path}/ready');
+      final ready = waitFor(marker, helperExit: exit.future);
+      await marker.writeAsString('ready');
+      await ready;
+      expect(exit.isCompleted, isFalse);
+      exit.complete(0);
+    },
+  );
   test('update discovery queries the organization repository and accepts its canonical release assets', () async {
     final release = updateRelease('0.1.2', target: 'macos-universal');
     for (final asset in release['assets'] as List) {
@@ -846,43 +893,75 @@ void main() {
     }
   }, testOn: '!windows');
 
-  test('native Windows helper acknowledges startup and cancels without replacement', () async {
-    final root = await Directory.systemTemp.createTemp(
-      'broomm-update-windows-',
-    );
-    addTearDown(() => root.delete(recursive: true));
-    final script = await File('${root.path}/install.ps1')
-        .writeAsString(windowsUpdateHelper);
-    final claim = await File('${root.path}/claim').writeAsString(root.path);
-    final helper = await Process.start(
-      '${Platform.environment['SystemRoot']}/System32/WindowsPowerShell/v1.0/powershell.exe',
-      [
-        '-NoProfile',
-        '-NonInteractive',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        script.path,
-        '$pid',
-        '${root.path}/current',
-        '${root.path}/new',
-        '${root.path}/previous',
-        root.path,
-        'windows',
-        claim.path,
-      ],
-    );
-    try {
-      await waitFor(File('${root.path}/ready'));
-      await File('${root.path}/cancel').writeAsString('cancel');
-      expect(await helper.exitCode.timeout(const Duration(seconds: 8)), 0);
-      expect(await claim.exists(), isFalse);
-      expect(await File('${root.path}/installed').exists(), isFalse);
-    } finally {
-      helper.kill();
-      await helper.exitCode;
-    }
-  }, testOn: 'windows');
+  test(
+    'native Windows helper acknowledges startup and cancels without replacement',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'broomm-update-windows-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final script = await File('${root.path}/install.ps1')
+          .writeAsString(windowsUpdateHelper);
+      final claim = await File('${root.path}/claim').writeAsString(root.path);
+      final current = await Directory('${root.path}/current').create();
+      final original = await File('${current.path}/broomm.exe')
+          .writeAsString('keep');
+      final helper = await Process.start(
+        '${Platform.environment['SystemRoot']}/System32/WindowsPowerShell/v1.0/powershell.exe',
+        [
+          '-NoProfile',
+          '-NonInteractive',
+          '-ExecutionPolicy',
+          'Bypass',
+          '-File',
+          script.path,
+          '$pid',
+          '${root.path}/current',
+          '${root.path}/new',
+          '${root.path}/previous',
+          root.path,
+          'windows',
+          claim.path,
+        ],
+        workingDirectory: root.path,
+      );
+      final output = helperOutput(helper.stdout),
+          errors = helperOutput(helper.stderr),
+          exit = helper.exitCode;
+      try {
+        await waitFor(File('${root.path}/ready'), helperExit: exit);
+        await File('${root.path}/cancel').writeAsString('cancel');
+        expect(await exit.timeout(const Duration(seconds: 8)), 0);
+        expect(await claim.exists(), isFalse);
+        expect(await File('${root.path}/installed').exists(), isFalse);
+        expect(await original.readAsString(), 'keep');
+        expect(await Directory('${root.path}/previous').exists(), isFalse);
+      } catch (error, stack) {
+        helper.kill();
+        final code = await exit;
+        final log = File('${root.path}/install.log');
+        final native = await log.exists()
+            ? await helperOutput(log.openRead(0, 16 * 1024))
+            : '(no installer log)';
+        final diagnostic =
+            '$error\nHelper exit after cleanup: $code\nstdout:\n${await output}\nstderr:\n${await errors}\ninstaller:\n$native';
+        final destination =
+            Platform.environment['BROOMM_NATIVE_UPDATER_DIAGNOSTICS'];
+        if (destination != null) {
+          final file = File(destination);
+          await file.parent.create(recursive: true);
+          await file.writeAsString(diagnostic, flush: true);
+        }
+        Error.throwWithStackTrace(TestFailure(diagnostic), stack);
+      } finally {
+        helper.kill();
+        await exit;
+        await Future.wait([output, errors]);
+      }
+    },
+    testOn: 'windows',
+    tags: ['native-windows-updater'],
+  );
 
   test('native macOS helper replaces a private app bundle and relaunches it through Launch Services', () async {
     final root = await Directory.systemTemp.createTemp(
