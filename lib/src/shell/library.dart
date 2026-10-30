@@ -124,7 +124,16 @@ class GameLibrary {
     _validatePaths(files.map((f) => f['path'] as String).toList());
     final result = <String>[];
     for (final f in files) {
-      if (excludeAddons && {'update', 'dlc'}.contains(f['category'])) continue;
+      // Older receipts can lack API roles; the attachment folders are also
+      // part of RomM's update/DLC contract. Root-level packages use the role.
+      if (excludeAddons &&
+          ({'update', 'dlc'}.contains(f['category']) ||
+              {
+                'update',
+                'updates',
+                'dlc',
+              }.contains((f['path'] as String).split('/').first.toLowerCase())))
+        continue;
       final file = await _payload(
         Directory('${entry.directory.path}/content'),
         f['path'] as String,

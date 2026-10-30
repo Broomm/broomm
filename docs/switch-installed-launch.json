@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-30",
+  "scope": "Switch installed-game launch fix only; pending emulator additions excluded",
+  "baseRevision": "81877fd13be0bed9b505b09d3755faa1cc54a498",
+  "selectedCodePatchSha256": "6beee84a45ad09adba1ce8c049aecd1b373c4590be09a78d15726fa260a2adfa",
+  "host": "macOS 27.0.1 / M1 Pro / Xcode 27.1 / Devbox Flutter 3.47.0",
+  "verification": {
+    "analyzer": "pass",
+    "mainSuitePassed": 426,
+    "separateFullSizeSaveTestsPassed": 2,
+    "readOnlyInstalledReceiptChecksPassed": 1,
+    "installedGame": {
+      "name": "Super Smash Bros. Ultimate",
+      "romId": 8103,
+      "installedFiles": 101,
+      "base": 1,
+      "updates": 1,
+      "dlc": 99,
+      "missingOrWrongSize": 0,
+      "persistedRemoteFiles": 0,
+      "existingCheckpointReused": true,
+      "missingCheckpointDetected": true,
+      "elapsedMs": 93,
+      "romPayloadBytesRead": 0
+    },
+    "regressions": [
+      "Base-only restart without a downloadable manifest",
+      "Shared content generation applied to both profiles after restart; damaged checkpoint rejected",
+      "First import resolves real file identities and reuses installed root-role or legacy folder DLC",
+      "Unavailable, incomplete or mismatched manifests preserve media without content publication"
+    ],
+    "nativeGameplayAcceptance": false,
+    "otherNativeHostsVerified": false
+  },
+  "localBuildManifest": "build/releases/Broomm-macOS-switch-launch-fix-ci.json",
+  "productionFilesModified": false,
+  "productionProgressModified": false,
+  "remoteEffects": false,
+  "newRuntimeDependencies": [],
+  "logs": {
+    "analysis.log": {
+      "path": ".tool-cache/research/switch-receipt-commit/analysis.log",
+      "sha256": "d3520b3e8bf3699bd4121427eb200e55661579472dffb1fe73728180dda95bdf"
+    },
+    "flutter-suite.log": {
+      "path": ".tool-cache/research/switch-receipt-commit/flutter-suite.log",
+      "sha256": "fe257e66db736746445c48dfab37737a4f224f274068f9449a77959b3880cbe7"
+    },
+    "full-size-saves.log": {
+      "path": ".tool-cache/research/switch-receipt-commit/full-size-saves.log",
+      "sha256": "26cbe82e13554240ff7bb880a887cdd5f9e25d43d73054fba4a27b380de4cc7e"
+    },
+    "installed-receipt.log": {
+      "path": ".tool-cache/research/switch-receipt-commit/installed-receipt.log",
+      "sha256": "71205323ec5235ae202a9dd7c031bb6ec73037785d917c07d2df4e11d1b7a1de"
+    }
+  }
+}

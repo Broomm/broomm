@@ -1,5 +1,14 @@
 # Implementation plan
 
+Installed Switch launch correction (2026-10-30): the package-selection preflight
+now reads the installed receipt and existing native package checkpoint instead
+of requiring the lightweight saved game metadata to contain a downloadable RomM
+manifest. Existing generations remain usable by both profiles without a remote
+manifest request. A missing generation resolves real remote file identities
+before its first import; failed, incomplete or mismatched responses retain the
+installation. Legacy update/DLC folders are excluded from base-game selection
+even without API category fields. See [reproduction and verification](docs/switch-installed-launch.md).
+
 Updater preparation correction (2026-10-29): the production 0.1.2 → 0.1.3
 failure is reproduced with a progress callback holding a native receive port.
 Both worker closures unintentionally captured the UI callback. Dedicated

@@ -159,19 +159,17 @@ class GamePackages {
 
   /// A new Switch default needs its own native content, including when the
   /// shared game was downloaded with the other emulator selected. This uses
-  /// the installed receipt's known content; explicit checks refresh RomM.
+  /// the installed receipt, rather than the lightweight catalogue metadata
+  /// (which deliberately does not persist RomM's downloadable file list).
   Future<bool> needsSwitchSelection(String server, InstalledGame entry) async {
     if (platform != 'switch') return false;
-    final paths = gameFilePaths(entry.game);
-    if (!List.generate(
-      paths.length,
-      (i) => i,
-    ).any((i) => addonKind(entry.game.files[i], paths[i]) != null))
-      return false;
     final dir = await _directory(server, entry.game.id);
     if (await addonExists('${dir.path}/deleting.json'))
       throw const RommFailure('Finish deleting this game before playing.');
-    return await _current(dir, server, entry.game.id) == null;
+    if (await _current(dir, server, entry.game.id) != null) return false;
+    final all = await library.contentFiles(entry);
+    final base = await library.contentFiles(entry, excludeAddons: true);
+    return all.length != base.length;
   }
 
   Future<AddonResult> sync({
@@ -194,6 +192,18 @@ class GamePackages {
       if (entry.game.id != game.id ||
           gamePlatform(game, const [])?.slug != platform)
         throw const FormatException('Native package platform differs');
+      if (platform == 'switch' && game.files.isEmpty) {
+        // A different Switch backend may need to import an old installation's
+        // packages. Resolve real remote file identities only in that case;
+        // normal launches with a published generation remain local.
+        final detail = await client.game(game.id);
+        cancellation.check();
+        if (detail.id != game.id ||
+            detail.platformId != game.platformId ||
+            gamePlatform(detail, const [])?.slug != platform)
+          throw const FormatException('Native package platform differs');
+        game = detail;
+      }
       final dir = await _directory(serverId, game.id);
       if (await addonExists('${dir.path}/deleting.json'))
         throw const RommFailure(

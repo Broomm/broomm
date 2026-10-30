@@ -423,6 +423,160 @@ void main() {
       );
     });
     tearDown(() => client.close());
+    test('restarted base-only Switch installations need no downloadable manifest or package import', () async {
+      await install(1);
+      final restored = (await GameLibrary(root).load(addonServer)).games.single;
+      expect(restored.game.files, isEmpty);
+      client.problem = const RommFailure('Offline');
+      expect(await service.needsSwitchSelection(addonServer, restored), false);
+      expect(await library.contentFiles(restored, excludeAddons: true), [
+        endsWith('/game.nsp'),
+      ]);
+    });
+    test('restarted Switch content reuses its checkpoint for both profiles without a remote manifest and rejects a damaged checkpoint', () async {
+      final entry = await install(1);
+      await sync(entry);
+      final restored = (await GameLibrary(root).load(addonServer)).games.single;
+      expect(restored.game.files, isEmpty);
+      client.problem = const RommFailure('Offline');
+      final transfers = client.downloads.length;
+      expect(await service.needsSwitchSelection(addonServer, restored), false);
+      final first = (await prepare(addonProfile, DownloadCancellation())).$2;
+      final second = (await prepare(
+        secondAddonProfile,
+        DownloadCancellation(),
+      )).$2;
+      final save = File('${second.path}/user/bis/user/save/progress');
+      await save.parent.create(recursive: true);
+      await save.writeAsString('retained');
+      final lease = await SessionLease.acquire(root);
+      try {
+        for (final (id, profile) in [
+          (addonProfile, first),
+          (secondAddonProfile, second),
+        ]) {
+          await service.applyForLaunch(
+            addonServer,
+            1,
+            id,
+            profile,
+            (await library.contentFiles(restored, excludeAddons: true)).single,
+            entry: restored,
+          );
+        }
+      } finally {
+        await lease.release();
+      }
+      const selection = 'user/games/01005d100807a000/dlc.json';
+      expect(
+        await File('${first.path}/$selection').readAsString(),
+        await File('${second.path}/$selection').readAsString(),
+      );
+      expect(client.downloads.length, transfers);
+      expect(await save.readAsString(), 'retained');
+      final checkpoint = File(
+        '${root.path}/addons/$addonServer/1/switch/current.json',
+      );
+      final changed = jsonDecode(await checkpoint.readAsString()) as Map;
+      changed['base'] = '0100000000000000';
+      await checkpoint.writeAsString(jsonEncode(changed));
+      await expectLater(
+        service.needsSwitchSelection(addonServer, restored),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(await save.readAsString(), 'retained');
+    });
+    test('first Switch package import after restart resolves real file identities and reuses installed folder or root-role DLC', () async {
+      for (final path in ['dlc/extra.nsp', 'extra.nsp']) {
+        final id = path.contains('/') ? 10 : 11;
+        final payloads = {
+          'game.nsp': [1],
+          path: [2],
+        };
+        final made = await addonGame(
+          root,
+          payloads,
+          id: id,
+          categories: {path: 'dlc'},
+        );
+        final remote = RommGame(
+          id: id,
+          name: 'Game',
+          platformId: 8,
+          platform: 'Nintendo Switch',
+          platformSlug: 'switch',
+          fullPath: made.fullPath,
+          files: made.files,
+        );
+        client.payloads.addAll(filesClient(remote, payloads).payloads);
+        final entry = await library.install(
+          serverId: addonServer,
+          userId: 7,
+          game: remote,
+          client: client,
+          cancellation: DownloadCancellation(),
+          progress: (_) {},
+        );
+        // Legacy folder receipts may not have an API category at all.
+        if (path.contains('/')) {
+          final receipt = File('${entry.directory.path}/receipt.json');
+          final record = jsonDecode(await receipt.readAsString()) as Map;
+          for (final file in record['files'] as List) {
+            (file as Map).remove('category');
+          }
+          await receipt.writeAsString(jsonEncode(record));
+        }
+        final restored = (await GameLibrary(root).load(addonServer)).games
+            .singleWhere((e) => e.game.id == id);
+        expect(restored.game.files, isEmpty);
+        expect(await service.needsSwitchSelection(addonServer, restored), true);
+        client.detail = remote;
+        final transfers = client.downloads.length;
+        await service.sync(
+          serverId: addonServer,
+          profileId: addonProfile,
+          entry: restored,
+          game: restored.game,
+          client: client,
+          cancellation: DownloadCancellation(),
+          progress: (_) {},
+        );
+        expect(client.downloads.length, transfers);
+        expect(
+          await service.needsSwitchSelection(addonServer, restored),
+          false,
+        );
+      }
+    });
+    test('failed or mismatched Switch manifest recovery preserves installed media without publishing content', () async {
+      final entry = await install(1);
+      final restored = (await GameLibrary(root).load(addonServer)).games.single;
+      final checkpoint = File(
+        '${root.path}/addons/$addonServer/1/switch/current.json',
+      );
+      Future<void> attempt() => service.sync(
+        serverId: addonServer,
+        profileId: addonProfile,
+        entry: restored,
+        game: restored.game,
+        client: client,
+        cancellation: DownloadCancellation(),
+        progress: (_) {},
+      );
+      client.problem = const RommFailure('Unavailable', status: 503);
+      await expectLater(attempt(), throwsA(isA<RommFailure>()));
+      client.problem = null;
+      client.detail = await game(2);
+      await expectLater(attempt(), throwsFormatException);
+      client.detail = restored.game;
+      await expectLater(attempt(), throwsA(isA<RommFailure>()));
+      expect(await checkpoint.exists(), false);
+      expect(
+        await File('${entry.directory.path}/content/game.nsp').readAsBytes(),
+        [1],
+      );
+      expect(await Directory('${root.path}/profiles').exists(), false);
+    });
     test('empty API checksums permit transfer; repeat avoids it; package bytes survive another owner until its removal', () async {
       final a = await install(1), b = await install(2);
       await sync(a);
