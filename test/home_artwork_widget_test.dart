@@ -201,7 +201,14 @@ void main() {
   }
 
   Future<void> finish(WidgetTester t) async {
+    await decodeArtworkImages(t);
     await t.pumpWidget(const SizedBox());
+    // FileImage may retain its native encoded buffer through the image cache.
+    // Cache handles are disposed in post-frame callbacks, so unmounting alone
+    // does not release Windows file mappings before fixture deletion.
+    t.binding.imageCache.clear();
+    t.binding.imageCache.clearLiveImages();
+    await t.pump();
     await t.binding.setSurfaceSize(null);
     t.view.resetPhysicalSize();
     t.view.resetDevicePixelRatio();
@@ -210,6 +217,36 @@ void main() {
   Future<void> download(WidgetTester t) async {
     await t.runAsync(() => model.downloadGame(fixture()));
     await t.pump();
+  }
+
+  for (final removed in [false, true]) {
+    testWidgets(
+      'artwork cleanup releases ${removed ? 'cache-only' : 'visible'} file image variants before deletion',
+      (t) async {
+        final file = File('${root.path}/cleanup.png');
+        await t.runAsync(() => file.writeAsBytes(artworkPng(64, 64)));
+        await t.pumpWidget(
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Row(
+              children: [
+                Image.file(file, cacheWidth: 32),
+                Image.file(file, cacheWidth: 64),
+              ],
+            ),
+          ),
+        );
+        await decodeArtworkImages(t);
+        expect(t.binding.imageCache.currentSize, greaterThanOrEqualTo(2));
+        if (removed) await t.pumpWidget(const SizedBox());
+        await finish(t);
+        expect(t.binding.imageCache.pendingImageCount, 0);
+        expect(t.binding.imageCache.currentSize, 0);
+        expect(t.binding.imageCache.liveImageCount, 0);
+        await t.runAsync(() => file.delete());
+        expect(await t.runAsync(() => file.exists()), false);
+      },
+    );
   }
 
   testWidgets(

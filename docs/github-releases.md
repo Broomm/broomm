@@ -651,3 +651,17 @@ and its nested child listing to **252**, below the Windows enumeration limit.
 No registry, system temp setting, runtime save layout, test timeout or assertion
 is changed. The two existing MMJ capture/recovery cases remain the native
 regressions; the subsequent Windows job establishes the final result.
+
+The `8b6ea59` Windows run confirms the MMJ fixes and passes full-size saves and
+the native updater. Its sole remaining failure is the artwork widget fixture's
+directory deletion: Windows still has an image file open. Flutter 3.47's
+`FileImage` decodes a native immutable buffer, and its image-cache keep-alive
+handles dispose in post-frame callbacks. Unmounting the widget alone does not
+complete that lifecycle before the fixture is deleted.
+
+Artwork teardown now completes current image decoding, unmounts the widgets,
+clears cached/live image references and renders the disposal frame. Two new
+regressions cover visible and cache-only resized file images, verify empty image
+cache state and immediately delete the file. Both fail with the old teardown
+and pass with the corrected lifecycle. The six artwork cases pass locally;
+production artwork code, retries and timeouts remain unchanged.

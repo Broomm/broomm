@@ -757,3 +757,10 @@ failures absent and full-size saves/native updater passing. The checks job now
 uses the runner-owned short `TEMP`/`TMP`, with a shorter MMJ fixture prefix;
 the observed deepest listing becomes 252 characters. This affects test scratch
 storage only, without system changes, relaxed validation or larger timeouts.
+
+Windows run `8b6ea59` has no remaining MMJ failures; full-size saves and the native
+updater pass. It exposes one artwork-fixture cleanup failure from a live file
+image. Teardown now finishes decoding, unmounts, clears cached/live streams and
+pumps their disposal frame before deletion. Both new visible/cache-only file
+regressions fail with the old cleanup and pass with the fix; all six artwork
+cases pass locally. Production application sources remain unchanged.

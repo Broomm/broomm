@@ -234,5 +234,67 @@
         "sha256": "8f696814d0953eea92f671ba904f1de2a34c70a086aeefc8dedb12b149455ca1"
       }
     }
+  },
+  "artworkCleanupCorrection": {
+    "nativeRun": "https://github.com/Broomm/broomm/actions/runs/41116097107/job/124271785302",
+    "mmjFailures": 0,
+    "remainingFailure": "home_artwork_widget_test.dart fixture deletion: Windows file-in-use errno 32",
+    "fullSizeSaveStep": "success",
+    "nativeUpdaterStep": "success",
+    "mechanism": "Pinned Flutter FileImage uses ImmutableBuffer.fromFilePath; cached image handle disposal is scheduled as a post-frame callback.",
+    "correction": "Decode current images, unmount, clear cached/live images and pump the disposal frame before fixture deletion.",
+    "verification": {
+      "newRegressions": 2,
+      "oldCleanupExpectedFailures": 2,
+      "artworkCasesPassed": 6,
+      "fullFlutterSuitePassed": 463,
+      "analysis": "pass",
+      "format": "pass",
+      "productionCodeChanged": false,
+      "retryOrTimeoutChanges": false,
+      "nativeResult": "subsequent Windows job"
+    },
+    "files": {
+      "test/home_artwork_widget_test.dart": {
+        "path": "test/home_artwork_widget_test.dart",
+        "bytes": 16350,
+        "sha256": "f90570a9907b5441f611fb6a2992b98260529360e45175001cf6b9af8865e4ab"
+      },
+      ".tool-cache/research/windows-document-paths/annotations-124271785302.json": {
+        "path": ".tool-cache/research/windows-document-paths/annotations-124271785302.json",
+        "bytes": 1921,
+        "sha256": "212442adaa52e793893fc9601d04a394deb77ff309d6530018ee2a426bb83156"
+      },
+      ".tool-cache/research/windows-document-paths/job-124271785302.json": {
+        "path": ".tool-cache/research/windows-document-paths/job-124271785302.json",
+        "bytes": 3777,
+        "sha256": "6c22df77bd1929c9893513f81739d321b1fd83d8ae47570174cc0b2797396337"
+      },
+      ".tool-cache/research/windows-document-paths/artwork-cleanup.log": {
+        "path": ".tool-cache/research/windows-document-paths/artwork-cleanup.log",
+        "bytes": 828,
+        "sha256": "c5e2da3636a49657ee4860d0ecf23a70be0a989261bf0bcef00f8cf93a87614e"
+      },
+      ".tool-cache/research/windows-document-paths/artwork-red.log": {
+        "path": ".tool-cache/research/windows-document-paths/artwork-red.log",
+        "bytes": 4092,
+        "sha256": "053715fab8b63092e337669eaf35bc25d3789529a2a7acef670dfd6be6c2bd01"
+      },
+      ".tool-cache/research/windows-document-paths/artwork-full-suite.log": {
+        "path": ".tool-cache/research/windows-document-paths/artwork-full-suite.log",
+        "bytes": 76274,
+        "sha256": "0d1980735cdd6c45df5660d031ac86f192d4faf34dfd15fe7eec809ca3414545"
+      },
+      ".tool-cache/research/windows-document-paths/artwork-analysis.log": {
+        "path": ".tool-cache/research/windows-document-paths/artwork-analysis.log",
+        "bytes": 249,
+        "sha256": "35eb78842626ee1aa2258203b6c6c77be1678b1d21611335f8472c21f74187f1"
+      },
+      ".tool-cache/research/windows-document-paths/artwork-format.log": {
+        "path": ".tool-cache/research/windows-document-paths/artwork-format.log",
+        "bytes": 199,
+        "sha256": "e5eb94a3b60154d02bc7fdb5fec5f0763f1139601d8d565eb8b7931768b9f24f"
+      }
+    }
   }
 }
