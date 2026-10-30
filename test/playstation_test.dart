@@ -395,89 +395,106 @@ void main() {
     }
   }, tags: ['full-size-save']);
 
-  test('switching PS2 engines retains one cloud card and each engine’s matching states', () async {
-    final pcs = await emulator('PCSX2'), arms = await emulator('ARMSX2');
-    final first = await gameProgressLayout(resolved(pcs), 'ps2');
-    final second = await gameProgressLayout(
-      ResolvedSession(arms, '/media/game.chd', 'b' * 64, {}),
-      'ps2',
-    );
-    final api = SaveServer();
-    addTearDown(api.close);
-    final finished = Completer<void>();
-    workersFinished = false;
-    addTearDown(() => finished.future);
-    final clock = Stopwatch()..start();
-    void phase(String message) => printOnFailure(
-      'PS2 cloud round trip +${clock.elapsedMilliseconds} ms: $message',
-    );
-    Future<void> runPhase(String name, Future<void> Function() work) async {
-      phase('begin $name');
-      await work();
-      phase('end $name');
-    }
+  // The native Windows trace completes all five phases in 51 seconds, including
+  // durable full-card copies and upload readback. Keep the real card/workflow;
+  // its cumulative integration budget is distinct from a unit-test deadline.
+  test(
+    'switching PS2 engines retains one cloud card and each engine’s matching states',
+    () async {
+      final pcs = await emulator('PCSX2'), arms = await emulator('ARMSX2');
+      final first = await gameProgressLayout(resolved(pcs), 'ps2');
+      final second = await gameProgressLayout(
+        ResolvedSession(arms, '/media/game.chd', 'b' * 64, {}),
+        'ps2',
+      );
+      final api = SaveServer();
+      addTearDown(api.close);
+      final finished = Completer<void>();
+      workersFinished = false;
+      addTearDown(() => finished.future);
+      final clock = Stopwatch()..start();
+      void phase(String message) => printOnFailure(
+        'PS2 cloud round trip +${clock.elapsedMilliseconds} ms: $message',
+      );
+      Future<void> runPhase(String name, Future<void> Function() work) async {
+        phase('begin $name');
+        await work();
+        phase('end $name');
+      }
 
-    CloudGame game(ProgressLayout layout) => CloudGame(
-      server: serverId,
-      profile: profileId,
-      user: 3,
-      rom: 42,
-      client: api,
-      layout: layout,
-    );
-    final cloud = CloudSaves(root, notice: (_, __) {}, phase: phase);
-    try {
-      await runPhase('PCSX2 before play', () => cloud.beforePlay(game(first)));
-      await card((await first.target('save/slot1.ps2')).path, ps2: true);
-      await (await first.target('${first.areas.last.id}/slot.p2s'))
-          .writeAsBytes([1, 2, 3]);
-      await runPhase('PCSX2 after play', () => cloud.afterPlay(game(first), 0));
-      expect(api.records.values.single.name, endsWith('.ps2'));
-      await runPhase(
-        'ARMSX2 before play',
-        () => cloud.beforePlay(game(second)),
+      CloudGame game(ProgressLayout layout) => CloudGame(
+        server: serverId,
+        profile: profileId,
+        user: 3,
+        rom: 42,
+        client: api,
+        layout: layout,
       );
-      expect(api.records, hasLength(1));
-      expect((await cloud.store(game(second)).state())['pending'], false);
-      expect(
-        (await second.files()).keys.where((k) => k.startsWith('states-')),
-        isEmpty,
-      );
-      await (await second.target('${second.areas.last.id}/slot.p2s'))
-          .writeAsBytes([4, 5, 6]);
-      await runPhase(
-        'ARMSX2 after play',
-        () => cloud.afterPlay(game(second), 0),
-      );
-      final afterSwitch = await cloud
-          .store(game(second))
-          .capture(
-            retained: await cloud
-                .store(game(second))
-                .load(
-                  (await cloud.store(game(second)).state())['snapshot']
-                      as String,
-                ),
-          );
-      expect(
-        afterSwitch.entries.keys.where((k) => k.startsWith('states-')),
-        containsAll([
-          '${first.areas.last.id}/slot.p2s',
-          '${second.areas.last.id}/slot.p2s',
-        ]),
-      );
-      final versions = api.records.length;
-      await runPhase('PCSX2 sync after switch', () => cloud.sync(game(first)));
-      expect(api.records, hasLength(versions));
-      expect((await cloud.store(game(first)).state())['pending'], false);
-      expect(
+      final cloud = CloudSaves(root, notice: (_, __) {}, phase: phase);
+      try {
+        await runPhase(
+          'PCSX2 before play',
+          () => cloud.beforePlay(game(first)),
+        );
+        await card((await first.target('save/slot1.ps2')).path, ps2: true);
         await (await first.target('${first.areas.last.id}/slot.p2s'))
-            .readAsBytes(),
-        [1, 2, 3],
-      );
-    } finally {
-      workersFinished = true;
-      finished.complete();
-    }
-  }, tags: ['full-size-save']);
+            .writeAsBytes([1, 2, 3]);
+        await runPhase(
+          'PCSX2 after play',
+          () => cloud.afterPlay(game(first), 0),
+        );
+        expect(api.records.values.single.name, endsWith('.ps2'));
+        await runPhase(
+          'ARMSX2 before play',
+          () => cloud.beforePlay(game(second)),
+        );
+        expect(api.records, hasLength(1));
+        expect((await cloud.store(game(second)).state())['pending'], false);
+        expect(
+          (await second.files()).keys.where((k) => k.startsWith('states-')),
+          isEmpty,
+        );
+        await (await second.target('${second.areas.last.id}/slot.p2s'))
+            .writeAsBytes([4, 5, 6]);
+        await runPhase(
+          'ARMSX2 after play',
+          () => cloud.afterPlay(game(second), 0),
+        );
+        final afterSwitch = await cloud
+            .store(game(second))
+            .capture(
+              retained: await cloud
+                  .store(game(second))
+                  .load(
+                    (await cloud.store(game(second)).state())['snapshot']
+                        as String,
+                  ),
+            );
+        expect(
+          afterSwitch.entries.keys.where((k) => k.startsWith('states-')),
+          containsAll([
+            '${first.areas.last.id}/slot.p2s',
+            '${second.areas.last.id}/slot.p2s',
+          ]),
+        );
+        final versions = api.records.length;
+        await runPhase(
+          'PCSX2 sync after switch',
+          () => cloud.sync(game(first)),
+        );
+        expect(api.records, hasLength(versions));
+        expect((await cloud.store(game(first)).state())['pending'], false);
+        expect(
+          await (await first.target('${first.areas.last.id}/slot.p2s'))
+              .readAsBytes(),
+          [1, 2, 3],
+        );
+      } finally {
+        workersFinished = true;
+        finished.complete();
+      }
+    },
+    tags: ['full-size-save'],
+    timeout: const Timeout(Duration(seconds: 90)),
+  );
 }

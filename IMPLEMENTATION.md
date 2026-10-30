@@ -1,5 +1,13 @@
 # Implementation plan
 
+Measured Windows full-card test budget (2026-10-30): after the native updater
+fixture passes independently, Windows reports a separate PS2 cloud round-trip
+timeout. Its retained phase trace completes all five workflow phases in 51.182
+seconds, exceeding the generic 30-second test limit. Only that full-card
+integration case now has a 90-second budget; native card sizes, readbacks,
+assertions and worker-drain teardown are retained. See
+[timings and scope](docs/github-releases.md).
+
 Windows updater test supervision (2026-10-30): the native PowerShell cancellation
 fixture runs in its own mandatory Windows step, separate from parallel Flutter
 tests, with unchanged eight-second deadlines. It reports early process exit,

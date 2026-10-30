@@ -410,6 +410,19 @@ runs after an earlier check failure unless the job is canceled. All assertions,
 native card sizes and the default 30-second limits remain. `dart_test.yaml`
 declares the tag without changing default local test selection or timeouts.
 
+Follow-up on 2026-10-30: the isolated Windows trace for `df00f8e` establishes
+the cumulative deadline problem. The two-emulator cloud round trip reaches
+every phase's end at **51,182 ms**, after the default 30-second test timeout.
+PCSX2 after-play ends at 13,131 ms, ARMSX2 before-play at 20,959 ms, ARMSX2
+after-play at 43,171 ms, and the final PCSX2 sync at 51,182 ms. This is a
+completing series of real-card captures/restores/readbacks, rather than a stalled
+individual operation. That single end-to-end test now has an explicit bounded
+**90-second** budget. The other card test, data sizes, integrity/state assertions,
+worker-drain teardown, application deadlines and native updater's eight-second
+checks remain unchanged. The Windows updater fixture independently passes in
+its dedicated step. Raw phase evidence is retained in
+`.tool-cache/research/windows-updater-test/windows-job-native.log`.
+
 The round trip retains phase timings for failure output. Both full-size cases
 drain their complete asynchronous workflow before fixture cleanup; if a worker
 cannot drain, teardown reports and retains its directory. An isolated copy with
