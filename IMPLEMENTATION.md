@@ -1,5 +1,14 @@
 # Implementation plan
 
+macOS CI controller-test correction (2026-11-02): the hosted native test read
+shortcut events after fixed 50 ms run-loop waits and missed the first Y event.
+Controller tests now acknowledge each native press/release and its queued main
+work before exact assertions. A held callback-queue regression also covers
+release and re-press; the two-controller Shift case retains its semantics.
+All eleven native macOS tests pass locally, with no skips. Application behavior
+and workflow requirements are unchanged. See the
+[diagnosis, reproduction and verification scope](docs/github-releases.md#controller-callback-synchronization--2026-11-02).
+
 Linux standalone milestone (2026-11-02): Linux x64 adds bundled Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden recipes. Managed installation, private profiles, native SDL/Qt/debugger pause/input, independent Open emulator, firmware/add-on staging and existing progress adapters are wired. Nine production installations and two profiles each pass. Native controller/lifecycle checks cover GameCube/Wii (all four Wii layouts), 3DS, DS, PS1, PS2, PSP and PS3 homebrew; PUP/CIA imports pass. Kernel/process/protocol/ABI regressions and independent sanitizers pass. Switch runtime requires owner-configured keys/firmware or explicit permission for key export; physical input/gyro, Steam/gamescope, new standalone native cloud round trips and managed ARM64 remain separate acceptance. See [versions, native evidence, walkthrough and limitations](docs/linux-standalone.md).
 
 Linux download throughput correction (2026-11-02): native Flutter HTTPS file

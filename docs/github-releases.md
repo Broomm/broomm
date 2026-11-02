@@ -244,6 +244,39 @@ readback. The clean version CLI, formatter and workflow/ShellCheck checks pass,
 with the documented queue-schema exception. Exact hashes, retained diagnostics
 and commands are in the [machine-readable record](github-releases.json).
 
+### Controller callback synchronization — 2026-11-02
+
+[Run 41511431182](https://github.com/Broomm/broomm/actions/runs/41511431182)
+built every application target, but its native macOS job failed
+`testGameControllerKeyboardShortcutEvents`: the first Y press had produced no
+`space` event at assertion time. The other nine native tests passed. The old
+test advanced the run loop for 50 ms before releasing each button and another
+50 ms before reading events; this did not establish that either native callback
+had run. The original two controller tests passed on the development Mac, so
+the runner's specific scheduling delay is not reproduced locally.
+
+Apple's [GameController callback contract](https://github.com/apple/game-porting-toolkit/blob/main/game-porting-skills/skills/using-game-controller/reference/profile-based-input.md#receiving-input)
+schedules callbacks on `handlerQueue`. The tests now await each real snapshot
+press/release callback, forward it through Broomm's existing handler, then
+acknowledge its main-queue work before checking the exact event list. A one-second
+failure deadline bounds missing callbacks; there are no retries or fixed sleeps.
+Releases must not type another character. The held-Shift test still requires
+both controllers to release. A new serial-queue fixture explicitly holds native
+delivery, releases it, and checks the shortcut, release and second press.
+Application behavior, dependencies and workflow requirements are unchanged.
+
+Local verification passes all **11 native macOS tests**, with zero failures or
+skips, on an ARM64 MacBook Pro running macOS 27.0.1 / Xcode 27. The targeted
+three-controller-test run also passes. The full result is
+`build/macos/Logs/Test/Native-20261102T214524-72287.xcresult`. Existing XCTest
+deployment-target link warnings remain. A freshly built universal macOS ZIP is
+checked for archive integrity and deep signatures before delivery.
+
+Run `devbox run -- bash tool/test_macos.sh` to repeat all native cases. Result
+bundles remain under `build/macos/Logs/Test/Native-*.xcresult`; these fixtures use
+synthetic GameController snapshots, not physical-device acceptance. Hosted
+confirmation remains separate from local verification.
+
 ### First hosted failures and corrections — 2026-10-26
 
 The owner supplied six failing job logs from the first hosted run at

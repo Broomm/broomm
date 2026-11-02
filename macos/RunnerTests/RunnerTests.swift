@@ -19,6 +19,24 @@ private class QuitTestWindow: MainFlutterWindow {
 
 class RunnerTests: XCTestCase {
   @MainActor
+  private func setButton(_ button: GCControllerButtonInput, pressed: Bool) async throws {
+    let handler = try XCTUnwrap(button.pressedChangedHandler)
+    let delivered = expectation(description: "Native button \(pressed ? "press" : "release") delivered")
+    button.pressedChangedHandler = { button, value, down in
+      handler(button, value, down)
+      // Production Shift handling posts to the main queue. Acknowledge only
+      // after that work, rather than assuming a short run-loop sleep drains it.
+      DispatchQueue.main.async {
+        XCTAssertEqual(down, pressed)
+        delivered.fulfill()
+      }
+    }
+    defer { button.pressedChangedHandler = handler }
+    button.setValue(pressed ? 1 : 0)
+    await fulfillment(of: [delivered], timeout: 1)
+  }
+
+  @MainActor
   private func iconPixels(_ image: NSImage) throws -> Data {
     let bitmap = try XCTUnwrap(NSBitmapImageRep(bitmapDataPlanes: nil,
       pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
@@ -106,7 +124,7 @@ class RunnerTests: XCTestCase {
   }
 
   @MainActor
-  func testGameControllerKeyboardShortcutEvents() throws {
+  func testGameControllerKeyboardShortcutEvents() async throws {
     let window = InputTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
     let controller = GCController.withExtendedGamepad()
     let pad = try XCTUnwrap(controller.extendedGamepad)
@@ -119,29 +137,65 @@ class RunnerTests: XCTestCase {
     ]
     for (button, action) in buttons {
       window.events.removeAll()
-      button.setValue(1)
-      RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
-      button.setValue(0)
-      RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
+      try await setButton(button, pressed: true)
+      XCTAssertEqual(window.events, [action])
+      try await setButton(button, pressed: false)
       XCTAssertEqual(window.events, [action])
     }
   }
 
   @MainActor
-  func testHeldShiftWaitsForEveryControllerRelease() throws {
+  func testHeldShiftWaitsForEveryControllerRelease() async throws {
     let window = InputTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
     let a = GCController.withExtendedGamepad(), b = GCController.withExtendedGamepad()
     window.observe(a); window.observe(b)
     let first = try XCTUnwrap(a.extendedGamepad).leftTrigger
     let second = try XCTUnwrap(b.extendedGamepad).leftTrigger
-    for (button, value) in [(first, Float(1)), (second, Float(1)), (first, Float(0))] {
-      button.setValue(value)
-      RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
+    for (button, pressed) in [(first, true), (second, true), (first, false)] {
+      try await setButton(button, pressed: pressed)
     }
     XCTAssertEqual(window.events, ["shift-down"])
-    second.setValue(0)
-    RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
+    try await setButton(second, pressed: false)
     XCTAssertEqual(window.events, ["shift-down", "shift-up"])
+  }
+
+  @MainActor
+  func testQueuedControllerShortcutWaitsForDeliveryAndCanBePressedAgain() async throws {
+    let window = InputTestWindow(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
+    let controller = GCController.withExtendedGamepad()
+    let queue = DispatchQueue(label: "broomm.tests.controller-delivery")
+    controller.handlerQueue = queue
+    let button = try XCTUnwrap(controller.extendedGamepad).buttonY
+    window.observe(controller)
+    let handler = try XCTUnwrap(button.pressedChangedHandler)
+    let blocked = expectation(description: "Controller callback queue held")
+    let delivered = expectation(description: "Queued shortcut delivered on main")
+    let resume = DispatchSemaphore(value: 0)
+    queue.async { blocked.fulfill(); resume.wait() }
+    // Always release the queue, including on a failed assertion or timeout.
+    defer { resume.signal() }
+    await fulfillment(of: [blocked], timeout: 1)
+    button.pressedChangedHandler = { button, value, down in
+      // Match production's main-queue input delivery in this background-queue
+      // fixture; the normal shortcut test uses GameController's main queue.
+      DispatchQueue.main.async {
+        handler(button, value, down)
+        delivered.fulfill()
+      }
+    }
+    button.setValue(1)
+    XCTAssertTrue(window.events.isEmpty, "Queued input must not be treated as delivered")
+    resume.signal()
+    await fulfillment(of: [delivered], timeout: 1)
+    button.pressedChangedHandler = handler
+    XCTAssertEqual(window.events, ["space"])
+    // Return to the default delivery queue before touching the test window.
+    controller.handlerQueue = .main
+    try await setButton(button, pressed: false)
+    XCTAssertEqual(window.events, ["space"], "Release must not type another space")
+    try await setButton(button, pressed: true)
+    try await setButton(button, pressed: false)
+    XCTAssertEqual(window.events, ["space", "space"])
   }
   func testArtworkKeyIsSeparateFromRomMSignIn() throws {
     let key = UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
