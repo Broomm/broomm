@@ -49,7 +49,11 @@ done
 cat > "$broomm_bundle/RUNNING.txt" <<'EOF'
 Run ./broomm from this extracted directory. Keep data/ and lib/ beside it.
 Requires a desktop with GTK 3, a Secret Service, and graphics drivers.
-Built against Ubuntu 24.04 (glibc 2.39). Broomm does not install OS dependencies.
-Linux emulator bridges/Steam/gamescope acceptance remain pending. This is an
-early application build, not a claim of native emulator integration parity.
+Official CI builds target Ubuntu 24.04 (glibc 2.39); local builds retain their
+host compiler baseline. Broomm does not install OS dependencies.
+Linux x64 includes managed RetroArch and nine standalone emulator integrations.
+Use Emulator Settings to review/install the bundled setup. It requires kernel Landlock ABI 3
+or newer for private emulator writes (normally Linux 6.2+).
+Linux ARM64 managed setup remains pending. Switch runtime, physical controller,
+gyro and Steam/gamescope acceptance are separate from native test fixtures.
 EOF

@@ -6,6 +6,7 @@ import 'session.dart';
 import 'session_lease.dart';
 import 'romm/transfer.dart';
 import 'setup/archive.dart';
+import 'linux_runtime.dart';
 
 /// Hands a private no-game application to the OS. There is no retained child,
 /// readiness polling, exit watcher or lease after the launch request. Native
@@ -19,6 +20,53 @@ class EmulatorConfiguration {
   Future<void> start(Future<ResolvedSession> Function() resolve) async {
     final lease = await SessionLease.acquire(data);
     try {
+      if (Platform.isLinux) {
+        final resolved = await resolve();
+        final e = resolved.emulator;
+        final root = await Directory(e.root).resolveSymbolicLinks();
+        final name = e.name == 'RetroArch'
+            ? 'broomm-retroarch.so'
+            : 'broomm-sdl${e.sdlMajor}.so';
+        final packaged =
+            '${File(Platform.resolvedExecutable).parent.path}/lib/$name';
+        final bridge = await File(packaged).exists()
+            ? packaged
+            : '${project ?? Directory.current.path}/build/native/$name';
+        final preload = await prepareLinuxBridge(bridge, root);
+        final args = await EmulatorAdapter.forName(e.name)
+            .configurationArguments(e);
+        final base = await data.resolveSymbolicLinks();
+        await lease.release();
+        await Process.start(
+          linuxLaunchExecutable(e),
+          args,
+          mode: ProcessStartMode.detached,
+          workingDirectory: linuxLaunchDirectory(e),
+          environment: {
+            'HOME': resolved.home ?? '$root/home',
+            'XDG_CONFIG_HOME': '$root/config',
+            'XDG_DATA_HOME': '$root/data',
+            'XDG_CACHE_HOME': '$root/cache',
+            'TMPDIR': '$root/cache',
+            'LD_PRELOAD': [
+              linuxLaunchPreload(e, preload),
+              if ((Platform.environment['LD_PRELOAD'] ?? '').isNotEmpty)
+                Platform.environment['LD_PRELOAD']!,
+            ].join(':'),
+            ...linuxLaunchEnvironment(e),
+            'BROOMM_SESSION_EXECUTABLE': await File(linuxLaunchExecutable(e))
+                .resolveSymbolicLinks(),
+            'BROOMM_CONFIGURATION_ROOT': root,
+            'BROOMM_CONFIGURATION_SESSION_LOCK': '$base/session.lock',
+            'BROOMM_WRITER_LOCK': '$base/writer.lock',
+            'BROOMM_PROBE_LOG': '$root/configuration.log',
+          },
+        );
+        log?.write(
+          'Requested independent private ${e.name} configuration on Linux.',
+        );
+        return;
+      }
       if (!Platform.isMacOS)
         throw UnsupportedError(
           'Managed emulator configuration needs a validated native package for this host.',

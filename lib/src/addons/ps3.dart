@@ -283,6 +283,7 @@ class Ps3Addons {
         return AddonResult(0, files.length);
       }
       final stage = await root.createTemp('.pending-');
+      var uncertainWriter = false;
       try {
         await addonWrite(File('${stage.path}/owner.json'), {
           'version': 1,
@@ -467,8 +468,13 @@ class Ps3Addons {
           changed.where((f) => f.$2.toLowerCase().endsWith('.pkg')).length,
           files.length,
         );
+      } on DownloadWriterUncertain {
+        uncertainWriter = true;
+        lease.retainForUncertainWriter();
+        rethrow;
       } finally {
-        if (await stage.exists()) await stage.delete(recursive: true);
+        if (!uncertainWriter && await stage.exists())
+          await stage.delete(recursive: true);
       }
     } finally {
       await lease.release();

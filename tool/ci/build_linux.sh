@@ -4,8 +4,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 test "$(uname -s)" = Linux
-test -x /usr/bin/clang-18
-test -x /usr/bin/clang++-18
+export BROOMM_LINUX_CC="${BROOMM_LINUX_CC:-/usr/bin/clang-18}"
+export BROOMM_LINUX_CXX="${BROOMM_LINUX_CXX:-/usr/bin/clang++-18}"
+test -x "$BROOMM_LINUX_CC"
+test -x "$BROOMM_LINUX_CXX"
 unset CC CXX LD AR SDKROOT NIX_LDFLAGS NIX_CFLAGS_COMPILE NIX_CC
 # Flutter's Nix wrapper adds its newer GTK flags after this script runs. Capture
 # the Devbox target graph now; native tool shims restore it after that wrapper.
@@ -13,7 +15,7 @@ export BROOMM_LINUX_CMAKE
 BROOMM_LINUX_CMAKE="$(command -v cmake)"
 export BROOMM_LINUX_PKG_CONFIG_PATH="${PKG_CONFIG_PATH_FOR_TARGET:-${PKG_CONFIG_PATH:-}}"
 export PATH="$PWD/tool/ci/linux-tools:$PATH"
-export CC=/usr/bin/clang-18 CXX=/usr/bin/clang++-18 LD=/usr/bin/ld AR=/usr/bin/ar
+export CC="$BROOMM_LINUX_CC" CXX="$BROOMM_LINUX_CXX" LD=/usr/bin/ld AR=/usr/bin/ar
 export LDFLAGS=-fuse-ld=/usr/bin/ld
 # FindPkgConfig queries both dynamic and static metadata even for shared builds.
 # Fail with the complete missing-requirement diagnostic before invoking CMake.

@@ -1,0 +1,315 @@
+{
+  "date": "2026-11-02",
+  "revision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "working_tree": true,
+  "scope": "Linux x64 RetroArch first milestone; standalone Linux emulators remain next",
+  "host": {
+    "os": "CachyOS",
+    "architecture": "x86_64",
+    "kernel": "7.3.0-4-cachyos",
+    "gui_backend": "wayland",
+    "filesystem": "Btrfs",
+    "existing_owner_broomm_pid": 5742,
+    "owner_process_preserved": true,
+    "gui_connection": "explicitly authorized in-memory only; not printed or persisted"
+  },
+  "environment": {
+    "sdk": "checked-in Devbox Flutter 3.47.0",
+    "devbox": "0.18.4",
+    "nix_portable": "v012 / Nix 2.20.6",
+    "host_compiler": "pre-provisioned Clang 23.1.3",
+    "caches": "remote project .tool-cache/bootstrap and tool/ci/linux/.devbox",
+    "global_os_dependencies_installed": false,
+    "global_settings_changed": false
+  },
+  "checks": {
+    "macos_flutter": {
+      "passed": 474
+    },
+    "linux_flutter": {
+      "passed": 406,
+      "existing_skips": 21
+    },
+    "analysis": "clean",
+    "dart_format": "280 files unchanged",
+    "workflow_lint": "passed",
+    "kernel_regressions": 4,
+    "kernel_asan_ubsan": "passed independently",
+    "production_gtk_recovery": "passed with held writer, Btrfs, graceful checkpoint/restart, unknown linked checkpoint and exited handle",
+    "core_abi": "15 native Libretro ABI 1 probes",
+    "game_integration": "released frontend plus real Mesen executing original battery-backed NES program",
+    "exact_packaged_bridge": "passed after runtime path audit",
+    "macos_signature": "source and fresh extraction deep/strict/all architectures passed",
+    "linux_dependencies": "all 4 ELF dependency trees resolve on CachyOS with no Nix paths",
+    "archive_integrity": "all Linux file readbacks and Mac ZIP/fresh extraction checks passed"
+  },
+  "native_observations": {
+    "checks": [
+      "bundled recipe: frontend and all 15 pinned cores installed/verified",
+      "logical SDL triggers read neutral/full/release, without a phantom half press",
+      "same SDL device identity reaches real Mesen core; live face orientation changes",
+      "native pause/resume remains independent of Broomm polling/routing",
+      "menu chord and assigned-controller disconnect pause the game",
+      "native NES .srm and matching save state uploaded through production cloud workflow",
+      "explicit cloud restore preserves native save bytes and matching state",
+      "second launch restores native battery progress and accepts input",
+      "independent no-game configuration retains native locks and releases them on ordinary Quit",
+      "production recovery targets the real native writer and graceful SIGTERM flushes its save"
+    ],
+    "problems": [],
+    "physical_controller_check": false,
+    "commercial_rom": false,
+    "owner_data_changed": false,
+    "real_romm_writes": false
+  },
+  "core_metadata": [
+    {
+      "name": "Snes9x",
+      "version": "1.63 fae2fea",
+      "extensions": "smc|sfc|swc|fig|bs|st",
+      "id": "snes9x"
+    },
+    {
+      "name": "FinalBurn Neo",
+      "version": "v1.0.0.03 261101 GIT8762716",
+      "extensions": "zip|7z|cue|ccd|chd",
+      "id": "fbneo"
+    },
+    {
+      "name": "Flycast",
+      "version": "7adbf3c",
+      "extensions": "chd|cdi|elf|cue|gdi|lst|bin|dat|zip|7z|m3u",
+      "id": "flycast"
+    },
+    {
+      "name": "Gambatte",
+      "version": "v0.5.0-netlink 77f2567",
+      "extensions": "gb|gbc|dmg",
+      "id": "gambatte"
+    },
+    {
+      "name": "Genesis Plus GX",
+      "version": "v1.7.4 f27655b",
+      "extensions": "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg|68k|sgd",
+      "id": "genesis_plus_gx"
+    },
+    {
+      "name": "Beetle Lynx",
+      "version": "v1.24.0 fcdefcf",
+      "extensions": "lnx|lyx|bll|o",
+      "id": "mednafen_lynx"
+    },
+    {
+      "name": "Beetle PCE Fast",
+      "version": "v1.31.0.0",
+      "extensions": "pce|cue|ccd|chd|toc|m3u",
+      "id": "mednafen_pce_fast"
+    },
+    {
+      "name": "Beetle Saturn",
+      "version": "v1.32.1",
+      "extensions": "cue|ccd|chd|toc|m3u|zip",
+      "id": "mednafen_saturn"
+    },
+    {
+      "name": "Mesen",
+      "version": "0.9.9",
+      "extensions": "nes|fds|unf|unif",
+      "id": "mesen"
+    },
+    {
+      "name": "mGBA",
+      "version": "0.11-212-7a12d6d",
+      "extensions": "gba|gb|gbc|sgb",
+      "id": "mgba"
+    },
+    {
+      "name": "Mupen64Plus-Next",
+      "version": "3.0-Vulkan 15bada8",
+      "extensions": "n64|v64|z64|bin|u1",
+      "id": "mupen64plus_next"
+    },
+    {
+      "name": "Opera",
+      "version": "1.0.0 370d9a2",
+      "extensions": "iso|bin|chd|cue",
+      "id": "opera"
+    },
+    {
+      "name": "PicoDrive",
+      "version": "2.05-1890c29",
+      "extensions": "bin|gen|smd|md|32x|cue|iso|chd|m3u|sms|gg|sg|sc|68k|sgd|pco|vgm|vgz",
+      "id": "picodrive"
+    },
+    {
+      "name": "Stella",
+      "version": "8.0_pre 514efcf",
+      "extensions": "a26|bin",
+      "id": "stella"
+    },
+    {
+      "name": "Virtual Jaguar",
+      "version": "v3.10.0 ffea789",
+      "extensions": "j64|jag|rom|abs|cof|bin|prg|cue|cdi|chd",
+      "id": "virtualjaguar"
+    }
+  ],
+  "source_sha256": {
+    "lib/src/managed_emulators.dart": "03af57f889489d7f497253f34411cf850d81a19785c59f0449c2d60cb1162aa7",
+    "lib/src/managed_profile.dart": "98a19f8a863eab522e271b051839fe35c6a7790be71f36804ca5a3c592874607",
+    "lib/src/session.dart": "854737f53aa89846979be9171edc10f554accce0d9f96fc534b119c09085711a",
+    "lib/src/retroarch_control.dart": "cef0e2c210d6ed6f9d39f3c6f8aad781d1e2ddde70652ad665286279b681458e",
+    "lib/src/emulator_configuration.dart": "ba6828a472af488cca604cfb86eca546beb81d469601204a10fbc0ed79e04a5c",
+    "lib/src/linux_runtime.dart": "3ab395c323fd270807a7f9752625a48dcb99c48f1c550a8b92ad9015991188b6",
+    "lib/src/setup/linux_identity.dart": "adbd54aa60ca34b7cd0bde2aae545586358dc1b88b45b000a3a24e0ec3d26776",
+    "lib/src/setup/archive.dart": "688a31e4b2e9d3d4720e0b056d30372fbc517e97ac7d574fb7310a6840774f0d",
+    "lib/src/progress/zip.dart": "1dc62251d6b70031a91439ec5f7321bfa583491fafcb822d7455c41f2af4b040",
+    "linux/CMakeLists.txt": "c4f812c27b789d8e7ff455e7af33379b9cdf7967f2a4df98ac344d2edc0d2916",
+    "linux/runner/my_application.cc": "bd32dd2de745673600ebbbbf41d543f4191b5aa735119b7c371bdbb813ec6290",
+    "linux/runner/broomm_host.h": "23ec48c12175d484bce0ce33037ae4be5518fde7a8d267bb83c973ed9762fc4c",
+    "linux/runner/process_identity.h": "80d4b0eca1e482d1ea9fd41822b7a3070ddd441916bac979de967d8b5fe3e22b",
+    "native/linux_retroarch.c": "46f8d3c5bcfae6c2cc510ad3f7262ed055d45157be014f55b6451ca792e82c14",
+    "native/linux_write_policy.h": "01fa5a411ff2fc1e9a79e82d61db7a60a485a62d6dd21cdc8359aeb613f48e2e",
+    "pubspec.yaml": "9ed0ec00189efc9f7ceef0428df6792817960341ebcf72c88ac4943b1e9d3059",
+    "test/linux_setup_test.dart": "2103199d8506533cafa91f545f3efc7d5fe7a57d301d54212df2da15cc8e9a8b",
+    "test/retroarch_systems_test.dart": "6eac515a06017e29cf829d269799c9e7a10afe0d8b5b4ec73c05ae795f6f2ded",
+    "tool/check_linux_native.sh": "2da9f55ba08656d3754b1a7b7c94ef90e28672785e63492ea049ead800baef27",
+    "tool/check_linux_host.sh": "637817e9737c6f9cb001bc8833df93caa56ba05e0fde53d907522627dc92a414",
+    "tool/check_linux_retroarch_test.dart": "89ad75317a8ea5b305048767087a75227e2756c1a7f369933003ea18d09bc878",
+    "tool/fixtures/linux_kernel_test.cc": "05dbd586353d5de55e6ae98c2d331bd9d0454a0cecc017e304c82985e3a624f9",
+    "tool/fixtures/linux_host_test.cc": "a269c3cfb92cb25b187ca2277df9659a6cd927d3ecc76518b63eb52117217c76",
+    "tool/fixtures/core_inspect.c": "f127f8e21c9a9c233a6fb9a6a486556478baa92a439dd2b271fa8c8bb0f23a21",
+    "tool/fixtures/nes_fixture.py": "142e9dd7e118f893477e6a70eae962c74c310c2496b47c89ee76673b0636c123",
+    "tool/linux_desktop_test.py": "10ad07a755c5ecdac241585de9845d1a03d44356616b4a9b120df2fd4e81db6c",
+    "tool/build_linux_bridges.sh": "50c36add67712e86fdec85a4a032196556882f5b7e15c7d49c781f8c01569b0d",
+    "tool/ci/build_linux.sh": "aef6bbbe2d66a778568a9bb7bb0fe1a5876ab11e714494daf463d289e02ed5d3",
+    "tool/ci/check_linux_bundle.sh": "a9108ad5bd30da9af310e2f65043c0606ea93b07e772e8977d309b94a170ae1a",
+    "tool/ci/linux-tools/clang": "c469743af8e04d11151cc514978e84732b1dbe08b513e7d8e90545ee71a59cd3",
+    "tool/ci/linux-tools/clang++": "72e5e7bec5180037a51a44f36a92c4c07a871ebd2a9727bf9499d0fcfa8db69a",
+    ".github/workflows/release.yml": "b1c2368444f1c365d4fa8de6725bbd884d5ceb8ee7766b09bf67d466691107db",
+    "tool/ci/lint_workflow.sh": "03ef32ff3fc14df7704eb14dc6c3b529f6d83b49b638f4d4e6df81340544ae0e",
+    "assets/setup/linux-x64/setup.json": "57b08b6686b0806b4d4637808ae587294c3133bc24cc107de20414d8618aa9a5",
+    "assets/setup/linux-x64/retroarch.integrity.json": "d091f62e73bf76ad2606d1ec7c7d696c63c2b135dc0d50c77fe39bb81a6a618a",
+    "assets/setup/linux-x64/tested-builds.json": "97c0c9006e71dc8bf7b8f613b967678cb9ca3368426bc5eebbcb469072942e85",
+    "assets/setup/linux-x64/retroarch.symbols": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "assets/setup/linux-x64/retroarch-cores.json": "867035c6ca672da63ac71a68046fdb9d03bbfdb8be369afb9c6b71a4a7be04ae"
+  },
+  "log_sha256": {
+    ".tool-cache/research/linux-setup/evidence/linux-full-tests-final.log": "c98b5fea5ffd06259b33177168b5001011c1e4ee92085018070326b2384daf74",
+    ".tool-cache/research/linux-setup/evidence/native-retroarch-packaged.log": "4b6ab8e57a5e695fdb81f84d1195e0e8e3c212098df9c9a95ae039a2db10e5bc",
+    ".tool-cache/research/linux-setup/evidence/host-tests-btrfs.log": "86e0b1775e2af70d8c3cb26bb3e4e6e864565e4e66bd6694ee34bae5a883c9d9",
+    ".tool-cache/research/linux-setup/evidence/kernel-tests-final.log": "60f7b4e3a51384782c2e5bf2c1b0565edf9878b51212d277e9b9e4076cd3a47e",
+    ".tool-cache/research/linux-setup/evidence/kernel-sanitizers-final.log": "60f7b4e3a51384782c2e5bf2c1b0565edf9878b51212d277e9b9e4076cd3a47e",
+    ".tool-cache/research/linux-setup/evidence/linux-bundle-audit.log": "c9adc82a77e5d5c6ff9bcba292156496ae41bf10debe53d775170638f41367f1",
+    ".tool-cache/research/linux-setup/macos-full-tests-final.log": "cf04e7134ae70e12ae3407031ccc04d94b444aeb85b265b5e6e08baee9d25aa8",
+    ".tool-cache/research/linux-setup/analysis-final.log": "5c5395513484fb837df92faeecb0e0771093df1549e7ba7fe2f5ea79bad894b5",
+    ".tool-cache/research/linux-setup/format-final.log": "179a3cf5f8f4b28d03f408f25492079a9f98c5a7bd860069665e520b9ede9ae1",
+    ".tool-cache/research/linux-setup/workflow-lint.log": "8f696814d0953eea92f671ba904f1de2a34c70a086aeefc8dedb12b149455ca1",
+    ".tool-cache/research/linux-setup/macos-build.log": "1592bdef786f4fd53a8e1ddc3f9d322470f034966d9f44ad29fb0c92eb582765",
+    ".tool-cache/research/linux-setup/macos-package.log": "e2fd5eebd87c926c7c212aa05975656bd0c4c34d1dd3b058ed04843b63ab7d09"
+  },
+  "corrections": [
+    "Initial Linux native test fixtures expected a pre-created extraction stage and a macOS core filename; corrected host-specific fixtures preserve the same assertions.",
+    "Btrfs subvolume st_dev differs from /proc/locks superblock identity; actual open-file/fdinfo correspondence now confirms ownership without opening the lock inode.",
+    "Repeated status observations raced a slow readiness publication; held-write single-publication/retry/shutdown cases cover the correction.",
+    "SDL gamepad triggers must be converted before virtual-joystick routing; actual logical-pad neutral/full/release readback passes.",
+    "Graceful termination is checkpointed under a stable OS lock so a restarted launcher cannot send RetroArch a second hard-exit signal."
+  ],
+  "artifacts": {
+    "macos": {
+      "path": "build/releases/Broomm-macOS-linux-retroarch.zip",
+      "bytes": 20648053,
+      "sha256": "4e33c654db8017e84b1223c368ce68e76512b9084231d63a57a590455529edde",
+      "record": {
+        "product": "Broomm",
+        "version": "0.1.6",
+        "build_number": "1013",
+        "target": "macos-universal",
+        "sha": "82c953d4858f5229f6fa996e2b852417144a45b0",
+        "working_tree": true,
+        "source_tree_sha256": "dc0edcb05fbe09607b502cd4b120490f7b4991004d426e8a50f440cb333c7589",
+        "entries": [
+          "AppIcon.icns",
+          "Assets.car",
+          "Base.lproj",
+          "NATIVE-SOURCES.md",
+          "broomm-release.json",
+          "native"
+        ]
+      },
+      "payloads": {
+        "Contents/MacOS/broomm": {
+          "architectures": "x86_64 arm64",
+          "sha256": "8ad333c445628a99ab05f61608559f167dd8c674fa960de307ff562918b90402"
+        },
+        "Contents/Frameworks/App.framework/Versions/A/App": {
+          "architectures": "x86_64 arm64",
+          "sha256": "9fa715f61ed1c340220b2a7f5eb295a5523cca48218c52441f4c0c678a77ee37"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+          "architectures": "x86_64 arm64",
+          "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+        },
+        "Contents/Resources/native/broomm-sdl2.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "1814fccfaf786bed1a5ad3ea5baf4807f4a7ef03c722c4896c3b6ce31d9fc8df"
+        },
+        "Contents/Resources/native/broomm-sdl3.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "06df2bc785e144a5ca33eec3639fa1283321373da6e4a9d466094827592dc75b"
+        },
+        "Contents/Resources/native/broomm-astris.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "7126db19be46e48182cc2a587e14e50a3f948ad4038ca2d06651f6c97815ccb9"
+        },
+        "Contents/Resources/native/broomm-installer-guard.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "2310d05c852aa4682624a1afe0b21ea9e7a44b2dadf137554ef9baf6a90cf39c"
+        }
+      },
+      "signature": "source/fresh extraction deep strict all architectures passed",
+      "archive_integrity": "passed",
+      "bridge_and_linux_asset_readbacks": "passed",
+      "ad_hoc_signed": true,
+      "notarized": false,
+      "payload_hash_timing": "after final code signing; fresh extraction readbacks match"
+    },
+    "linux": {
+      "path": "build/releases/Broomm-Linux-x64-RetroArch-CachyOS.tar.gz",
+      "bytes": 11247709,
+      "sha256": "077de3c979303c15a71a6e6258fdda848ba2b5b0acc00db057ecf28e6c281f1f",
+      "record": {
+        "product": "Broomm",
+        "version": "0.1.6",
+        "build_number": "1013",
+        "target": "linux-x64",
+        "sha": "82c953d4858f5229f6fa996e2b852417144a45b0",
+        "working_tree": true,
+        "build_host": "CachyOS x64; local host compiler baseline",
+        "entries": [
+          "NATIVE-SOURCES.md",
+          "RUNNING.txt",
+          "broomm",
+          "broomm-release.json",
+          "data",
+          "lib",
+          "share"
+        ]
+      },
+      "archive_integrity": "all file readbacks passed",
+      "native_bridge_sha256": "00c30ce0d520f2b70b44ae8db6380b2c3a02be93dc404207fffa3d799b97dfb5",
+      "glibc": "glibc 2.44",
+      "artifact": "local CachyOS x64 build; official Ubuntu CI rerun pending"
+    }
+  },
+  "remaining_native_checks": [
+    "physical controllers and evdev permissions",
+    "Steam Input, Big Picture, gamescope and fullscreen/focus/visual acceptance",
+    "remaining cores native gameplay/BIOS/save cases",
+    "standalone Linux emulator adapters",
+    "managed Linux ARM64",
+    "new hosted CI run"
+  ],
+  "romm_writes": false,
+  "owner_progress_changed": false
+}

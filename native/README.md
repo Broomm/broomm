@@ -1,4 +1,34 @@
-# Prototype native bridges
+# Native emulator bridges
+
+The [Linux standalone integration](../docs/linux-standalone.md) adds native SDL2/SDL3, guarded Qt timers, same-process loopback debugger pause, confined installation supervision and independent configuration. Its pinned recipes and full runtime inventories live under `assets/setup/linux-x64/`. The documentation distinguishes actual native fixture results from pending Switch/physical/Steam/gamescope acceptance. No additional Qt, SDL, crypto runtime or emulator implementation is bundled.
+
+The [Linux x64 RetroArch bridge](../docs/linux-retroarch.md) is original public
+SDL 3.4 interposition in `linux_retroarch.c`, with private Landlock writes in
+`linux_write_policy.h`. It loads the reviewed frontend's own SDL, without native
+offsets, copied emulator code or another shipped SDL library. CMake packages
+`broomm-retroarch.so` beside the Linux application libraries; explicit local
+checks can use `tool/build_linux_bridges.sh`. GTK OS interop lives under
+`linux/runner/`, while Dart retains session, installation and save workflows.
+The Linux manifest pins source packages, executable/runtime/core hashes and
+licenses. Native kernel/host regressions and the opt-in real Mesen fixture are
+documented in the linked walkthrough; physical/Steam/gamescope remain separate.
+
+
+The [all-adapter pause follow-up](../docs/emulator-pause.md) extends explicit
+Resume ownership to every current desktop path, including RetroArch's Dart
+network controller and Astris. `pause_transition.h` is the common native policy.
+Eden separately records temporary controller-socket pause ownership, so socket
+changes do not resume an already paused game. The linked record distinguishes
+real native checks from compilation and remaining gameplay/host acceptance.
+
+The [native pause correction](../docs/duckstation-pause.md) gives Sony adapters
+an explicit pending Resume transition instead of continually enforcing Running.
+Emulator-native pause/resume survives ordinary polling and active routing
+updates; Broomm gates still enforce Pause and explicit release resumes once.
+`tool/check_sony_pause.sh` runs the three C boundary cases, with `--sanitize`
+for an independent ASan/UBSan run. The opt-in native DuckStation fixture invokes
+native pause/resume through test actions 4/5 and checks sustained real readback;
+production never enables these test actions.
 
 The [PlayStation integration](../docs/playstation-support.md) adds pinned DuckStation ARM64, ARMSX2 ARM64 and PCSX2 x86-64/Rosetta adapters in `playstation.inc`. They call native Qt pause methods that marshal to the emulator thread, then acknowledge actual UI notification flags (DuckStation) or atomic VM state (PS2). SDL3 logical enumeration/player indices exclude physical source devices from numbered emulator routes while retaining direct Broomm discovery. These paths use the emulator's bundled SDL3; no additional runtime or emulator implementation source is shipped. Test-only state save/load actions require the existing session-test opt-in. Source/output fingerprints, ABI evidence and native test limits are in the integration record.
 

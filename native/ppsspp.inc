@@ -55,9 +55,14 @@ static int ppsspp_tick(void) {
     // Core_Break is explicitly asynchronous/free-threaded upstream. Wait for
     // its native pending-work flag to clear before acknowledging the pause.
     bool stopped=stepping()&&inactive();
-    if(atomic_load(&session_wanted)) {
-        if(!stopped&&active())pause_core(22,0); // BreakReason::UIPause, pinned v1.20.4.
-    } else if(stopped)resume_core();
+    static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+    int command=session_pause_command(&control,atomic_load(&session_wanted),
+        stopped?1:active()&&!stepping()?0:-1);
+    if(command==1)pause_core(22,0); // BreakReason::UIPause, pinned v1.20.4.
+    else if(command==0)resume_core();
+    int native_action=session_test?atomic_exchange(&test_native_pause_action,0):0;
+    if(native_action==4)pause_core(22,0);
+    else if(native_action==5)resume_core();
     if(buttons&&session_test)atomic_store(&psp_buttons,buttons());
     int key=atomic_exchange(&psp_test_key,0);
     if(session_test&&key) {

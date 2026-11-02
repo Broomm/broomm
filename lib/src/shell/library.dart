@@ -49,6 +49,7 @@ class GameLibrary {
   final Directory data;
   Directory get root => Directory('${data.path}/library');
   static final _held = <String>{};
+  static final _uncertainWriters = <String, RandomAccessFile>{};
   static final _artSerial = <String, Future<void>>{};
   static final _metadataSerial = <String, Future<void>>{};
 
@@ -195,9 +196,17 @@ class GameLibrary {
         );
       }
       return await action();
+    } on DownloadWriterUncertain {
+      // Keep this stable OS lock until process exit. Another instance must not
+      // clean a private stage while an unacknowledged native I/O may remain.
+      if (lock != null) {
+        _uncertainWriters[key] = lock;
+        lock = null;
+      }
+      rethrow;
     } finally {
       await lock?.close();
-      _held.remove(key);
+      if (!_uncertainWriters.containsKey(key)) _held.remove(key);
     }
   }
 
@@ -364,7 +373,7 @@ class GameLibrary {
       }
       return parent.createTemp('.partial-${game.id}-');
     });
-    var published = false;
+    var published = false, uncertainWriter = false;
     final total = game.files.fold<int>(0, (n, f) => n + f.bytes);
     var completed = 0;
     final receipts = <Map<String, dynamic>>[];
@@ -468,8 +477,11 @@ class GameLibrary {
       });
       published = true;
       return InstalledGame(game, destination, userId);
+    } on DownloadWriterUncertain {
+      uncertainWriter = true;
+      rethrow;
     } finally {
-      if (!published && await staging.exists())
+      if (!published && !uncertainWriter && await staging.exists())
         await staging.delete(recursive: true);
     }
   }, lockName: 'game-$serverId-${game.id}.lock');

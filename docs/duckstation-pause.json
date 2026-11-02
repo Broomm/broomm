@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-02",
+  "revision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "working_tree": true,
+  "runtime_source_fingerprint": "a730f52e78f10e351106a9f472d64c5ecb9cfa0d6b9b59cfbb161fe72d32836c",
+  "source_hashes": {
+    "native/playstation.inc": "1e56991d39e917678578f459dc24f98b496ee8228fbe9406668b8915fa8e0c20",
+    "native/session.inc": "f2ce60bc4cb49323f898aea43a5c194e468fa9787fa40d7da6f788886fae7a85",
+    "native/sony_pause.h": "056ecff2b6d590aa042a7e044cadea489177d1f169af4fa530652bdec988bf09",
+    "native/test_sources.inc": "8a6dd9df43f93cd57ed390bc36ff16ea3ab095141927cf4d863ad4bd8072a622",
+    "tool/check_sony_pause.sh": "d78aa2923579cf08507be5d1c866ca93f13a7fdfc60595593902602f1df13443",
+    "tool/fixtures/sony_pause_test.c": "e9c3b90f685ac1398bf1f69158c68ed620b5f4bee16a1014259e5b4d40a4e9a1",
+    "tool/check_duckstation_pause_test.dart": "ed4f19633af3dc2fe152e41ef2a2bcd8a64b439b05bdafd89539c1141d3d3518",
+    "tool/ci/lint_workflow.sh": "58ef10eb35f106344e3cc06a8426ddeccb418b9410cc631fbcaeaf6d356b6ec8",
+    ".github/workflows/release.yml": "9d134bbd73fd9290d3eba54cb2ec3693901c5a610d48ddbc446c2d09e79c988d"
+  },
+  "baseline": {
+    "pause_policy": "HEAD continuous-running reconciliation; test-only native actions added for reproduction",
+    "result": "failed",
+    "error": "Expected paused 1, actual 0 during steady gameplay polling",
+    "elapsed_seconds": 7
+  },
+  "native_observations": [
+    {
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/duckstation-pause/native-9Qd9cM",
+      "emulator": "0.1-12083-g00e299795",
+      "rom": "Mega Man X4",
+      "checks": [],
+      "problems": []
+    },
+    {
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/duckstation-pause/native-U1aN4X",
+      "emulator": "0.1-12083-g00e299795",
+      "rom": "Mega Man X4",
+      "checks": [
+        "native pause retained across polling and active routing publication",
+        "native resume retained",
+        "Broomm pause gate and explicit resume still work, including quick gate/release; subsequent native pause retained",
+        "assigned controller disconnection gates and pauses"
+      ],
+      "problems": []
+    },
+    {
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/duckstation-pause/native-8vVr17",
+      "emulator": "0.1-12083-g00e299795",
+      "rom": "Mega Man X4",
+      "checks": [
+        "native pause retained across polling and active routing publication",
+        "native resume retained",
+        "Broomm pause gate and explicit resume still work; subsequent native pause retained",
+        "assigned controller disconnection gates and pauses"
+      ],
+      "problems": []
+    },
+    {
+      "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/duckstation-pause/native-rPB8Zi",
+      "emulator": "0.1-12083-g00e299795",
+      "rom": "Mega Man X4",
+      "checks": [
+        "native pause retained across polling and active routing publication",
+        "native resume retained",
+        "Broomm pause gate and explicit resume still work; subsequent native pause retained",
+        "assigned controller disconnection gates and pauses"
+      ],
+      "problems": []
+    }
+  ],
+  "checks": {
+    "native_duckstation": "passed, including quick gate/release; build/native-pause-checks/duckstation-native.log",
+    "native_policy_cases": 3,
+    "native_policy_asan_ubsan": "passed independently",
+    "flutter_playstation_session_cases": 10,
+    "flutter_analysis": "clean",
+    "workflow_lint": "passed",
+    "universal_bridges": "built and signed",
+    "source_bundle_signature": "deep/strict/all-architectures passed",
+    "archive_integrity": "passed",
+    "fresh_extraction_signature": "deep/strict/all-architectures passed",
+    "packaged_and_extracted_bridges_match": true
+  },
+  "native_scope": {
+    "host": "macOS ARM64",
+    "emulator": "DuckStation 0.1-12083-g00e299795",
+    "game": "Mega Man X4",
+    "configuration": "copied executable/BIOS, disposable private profile, read-only owner ROM",
+    "physical_controller_check": false,
+    "computer_use": false,
+    "romm_writes": false,
+    "owner_progress_changed": false
+  },
+  "remaining_native_checks": [
+    "PS2 engines for this pause correction",
+    "Linux/Windows/Android runtime",
+    "owner keyboard/menu and physical-controller verification"
+  ],
+  "payloads": {
+    "Contents/MacOS/broomm": {
+      "architectures": "x86_64 arm64",
+      "sha256": "77657bfcbe07f918f21080509ebb122234124ceaeede689ab38aab4d9ca551e3"
+    },
+    "Contents/Frameworks/App.framework/Versions/A/App": {
+      "architectures": "x86_64 arm64",
+      "sha256": "cf3d7158d4ad977862f7d3d8612a88029b3f7386964f1b741439d02613c401bf"
+    },
+    "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+      "architectures": "x86_64 arm64",
+      "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+    },
+    "Contents/Resources/native/broomm-sdl2.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "a21327db0dc208fc6d29f419a8e02fe5ee671b8ea6198d72bd1848876c969cd0"
+    },
+    "Contents/Resources/native/broomm-sdl3.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "7581557249a98d63fc7705c4b1545601db177e4b8163ea40e192180cf422be6f"
+    },
+    "Contents/Resources/native/broomm-installer-guard.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "2d1198bff7ef20b2898fe5b845e05e29ed24d2a39f63d32c80a58791dd68245a"
+    },
+    "Contents/Resources/native/broomm-astris.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "cf615ea24e9bcc1ef3554ae8e2d41ae45b7a1aeed2b9dcda774eda27abc6003b"
+    }
+  },
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-duckstation-pause-fix.zip",
+    "bytes": 20614822,
+    "sha256": "05c8c5544ddd14a8d9844b7b84d141b1c036b0dc32bc9405ea7295d3fa381214",
+    "version": "0.1.4 (1006)",
+    "data_root": "production Application Support",
+    "ad_hoc_signed": true,
+    "notarized": false
+  }
+}

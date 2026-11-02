@@ -32,6 +32,13 @@ static void wii_tick(int state) {
         upright=symbol("_ZNK10WiimoteEmu7Wiimote9IsUprightEv");
         info=symbol("_ZN6Config23GetInfoForWiimoteSourceEi");
         set=symbol("_ZN6Config3SetINS_4InfoI13WiimoteSourceEES2_EEvNS_9LayerTypeERKT_RKT0_");
+#if defined(__linux__)
+        // This LTO build inlines the Wiimote instantiation. Its retained SI
+        // instantiation has the same reviewed ABI: Info::GetLocation plus an
+        // enum32 formatted as an integer, Layer::Set, then OnConfigChanged.
+        // It does not read the type-specific default/cached fields of Info.
+        if(!set)set=symbol("_ZN6Config3SetINS_4InfoIN15SerialInterface9SIDevicesEEES3_EEvNS_9LayerTypeERKT_RKT0_");
+#endif
         get=symbol("_ZN6Config11GetUncachedI13WiimoteSourceEET_RKNS_4InfoIS2_EE");
         buttons=symbol("_ZN10WiimoteEmu7Wiimote26GetCurrentlyPressedButtonsEv");
         cursor=symbol("_ZN13ControllerEmu6Cursor8GetStateEb");

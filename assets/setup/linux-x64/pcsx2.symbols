@@ -1,0 +1,5 @@
+0000000000aa8c60 _ZN9EmuThread15saveStateToSlotEi
+0000000000aa8890 _ZN9EmuThread17loadStateFromSlotEib
+00000000005db3a0 _ZN9VMManager8GetStateEv
+0000000000a870f0 _ZNK10MainWindow10metaObjectEv
+000000000d574c88 g_emu_thread

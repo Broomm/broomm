@@ -3,9 +3,16 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'macos_aes.dart';
+import 'aes128.dart';
+
+Uint8List _headerAes(Uint8List bytes, Uint8List key, {required bool decrypt}) =>
+    Platform.isMacOS
+    ? macosAesEcb(bytes, key, decrypt: decrypt)
+    : aes128Ecb(bytes, key, decrypt: decrypt);
 
 /// Nintendo XTS data units use a big-endian sector IV, then standard XTS
-/// little-endian polynomial tweaks. AES itself is supplied by the OS adapter.
+/// little-endian polynomial tweaks. AES uses the native Apple primitive on
+/// macOS and the bounded Dart block primitive on other hosts.
 Uint8List switchXtsSector(
   Uint8List bytes,
   Uint8List key,
@@ -16,7 +23,7 @@ Uint8List switchXtsSector(
     throw const FormatException('Invalid Switch header sector');
   final iv = Uint8List(16);
   ByteData.sublistView(iv).setUint64(8, sector);
-  final tweak = macosAesEcb(iv, Uint8List.sublistView(key, 16), decrypt: false),
+  final tweak = _headerAes(iv, Uint8List.sublistView(key, 16), decrypt: false),
       tweaks = Uint8List(512),
       input = Uint8List(512);
   for (var at = 0; at < 512; at += 16) {
@@ -32,7 +39,7 @@ Uint8List switchXtsSector(
     }
     if (carry != 0) tweak[0] ^= 0x87;
   }
-  final output = macosAesEcb(
+  final output = _headerAes(
     input,
     Uint8List.sublistView(key, 0, 16),
     decrypt: decrypt,

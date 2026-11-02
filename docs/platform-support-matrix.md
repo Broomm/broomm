@@ -1,5 +1,16 @@
 # RomM platform and emulator support matrix
 
+**Linux standalone update, 2026-11-02:** 🟢 Eight native controller/lifecycle cases cover six console families plus PS3 homebrew; 🟢 native PS3 PUP and 3DS CIA imports; 🟡 Ryubing/Eden Switch runtime and physical/Steam/gamescope acceptance remain pending. All nine reviewed packages install into private profiles. See the [Linux table, versions and limits](linux-standalone.md).
+
+**Linux x64, 2026-11-02:** 🟢 bundled RetroArch installation/private profiles and
+native Wayland NES/Mesen controller/save/state/recovery fixture pass. 🟡 All
+fifteen cores pass native ABI probes and the shared nineteen platform routes are
+configured; each remaining core's Linux gameplay/BIOS/native save case, physical
+pads and Steam/gamescope still need acceptance. 🟡 Nine [Linux x64 standalones](linux-standalone.md) now have managed integrations;
+Switch runtime and managed ARM64 remain pending. The macOS cells below retain their original host
+scope. See [Linux evidence and walkthrough](linux-retroarch.md).
+
+
 **Emulator additions, 2026-10-29, Android follow-up 2026-10-30:** [Astris (macOS 15+ ARM64) and Citra MMJ (Android)](astris-and-citra-mmj.md) are now selectable. Astris has native launch/controller/update/DLC and ordinary-save ZIP checks. Android's nine adapters now have 🟡 [connected ordinary saves and matching states](android-installation-and-saves.md) (Eden has no states), plus official APK acquisition and stable/nightly ARMSX2 detection. Native Android acceptance and new content/firmware installers remain outstanding. Defaults require a configured emulator and successful setup changes the default. Older evidence remains scoped to its emulator/host.
 
 **Setup delivery, 2026-10-27:** all twelve macOS frontends and all fifteen RetroArch cores now download through bundled recipes; no external pack/import is required. RetroArch uses Broomm/retroarch v0.1.0. Seven official Libretro builds replace the offline core inputs; the other eight libraries retain their hashes. Native ABI, thirteen game/state cases, four BIOS-based routes and Genesis/Master System/Game Gear/Arcade native save round trips pass. Existing cores remain usable until explicit setup; ordinary saves are retained and incompatible states have separate physical and cloud identities. Earlier per-platform evidence below retains its stated scope. Other desktop frontends are published and verified, but their Broomm core/bridge acceptance is pending. See [delivery status](managed-setup-downloads.md) and [new core versions](retroarch-public-cores.md).

@@ -12,6 +12,7 @@
 #include <sys/proc_info.h>
 #include <sys/stat.h>
 #include "ownership.inc"
+#include "pause_transition.h"
 
 static NSString *as_root, *as_user;
 static NSUserDefaults *as_defaults;
@@ -29,6 +30,12 @@ static NSMutableArray<GCController *> *as_controllers;
 static NSMutableArray<NSNumber *> *as_ids;
 static uint32_t as_next_id=1, as_ports;
 static int as_paused=-1;
+static unsigned long long as_resume_serial;
+static int as_test_pause_action;
+static void as_set_wanted(BOOL wanted) {
+    if(!wanted&&as_wanted)++as_resume_serial;
+    as_wanted=wanted;
+}
 static void (*as_first_callback)(void);
 
 static void *as_native(size_t offset) {
@@ -203,7 +210,7 @@ AS_INTERPOSE(as_stick,ryujinx_set_controller_stick_axis);
 AS_INTERPOSE(as_motion,ryujinx_set_controller_motion_axis);
 
 static void as_request_menu(NSString *kind,uint32_t device) {
-    as_gate=YES;as_wanted=YES;as_pending=NO;as_request=kind;as_device=device;as_serial++;
+    as_gate=YES;as_set_wanted(YES);as_pending=NO;as_request=kind;as_device=device;as_serial++;
 }
 static int as_pause_state(void) {
     uintptr_t api=*(uintptr_t *)as_native(0x14a1398);
@@ -240,10 +247,10 @@ static void as_read_command(NSDictionary<NSNumber *,NSDictionary *> *sources) {
     }
     BOOL valid=YES;for(int p=0;p<4;p++)if(routes[p]!=UINT32_MAX&&!sources[@(routes[p])])valid=NO;
     memcpy(as_routes,routes,sizeof(routes));memcpy(as_swaps,swaps,sizeof(swaps));memcpy(as_gyro,gyro,sizeof(gyro));as_revision=revision;
-    as_pending=active&&valid&&as_gate;as_gate=!active||!valid||as_pending;as_wanted=pause||!valid||as_pending;
+    as_pending=active&&valid&&as_gate;as_gate=!active||!valid||as_pending;as_set_wanted(pause||!valid||as_pending);
     if(!valid)as_request_menu(@"disconnect",UINT32_MAX);
     if(quit) {
-        as_gate=YES;as_wanted=YES;
+        as_gate=YES;as_set_wanted(YES);
         if(atomic_load(&as_ready)&&!atomic_load(&as_ended))as_stop();
         [NSApp terminate:nil];
     }
@@ -277,7 +284,11 @@ static void as_tick(void) {
     if(getenv("BROOMM_SESSION_TEST")) {
         unsigned int bits=0,missing=0,count=3;
         FILE *input=fopen(getenv("BROOMM_TEST_INPUT")?:"","r");
-        if(input){(void)fscanf(input,"%u %u %u",&bits,&missing,&count);fclose(input);}
+        unsigned int unused=0,action=0;
+        if(input){(void)fscanf(input,"%u %u %u %u %u",&bits,&missing,&count,&unused,&action);fclose(input);}
+        static unsigned int previous_action;
+        if(action!=previous_action&&(action==4||action==5))as_test_pause_action=(int)action;
+        previous_action=action;
         for(unsigned int i=0;i<MIN(count,4);i++)if(!(missing&(1u<<i))) {
             NSNumber *identity=@(0x70000001u+i);
             NSDictionary *source=@{@"id":identity,@"name":@"Broomm test source",@"buttons":@(bits),@"x":@0,@"y":@0,@"rx":@0,@"ry":@0,@"lt":@0,@"rt":@0,@"family":@1,@"sensors":@0,@"sensorReady":@0,@"accel":as_vector(0,0,0),@"gyro":as_vector(0,0,0)};
@@ -306,15 +317,21 @@ static void as_tick(void) {
         // readers retain them; unpairing disables the player configuration.
         if(as_ports!=ports){as_ports=ports;as_apply_options();}
     }
-    if(as_pending&&released){as_pending=NO;as_gate=NO;as_wanted=NO;}
+    if(as_pending&&released){as_pending=NO;as_gate=NO;as_set_wanted(NO);}
     if(atomic_load(&as_ended))as_request=@"game-ended";
     if(atomic_load(&as_ready)&&!atomic_load(&as_ended)) {
         // Read the same Device.IsPaused byte written by the synchronous pinned
         // backend setter, resolving the GC root afresh on the owning queue.
         as_paused=as_pause_state();
-        if(as_paused>=0&&as_paused!=(int)as_wanted) {
-            ((void(*)(bool))as_native(0x958540))(as_wanted);
+        static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+        int command=pause_transition(&control,as_wanted,as_paused,as_resume_serial);
+        if(command>=0) {
+            ((void(*)(bool))as_native(0x958540))(command!=0);
             as_paused=as_pause_state();
+        }
+        if(as_test_pause_action==4||as_test_pause_action==5) {
+            ((void(*)(bool))as_native(0x958540))(as_test_pause_action==4);
+            as_test_pause_action=0;as_paused=as_pause_state();
         }
         // The exported frontend API uses the same first 15 button indices
         // as Broomm; the backend maps these to GamepadButtonInputId values.

@@ -5,8 +5,19 @@ class SessionLease {
   final RandomAccessFile file;
   final String key;
   bool _released = false;
+  bool _uncertainWriter = false;
   bool get active => !_released;
   static final _held = <String>{};
+  static final _uncertain = <String, SessionLease>{};
+
+  /// A native writer has not acknowledged closure. Keep the stable OS lock
+  /// through normal cleanup; only process exit makes recovery safe again.
+  void retainForUncertainWriter() {
+    if (_released) throw StateError('The session lease was already released.');
+    _uncertainWriter = true;
+    _uncertain[key] = this;
+  }
+
   static Future<SessionLease> acquire(Directory root) async {
     await root.create(recursive: true);
     if (await FileSystemEntity.type(root.path, followLinks: false) !=
@@ -50,7 +61,7 @@ class SessionLease {
   }
 
   Future<void> release() async {
-    if (_released) return;
+    if (_released || _uncertainWriter) return;
     _released = true;
     try {
       await file.close();

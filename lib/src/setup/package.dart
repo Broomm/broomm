@@ -64,7 +64,15 @@ class SetupPackage {
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash) ||
         bytes < 1 ||
         bytes > 2 * 1024 * 1024 * 1024 ||
-        !{'zip', '7z', 'tar.xz', 'tar.gz', 'dmg'}.contains(format) ||
+        !{
+          'zip',
+          '7z',
+          'tar.xz',
+          'tar.gz',
+          'dmg',
+          'appimage',
+          'appimage-zip',
+        }.contains(format) ||
         !{
           'none',
           'macos-adhoc',

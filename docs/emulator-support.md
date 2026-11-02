@@ -1,5 +1,7 @@
 # Initial emulator scope and setup files
 
+The [Linux x64 RetroArch milestone](linux-retroarch.md) adds bundled setup, private configuration and native Wayland/Mesen input/progress/recovery checks. All fifteen cores pass Linux ABI probes. The [standalone milestone](linux-standalone.md) adds nine Linux x64 frontends with the native evidence and remaining Switch/physical/Steam/gamescope acceptance listed there. Dated macOS evidence below keeps its host scope.
+
 The [Astris/Citra MMJ follow-up](astris-and-citra-mmj.md) adds the managed Astris macOS alternative and Android MMJ direct launch. The newer [Android installation/save milestone](android-installation-and-saves.md) adds APK acquisition and connected ordinary saves/matching states across its nine adapters (Eden has no states), including MMJ and both ARMSX2 channels. Native Android acceptance and new content/firmware installers remain outstanding. Only configured emulators have a default; successful setup selects the newly installed emulator. Historical milestone counts below retain their dates.
 
 Android has its own installed-app settings/launch route, described in the [Android status](android-emulators.md). Connected saves use one-time folder grants, journaled profile swaps and explicit save/close confirmation on return. Compiled host code and controlled workflow tests do not establish native acceptance or content/firmware parity. Android never imports desktop bundles or opens desktop pairing.

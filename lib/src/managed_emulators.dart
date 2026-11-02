@@ -17,6 +17,7 @@ import 'retroarch_saves.dart';
 import 'progress/file_hash.dart';
 import 'setup/archive.dart';
 import 'setup/package.dart';
+import 'setup/linux_identity.dart';
 
 class TestedBuild {
   TestedBuild(Map j)
@@ -31,6 +32,7 @@ class TestedBuild {
       hash = j['sha256'] as String,
       sdl = j['sdl'] as int,
       sdlLibrary = j['sdl_library'] as String?,
+      linuxLauncher = j['linux_launcher'] as String?,
       coreHash = j['core_sha256'] as String?,
       retroNativeStateNames = j['retro_native_state_names'] == true,
       integrityAsset =
@@ -63,6 +65,7 @@ class TestedBuild {
       : id;
   String get engine => isRpcs3 ? 'RPCS3' : name;
   final String? sdlLibrary, coreHash;
+  final String? linuxLauncher;
   final bool retroNativeStateNames;
   final int sdl;
   final Map<String, String> native;
@@ -110,10 +113,12 @@ class ManagedEmulators extends ChangeNotifier {
     this.log,
     Future<String> Function(String)? asset,
     SetupDownloads? downloads,
+    this.hostOverride,
   }) : asset = asset ?? rootBundle.loadString,
        downloads = downloads ?? SetupDownloads(data);
   final Directory data;
   final String? project;
+  final String? hostOverride;
   final SessionLog? log;
   final SetupDownloads downloads;
   double? progress;
@@ -161,8 +166,15 @@ class ManagedEmulators extends ChangeNotifier {
   DownloadCancellation? _cancel;
   Future<void>? _work;
   String get host =>
+      hostOverride ??
       '${Platform.operatingSystem}-${Abi.current().toString().split('_').last}';
-  bool get supported => host == 'macos-arm64';
+  bool get supported => host == 'macos-arm64' || host == 'linux-x64';
+  String get setupAssets =>
+      host == 'linux-x64' ? 'assets/setup/linux-x64' : 'assets/setup';
+  String get coreFile => host.startsWith('linux-') ? 'core.so' : 'core.dylib';
+  String get snesCoreFile => host.startsWith('linux-')
+      ? 'snes9x_libretro.so'
+      : 'snes9x_libretro.dylib';
   Directory get root => Directory('${data.path}/emulators');
   void emit() {
     if (!disposed) notifyListeners();
@@ -173,7 +185,7 @@ class ManagedEmulators extends ChangeNotifier {
     try {
       if (builds.isEmpty) {
         final j =
-            jsonDecode(await asset('assets/setup/tested-builds.json')) as Map;
+            jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         final current = (j['builds'] as List)
             .map((e) => TestedBuild(e as Map))
             .toList();
@@ -192,7 +204,7 @@ class ManagedEmulators extends ChangeNotifier {
       }
       if (coreBuilds.isEmpty && builds.any((b) => b.id == 'retroarch')) {
         final j =
-            jsonDecode(await asset('assets/setup/retroarch-cores.json')) as Map;
+            jsonDecode(await asset('$setupAssets/retroarch-cores.json')) as Map;
         final current = (j['cores'] as List).cast<Map>();
         final previous = (j['previous_cores'] as List? ?? const []).cast<Map>();
         for (final c in [...current, ...previous]) {
@@ -245,7 +257,7 @@ class ManagedEmulators extends ChangeNotifier {
             // version only after explicit setup has published that exact file.
             for (final c in _coreVersions(id)) {
               final path =
-                  '${root.path}/${b.id}/${b.hash}/cores/$id-${c['sha256']}/core.dylib';
+                  '${root.path}/${b.id}/${b.hash}/cores/$id-${c['sha256']}/$coreFile';
               final type = await FileSystemEntity.type(
                 path,
                 followLinks: false,
@@ -280,14 +292,14 @@ class ManagedEmulators extends ChangeNotifier {
     if (busy) throw StateError('Emulator setup is already running.');
     if (!supported)
       throw UnsupportedError(
-        'The tested native controller builds are currently available for macOS Apple Silicon. Linux, Windows and Android setup need their own validated packages; no desktop bridge is used on Android.',
+        'No reviewed managed emulator package is available for this host. Android uses external emulator apps.',
       );
     await load();
     if (error != null) throw StateError(error!);
     final String source;
     Directory? base;
     if (file == null) {
-      source = await asset('assets/setup/setup.json');
+      source = await asset('$setupAssets/setup.json');
     } else {
       final f = File(file);
       if (await FileSystemEntity.type(file, followLinks: false) !=
@@ -419,7 +431,7 @@ class ManagedEmulators extends ChangeNotifier {
     String slot,
     SetupPackage package,
   ) async {
-    final j = jsonDecode(await asset('assets/setup/setup.json')) as Map;
+    final j = jsonDecode(await asset('$setupAssets/setup.json')) as Map;
     final entry = (j['launchers'] as Map)[build.id] as Map?;
     Object? value;
     if (entry != null) {
@@ -464,7 +476,7 @@ class ManagedEmulators extends ChangeNotifier {
     if (names.containsKey(key))
       return '$project/prototype-data/$key/${names[key]}';
     return switch (key) {
-      'snes9x' => '$project/prototype-data/retroarch/snes9x_libretro.dylib',
+      'snes9x' => '$project/prototype-data/retroarch/$snesCoreFile',
       'ps3_firmware' => '$project/prototype-data/rpcs3/portable/dev_flash',
       'switch_firmware' =>
         '$project/prototype-data/ryubing/user/bis/system/Contents/registered',
@@ -520,8 +532,18 @@ class ManagedEmulators extends ChangeNotifier {
       final target = Directory('${parent.path}/${entry.key}-${c['sha256']}');
       if (await target.exists()) {
         await ownedDirectory(target);
-        if (await sha256File('${target.path}/core.dylib') != c['sha256']) {
+        if (await sha256File('${target.path}/$coreFile') != c['sha256']) {
           throw StateError('A managed core changed; its files were kept.');
+        }
+        if (host.startsWith('linux-')) {
+          await verifyLinuxElf(File('${target.path}/$coreFile'));
+          await atomicText(
+            '${target.path}/receipt.json',
+            jsonEncode({
+              ...c,
+              'verification': await linuxTreeStamp(target, [coreFile]),
+            }),
+          );
         }
         continue;
       }
@@ -529,9 +551,19 @@ class ManagedEmulators extends ChangeNotifier {
       try {
         await File('${stage.path}/receipt.json')
             .writeAsString(jsonEncode(c), flush: true);
-        await File(entry.value).copy('${stage.path}/core.dylib');
-        if (await sha256File('${stage.path}/core.dylib') != c['sha256']) {
+        await File(entry.value).copy('${stage.path}/$coreFile');
+        if (await sha256File('${stage.path}/$coreFile') != c['sha256']) {
           throw const FileSystemException('Core copy verification failed');
+        }
+        if (host.startsWith('linux-')) {
+          await verifyLinuxElf(File('${stage.path}/$coreFile'));
+          await atomicText(
+            '${stage.path}/receipt.json',
+            jsonEncode({
+              ...c,
+              'verification': await linuxTreeStamp(stage, [coreFile]),
+            }),
+          );
         }
         cancellation.check();
         await stage.rename(target.path);
@@ -566,15 +598,12 @@ class ManagedEmulators extends ChangeNotifier {
         throw StateError('Core ownership differs from its directory.');
       await for (final child in entry.list(followLinks: false)) {
         if (child is! File ||
-            !{
-              'core.dylib',
-              'receipt.json',
-            }.contains(child.uri.pathSegments.last))
+            !{coreFile, 'receipt.json'}.contains(child.uri.pathSegments.last))
           throw StateError(
             'The core folder contains unrelated files; they were kept.',
           );
       }
-      if (!staged && await sha256File('${entry.path}/core.dylib') != hash)
+      if (!staged && await sha256File('${entry.path}/$coreFile') != hash)
         throw StateError('The managed core changed; its files were kept.');
     }
   }
@@ -642,7 +671,7 @@ class ManagedEmulators extends ChangeNotifier {
         : await resolve(
             item.core!,
             'core',
-            '${release.path}/snes9x_libretro.dylib',
+            '${release.path}/$snesCoreFile',
             b.coreHash,
           );
     final cores = <String, String>{};
@@ -664,7 +693,7 @@ class ManagedEmulators extends ChangeNotifier {
       cores[entry.key] = await resolve(
         entry.value,
         'cores:${entry.key}',
-        '${release.path}/cores/${entry.key}-$hash/core.dylib',
+        '${release.path}/cores/${entry.key}-$hash/$coreFile',
         hash,
       );
     }
@@ -741,11 +770,15 @@ class ManagedEmulators extends ChangeNotifier {
               cancellation,
               allowBundleLinks: true,
             );
+            if (b.host.startsWith('linux-'))
+              await setupTool('/bin/chmod', [
+                'u+x',
+                '${staging.path}/${b.bundle}/${b.executable}',
+              ], cancellation);
             if (item.core != null)
-              await File(item.core!)
-                  .copy('${staging.path}/snes9x_libretro.dylib');
+              await File(item.core!).copy('${staging.path}/$snesCoreFile');
             await File('${staging.path}/local-symbols.txt').writeAsString(
-              await asset('assets/setup/${b.id}.symbols'),
+              await asset('$setupAssets/${b.id}.symbols'),
               flush: true,
             );
             for (final entry in item.resources.entries) {
@@ -766,8 +799,7 @@ class ManagedEmulators extends ChangeNotifier {
               preparation: item.preparation,
             );
             if (b.coreHash != null &&
-                await sha256File('${staging.path}/snes9x_libretro.dylib') !=
-                    b.coreHash)
+                await sha256File('${staging.path}/$snesCoreFile') != b.coreHash)
               throw StateError('Copied core verification failed');
             final receipt = jsonEncode({
               'schema_version': 1,
@@ -778,6 +810,8 @@ class ManagedEmulators extends ChangeNotifier {
               'resources': item.resources.keys.toList(),
               'installedAt': DateTime.now().toUtc().toIso8601String(),
               if (item.preparation != null) 'preparation': item.preparation,
+              if (b.host.startsWith('linux-'))
+                'verification': await _linuxVerification(b, staging),
             });
             final f = File('${staging.path}/receipt.json');
             await f.writeAsString(receipt, flush: true);
@@ -809,11 +843,15 @@ class ManagedEmulators extends ChangeNotifier {
             cancellation,
           );
           if (b.coreHash != null &&
-              await sha256File('${destination.path}/snes9x_libretro.dylib') !=
+              await sha256File('${destination.path}/$snesCoreFile') !=
                   b.coreHash)
             throw StateError(
               'The installed Snes9x core changed. Its files and profile progress were kept.',
             );
+          if (b.host.startsWith('linux-')) {
+            record['verification'] = await _linuxVerification(b, destination);
+            await atomicText(receipt.path, jsonEncode(record));
+          }
         }
         await _addResources(item, destination, cancellation);
         await _addRetroCores(item, destination, cancellation);
@@ -931,7 +969,7 @@ class ManagedEmulators extends ChangeNotifier {
           if (![
             build.bundle,
             'resources',
-            'snes9x_libretro.dylib',
+            snesCoreFile,
             if (build.id == 'retroarch') 'cores',
             'local-symbols.txt',
             'receipt.json',
@@ -1088,7 +1126,14 @@ class ManagedEmulators extends ChangeNotifier {
         'Set up Azahar in Emulator Settings, then choose Download Updates and DLC again.',
       );
     final bundle = '${root.path}/${b.id}/${b.hash}/${b.bundle}';
-    await verifyBundle(b, bundle, cancellation);
+    if (b.host.startsWith('linux-')) {
+      await _verifyLinuxInstallation(
+        b,
+        Directory('${root.path}/${b.id}/${b.hash}'),
+      );
+    } else {
+      await verifyBundle(b, bundle, cancellation);
+    }
     return '$bundle/${b.executable}';
   }
 
@@ -1139,7 +1184,11 @@ class ManagedEmulators extends ChangeNotifier {
     if (b == null || !ready(name))
       throw StateError('Set up $name in Emulator Settings first.');
     final release = Directory('${root.path}/${b.id}/${b.hash}');
-    await verifyBundle(b, '${release.path}/${b.bundle}', cancellation);
+    if (b.host.startsWith('linux-')) {
+      await _verifyLinuxInstallation(b, release);
+    } else {
+      await verifyBundle(b, '${release.path}/${b.bundle}', cancellation);
+    }
     final runtime = await prepareManagedProfile(data, profileId, b, release);
     return ('${release.path}/${b.bundle}/${b.executable}', runtime);
   }
@@ -1162,7 +1211,11 @@ class ManagedEmulators extends ChangeNotifier {
       throw StateError('Set up $emulator in Emulator Settings first.');
     await requireRuntime(b);
     final release = Directory('${root.path}/${b.id}/${b.hash}');
-    await verifyBundle(b, '${release.path}/${b.bundle}', cancellation);
+    if (b.host.startsWith('linux-')) {
+      await _verifyLinuxInstallation(b, release);
+    } else {
+      await verifyBundle(b, '${release.path}/${b.bundle}', cancellation);
+    }
     final runtime = await prepareManagedProfile(data, profileId, b, release);
     return ('${release.path}/${b.bundle}/${b.executable}', runtime);
   }
@@ -1233,11 +1286,13 @@ class ManagedEmulators extends ChangeNotifier {
       throw StateError(
         '${resourceProblems[b.id]}. Add the required local resources in Emulator Settings before playing.',
       );
-    final executableHash = await verifyBundle(
-      b,
-      '${release.path}/${b.bundle}',
-      DownloadCancellation(),
-    );
+    final executableHash = b.host.startsWith('linux-')
+        ? await _verifyLinuxInstallation(b, release)
+        : await verifyBundle(
+            b,
+            '${release.path}/${b.bundle}',
+            DownloadCancellation(),
+          );
     await requireRuntime(b);
     final runtime = await prepareManagedProfile(data, profileId, b, release);
     var executable = '${release.path}/${b.bundle}/${b.executable}';
@@ -1265,7 +1320,7 @@ class ManagedEmulators extends ChangeNotifier {
         );
       }
     }
-    if (b.id == 'melonds') {
+    if (b.id == 'melonds' && !b.host.startsWith('linux-')) {
       // macOS Qt 6 resolves its default preferences outside a child HOME.
       // melonDS's supported adjacent portable directory provides isolation.
       // A private copy of its single-file static executable anchors that path;
@@ -1282,9 +1337,7 @@ class ManagedEmulators extends ChangeNotifier {
         );
       executable = launcher;
     }
-    var core = b.coreHash == null
-        ? null
-        : '${release.path}/snes9x_libretro.dylib';
+    var core = b.coreHash == null ? null : '${release.path}/$snesCoreFile';
     var coreHash = b.coreHash;
     if (coreId != null) {
       if (b.id != 'retroarch' || !coreBuilds.containsKey(coreId)) {
@@ -1297,9 +1350,23 @@ class ManagedEmulators extends ChangeNotifier {
         );
       }
       coreHash = installedCoreBuilds[coreId]!['sha256'] as String;
-      core = '${release.path}/cores/$coreId-$coreHash/core.dylib';
+      core = '${release.path}/cores/$coreId-$coreHash/$coreFile';
     }
-    if (core != null && await sha256File(core) != coreHash)
+    if (core != null && b.host.startsWith('linux-') && coreId != null) {
+      final record = jsonDecode(
+        await File('${File(core).parent.path}/receipt.json').readAsString(),
+      ) as Map;
+      if (record['id'] != coreId || record['sha256'] != coreHash)
+        throw StateError(
+          'The managed Linux core identity changed. Verify setup; progress was kept.',
+        );
+      await verifyLinuxStamp(File(core).parent, [
+        coreFile,
+      ], record['verification']);
+    }
+    if (core != null &&
+        !b.host.startsWith('linux-') &&
+        await sha256File(core) != coreHash)
       throw StateError(
         'The managed core changed. Its saved data has been kept.',
       );
@@ -1307,7 +1374,7 @@ class ManagedEmulators extends ChangeNotifier {
       await prepareFlycastSaves(runtime.path, contentId!, rom);
     await File(
       '${runtime.path}/local-symbols.txt',
-    ).writeAsString(await asset('assets/setup/${b.id}.symbols'), flush: true);
+    ).writeAsString(await asset('$setupAssets/${b.id}.symbols'), flush: true);
     return ResolvedSession(
       PreparedEmulator(
         b.engine,
@@ -1329,6 +1396,9 @@ class ManagedEmulators extends ChangeNotifier {
         cacheDirectory: b.id == 'rpcs3-intel'
             ? '${runtime.path}/cache-intel'
             : null,
+        linuxLauncher: b.linuxLauncher == null
+            ? null
+            : '${release.path}/${b.bundle}/${b.linuxLauncher}',
         userDirectory: b.id == 'eden'
             ? '${runtime.path}/data/eden'
             : b.id == 'melonds'
@@ -1351,11 +1421,88 @@ class ManagedEmulators extends ChangeNotifier {
     );
   }
 
+  Future<Map<String, Object>> _linuxVerification(
+    TestedBuild b,
+    Directory release,
+  ) async {
+    final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
+    final bundle = Directory('${release.path}/${b.bundle}');
+    await verifyLinuxElf(File('${bundle.path}/${b.executable}'));
+    if (b.sdlLibrary != null)
+      await verifyLinuxElf(File('${bundle.path}/${b.sdlLibrary}'));
+    if (b.coreHash != null)
+      await verifyLinuxElf(File('${release.path}/$snesCoreFile'));
+    return {
+      'app': await linuxTreeStamp(
+        bundle,
+        (expected['files'] as Map).keys.cast<String>(),
+      ),
+      if (b.coreHash != null)
+        'default_core': await linuxTreeStamp(release, [snesCoreFile]),
+    };
+  }
+
+  Future<String> _verifyLinuxInstallation(
+    TestedBuild b,
+    Directory release,
+  ) async {
+    final file = File('${release.path}/receipt.json');
+    if (await FileSystemEntity.type(file.path, followLinks: false) !=
+            FileSystemEntityType.file ||
+        await file.length() > 8 * 1024 * 1024)
+      throw StateError(
+        'The Linux setup receipt is missing or invalid. Verify setup; progress was kept.',
+      );
+    final receipt = jsonDecode(await file.readAsString()) as Map;
+    if (receipt['id'] != b.id ||
+        receipt['hash'] != b.hash ||
+        receipt['host'] != host)
+      throw StateError(
+        'The Linux installation belongs to a different build. Verify setup; progress was kept.',
+      );
+    final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
+    final names = (expected['files'] as Map).keys.cast<String>().toSet();
+    final bundle = Directory('${release.path}/${b.bundle}');
+    await inspectTree(bundle.path, allowLinks: true);
+    final actual = <String>{};
+    final links = <String, String>{};
+    await for (final entry in bundle.list(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entry is File)
+        actual.add(entry.path.substring(bundle.path.length + 1));
+      if (entry is Link)
+        links[entry.path.substring(bundle.path.length + 1)] = await entry
+            .target();
+    }
+    if (actual.length != names.length || !actual.containsAll(names))
+      throw StateError(
+        'The Linux application contains missing or untracked files. Verify setup; existing files were kept.',
+      );
+    final expectedLinks = (expected['links'] as Map).cast<String, String>();
+    if (links.length != expectedLinks.length ||
+        links.entries.any((entry) => expectedLinks[entry.key] != entry.value))
+      throw StateError(
+        'The managed Linux application links changed. Verify setup; existing files were kept.',
+      );
+    final verified = receipt['verification'];
+    if (verified is! Map)
+      throw StateError(
+        'Verify Linux setup before playing. Existing progress was kept.',
+      );
+    await verifyLinuxStamp(bundle, names, verified['app']);
+    if (b.coreHash != null)
+      await verifyLinuxStamp(release, [snesCoreFile], verified['default_core']);
+    return b.hash;
+  }
+
   Future<Map<String, String>?> _installedPreparation(TestedBuild b) async {
     final file = File('${root.path}/${b.id}/${b.hash}/receipt.json');
     if (await FileSystemEntity.type(file.path, followLinks: false) !=
             FileSystemEntityType.file ||
-        await file.length() > 65536)
+        await file.length() >
+            (b.host.startsWith('linux-') ? 8 * 1024 * 1024 : 65536))
       throw StateError(
         '${b.name} installation receipt is missing or invalid. Retry setup.',
       );
@@ -1449,6 +1596,20 @@ class ManagedEmulators extends ChangeNotifier {
           '${b.name} executable changed after setup. Existing settings were kept. Retry setup.',
         );
       return hash;
+    }
+    if (host.startsWith('linux-')) {
+      for (final entry in files.entries) {
+        cancellation.check();
+        if (await sha256File(
+              '$path/${entry.key}',
+              cancellation: cancellation,
+            ) !=
+            entry.value)
+          throw StateError(
+            '${b.name} files changed or are not the reviewed build. Existing settings have been kept.',
+          );
+      }
+      return b.hash;
     }
     final paths = files.keys.toList();
     for (var i = 0; i < paths.length; i += 64) {

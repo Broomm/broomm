@@ -113,6 +113,18 @@ jobs:
         run: |
           mkdir -p build/test-results
           bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter github --file-reporter json:build/test-results/main.json --exclude-tags 'full-size-save || native-windows-updater'
+      - name: Linux kernel ownership and write protection
+        if: ${{ !cancelled() && matrix.platform == 'linux' }}
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/check_linux_native.sh > build/native-linux-checks/kernel.log 2>&1
+      - name: Linux kernel sanitizers
+        if: ${{ !cancelled() && matrix.platform == 'linux' }}
+        env:
+          BROOMM_NATIVE_SANITIZERS: '1'
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/check_linux_native.sh > build/native-linux-checks/sanitizers.log 2>&1
       # Full native memory cards require repeated durable copies/readback. Give
       # those tests the runner without competing suites, with unchanged limits.
       - name: Test full-size save workflows
@@ -143,7 +155,9 @@ jobs:
         if: failure()
         with:
           name: broomm-test-results-${{ matrix.platform }}
-          path: build/test-results/*.json
+          path: |
+            build/test-results/*.json
+            build/native-linux-checks/*.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -165,6 +179,12 @@ jobs:
           bash tool/ci/run.sh bash tool/build_app.sh --portable --no-pub
       - name: Native host tests
         run: bash tool/ci/run.sh bash tool/test_macos.sh
+      - name: Native pause transition regressions
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_sony_pause.sh
+      - name: Native pause transition sanitizers
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_sony_pause.sh --sanitize
       - name: Shared save native file-lock tests
         if: ${{ !cancelled() }}
         run: |
@@ -177,6 +197,7 @@ jobs:
           path: |
             build/macos/Logs/Test/*.xcresult
             build/android-checks/*.log
+            build/native-pause-checks/*.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -264,6 +285,18 @@ jobs:
       - name: Remove signing material
         if: always() && matrix.platform == 'android'
         run: rm -f android/key.properties android/app/release.jks
+      - name: Native Linux recovery adapter
+        if: ${{ !cancelled() && matrix.platform == 'linux' }}
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/check_linux_host.sh > build/native-linux-checks/host.log 2>&1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !cancelled() && matrix.platform == 'linux' }}
+        with:
+          name: broomm-native-linux-${{ matrix.arch }}
+          path: build/native-linux-checks/*.log
+          if-no-files-found: error
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: broomm-build-${{ matrix.platform }}-${{ matrix.arch }}

@@ -320,7 +320,7 @@ void main() {
           'id': 'retroarch',
           'name': 'RetroArch',
           'version': 'test',
-          'host': 'macos-arm64',
+          'host': manager.host,
           'bundle': 'RetroArch.app',
           'executable': 'x',
           'sha256': 'a' * 64,
@@ -349,7 +349,7 @@ void main() {
         await core.create(recursive: true);
         await File('${core.path}/receipt.json')
             .writeAsString(jsonEncode({'id': 'gambatte', 'sha256': hash}));
-        await File('${core.path}/core.dylib')
+        await File('${core.path}/${manager.coreFile}')
             .writeAsBytes(changed ? [9] : [1, 2, 3]);
         final save = File('${root.path}/profiles/private/save');
         await save.parent.create(recursive: true);

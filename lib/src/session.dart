@@ -5,7 +5,9 @@ import 'dart:io';
 import 'catalogue.dart';
 import 'astris_process.dart';
 import 'emulators.dart';
+import 'linux_runtime.dart';
 import 'pairing.dart';
+import 'retroarch_control.dart';
 import 'session_log.dart';
 import 'session_lease.dart';
 import 'romm/transfer.dart';
@@ -132,6 +134,7 @@ class BridgeStatus {
       requestDevice = j['requestDevice'] as int?,
       blocked = j['blocked'] as bool,
       paused = j['paused'] as int,
+      pauseReleaseSerial = j['pauseReleaseSerial'] as int? ?? 0,
       window = (j['window'] as List)
           .cast<num>()
           .map((n) => n.toDouble())
@@ -156,7 +159,7 @@ class BridgeStatus {
         'Unsupported controller bridge protocol. Rebuild Broomm and its native bridges.',
       );
   }
-  final int pid, sample, ack, requestSerial, paused;
+  final int pid, sample, ack, requestSerial, paused, pauseReleaseSerial;
   final String request;
   final int? requestDevice;
   final bool blocked;
@@ -224,10 +227,10 @@ class GameSession {
   RawDatagramSocket? _retro;
   StreamSubscription<RawSocketEvent>? _retroSubscription;
   Completer<String>? _retroReply;
-  String? _retroMessage;
-  bool _retroBusy = false;
+  RetroArchPauseControl? _retroControl;
   int _retroPort = 0;
   int _retroPaused = -1;
+  LinuxWindowReadiness? _linuxWindow;
   String get dataRoot => managedRoot ?? '$project/prototype-data';
   SessionLease get ownerLease =>
       _guard ?? (throw StateError('No active game session owner'));
@@ -257,17 +260,16 @@ class GameSession {
     final generation = ++_generation;
     _cancellation = DownloadCancellation();
     _retroPaused = -1;
-    _retroBusy = false;
-    _retroMessage = null;
+    _retroControl = null;
     _retroReply = null;
     _stopping = false;
     status = null;
     nativeProgramId = null;
     _bridgeLost = false;
     _nativeGameReady = false;
-    if (!Platform.isMacOS)
+    if (!Platform.isMacOS && !Platform.isLinux)
       throw UnsupportedError(
-        'This prototype’s native bridge currently supports macOS arm64.',
+        'No native controller adapter is available for this emulator on this host.',
       );
     final metadata = File('$dataRoot/installations.json');
     if (resolve == null && !await metadata.exists())
@@ -310,24 +312,31 @@ class GameSession {
       emulator = e;
       game = selected;
       // Keep version-sensitive native ABI addresses tied to the exact prepared executable.
-      final hash = await Process.run('/usr/bin/shasum', [
-        '-a',
-        '256',
-        e.executable,
-      ]).timeout(const Duration(seconds: 20));
-      if (hash.exitCode != 0 ||
-          (hash.stdout as String).split(' ').first !=
-              raw['executable_sha256']) {
-        throw StateError(
-          'The prepared ${e.name} executable changed. Re-run prototype-prepare before using its bridge.',
-        );
+      if (Platform.isMacOS) {
+        final hash = await Process.run('/usr/bin/shasum', [
+          '-a',
+          '256',
+          e.executable,
+        ]).timeout(const Duration(seconds: 20));
+        if (hash.exitCode != 0 ||
+            (hash.stdout as String).split(' ').first !=
+                raw['executable_sha256']) {
+          throw StateError(
+            'The prepared ${e.name} executable changed. Re-run prototype-prepare before using its bridge.',
+          );
+        }
       }
-      final bridgeName = e.name == 'Astris'
+      final bridgeName = Platform.isLinux
+          ? e.name == 'RetroArch'
+                ? 'broomm-retroarch.so'
+                : 'broomm-sdl${e.sdlMajor}.so'
+          : e.name == 'Astris'
           ? 'broomm-astris.dylib'
           : 'broomm-sdl${e.sdlMajor}.dylib';
-      final bundled =
-          '${File(Platform.resolvedExecutable).parent.parent.path}/Resources/native/$bridgeName';
-      final bridge = Platform.isMacOS && await File(bundled).exists()
+      final bundled = Platform.isLinux
+          ? '${File(Platform.resolvedExecutable).parent.path}/lib/$bridgeName'
+          : '${File(Platform.resolvedExecutable).parent.parent.path}/Resources/native/$bridgeName';
+      final bridge = await File(bundled).exists()
           ? bundled
           : '$project/build/native/$bridgeName';
       if (!await File(bridge).exists())
@@ -368,6 +377,24 @@ class GameSession {
           final pending = _retroReply;
           if (pending != null && !pending.isCompleted) pending.complete(text);
         });
+        _retroControl = RetroArchPauseControl(
+          query: () => _queryRetro('GET_STATUS'),
+          toggle: () => _retro!.send(
+            utf8.encode('PAUSE_TOGGLE'),
+            InternetAddress.loopbackIPv4,
+            _retroPort,
+          ),
+          matches: (reply) => retroStatusMatches(reply, _romPath),
+          current: () => generation == _generation && !_stopping,
+        );
+      }
+      if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP')) {
+        final endpoint = await ServerSocket.bind(
+          InternetAddress.loopbackIPv4,
+          0,
+        );
+        _retroPort = endpoint.port;
+        await endpoint.close();
       }
       final args = await EmulatorAdapter.forName(e.name)
           .prepare(e, selected, rom.path, _retroPort);
@@ -379,6 +406,11 @@ class GameSession {
       await command([], active: false);
       final snapshot = File('${e.root}/bridge-status.json');
       if (await snapshot.exists()) await snapshot.delete();
+      if (Platform.isLinux) {
+        final ready = File('${e.root}/bridge-window-ready.txt');
+        if (await ready.exists()) await ready.delete();
+        _linuxWindow = LinuxWindowReadiness(() => atomicText(ready.path, '1'));
+      }
       if (testInputs) {
         // A retained private profile may have ended with a disconnected or
         // held synthetic source. Test controls are per-process commands, not
@@ -420,6 +452,8 @@ class GameSession {
         },
         'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
         'BROOMM_SESSION': '1',
+        if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP'))
+          'BROOMM_NATIVE_CONTROL_PORT': '$_retroPort',
         'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',
         if (testInputs) 'BROOMM_SESSION_TEST': '1',
         if (testInputs && testPreconnected) 'BROOMM_TEST_PRECONNECTED': '1',
@@ -447,6 +481,7 @@ class GameSession {
         if (e.name == 'RetroArch') 'BROOMM_RETROARCH': '1',
         if (e.name == 'Azahar' || e.name == 'Eden')
           'BROOMM_DEFER_SDL_WATCHES': '1',
+        if (Platform.isLinux && e.name == 'Azahar') 'BROOMM_AZAHAR': '1',
         if (e.name == 'melonDS') 'BROOMM_MELONDS': '1',
         if (e.name == 'Eden') 'BROOMM_EDEN': '1',
         if (e.name == 'PPSSPP') ...{
@@ -455,13 +490,39 @@ class GameSession {
         },
         if (e.name == 'DuckStation' || e.name == 'PCSX2' || e.name == 'ARMSX2')
           'BROOMM_PLAYSTATION': '1',
-        if (e.name == 'Ryubing') 'BROOMM_PAUSE_APPKIT_F5': '1',
+        if (Platform.isMacOS && e.name == 'Ryubing')
+          'BROOMM_PAUSE_APPKIT_F5': '1',
         // Keep this existing native input workaround local to Ryubing.
         if (e.name == 'Ryubing') 'SDL_JOYSTICK_MFI': '0',
         ...Map<String, String>.from(raw['native'] as Map),
       };
       final guard = '${File(bridge).parent.path}/broomm-installer-guard.dylib';
-      final process = e.name == 'Astris'
+      final preload = Platform.isLinux
+          ? await prepareLinuxBridge(bridge, e.root)
+          : null;
+      final process = Platform.isLinux
+          ? await Process.start(
+              linuxLaunchExecutable(e),
+              args,
+              workingDirectory: linuxLaunchDirectory(e),
+              environment: {
+                ...environment,
+                'BROOMM_SESSION_EXECUTABLE': await File(
+                  linuxLaunchExecutable(e),
+                ).resolveSymbolicLinks(),
+                'BROOMM_LAUNCHER_PID': '$pid',
+                'BROOMM_LINUX_PROFILE': await Directory(e.root)
+                    .resolveSymbolicLinks(),
+                'TMPDIR': '${e.root}/cache',
+                ...linuxLaunchEnvironment(e),
+                'LD_PRELOAD': [
+                  linuxLaunchPreload(e, preload!),
+                  if ((Platform.environment['LD_PRELOAD'] ?? '').isNotEmpty)
+                    Platform.environment['LD_PRELOAD']!,
+                ].join(':'),
+              },
+            )
+          : e.name == 'Astris'
           ? await AstrisProcess.start(
               executable: e.executable,
               rom: rom.path,
@@ -502,12 +563,23 @@ class GameSession {
 
       void stdoutOutput(List<int> bytes) {
         output(bytes);
-        if ({'Ryubing', 'Astris'}.contains(e.name) && nativeProgramId == null) {
+        if ({
+              'Ryubing',
+              'Astris',
+              if (Platform.isLinux) 'Eden',
+            }.contains(e.name) &&
+            nativeProgramId == null) {
           identityOutput =
               '$identityOutput${String.fromCharCodes(bytes.take(32768))}';
-          final match = RegExp(
-            r'Loader Start: Application Loaded: [^\r\n]*\[(010[0-9a-fA-F]{13})\] \[64-bit\]',
-          ).firstMatch(identityOutput);
+          final match =
+              (e.name == 'Eden'
+                      ? RegExp(
+                          r'Core .*Loading [^\r\n]*\((010[0-9a-fA-F]{13})\) \.\.\.',
+                        )
+                      : RegExp(
+                          r'Loader Start: Application Loaded: [^\r\n]*\[(010[0-9a-fA-F]{13})\] \[64-bit\]',
+                        ))
+                  .firstMatch(identityOutput);
           if (match != null) nativeProgramId = match[1]!.toLowerCase();
           if (identityOutput.length > 32768)
             identityOutput = identityOutput.substring(
@@ -526,7 +598,7 @@ class GameSession {
         },
       );
       process.stderr.listen(
-        output,
+        e.name == 'Eden' && Platform.isLinux ? stdoutOutput : output,
         onDone: stderrDone.complete,
         onError: (Object e) {
           sessionLog.write('Emulator stderr failed: $e');
@@ -607,8 +679,7 @@ class GameSession {
           _lastUpdate = DateTime.now();
           _sample = next.sample;
           if (emulator!.name == 'RetroArch') {
-            _retroMessage = next.blocked ? 'pause' : 'resume';
-            unawaited(_updateRetro(generation));
+            unawaited(_updateRetro(generation, next));
             json['paused'] = _retroPaused;
           }
           status = BridgeStatus(json);
@@ -674,35 +745,25 @@ class GameSession {
     }
   }
 
-  Future<void> _updateRetro(int generation) async {
-    if (_retroBusy || _stopping) return;
-    _retroBusy = true;
+  Future<void> _updateRetro(int generation, BridgeStatus next) async {
+    if (_stopping) return;
     try {
-      final state = await _queryRetro('GET_STATUS');
-      if (generation != _generation || _stopping) return;
-      if (state == null) return;
-      if (!state.contains('PLAYING') && !state.contains('PAUSED')) return;
-      // Never toggle a different network-command server's game.
-      if (!retroStatusMatches(state, _romPath)) return;
-      final paused = state.contains('PAUSED');
-      final wanted = _retroMessage == 'pause';
-      if (paused != wanted) {
-        _retro!.send(
-          utf8.encode('PAUSE_TOGGLE'),
-          InternetAddress.loopbackIPv4,
-          _retroPort,
-        );
+      final paused = await _retroControl?.update(
+        blocked: next.blocked,
+        releaseSerial: next.pauseReleaseSerial,
+        revision: next.ack,
+      );
+      if (generation == _generation && !_stopping && paused != null)
+        _retroPaused = paused;
+      if (Platform.isLinux &&
+          generation == _generation &&
+          !_stopping &&
+          paused != null) {
+        await _linuxWindow?.ready();
       }
-      final after = await _queryRetro('GET_STATUS');
-      if (generation == _generation &&
-          after != null &&
-          retroStatusMatches(after, _romPath))
-        _retroPaused = after.contains('PAUSED') ? 1 : 0;
     } catch (e) {
       if (generation == _generation && running)
         onProblem?.call('RetroArch control: $e');
-    } finally {
-      if (generation == _generation) _retroBusy = false;
     }
   }
 
@@ -851,6 +912,8 @@ class GameSession {
     _romPath = null;
     _timer?.cancel();
     await _commands;
+    await _linuxWindow?.close();
+    _linuxWindow = null;
     await log?.close();
     log = null;
     await _retroSubscription?.cancel();

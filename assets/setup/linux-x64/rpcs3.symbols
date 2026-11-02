@@ -1,0 +1,10 @@
+00000000051593b8 Emu
+000000000136f200 _ZN11main_window13OnPlayOrPauseEv
+0000000001338310 _ZNK11main_window10metaObjectEv
+00000000071a5034 g_progr_fdone
+00000000071a5040 g_progr_fknown_bits
+00000000071a5030 g_progr_ftotal
+00000000071a5038 g_progr_ftotal_bits
+00000000071a504c g_progr_pdone
+00000000071a5048 g_progr_ptotal
+0000000004fbe0d0 g_progr_text

@@ -3,6 +3,24 @@ part of 'emulators.dart';
 class PpssppAdapter extends EmulatorAdapter {
   const PpssppAdapter();
   @override
+  Future<List<String>> configurationArguments(PreparedEmulator e) async {
+    if (Platform.isLinux) {
+      final config = File('${e.user}/PSP/SYSTEM/ppsspp.ini');
+      await config.parent.create(recursive: true);
+      await atomicText(
+        config.path,
+        _patchPreferences(await _sonyPreferences(config), {
+          'General': {
+            'RemoteDebuggerOnStartup': 'False',
+            'RemoteShareOnStartup': 'False',
+          },
+        }),
+      );
+    }
+    return [];
+  }
+
+  @override
   Future<List<String>> prepare(
     PreparedEmulator e,
     TestGame game,
@@ -22,6 +40,11 @@ class PpssppAdapter extends EmulatorAdapter {
           'Enable Logging': 'True',
           'AutoRun': 'True',
           'AutoLoadSaveState': '0',
+          if (Platform.isLinux) ...{
+            'RemoteDebuggerOnStartup': 'True',
+            'RemoteShareOnStartup': 'False',
+            'RemoteISOPort': '$commandPort',
+          },
         },
         'Control': {'ShowTouchControls': 'False'},
       }),

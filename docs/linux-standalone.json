@@ -1,0 +1,265 @@
+{
+  "host": "CachyOS x86_64; AMD Radeon RX 6600 XT",
+  "nativeCompiler": "clang version 23.1.3",
+  "installations": [
+    {
+      "id": "dolphin",
+      "version": "2609-166 / d182533d363e",
+      "resolveTwoProfilesMs": 1483,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "all four Wii layouts applied with native source/extension/orientation readback",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "xcb"
+      ]
+    },
+    {
+      "id": "rpcs3",
+      "version": "0.0.42-20031 d08d568d",
+      "resolveTwoProfilesMs": 260,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "wayland",
+        "xcb"
+      ]
+    },
+    {
+      "id": "azahar",
+      "version": "2126.1.2",
+      "resolveTwoProfilesMs": 230,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "wayland",
+        "xcb"
+      ]
+    },
+    {
+      "id": "ryubing",
+      "version": "1.3.3",
+      "resolveTwoProfilesMs": 36
+    },
+    {
+      "id": "melonds",
+      "version": "1.1",
+      "resolveTwoProfilesMs": 115,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "xcb"
+      ]
+    },
+    {
+      "id": "duckstation",
+      "version": "0.1-12083-g00e299795",
+      "resolveTwoProfilesMs": 222,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "wayland",
+        "xcb"
+      ]
+    },
+    {
+      "id": "pcsx2",
+      "version": "2.8.2 / fd9d310",
+      "resolveTwoProfilesMs": 221,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "native pause survives steady gameplay and active-route republication",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": [
+        "wayland",
+        "xcb"
+      ]
+    },
+    {
+      "id": "ppsspp",
+      "version": "1.20.4 / 3a31057",
+      "resolveTwoProfilesMs": 1252,
+      "nativeLifecycle": [
+        "same-runtime input and native CPU pause acknowledged",
+        "logical face mapping changed without restarting",
+        "R3 + Select gate/native pause acknowledged",
+        "physical-source reconnect routes to existing logical device",
+        "normal native shutdown released writer"
+      ],
+      "problems": [],
+      "observedQtBackends": []
+    },
+    {
+      "id": "eden",
+      "version": "0.2.1",
+      "resolveTwoProfilesMs": 1329
+    }
+  ],
+  "testInputs": {
+    "FBI.cia": {
+      "bytes": 1192896,
+      "sha256": "09b535826caa9b04a682ec07e0df605b5d8774af35b4dd77955e6c913df1a48b"
+    },
+    "basicwater.fake.self": {
+      "bytes": 6825232,
+      "sha256": "2dd4b7b5eb94da0bba607fb675c21a0cf6e3ad8dd25ff8a036c1ca84b3f06768"
+    },
+    "psp.pbp": {
+      "bytes": 160467,
+      "sha256": "3030f2f81f8567b1a51e76ce1a13407b94d733b23d67f5595cd7f8985cd13927"
+    },
+    "PS3UPDAT.PUP": {
+      "bytes": 206197916,
+      "sha256": "158471fd834f8ea8036136b6aab43cd86c7ba73d79ca30e0af3c0fe0001cf365"
+    }
+  },
+  "ownerProductionModified": false,
+  "date": "2026-11-02",
+  "baseRevision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "workingTree": true,
+  "scope": "Linux x64 standalone managed emulator integration",
+  "tests": {
+    "macosFlutter": {
+      "passed": 483
+    },
+    "linuxFlutter": {
+      "passed": 414,
+      "skipped": 22,
+      "additionalSkip": "Independent Apple AES comparison; existing platform skips retained"
+    },
+    "nativeLifecycle": {
+      "defaultBackend": 8,
+      "childOnlyX11": 8,
+      "includes": "pairing, remap, menu, disconnect/reconnect, normal exit; Qt native pause survives active-route publication; four Wii layouts"
+    },
+    "provisioning": [
+      "native RPCS3 PUP with liblv2 readback",
+      "native Azahar CIA with installed title-content readback"
+    ],
+    "nativeKernelProcessProtocol": "passed",
+    "nativeASanUBSan": "passed independently",
+    "linuxRecoveryHost": "passed",
+    "analysis": "passed",
+    "format": "passed",
+    "workflowLint": "passed"
+  },
+  "limitations": [
+    "Switch native runtime requires explicit key-export approval or owner-configured keys/firmware; review rejected exporting private keys, no workaround attempted",
+    "Physical controllers/gyro, Steam Input and gamescope owner acceptance pending",
+    "New native standalone ordinary-save/state creation and cross-device acceptance per emulator pending; shared progress boundary regressions pass",
+    "Linux ARM64 managed recipes pending; application compilation is distinct",
+    "Local CachyOS build uses its own glibc baseline; official Ubuntu CI owns portable release"
+  ],
+  "macosPackage": {
+    "path": "build/releases/Broomm-macOS-linux-emulators.zip",
+    "bytes": 21196410,
+    "sha256": "16c8c9f4af464fea08c350a1f0d738ba802093d7c6f7525867015e0ecac151a4",
+    "record": {
+      "product": "Broomm",
+      "version": "0.1.6",
+      "build_number": "1013",
+      "target": "macos-universal",
+      "sha": "82c953d4858f5229f6fa996e2b852417144a45b0",
+      "working_tree": true,
+      "source_tree_sha256": "0379a43318b4e991de1061263055dc323f69ea7fcc699441eb8320cfa3f3a625",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "payloads": {
+      "Contents/MacOS/broomm": {
+        "architectures": "x86_64 arm64",
+        "sha256": "b27e4ad2148c25ecff8f662553007242a5a9cc40edbadc53b9089ee857740f60"
+      },
+      "Contents/Frameworks/App.framework/Versions/A/App": {
+        "architectures": "x86_64 arm64",
+        "sha256": "517f55d5b5896aef0ed8bd8cc187739e10e2ea8a99c45b8f0dc8cce7d7870d6d"
+      },
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+        "architectures": "x86_64 arm64",
+        "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+      },
+      "Contents/Resources/native/broomm-sdl2.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "0c97ab9575a4a0ed3246eefdc8eb3ae8eb44d96e92b4dc3d8f2c8151f048eaf5"
+      },
+      "Contents/Resources/native/broomm-sdl3.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "cb298c575a1c415503963b20a514b1493f21bfbc0497a874b40132263a2c53e7"
+      },
+      "Contents/Resources/native/broomm-astris.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "af2771fe5d47831cb7cb9eb66c68d5bbdfadbaace8bb27884cdb3d7553d0866d"
+      },
+      "Contents/Resources/native/broomm-installer-guard.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "ade3fb870e3e0408ff1a7fb570a131db5bc3cb6406cd3341e594afa3dcd8eb38"
+      }
+    },
+    "signature": "source/fresh extraction deep strict all architectures passed",
+    "archive_integrity": "passed",
+    "bridge_and_linux_asset_readbacks": "passed",
+    "ad_hoc_signed": true,
+    "notarized": false
+  },
+  "nativeLogs": [
+    "native-final.log",
+    "sanitizers-final.log",
+    "linux-host-final.log",
+    "gameplay-release-default-final.log",
+    "gameplay-release-x11-final.log",
+    "native-imports-display.log",
+    "linux-tests-release.log",
+    "linux-bundle-final.log"
+  ],
+  "inputSources": {
+    "PS3UPDAT.PUP": "Sony official support link; MD5 a2b60b6ac1d2e49e230144345616927c confirmed",
+    "FBI.cia": "https://github.com/Steveice10/FBI/releases/download/2.6.1/FBI.cia",
+    "basicwater.fake.self": "https://github.com/utkuhalis/ps3-homebrew/releases/download/v2.0.0/basicwater.fake.self",
+    "psp.pbp": "https://github.com/ShadowinFlight/PSP2048/releases/download/PSP2048-1.1/psp2048.zip"
+  }
+}

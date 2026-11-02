@@ -28,6 +28,7 @@ class PreparedEmulator {
     this.contentId,
     this.retroNativeStateNames = false,
     this.retroStateDirectory,
+    this.linuxLauncher,
   });
   final String name, root, executable;
   final String? sdlLibrary, core;
@@ -39,6 +40,9 @@ class PreparedEmulator {
   // Keep the previous frontend's explicit game.state contract for reuse.
   final bool retroNativeStateNames;
   final String? retroStateDirectory;
+  // A reviewed AppImage may carry a bundled ELF loader. Its launcher remains
+  // separately inventoried; executable/build identity refers to the emulator.
+  final String? linuxLauncher;
   String get user =>
       userDirectory ?? '$root/${name == 'RPCS3' ? 'portable' : 'user'}';
   factory PreparedEmulator.fromJson(Map<String, dynamic> j) => PreparedEmulator(
@@ -704,10 +708,21 @@ class AzaharAdapter extends EmulatorAdapter {
 class RyubingAdapter extends EmulatorAdapter {
   const RyubingAdapter();
   @override
-  Future<List<String>> configurationArguments(PreparedEmulator e) async => [
-    '-r',
-    e.user,
-  ];
+  Future<List<String>> configurationArguments(PreparedEmulator e) async {
+    if (Platform.isLinux) {
+      final file = File('${e.user}/Config.json');
+      final settings =
+          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      settings['enable_gdb_stub'] = false;
+      settings['debugger_suspend_on_start'] = false;
+      await atomicText(
+        file.path,
+        const JsonEncoder.withIndent('  ').convert(settings),
+      );
+    }
+    return ['-r', e.user];
+  }
+
   @override
   Future<List<String>> prepare(
     PreparedEmulator e,
@@ -722,6 +737,11 @@ class RyubingAdapter extends EmulatorAdapter {
       'enable_file_log': false,
       'show_confirm_exit': false,
       'disable_input_when_out_of_focus': false,
+      if (Platform.isLinux) ...{
+        'enable_gdb_stub': true,
+        'gdb_stub_port': commandPort,
+        'debugger_suspend_on_start': true,
+      },
     });
     // Pin the same positional Nintendo diamond the tester projects, even if
     // the private fixture was changed through the emulator's own settings.
@@ -744,7 +764,9 @@ class RyubingAdapter extends EmulatorAdapter {
       for (var p = 0; p < 4; p++)
         {
           ...seed,
-          'id': '$p-000000ff-6956-7472-7561-6c2043007601',
+          'id': Platform.isLinux
+              ? '0-00005242-0000-0000-0000-00000000000${p + 1}'
+              : '$p-000000ff-6956-7472-7561-6c2043007601',
           'player_index': 'Player${p + 1}',
         },
     ];

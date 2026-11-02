@@ -316,7 +316,7 @@ class GamePackages {
       final stage = await dir.createTemp('.packages-');
       final generation =
           'generation-${stage.uri.pathSegments.where((p) => p.isNotEmpty).last.substring(10)}';
-      var published = false;
+      var published = false, uncertainWriter = false;
       try {
         await addonWrite(File('${stage.path}/owner.json'), {
           'version': 1,
@@ -546,8 +546,12 @@ class GamePackages {
           installed,
           remote.where((r) => r.$3 != 'base').length,
         );
+      } on DownloadWriterUncertain {
+        uncertainWriter = true;
+        lease.retainForUncertainWriter();
+        rethrow;
       } finally {
-        if (!published && await stage.exists())
+        if (!published && !uncertainWriter && await stage.exists())
           await stage.delete(recursive: true);
       }
     } finally {

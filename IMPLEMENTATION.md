@@ -1,5 +1,71 @@
 # Implementation plan
 
+Linux standalone milestone (2026-11-02): Linux x64 adds bundled Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden recipes. Managed installation, private profiles, native SDL/Qt/debugger pause/input, independent Open emulator, firmware/add-on staging and existing progress adapters are wired. Nine production installations and two profiles each pass. Native controller/lifecycle checks cover GameCube/Wii (all four Wii layouts), 3DS, DS, PS1, PS2, PSP and PS3 homebrew; PUP/CIA imports pass. Kernel/process/protocol/ABI regressions and independent sanitizers pass. Switch runtime requires owner-configured keys/firmware or explicit permission for key export; physical input/gyro, Steam/gamescope, new standalone native cloud round trips and managed ARM64 remain separate acceptance. See [versions, native evidence, walkthrough and limitations](docs/linux-standalone.md).
+
+Linux download throughput correction (2026-11-02): native Flutter HTTPS file
+transfers were limited to about 2.3 MB/s on the UI isolate while the same raw
+consumer reached 38–57 MB/s on a background Dart isolate. Default RomM game and
+add-on transfers now use independent worker I/O with bounded progress, drained
+cancellation and confirmed writer closure/exit. Uncertain writers retain private
+stages and stable game/session locks until restart. The compiled small-file
+benchmark improves from 2.26 to 11.85 MB/s over HTTPS; curl confirms 51.84 MB/s
+over Tailscale and 75.03 MB/s over LAN HTTP. All 478 macOS and 410 applicable
+Linux tests pass (21 existing Linux skips), with clean analysis/formatting.
+Fresh macOS signatures/archive and Linux dependency/archive checks pass. No
+network settings or owner data changed; full-game post-fix speed remains owner
+acceptance. See [measurements, scope and builds](docs/linux-download-throughput.md).
+
+Linux RetroArch milestone (2026-11-02): Linux x64 now selects its own bundled
+setup recipe and installs the released frontend and fifteen pinned cores. Dart
+ZIP staging, metadata-bound launch verification, private profiles, public SDL3
+input interposition, pause/menu/disconnect, Landlock writes, GTK close/recovery
+and independent no-game configuration are implemented. The owner selected
+RetroArch first, then standalone emulators. Native Wayland/Mesen execution proves
+input/remap, pause, native SRAM/state capture/upload/restore against the test
+server, repeated launch, independent configuration and graceful real-writer
+recovery. Kernel/ASan/UBSan and production recovery checks pass, including a
+Btrfs device-identity correction. All 474 macOS and 406 applicable Linux Flutter
+tests pass; 21 existing Linux platform skips remain. Physical/Steam/gamescope,
+other-core gameplay, standalone Linux and Linux ARM64 acceptance remain separate.
+The owner's running app/download/data were preserved; only project-contained
+SDK caches and disposable fixtures were created. See [walkthrough and evidence](docs/linux-retroarch.md).
+
+All-emulator pause follow-up (2026-11-02): the remaining desktop adapters now
+preserve emulator-native pause/resume instead of enforcing Running during play.
+The shared native transition covers Qt, native-core, F5 and Astris routes;
+RetroArch uses explicit, identity-checked network transitions. Eden preserves
+an existing pause while changing controller sockets. Real macOS checks pass
+for RetroArch's released frontend with an original synthetic core, Ryubing and
+Astris with Super Smash Bros. Ultimate, and the DuckStation regression. Twenty
+targeted Flutter cases, three C scenarios with independent ASan/UBSan, analysis
+and workflow lint pass. Other native gameplay and physical/other-host checks
+remain pending; implementation and verification are distinguished in
+[the adapter record](docs/emulator-pause.md).
+
+DuckStation native pause correction (2026-11-02): Broomm's Sony pause bridge
+no longer interprets every native pause during gameplay as a request to Resume.
+An explicit gate release owns one pending resume; ordinary polling observes
+native pause/resume while pairing/disconnect gates continue enforcing Pause.
+The old behavior is reproduced with real DuckStation/Mega Man X4; the fixed
+native run passes polling, active-route publication, native resume, explicit
+gate release (including a quick menu transition) and disconnect cases in a copied private profile. Three C cases
+pass normally and under ASan/UBSan, ten existing Flutter cases pass, analysis
+and workflow lint pass. Universal bridges and a fresh macOS application are
+built; exact archive/signature evidence and remaining native-host limits are in
+[the correction record](docs/duckstation-pause.md).
+
+Argosy Android workflow research (2026-10-30): the owner rejects the mandatory
+manual save-folder flow as the desired experience. A deeper audit of Argosy
+2.27.3 at `68f1368b61707f8c4ad001b89eb095a705a46143` distinguishes its
+embedded LibretroDroid frontend/core downloader from external RetroArch, traces
+APK installation, automatic save-path discovery, session/cloud sync and RomM
+BIOS distribution, and identifies vendor-specific storage access limits.
+External-app discovery is proposed within the current design; an embedded
+frontend is an unadopted architecture option. No app behavior, dependency,
+emulator or production progress changed; native Android execution was not
+performed. See [findings and tradeoffs](docs/argosy-android-workflow.md) and the
+[pinned evidence inventory](docs/argosy-android-workflow.json).
+
 MMJ shared-folder saves (2026-10-30): Android MMJ now connects the shared
 `citra-emu` tree with persistent read/write access, explicit private-storage
 warnings and per-profile private saves. SessionLease and a durable copy/restore

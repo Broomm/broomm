@@ -60,8 +60,13 @@ static void test_sources_tick(void) {
         psp_previous=close_window;
     }
     if(getenv("BROOMM_PLAYSTATION")&&close_window!=sony_previous) {
-        if(close_window==2||close_window==3)atomic_store(&sony_test_action,(int)close_window);
+        if(close_window>=2&&close_window<=5)atomic_store(&sony_test_action,(int)close_window);
         sony_previous=close_window;
+    }
+    static unsigned int pause_previous;
+    if(!getenv("BROOMM_PLAYSTATION")&&close_window!=pause_previous) {
+        if(close_window==4||close_window==5)atomic_store(&test_native_pause_action,(int)close_window);
+        pause_previous=close_window;
     }
     static bool close_sent;
     if(close_window==1&&!close_sent){close_sent=true;atomic_store(&test_close_window,true);}

@@ -1,6 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.13)
-project(runner LANGUAGES CXX)
+project(runner LANGUAGES C CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
@@ -60,6 +60,29 @@ pkg_check_modules(X11 REQUIRED IMPORTED_TARGET x11)
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
+add_library(broomm_retroarch SHARED "../native/linux_retroarch.c")
+set_target_properties(broomm_retroarch PROPERTIES PREFIX "" OUTPUT_NAME "broomm-retroarch")
+target_compile_options(broomm_retroarch PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(broomm_retroarch PRIVATE dl pthread)
+add_dependencies(${BINARY_NAME} broomm_retroarch)
+add_executable(broomm_native_run "../native/linux_process.c")
+set_target_properties(broomm_native_run PROPERTIES OUTPUT_NAME "broomm-native-run")
+target_compile_options(broomm_native_run PRIVATE -Wall -Wextra -Werror)
+add_dependencies(${BINARY_NAME} broomm_native_run)
+add_library(broomm_installer SHARED "../native/linux_installer.c")
+set_target_properties(broomm_installer PROPERTIES PREFIX "" OUTPUT_NAME "broomm-installer")
+target_compile_options(broomm_installer PRIVATE -Wall -Wextra -Werror)
+target_link_libraries(broomm_installer PRIVATE dl)
+add_dependencies(${BINARY_NAME} broomm_installer)
+foreach(SDL_MAJOR 2 3)
+  add_library(broomm_sdl${SDL_MAJOR} SHARED "../native/linux_bridge.c")
+  set_target_properties(broomm_sdl${SDL_MAJOR} PROPERTIES PREFIX "" OUTPUT_NAME "broomm-sdl${SDL_MAJOR}")
+  target_compile_definitions(broomm_sdl${SDL_MAJOR} PRIVATE BROOMM_SDL_MAJOR=${SDL_MAJOR})
+  target_compile_options(broomm_sdl${SDL_MAJOR} PRIVATE -Wall -Wextra -Werror)
+  target_link_libraries(broomm_sdl${SDL_MAJOR} PRIVATE dl pthread m PkgConfig::X11)
+  add_dependencies(${BINARY_NAME} broomm_sdl${SDL_MAJOR})
+endforeach()
+
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
@@ -93,6 +116,9 @@ install(CODE "
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+install(TARGETS broomm_retroarch LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+install(TARGETS broomm_native_run RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
+install(TARGETS broomm_installer broomm_sdl2 broomm_sdl3 LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)

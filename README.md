@@ -4,11 +4,13 @@ Broomm is a native Flutter game launcher in early development for Windows, macOS
 
 The default Flutter application connects to RomM 5.4.0, signs in, and opens a console-style Home with **Broomm settings**, **Game Store**, and **Emulator Settings**. The Store downloads games to Home. On **macOS Apple Silicon**, the managed setup pack configures RetroArch, Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, ARMSX2, PPSSPP, Eden and Astris; supported Home games open controller pairing before play. PCSX2 runs through existing Rosetta. Timestamped BROOMM saves, explicit imports and named backups are available for the documented native formats; see [save history and PS3 ISO support](docs/slotted-saves-and-ps3-iso.md). The earlier six-ROM controller lab is preserved separately.
 
+On **Linux x64**, Emulator Settings now includes RetroArch plus Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden, with automatically selected bundled recipes. Use the [Linux walkthrough, tested versions and remaining acceptance](docs/linux-standalone.md). Linux ARM64 managed recipes and Switch/physical/Steam/gamescope acceptance remain pending; the application build alone does not establish them.
+
 For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CSO v1 or PBP; no BIOS is required. For the additional Switch choice, set up **Eden** or **Astris** (macOS 15+). Successful setup makes the selected emulator the default; a platform with nothing configured has no default. Both use the normal controller-pairing flow and profile-private cloud saves. The [PPSSPP/Eden walkthrough](docs/psp-and-eden-support.md) covers native DLC directories, firmware/keys, cleanup, test commands and the experimental Eden macOS limits. The current [colored support matrix](docs/platform-support-matrix.md) includes both.
 
 For Astris, open **Emulator Settings → Nintendo Switch → Astris → Set up**. It downloads the reviewed ARM64 build; firmware and keys use the same RomM provisioning flow as other Switch emulators. Play uses Broomm's loading/pairing screens and in-game controller menu. Astris keeps its own configuration/account/content records. Android's current milestone adds official APK downloading and connected save/state routes for its nine emulator adapters, including MMJ shared storage and both ARMSX2 channels. Native Android acceptance remains pending; see [setup, limits and recovery](docs/android-installation-and-saves.md).
 
-The latest local macOS build is [Broomm with the Android installation/save milestone](build/releases/Broomm-macOS-android-saves.zip), also retaining Astris and the installed Switch launch fix. It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This local build uses version 0.1.4 (1006) and enables GitHub updates for newer official releases. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
+The latest local macOS build is [Broomm with Linux standalone emulator support](build/releases/Broomm-macOS-linux-emulators.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This local build uses version 0.1.6 (1013) and enables GitHub updates for newer official releases. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
 
 For the installed Switch game's “complete downloadable file manifest” error, replace only the application with this build, then choose the existing profile and **Home → game → Play**. Repeat with the other profile; no redownload or data cleanup is needed. The [launch correction](docs/switch-installed-launch.md) explains receipt reuse, first-import connection requirements and the read-only diagnostic command.
 
@@ -37,7 +39,41 @@ The separate [RetroArch packaging project](../broomm-retroarch/README.md) publis
 The mint infinity icon is included in macOS, Windows, Linux and Android debug,
 profile and release builds. See the [artwork source, native resources and rendering command](assets/branding/README.md).
 
+Linux HTTPS downloads now run their network/file work in a background Dart
+isolate. The native small-file test improved from 2.26 to 11.85 MB/s; direct LAN
+and curl comparisons confirmed the original UI-isolate bottleneck. Install the
+current build, queue a game and check sustained speed in Downloads. Accounts,
+installed games and progress remain in their existing production storage. See
+[measurements, failure recovery and verification](docs/linux-download-throughput.md).
+
+## Linux x64 RetroArch
+
+The first Linux emulator milestone now includes automatic bundled setup,
+private configuration, pairing/menu/disconnect and native progress boundaries
+for RetroArch. [Linux x64 test build](build/releases/Broomm-Linux-x64-download-speed-CachyOS.tar.gz)
+and [macOS build](build/releases/Broomm-macOS-download-speed.zip) include the
+current sources. The local Linux package was built on CachyOS; it retains that
+host's runtime baseline. Official CI remains Ubuntu 24.04/glibc 2.39.
+
+Close the old Linux Broomm normally, extract the archive and run `bundle/broomm`
+from your desktop session. Open **Emulator Settings → RetroArch**, review/start
+setup, then play an installed RA game. It uses the existing `~/.config/broomm`
+accounts, library and profiles. No JSON import or OS package install is needed.
+Private writes require Landlock ABI 3 (normally Linux 6.2+). Native Wayland/Mesen
+input, save/state and recovery checks pass; physical controller/Steam/gamescope,
+other-core gameplay and standalone Linux emulators remain separate checks.
+See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
+
 ## Run Broomm
+
+The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
+each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
+when explicitly leaving its menu. Install the
+[current macOS build](build/releases/Broomm-macOS-download-speed.zip),
+then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
+Configuration and progress stay in production Application Support storage.
+The linked verification table distinguishes native checks from pending gameplay
+and other-host acceptance; Android keeps its external-app handoff.
 
 Official release builds now check GitHub for Broomm updates. An available release
 adds **Update Broomm** as the first Home tile. Activate it with A/Enter or a click
@@ -51,6 +87,8 @@ The native Nintendo Switch homebrew app lives in the sibling [broomm-nsw project
 Android has APK installation/discovery and connected save adapters, with **native device verification and content/firmware parity still outstanding**; see the [Android status](docs/android-emulators.md). Open **Emulator Settings → Refresh installed apps**, then **Install** to download the official APK and open Android's confirmation flow, or **Install APK…** for your own compatible APK. DuckStation uses its store and PPSSPP Gold remains a paid entitlement. Stable `com.armsx2` and nightly `com.armsx2.nightly` are both detected; enabled stable wins when both exist. Successful package readback selects the installed emulator as default. Play opens the app without controller pairing.
 
 Choose **Configure saves**, follow that app's location instructions and grant the same shared folder or its own provider. This connection serves every Broomm profile; no folder reselection is needed on profile changes. PPSSPP uses a Memory Stick root, melonDS a custom save folder with states in the save directory, and Azahar a user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker sidebar. ARMSX2 needs a shared custom data root and global cards; DuckStation needs accessible memcards/states and Shared cards. The [per-app checklist](docs/android-installation-and-saves.md#connect-once-use-every-broomm-profile) has exact settings, prerequisites and limits. Missing setup leads to Emulator Settings before Play.
+
+The owner has requested a smoother Android setup. The [Argosy workflow audit](docs/argosy-android-workflow.md) separates its automatic built-in core downloads from external-app installation, save discovery, RomM sync and BIOS distribution. Automatic discovery and an optional embedded frontend are proposals; the manual workflow above remains the current implementation.
 
 For MMJ use **Internal storage/citra-emu** and confirm it actually uses shared storage; private Storage Access builds are unsupported. Broomm preserves standalone progress, swaps the active profile/game's saves for play, and restores the original afterward. On return choose **Finished? Sync progress** only after saving/closing the emulator; **Not finished** keeps the session active. Saves use timestamped BROOMM history and native extensions, with imports/backups in the game's Options menu. After interruption use **Finish previous game session**; **Reconnect original save folder** handles revoked grants, and **Keep emulator folder unchanged · Finish** retains copies when normal recovery cannot complete. States have separate physical/build groups; Eden has no states. BIOS/firmware and new content installers are later work, with no additional Wii update integration planned. See [effects, offline behavior and cleanup](docs/android-installation-and-saves.md#recovery-effects-and-cleanup).
 

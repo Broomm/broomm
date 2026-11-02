@@ -1,0 +1,19 @@
+{
+  "files": {
+    "LICENSE.txt": "781bbdf040b7d0286c47cca6bffdb9148dfe751c0c9cabdf1a1752412a2e56b4",
+    "Ryujinx": "668cf770804dfed94d5362f2334844ad7665ce7e3b3edc4659ba24e1684e5a04",
+    "Ryujinx.SDL2.Common.dll.config": "ccb8d75668d09da1d56153fef48e62de2ef3c6248cfb1b98169c4d94eac77ceb",
+    "Ryujinx.sh": "9078a175516d041608e8e035644f56705200272652e0300961f9f81f53be28b2",
+    "THIRDPARTY.md": "3d25343318ac33de9d0fb43cccadd610a228e167017a93a905632e0002fd1a99",
+    "libHarfBuzzSharp.so": "95fad4b704332ff1a9d7e137ab5d1849b8711099be61fd5d264afe0562b306a2",
+    "libSDL2.so": "8adb04ab55bbb03dacf772f95ae5e479a7f91a2b0d45b463e7aa4a1592fdf8ef",
+    "libSkiaSharp.so": "a02cd03f1ebcbb972b811bd836caa02245de764a439794c5d5eebaf063baaa65",
+    "libavcodec.so.60": "e1d87507d69a0e8602c94becb292aa863f5335e6388e0e398b0f99508109cc91",
+    "libavutil.so.58": "8a8871ca84f2725c38ce508b835802505e1f5d26f87426993ea757051f03663c",
+    "libglfw-wayland.so.3.3": "99b62c01181dd560df67adb0b95cc15bb9d60787cc65bd1b31f00a2ec9c691a4",
+    "libglfw.so.3.3": "4cbd736488deb2d0577c016dc18bee64f636c934b7c187dfeae0b4f7b2a2ed95",
+    "libsoundio.so": "4b0021f8a2959d9b36111d1c7019318310b9422eb235bc5a23013067fc9cee63",
+    "mime/Ryujinx.xml": "0a12333b3b648a8c60ed165507c4da5a32fdd43a4013824818288a7848585da3"
+  },
+  "links": {}
+}

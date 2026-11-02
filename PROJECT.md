@@ -61,6 +61,14 @@ The initial emulator roster is the concrete PGCS roster: RetroArch, PCSX2, ARMSX
 
 PlayStation uses DuckStation with profile/game-private whole memory cards. PlayStation 2 offers PCSX2 and ARMSX2 where supported by the host/build; both use the same ordinary memory cards for a given profile/game, with separate emulator settings and build-specific save states. Missing BIOS images can be obtained from that platform's RomM firmware catalogue, preserving existing private firmware. Normal native settings remain within Broomm. Alternate executables must not cause progress to cross profile boundaries or make incompatible save states appear interchangeable.
 
+All desktop emulator pause adapters must preserve pauses made inside the emulator
+during normal gameplay. Broomm's pairing/menu/disconnect gates still enforce
+Pause; Resume is an explicit gate-release transition, not a continuously enforced
+gameplay preference. Re-publishing active controller routes must not undo a
+native pause. Temporary controller-port changes may resume only a game that
+Broomm itself paused for that change. Android's external-app handoff does not
+intercept emulator pause.
+
 PSP uses PPSSPP with a profile-private memory stick, one PSP controller and the normal loading/pairing/menu/disconnect flow. Native savedata directories travel as ZIPs, preserving their console files and excluding Broomm-owned static DLC. Save states require the same executable, game revision and host compatibility group. Native ISO, CSO and PBP identities must be verified rather than inferred from filenames. PSP content in RomM must identify its native `PSP/GAME` or `PSP/SAVEDATA` destination, directly or inside a ZIP; game-specific update execution is distinct from installing those files.
 
 Switch alternatives retain separate private emulator configuration, console accounts and installed-content records. Ordinary cloud exports use the same logical save/device format, so changing the default does not create a separate cloud history. Preserve native account identities; map the game's files into the selected console's existing save boundary. Prepare known installed updates/DLC for a newly selected default before launching. Eden consumes native NAND content rather than Ryubing selection JSON. State support and build/host verification remain specific to each backend; an upstream experimental build is not a compatibility guarantee.
@@ -104,6 +112,11 @@ A central desktop launch flow is **Steam → Broomm → emulator**, with both ga
 The whole Broomm interface must be navigable with a controller, comparable to Steam Big Picture. This includes Home, Store, Settings, profiles, installation progress, launch preparation, and conflict resolution. Text entry needs an accessible on-screen or platform keyboard route. Keyboard, mouse, and Android touch remain supported inputs.
 
 Broomm permits **only one active game session at a time**, including across app instances sharing its data. Starting another game requires the previous session's writer to stop. Server/profile changes cannot change a running session's ownership; the initial UI keeps those changes unavailable until the session ends. Pending uploads may outlive that session and retain their original owner.
+
+The agreed Linux implementation order is RetroArch first, then standalone
+emulators. A host offers only the setup recipes and native integrations actually
+implemented for it; published upstream binaries alone do not establish support.
+This staging retains the full Windows/macOS/Linux/Android product targets.
 
 ## Android handoff
 

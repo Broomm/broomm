@@ -53,7 +53,15 @@ class GameAddons {
     ImportCia? importer,
     this.phase,
     this.checkpoint,
-  }) : importer = importer ?? installAzaharCia;
+  }) : importer =
+           importer ??
+           ((executable, cia, stage, cancellation) => installAzaharCia(
+             executable,
+             cia,
+             stage,
+             cancellation,
+             writer: '${data.path}/writer.lock',
+           ));
   final Directory data;
   final GameLibrary library;
   final PrepareAddonProfile prepare;
@@ -222,7 +230,7 @@ class GameAddons {
         return AddonResult(0, remote.length);
       }
       final stage = await dir.createTemp('.import-');
-      var published = false;
+      var published = false, uncertainWriter = false;
       try {
         final sources =
             jsonDecode(jsonEncode(oldSources)) as Map<String, dynamic>;
@@ -428,8 +436,12 @@ class GameAddons {
         await _apply(serverId, game.id, profile, dir, manifest);
         await _finishRetired(dir, serverId, game.id);
         return AddonResult(installed, remote.length);
+      } on DownloadWriterUncertain {
+        uncertainWriter = true;
+        lease.retainForUncertainWriter();
+        rethrow;
       } finally {
-        if (!published && await stage.exists())
+        if (!published && !uncertainWriter && await stage.exists())
           await stage.delete(recursive: true);
       }
     } finally {

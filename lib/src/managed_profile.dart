@@ -79,6 +79,8 @@ Future<Directory> prepareManagedProfile(
         '${release.path}/${build.bundle}/Contents/Resources/Icons',
         '${destination.path}/portable/Icons',
       );
+    if (build.host.startsWith('linux-'))
+      await prepareLinuxProfileLinks(destination, build.id);
     return destination;
   }
   final stage = await parent.createTemp('.profile-');
@@ -120,6 +122,24 @@ Future<Directory> prepareManagedProfile(
     }
 
     switch (build.profileId) {
+      case 'retroarch':
+        if (build.host.startsWith('linux-'))
+          await File('${stage.path}/retroarch.cfg').writeAsString(
+            {
+                  'video_context_driver': 'gl_sdl3',
+                  'video_threaded': 'false',
+                  'video_driver': 'glcore',
+                  'config_save_on_exit': 'false',
+                  'savefile_directory': '${destination.path}/saves',
+                  'savestate_directory': '${destination.path}/states',
+                  'system_directory': '${destination.path}/system',
+                  'cache_directory': '${destination.path}/cache',
+                  'rgui_config_directory': '${destination.path}/config',
+                }.entries
+                .map((e) => '${e.key} = ${jsonEncode(e.value)}')
+                .join('\n'),
+            flush: true,
+          );
       case 'eden':
         await ownedDirectory(Directory('${stage.path}/config/eden'));
         await File('${stage.path}/config/eden/qt-config.ini').writeAsString('''
@@ -268,6 +288,8 @@ use_custom_storage=false
       await ownedDirectory(support);
       await Link('${support.path}/rpcs3').create('../../../portable');
     }
+    if (build.host.startsWith('linux-'))
+      await prepareLinuxProfileLinks(stage, build.id);
     await File('${stage.path}/profile.json').writeAsString(
       jsonEncode({
         'version': 1,
@@ -281,6 +303,42 @@ use_custom_storage=false
     return destination;
   } finally {
     if (!published && await stage.exists()) await stage.delete(recursive: true);
+  }
+}
+
+/// Bind native XDG lookups to Broomm's existing per-emulator save contracts.
+/// Only these Broomm-created relative links are accepted; foreign links remain
+/// an error. This never reaches a system emulator's ordinary configuration.
+Future<void> prepareLinuxProfileLinks(Directory root, String id) async {
+  final links = switch (id) {
+    'rpcs3' => {'config/rpcs3': '../portable'},
+    'azahar' => {
+      'data/azahar-emu': '../home/Library/Application Support/Azahar',
+      'config/azahar-emu': '../home/Library/Application Support/Azahar/config',
+    },
+    'duckstation' => {
+      'data/duckstation': '../home/Library/Application Support/DuckStation',
+      'config/duckstation': '../home/Library/Application Support/DuckStation',
+    },
+    'melonds' => {'config/melonDS': '../launcher/portable'},
+    'ppsspp' => {'config/ppsspp': '../user'},
+    'pcsx2' => {'user/pcsx2/inis': 'PCSX2/inis'},
+    _ => <String, String>{},
+  };
+  if (id == 'melonds')
+    await ownedDirectory(Directory('${root.path}/launcher/portable'));
+  for (final entry in links.entries) {
+    final link = Link('${root.path}/${entry.key}');
+    await ownedDirectory(link.parent);
+    final type = await FileSystemEntity.type(link.path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) {
+      await link.create(entry.value);
+    } else if (type != FileSystemEntityType.link ||
+        await link.target() != entry.value) {
+      throw StateError(
+        'The private Linux $id data location changed. Existing progress was kept.',
+      );
+    }
   }
 }
 

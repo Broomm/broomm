@@ -61,3 +61,25 @@ Apple's existing CommonCrypto `CCCrypt` API supplies the bounded AES primitive t
 Astris 1.0.32+2398e7c80 is obtained from the official [V380-Ori/Astris.Binaries release](https://github.com/V380-Ori/Astris.Binaries/releases/tag/astris-1.0.32). This repository publishes binaries; matching frontend/backend implementation source is unavailable there. The DMG SHA-256 is `661f01a47816b3baeda5c6c924f92d32e7a2bf42db98483c259207f0eb5feb6f`; its unchanged libryujinx SHA-256 is `dc0d0e6c9fc6664897cbdb21f82a5987dceac5ff1bb926b3bbefb06266532088`. Original Objective-C interop in `native/astris_bridge.m` uses Apple AppKit/GameController and independently inspected native export/layout facts. No emulator implementation is copied. The managed copy is re-signed for profile-private preference/bookmark interop and retains upstream notices; system installations are untouched. The maintainer's [Launch Services contract](https://github.com/V380-Ori/Astris.Binaries/issues/54) and real pinned execution establish document launch. Dart supervises kernel writer ownership and process birth through the existing installer guard, retaining AppKit application identity for scoped cancellation. `tool/build_bridges.sh` builds all four universal dylibs with the pre-provisioned Apple SDK; the app bundles only Broomm interop, metadata and notices, without emulator/firmware/key/ROM payloads. See [scoped verification](../../docs/astris-and-citra-mmj.md).
 
 Citra MMJ's [weihuoya/citra source and Android releases](https://github.com/weihuoya/citra/releases) supply its exported EmulationActivity, GamePath intent key, package variants and fixed storage behavior. Only Android's existing platform APIs are used; no Citra code or APK is bundled. Its AnTuTu-named variant requires the emulator's actual exported activity, preventing the unrelated benchmark app from being detected as MMJ. Native device acceptance and unsupported storage/installer routes remain explicit.
+
+## Linux x64 RetroArch interop — 2026-11-02
+
+`native/linux_retroarch.c` and `native/linux_write_policy.h` are original Broomm
+public-API interop. The reviewed [Broomm frontend release](https://github.com/Broomm/retroarch/releases/tag/v0.1.0)
+provides RetroArch 1.22.2 and SDL 3.4.0; no additional SDL binary is shipped in
+Broomm. The bridge uses SDL's published virtual-gamepad descriptor and function
+signatures, with no emulator code or offsets. Gamepad triggers use 0..32767;
+virtual joystick triggers use -32768..32767. Native logical gamepad readback
+checks neutral, full press and release. Existing SDL zlib notices above apply.
+
+The initial renderer selects RetroArch's [SDL3 context](https://github.com/libretro/RetroArch/blob/1b8917df23625bcf40b67ba6476d9bfb0d30dc65/gfx/drivers_context/sdl3_gl_ctx.c).
+[Landlock](https://docs.kernel.org/userspace-api/landlock.html) protects private
+writes through kernel syscalls; no sandbox runtime is bundled. GTK/process/pidfd
+interop in `linux/runner/` is original Broomm code. Dart retains installation,
+launch supervision and save workflows. Exact package/core/source hashes, native
+checks and remaining host/input limits are in [Linux evidence](../../docs/linux-retroarch.json)
+and its [walkthrough](../../docs/linux-retroarch.md).
+
+## Linux standalone follow-up — 2026-11-02
+
+Original Broomm Linux C adapters call the reviewed emulator SDL/Qt/native debugger APIs without importing upstream implementation. The complete [source/contracts and tradeoffs](../../docs/linux-standalone.md#source-and-implementation-choices) and host-specific [evidence](../../docs/linux-standalone.json) accompany pinned official archive hashes and runtime/link inventories under `assets/setup/linux-x64/`. Qt timer ABI, both x64 SDL dispatch forms and Linux SDL2 slot ordering are inspected independently; imported licenses/notices stay with their packages. Linux kernel Landlock, OFD locks, pidfd identity and subreaper behavior require no new helper service/runtime. The media-header AES primitive is original Dart following FIPS 197, checked against NIST vectors and Apple CommonCrypto; it adds no third-party code and is not a credential encryption API.

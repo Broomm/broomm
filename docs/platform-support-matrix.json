@@ -716,5 +716,59 @@
     "citraMmjHost": "android",
     "citraMmjProgress": "ordinary saves implemented for shared citra-emu with journaled profile swaps; native Android acceptance pending; cloud states and CIA installer missing",
     "defaultRule": "configured only; successful installation selects the newly installed emulator"
+  },
+  "linux": {
+    "date": "2026-11-02",
+    "host": "linux-x64",
+    "milestone": "RetroArch first, then standalone emulators",
+    "status": "bundled frontend/15 cores, private profiles, input/pause/window/recovery and progress boundaries implemented",
+    "verified": "native Wayland NES/Mesen synthetic input and native save/state cloud test-server roundtrip; 15 core ABI probes; native kernel/host checks",
+    "remaining": [
+      "physical controllers",
+      "Steam Input/Big Picture/gamescope",
+      "other-core Linux gameplay/BIOS/save cases",
+      "standalone Linux emulators",
+      "managed Linux ARM64"
+    ],
+    "details": "linux-retroarch.md",
+    "evidence": "linux-retroarch.json"
+  },
+  "linuxStandalone": {
+    "date": "2026-11-02",
+    "host": "linux-x64",
+    "details": "linux-standalone.md",
+    "evidence": "linux-standalone.json",
+    "managed": [
+      "dolphin",
+      "rpcs3",
+      "azahar",
+      "ryubing",
+      "melonds",
+      "duckstation",
+      "pcsx2",
+      "ppsspp",
+      "eden"
+    ],
+    "nativeLifecycle": [
+      "dolphin-gamecube",
+      "dolphin-wii",
+      "azahar",
+      "melonds",
+      "duckstation",
+      "pcsx2",
+      "ppsspp",
+      "rpcs3"
+    ],
+    "nativeProvisioning": [
+      "rpcs3-pup",
+      "azahar-cia"
+    ],
+    "pending": [
+      "Switch runtime with keys/firmware",
+      "new native standalone cloud save/state creation per emulator",
+      "physical input/gyro",
+      "Steam/gamescope",
+      "Linux ARM64 managed setup"
+    ]
   }
 }

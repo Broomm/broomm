@@ -1,0 +1,289 @@
+{
+  "date": "2026-11-02",
+  "revision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "working_tree": true,
+  "scope": "RomM game/update/DLC file transfers on the default Dart HTTP transport",
+  "host": {
+    "os": "CachyOS x64",
+    "kernel": "7.3.0-4-cachyos",
+    "filesystem": "Btrfs",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "backend": "native Flutter GTK/Wayland",
+    "ethernet": "enp34s0, 1000 Mbps",
+    "server_https": "https://romm.docubi.casa",
+    "server_lan": "http://192.168.1.2:1080",
+    "tailscale": "direct LAN endpoint 192.168.1.2:41641; 2 ms peer ping, not a relay"
+  },
+  "observations": {
+    "active_download_MBps_approx": 2,
+    "tcp_receive_backlog_KiB_approx": [
+      650,
+      760
+    ],
+    "io_pressure_avg10": 0,
+    "active_download_was": "payload streaming, not checksum verification",
+    "original_owner_download": "completed naturally at 2026-11-02 16:28:48 UTC; base game published; old release reported incomplete add-on integration",
+    "owner_app_pid": 5742,
+    "owner_app_restarted_or_stopped": false,
+    "owner_configuration_or_progress_changed_by_tests": false
+  },
+  "public_asset": {
+    "path": "/assets/materialdesignicons-webfont-B7mPwVP_.ttf",
+    "bytes": 1307660,
+    "copies_per_row": 8,
+    "total_bytes": 10461280,
+    "real_credentials_used": false,
+    "real_romm_mutations": false
+  },
+  "curl": {
+    "tailscale_https": {
+      "us": 201814,
+      "MBps": 51.84
+    },
+    "lan_http": {
+      "us": 139432,
+      "MBps": 75.03
+    },
+    "sink": "/dev/null"
+  },
+  "flutter_before": {
+    "passed": true,
+    "results": [
+      {
+        "route": "tailscale",
+        "bytes": 10461280,
+        "us": 4624235,
+        "updates": 1912,
+        "MBps": 2.2622725704900377
+      },
+      {
+        "route": "lan",
+        "bytes": 10461280,
+        "us": 377403,
+        "updates": 68,
+        "MBps": 27.719122529497646
+      }
+    ]
+  },
+  "flutter_isolate_comparison": {
+    "passed": true,
+    "results": [
+      {
+        "route": "raw-ui-isolate",
+        "bytes": 10461280,
+        "chunks": 1912,
+        "us": 4397825,
+        "MBps": 2.378739490543621
+      },
+      {
+        "route": "raw-worker-isolate",
+        "bytes": 10461280,
+        "chunks": 1912,
+        "us": 182289,
+        "MBps": 57.38843265364339
+      },
+      {
+        "route": "tailscale",
+        "bytes": 10461280,
+        "us": 4517848,
+        "updates": 1912,
+        "MBps": 2.3155449231581056
+      },
+      {
+        "route": "lan",
+        "bytes": 10461280,
+        "us": 279583,
+        "updates": 33,
+        "MBps": 37.41743954389215
+      }
+    ]
+  },
+  "flutter_production_worker": {
+    "passed": true,
+    "results": [
+      {
+        "route": "raw-ui-isolate",
+        "bytes": 10461280,
+        "chunks": 1912,
+        "us": 4433026,
+        "MBps": 2.3598508107103364
+      },
+      {
+        "route": "raw-worker-isolate",
+        "bytes": 10461280,
+        "chunks": 1912,
+        "us": 272732,
+        "MBps": 38.3573618057287
+      },
+      {
+        "route": "production-worker-tailscale",
+        "bytes": 10461280,
+        "us": 882953,
+        "updates": 16,
+        "MBps": 11.848059862756001
+      },
+      {
+        "route": "production-worker-lan",
+        "bytes": 10461280,
+        "us": 452627,
+        "updates": 16,
+        "MBps": 23.112364043682767
+      },
+      {
+        "route": "tailscale",
+        "bytes": 10461280,
+        "us": 4621092,
+        "updates": 1912,
+        "MBps": 2.263811237690139
+      },
+      {
+        "route": "lan",
+        "bytes": 10461280,
+        "us": 320438,
+        "updates": 34,
+        "MBps": 32.64681467241713
+      }
+    ]
+  },
+  "diagnosis": "TLS consumption on the Flutter UI isolate is the bottleneck in this native Linux run. An independent Dart isolate removes that bottleneck; exact engine/GTK internals were not established.",
+  "failed_experiments": [
+    "256 KiB disk batching: no material improvement",
+    "synchronous stream subscription: no material improvement",
+    "remove per-chunk timeout timer churn: no material improvement"
+  ],
+  "implementation": {
+    "io": "one background Dart isolate per game-content file; independent HTTP client; existing size checks, deadlines, flush and close",
+    "progress": "at most once per 120 ms plus final bytes",
+    "authentication": "existing owner-isolate refresh and account association; only current access-token snapshot in worker memory",
+    "completion": "closed-writer result plus isolate exit",
+    "cancellation": "abort only that worker client; drain before return; client close drains its workers",
+    "uncertain_writer": "retain private game/add-on stage and stable OS game/session lock until process exit; restart permits original owned cleanup",
+    "unchanged_routes": "explicitly injected HTTP clients, firmware, save transfers, emulator packages and application updater keep their existing transport paths"
+  },
+  "checks": {
+    "macos_flutter": {
+      "passed": 478
+    },
+    "linux_flutter": {
+      "passed": 410,
+      "existing_platform_skips": 21
+    },
+    "new_regression_cases": 4,
+    "analysis": "clean",
+    "format": "284 files unchanged",
+    "diff_check": "passed",
+    "linux_dependencies": "4 ELF dependency trees resolve; no Nix runtime paths",
+    "native_benchmark": "compiled Linux release Flutter application using production transfer worker and public assets",
+    "windows_android_native": "not executed this turn",
+    "linux_entry_point": "generated_config.cmake FLUTTER_TARGET=lib/main.dart; latest kernel input lib/main.dart; normal AOT snapshot 8,520,584 bytes, diagnostic snapshot 3,605,384 bytes"
+  },
+  "source_sha256": {
+    "lib/src/romm/client.dart": "e834e1a5ca33347bb9f3dac12b34bbfc5e172c7b129e8876ae91be57eda94f89",
+    "lib/src/romm/content_download.dart": "bac3a464825ab9a99783c2f68a7ccdf30c233b8139b4df6472b5fce95b83fdda",
+    "lib/src/romm/download_worker.dart": "67e57e36a19cf4d22a699bbe2cbe26a39dfdbb38cb901e17956d8c28f2bc8c3c",
+    "lib/src/romm/transfer.dart": "b420fb9f434d159e2dc9d282f52fa7d600ad538369f96ff42b92d531106acd23",
+    "lib/src/shell/library.dart": "97b3d4f552cdc1cad5da7c3463f1f083bca4310ee2ef7f1169c5e1f47bf94280",
+    "lib/src/session_lease.dart": "8829f71b353225c58345fb1da2bac15b5f67de0543d858a759a61168e834805a",
+    "lib/src/addons/service.dart": "dbc10e7ae1ab2b8de9fb01c22052a9bc82000571d3116f53a33a45df9b744eeb",
+    "lib/src/addons/ps3.dart": "e9b72be200a669c526a19a129adea55cf2171219bf2d4f1e38704fcf7e3c7560",
+    "lib/src/addons/packages.dart": "1921d708e749d916ebca699c474f63b27450711e586108c3b3e01665d370b9fa",
+    "test/romm_download_worker_test.dart": "44634f69214ae70d2ab8cc8fc7734c7286cd47f7a83b993ca62fa8815215e5af",
+    "test/support/uncertain_download.dart": "2535ad0f7dfb914ec279377387388e0f4294c4445cbfa6b9ea2ef1b43b41f655"
+  },
+  "artifacts": {
+    "macos": {
+      "path": "build/releases/Broomm-macOS-download-speed.zip",
+      "bytes": 20651828,
+      "sha256": "7bbb8efb304170bae748b546503010b631436308e79f8da42ccc5ad4e27a81c3",
+      "record": {
+        "product": "Broomm",
+        "version": "0.1.6",
+        "build_number": "1013",
+        "target": "macos-universal",
+        "sha": "82c953d4858f5229f6fa996e2b852417144a45b0",
+        "working_tree": true,
+        "source_tree_sha256": "24bdb000189b349e869208e12c96e056e1f3e75ace87b4e60240a302c368c2d9",
+        "entries": [
+          "AppIcon.icns",
+          "Assets.car",
+          "Base.lproj",
+          "NATIVE-SOURCES.md",
+          "broomm-release.json",
+          "native"
+        ]
+      },
+      "payloads": {
+        "Contents/MacOS/broomm": {
+          "architectures": "x86_64 arm64",
+          "sha256": "8fe745c2e2b3e33c41054511884d0d92ffec27a3b3593b1ab1dd3fe8fea8e530"
+        },
+        "Contents/Frameworks/App.framework/Versions/A/App": {
+          "architectures": "x86_64 arm64",
+          "sha256": "9508a8f92bb050f29ed78ee06432f878d97e1fa0b4937cf23081596ac0e3b7d3"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+          "architectures": "x86_64 arm64",
+          "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+        },
+        "Contents/Resources/native/broomm-sdl2.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "1814fccfaf786bed1a5ad3ea5baf4807f4a7ef03c722c4896c3b6ce31d9fc8df"
+        },
+        "Contents/Resources/native/broomm-sdl3.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "06df2bc785e144a5ca33eec3639fa1283321373da6e4a9d466094827592dc75b"
+        },
+        "Contents/Resources/native/broomm-astris.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "7126db19be46e48182cc2a587e14e50a3f948ad4038ca2d06651f6c97815ccb9"
+        },
+        "Contents/Resources/native/broomm-installer-guard.dylib": {
+          "architectures": "x86_64 arm64",
+          "sha256": "2310d05c852aa4682624a1afe0b21ea9e7a44b2dadf137554ef9baf6a90cf39c"
+        }
+      },
+      "signature": "source/fresh extraction deep strict all architectures passed",
+      "archive_integrity": "passed",
+      "bridge_and_linux_asset_readbacks": "passed",
+      "ad_hoc_signed": true,
+      "notarized": false
+    },
+    "linux": {
+      "path": "build/releases/Broomm-Linux-x64-download-speed-CachyOS.tar.gz",
+      "bytes": 11254341,
+      "sha256": "1ebe48e118b4b9db08c4730fb422e17fbb1933898c2d84eb3c88c68dfecea3bc",
+      "record": {
+        "product": "Broomm",
+        "version": "0.1.6",
+        "build_number": "1013",
+        "target": "linux-x64",
+        "sha": "82c953d4858f5229f6fa996e2b852417144a45b0",
+        "working_tree": true,
+        "build_host": "CachyOS x64; local host compiler baseline",
+        "entries": [
+          "NATIVE-SOURCES.md",
+          "RUNNING.txt",
+          "broomm",
+          "broomm-release.json",
+          "data",
+          "lib",
+          "share"
+        ]
+      },
+      "archive_integrity": "all file readbacks passed",
+      "native_bridge_sha256": "00c30ce0d520f2b70b44ae8db6380b2c3a02be93dc404207fffa3d799b97dfb5",
+      "glibc": "glibc 2.44",
+      "artifact": "local CachyOS x64 build; official Ubuntu CI rerun pending"
+    }
+  },
+  "limits": [
+    "small public-asset benchmark, not a full authenticated ROM transfer after the fix",
+    "HTTPS versus HTTP comparisons also differ in TLS and route; they are not a controlled VPN-only comparison",
+    "worker-per-file connection/startup overhead matters for small files",
+    "final Linux package restored to lib/main.dart; owner app left running unchanged",
+    "local Linux artifact uses CachyOS/glibc 2.44, official Ubuntu CI rerun remains separate",
+    "macOS package universal/ad-hoc signed, not notarized",
+    "no new runtime dependency or OS/global configuration change"
+  ]
+}

@@ -3,9 +3,58 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../progress/files.dart';
+import '../progress/zip.dart';
 import '../romm/transfer.dart';
 
 const setupExpandedLimit = 8 * 1024 * 1024 * 1024;
+
+/// AppImage's own pinned runtime extracts under kernel confinement. Inspect the
+/// resulting private tree before it can be copied or published. Links must stay
+/// within the application and may never act as write ancestors during copying.
+Future<void> validateSetupTree(
+  Directory directory,
+  DownloadCancellation cancellation,
+) async {
+  final root = await directory.resolveSymbolicLinks();
+  final spellings = <String, String>{};
+  var count = 0, bytes = 0;
+  await for (final entity in directory.list(
+    recursive: true,
+    followLinks: false,
+  )) {
+    cancellation.check();
+    final relative = entity.path.substring(directory.path.length + 1);
+    progressRelative(relative);
+    if (++count > 30000)
+      throw const FormatException('Too many files in the emulator package.');
+    final parts = relative.split('/');
+    for (var i = 1; i <= parts.length; i++) {
+      final name = parts.take(i).join('/');
+      final old = spellings[name.toLowerCase()];
+      if (old != null && old != name)
+        throw const FormatException('Colliding emulator package paths.');
+      spellings[name.toLowerCase()] = name;
+    }
+    if (entity is Link) {
+      final target = await entity.target();
+      if (target.startsWith('/') ||
+          target.contains('\\') ||
+          RegExp(r'[\x00-\x1f\x7f]').hasMatch(target))
+        throw const FormatException('Unsafe emulator package link.');
+      final resolved = await entity.resolveSymbolicLinks();
+      if (resolved != root && !resolved.startsWith('$root/'))
+        throw const FormatException(
+          'Emulator package link escapes its application.',
+        );
+    } else if (entity is File) {
+      bytes += await entity.length();
+      if (bytes > setupExpandedLimit)
+        throw const FormatException('Expanded emulator archive exceeds 8 GiB.');
+    } else if (entity is! Directory) {
+      throw const FormatException('Unsupported emulator package file type.');
+    }
+  }
+}
 
 class SetupWriterUncertain implements Exception {
   const SetupWriterUncertain();
@@ -21,25 +70,38 @@ Future<List<int>> setupTool(
   List<String> arguments,
   DownloadCancellation cancellation, {
   File? output,
+  String? workingDirectory,
+  Map<String, String>? environment,
+  bool supervised = false,
 }) async {
   cancellation.check();
   RandomAccessFile? sink;
   var alive = false;
+  int? exitCode;
   Timer? killTimer;
   try {
     if (output != null) {
       await output.create(exclusive: true);
       sink = await output.open(mode: FileMode.writeOnly);
     }
-    final child = await Process.start(executable, arguments);
+    final child = await Process.start(
+      executable,
+      arguments,
+      workingDirectory: workingDirectory,
+      environment: environment,
+    );
     alive = true;
     unawaited(
       cancellation.whenCancelled.then((_) {
         if (!alive) return;
         child.kill();
-        killTimer = Timer(const Duration(seconds: 1), () {
-          if (alive) child.kill(ProcessSignal.sigkill);
-        });
+        if (!supervised)
+          killTimer = Timer(const Duration(seconds: 1), () {
+            if (alive)
+              child.kill(
+                supervised ? ProcessSignal.sigterm : ProcessSignal.sigkill,
+              );
+          });
       }),
     );
     final stdout = <int>[], stderr = <int>[];
@@ -59,7 +121,10 @@ Future<List<int>> setupTool(
           }
         }
       } catch (_) {
-        if (alive) child.kill(ProcessSignal.sigkill);
+        if (alive)
+          child.kill(
+            supervised ? ProcessSignal.sigterm : ProcessSignal.sigkill,
+          );
         rethrow;
       }
     }
@@ -67,7 +132,10 @@ Future<List<int>> setupTool(
     Future<void> readError() async {
       await for (final bytes in child.stderr) {
         if (stderr.length + bytes.length > 65536) {
-          if (alive) child.kill(ProcessSignal.sigkill);
+          if (alive)
+            child.kill(
+              supervised ? ProcessSignal.sigterm : ProcessSignal.sigkill,
+            );
           throw const FormatException(
             'Archive tool diagnostics exceeded their limit.',
           );
@@ -79,6 +147,7 @@ Future<List<int>> setupTool(
     final work = Future.wait<Object?>([
       child.exitCode.then((code) {
         alive = false;
+        exitCode = code;
         return code;
       }),
       readOutput(),
@@ -88,7 +157,8 @@ Future<List<int>> setupTool(
     try {
       result = await work.timeout(const Duration(minutes: 3));
     } on TimeoutException {
-      if (alive) child.kill(ProcessSignal.sigkill);
+      if (alive)
+        child.kill(supervised ? ProcessSignal.sigterm : ProcessSignal.sigkill);
       try {
         await work.timeout(const Duration(seconds: 10));
       } on TimeoutException {
@@ -97,7 +167,13 @@ Future<List<int>> setupTool(
       throw StateError(
         'Emulator archive preparation timed out. Nothing was installed.',
       );
+    } catch (_) {
+      if (supervised && (exitCode == null || exitCode! < 0))
+        throw const SetupWriterUncertain();
+      rethrow;
     }
+    if (supervised && (exitCode == null || exitCode! < 0))
+      throw const SetupWriterUncertain();
     cancellation.check();
     if (result.first != 0) {
       final detail = utf8
@@ -126,6 +202,128 @@ Future<String> extractSetupArchive(
   Directory stage,
   DownloadCancellation cancellation,
 ) async {
+  if (Platform.isLinux) {
+    cancellation.check();
+    if (format == 'appimage' || format == 'appimage-zip') {
+      stage = Directory(await stage.resolveSymbolicLinks());
+      var image = archive;
+      if (format == 'appimage-zip') {
+        final zip = await ProgressZip.read(
+          archive,
+          maxBytes: 2 * 1024 * 1024 * 1024,
+          maxEntryBytes: 2 * 1024 * 1024 * 1024,
+        );
+        final nested = Directory('${stage.path}/image');
+        await zip.extract(nested, check: cancellation.check);
+        final candidates = await nested
+            .list(recursive: true, followLinks: false)
+            .where((e) => e is File && e.path.endsWith('.AppImage'))
+            .cast<File>()
+            .toList();
+        if (candidates.length != 1)
+          throw const FormatException(
+            'Expected one reviewed AppImage in the ZIP package.',
+          );
+        image = candidates.single;
+      }
+      final header = await image.open();
+      try {
+        final bytes = await header.read(20);
+        if (bytes.length != 20 ||
+            bytes[0] != 0x7f ||
+            bytes[1] != 69 ||
+            bytes[2] != 76 ||
+            bytes[3] != 70 ||
+            bytes[4] != 2 ||
+            bytes[5] != 1 ||
+            bytes[18] != 62 ||
+            bytes[19] != 0)
+          throw const FormatException(
+            'Expected the reviewed Linux x64 AppImage.',
+          );
+      } finally {
+        await header.close();
+      }
+      final packaged =
+          '${File(Platform.resolvedExecutable).parent.path}/lib/broomm-native-run';
+      final runner = await File(packaged).exists()
+          ? packaged
+          : '${Directory.current.path}/build/native/broomm-native-run';
+      if (!await File(runner).exists())
+        throw StateError(
+          'The Linux package adapter is missing. Use a complete Broomm build.',
+        );
+      await setupTool('/bin/chmod', ['u+x', image.absolute.path], cancellation);
+      final destination = Directory('${stage.path}/extracted');
+      await destination.create();
+      await setupTool(
+        runner,
+        [
+          destination.path,
+          destination.path,
+          image.absolute.path,
+          '--appimage-extract',
+        ],
+        cancellation,
+        workingDirectory: destination.path,
+        supervised: true,
+        environment: {'TMPDIR': destination.path},
+      );
+      progressRelative(entry);
+      final selected = Directory('${destination.path}/$entry');
+      if (await FileSystemEntity.type(selected.path, followLinks: false) !=
+          FileSystemEntityType.directory)
+        throw const FormatException(
+          'The AppImage did not produce its expected application directory.',
+        );
+      await validateSetupTree(selected, cancellation);
+      return selected.path;
+    }
+    if (format == 'tar.gz') {
+      final tar = File('${stage.path}/archive.tar');
+      final sink = await tar.open(mode: FileMode.writeOnly);
+      try {
+        var total = 0;
+        await for (final bytes in archive.openRead().transform(gzip.decoder)) {
+          cancellation.check();
+          total += bytes.length;
+          if (total > setupExpandedLimit)
+            throw const FormatException(
+              'Expanded emulator archive exceeds 8 GiB.',
+            );
+          await sink.writeFrom(bytes);
+        }
+        await sink.flush();
+      } finally {
+        await sink.close();
+      }
+      final destination = Directory('${stage.path}/extracted');
+      await extractSetupTar(tar, destination, entry, cancellation);
+      await tar.delete();
+      return '${destination.path}/$entry';
+    }
+    if (format != 'zip')
+      throw UnsupportedError(
+        'This Linux emulator recipe requires a reviewed ZIP, AppImage or gzip package.',
+      );
+    progressRelative(entry);
+    stage = Directory(await stage.resolveSymbolicLinks());
+    final destination = Directory('${stage.path}/extracted');
+    final zip = await ProgressZip.read(
+      archive,
+      maxBytes: 2 * 1024 * 1024 * 1024,
+      maxEntryBytes: 2 * 1024 * 1024 * 1024,
+    );
+    await zip.extract(destination, check: cancellation.check);
+    final selected = '${destination.path}/$entry';
+    final type = await FileSystemEntity.type(selected, followLinks: false);
+    if (type != FileSystemEntityType.file &&
+        type != FileSystemEntityType.directory)
+      throw const FormatException(
+        'The Linux package is missing its expected application entry.',
+      );
+    return selected;
+  }
   if (!Platform.isMacOS)
     throw UnsupportedError(
       'This emulator package requires its macOS archive adapter.',

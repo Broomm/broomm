@@ -16,6 +16,16 @@ static _Atomic int gyro_allowed[4]={1,1,1,1};
 static bool pending_activation;
 static unsigned long long revision, request_serial;
 static _Atomic int session_gate=1, session_paused=-1, session_wanted=1;
+static _Atomic unsigned long long session_resume_serial;
+static int session_pause_command(struct PauseTransition *control,int wanted,int actual) {
+    return pause_transition(control,wanted,actual,atomic_load(&session_resume_serial));
+}
+// Published by the sampling worker before releasing its pause gate. A UI tick
+// can miss a quick gate/release pair, but must not lose that explicit Resume.
+static void set_session_wanted(int wanted) {
+    if(!wanted&&atomic_load(&session_wanted))atomic_fetch_add(&session_resume_serial,1);
+    atomic_store(&session_wanted,wanted);
+}
 static const char *request_kind="initial";
 static uint32_t request_device=UINT32_MAX;
 static _Atomic bool ui_pending;
@@ -83,7 +93,7 @@ static void json_text(FILE *out,const char *s) {
     fputc('"',out);
 }
 static void session_request(const char *kind) {
-    atomic_store(&session_gate,1);atomic_store(&session_wanted,1);
+    atomic_store(&session_gate,1);set_session_wanted(1);
     request_kind=kind;++request_serial;
     request_device=UINT32_MAX;
     record("SESSION_REQUEST serial=%llu kind=%s",request_serial,kind);
@@ -138,20 +148,50 @@ static void appkit_observe_content(bool ready) {
         if(now-appkit_missing_since>1.0)atomic_store(&game_ended,true);
     }
 }
+// Explicit native pause/resume for the opt-in fixture, separate from Broomm's
+// desired state. These invoke the frontend's API and never write native state.
+static void native_pause_fixture(int actual,id window) {
+    int action=session_test?atomic_load(&test_native_pause_action):0;
+    if((action!=4&&action!=5)||actual<0)return;
+    bool paused=action==4;
+    if(getenv("BROOMM_PAUSE_APPKIT_F5")) {
+        if(atomic_load(&f5_down)||!window)return;
+        id app=send0((id)objc_getClass("NSApplication"),"sharedApplication");
+        if(!((bool(*)(id,SEL))objc_msgSend)(app,sel_registerName("isActive"))||
+           !((bool(*)(id,SEL))objc_msgSend)(window,sel_registerName("isKeyWindow"))) {
+            ((void(*)(id,SEL,bool))objc_msgSend)(app,sel_registerName("activateIgnoringOtherApps:"),true);
+            ((void(*)(id,SEL,id))objc_msgSend)(window,sel_registerName("makeKeyAndOrderFront:"),NULL);
+            return;
+        }
+        if(paused!=(bool)actual) {
+            atomic_store(&f5_down,true);send_f5(window,10);
+            dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,100*NSEC_PER_MSEC),dispatch_get_main_queue(),
+                (void *)send0(window,"retain"),session_release_f5);
+        }
+    } else if(core_system_fn&&core_set_state_fn) {
+        void *system=((void *(*)(void))core_system_fn)();
+        ((void(*)(void *,int,bool,bool))core_set_state_fn)(system,paused?1:2,true,false);
+    } else if(melonds_thread()) {
+        void (*set)(void *,bool)=symbol("_ZN10MainWindow7onPauseEb");set(qt_main,paused);
+    } else if(rpcs_status) {
+        void (*toggle)(void *)=symbol("_ZN11main_window13OnPlayOrPauseEv");
+        if(toggle&&paused!=(bool)actual)toggle(qt_main);
+    } else if(qt_main&&azahar_game_loaded()) {
+        void (*pause)(void *)=symbol("_ZN11GMainWindow11OnPauseGameEv");
+        void (*resume)(void *,bool)=symbol("_ZN11GMainWindow12OnResumeGameEb");
+        if(!pause||!resume)return;
+        if(paused)pause(qt_main);else resume(qt_main,false);
+    } else return;
+    atomic_store(&test_native_pause_action,0);
+    record("SESSION_TEST_NATIVE_PAUSE requested=%d",paused);
+}
 static void session_ui(void *unused) {
     (void)unused;
     if(atomic_load(&session_finishing)){atomic_store(&ui_pending,false);return;}
     atomic_store(&pause_requested,atomic_load(&session_wanted));
-    static bool symbols_resolved;
     static uint32_t *azahar_pause;
+    static bool symbols_resolved;
     if(!symbols_resolved){azahar_pause=symbol("_ZN11GMainWindow11OnPauseGameEv");symbols_resolved=true;}
-    if(qt_main&&azahar_pause) {
-        uint32_t *code=azahar_pause;
-        if(code[4]==0xf9402408&&code[5]==0x91008108) {
-            uint8_t *flag=(uint8_t *)*(void **)((char *)qt_main+0x48)+0x20;
-            if((int)__atomic_load_n(flag,__ATOMIC_ACQUIRE)!=atomic_load(&session_wanted))qt_pause_applied=-1;
-        }
-    }
     qt_tick();
     int actual=-1;
     if(getenv("BROOMM_EDEN")) {
@@ -188,9 +228,11 @@ static void session_ui(void *unused) {
                 if(si_get(info)!=type) {si_set(6,info,&type);record("DOLPHIN_SI port=%d type=%d",p,type);}
             }
         }
-        int desired=atomic_load(&session_wanted)?1:2;
-        if((state==1||state==2)&&state!=desired)
-            ((void(*)(void *,int,bool,bool))core_set_state_fn)(system,desired,true,false);
+        static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+        int command=session_pause_command(&control,atomic_load(&session_wanted),
+            state==1?1:state==2?0:-1);
+        if(command>=0)
+            ((void(*)(void *,int,bool,bool))core_set_state_fn)(system,command?1:2,true,false);
         state=((int(*)(void *))core_state_fn)(system);
         if(state==1||state==2)actual=state==1;
         wii_tick(state);
@@ -253,7 +295,10 @@ static void session_ui(void *unused) {
             }
             if(ready) {
                 actual=strstr(title,"Paused")!=NULL;
-                if(actual!=atomic_load(&session_wanted)&&!appkit_pause_applied&&!atomic_load(&f5_down)) {
+                static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+                int command=atomic_load(&f5_down)?-1:
+                    session_pause_command(&control,atomic_load(&session_wanted),actual);
+                if(command>=0) {
                     // Avalonia polls its keyboard hotkeys only while active.
                     // A sendEvent into a background app was silently ignored
                     // when Broomm owned focus on Apply. Wait for activation.
@@ -264,18 +309,19 @@ static void session_ui(void *unused) {
                         ((void(*)(id,SEL,id))objc_msgSend)(window,sel_registerName("makeKeyAndOrderFront:"),NULL);
                         atomic_store(&session_paused,actual);
                         atomic_store(&ui_pending,false);
+                        pause_transition_defer(&control); // No key delivered yet.
                         return;
                     }
                     ((void(*)(id,SEL))objc_msgSend)(window,sel_registerName("makeKeyWindow"));
                     atomic_store(&f5_down,true);
                     send_f5(window,10);
                     dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,100*NSEC_PER_MSEC),dispatch_get_main_queue(),(void *)send0(window,"retain"),session_release_f5);
-                    appkit_pause_applied=1;
-                } else if(actual==atomic_load(&session_wanted))appkit_pause_applied=0;
+                }
             }
         }
     }
     if(getenv("BROOMM_PAUSE_APPKIT_F5"))appkit_observe_content(appkit_content_exists);
+    native_pause_fixture(actual,window);
     // Azahar runs a modal direct-launch warning before BootGame and app.exec.
     // Closing there can return successfully, then BootGame starts behind the
     // closed window and QCoreApplication::quit has no running loop to stop.
@@ -373,6 +419,9 @@ static void read_command(void) {
         }
     }
     if(quit==1)atomic_store(&session_quit,true);
+    // Capture the pre-command gate before Wii reload can assert it. A plain
+    // active-route publication must not manufacture an explicit Resume.
+    bool was_blocked=atomic_load(&session_gate);
     if(dolphin_wii&&!quit) {
         for(int p=0;p<4;++p)atomic_store(&wii_modes[p],modes[p]);
         unsigned int present=0;
@@ -382,10 +431,9 @@ static void read_command(void) {
         atomic_store(&wii_revision,next);
         atomic_store(&session_gate,1); // Native reload must finish before resume.
     }
-    bool was_blocked=atomic_load(&session_gate);
     revision=next;pending_activation=active&&valid&&was_blocked;
     atomic_store(&session_gate,!active||!valid||pending_activation);
-    atomic_store(&session_wanted,pause||!valid||pending_activation);
+    set_session_wanted(pause||!valid||pending_activation);
     if(!valid)session_request("disconnect");
     record("SESSION_COMMAND revision=%llu active=%d valid=%d",revision,active,valid);
 }
@@ -418,6 +466,7 @@ static void write_status(void) {
     fprintf(out,"],\"logicalButtons\":[");
     for(int p=0;p<4;++p){unsigned int bits=0;for(int b=0;b<21;b++)if(real_button(pad[p],b))bits|=1u<<b;fprintf(out,"%s%u",p?",":"",bits);}
     fprintf(out,"],\"connectedPorts\":%u,\"consolePorts\":%d,\"appActive\":%s,\"pspButtons\":%u",atomic_load(&connected_ports),atomic_load(&console_ports),atomic_load(&app_active)?"true":"false",atomic_load(&psp_buttons));
+    fprintf(out,",\"pauseReleaseSerial\":%llu",atomic_load(&session_resume_serial));
     fprintf(out,",\"nativeProgram\":\"%016llx\",\"switchButtons\":%llu",(unsigned long long)atomic_load(&eden_program),(unsigned long long)atomic_load(&eden_buttons));
     if(dolphin_wii) {
         fprintf(out,",\"wiiApplied\":%llu,\"wiiSources\":%u,\"wiiSelected\":[",atomic_load(&wii_applied),atomic_load(&wii_sources));
@@ -526,7 +575,7 @@ static void session_worker(void) {
                 if(sources[i].id==routes[p]&&sources[i].buttons)released=false;
             if(!strcmp(request_kind,"gyro"))for(int i=0;i<source_count;++i)
                 if(sources[i].id==request_device&&sources[i].axes[5]>8192)released=false;
-            if(released&&(!dolphin_wii||atomic_load(&wii_applied)>=atomic_load(&wii_revision))){pending_activation=false;atomic_store(&session_gate,0);atomic_store(&session_wanted,0);}
+            if(released&&(!dolphin_wii||atomic_load(&wii_applied)>=atomic_load(&wii_revision))){pending_activation=false;atomic_store(&session_gate,0);set_session_wanted(0);}
         }
         for(int p=0;p<4;++p) {
             struct Source *src=NULL;

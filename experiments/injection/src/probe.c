@@ -600,6 +600,11 @@ static void send_f5(id window,int type) {
 }
 static void release_f5(void *window) {send_f5((id)window,11);}
 static _Atomic int menu_requested, pause_requested;
+#ifdef BROOMM_SESSION_BRIDGE
+#include "../../../native/pause_transition.h"
+static int session_pause_command(struct PauseTransition *,int,int);
+static _Atomic int test_native_pause_action;
+#endif
 static void *qt_main;
 static void *melonds_thread(void) {
     if(!getenv("BROOMM_MELONDS")||!qt_main)return NULL;
@@ -682,13 +687,21 @@ static void qt_tick(void) {
     void *melon=melonds_thread();
     if(melon&&__atomic_load_n((uint8_t *)melon+0x38,__ATOMIC_ACQUIRE)) {
         uint32_t state=__atomic_load_n((uint32_t *)((char *)melon+0x34),__ATOMIC_ACQUIRE);
-        if((state==1||state==2)&&((state==2)!=wanted)) {
+        int command=-1;
+#ifdef BROOMM_SESSION_BRIDGE
+        static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+        if(getenv("BROOMM_SESSION"))command=session_pause_command(&control,wanted,
+            state==1?0:state==2?1:-1);
+        else
+#endif
+        if((state==1||state==2)&&((state==2)!=wanted))command=wanted;
+        if(command>=0) {
             void (*pause)(void *,bool)=symbol("_ZN10MainWindow7onPauseEb");
-            pause(qt_main,wanted!=0);
-            record("MELONDS_PAUSE before=%u requested=%d after=%u",state,wanted,__atomic_load_n((uint32_t *)((char *)melon+0x34),__ATOMIC_ACQUIRE));
+            pause(qt_main,command!=0);
+            record("MELONDS_PAUSE before=%u requested=%d after=%u",state,command,__atomic_load_n((uint32_t *)((char *)melon+0x34),__ATOMIC_ACQUIRE));
         }
     }
-    if(qt_main&&main_meta&&qt_pause_applied!=wanted) {
+    if(qt_main&&main_meta) {
         void (*pause)(void *)=symbol("_ZN11GMainWindow11OnPauseGameEv");
         void (*resume)(void *,bool)=symbol("_ZN11GMainWindow12OnResumeGameEb");
         if(pause&&resume) {
@@ -709,17 +722,35 @@ static void qt_tick(void) {
             if(code[4]==0xf9402408 && code[5]==0x91008108)
                 frame_advancing=(uint8_t *)*(void **)((char *)qt_main+0x48)+0x20;
             int before=frame_advancing?__atomic_load_n(frame_advancing,__ATOMIC_ACQUIRE):-1;
-            if(wanted)pause(qt_main);else resume(qt_main,false);
+            int command=-1;
+#ifdef BROOMM_SESSION_BRIDGE
+            static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+            if(getenv("BROOMM_SESSION")) {
+                if(!azahar_game_loaded())return;
+                command=session_pause_command(&control,wanted,before);
+            } else
+#endif
+            if(qt_pause_applied!=wanted)command=wanted;
+            if(command<0)return;
+            if(command)pause(qt_main);else resume(qt_main,false);
             int after=frame_advancing?__atomic_load_n(frame_advancing,__ATOMIC_ACQUIRE):-1;
             qt_pause_applied=wanted;record("QT_PAUSE_CALLED value=%d before_frame_advancing=%d after_frame_advancing=%d",wanted,before,after);
         }
     }
-    if(qt_main&&rpcs_meta&&qt_pause_applied!=wanted) {
+    if(qt_main&&rpcs_meta) {
         void (*toggle)(void *)=symbol("_ZN11main_window13OnPlayOrPauseEv");
         if(toggle){
             int before=rpcs_status?(int)__atomic_load_n(rpcs_status,__ATOMIC_ACQUIRE):-1;
             if(before!=3&&before!=4) {record("QT_PAUSE_NOT_READY raw_state=%d",before);return;}
-            if((wanted&&before==3)||(!wanted&&before==4))toggle(qt_main);
+            int command=-1;
+#ifdef BROOMM_SESSION_BRIDGE
+            static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+            if(getenv("BROOMM_SESSION"))command=session_pause_command(&control,wanted,before==4);
+            else
+#endif
+            if(qt_pause_applied!=wanted&&((wanted&&before==3)||(!wanted&&before==4)))command=wanted;
+            if(command>=0)toggle(qt_main);
+            else if(getenv("BROOMM_SESSION")||qt_pause_applied==wanted)return;
             int after=rpcs_status?(int)__atomic_load_n(rpcs_status,__ATOMIC_ACQUIRE):-1;
             qt_pause_applied=wanted;record("QT_PAUSE_TOGGLED value=%d raw_before=%d raw_after=%d",wanted,before,after);
         }

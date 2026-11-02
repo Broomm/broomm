@@ -5,6 +5,7 @@ import 'dart:io';
 import '../managed_emulators.dart' show ownedDirectory, copyTree;
 import '../managed_profile.dart' show ryubingDefaults;
 import '../romm/models.dart';
+import '../linux_runtime.dart';
 import '../romm/transfer.dart';
 import 'files.dart';
 import 'wii.dart';
@@ -18,12 +19,21 @@ Future<Process> startPackageTool(
   Directory data,
   Map<String, String> extra,
 ) async {
-  if (!Platform.isMacOS)
+  if (!Platform.isMacOS && !Platform.isLinux)
     throw UnsupportedError(
       'Native package import has not been validated on this host.',
     );
   final root = await stage.resolveSymbolicLinks();
   final writer = '${await data.resolveSymbolicLinks()}/writer.lock';
+  if (Platform.isLinux) {
+    return startLinuxInstallation(
+      executable,
+      arguments,
+      stage,
+      writer: writer,
+      environment: {...extra, 'QT_QPA_PLATFORM': 'offscreen'},
+    );
+  }
   final bundled =
       '${File(Platform.resolvedExecutable).parent.parent.path}/Resources/native/broomm-installer-guard.dylib';
   final guard = await File(bundled).exists()
@@ -83,6 +93,9 @@ Future<void> importWiiWad(
     data,
     {
       'BROOMM_DOLPHIN_WAD': File(input).absolute.path,
+      if (Platform.isLinux)
+        'BROOMM_SYMBOL_FILE':
+            '${File(executable).parent.parent.parent.parent.path}/local-symbols.txt',
       'QT_QPA_PLATFORM': 'cocoa',
     },
   );
@@ -254,7 +267,14 @@ Future<SwitchPackages> inspectSwitchPackages(
       err = child.stderr.listen(output).asFuture<void>();
   cancellation.abort = () => child.kill(ProcessSignal.sigkill);
   var exited = false;
-  unawaited(child.exitCode.then((_) => exited = true));
+  unawaited(
+    child.exitCode.then(
+      (_) => exited = true,
+      onError: (Object _, StackTrace __) {
+        exited = true;
+      },
+    ),
+  );
   SwitchPackages? result;
   try {
     final deadline = DateTime.now().add(const Duration(seconds: 90));

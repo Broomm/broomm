@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "builds": [
+    {
+      "id": "retroarch",
+      "name": "RetroArch",
+      "version": "1.22.2 / Broomm 0.1.0 + Snes9x 1.63 fae2fea",
+      "retro_native_state_names": true,
+      "host": "linux-x64",
+      "bundle": "RetroArch",
+      "executable": "retroarch",
+      "sha256": "a6e405d589d423bbf566eaa760702dbe98dd179fe0cebeb16ebaba024d379339",
+      "sdl": 3,
+      "sdl_library": "lib/libSDL3.so.0",
+      "native": {},
+      "integrity_asset": "assets/setup/linux-x64/retroarch.integrity.json",
+      "core_sha256": "9b2b6ea9d88f96c156590443ddd05ee56aaf4e495329a889c979921942717a31"
+    },
+    {
+      "id": "dolphin",
+      "name": "Dolphin",
+      "version": "2609-166 / d182533d363e",
+      "host": "linux-x64",
+      "bundle": "Dolphin",
+      "executable": "usr/bin/dolphin-emu",
+      "sha256": "348d11140303f66a372b81f0b2400b7a039095a039ec2212807e311e6bf726a9",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004016"
+      },
+      "integrity_asset": "assets/setup/linux-x64/dolphin.integrity.json",
+      "source_package": {
+        "url": "https://dl.dolphin-emu.org/builds/c9/75/dolphin-master-2609-166-x64.AppImage",
+        "sha256": "5e8d1a006211f45b47ca255d9639339fbf2872c7a669dc8780c138d2ff2d8c82",
+        "bytes": 100207096,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    {
+      "id": "rpcs3",
+      "name": "RPCS3",
+      "version": "0.0.42-20031 d08d568d",
+      "host": "linux-x64",
+      "bundle": "RPCS3",
+      "executable": "usr/bin/rpcs3",
+      "sha256": "e96311a3a5f624b706c63bd7194784afa4720b4ee8c2323814a6ee8c0e4bf152",
+      "sdl": 3,
+      "native": {
+        "BROOMM_EMU_STATUS": "51593b8",
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004014"
+      },
+      "integrity_asset": "assets/setup/linux-x64/rpcs3.integrity.json",
+      "source_package": {
+        "url": "https://github.com/RPCS3/rpcs3-binaries-linux/releases/download/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3-v0.0.42-20031-d08d568d_linux64.AppImage",
+        "sha256": "9fcfbea9d748b812dd72886c6e105d3ed341dbfc3c15775a96f33ea196a27235",
+        "bytes": 94020124,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "sdl_library": "usr/lib/libSDL3.so.0"
+    },
+    {
+      "id": "azahar",
+      "name": "Azahar",
+      "version": "2126.1.2",
+      "host": "linux-x64",
+      "bundle": "Azahar",
+      "executable": "usr/bin/azahar",
+      "sha256": "9ead802cdbcd6eef1762dfa6698aa501a10ee82006831a2532bfdc4421a5e96a",
+      "sdl": 2,
+      "native": {
+        "BROOMM_SDL_TABLE": "253e2c8",
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "23210"
+      },
+      "integrity_asset": "assets/setup/linux-x64/azahar.integrity.json",
+      "source_package": {
+        "url": "https://github.com/azahar-emu/azahar/releases/download/2126.1.2/azahar.AppImage",
+        "sha256": "1ea15020334ee2e8fd16fbb3911fa7eafa8111e311c54dd4387b61b2ea742df6",
+        "bytes": 103664120,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    {
+      "id": "ryubing",
+      "name": "Ryubing",
+      "version": "1.3.3",
+      "host": "linux-x64",
+      "bundle": "Ryubing",
+      "executable": "Ryujinx",
+      "sha256": "668cf770804dfed94d5362f2334844ad7665ce7e3b3edc4659ba24e1684e5a04",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "avalonia",
+        "BROOMM_EXPECT_SDL_VERSION": "23000",
+        "BROOMM_RYUBING": "1"
+      },
+      "integrity_asset": "assets/setup/linux-x64/ryubing.integrity.json",
+      "source_package": {
+        "url": "https://git.ryujinx.app/projects/Ryubing/releases/download/1.3.3/ryujinx-1.3.3-linux_x64.tar.gz",
+        "sha256": "19b67b222726f28d11846e9b7cbaed113ea03c2be016408662ffb27c558bd28c",
+        "bytes": 33234450,
+        "format": "tar.gz",
+        "entry": "publish"
+      },
+      "sdl_library": "libSDL2.so"
+    },
+    {
+      "id": "melonds",
+      "name": "melonDS",
+      "version": "1.1",
+      "host": "linux-x64",
+      "bundle": "melonDS",
+      "executable": "usr/bin/melonDS",
+      "sha256": "0cf922ca9066230816d83ecdf2d0f786641536238141cd5d384d9a742517f891",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "20020"
+      },
+      "integrity_asset": "assets/setup/linux-x64/melonds.integrity.json",
+      "source_package": {
+        "url": "https://github.com/melonDS-emu/melonDS/releases/download/1.1/melonDS-1.1-appimage-x86_64.zip",
+        "sha256": "bf377420a2e95f2cd2cdda17d5372b51c2534f858b038db9ec6d129554875124",
+        "bytes": 34289284,
+        "format": "appimage-zip",
+        "entry": "squashfs-root"
+      },
+      "sdl_library": "usr/lib/libSDL2-2.0.so.0"
+    },
+    {
+      "id": "duckstation",
+      "name": "DuckStation",
+      "version": "0.1-12083-g00e299795",
+      "host": "linux-x64",
+      "bundle": "DuckStation",
+      "executable": "usr/bin/duckstation-qt",
+      "sha256": "6e8451b883110b37d2e162692044fce0c4753e2b4596324cb7d1bee7abb9eb5e",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004016"
+      },
+      "integrity_asset": "assets/setup/linux-x64/duckstation.integrity.json",
+      "source_package": {
+        "url": "https://github.com/stenzek/duckstation/releases/download/v0.1-12083/DuckStation-x64.AppImage",
+        "sha256": "c5e6f045f6a242082fcafa9f02d56ad895e233b942728788d232ad0c0c765c24",
+        "bytes": 93323552,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      },
+      "sdl_library": "usr/lib/libSDL3.so.0"
+    },
+    {
+      "id": "pcsx2",
+      "name": "PCSX2",
+      "version": "2.8.2 / fd9d310",
+      "host": "linux-x64",
+      "bundle": "PCSX2",
+      "executable": "usr/bin/pcsx2-qt",
+      "sha256": "9b935133f224d29981200272492797eee4cb16fece3357119bf90c33cd62e48a",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004012"
+      },
+      "integrity_asset": "assets/setup/linux-x64/pcsx2.integrity.json",
+      "source_package": {
+        "url": "https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-linux-appimage-x64-Qt.AppImage",
+        "sha256": "0c46bb6a88aa2782b10853a7b07cf3387ba99cbef2b966372cd2315b8571abea",
+        "bytes": 60119544,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      },
+      "sdl_library": "usr/lib/libSDL3.so.0"
+    },
+    {
+      "id": "ppsspp",
+      "name": "PPSSPP",
+      "version": "1.20.4 / 3a31057",
+      "host": "linux-x64",
+      "bundle": "PPSSPP",
+      "executable": "shared/bin/PPSSPPSDL",
+      "sha256": "69756222b9a94b82de0bbfc8e3bf711dc231f9f6929e2ab2cd961be3f408e94f",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "sdl",
+        "BROOMM_EXPECT_SDL_VERSION": "23208"
+      },
+      "integrity_asset": "assets/setup/linux-x64/ppsspp.integrity.json",
+      "source_package": {
+        "url": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPP-v1.20.4-anylinux-x86_64.AppImage",
+        "sha256": "661c098e6b7f7610171a57b7c533ce8bba6f2312b71e76d61e850461973eba21",
+        "bytes": 50689748,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "sdl_library": "shared/lib/libSDL2-2.0.so.0.3200.8",
+      "linux_launcher": "bin/PPSSPPSDL"
+    },
+    {
+      "id": "eden",
+      "name": "Eden",
+      "version": "0.2.1",
+      "host": "linux-x64",
+      "bundle": "Eden",
+      "executable": "shared/bin/eden",
+      "sha256": "f9ff8a8991ae33b4f96469a6df2b7ac59220dca9c3e075750ea6f406dde0c734",
+      "sdl": 2,
+      "native": {
+        "BROOMM_SDL_TABLE": "24d08e0",
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "23300"
+      },
+      "integrity_asset": "assets/setup/linux-x64/eden.integrity.json",
+      "source_package": {
+        "url": "https://stable.eden-emu.dev/v0.2.1/Eden-Linux-v0.2.1-amd64-clang-pgo.AppImage",
+        "sha256": "7a28bf988b0648831989722bdbaa90ab31371b403808199813e0ea7c8b25ba6d",
+        "bytes": 69276651,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "linux_launcher": "bin/eden"
+    }
+  ]
+}

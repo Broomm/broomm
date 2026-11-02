@@ -1,0 +1,32 @@
+{
+  "files": {
+    "lib/libSDL3.so.0": "cd1e2e0c2b789ef0190311b4f3af73961947bc2a919c62037a9156a356448c0d",
+    "licenses/Broomm-NOTICE.md": "280068281ff4cc5d14d68e1de584c2c97e13aa30bad572fd6b90ac7fc3ec00b0",
+    "licenses/GCC-Runtime-Library-Exception.txt": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+    "licenses/RetroArch/COPYING": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "licenses/RetroArch/cores/libretro-imageviewer/LICENSE": "3461e105359fe4e24ca575ac799476f31a042edf5759cbdc9be71e0afc9aa7d1",
+    "licenses/RetroArch/cores/libretro-mpv/LICENSE": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "licenses/RetroArch/cores/libretro-video-processor/LICENSE": "fba7111eaa50dd02eb70f910c5ef5adb7acdaaabf4ce4cbdfd7b9fe25d875af2",
+    "licenses/RetroArch/deps/SPIRV-Cross/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "licenses/RetroArch/deps/libShake/LICENSE.txt": "c6712b4aae835682324c2f0effcdb0843178db8b234817a0f7f82ed8de10be04",
+    "licenses/RetroArch/deps/libgo2/LICENSE": "a619c43b767de59121d8d9094a94925fe07d245f213994ffafd0cf28db6c3ec3",
+    "licenses/RetroArch/deps/rcheevos/LICENSE": "bf820c034966a3b6be050bb85f94ec841a0b972bd5d477e362337d0574b5c219",
+    "licenses/RetroArch/deps/wayland-protocols/COPYING": "f1a2b233e8a9a71c40f4aa885be08a0842ac85bb8588703c1dd7e6e6502e3124",
+    "licenses/RetroArch/deps/xxHash/LICENSE": "6ffedbc0f7878612d2b23589f1ff2ab15633e1df7963a5d9fc750ec5500c7e7a",
+    "licenses/RetroArch/deps/xxHash/tests/bench/LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+    "licenses/RetroArch/deps/xxHash/tests/collisions/LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+    "licenses/RetroArch/gfx/drivers/vita_shaders/LICENSE": "bfcd754f76d4c3746c58b62e838becc8f36555b409cd0c1b9b6d665b9d184b68",
+    "licenses/RetroArch/gfx/drivers_context/vita_pib/LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "licenses/RetroArch/media/icons/LICENSE/LICENSE.CC_BY_NC_3.txt": "bc7319c86c160a972d4036d87bfc4e170c6b632f39cde2140cd3da68f077dfd9",
+    "licenses/RetroArch/media/icons/LICENSE/LICENSE.txt": "840de2528a612bc0ae6241fa4817ade2b5c389071f3b22c93ca0cde5dc9ecd24",
+    "licenses/RetroArch/pkg/debian/copyright": "fba268602239aa95e096fa6766a0b5687b0da7c9449ad19d378ba328a3aaedee",
+    "licenses/RetroArch/pkg/msvc-uwp/packages/Microsoft.Windows.CppWinRT.3.0.260520.1/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+    "licenses/RetroArch/pkg/msvc/packaging/FONT-LICENSES.txt": "3426250f3adf09ab41a8d5b69ed06eecdd57e7de6b8e894966937497d43fb6c2",
+    "licenses/RetroArch/tools/ps3/ps3py/LICENSE": "61fc255a4be73a0603ec1c664d277a038333df45db408379aa2a885ac1e4d560",
+    "licenses/RetroArch/wii/libogc/libogc_license.txt": "8be3bc1cad868fae35498ce049c60b4263e57184a7d23df99ea1f7ba2d338a2f",
+    "licenses/RetroArch/wii/libogc/wiiuse/license_libogc.txt": "c2d57113b7e3df8ea52c5fc96541a2b50d4e7bbba3ad16aeac376fb6b6479183",
+    "licenses/SDL3-LICENSE.txt": "97f35b302b361680ec1e891e95d2d52097bb95abff361434916d99dc1305f127",
+    "retroarch": "a6e405d589d423bbf566eaa760702dbe98dd179fe0cebeb16ebaba024d379339"
+  },
+  "links": {}
+}

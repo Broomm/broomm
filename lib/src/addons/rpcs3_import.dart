@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../managed_emulators.dart' show ownedDirectory;
 import '../romm/models.dart';
+import '../linux_runtime.dart';
 import '../romm/transfer.dart';
 
 /// RPCS3's CLI performs unattended installation only without its GUI main
@@ -16,7 +17,7 @@ Future<Directory> installRpcs3Content(
   required bool firmware,
   required Directory data,
 }) async {
-  if (!Platform.isMacOS)
+  if (!Platform.isMacOS && !Platform.isLinux)
     throw UnsupportedError(
       'RPCS3 native installation is not validated on this host yet.',
     );
@@ -27,12 +28,16 @@ Future<Directory> installRpcs3Content(
   final guard = await File(bundled).exists()
       ? bundled
       : '${Directory.current.path}/build/native/broomm-installer-guard.dylib';
-  if (!await File(guard).exists())
+  if (Platform.isMacOS && !await File(guard).exists())
     throw StateError(
       'The native installer guard is missing. Use a complete Broomm build.',
     );
   final home = '$root/home';
-  final user = Directory('$home/Library/Application Support/rpcs3');
+  final user = Directory(
+    Platform.isLinux
+        ? '$root/config/rpcs3'
+        : '$home/Library/Application Support/rpcs3',
+  );
   for (final path in [
     user.path,
     '$root/tmp',
@@ -43,32 +48,43 @@ Future<Directory> installRpcs3Content(
     await ownedDirectory(Directory(path));
   String quote(String s) =>
       '"${s.replaceAll(r'\', r'\\').replaceAll('"', r'\"')}"';
-  final child = await Process.start(
-    '/usr/bin/sandbox-exec',
-    [
-      '-p',
-      '(version 1)(allow default)(deny network*)(deny file-write* (require-all (require-not (subpath ${quote(root)})) (require-not (literal ${quote(writer)}))))',
-      '/usr/bin/env',
-      'DYLD_INSERT_LIBRARIES=$guard',
-      executable,
-      '${firmware ? '--installfw' : '--installpkg'}=${File(input).absolute.path}',
-      '--headless',
-    ],
-    workingDirectory: root,
-    includeParentEnvironment: false,
-    environment: {
-      'HOME': home,
-      'XDG_CONFIG_HOME': '$root/config',
-      'XDG_CACHE_HOME': '$root/cache',
-      'XDG_DATA_HOME': '$root/data',
-      'TMPDIR': '$root/tmp',
-      'PATH': '/usr/bin:/bin',
-      'LANG': 'en_US.UTF-8',
-      'QT_QPA_PLATFORM': 'offscreen',
-      'BROOMM_INSTALLER_WRITER_LOCK': writer,
-      'BROOMM_INSTALLER_ABORT_MODE': 'rpcs3-cli-v1',
-    },
-  );
+  final child = Platform.isLinux
+      ? await startLinuxInstallation(
+          executable,
+          [
+            '${firmware ? '--installfw' : '--installpkg'}=${File(input).absolute.path}',
+            '--headless',
+          ],
+          stage,
+          writer: writer,
+          environment: {'BROOMM_INSTALLER_ABORT_MODE': 'rpcs3-cli-v1'},
+        )
+      : await Process.start(
+          '/usr/bin/sandbox-exec',
+          [
+            '-p',
+            '(version 1)(allow default)(deny network*)(deny file-write* (require-all (require-not (subpath ${quote(root)})) (require-not (literal ${quote(writer)}))))',
+            '/usr/bin/env',
+            'DYLD_INSERT_LIBRARIES=$guard',
+            executable,
+            '${firmware ? '--installfw' : '--installpkg'}=${File(input).absolute.path}',
+            '--headless',
+          ],
+          workingDirectory: root,
+          includeParentEnvironment: false,
+          environment: {
+            'HOME': home,
+            'XDG_CONFIG_HOME': '$root/config',
+            'XDG_CACHE_HOME': '$root/cache',
+            'XDG_DATA_HOME': '$root/data',
+            'TMPDIR': '$root/tmp',
+            'PATH': '/usr/bin:/bin',
+            'LANG': 'en_US.UTF-8',
+            'QT_QPA_PLATFORM': 'offscreen',
+            'BROOMM_INSTALLER_WRITER_LOCK': writer,
+            'BROOMM_INSTALLER_ABORT_MODE': 'rpcs3-cli-v1',
+          },
+        );
   final log = File('$root/installer.log').openWrite();
   log.writeln('RPCS3 installer PID: ${child.pid}');
   var size = 0;

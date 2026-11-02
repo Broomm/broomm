@@ -1,0 +1,188 @@
+{
+  "date": "2026-11-02",
+  "revision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "working_tree": true,
+  "runtime_source_fingerprint": "416c4cd3e1a238545a9801143b1c980ef0be4384dbd810b1019c1fb7e852e318",
+  "source_hashes": {
+    "native/playstation.inc": "2b580ebe9a49759b40699bf9889178359574915959266a55976f741e0c437c9a",
+    "native/session.inc": "4d9625e6e9054f0b272fb7e579cc0477609e8230358ef93e85e7e863d67a3bfc",
+    "native/pause_transition.h": "31c2b89f7e2252249c0ed0b986430027dfda6cdd1f84beeb2caefdc7c524023f",
+    "native/eden.inc": "1af1a8fe7950489b83c79249b38e582153d8865f523059dcb6a1ab7e60570f39",
+    "native/ppsspp.inc": "ff14b6038dd6284fee32f93ef123f7ddc5e03f2cb5e49e3a8dce6dff9c254bf8",
+    "native/astris_bridge.m": "45b4c03e6296e7717158dec7196217c860b00da7bf69561588e6091a86bd7912",
+    "native/test_sources.inc": "14402ab5fbd10f5e2f899eeceea086d48fe15cf230e47aa1f61fc24d30f1d355",
+    "experiments/injection/src/probe.c": "2de1cb63cb978e132cbec1285217941436966aa6805470f879f899cf5aff60f4",
+    "lib/src/session.dart": "e5ffa9b73205f602d29cc7f1e21dfaa27827a0ed6d1bfcf32651169656535188",
+    "lib/src/retroarch_control.dart": "cef0e2c210d6ed6f9d39f3c6f8aad781d1e2ddde70652ad665286279b681458e",
+    "test/retroarch_pause_test.dart": "06baf9ce391b44d6e9aeb36a5874a2fda04a6fb7096d138f699539ad6b9b900c",
+    "tool/check_sony_pause.sh": "d78aa2923579cf08507be5d1c866ca93f13a7fdfc60595593902602f1df13443",
+    "tool/fixtures/sony_pause_test.c": "52acc17f046770d518de2f5f16982d7f36d64484d51b972cbfba3e83b844f7fa",
+    "tool/fixtures/pause_core.c": "128a59c3d76c7f5e8ced5d00d6a7799fd3e812c865e04ce1ff5a6e63805af377",
+    "tool/check_emulator_pause_test.dart": "a2bd2de82644e806823d4b8fa51d641daf3f8c689ec548efc451f88de445d4dc",
+    "tool/check_duckstation_pause_test.dart": "ed4f19633af3dc2fe152e41ef2a2bcd8a64b439b05bdafd89539c1141d3d3518",
+    "tool/ci/lint_workflow.sh": "58ef10eb35f106344e3cc06a8426ddeccb418b9410cc631fbcaeaf6d356b6ec8",
+    ".github/workflows/release.yml": "b769bdffde56700c3e0bd9f505dcd2d9ab1bbfb25992ee2f948091c02fe89e0e"
+  },
+  "baseline": {
+    "pause_policy": "HEAD continuous-running reconciliation; test-only native actions added for reproduction",
+    "result": "failed",
+    "error": "Expected paused 1, actual 0 during steady gameplay polling",
+    "elapsed_seconds": 7
+  },
+  "native_observations": [
+    {
+      "passed": true,
+      "observations": {
+        "emulator": "retroarch",
+        "version": "1.22.2 / Broomm 0.1.0 + Snes9x 1.63",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/emulator-pause/native-retroarch-DL1cpQ",
+        "checks": [
+          "native pause preserved through polling and active port/routing changes",
+          "native resume preserved",
+          "Broomm pause/reassert/release works and subsequent native pause survives",
+          "quick gate/release resumes explicitly",
+          "assigned-source disconnect still pauses"
+        ],
+        "problems": [],
+        "synthetic_core": true,
+        "physical_controllers": false,
+        "romm_writes": false
+      }
+    },
+    {
+      "passed": true,
+      "observations": {
+        "emulator": "ryubing",
+        "version": "1.3.3",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/emulator-pause/native-ryubing-1lne4m",
+        "checks": [
+          "native pause preserved through polling and active port/routing changes",
+          "native resume preserved",
+          "Broomm pause/reassert/release works and subsequent native pause survives",
+          "quick gate/release resumes explicitly",
+          "assigned-source disconnect still pauses"
+        ],
+        "problems": [],
+        "synthetic_core": false,
+        "physical_controllers": false,
+        "romm_writes": false
+      }
+    },
+    {
+      "passed": true,
+      "observations": {
+        "emulator": "astris",
+        "version": "1.0.32+2398e7c80 · macOS 15+",
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/emulator-pause/native-astris-dilRYD",
+        "checks": [
+          "native pause preserved through polling and active port/routing changes",
+          "native resume preserved",
+          "Broomm pause/reassert/release works and subsequent native pause survives",
+          "quick gate/release resumes explicitly",
+          "assigned-source disconnect still pauses"
+        ],
+        "problems": [],
+        "synthetic_core": false,
+        "physical_controllers": false,
+        "romm_writes": false
+      }
+    },
+    {
+      "passed": true,
+      "observations": {
+        "root": "/Users/ptrschneider/Projects/broomm/.tool-cache/research/duckstation-pause/native-U50nmA",
+        "emulator": "0.1-12083-g00e299795",
+        "rom": "Mega Man X4",
+        "checks": [
+          "native pause retained across polling and active routing publication",
+          "native resume retained",
+          "Broomm pause gate and explicit resume still work, including quick gate/release; subsequent native pause retained",
+          "assigned controller disconnection gates and pauses"
+        ],
+        "problems": []
+      }
+    }
+  ],
+  "checks": {
+    "native_duckstation": "passed, Mega Man X4",
+    "native_retroarch": "passed, released frontend and original synthetic core",
+    "native_ryubing": "passed, Super Smash Bros Ultimate",
+    "native_astris": "passed, Super Smash Bros Ultimate",
+    "native_policy_cases": 3,
+    "native_policy_asan_ubsan": "passed independently",
+    "targeted_flutter_cases": 20,
+    "flutter_analysis": "clean",
+    "workflow_lint": "passed",
+    "universal_bridges": "built and signed",
+    "source_bundle_signature": "deep/strict/all-architectures passed",
+    "archive_integrity": "passed",
+    "fresh_extraction_signature": "deep/strict/all-architectures passed",
+    "all_four_packaged_and_extracted_bridges_match": true
+  },
+  "native_scope": {
+    "host": "macOS ARM64",
+    "physical_controller_check": false,
+    "computer_use": false,
+    "romm_writes": false,
+    "owner_progress_changed": false,
+    "configuration": "copied reviewed releases/resources; production validator; fresh private profiles; read-only owner ROMs"
+  },
+  "logs": [
+    "build/native-pause-checks/flutter-regressions-final.log",
+    "build/native-pause-checks/native-emulators.log",
+    "build/native-pause-checks/native-astris.log",
+    "build/native-pause-checks/native-duckstation-final.log",
+    "build/native-pause-checks/results.log",
+    "build/native-pause-checks/results-sanitized.log",
+    "build/native-pause-checks/analysis-final.log",
+    "build/native-pause-checks/macos-all-emulators.log"
+  ],
+  "remaining_native_checks": [
+    "Dolphin/melonDS/Azahar/PPSSPP/Eden/RPCS3/PS2 gameplay for this correction",
+    "Physical input, visual owner acceptance, Steam/gamescope",
+    "Linux/Windows runtime and Intel emulator execution"
+  ],
+  "fixture_corrections": [
+    "Initial RetroArch run passed pause/routing/menu checks but its disconnect step used Astris rather than SDL encoding; corrected mask passes.",
+    "Initial Astris fixture stopped before launch at a pre-signing hash comparison; using the existing production reviewed-archive/signature validator passes."
+  ],
+  "payloads": {
+    "Contents/MacOS/broomm": {
+      "architectures": "x86_64 arm64",
+      "sha256": "720d4c85adbd6053a30ece5811d41103c5d4839d6b432272fd31318690c1896a"
+    },
+    "Contents/Frameworks/App.framework/Versions/A/App": {
+      "architectures": "x86_64 arm64",
+      "sha256": "d5a35644f88286b13939721dd3c86a825f7dec00cbbf8a18bb38d1a04660d3b8"
+    },
+    "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+      "architectures": "x86_64 arm64",
+      "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+    },
+    "Contents/Resources/native/broomm-sdl2.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "1814fccfaf786bed1a5ad3ea5baf4807f4a7ef03c722c4896c3b6ce31d9fc8df"
+    },
+    "Contents/Resources/native/broomm-sdl3.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "06df2bc785e144a5ca33eec3639fa1283321373da6e4a9d466094827592dc75b"
+    },
+    "Contents/Resources/native/broomm-installer-guard.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "2310d05c852aa4682624a1afe0b21ea9e7a44b2dadf137554ef9baf6a90cf39c"
+    },
+    "Contents/Resources/native/broomm-astris.dylib": {
+      "architectures": "x86_64 arm64",
+      "sha256": "7126db19be46e48182cc2a587e14e50a3f948ad4038ca2d06651f6c97815ccb9"
+    }
+  },
+  "artifact": {
+    "path": "build/releases/Broomm-macOS-emulator-pause-fix.zip",
+    "bytes": 20623213,
+    "sha256": "781c5eee8aa424291104ce21eebbd1078fb3496ebc83868a3814afd88ee917f4",
+    "version": "0.1.4 (1006)",
+    "data_root": "production Application Support",
+    "ad_hoc_signed": true,
+    "notarized": false
+  }
+}

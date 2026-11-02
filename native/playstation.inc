@@ -2,6 +2,7 @@
 // thread; acknowledgement always comes from the real native state afterward.
 // Addresses come only from reviewed application assets, after Dart verifies
 // the executable hash. This does not load or modify a system installation.
+#include "pause_transition.h"
 static _Atomic int sony_test_action;
 static int playstation_tick(void) {
     if(!getenv("BROOMM_PLAYSTATION"))return -1;
@@ -36,15 +37,18 @@ static int playstation_tick(void) {
         get_state?get_state():(int)__atomic_load_n(ps2_state,__ATOMIC_ACQUIRE);
     if(state!=2&&state!=3)return -1;
     int wanted=atomic_load(&session_wanted),actual=state==3;
-    static int requested=-1;
-    if(actual==wanted)requested=-1;
-    else if(requested!=wanted) {
-        requested=wanted;set_paused(*thread,wanted!=0);
-        record("PLAYSTATION_PAUSE requested=%d raw_before=%d",wanted,state);
+    static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+    int command=pause_transition(&control,wanted,actual,atomic_load(&session_resume_serial));
+    if(command>=0) {
+        set_paused(*thread,command!=0);
+        record("PLAYSTATION_PAUSE requested=%d raw_before=%d",command,state);
     }
     int action=atomic_exchange(&sony_test_action,0);
     if(session_test&&action) {
-        if(duck&&action==2) {
+        if(action==4||action==5) {
+            set_paused(*thread,action==4);
+            record("PLAYSTATION_TEST_NATIVE_PAUSE requested=%d",action==4);
+        } else if(duck&&action==2) {
             void (*f)(void *,bool,int)=symbol("_ZN10CoreThread9saveStateEbi");
             if(f){f(*thread,false,1);record("PLAYSTATION_TEST_STATE action=%d",action);}
         } else if(!duck&&action==2) {

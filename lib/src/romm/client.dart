@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'models.dart';
 import 'transfer.dart';
 import 'credential.dart';
+import 'content_download.dart';
+import 'download_worker.dart';
 
 part 'saves.dart';
 
@@ -14,13 +16,16 @@ class RommClient with RommSaves {
     this.server, {
     HttpClient? http,
     this.deadline = const Duration(seconds: 20),
-  }) : _http = http ?? HttpClient() {
+  }) : _http = http ?? HttpClient(),
+       _backgroundDownloads = http == null {
     _http.connectionTimeout = deadline;
     _http.idleTimeout = const Duration(seconds: 15);
     _http.maxConnectionsPerHost = 4;
   }
   final Uri server;
   final HttpClient _http;
+  final bool _backgroundDownloads;
+  final _downloadWorkers = <RommDownloadWorker>{};
   final Duration deadline;
   String? _access, _refresh;
   DateTime? _expires;
@@ -285,89 +290,46 @@ class RommClient with RommSaves {
     required DownloadCancellation cancellation,
     required void Function(int) onProgress,
   }) async {
-    HttpClientRequest? request;
-    RandomAccessFile? output;
-    var stopped = false;
-    final totalDeadline = Timer(
-      const Duration(hours: 24),
-      () => request?.abort(),
+    cancellation.check();
+    await _ensureToken();
+    cancellation.check();
+    final uri = server.replace(
+      pathSegments: [
+        ...server.pathSegments.where((v) => v.isNotEmpty),
+        'api',
+        ...contentPath,
+      ],
     );
-    cancellation.abort = () => request?.abort();
-    try {
-      cancellation.check();
-      await _ensureToken();
-      cancellation.check();
-      final uri = server.replace(
-        pathSegments: [
-          ...server.pathSegments.where((v) => v.isNotEmpty),
-          'api',
-          ...contentPath,
-        ],
+    // Explicitly supplied transports retain their own proxy/certificate/test
+    // behavior. Ordinary game downloads use a worker's independent event loop.
+    if (_backgroundDownloads && contentPath.first == 'roms') {
+      final worker = RommDownloadWorker(
+        uri,
+        _access!,
+        expectedBytes,
+        destination.path,
+        deadline,
       );
-      request = await _http
-          .getUrl(uri)
-          .then((value) {
-            if (stopped || cancellation.cancelled || _closed) value.abort();
-            return value;
-          })
-          .timeout(deadline);
-      cancellation.check();
-      request.followRedirects = false;
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_access');
-      request.headers.set(HttpHeaders.acceptEncodingHeader, 'identity');
-      final response = await request.close().timeout(deadline);
-      if (response.statusCode != 200) {
-        throw RommFailure(switch (response.statusCode) {
-          401 => 'Your session expired. Sign in again to download.',
-          403 => 'This account does not have permission to download this game.',
-          404 =>
-            'This game file is no longer available in RomM. Refresh and retry.',
-          >= 300 && < 400 => 'RomM redirected the download. Credentials were not forwarded. Use the final server address.',
-          _ =>
-            'RomM could not download this file (HTTP ${response.statusCode}). Retry from the game page.',
-        }, status: response.statusCode);
-      }
-      if (response.contentLength >= 0 &&
-          response.contentLength != expectedBytes) {
-        throw const RommFailure(
-          'The file size changed in RomM. Refresh the game and retry.',
-        );
-      }
-      output = await destination.open(mode: FileMode.writeOnly);
-      var received = 0;
-      await for (final chunk in response.timeout(deadline)) {
+      _downloadWorkers.add(worker);
+      try {
+        if (_closed) worker.cancel();
+        await worker.run(cancellation: cancellation, onProgress: onProgress);
         cancellation.check();
-        received += chunk.length;
-        if (received > expectedBytes)
-          throw const RommFailure(
-            'RomM sent more data than the file manifest allows.',
-          );
-        await output.writeFrom(chunk);
-        onProgress(received);
+      } finally {
+        _downloadWorkers.remove(worker);
       }
-      cancellation.check();
-      if (received != expectedBytes)
-        throw const RommFailure(
-          'The download ended before the whole file arrived. Please retry.',
-        );
-      await output.flush();
-    } on RommFailure {
-      rethrow;
-    } on TimeoutException {
-      throw const RommFailure(
-        'The download stalled. Check your connection and retry.',
+    } else {
+      await downloadRommContent(
+        _http,
+        uri,
+        _access!,
+        expectedBytes,
+        destination,
+        deadline: deadline,
+        cancellation: cancellation,
+        onProgress: onProgress,
+        isClosed: () => _closed,
       );
-    } on IOException {
-      cancellation.check();
-      throw const RommFailure(
-        'The download failed. Check your connection, free disk space and write access, then retry.',
-      );
-    } finally {
-      stopped = true;
-      totalDeadline.cancel();
-      cancellation.abort = null;
-      request?.abort();
-      await output?.close();
     }
   }
 
@@ -528,6 +490,7 @@ class RommClient with RommSaves {
     _closed = true;
     _access = null;
     _refresh = null;
+    for (final worker in _downloadWorkers.toList()) worker.cancel();
     _http.close(force: true);
   }
 }

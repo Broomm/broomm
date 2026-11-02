@@ -78,6 +78,7 @@ Future<void> ensurePs3Firmware(
       cancellation,
     );
     final stage = await release.createTemp('.firmware-');
+    var uncertain = false;
     try {
       await addonWrite(File('${stage.path}/owner.json'), {
         'version': 1,
@@ -125,7 +126,9 @@ Future<void> ensurePs3Firmware(
           'PS3 firmware changed during installation. Retry Play.',
         );
       await flash.rename(target.path);
-    } catch (_) {
+    } on DownloadWriterUncertain {
+      uncertain = true;
+      lease.retainForUncertainWriter();
       rethrow;
     } finally {
       await retainRpcs3InstallLog(
@@ -133,7 +136,8 @@ Future<void> ensurePs3Firmware(
         manager.data,
         onProblem: (message) => manager.log?.write(message, level: 'warning'),
       );
-      if (await stage.exists()) await stage.delete(recursive: true);
+      if (!uncertain && await stage.exists())
+        await stage.delete(recursive: true);
     }
   }
   final runtime = await prepareManagedProfile(

@@ -38,6 +38,9 @@ static int eden_tick(void) {
     if(!__atomic_load_n(state+2,__ATOMIC_ACQUIRE)||__atomic_load_n(state+1,__ATOMIC_ACQUIRE))return -1;
     bool paused=__atomic_load_n(state,__ATOMIC_ACQUIRE)!=0;
     bool wanted=atomic_load(&session_wanted)!=0;
+    static struct PauseTransition control=PAUSE_TRANSITION_INIT;
+    static bool port_pause_owned;
+    static unsigned long long port_releases;
     // Apply socket changes while the CPU is paused, then resume through the
     // owning native thread's interface. UI sleep/Discord/play-time callbacks
     // are not a pause acknowledgment and do not own this transition.
@@ -48,23 +51,39 @@ static int eden_tick(void) {
         if(pad&&(__atomic_load_n((uint8_t *)pad+0x56,__ATOMIC_ACQUIRE)!=0)!=(p<4&&(wanted_ports&(1u<<p))))port_change=true;
     }
     void *thread=*(void **)((char *)window+0x1c0);
-    if(!paused&&(wanted||port_change)) {
+    int command=pause_transition(&control,wanted||port_change,paused,
+        atomic_load(&session_resume_serial)+port_releases);
+    if(command==1) {
+        if(!wanted&&port_change)port_pause_owned=true;
         set_running(thread,false);paused=__atomic_load_n(state,__ATOMIC_ACQUIRE)!=0;
         update_menu(window);record("EDEN_PAUSE requested=1 native=%d",paused);
-    }
+    } else if(command==0)pause_transition_defer(&control); // Confirm sockets below before Resume.
+    bool ports_pending=false;
     for(int p=0;p<10;++p) {
         void *pad=*(void **)((char *)impl+0x2d0+p*sizeof(void *));
         if(!pad)continue;
         bool connected=__atomic_load_n((uint8_t *)pad+0x56,__ATOMIC_ACQUIRE)!=0;
         bool desired=p<4&&(wanted_ports&(1u<<p));
         if(paused&&desired!=connected) {if(desired)connect_pad(pad,false);else disconnect_pad(pad);}
+        if((__atomic_load_n((uint8_t *)pad+0x56,__ATOMIC_ACQUIRE)!=0)!=desired)ports_pending=true;
         if(p<4&&__atomic_load_n((uint8_t *)pad+0x56,__ATOMIC_ACQUIRE))actual_ports|=1u<<p;
         if(p==0&&session_test)atomic_store(&eden_buttons,pad_buttons(pad));
     }
-    if(paused&&!wanted&&actual_ports==wanted_ports) {
+    ports_pending=ports_pending||actual_ports!=wanted_ports;
+    // Only release a temporary port pause if we actually paused a running CPU.
+    // Updating sockets in an already native-paused game does not own Resume.
+    if(port_pause_owned&&!ports_pending){++port_releases;port_pause_owned=false;}
+    command=pause_transition(&control,wanted||ports_pending,paused,
+        atomic_load(&session_resume_serial)+port_releases);
+    if(command==0) {
         set_running(thread,true);update_menu(window);
         paused=__atomic_load_n(state,__ATOMIC_ACQUIRE)!=0;
         record("EDEN_PAUSE requested=0 native=%d",paused);
+    }
+    int native_action=session_test?atomic_exchange(&test_native_pause_action,0):0;
+    if(native_action==4||native_action==5) {
+        set_running(thread,native_action==5);update_menu(window);
+        paused=__atomic_load_n(state,__ATOMIC_ACQUIRE)!=0;
     }
     atomic_store(&console_ports,(int)actual_ports);
     atomic_store(&eden_program,*(uint64_t *)impl);

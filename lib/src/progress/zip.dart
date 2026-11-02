@@ -190,8 +190,9 @@ class ProgressZip {
   }
 
   Future<Map<String, Map<String, dynamic>>> extract(
-    Directory destination,
-  ) async {
+    Directory destination, {
+    void Function()? check,
+  }) async {
     if (entries.any((e) => e.symbolicLink))
       throw const FormatException(
         'Save extraction does not accept symbolic links',
@@ -199,6 +200,7 @@ class ProgressZip {
     await progressDirectory(destination);
     final result = <String, Map<String, dynamic>>{};
     for (final entry in entries) {
+      check?.call();
       final output = await progressFile(
         destination,
         entry.name,
@@ -219,6 +221,7 @@ class ProgressZip {
             ? input.transform(ZLibDecoder(raw: true))
             : input;
         await for (final chunk in stream) {
+          check?.call();
           size += chunk.length;
           if (size > entry.bytes)
             throw const FormatException('ZIP expands beyond its declared size');
