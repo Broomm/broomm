@@ -189,7 +189,9 @@ void main() {
     model = await artworkFixture(root, grid: grid);
   });
   tearDown(() async {
-    model.dispose();
+    if (!model.disposed) model.dispose();
+    await model.finishDownloads();
+    await model.finishCloud();
     await root.delete(recursive: true);
   });
   Future<void> open(WidgetTester t, {Size size = const Size(1180, 800)}) async {
@@ -203,6 +205,15 @@ void main() {
   Future<void> finish(WidgetTester t) async {
     await decodeArtworkImages(t);
     await t.pumpWidget(const SizedBox());
+    var finished = false;
+    final drained = () async {
+      await model.finishDownloads();
+      await model.finishCloud();
+    }().whenComplete(() => finished = true);
+    // Drive real I/O and the widget clock until the native queue handle closes.
+    // ChangeNotifier.dispose starts cleanup but cannot await that file close.
+    await driveArtwork(t, () => finished);
+    await drained;
     // FileImage may retain its native encoded buffer through the image cache.
     // Cache handles are disposed in post-frame callbacks, so unmounting alone
     // does not release Windows file mappings before fixture deletion.
@@ -217,6 +228,31 @@ void main() {
   Future<void> download(WidgetTester t) async {
     await t.runAsync(() => model.downloadGame(fixture()));
     await t.pump();
+  }
+
+  for (final disposed in [false, true]) {
+    testWidgets(
+      'artwork fixture shutdown releases the ${disposed ? "disposing" : "live"} download queue before storage cleanup',
+      (t) async {
+        await download(t);
+        final queue = DownloadQueueStore(
+          root,
+          model.server!.id,
+          model.profile!.id,
+        );
+        await t.runAsync(() async {
+          await expectLater(queue.open(), throwsA(isA<DownloadQueueInUse>()));
+        });
+        if (disposed) model.dispose();
+        await finish(t);
+        // A second owner must acquire the actual production lock immediately after
+        // shutdown, with no deletion retries or dependency on filesystem timing.
+        await t.runAsync(() async {
+          await queue.open();
+          await queue.close();
+        });
+      },
+    );
   }
 
   for (final removed in [false, true]) {

@@ -275,7 +275,32 @@ checked for archive integrity and deep signatures before delivery.
 Run `devbox run -- bash tool/test_macos.sh` to repeat all native cases. Result
 bundles remain under `build/macos/Logs/Test/Native-*.xcresult`; these fixtures use
 synthetic GameController snapshots, not physical-device acceptance. Hosted
-confirmation remains separate from local verification.
+confirmation passes in
+[run 41531438266](https://github.com/Broomm/broomm/actions/runs/41531438266),
+including the independent native pause/sanitizer/file-lock checks.
+
+### Windows artwork fixture shutdown — 2026-11-02
+
+That rerun also exposes an intermittent Windows artwork-test cleanup failure:
+`PathAccessException`, sharing violation 32 while deleting its temporary root.
+The fixture called synchronous `ShellModel.dispose()` and immediately deleted
+storage, although disposal starts asynchronous queue shutdown. Its image-cache
+cleanup did not close the download queue's native lock handle.
+
+Artwork fixture cleanup now awaits downloads and cloud work while driving both
+real I/O and widget frames. The failure-path teardown also waits before deleting
+storage. Two regression cases establish a held production queue lock, then
+require immediate reacquisition after shutdown for both live and already
+disposing models. Existing visible/cache-only image cleanup cases remain.
+There are no deletion retries, skipped tests or application changes. All 19
+targeted artwork, version-selection and queue tests pass on macOS; native
+Windows confirmation is delegated to the required hosted job.
+
+```sh
+devbox run -- flutter --suppress-analytics test --no-pub \
+  test/home_artwork_widget_test.dart test/game_versions_test.dart \
+  test/download_queue_test.dart
+```
 
 ### First hosted failures and corrections — 2026-10-26
 
