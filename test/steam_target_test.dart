@@ -11,16 +11,27 @@ void main() {
   });
   tearDown(() => root.delete(recursive: true));
   test('desktop target preserves spaces and literal shell metacharacters without a shell', () async {
-    final file = await File('${root.path}/Broomm with spaces \$ money.exe')
-        .writeAsString('fixture');
-    if (!Platform.isWindows)
-      await Process.run('/bin/chmod', ['u+x', file.path]);
-    final result = await SteamLaunchTarget.resolve(
-      executable: file.path,
-      operatingSystem: Platform.isWindows ? 'windows' : 'linux',
-    );
-    expect(result.executable, file.path);
-    expect(result.directory, root.path);
+    for (final name in [
+      r'Broomm with spaces $ money.exe',
+      'Broomm 100% café.exe',
+    ]) {
+      // File.fromUri constructs a native path. Interpolating / into a Windows
+      // root produces a mixed-separator expectation, unlike the canonical path
+      // the resolver correctly returns. Exercise that input separately below.
+      final file = await File.fromUri(root.uri.resolveUri(Uri(path: name)))
+          .writeAsString('fixture');
+      if (!Platform.isWindows)
+        await Process.run('/bin/chmod', ['u+x', file.path]);
+      for (final input in {file.path, '${root.path}/$name'}) {
+        final result = await SteamLaunchTarget.resolve(
+          executable: input,
+          operatingSystem: Platform.isWindows ? 'windows' : 'linux',
+        );
+        expect(result.executable, file.path);
+        expect(result.directory, root.path);
+        expect(await File(result.executable).readAsString(), 'fixture');
+      }
+    }
     for (final value in ['broken\npath', 'broken"path', 'broken\u0000path']) {
       expect(() => SteamLaunchTarget.validate(value), throwsStateError);
     }

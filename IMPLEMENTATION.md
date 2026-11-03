@@ -1,5 +1,15 @@
 # Implementation plan
 
+Steam Windows CI fixture correction (2026-11-03): run 41692492424 failed one
+Windows test because its expected path mixed separators, while the resolver
+correctly returned a native canonical path. Build and analysis succeeded.
+Construct the expected file with a native file URI; keep exact path/directory
+assertions and exercise both native/mixed inputs, literal metacharacters, Unicode
+and actual file readback. No production behavior, skips or timeouts change.
+The 17 related Steam tests pass on macOS and Linux, along with analysis; native
+Windows verification belongs to the correction's GitHub run. See the
+[failure evidence](docs/add-to-steam.md#windows-ci-fixture-correction).
+
 Add to Steam (2026-11-03): Settings → Application has a desktop-only,
 controller-navigable CEF action for the running Broomm copy and approved bundled
 Steam artwork. SDK-only direct loopback transport rejects discovery/handshake

@@ -166,3 +166,24 @@ updates; a subsequent official CI release remains the production update path.
 | --- | ---: | --- |
 | [macOS universal preview](../build/releases/Broomm-macOS-steam-preview.zip) | 23,660,255 | `b042018d6fc758d76c7cf5088098b2b00285e6f2bead9f9bbcc80238b0abc94b` |
 | [Linux x64 preview](../build/releases/Broomm-Linux-x64-steam-preview.tar.gz) | 14,297,677 | `43bd6dd683a87083720ee61e69412bd4883056f169de1433f4471a3dc1b2411d` |
+
+## Windows CI fixture correction
+
+The [Windows checks in run 41692492424](https://github.com/Broomm/broomm/actions/runs/41692492424/job/126114366664)
+executed normally and failed exactly one test: `steam_target_test.dart`'s
+desktop path assertion. It constructed the fixture as a Windows root plus `/`
+and a filename, then expected that mixed-separator string unchanged. The
+resolver correctly returned the existing file's native `\` path. The log reports
+437 passed, one failed and 25 skipped; Windows analysis and application build
+succeeded. This failure is a test bug, not runner availability or a production
+path-resolution failure.
+
+Build the expected file from a native file URI, then pass both native and
+mixed-separator input spellings to the resolver. Keep exact executable/directory
+equality and confirm the returned path reads the actual fixture. Cases retain
+spaces and `$` and add literal `%` and Unicode, checking URI encoding does not
+change the filename. All 17 related Steam tests pass on macOS and Linux, with
+clean analysis. The Windows test stays enabled; native verification is provided
+by the corrective commit's GitHub Actions run. No application code, workflow,
+timeouts, skips or packaged runtime assets change, so the verified preview
+builds linked above still contain the current application implementation.
