@@ -74,7 +74,7 @@ class ShellModel extends ChangeNotifier {
     LinuxLauncher? launcherInstaller,
     SteamInstaller? steamInstaller,
   }) : clientFactory = clientFactory ?? ((uri) => RommClient(uri)),
-       credentialBackend = credentials ?? PlatformCredentials(),
+       _credentialOverride = credentials,
        _emulatorManager = emulatorManager,
        _androidManager = androidManager,
        _gameAddons = gameAddons,
@@ -370,7 +370,18 @@ class ShellModel extends ChangeNotifier {
   final ManagedEmulators? _emulatorManager;
   final AndroidEmulators? _androidManager;
   final GameAddons? _gameAddons;
-  final CredentialBackend credentialBackend;
+  final CredentialBackend? _credentialOverride;
+  bool get linuxCredentialOptions => Platform.isLinux;
+  bool _linuxUseKeyring = false;
+  bool get usesPrivateCredentialFile =>
+      linuxCredentialOptions && !_linuxUseKeyring;
+  late final CredentialBackend credentialBackend =
+      _credentialOverride ??
+      PlatformCredentials(
+        localRoot: usesPrivateCredentialFile
+            ? storage.directory.absolute.path
+            : null,
+      );
   late final credentials = ProfileCredentials(
     storage.directory,
     backend: credentialBackend,
@@ -767,6 +778,7 @@ class ShellModel extends ChangeNotifier {
     _emit();
     try {
       records = await storage.load();
+      _linuxUseKeyring = preferences.linuxUseKeyring;
       updates.start(preferences.updateChannel);
       unawaited(
         updates
@@ -927,7 +939,9 @@ class ShellModel extends ChangeNotifier {
   }
 
   void _credentialProblem() {
-    credentialNotice = 'You are signed in for this session, but the saved sign-in could not be updated. Unlock your system keyring and sign in again to remember it.';
+    credentialNotice = usesPrivateCredentialFile
+        ? 'You are signed in for this session. Broomm could not update the private sign-in file. Check data directory permissions and sign in again.'
+        : 'You are signed in for this session, but the saved sign-in could not be updated. Unlock your system keyring and sign in again to remember it.';
     log?.write(
       'Secure sign-in publication failed; current session retained.',
       level: 'warning',
@@ -1059,7 +1073,9 @@ class ShellModel extends ChangeNotifier {
       busy = false;
       switchAccount();
     } catch (_) {
-      error = 'The saved sign-in could not be removed. Unlock your system keyring and retry signing out.';
+      error = usesPrivateCredentialFile
+          ? 'The saved sign-in could not be removed. Check data directory permissions and retry signing out.'
+          : 'The saved sign-in could not be removed. Unlock your system keyring and retry signing out.';
     } finally {
       busy = false;
       _emit();

@@ -25,3 +25,13 @@ mkdir "$broomm_fixture/process-data"
 env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_c_compiler" -std=c11 -Wall -Wextra -Werror \
   "${broomm_flags[@]}" -pthread tool/fixtures/linux_control_test.c -ldl -o "$broomm_fixture/control-check"
 "$broomm_fixture/control-check"
+
+# The Linux credential store uses the runner's existing GIO dependency.
+read -r -a broomm_gio_cflags <<< "$(pkg-config --cflags gio-2.0)"
+read -r -a broomm_gio_libs <<< "$(pkg-config --libs gio-2.0)"
+"$broomm_compiler" -std=c++14 -Wall -Wextra -Werror \
+  "${broomm_flags[@]}" "${broomm_gio_cflags[@]}" tool/fixtures/linux_credentials_test.cc \
+  "${broomm_gio_libs[@]}" -o "$broomm_fixture/credentials-check"
+mkdir "$broomm_fixture/credentials-data"
+"$broomm_fixture/credentials-check" "$broomm_fixture/credentials-data" write
+"$broomm_fixture/credentials-check" "$broomm_fixture/credentials-data" restore

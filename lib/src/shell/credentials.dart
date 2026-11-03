@@ -14,12 +14,15 @@ abstract class CredentialBackend {
 }
 
 class PlatformCredentials implements CredentialBackend {
+  PlatformCredentials({this.localRoot});
+  final String? localRoot;
   static const channel = MethodChannel('app.broomm/credentials');
   Future<T?> invoke<T>(String method, String key, [String? value]) async {
     try {
       return await channel
           .invokeMethod<T>(method, {
             'key': key,
+            if (localRoot != null) 'localRoot': localRoot,
             if (value != null) 'value': value,
           })
           .timeout(const Duration(seconds: 12));
@@ -28,12 +31,14 @@ class PlatformCredentials implements CredentialBackend {
         'Secure sign-in storage is unavailable on this build.',
       );
     } on PlatformException {
-      throw const CredentialFailure(
-        'Secure sign-in storage is locked or unavailable. Unlock your system keyring and retry.',
+      throw CredentialFailure(
+        localRoot == null
+            ? 'Secure sign-in storage is locked or unavailable. Unlock your system keyring and retry.'
+            : 'The private sign-in file is unavailable. Check Broomm’s data directory permissions and retry.',
       );
     } on TimeoutException {
       throw const CredentialFailure(
-        'Secure sign-in storage did not respond. Unlock your system keyring and retry.',
+        'Sign-in storage did not respond. Try again.',
       );
     }
   }
@@ -54,7 +59,7 @@ class CredentialFailure implements Exception {
   String toString() => message;
 }
 
-/// Secret values live only in the native secure store. Stable, nonsecret locks
+/// Secret values live in the selected credential backend. Stable, nonsecret locks
 /// serialize restore/refresh/publication across Broomm processes sharing data.
 class ProfileCredentials {
   ProfileCredentials(this.data, {CredentialBackend? backend})

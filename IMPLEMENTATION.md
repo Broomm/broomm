@@ -1,5 +1,79 @@
 # Implementation plan
 
+In Steam Gaming Mode on the Ally, the RetroArch bridge recorded the menu
+request and hid its window while Steam still tracked the launcher process.
+Gamescope sessions now gate input immediately but wait for Broomm to map
+before hiding the emulator. Resuming waits for emulator visibility before
+hiding Broomm. Native Linux window-gate checks and 31 targeted Flutter tests
+passed on Linux and macOS. The owner confirmed the installed preview fixed
+the overlay handoff in Gaming Mode on the Ally.
+
+Linux defaults to an owner-only local credential store for RomM and
+SteamGridDB. The keyring is opt-in and selected at process startup. The
+local store does not call Secret Service. Existing keyring entries remain
+in that backend. Sign in once after switching to a store with no credential.
+Native Linux checks verified restore from a separate process, profile isolation,
+file permissions, and symlink rejection. Nineteen targeted Flutter tests passed
+on Linux. The portable preview was installed on the Ally at its existing Steam
+shortcut path, with the previous bundle retained beside it. Gaming Mode restore
+was reported working during the owner's initial Gaming Mode testing.
+
+The desktop settings overlay opens on the existing R3 + Select chord and uses
+launcher controller events to navigate between Controller pairing and Close
+game. Start resumes with a single press. The first action receives focus once
+the pause settles. Closing uses session shutdown and progress finalization.
+The pairing screen retains its separate hold-Start behavior. Analysis and 33
+targeted tests on each of macOS and Linux passed. The macOS archive and its
+signature were verified after extraction. The Linux preview was staged on the
+Ally and its runner dependencies resolved. The owner later confirmed the overlay worked in Gaming Mode with the
+window handoff fix above.
+
+The owner confirmed Broomm's window stacking on an ASUS ROG Ally X in Steam
+Gaming Mode on Bazzite. KDE also showed the application launcher icon after
+refreshing its index. On Bazzite 44.20260921.0 (Kinoite), Broomm 0.1.10 reported
+failed credential publication while keeping the authenticated session. The
+user bus reached KDE's `ksecretd`, which returned zero collections and no
+default alias. That build needed a default unlocked wallet for persistent sign-in.
+The GNOME comparison host had an unlocked default `login` collection and two
+Broomm credential items despite no manual keyring setup reported by the owner.
+The owner later created a KDE wallet and reported that Broomm sign-in storage worked.
+See [the KDE setup and verification steps](README.md#run-broomm).
+
+Gaming Mode recheck on the same Bazzite build found a Gamescope Wayland session
+started through SDDM autologin. Broomm used the normal user bus. The Secret
+Service name was absent and not activatable directly. The installed KDE
+compatibility alias tried to start `ksecretd` without a display and Qt aborted.
+Starting the existing daemon with Broomm's Gamescope XWayland display context
+registered Secret Service and found the user's default wallet in a locked
+state. The owner did not see the first native unlock dialog despite its X11
+window being mapped. A second probe verified that KDE can attach the native
+modal dialog to Broomm's X11 window, and the owner confirmed that it was still
+invisible. The diagnostic daemon was in a different process group from Broomm.
+The temporary daemon and its hidden prompt were stopped. The follow-up used a
+temporary Steam launch wrapper inside Steam's reaper chain. It started KDE
+Secret Service with the Broomm display environment, confirmed both processes
+shared the Steam cgroup, and requested the unlock dialog with Broomm as its
+parent. The original Steam launch options were restored and verified after
+startup. The prompt timed out and the wallet remained locked. The transient
+provider was stopped after the test. A shared Steam cgroup by itself did not
+produce a successful unlock in this run.
+On the repeat launch, the owner confirmed the Steam-scoped dialog was visible.
+Focusing KDE's password field did not open Steam's keyboard automatically.
+The owner opened the keyboard from Steam's side menu and unlocked the wallet.
+The user bus then reported it unlocked, and Broomm logged profile activation.
+The diagnostic prompt wait expired before that manual unlock. The provider
+still accepted the password afterward. A candidate for automatic keyboard
+display is SDL's Steam keyboard URI. The Ally follow-up found KDE's mapped
+modal and submitted its bounds relative to the Broomm window. Steam logged
+execution of the URI, KDE reported prompt completion and an unlocked wallet,
+and Broomm logged profile activation. The owner confirmed the initial keyboard
+covered the password field. A follow-up reserved a narrow region at the
+bottom of the game viewport. The owner confirmed that this worked, KDE reported
+the wallet unlocked, and Broomm logged profile activation. The original
+shortcut options were restored after each launch. The diagnostic provider
+lives with the launch wrapper. A session-wide unlock lifetime and placement
+on other display configurations remain unverified.
+
 Steam Windows CI fixture correction (2026-11-03): run 41692492424 failed one
 Windows test because its expected path mixed separators, while the resolver
 correctly returned a native canonical path. Build and analysis succeeded.

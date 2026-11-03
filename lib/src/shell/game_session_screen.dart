@@ -8,6 +8,7 @@ import '../catalogue.dart';
 import '../host.dart';
 import '../widgets/pairing_screen.dart';
 import 'controls.dart';
+import 'game_settings_overlay.dart';
 import 'navigation.dart';
 import 'quit_dialog.dart';
 
@@ -66,9 +67,15 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
       // Pairing buttons belong to the live tester/chords, not UI shortcuts.
       // Before startup and after writer exit, console dialogs/cancel actions
       // need launcher navigation while there is no emulator SDL event source.
-      if (call.method == 'controller' &&
-          (closing || m.screen == Screen.loading && !m.session.running))
-        widget.launcherController?.call(call.arguments as String);
+      if (call.method == 'controller') {
+        final input = call.arguments as String;
+        if (!closing && m.screen == Screen.menu) {
+          GameSettingsOverlay.controller(input);
+        } else if (closing ||
+            m.screen == Screen.loading && !m.session.running) {
+          widget.launcherController?.call(input);
+        }
+      }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(m.select(widget.game));
@@ -193,42 +200,9 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                         identity: m.screen,
                         child: switch (m.screen) {
                           Screen.pairing => PairingScreen(model: m),
-                          Screen.menu => ConsoleScrollBody(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 480),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  const Eyebrow('Take a moment'),
-                                  const SizedBox(height: 18),
-                                  const Text(
-                                    'Game paused',
-                                    style: TextStyle(
-                                      fontSize: 42,
-                                      fontWeight: FontWeight.w300,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 28),
-                                  ConsoleButton(
-                                    autofocus: true,
-                                    onPressed: m.busy ? null : m.showPairing,
-                                    child: const ActionLabel(
-                                      'Controller pairing',
-                                      icon: Icons.sports_esports_outlined,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  const Text(
-                                    'Hold Start to resume · Esc to return',
-                                    style: TextStyle(
-                                      color: muted,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          Screen.menu => GameSettingsOverlay(
+                            model: m,
+                            enabled: !m.busy,
                           ),
                           Screen.playing => ConsoleScrollBody(
                             child: Column(
@@ -249,13 +223,13 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                                 ),
                                 const SizedBox(height: 14),
                                 const Text(
-                                  'R3 + Select opens controller pairing and the game menu.',
+                                  'R3 + Select opens the settings overlay.',
                                   style: TextStyle(color: muted),
                                 ),
                                 const SizedBox(height: 24),
                                 ConsoleButton(
                                   onPressed: () => m.menu(),
-                                  child: const Text('Open game menu'),
+                                  child: const Text('Open settings overlay'),
                                 ),
                               ],
                             ),

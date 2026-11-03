@@ -20,6 +20,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "ownership.inc"
+#include "linux_window_handoff.h"
 
 struct VirtualDesc {
     uint32_t version;
@@ -183,7 +184,7 @@ static void apply_window_gate(void) {
     if(!active_session||!main_window||!atomic_load(&window_control)||atomic_load(&finishing)||
        !pthread_equal(pthread_self(),window_thread))return;
     bool requested=atomic_exchange(&show_requested,false);
-    bool visible=(window_flags(main_window)&8u)==0,wanted=atomic_load(&orphaned)||!atomic_load(&ui_gate);
+    bool visible=(window_flags(main_window)&8u)==0,wanted=!broomm_hide_game_window(atomic_load(&ui_gate),atomic_load(&orphaned),getenv("BROOMM_MAPPED_LAUNCHER"));
     if(visible!=wanted) {
         bool ok=wanted?show_window(main_window):hide_window(main_window);
         if(ok&&wanted)raise_window(main_window);
@@ -201,7 +202,8 @@ void *SDL_CreateWindow(const char *title,int width,int height,uint64_t flags) {
 }
 bool SDL_ShowWindow(void *window) {
     pthread_once(&api_once,resolve_api);if(!show_window)return false;
-    if(active_session&&window==main_window&&atomic_load(&window_control)&&atomic_load(&ui_gate))return hide_window(window);
+    if(active_session&&window==main_window&&atomic_load(&window_control)&&
+       broomm_hide_game_window(atomic_load(&ui_gate),atomic_load(&orphaned),getenv("BROOMM_MAPPED_LAUNCHER")))return hide_window(window);
     return show_window(window);
 }
 void SDL_DestroyWindow(void *window) {

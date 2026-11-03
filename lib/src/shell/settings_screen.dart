@@ -77,6 +77,22 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
+            if (model.linuxCredentialOptions) ...[
+              _toggle(
+                context,
+                'Use system keyring',
+                'Off by default. Broomm uses a private, unencrypted local file. '
+                    'Changing this takes effect after restarting Broomm. Each store '
+                    'keeps its own saved sign-ins and artwork keys.',
+                model.preferences.linuxUseKeyring,
+                () => model.savePreferences(
+                  model.preferences.copy(
+                    linuxUseKeyring: !model.preferences.linuxUseKeyring,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             const Eyebrow('Application updates', color: muted),
             const SizedBox(height: 12),
             Text(

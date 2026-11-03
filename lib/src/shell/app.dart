@@ -23,6 +23,7 @@ import 'controller_input.dart';
 import '../game_launch.dart';
 import '../session.dart';
 import 'game_session_screen.dart';
+import 'game_settings_overlay.dart';
 import 'emulator_settings_screen.dart';
 import 'artwork_picker.dart';
 import 'artwork.dart' show HomeBackground;
@@ -862,13 +863,14 @@ class _BroommAppState extends State<BroommApp> {
   }
 
   void _dispatch(String value) {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
+    if (_quitting == null && GameSettingsOverlay.controller(value)) return;
     if (lab &&
         _quitting == null &&
         (_activeGameModel?.screen != Screen.loading ||
             _activeGameModel!.session.running))
       return;
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
     final context =
         FocusManager.instance.primaryFocus?.context ?? navigator.currentContext;
     if (context == null) return;

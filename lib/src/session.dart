@@ -153,6 +153,7 @@ class BridgeStatus {
       nativeProgram = j['nativeProgram'] as String?,
       appActive = j['appActive'] as bool? ?? false,
       inputReady = j['inputReady'] as bool? ?? false,
+      gameWindowVisible = j['gameWindowVisible'] as bool? ?? false,
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -168,7 +169,7 @@ class BridgeStatus {
   final List<int> testSourceIds;
   final int connectedPorts, consolePorts, pspButtons, switchButtons;
   final String? nativeProgram;
-  final bool appActive, inputReady;
+  final bool appActive, inputReady, gameWindowVisible;
   final Rpcs3Loading? loading;
 }
 
@@ -231,6 +232,22 @@ class GameSession {
   int _retroPort = 0;
   int _retroPaused = -1;
   LinuxWindowReadiness? _linuxWindow;
+  File? _mappedLauncher;
+
+  bool get gamescopeHandoff => _mappedLauncher != null;
+
+  Future<void> launcherMapped() async {
+    final marker = _mappedLauncher;
+    if (marker != null && running && !_stopping) {
+      await atomicText(marker.path, '1');
+    }
+  }
+
+  Future<void> _clearMappedLauncher() async {
+    final marker = _mappedLauncher;
+    if (marker != null && await marker.exists()) await marker.delete();
+  }
+
   String get dataRoot => managedRoot ?? '$project/prototype-data';
   SessionLease get ownerLease =>
       _guard ?? (throw StateError('No active game session owner'));
@@ -410,6 +427,13 @@ class GameSession {
         final ready = File('${e.root}/bridge-window-ready.txt');
         if (await ready.exists()) await ready.delete();
         _linuxWindow = LinuxWindowReadiness(() => atomicText(ready.path, '1'));
+        final desktop = Platform.environment['XDG_CURRENT_DESKTOP'];
+        if (desktop?.split(':').contains('gamescope') == true) {
+          _mappedLauncher = File('${e.root}/bridge-launcher-mapped.txt');
+          await _clearMappedLauncher();
+          // The launcher is already showing the loading screen at startup.
+          await atomicText(_mappedLauncher!.path, '1');
+        }
       }
       if (testInputs) {
         // A retained private profile may have ended with a disconnected or
@@ -507,6 +531,8 @@ class GameSession {
               workingDirectory: linuxLaunchDirectory(e),
               environment: {
                 ...environment,
+                if (_mappedLauncher case final marker?)
+                  'BROOMM_MAPPED_LAUNCHER': marker.path,
                 'BROOMM_SESSION_EXECUTABLE': await File(
                   linuxLaunchExecutable(e),
                 ).resolveSymbolicLinks(),
@@ -794,6 +820,7 @@ class GameSession {
     ];
     final write = _commands.then((_) async {
       if (generation != _generation) throw StateError('The game session ended');
+      if (active) await _clearMappedLauncher();
       if (game?.controllerTarget == ControllerTarget.wii && !quit) {
         await const DolphinAdapter().prepareWii(
           e,
@@ -914,6 +941,7 @@ class GameSession {
     await _commands;
     await _linuxWindow?.close();
     _linuxWindow = null;
+    _mappedLauncher = null;
     await log?.close();
     log = null;
     await _retroSubscription?.cancel();

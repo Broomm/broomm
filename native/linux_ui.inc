@@ -8,6 +8,11 @@ static uint64_t *rpcs_ftotal_bits,*rpcs_fknown_bits;
 static void *core_system_fn,*core_state_fn,*core_set_state_fn;
 static _Atomic bool linux_active;
 static bool ui_hidden,had_game;
+static _Atomic bool game_window_visible;
+#include "linux_window_handoff.h"
+static bool hide_game_window(void) {
+ return broomm_hide_game_window(atomic_load(&session_gate),atomic_load(&linux_orphaned),getenv("BROOMM_MAPPED_LAUNCHER"));
+}
 #include "linux_qt_timer.inc"
 static double last_game;
 static pthread_mutex_t dispatch_lock=PTHREAD_MUTEX_INITIALIZER;
@@ -207,7 +212,9 @@ static void session_ui(void *unused) {
  if(actual>=0){had_game=true;struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);last_game=t.tv_sec+t.tv_nsec/1e9;}
  else if(had_game){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);if(t.tv_sec+t.tv_nsec/1e9-last_game>1.0)atomic_store(&session_quit,true);}
  void (*visible)(void *,bool)=dlsym(RTLD_DEFAULT,"_ZN7QWidget10setVisibleEb");
- if(visible&&actual>=0){bool hide=atomic_load(&session_gate)!=0&&!atomic_load(&linux_orphaned);if(hide!=ui_hidden){visible(qt_main,!hide);ui_hidden=hide;}}
+ if(visible&&actual>=0){bool hide=hide_game_window();if(hide!=ui_hidden){visible(qt_main,!hide);ui_hidden=hide;}
+  bool (*is_visible)(const void *,const void *)=symbol("_ZNK7QWidget11isVisibleToEPKS_");
+  atomic_store(&game_window_visible,!hide&&is_visible&&is_visible(qt_main,NULL));}
  atomic_store(&app_active,actual>=0);
 }
 static _Thread_local bool in_ui;

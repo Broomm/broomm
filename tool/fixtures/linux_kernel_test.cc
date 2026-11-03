@@ -1,6 +1,7 @@
 #define _GNU_SOURCE 1
 #include "../../linux/runner/process_identity.h"
 #include "../../native/linux_write_policy.h"
+#include "../../native/linux_window_handoff.h"
 #include <sys/wait.h>
 #include <signal.h>
 #include <cassert>
@@ -19,6 +20,18 @@ static int locked(const std::string& path) {
 }
 int main(int argc,char** argv) {
   assert(argc==2);std::string root=argv[1],path=root+"/coordinator";
+  const auto launcher = root + "/mapped-launcher";
+  assert(!broomm_hide_game_window(true, false, launcher.c_str()));
+  int mapped = open(launcher.c_str(), O_CREAT | O_WRONLY, 0600);
+  assert(mapped >= 0);
+  close(mapped);
+  assert(broomm_hide_game_window(true, false, launcher.c_str()));
+  assert(!broomm_hide_game_window(false, false, launcher.c_str()));
+  assert(!broomm_hide_game_window(true, true, launcher.c_str()));
+  assert(unlink(launcher.c_str()) == 0);
+  assert(!broomm_hide_game_window(true, false, launcher.c_str()));
+  assert(broomm_hide_game_window(true, false, nullptr));
+  puts("PASS: Gamescope hides a gated emulator only after launcher handoff");
   int fd=locked(path);const auto owner=lock_owner(path);assert(owner.pid==getpid());
   struct stat actual;assert(fstat(fd,&actual)==0);Lock target;
   target.major=major(actual.st_dev);target.minor=minor(actual.st_dev);target.inode=actual.st_ino;

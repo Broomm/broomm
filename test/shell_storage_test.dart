@@ -14,6 +14,15 @@ void main() {
   tearDown(() async {
     await root.delete(recursive: true);
   });
+  test('Linux keyring is opt-in and stays selected after a restart', () async {
+    expect(ShellPreferences.fromJson({}).linuxUseKeyring, isFalse);
+    final defaultSettings = (await storage.load()).preferences;
+    expect(defaultSettings.linuxUseKeyring, isFalse);
+    await storage.preferences(defaultSettings.copy(linuxUseKeyring: true));
+    final restored = (await ShellStorage(root).load()).preferences;
+    expect(restored.copy(reduceMotion: true).linuxUseKeyring, isTrue);
+  });
+
   test(
     'servers survive cancelled login and same account IDs remain server scoped',
     () async {

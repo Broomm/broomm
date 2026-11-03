@@ -154,21 +154,6 @@ class PrototypeModel extends ChangeNotifier {
             if (canPlay) unawaited(play());
         }
       }
-    } else if (screen == Screen.menu) {
-      final actions = gestures.update(
-        devices,
-        pairing?.players.map((p) => p.deviceId).toSet() ?? {},
-        _clock.elapsed,
-        enabled: !busy && paused,
-      );
-      for (final d in devices) {
-        final edges = d.buttons & ~(_buttons[d.id] ?? d.buttons);
-        if (edges & 1 != 0) showPairing();
-      }
-      for (final (id, action) in actions) {
-        if (action == PairingAction.gyro) pairing?.toggleGyro(id);
-      }
-      if (actions.any((a) => a.$2 == PairingAction.play)) unawaited(play());
     }
     _buttons
       ..clear()
@@ -373,7 +358,11 @@ class PrototypeModel extends ChangeNotifier {
       final revision = await session.command(players, active: true);
       if (lifetime != _lifetime) return;
       await session.waitFor(
-        (s) => s.ack >= revision && !s.blocked && s.paused == 0,
+        (s) =>
+            s.ack >= revision &&
+            !s.blocked &&
+            s.paused == 0 &&
+            (!session.gamescopeHandoff || s.gameWindowVisible),
       );
       if (!current()) return;
       await host.hide(session.status!.pid);
@@ -489,6 +478,7 @@ class PrototypeModel extends ChangeNotifier {
   Future<void> _show({bool overlay = false}) async {
     try {
       await host.show(overlay: overlay);
+      if (overlay) await session.launcherMapped();
     } catch (e) {
       _problem('Could not bring Broomm back to the foreground: $e');
     }

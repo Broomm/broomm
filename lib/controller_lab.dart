@@ -8,6 +8,7 @@ import 'src/catalogue.dart';
 import 'src/host.dart';
 import 'src/widgets/pairing_screen.dart';
 import 'src/shell/controls.dart';
+import 'src/shell/game_settings_overlay.dart';
 import 'src/shell/navigation.dart';
 
 class BroommPrototype extends StatefulWidget {
@@ -36,6 +37,10 @@ class _BroommPrototypeState extends State<BroommPrototype> {
     super.initState();
     DesktopHost.channel.setMethodCallHandler((call) async {
       if (call.method == 'controller') {
+        if (m.screen == Screen.menu) {
+          GameSettingsOverlay.controller(call.arguments as String);
+          return;
+        }
         if (call.arguments == 'back' &&
             m.screen == Screen.library &&
             widget.onReturn != null)
@@ -213,7 +218,10 @@ class _BroommPrototypeState extends State<BroommPrototype> {
                         Screen.library => library(context),
                         Screen.loading => loading(context),
                         Screen.pairing => pairing(context),
-                        Screen.menu => menu(context),
+                        Screen.menu => GameSettingsOverlay(
+                          model: m,
+                          enabled: !m.busy,
+                        ),
                         Screen.playing => playing(context),
                       },
                     ),
@@ -443,47 +451,6 @@ class _BroommPrototypeState extends State<BroommPrototype> {
     ),
   );
 
-  Widget menu(BuildContext context) => ConsoleScrollBody(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 480),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(
-            Icons.pause_circle_outline,
-            size: 42,
-            color: Colors.white60,
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Game paused',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 34, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            m.session.game?.title ?? '',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60),
-          ),
-          const SizedBox(height: 40),
-          FilledButton.icon(
-            autofocus: true,
-            onPressed: m.busy ? null : m.showPairing,
-            icon: const Icon(Icons.sports_esports_outlined),
-            label: const Text('Controller pairing'),
-          ),
-          const SizedBox(height: 28),
-          const Text(
-            'Bottom face button: select     Hold Start / Esc: resume',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-        ],
-      ),
-    ),
-  );
   Widget playing(BuildContext context) => ConsoleScrollBody(
     child: Column(
       mainAxisSize: MainAxisSize.min,
@@ -492,11 +459,11 @@ class _BroommPrototypeState extends State<BroommPrototype> {
         const SizedBox(height: 24),
         Text(m.session.game?.title ?? '', style: const TextStyle(fontSize: 28)),
         const SizedBox(height: 16),
-        const Text('R3 + Select opens the menu'),
+        const Text('R3 + Select opens the settings overlay'),
         const SizedBox(height: 24),
         OutlinedButton(
           onPressed: () => unawaited(m.menu()),
-          child: const Text('Open menu'),
+          child: const Text('Open settings overlay'),
         ),
       ],
     ),

@@ -47,6 +47,7 @@ class ShellPreferences {
     this.maxDownloads = 3,
     this.verifyDownloads = false,
     this.updateChannel = 'auto',
+    this.linuxUseKeyring = false,
   });
   factory ShellPreferences.fromJson(Map j) {
     final size = j['pageSize'] as int? ?? 24;
@@ -65,9 +66,10 @@ class ShellPreferences {
       maxDownloads: maxDownloads,
       verifyDownloads: j['verifyDownloads'] as bool? ?? false,
       updateChannel: channel,
+      linuxUseKeyring: j['linuxUseKeyring'] as bool? ?? false,
     );
   }
-  final bool reduceMotion, showArtwork, verifyDownloads;
+  final bool reduceMotion, showArtwork, verifyDownloads, linuxUseKeyring;
   final int pageSize, maxDownloads;
   final String updateChannel;
   ShellPreferences copy({
@@ -77,6 +79,7 @@ class ShellPreferences {
     int? maxDownloads,
     bool? verifyDownloads,
     String? updateChannel,
+    bool? linuxUseKeyring,
   }) => ShellPreferences(
     reduceMotion: reduceMotion ?? this.reduceMotion,
     showArtwork: showArtwork ?? this.showArtwork,
@@ -84,6 +87,7 @@ class ShellPreferences {
     maxDownloads: maxDownloads ?? this.maxDownloads,
     verifyDownloads: verifyDownloads ?? this.verifyDownloads,
     updateChannel: updateChannel ?? this.updateChannel,
+    linuxUseKeyring: linuxUseKeyring ?? this.linuxUseKeyring,
   );
   Map<String, dynamic> toJson() => {
     'reduceMotion': reduceMotion,
@@ -92,6 +96,7 @@ class ShellPreferences {
     'maxDownloads': maxDownloads,
     'verifyDownloads': verifyDownloads,
     'updateChannel': updateChannel,
+    'linuxUseKeyring': linuxUseKeyring,
   };
 }
 

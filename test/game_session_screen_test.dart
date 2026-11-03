@@ -31,6 +31,86 @@ class PreparingSession extends PausedSession {
 }
 
 void main() {
+  for (final action in ['pairing', 'close', 'resume']) {
+    testWidgets(
+      'settings overlay can $action through native controller input',
+      (t) async {
+        final session = NavigationSession()..alive = false;
+        final model = PrototypeModel(
+          '/unused',
+          host: RecordingHost(),
+          gameSession: session,
+        );
+        await t.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => Navigator.push<void>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        GameSessionScreen(model: model, game: testGames.first),
+                  ),
+                ),
+                child: const Text('Home game'),
+              ),
+            ),
+          ),
+        );
+        Future<void> controller(String input) async {
+          await t.binding.defaultBinaryMessenger.handlePlatformMessage(
+            'app.broomm/prototype',
+            const StandardMethodCodec().encodeMethodCall(
+              MethodCall('controller', input),
+            ),
+            (_) {},
+          );
+          await t.pump();
+        }
+
+        await t.tap(find.text('Home game'));
+        await t.pump();
+        await t.pump(const Duration(milliseconds: 400));
+        session.emit();
+        await t.pumpAndSettle();
+        model.join(10);
+        await model.play();
+        session.pauseAck = Completer<void>();
+        session.emit(request: 'menu', serial: 1);
+        await t.pumpAndSettle();
+        await controller('down');
+        await controller('accept');
+        expect(session.stops, 0);
+        expect(model.screen, Screen.menu);
+        session.pauseAck!.complete();
+        await t.pumpAndSettle();
+        expect(find.text('Settings overlay'), findsOneWidget);
+        if (action == 'pairing') {
+          await controller('down');
+          await controller('up');
+          await controller('accept');
+          expect(model.screen, Screen.pairing);
+          final commands = session.commands;
+          await controller('home');
+          expect(session.commands, commands);
+        } else if (action == 'close') {
+          await controller('down');
+          await controller('accept');
+          await t.pumpAndSettle();
+          expect(session.stops, 1);
+          expect(find.text('Home game'), findsOneWidget);
+        } else {
+          await controller('home');
+          await t.pumpAndSettle();
+          expect(model.screen, Screen.playing);
+          expect(session.stops, 0);
+        }
+        await t.pumpWidget(const SizedBox());
+        model.dispose();
+      },
+    );
+  }
+
   testWidgets(
     'native Quit is acknowledged immediately and game exit leaves the closing dialog available above Home',
     (t) async {

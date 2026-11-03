@@ -122,6 +122,7 @@ static void write_status(void) {
     fprintf(out,"],\"logicalButtons\":[");
     for(int p=0;p<4;++p){unsigned int bits=0;for(int b=0;b<21;b++)if(real_button(pad[p],b))bits|=1u<<b;fprintf(out,"%s%u",p?",":"",bits);}
     fprintf(out,"],\"connectedPorts\":%u,\"consolePorts\":%d,\"appActive\":%s,\"pspButtons\":%u",atomic_load(&connected_ports),atomic_load(&console_ports),atomic_load(&app_active)?"true":"false",atomic_load(&psp_buttons));
+    fprintf(out,",\"gameWindowVisible\":%s",atomic_load(&game_window_visible)?"true":"false");
     fprintf(out,",\"pauseReleaseSerial\":%llu",atomic_load(&session_resume_serial));
     fprintf(out,",\"nativeProgram\":\"%016llx\",\"switchButtons\":%llu",(unsigned long long)atomic_load(&eden_program),(unsigned long long)atomic_load(&eden_buttons));
     if(dolphin_wii) {

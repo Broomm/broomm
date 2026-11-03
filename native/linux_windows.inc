@@ -14,7 +14,9 @@ static void psp_window_tick(void) {
    static bool sent;if(push&&!sent){sent=true;push(event);}
   }return;
  }
- if(actual>=0){bool hidden=atomic_load(&session_gate)&&!atomic_load(&linux_orphaned);if(hidden!=ui_hidden){if(hidden)hide(window);else{show(window);raise(window);}ui_hidden=hidden;}}
+ if(actual>=0){bool hidden=hide_game_window();if(hidden!=ui_hidden){if(hidden)hide(window);else{show(window);raise(window);}ui_hidden=hidden;}
+  uint32_t (*flags)(void *)=symbol("SDL_GetWindowFlags");
+  atomic_store(&game_window_visible,!hidden&&flags&&!(flags(window)&8u));}
  atomic_store(&app_active,actual>=0);
 }
 #include <X11/Xlib.h>
@@ -46,8 +48,11 @@ static void linux_sdk_window_tick(void) {
    atomic_store(&session_finishing,true);
    if(atomic_load(&session_worker_stopped)){XEvent event;memset(&event,0,sizeof(event));event.xclient.type=ClientMessage;event.xclient.window=window;event.xclient.message_type=atom(display,"WM_PROTOCOLS",False);event.xclient.format=32;event.xclient.data.l[0]=(long)atom(display,"WM_DELETE_WINDOW",False);send_event(display,window,False,0,&event);}
   } else if(actual>=0) {
-   bool wanted=atomic_load(&session_gate)&&!atomic_load(&linux_orphaned);
+   bool wanted=hide_game_window();
    if(wanted!=hidden){if(wanted)unmap(display,window);else map(display,window);hidden=wanted;}
+   Status (*get_attributes)(Display *,Window,XWindowAttributes *)=dlsym(library,"XGetWindowAttributes");
+   XWindowAttributes state;
+   atomic_store(&game_window_visible,!wanted&&get_attributes&&get_attributes(display,window,&state)&&state.map_state==IsViewable);
   }flush(display);
  }
  dlclose(library);

@@ -69,6 +69,7 @@ class PausedSession extends GameSession {
     int? requestDevice,
     bool inputReady = true,
     bool blocked = true,
+    bool gameWindowVisible = false,
     Map<String, dynamic>? loading,
   }) {
     status = BridgeStatus({
@@ -81,6 +82,7 @@ class PausedSession extends GameSession {
       'request': request,
       'requestDevice': requestDevice,
       'blocked': blocked,
+      'gameWindowVisible': gameWindowVisible,
       'paused': paused,
       'window': [0, 0, 1000, 720],
       'devices':
@@ -94,7 +96,77 @@ class PausedSession extends GameSession {
   }
 }
 
+class GamescopeSession extends PausedSession {
+  int mapped = 0;
+  bool Function(BridgeStatus)? condition;
+  final visibility = Completer<void>();
+
+  @override
+  bool get gamescopeHandoff => true;
+
+  @override
+  Future<void> launcherMapped() async => mapped++;
+
+  @override
+  Future<void> waitFor(
+    bool Function(BridgeStatus) ready, {
+    Duration timeout = const Duration(seconds: 15),
+  }) {
+    condition = ready;
+    return visibility.future;
+  }
+}
+
+class MappingHost extends RecordingHost {
+  final mapped = Completer<void>();
+
+  @override
+  Future<void> show({List<double>? frame, bool overlay = false}) async {
+    await super.show(frame: frame, overlay: overlay);
+    await mapped.future;
+  }
+}
+
 void main() {
+  test('Gamescope publishes handoff only after the launcher maps', () async {
+    final session = GamescopeSession(), host = MappingHost();
+    final model = PrototypeModel('/unused', host: host, gameSession: session)
+      ..screen = Screen.playing
+      ..pairing = (Pairing(1)..join(10));
+    session.emit(request: 'menu', serial: 1);
+    expect(session.mapped, 0);
+    session.visibility.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(host.shown, 1);
+    expect(session.mapped, 0);
+    host.mapped.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(session.mapped, 1);
+    expect(model.screen, Screen.menu);
+  });
+
+  test(
+    'Gamescope keeps launcher visible until the game window is ready',
+    () async {
+      final session = GamescopeSession(), host = RecordingHost();
+      final model = PrototypeModel('/unused', host: host, gameSession: session)
+        ..screen = Screen.menu
+        ..pairing = (Pairing(1)..join(10));
+      session.emit();
+      final play = model.play();
+      await Future<void>.delayed(Duration.zero);
+      session.emit(paused: 0, blocked: false);
+      expect(session.condition!(session.status!), isFalse);
+      expect(host.hidden, 0);
+      session.emit(paused: 0, blocked: false, gameWindowVisible: true);
+      expect(session.condition!(session.status!), isTrue);
+      session.visibility.complete();
+      await play;
+      expect(host.hidden, 1);
+      expect(model.screen, Screen.playing);
+    },
+  );
+
   test(
     'startup waits for input discovery and pause before exposing join actions',
     () async {

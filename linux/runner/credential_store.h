@@ -6,10 +6,12 @@
 #include <stdexcept>
 #include <string>
 
+#include "local_credentials.h"
+
 // Uses GIO already linked by the GTK runner. No libsecret package/helper is
 // required. An unlocked Secret Service provider on the session bus is required.
 namespace broomm_credentials {
-struct Job { FlMethodCall* call; std::string method, key, value; GSource* timeout; };
+struct Job { FlMethodCall* call; std::string method, key, value, local_root; GSource* timeout; };
 struct SecretService {
   GDBusConnection* bus;
   GCancellable* cancel;
@@ -105,15 +107,18 @@ inline void register_store(FlBinaryMessenger* messenger) {
     FlValue* key_value = args && fl_value_get_type(args) == FL_VALUE_TYPE_MAP ? fl_value_lookup_string(args, "key") : nullptr;
     FlValue* value = args && fl_value_get_type(args) == FL_VALUE_TYPE_MAP ? fl_value_lookup_string(args, "value") : nullptr;
     const char* key = key_value && fl_value_get_type(key_value) == FL_VALUE_TYPE_STRING ? fl_value_get_string(key_value) : "";
+    FlValue* root_value = args && fl_value_get_type(args) == FL_VALUE_TYPE_MAP ? fl_value_lookup_string(args, "localRoot") : nullptr;
+    const char* local_root = root_value && fl_value_get_type(root_value) == FL_VALUE_TYPE_STRING ? fl_value_get_string(root_value) : "";
     const char* method = fl_method_call_get_name(call);
     const char* text = value && fl_value_get_type(value) == FL_VALUE_TYPE_STRING ? fl_value_get_string(value) : "";
     const char* identity = !std::strncmp(key, "sgdb-", 5) ? key + 5 : key;
-    if (std::strlen(identity) != 32 || std::strspn(identity, "0123456789abcdef") != 32 ||
+    if ((root_value && (local_root[0] != '/' || std::strlen(local_root) > 4096)) ||
+        std::strlen(identity) != 32 || std::strspn(identity, "0123456789abcdef") != 32 ||
         (std::strcmp(method, "read") && std::strcmp(method, "write") && std::strcmp(method, "delete")) ||
         (!std::strcmp(method, "write") && (!value || fl_value_get_type(value) != FL_VALUE_TYPE_STRING || std::strlen(text) > 32768))) {
       fl_method_call_respond_error(call, "secure_store", "Invalid secure-store request", nullptr, nullptr); return;
     }
-    auto* job = new Job{FL_METHOD_CALL(g_object_ref(call)), method, key, text, nullptr};
+    auto* job = new Job{FL_METHOD_CALL(g_object_ref(call)), method, key, text, local_root, nullptr};
     g_autoptr(GCancellable) cancel = g_cancellable_new();
     job->timeout = g_timeout_source_new(9000);
     g_source_set_callback(job->timeout, [](gpointer value) -> gboolean {
@@ -127,7 +132,7 @@ inline void register_store(FlBinaryMessenger* messenger) {
       g_source_unref(job->timeout);
       g_autoptr(GError) error = nullptr;
       g_autofree gchar* value = static_cast<gchar*>(g_task_propagate_pointer(task, &error));
-      if (error) fl_method_call_respond_error(job->call, "secure_store", "Secure sign-in storage is locked or unavailable.", nullptr, nullptr);
+      if (error) fl_method_call_respond_error(job->call, "secure_store", job->local_root.empty() ? "System keyring is locked or unavailable." : "Private sign-in file is unavailable.", nullptr, nullptr);
       else {
         g_autoptr(FlValue) response = value ? fl_value_new_string(value) : nullptr;
         fl_method_call_respond_success(job->call, response, nullptr);
@@ -139,8 +144,14 @@ inline void register_store(FlBinaryMessenger* messenger) {
     g_task_run_in_thread(task, [](GTask* task, gpointer, gpointer data, GCancellable* cancel) {
       try {
         bool present = false;
-        SecretService service(cancel);
-        const std::string value = service.run(*static_cast<Job*>(data), present);
+        const auto& job = *static_cast<Job*>(data);
+        std::string value;
+        if (job.local_root.empty()) {
+          SecretService service(cancel);
+          value = service.run(job, present);
+        } else {
+          value = local_credential(job.local_root, job.method, job.key, job.value, present);
+        }
         g_task_return_pointer(task, present ? g_strdup(value.c_str()) : nullptr, g_free);
       } catch (...) { g_task_return_new_error(task, G_IO_ERROR, G_IO_ERROR_FAILED, "Secure store unavailable"); }
     });

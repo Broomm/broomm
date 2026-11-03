@@ -178,7 +178,20 @@ inline void register_host(FlView* view,GtkWindow* window) {
   fl_method_channel_set_method_call_handler(host->channel,+[](FlMethodChannel*,FlMethodCall* call,gpointer data){
     auto* host=static_cast<Host*>(data);const char* method=fl_method_call_get_name(call);FlValue* args=fl_method_call_get_args(call);
     try {
-      if(!strcmp(method,"show")){gtk_widget_show(GTK_WIDGET(host->window));gtk_window_deiconify(host->window);gtk_window_present(host->window);}
+      if(!strcmp(method,"show")){
+        GtkWidget* window=GTK_WIDGET(host->window);
+        gtk_widget_show(window);
+        gtk_window_deiconify(host->window);
+        gtk_window_present(host->window);
+        const char* desktop=g_getenv("XDG_CURRENT_DESKTOP");
+        if(desktop&&!strcmp(desktop,"gamescope")){
+          // Finish sending the map request before allowing the bridge to
+          // withdraw the only other game surface.
+          gdk_display_sync(gtk_widget_get_display(window));
+          if(!gtk_widget_get_mapped(window))
+            throw std::string("Gamescope did not map the Broomm window.");
+        }
+      }
       else if(!strcmp(method,"hide"))gtk_widget_hide(GTK_WIDGET(host->window));
       else if(!strcmp(method,"close")){host->permit=true;gtk_window_close(host->window);}
       else if(!strcmp(method,"gameWriter")){g_autoptr(FlValue) value=inspect(host,argument(args,"root"));fl_method_call_respond_success(call,value,nullptr);return;}

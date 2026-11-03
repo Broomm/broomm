@@ -395,6 +395,8 @@ class _LoginDialogState extends State<_LoginDialog> {
                   Text(
                     token
                         ? 'Create a RomM client token with profile, games, platforms, assets.read and assets.write access for cloud saves. You can also enter its pairing code.'
+                        : widget.model.usesPrivateCredentialFile
+                        ? 'Your password is never saved. Broomm remembers a refresh token in a private local file.'
                         : 'Your password is used only to sign in and is never saved. Broomm remembers a refresh token in your system secure store.',
                     style: const TextStyle(
                       color: muted,
