@@ -66,6 +66,62 @@ void main() {
   });
   void progress(String phase, double? fraction) {}
 
+  test('official rolling cores accept changed provider sizes and bytes on each explicit setup', () async {
+    var revision = 0;
+    server.listen((request) async {
+      final data = List<int>.filled(++revision * 100, revision);
+      request.response.contentLength = data.length;
+      request.response.add(data);
+      await request.response.close();
+    });
+    final recipe = SetupPackage.fromJson({
+      'url': 'https://buildbot.libretro.com/nightly/linux/x86_64/latest/mesen_libretro.so.zip',
+      'sha256': '0' * 64,
+      'bytes': 7,
+      'format': 'zip',
+      'entry': 'mesen_libretro.so',
+      'rolling': true,
+    });
+    final first = await downloads.archive(
+      recipe,
+      DownloadCancellation(),
+      progress,
+    );
+    final second = await downloads.archive(
+      recipe,
+      DownloadCancellation(),
+      progress,
+    );
+    expect(await first.length(), 100);
+    expect(await second.length(), 200);
+    expect(seen, hasLength(2));
+  });
+
+  test('rolling mode does not accept truncated HTTP bodies or arbitrary emulator providers', () async {
+    server.listen((request) async {
+      request.response.contentLength = 100;
+      final socket = await request.response.detachSocket(writeHeaders: true);
+      socket.add([1, 2, 3]);
+      await socket.flush();
+      socket.destroy();
+    });
+    for (final host in ['buildbot.libretro.com', 'provider.example']) {
+      final recipe = SetupPackage.fromJson({
+        'url': 'https://$host/mesen_libretro.so.zip',
+        'sha256': '0' * 64,
+        'bytes': 7,
+        'format': 'zip',
+        'entry': 'mesen_libretro.so',
+        'rolling': true,
+      });
+      await expectLater(
+        downloads.archive(recipe, DownloadCancellation(), progress),
+        throwsA(anyOf(isA<StateError>(), isA<FormatException>())),
+      );
+    }
+    expect(await downloads.cache.list().toList(), isEmpty);
+  });
+
   test('exact HTTPS download is reusable across restart; altered cached bytes are preserved and fetched again', () async {
     server.listen((request) async {
       request.response.contentLength = bytes.length;

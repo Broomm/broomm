@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'verification.dart';
+
 import '../managed_emulators.dart'
     show runOwnedTool, ownedDirectory, sha256File;
 
@@ -89,7 +91,11 @@ Future<void> addonWrite(File target, Object value) async {
 
 /// A bounded, exact file inventory. macOS batches its native checksum tool;
 /// other hosts use the existing streaming Dart digest outside the UI isolate.
-Future<Map<String, String>> addonInventory(Directory root) async {
+Future<Map<String, String>> addonInventory(
+  Directory root, {
+  Map<String, Map> verified = const {},
+  AddonVerification? verification,
+}) async {
   if (await FileSystemEntity.type(root.path, followLinks: false) !=
       FileSystemEntityType.directory)
     throw const FileSystemException('Invalid add-on content directory');
@@ -114,15 +120,27 @@ Future<Map<String, String>> addonInventory(Directory root) async {
     }
   }
   paths.sort();
-  final hashes = <String, String>{};
+  final hashes = <String, String>{}, pending = <String>[];
+  for (final path in paths) {
+    final file = File('${root.path}/$path'), saved = verified[path];
+    if (saved != null &&
+        sameAddonStamp(saved['stamp'], await addonStamp(file))) {
+      hashes[path] = saved['hash'] as String;
+      await verification?.remember(file, hashes[path]!);
+    } else if (verification != null) {
+      hashes[path] = (await verification.fingerprint(file.path))!;
+    } else {
+      pending.add(path);
+    }
+  }
   if (!Platform.isMacOS) {
-    for (final path in paths) {
+    for (final path in pending) {
       hashes[path] = await sha256File('${root.path}/$path');
     }
     return hashes;
   }
-  for (var start = 0; start < paths.length; start += 64) {
-    final batch = paths.skip(start).take(64).toList();
+  for (var start = 0; start < pending.length; start += 64) {
+    final batch = pending.skip(start).take(64).toList();
     final output = await runOwnedTool('/usr/bin/shasum', [
       '-a',
       '256',

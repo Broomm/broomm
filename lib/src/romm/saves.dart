@@ -94,10 +94,14 @@ class RommSave {
 
 mixin RommSaves {
   HttpClient get _http;
+  bool get _backgroundDownloads;
+  Set<IoWorker<void>> get _saveWorkers;
+  IoContext? get _saveIo;
   String? get _access;
   bool get _closed;
   Duration get deadline;
   Uri endpoint(String path, [Map<String, String>? query]);
+  Uri get serverAddress;
   Future<void> _ensureToken();
   Future<dynamic> _json(
     String method,
@@ -193,6 +197,29 @@ mixin RommSaves {
       throw const RommFailure(
         'RomM reports that this save is missing from its storage. Local progress has been kept.',
       );
+    if (_backgroundDownloads) {
+      cancellation.check();
+      await _ensureToken();
+      cancellation.check();
+      final worker = IoWorker(_saveDownloadWorker, [
+        serverAddress,
+        _access!,
+        save,
+        destination.path,
+        deadline,
+      ]);
+      _saveWorkers.add(worker);
+      try {
+        if (_closed) worker.cancel();
+        await worker.run(
+          cancellation: cancellation,
+          progress: (bytes) => onProgress?.call(bytes as int),
+        );
+      } finally {
+        _saveWorkers.remove(worker);
+      }
+      return;
+    }
     HttpClientRequest? request;
     RandomAccessFile? output;
     var stopped = false;
@@ -225,6 +252,7 @@ mixin RommSaves {
         );
       await destination.create(exclusive: true);
       output = await destination.open(mode: FileMode.writeOnly);
+      _saveIo?.writerOpen = true;
       var received = 0;
       await for (final chunk in response.timeout(deadline)) {
         cancellation.check();
@@ -255,6 +283,7 @@ mixin RommSaves {
       cancellation.abort = null;
       request?.abort();
       await output?.close();
+      _saveIo?.writerOpen = false;
     }
   }
 
@@ -472,5 +501,26 @@ mixin RommSaves {
       if (cancellation != null) cancellation.abort = null;
       request?.abort();
     }
+  }
+}
+
+Future<void> _saveDownloadWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final client =
+      RommClient(a[0] as Uri, http: HttpClient(), deadline: a[4] as Duration)
+        .._access = a[1] as String
+        .._clientToken = true
+        .._saveIo = io;
+  io.cancellation.abort = client.close;
+  try {
+    await client._downloadProgressAsset(
+      a[2] as RommSave,
+      File(a[3] as String),
+      cancellation: io.cancellation,
+      onProgress: (bytes) =>
+          io.progress(bytes, force: bytes == (a[2] as RommSave).bytes),
+    );
+  } finally {
+    client.close();
   }
 }

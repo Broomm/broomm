@@ -3,10 +3,15 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'releases.dart';
+import '../io_worker.dart';
+import '../romm/transfer.dart';
+import 'archive.dart' show UpdateWriterUncertain;
 
 /// Separate from RomM clients: no account headers or tokens reach GitHub.
 class UpdateTransport {
-  UpdateTransport({HttpClient? client}) : client = client ?? HttpClient() {
+  UpdateTransport({HttpClient? client})
+    : client = client ?? HttpClient(),
+      _background = client == null && HttpOverrides.current == null {
     this.client.connectionTimeout = const Duration(seconds: 15);
     _deadline = Timer(const Duration(minutes: 20), () {
       expired = true;
@@ -14,6 +19,9 @@ class UpdateTransport {
     });
   }
   final HttpClient client;
+  final bool _background;
+  IoWorker<void>? _worker;
+  IoContext? _io;
   bool cancelled = false;
   bool expired = false;
   Timer? _deadline;
@@ -23,6 +31,7 @@ class UpdateTransport {
   }
 
   void close() {
+    _worker?.cancel();
     _deadline?.cancel();
     client.close(force: true);
   }
@@ -144,6 +153,22 @@ class UpdateTransport {
     File destination,
     void Function(double) progress,
   ) async {
+    check();
+    if (_background) {
+      final worker = _worker = IoWorker(_updateDownloadWorker, [
+        asset,
+        destination.path,
+      ]);
+      try {
+        await worker.run(progress: (v) => progress(v as double));
+        check();
+      } on DownloadWriterUncertain {
+        throw const UpdateWriterUncertain();
+      } finally {
+        _worker = null;
+      }
+      return;
+    }
     final response = await get(asset.uri);
     if (response.statusCode != 200 ||
         response.contentLength >= 0 && response.contentLength != asset.bytes)
@@ -152,6 +177,7 @@ class UpdateTransport {
       );
     await destination.create(exclusive: true);
     final output = await destination.open(mode: FileMode.writeOnly);
+    _io?.writerOpen = true;
     var received = 0;
     try {
       await for (final chunk in response.timeout(const Duration(seconds: 30))) {
@@ -167,6 +193,22 @@ class UpdateTransport {
       await output.flush();
     } finally {
       await output.close();
+      _io?.writerOpen = false;
     }
+  }
+}
+
+Future<void> _updateDownloadWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final transport = UpdateTransport(client: HttpClient()).._io = io;
+  io.cancellation.abort = transport.cancel;
+  try {
+    await transport.download(
+      a[0] as ReleaseAsset,
+      File(a[1] as String),
+      (value) => io.progress(value, force: value == 1),
+    );
+  } finally {
+    transport.close();
   }
 }

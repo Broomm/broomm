@@ -493,6 +493,18 @@
       "captured": "2026-11-02",
       "version": "v3.10.0 ffea789",
       "extensions": "j64|jag|rom|abs|cof|bin|prg|cue|cdi|chd"
+    },
+    {
+      "id": "snes9x",
+      "name": "Snes9x",
+      "license": "Non-commercial",
+      "authors": "Snes9x Team",
+      "firmware": {},
+      "source_url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/snes9x_libretro.so.zip",
+      "sha256": "9b2b6ea9d88f96c156590443ddd05ee56aaf4e495329a889c979921942717a31",
+      "host": "linux-x64",
+      "version": "1.63",
+      "isolated_states": true
     }
   ]
 }

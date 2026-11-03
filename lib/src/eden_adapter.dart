@@ -63,6 +63,14 @@ class EdenAdapter extends EmulatorAdapter {
         'pauseWhenInBackground': 'false',
         'select_user_on_boot': 'false',
         'disableControllerApplet': 'true',
+        // The pinned Linux frontend otherwise blocks boot on an upstream
+        // Wayland recommendation dialog. Keep the user's actual backend.
+        if (Platform.isLinux) ...{
+          'gui_hide_backend_warning': 'true',
+          // POSIX writes this to stderr; no extra console window. Linux's
+          // supervised title-identity parser consumes Eden's native Load line.
+          'showConsole': 'true',
+        },
       },
       'System': {'current_user': '0'},
     };

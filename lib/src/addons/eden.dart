@@ -3,12 +3,14 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../emulators.dart' show atomicText;
+import '../io_worker.dart';
 import '../managed_emulators.dart' show ownedDirectory;
 import '../progress/digest.dart';
 import '../romm/transfer.dart';
 import '../switch_content.dart';
 import '../switch_firmware.dart' show validateSwitchKeyFile;
 import 'files.dart';
+import 'verification.dart';
 
 Future<Map<String, String>> _titleKeys(Directory user, String relative) async {
   final file = await addonFile(user, relative);
@@ -37,7 +39,54 @@ Future<String> stageEdenContent(
   Directory payload,
   Map<String, dynamic> units,
   int version,
+  DownloadCancellation cancellation, {
+  void Function(String, int, int)? progress,
+}) async {
+  final result =
+      await IoWorker(_stageEdenWorker, [
+        game.path,
+        [
+          for (final p in packages) [p.$1.path, p.$2],
+        ],
+        profile.path,
+        payload.path,
+        units,
+        version,
+      ]).run(
+        cancellation: cancellation,
+        progress: (value) {
+          final p = value as List;
+          progress?.call(p[0] as String, p[1] as int, p[2] as int);
+        },
+      );
+  units.addAll((result[1] as Map).cast<String, dynamic>());
+  return result[0] as String;
+}
+
+Future<List> _stageEdenWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List, units = (a[4] as Map).cast<String, dynamic>();
+  final base = await _stageEdenContent(
+    File(a[0] as String),
+    [for (final p in a[1] as List) (File(p[0] as String), p[1] as String)],
+    Directory(a[2] as String),
+    Directory(a[3] as String),
+    units,
+    a[5] as int,
+    io.cancellation,
+    io,
+  );
+  return [base, units];
+}
+
+Future<String> _stageEdenContent(
+  File game,
+  Iterable<(File, String)> packages,
+  Directory profile,
+  Directory payload,
+  Map<String, dynamic> units,
+  int version,
   DownloadCancellation cancellation,
+  IoContext worker,
 ) async {
   final user = Directory('${profile.path}/data/eden'),
       key = await switchHeaderKey(await addonFile(user, 'keys/prod.keys'));
@@ -160,6 +209,7 @@ Future<String> stageEdenContent(
                 ? await target.open(mode: FileMode.writeOnly)
                 : null,
             digest = ProgressDigest.sha256();
+        worker.writerOpen = out != null;
         var bytes = 0;
         try {
           await for (final chunk in input.$1.openRead(
@@ -170,17 +220,23 @@ Future<String> stageEdenContent(
             bytes += chunk.length;
             digest.add(chunk);
             if (out != null) await out.writeFrom(chunk);
+            worker.progress([
+              '${input.$2 == 'update' ? 'update' : 'DLC'} (${ncas.indexOf(e) + 1}/${ncas.length})',
+              bytes,
+              e.bytes,
+            ]);
           }
           await out?.flush();
         } finally {
           await out?.close();
+          worker.writerOpen = false;
         }
         final hash = digest.finish();
         if (bytes != e.bytes ||
             !hash.startsWith(e.name.substring(0, 32).toLowerCase()) ||
             (existing != null
                 ? (existing['files'] as Map)[''] != hash
-                : await progressFileHash(target) != hash))
+                : await target.length() != e.bytes))
           throw const FormatException(
             'Switch NCA bytes do not match their native content ID',
           );
@@ -188,6 +244,7 @@ Future<String> stageEdenContent(
         units[relative] = {
           'version': version,
           'files': {'': hash},
+          'verification': {'': await addonStamp(target)},
         };
       }
     }
@@ -203,6 +260,7 @@ Future<String> stageEdenContent(
       for (final e in additions.entries)
         if (!known.containsKey(e.key)) e.key: e.value,
     };
+    cancellation.check();
     if (fresh.isNotEmpty) {
       final file = await addonFile(
             user,

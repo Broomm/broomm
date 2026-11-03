@@ -128,7 +128,7 @@ Future<void> _extractTar(File file, Directory output) async {
     await sink.close();
   }
   final input = await tar.open();
-  final files = <(String, int, int)>[],
+  final files = <(String, int, int, bool)>[],
       seen = <String>{},
       directories = <String>{};
   var offset = 0, count = 0, bytes = 0;
@@ -179,7 +179,7 @@ Future<void> _extractTar(File file, Directory output) async {
         bytes += size;
         if (bytes > updateExpandedLimit)
           throw const UpdateFailure('Update expands beyond its size limit.');
-        files.add((name, offset + 512, size));
+        files.add((name, offset + 512, size, octal(100, 8) & 0x49 != 0));
       }
       offset += 512 + ((size + 511) ~/ 512) * 512;
       if (offset > expanded)
@@ -188,7 +188,7 @@ Future<void> _extractTar(File file, Directory output) async {
     if (!ended || files.any((e) => directories.contains(e.$1.toLowerCase())))
       throw const UpdateFailure('Incomplete or colliding TAR archive.');
     await output.create();
-    for (final (name, start, size) in files) {
+    for (final (name, start, size, executable) in files) {
       final dest = await progressFile(output, name, createParents: true);
       await dest.create(exclusive: true);
       final out = await dest.open(mode: FileMode.writeOnly);
@@ -200,6 +200,8 @@ Future<void> _extractTar(File file, Directory output) async {
       } finally {
         await out.close();
       }
+      if (executable && !Platform.isWindows)
+        await updateTool('/bin/chmod', ['u+x', dest.path]);
     }
   } finally {
     await input.close();

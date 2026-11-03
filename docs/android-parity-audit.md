@@ -11,6 +11,13 @@ saves, accepting explicit closure confirmation and deferring BIOS/content work.
 See the [implemented milestone](android-installation-and-saves.md) for current
 behavior. The findings below retain the pre-implementation audit state.
 
+The later [Argosy workflow audit](argosy-android-workflow.md) corrects the scope
+of this comparison: Argosy also embeds a LibretroDroid frontend with automatic
+core downloads into its own storage. Its external-app discovery can avoid
+mandatory manual folder setup when a usable location is found. The access limits
+below still apply to external private storage; they do not imply Broomm's current
+manual setup is the best achievable experience.
+
 ## What Broomm actually has
 
 The Android roster in `lib/src/android/emulators.dart` has nine concrete app

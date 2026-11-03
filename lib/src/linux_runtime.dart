@@ -10,11 +10,16 @@ String linuxLaunchExecutable(PreparedEmulator emulator) =>
 // Azahar gives a cwd/user directory precedence over XDG. Every managed profile
 // has a generic user directory, so launch from its private HOME to keep Azahar
 // on the reviewed XDG aliases and the save/configuration tree Dart actually uses.
+// Eden has the same cwd/user precedence; its Sharun loader must retain that cwd.
 String linuxLaunchDirectory(PreparedEmulator emulator) =>
-    emulator.name == 'Azahar' ? '${emulator.root}/home' : emulator.root;
+    {'Azahar', 'Eden'}.contains(emulator.name)
+    ? '${emulator.root}/home'
+    : emulator.root;
 
 String linuxLaunchPreload(PreparedEmulator emulator, String relative) =>
-    emulator.name == 'Azahar' ? '../${relative.substring(2)}' : relative;
+    {'Azahar', 'Eden'}.contains(emulator.name)
+    ? '../${relative.substring(2)}'
+    : relative;
 
 /// Use the reviewed bundle's own loader/libraries. In particular Sharun needs
 /// its documented preload opt-in; invoking the native ELF with the host loader
@@ -28,7 +33,7 @@ Map<String, String> linuxLaunchEnvironment(PreparedEmulator emulator) {
     return {
       'SHARUN_ALLOW_LD_PRELOAD': '1',
       'SHARUN_PRINTENV': '0',
-      'SHARUN_WORKING_DIR': emulator.root,
+      'SHARUN_WORKING_DIR': linuxLaunchDirectory(emulator),
     };
   final binary = File(emulator.executable);
   final libraries = emulator.name == 'RetroArch'
@@ -69,7 +74,11 @@ class LinuxWindowReadiness {
 
 /// Stages Broomm's own small native component, never an emulator or save.
 /// A relative preload path also works when the app/storage path contains spaces.
-Future<String> prepareLinuxBridge(String source, String profile) async {
+Future<String> prepareLinuxBridge(
+  String source,
+  String profile, {
+  bool runner = false,
+}) async {
   final root = Directory('$profile/.broomm-runtime');
   final type = await FileSystemEntity.type(root.path, followLinks: false);
   if (type == FileSystemEntityType.notFound) {
@@ -85,7 +94,8 @@ Future<String> prepareLinuxBridge(String source, String profile) async {
       'The private native runtime has unknown ownership. Existing files were kept.',
     );
   }
-  final target = File('${root.path}/bridge.so');
+  final name = runner ? 'broomm-native-run' : 'bridge.so';
+  final target = File('${root.path}/$name');
   final targetType = await FileSystemEntity.type(
     target.path,
     followLinks: false,
@@ -97,7 +107,7 @@ Future<String> prepareLinuxBridge(String source, String profile) async {
     );
   final stage = await root.createTemp('.publish-');
   try {
-    final file = File('${stage.path}/bridge.so');
+    final file = File('${stage.path}/$name');
     final bytes = await File(source).readAsBytes();
     if (bytes.length > 4 * 1024 * 1024 ||
         bytes.length < 64 ||
@@ -109,6 +119,13 @@ Future<String> prepareLinuxBridge(String source, String profile) async {
         'The packaged Linux native bridge is incomplete. Use a complete Broomm build.',
       );
     await file.writeAsBytes(bytes, flush: true);
+    if (runner) {
+      final result = await Process.run('/bin/chmod', ['u+x', file.path]);
+      if (result.exitCode != 0)
+        throw const FileSystemException(
+          'Could not prepare the private Linux process helper.',
+        );
+    }
     final copied = await file.readAsBytes();
     if (copied.length != bytes.length ||
         Iterable<int>.generate(bytes.length).any((i) => bytes[i] != copied[i]))
@@ -117,7 +134,7 @@ Future<String> prepareLinuxBridge(String source, String profile) async {
   } finally {
     if (await stage.exists()) await stage.delete(recursive: true);
   }
-  return './.broomm-runtime/bridge.so';
+  return './.broomm-runtime/$name';
 }
 
 /// A reviewed native installation command. The packaged supervisor confines
@@ -134,13 +151,13 @@ Future<Process> startLinuxInstallation(
   final root = await stage.resolveSymbolicLinks();
   final packaged = '${File(Platform.resolvedExecutable).parent.path}/lib';
   final development = '${Directory.current.path}/build/native';
-  final helper = await File('$packaged/broomm-native-run').exists()
+  final sourceHelper = await File('$packaged/broomm-native-run').exists()
       ? '$packaged/broomm-native-run'
       : '$development/broomm-native-run';
   final guard = await File('$packaged/broomm-installer.so').exists()
       ? '$packaged/broomm-installer.so'
       : '$development/broomm-installer.so';
-  if (!await File(helper).exists() || !await File(guard).exists())
+  if (!await File(sourceHelper).exists() || !await File(guard).exists())
     throw StateError(
       'The Linux installation components are missing. Use a complete Broomm build.',
     );
@@ -157,6 +174,12 @@ Future<Process> startLinuxInstallation(
       );
     await directory.create(recursive: true);
   }
+  final relativeHelper = await prepareLinuxBridge(
+    sourceHelper,
+    root,
+    runner: true,
+  );
+  final helper = File('$root/${relativeHelper.substring(2)}').absolute.path;
   final binary = File(await File(executable).resolveSymbolicLinks());
   final libraries = binary.path.endsWith('/Ryujinx')
       ? binary.parent.path

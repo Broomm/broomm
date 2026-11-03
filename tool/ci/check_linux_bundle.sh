@@ -3,6 +3,14 @@ set -euo pipefail
 broomm_bundle="$(realpath "$1")"
 test -f "$broomm_bundle/broomm"
 test -f "$broomm_bundle/lib/libflutter_linux_gtk.so"
+if [[ ! -x "$broomm_bundle/lib/broomm-native-run" ]]; then
+  printf 'Linux process helper is missing or not executable: %s\n' "$broomm_bundle/lib/broomm-native-run" >&2
+  exit 1
+fi
+# Exercise the shipped executable, rather than only inspecting its ELF headers.
+broomm_helper_status=0
+"$broomm_bundle/lib/broomm-native-run" >/dev/null 2>&1 || broomm_helper_status=$?
+test "$broomm_helper_status" -eq 64
 broomm_elfs=()
 while IFS= read -r -d '' broomm_elf; do
   if readelf -h "$broomm_elf" >/dev/null 2>&1; then

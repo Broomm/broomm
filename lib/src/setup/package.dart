@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import '../progress/digest.dart';
+import '../io_worker.dart';
 import '../progress/files.dart';
 import '../romm/transfer.dart';
 import 'archive.dart';
@@ -21,6 +22,7 @@ class SetupPackage {
     this.entry,
     this.prepare, {
     this.file,
+    this.rolling = false,
   });
   factory SetupPackage.fromJson(Map value) {
     if (value.keys.any(
@@ -32,12 +34,14 @@ class SetupPackage {
             'format',
             'entry',
             'prepare',
+            'rolling',
           }.contains(k),
         ) ||
         (value['url'] is String) == (value['file'] is String) ||
         value.containsKey('url') && value['url'] is! String ||
         value.containsKey('file') && value['file'] is! String ||
         value.containsKey('prepare') && value['prepare'] is! String ||
+        value.containsKey('rolling') && value['rolling'] is! bool ||
         value['sha256'] is! String ||
         value['bytes'] is! int ||
         value['format'] is! String ||
@@ -96,18 +100,24 @@ class SetupPackage {
       entry,
       prepare,
       file: value['file'] as String?,
+      rolling: value['rolling'] == true,
     );
   }
   final Uri? url;
   final String? file;
   final String sha256, format, entry, prepare;
   final int bytes;
+  // Official libretro nightly URLs intentionally change between explicit setups.
+  // Their installed library hash identifies states; historical archive sizes do
+  // not define whether a current provider download is usable.
+  final bool rolling;
   String get reference => 'download:$sha256:$entry';
   bool samePayload(SetupPackage other) =>
       sha256 == other.sha256 &&
       bytes == other.bytes &&
       format == other.format &&
       entry == other.entry &&
+      rolling == other.rolling &&
       prepare == other.prepare;
 }
 
@@ -116,8 +126,11 @@ class SetupPackage {
 /// private staging, so a cached download never contains a surviving writer.
 class SetupDownloads {
   SetupDownloads(this.data, {HttpClient Function()? client})
-    : createClient = client ?? HttpClient.new;
+    : createClient = client ?? HttpClient.new,
+      _background = client == null && HttpOverrides.current == null;
   final Directory data;
+  final bool _background;
+  IoContext? _io;
   final HttpClient Function() createClient;
   Directory get cache => Directory('${data.path}/setup-downloads');
 
@@ -128,6 +141,34 @@ class SetupDownloads {
     Directory? localRoot,
   }) async {
     cancellation.check();
+    if (_background) {
+      try {
+        final path =
+            await IoWorker(_setupArchiveWorker, [
+              data.path,
+              package,
+              localRoot?.path,
+            ]).run(
+              cancellation: cancellation,
+              progress: (value) {
+                final p = value as List;
+                progress(p[0] as String, p[1] as double?);
+              },
+            );
+        return File(path);
+      } on DownloadWriterUncertain {
+        throw const SetupBackgroundWriterUncertain();
+      }
+    }
+    if (package.rolling &&
+        (package.file != null ||
+            package.url?.host != 'buildbot.libretro.com' ||
+            package.format != 'zip' ||
+            !RegExp(r'^[a-z0-9_]+_libretro\.(so|dylib)$')
+                .hasMatch(package.entry)))
+      throw const FormatException(
+        'Rolling downloads are only supported for official libretro cores.',
+      );
     if (package.file != null) {
       final base = localRoot ?? Directory('${data.path}/setup-packages');
       final type = await FileSystemEntity.type(base.path, followLinks: false);
@@ -156,6 +197,7 @@ class SetupDownloads {
     await progressDirectory(cache);
     var count = 0;
     await for (final candidate in cache.list(followLinks: false)) {
+      if (package.rolling) break;
       if (++count > 4096)
         throw StateError(
           'The emulator download cache needs inspection before more entries can be added.',
@@ -244,7 +286,8 @@ class SetupDownloads {
         throw StateError(
           'The reviewed emulator download is unavailable from its provider. Retry later or check Broomm for updated setup recipes. Existing installations were kept.',
         );
-      if (response.contentLength >= 0 &&
+      if (!package.rolling &&
+          response.contentLength >= 0 &&
           response.contentLength != package.bytes)
         throw StateError(
           'The provider package size changed. Nothing was installed.',
@@ -252,6 +295,7 @@ class SetupDownloads {
       final file = await progressFile(stage, 'payload');
       await file.create(exclusive: true);
       final sink = await file.open(mode: FileMode.writeOnly);
+      _io?.writerOpen = true;
       var received = 0, last = DateTime.fromMillisecondsSinceEpoch(0);
       try {
         await for (final chunk in response.timeout(
@@ -259,26 +303,38 @@ class SetupDownloads {
         )) {
           cancellation.check();
           received += chunk.length;
-          if (received > package.bytes)
+          if (received >
+              (package.rolling ? 2 * 1024 * 1024 * 1024 : package.bytes))
             throw StateError('The emulator download exceeds its pinned size.');
           await sink.writeFrom(chunk);
           if (DateTime.now().difference(last).inMilliseconds >= 150 ||
-              received == package.bytes) {
+              received == response.contentLength) {
             last = DateTime.now();
-            progress('Downloading emulator package…', received / package.bytes);
+            final total = package.rolling
+                ? response.contentLength
+                : package.bytes;
+            progress(
+              'Downloading emulator package…',
+              total > 0 ? received / total : null,
+            );
           }
         }
         await sink.flush();
       } finally {
         await sink.close();
+        _io?.writerOpen = false;
       }
       cancellation.check();
-      if (received != package.bytes)
+      if (received == 0 ||
+          (!package.rolling && received != package.bytes) ||
+          package.rolling &&
+              response.contentLength >= 0 &&
+              received != response.contentLength)
         throw StateError('The emulator download was incomplete. Retry setup.');
       progress('Verifying emulator download…', null);
       final hash = await _hashSetupFile(file.path);
       cancellation.check();
-      if (hash != package.sha256)
+      if (!package.rolling && hash != package.sha256)
         throw StateError(
           'Emulator archive checksum mismatch. Nothing was installed.',
         );
@@ -286,8 +342,9 @@ class SetupDownloads {
         'product': 'Broomm setup',
         'format': 1,
         'state': 'complete',
-        'sha256': package.sha256,
-        'bytes': package.bytes,
+        'sha256': hash,
+        'bytes': received,
+        if (package.rolling) 'url': package.url.toString(),
       });
       complete = true;
       return file;
@@ -307,7 +364,8 @@ class SetupDownloads {
       deadline.cancel();
       if (identical(cancellation.abort, abort)) cancellation.abort = null;
       client.close(force: true);
-      if (!complete) await stage.delete(recursive: true);
+      if (!complete && _io?.writerOpen != true)
+        await stage.delete(recursive: true);
     }
   }
 
@@ -370,4 +428,20 @@ class SetupDownloads {
     cancellation.check();
     return path;
   }
+}
+
+Future<String> _setupArchiveWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final downloads = SetupDownloads(
+    Directory(a[0] as String),
+    client: HttpClient.new,
+  ).._io = io;
+  final result = await downloads.archive(
+    a[1] as SetupPackage,
+    io.cancellation,
+    (phase, fraction) =>
+        io.progress([phase, fraction], phase: phase, force: fraction == 1),
+    localRoot: a[2] == null ? null : Directory(a[2] as String),
+  );
+  return result.path;
 }

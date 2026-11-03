@@ -126,6 +126,28 @@ void main() {
     await root.delete(recursive: true);
   });
 
+  test('a frontend installed for GB opens configuration without requiring a SNES core', () async {
+    final metadata =
+        jsonDecode(assets['assets/setup/tested-builds.json']!) as Map;
+    (metadata['builds'] as List).first['core_sha256'] = 'f' * 64;
+    assets['assets/setup/tested-builds.json'] = jsonEncode(metadata);
+    manager.dispose();
+    manager = ManagedEmulators(
+      Directory('${root.path}/new-data'),
+      asset: (p) async => assets[p]!,
+    );
+    await manager.install((await manager.readPlan()).forPlatform('gb'));
+    expect(manager.error, isNull, reason: manager.error);
+    expect(manager.readyFor('RetroArch', 'gb'), isTrue);
+    expect(manager.readyFor('RetroArch', 'snes'), isFalse);
+    final configuration = await manager.resolveConfiguration(
+      'RetroArch',
+      profile,
+    );
+    expect(configuration.emulator.core, isNull);
+    final playing = await manager.resolve(game, profile);
+    expect(playing.coreHash, current['sha256']);
+  });
   test('startup keeps the installed previous core; explicit upgrade shares saves and separates native state files and fingerprints', () async {
     final restarted = ManagedEmulators(manager.data, asset: manager.asset);
     addTearDown(restarted.dispose);

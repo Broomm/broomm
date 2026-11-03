@@ -344,7 +344,8 @@ class _BroommAppState extends State<BroommApp> {
         if (m.isAndroid) {
           await m.android.load();
         } else {
-          await m.emulators.readPlan(only: {platform.emulatorId});
+          final plan = await m.emulators.readPlan(only: {platform.emulatorId});
+          m.emulators.plan = plan.forPlatform(platform.slug);
         }
         return;
       }

@@ -1186,6 +1186,41 @@ class ShellModel extends ChangeNotifier {
     unawaited(retryCloud());
   }
 
+  Future<void> resetEmulators() async {
+    if (gameActive ||
+        busy ||
+        downloading ||
+        emulators.busy ||
+        applicationUpdating) {
+      showNotice(
+        'Finish the current game, download or setup before resetting emulators.',
+        problem: true,
+      );
+      return;
+    }
+    busy = true;
+    _emit();
+    try {
+      await finishCloud();
+      await emulators.resetAll(
+        clearPreferences: () async {
+          records = await storage.clearEmulatorDefaults();
+        },
+      );
+      if (emulators.error == null) {
+        _cloudGames.clear();
+        _cloudStatus.clear();
+        _cloudIssuesShown.clear();
+        ++_cloudStatusRevision;
+        setupPlatformId = null;
+        showNotice(emulators.notice);
+      }
+    } finally {
+      busy = false;
+      _emit();
+    }
+  }
+
   GamePlatform? launchPlatform(RommGame game) {
     final platform =
         platforms.where((p) => p.id == game.platformId).firstOrNull ??

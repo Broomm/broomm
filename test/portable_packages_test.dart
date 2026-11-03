@@ -16,8 +16,8 @@ import 'package:broomm/src/shell/library.dart';
 import 'psp_test.dart' show pspPbp;
 import 'support/addon_fixtures.dart';
 
-Uint8List _nca(String title, int type) {
-  final b = Uint8List(0xc00), d = ByteData.sublistView(b);
+Uint8List _nca(String title, int type, {int bytes = 0xc00}) {
+  final b = Uint8List(bytes), d = ByteData.sublistView(b);
   b.setRange(0x200, 0x204, ascii.encode('NCA3'));
   b[0x205] = type;
   d.setUint64(0x208, b.length, Endian.little);
@@ -157,6 +157,61 @@ void main() {
     } finally {
       client.close();
     }
+  });
+
+  test('Eden publishes worker inventories and reports byte progress; cancellation drains its private writer', () async {
+    final program = _nca('01005d100807a000', 0);
+    final meta = _nca('01005d100807a800', 1, bytes: 4 * 1024 * 1024);
+    final name = '${_id(meta)}.cnmt.nca';
+    final game = await File('${root.path}/game.nsp')
+        .writeAsBytes(_nsp({'${_id(program)}.nca': program}));
+    final update = await File('${root.path}/update.nsp')
+        .writeAsBytes(_nsp({name: meta}));
+    final profile = Directory('${root.path}/profile');
+    final keys = File('${profile.path}/data/eden/keys/prod.keys');
+    await keys.parent.create(recursive: true);
+    await keys.writeAsString('header_key = ${'1' * 64}\n');
+    final payload = await root.createTemp('success-');
+    final units = <String, dynamic>{};
+    var progressBytes = 0;
+    expect(
+      await stageEdenContent(
+        game,
+        [(update, 'update')],
+        profile,
+        payload,
+        units,
+        1,
+        DownloadCancellation(),
+        progress: (_, bytes, __) => progressBytes = bytes,
+      ),
+      '01005d100807a000',
+    );
+    expect(units.length, 1);
+    expect(progressBytes, greaterThan(0));
+    expect(
+      await File('${payload.path}/${units.keys.single}').readAsBytes(),
+      meta,
+    );
+    final cancelledPayload = await root.createTemp('cancel-running-');
+    final cancelledUnits = <String, dynamic>{};
+    final cancel = DownloadCancellation();
+    await expectLater(
+      stageEdenContent(
+        game,
+        [(update, 'update')],
+        profile,
+        cancelledPayload,
+        cancelledUnits,
+        1,
+        cancel,
+        progress: (_, __, ___) => cancel.cancel(),
+      ),
+      throwsA(isA<DownloadCancelled>()),
+    );
+    expect(cancelledUnits, isEmpty);
+    await cancelledPayload.rename('${root.path}/writer-closed');
+    expect(await Directory('${profile.path}/data/eden/nand').exists(), isFalse);
   });
 
   test('Eden refuses foreign titles, ambiguous updates, corrupt duplicate content and oversized tickets before native publication', () async {

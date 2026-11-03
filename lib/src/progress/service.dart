@@ -166,6 +166,7 @@ class CloudSaves {
     final st = store(g);
     await progressDirectory(st.directory);
     final tmp = await st.directory.createTemp('.download-');
+    var uncertainWriter = false;
     final cancel = _transfer ??= DownloadCancellation();
     try {
       final file = File('${tmp.path}/broomm');
@@ -212,8 +213,13 @@ class CloudSaves {
         }
         return result;
       }
+    } on DownloadWriterUncertain {
+      // The worker writes only this unique private directory. Never import or
+      // remove it without closed-writer evidence. Other snapshots are untouched.
+      uncertainWriter = true;
+      rethrow;
     } finally {
-      await tmp.delete(recursive: true);
+      if (!uncertainWriter) await tmp.delete(recursive: true);
     }
   }
 

@@ -3,7 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 test "$(uname -s)" = Linux
-test -x /usr/bin/clang-18
+broomm_fixture_cc="${BROOMM_LINUX_CC:-/usr/bin/clang-18}"
+test -x "$broomm_fixture_cc"
 broomm_checker="$(realpath "${1:-tool/ci/check_linux_bundle.sh}")"
 broomm_fixture="$(mktemp -d "${TMPDIR:-/tmp}/broomm-bundle-test.XXXXXX")"
 trap 'rm -rf -- "$broomm_fixture"' EXIT
@@ -36,16 +37,18 @@ int main(void) { return broomm_fixture() == 42 ? 0 : 1; }
 EOF
 broomm_fixture_sdk="$broomm_fixture/nix/store/broomm-fixture/lib"
 mkdir -p "$broomm_fixture_sdk"
-broomm_libm="$(env -u LIBRARY_PATH -u LD_LIBRARY_PATH /usr/bin/clang-18 -print-file-name=libm.so.6)"
+broomm_libm="$(env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_fixture_cc" -print-file-name=libm.so.6)"
 test -f "$broomm_libm"
 cp "$broomm_libm" "$broomm_fixture_sdk/libm.so.6"
 prepare_fixture() {
   BROOMM_TEST_BUNDLE="$broomm_fixture/$1"
   mkdir -p "$BROOMM_TEST_BUNDLE/lib"
-  env -u LIBRARY_PATH -u LD_LIBRARY_PATH /usr/bin/clang-18 -fuse-ld=/usr/bin/ld \
+  env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_fixture_cc" -fuse-ld=/usr/bin/ld \
+    native/linux_process.c -o "$BROOMM_TEST_BUNDLE/lib/broomm-native-run"
+  env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_fixture_cc" -fuse-ld=/usr/bin/ld \
     -shared -fPIC "$broomm_fixture/engine.c" -Wl,-soname,libflutter_linux_gtk.so \
     -o "$BROOMM_TEST_BUNDLE/lib/libflutter_linux_gtk.so"
-  env -u LIBRARY_PATH -u LD_LIBRARY_PATH /usr/bin/clang-18 -fuse-ld=/usr/bin/ld \
+  env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_fixture_cc" -fuse-ld=/usr/bin/ld \
     "$broomm_fixture/main.c" -L"$BROOMM_TEST_BUNDLE/lib" -lflutter_linux_gtk \
     -o "$BROOMM_TEST_BUNDLE/broomm"
   # Like the real Flutter engine, this library resolves a unique dependency from
@@ -74,6 +77,11 @@ for BROOMM_TEST_ORDER in launcher-first engine-first; do
   env -u LD_LIBRARY_PATH "$BROOMM_TEST_BUNDLE relocated/broomm"
 done
 printf 'PASS: normalized dependency trees work in both orders and after relocation\n'
+
+prepare_fixture nonexecutable-helper
+chmod 644 "$BROOMM_TEST_BUNDLE/lib/broomm-native-run"
+expect_rejected nonexecutable-helper broomm-native-run
+printf 'PASS: a non-executable process helper cannot be published\n'
 
 BROOMM_TEST_ORDER=launcher-first
 prepare_fixture missing-dependency

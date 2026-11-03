@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'dart:async';
 
 import 'package:broomm/src/linux_runtime.dart';
+import 'package:broomm/src/emulators.dart';
 import 'package:broomm/src/managed_emulators.dart';
 import 'package:broomm/src/managed_profile.dart';
 import 'package:broomm/src/romm/transfer.dart';
@@ -27,6 +28,41 @@ void main() {
     root = await Directory.systemTemp.createTemp('broomm-linux-');
   });
   tearDown(() => root.delete(recursive: true));
+  test('Eden launches away from its generic portable user folder while keeping its private XDG data and preload', () {
+    final e = PreparedEmulator(
+      'Eden',
+      '/private/profile with spaces',
+      '/managed/shared/bin/eden',
+      2,
+      null,
+      null,
+      linuxLauncher: '/managed/bin/eden',
+    );
+    expect(linuxLaunchDirectory(e), '/private/profile with spaces/home');
+    expect(
+      linuxLaunchEnvironment(e)['SHARUN_WORKING_DIR'],
+      linuxLaunchDirectory(e),
+    );
+    expect(
+      File.fromUri(
+        Directory('${linuxLaunchDirectory(e)}/').uri
+            .resolve(linuxLaunchPreload(e, './.broomm-runtime/bridge.so')),
+      ).path,
+      '/private/profile with spaces/.broomm-runtime/bridge.so',
+    );
+    final psp = PreparedEmulator(
+      'PPSSPP',
+      '/private/psp',
+      '/managed/shared/bin/PPSSPPSDL',
+      2,
+      null,
+      null,
+      linuxLauncher: '/managed/bin/PPSSPPSDL',
+    );
+    expect(linuxLaunchDirectory(psp), psp.root);
+    expect(linuxLaunchEnvironment(psp)['SHARUN_WORKING_DIR'], psp.root);
+    expect(linuxLaunchPreload(psp, './bridge.so'), './bridge.so');
+  });
   test(
     'overlapping readiness observations share one durable publication',
     () async {
@@ -110,7 +146,9 @@ void main() {
     expect(item.build.host, 'linux-x64');
     expect(item.build.native, isEmpty);
     expect(item.downloads.length, 16);
-    expect(item.cores.length, 14);
+    expect(item.cores.length, 15);
+    expect(item.core, isNull);
+    expect(item.downloads.values.where((p) => p.rolling), hasLength(15));
     expect(
       item.downloads.values.every(
         (p) => p.url != null && p.file == null && p.format == 'zip',
@@ -180,6 +218,22 @@ void main() {
       throwsStateError,
     );
     expect(await File('${unknown.path}/keep').readAsString(), 'owner content');
+  });
+  test('private process helper repairs an old updater mode without modifying the packaged source', () async {
+    final source = await File('${root.path}/broomm-native-run')
+        .writeAsBytes(elf());
+    await Process.run('/bin/chmod', ['644', source.path]);
+    final profile = await Directory('${root.path}/private staging with spaces')
+        .create();
+    final relative = await prepareLinuxBridge(
+      source.path,
+      profile.path,
+      runner: true,
+    );
+    final helper = File('${profile.path}/${relative.substring(2)}');
+    expect((await helper.stat()).mode & 0x40, isNonZero);
+    expect((await source.stat()).mode & 0x49, 0);
+    expect(await helper.readAsBytes(), await source.readAsBytes());
   });
   test('Linux profiles share executable identity while preserving private settings and save data', () async {
     final record = jsonDecode(

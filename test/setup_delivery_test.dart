@@ -329,7 +329,7 @@ void main() {
     expect(manager.ready('Dolphin'), true);
     expect(await save.readAsString(), 'progress');
   });
-  test('reusing an installed frontend verifies its required base core and preserves changed or missing core data', () async {
+  test('reusing a frontend preserves a changed core and explicitly installing its core repairs an absent one', () async {
     final core = await File('${root.path}/core.dylib')
         .writeAsString('pinned native core');
     final builds =
@@ -382,8 +382,8 @@ void main() {
     expect(await installed.readAsString(), 'changed native core');
     await installed.delete();
     await manager.install(plan);
-    expect(manager.error, isNotNull);
-    expect(await installed.exists(), false);
+    expect(manager.error, isNull);
+    expect(await installed.readAsString(), 'pinned native core');
     expect(await save.readAsString(), 'progress');
   });
   test('abnormal signing retains private staging; cancellation before signing never starts the writer or removes earlier recovery data', () async {
@@ -419,7 +419,7 @@ void main() {
     manager.addListener(cancelBeforeSigning);
     await manager.install(plan);
     manager.removeListener(cancelBeforeSigning);
-    expect(cancelled, true);
+    expect(cancelled, true, reason: manager.error);
     expect(manager.error, contains('Setup cancelled'));
     expect(await stages(), hasLength(1));
     expect(await save.readAsString(), 'progress');

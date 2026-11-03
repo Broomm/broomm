@@ -6,11 +6,13 @@ The default Flutter application connects to RomM 5.4.0, signs in, and opens a co
 
 On **Linux x64**, Emulator Settings now includes RetroArch plus Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden, with automatically selected bundled recipes. Use the [Linux walkthrough, tested versions and remaining acceptance](docs/linux-standalone.md). Linux ARM64 managed recipes and Switch/physical/Steam/gamescope acceptance remain pending; the application build alone does not establish them.
 
+The uncommitted [Linux setup repair preview](docs/linux-setup-repair.md) fixes rolling core downloads and lost helper permissions. On the Linux test machine, close the old app and run `~/Downloads/Broomm-Linux-setup-fix-preview/bundle/broomm`. **Emulator Settings → Reset all emulators** resets installations/settings while keeping saves, states and pending cloud sync. The preview uses normal storage and disables application updates until an official build replaces it.
+
 For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CSO v1 or PBP; no BIOS is required. For the additional Switch choice, set up **Eden** or **Astris** (macOS 15+). Successful setup makes the selected emulator the default; a platform with nothing configured has no default. Both use the normal controller-pairing flow and profile-private cloud saves. The [PPSSPP/Eden walkthrough](docs/psp-and-eden-support.md) covers native DLC directories, firmware/keys, cleanup, test commands and the experimental Eden macOS limits. The current [colored support matrix](docs/platform-support-matrix.md) includes both.
 
 For Astris, open **Emulator Settings → Nintendo Switch → Astris → Set up**. It downloads the reviewed ARM64 build; firmware and keys use the same RomM provisioning flow as other Switch emulators. Play uses Broomm's loading/pairing screens and in-game controller menu. Astris keeps its own configuration/account/content records. Android's current milestone adds official APK downloading and connected save/state routes for its nine emulator adapters, including MMJ shared storage and both ARMSX2 channels. Native Android acceptance remains pending; see [setup, limits and recovery](docs/android-installation-and-saves.md).
 
-The latest local macOS build is [Broomm with Linux standalone emulator support](build/releases/Broomm-macOS-ci-fixes.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. The [CI corrections](docs/github-releases.md#controller-callback-synchronization--2026-11-02) change tests only; application behavior is unchanged. It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This local build uses version 0.1.6 (1013) and enables GitHub updates for newer official releases. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
+The latest local macOS build is [Broomm with Linux standalone emulator support](build/releases/Broomm-macOS-linux-setup-fix-preview.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the [Linux setup corrections and save-preserving reset](docs/linux-setup-repair.md). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This preview uses version 0.1.7-dev (1013); automatic application updates are disabled for this development identity. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
 
 For the installed Switch game's “complete downloadable file manifest” error, replace only the application with this build, then choose the existing profile and **Home → game → Play**. Repeat with the other profile; no redownload or data cleanup is needed. The [launch correction](docs/switch-installed-launch.md) explains receipt reuse, first-import connection requirements and the read-only diagnostic command.
 
@@ -452,3 +454,35 @@ Run `devbox run -- flutter test tool/check_retroarch_saves_test.dart --reporter 
 Add **`mpr-17933.bin`** (USA/Europe) and **`sega_101.bin`** (Japan) to Saturn's BIOS/firmware in RomM and rescan. Both are 524,288 bytes. Configure Saturn's RetroArch card, download a game and select **Play**: Broomm should install missing BIOS files into the private profile before pairing. Join with **L1 + R1**, hold **Start**, then quit the emulator normally. Backup RAM (`.srm`), backup cartridge (`.bcr`) and console settings (`.smpc`) synchronize together in a native ZIP in **BROOMM**; state groups require the same frontend/core build.
 
 The Legend of Oasis has passed native boot, pairing, pause/live remap, backup-memory round trip, state creation/loading and matched snapshot restore on macOS ARM64. These automated checks used disposable profiles and a fixture cloud endpoint, preserving all real progress. Repeat with `BROOMM_SAVE_PLATFORMS=saturn devbox run -- flutter test tool/check_retroarch_saves_test.dart --reporter expanded` after provisioning the local cached fixture. See [exact prerequisites, evidence and cleanup](docs/saturn-verification.md). No emulator reinstall or new Broomm build is needed for this BIOS verification.
+
+
+### Setup/download performance preview (2026-11-02)
+
+See [setup throughput](docs/setup-throughput.md) for measurements and the current
+uncommitted Linux/macOS previews. On Linux, close the old app normally before
+opening the new extracted `bundle/broomm`. Keep the whole bundle together; both
+previews use the existing production data folder. In Emulator Settings, select
+one RetroArch platform and confirm Setup: only that core should become ready.
+Setting up a second platform reuses the frontend. Existing extra cores are kept;
+Reset all emulators is an explicit option that preserves saves/states.
+
+Linux Eden now uses its configured private keys/firmware/content root; it no
+longer accidentally selects the generic portable `user` folder. Old files are
+retained. The Wayland recommendation dialog is suppressed without changing the
+selected backend.
+
+For Eden, select Smash on Home → Options → Download Updates and DLC. The initial
+large update installs with byte progress; smaller DLC packages follow. Launch
+again after completion. Previously installed content may need one initial
+verification to populate its local receipts. Later unchanged content uses file
+metadata rather than rereading entire packages. If the old app is still handling
+an install, cancel and wait for it to finish, or close it normally before changing
+builds. Keep all game/progress/recovery data and lock files. Test previews disable
+application updates until replaced by a normal CI release. No commit/push is made
+until the Linux preview has been tested.
+
+
+Current preview downloads: [Linux x64](build/releases/Broomm-Linux-x64-setup-speed-eden-preview.tar.gz)
+and [macOS](build/releases/Broomm-macOS-setup-speed-eden-preview.zip). On the SSH
+Linux machine, the extracted executable is
+`~/Downloads/Broomm-Linux-setup-speed-eden-preview/bundle/broomm`.

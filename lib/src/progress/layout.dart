@@ -356,7 +356,11 @@ Future<ProgressLayout> gameProgressLayout(
       return ProgressLayout(root.path, 'snes9x-sram-v1', 'snes', [
         ProgressArea('save', 'saves/Snes9x', prefix: stem, exact: '$stem.srm'),
         if (session.coreHash != null)
-          ProgressArea(state, 'states/Snes9x', prefix: '$stem.state'),
+          ProgressArea(
+            state,
+            '${e.retroStateDirectory ?? 'states'}/Snes9x',
+            prefix: '$stem.state',
+          ),
       ]);
     case 'Azahar':
       return threeDsProgressLayout(root.path, u, session.rom, state: state);

@@ -3,14 +3,21 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../progress/files.dart';
+import '../io_worker.dart';
 
 /// Explicit emulator installation only. No polling or unattended upgrades.
 class AndroidApkDownload {
-  AndroidApkDownload({HttpClient? client}) : client = client ?? HttpClient();
+  AndroidApkDownload({HttpClient? client})
+    : client = client ?? HttpClient(),
+      _background = client == null && HttpOverrides.current == null;
   final HttpClient client;
+  final bool _background;
+  IoWorker<String>? _worker;
+  IoContext? _io;
   bool cancelled = false;
   void cancel() {
     cancelled = true;
+    _worker?.cancel();
     client.close(force: true);
   }
 
@@ -146,6 +153,22 @@ class AndroidApkDownload {
     Uri uri,
     void Function(int, int?) progress,
   ) async {
+    if (cancelled) throw StateError('Installation download cancelled.');
+    if (_background) {
+      final worker = _worker = IoWorker(_apkDownloadWorker, [data.path, uri]);
+      try {
+        return File(
+          await worker.run(
+            progress: (value) {
+              final p = value as List;
+              progress(p[0] as int, p[1] as int?);
+            },
+          ),
+        );
+      } finally {
+        _worker = null;
+      }
+    }
     final file = await progressFile(
       data,
       'android/apks/${progressNonce()}.apk',
@@ -154,6 +177,7 @@ class AndroidApkDownload {
     await file.create(exclusive: true);
     final timer = Timer(const Duration(minutes: 10), cancel);
     final output = await file.open(mode: FileMode.writeOnly);
+    _io?.writerOpen = true;
     var closed = false;
     try {
       final reply = await response(uri), expected = reply.contentLength;
@@ -179,13 +203,29 @@ class AndroidApkDownload {
       return file;
     } catch (_) {
       await output.close();
+      _io?.writerOpen = false;
       closed = true;
       if (await file.exists()) await file.delete();
       rethrow;
     } finally {
       timer.cancel();
-      if (!closed) await output.close();
+      if (!closed) {
+        await output.close();
+        _io?.writerOpen = false;
+      }
       client.close(force: true);
     }
   }
+}
+
+Future<String> _apkDownloadWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final download = AndroidApkDownload(client: HttpClient()).._io = io;
+  io.cancellation.abort = download.cancel;
+  final file = await download.download(
+    Directory(a[0] as String),
+    a[1] as Uri,
+    (bytes, total) => io.progress([bytes, total], force: bytes == total),
+  );
+  return file.path;
 }

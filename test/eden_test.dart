@@ -47,7 +47,7 @@ void main() {
     final ini = File('${root.path}/config/eden/qt-config.ini');
     await ini.parent.create(recursive: true);
     await ini.writeAsString(
-      '[Renderer]\nresolution_setup=5\nresolution_setup\\default=false\n',
+      '[UI]\ngui_force_x11=true\n[Renderer]\nresolution_setup=5\nresolution_setup\\default=false\n',
     );
     final game = LaunchGame(
       '42',
@@ -67,6 +67,12 @@ void main() {
     ]);
     final config = await ini.readAsString();
     expect(config, contains('resolution_setup=5'));
+    expect(config, contains('gui_force_x11=true'));
+    if (Platform.isLinux) {
+      expect(config, contains('gui_hide_backend_warning = true'));
+      expect(config, contains('showConsole = true'));
+      expect(config, contains('gui_hide_backend_warning\\default = false'));
+    }
     expect(config, contains('guid:ff0000005669727475616c2043007601,port:3'));
     expect(config, contains('player_7_connected = false'));
     expect(config, contains('confirmStop = 2'));

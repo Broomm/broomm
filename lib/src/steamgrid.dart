@@ -4,6 +4,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'romm/models.dart';
+import 'romm/transfer.dart';
+import 'io_worker.dart';
 
 enum ArtworkKind { icon, hero, logo }
 
@@ -47,19 +49,25 @@ class SteamGridClient {
     Uri? api,
     this.deadline = const Duration(seconds: 20),
   }) : api = api ?? Uri.https('www.steamgriddb.com', '/api/v2'),
-       _http = http ?? HttpClient() {
+       _http = http ?? HttpClient(),
+       _background = http == null && HttpOverrides.current == null {
     _http.connectionTimeout = deadline;
     _http.maxConnectionsPerHost = 4;
   }
   final String key;
   final Uri api;
   final HttpClient _http;
+  final bool _background;
+  final _workers = <IoWorker<Uint8List>, Object?>{};
   final Duration deadline;
   bool closed = false;
   final _cancelledOwners = <Object>{};
   final _requests = <HttpClientRequest, Object>{};
   void cancelRequests(Object owner) {
     _cancelledOwners.add(owner);
+    for (final entry in _workers.entries.toList()) {
+      if (identical(entry.value, owner)) entry.key.cancel();
+    }
     for (final entry in _requests.entries.toList()) {
       if (identical(entry.value, owner)) entry.key.abort();
     }
@@ -210,6 +218,24 @@ class SteamGridClient {
   }) async {
     if (closed || _cancelledOwners.contains(owner))
       throw const RommFailure('Artwork selection was closed.');
+    if (_background) {
+      final worker = IoWorker(_artworkWorker, [
+        key,
+        api,
+        uri,
+        auth,
+        limit,
+        deadline,
+      ]);
+      _workers[worker] = owner;
+      try {
+        return await worker.run();
+      } on DownloadCancelled {
+        throw const RommFailure('Artwork selection was closed.');
+      } finally {
+        _workers.remove(worker);
+      }
+    }
     HttpClientRequest? request;
     var cancelled = false;
     final operation = () async {
@@ -286,6 +312,9 @@ class SteamGridClient {
 
   void close() {
     closed = true;
+    for (final worker in _workers.keys.toList()) {
+      worker.cancel();
+    }
     _http.close(force: true);
     _requests.clear();
     _cancelledOwners.clear();
@@ -308,4 +337,24 @@ class HomeArtwork {
     this.logoCredit,
   });
   final String? icon, hero, logo, iconCredit, heroCredit, logoCredit;
+}
+
+Future<Uint8List> _artworkWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final client = SteamGridClient(
+    a[0] as String,
+    api: a[1] as Uri,
+    deadline: a[5] as Duration,
+    http: HttpClient(),
+  );
+  io.cancellation.abort = client.close;
+  try {
+    return await client._get(
+      a[2] as Uri,
+      auth: a[3] as bool,
+      limit: a[4] as int,
+    );
+  } finally {
+    client.close();
+  }
 }

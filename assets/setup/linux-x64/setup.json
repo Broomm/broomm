@@ -16,106 +16,121 @@
           "sha256": "57bf7c5a45d0553b7462acd2c5f27d93385921abffa294bd191b728075e4637f",
           "bytes": 21197246,
           "format": "zip",
-          "entry": "fbneo_libretro.so"
+          "entry": "fbneo_libretro.so",
+          "rolling": true
         },
         "flycast": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/flycast_libretro.so.zip",
           "sha256": "12372b6555cda004cd3894d9085a41c2fd7613565836f3e631ddf839ca551981",
           "bytes": 5978804,
           "format": "zip",
-          "entry": "flycast_libretro.so"
+          "entry": "flycast_libretro.so",
+          "rolling": true
         },
         "gambatte": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/gambatte_libretro.so.zip",
           "sha256": "acf853b7050941cc0a6bd9ece7beccd0b8c07cc086cf4b7f107f2b2a0333f44c",
           "bytes": 528437,
           "format": "zip",
-          "entry": "gambatte_libretro.so"
+          "entry": "gambatte_libretro.so",
+          "rolling": true
         },
         "genesis_plus_gx": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/genesis_plus_gx_libretro.so.zip",
           "sha256": "527985b1b898e39025021588b6b3d7fdbd7188fa7308346a7a8b199a7350d744",
           "bytes": 1307905,
           "format": "zip",
-          "entry": "genesis_plus_gx_libretro.so"
+          "entry": "genesis_plus_gx_libretro.so",
+          "rolling": true
         },
         "mednafen_lynx": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mednafen_lynx_libretro.so.zip",
           "sha256": "af7e85f4846c4a5c6e46c739d26051445df47d457e573a8b910166852951de27",
           "bytes": 88126,
           "format": "zip",
-          "entry": "mednafen_lynx_libretro.so"
+          "entry": "mednafen_lynx_libretro.so",
+          "rolling": true
         },
         "mednafen_pce_fast": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mednafen_pce_fast_libretro.so.zip",
           "sha256": "ca02362b0a6c355573beb759530f0041d34328156b6846d7310cfb1b88ece95b",
           "bytes": 602946,
           "format": "zip",
-          "entry": "mednafen_pce_fast_libretro.so"
+          "entry": "mednafen_pce_fast_libretro.so",
+          "rolling": true
         },
         "mednafen_saturn": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mednafen_saturn_libretro.so.zip",
           "sha256": "d63147431a52478c09e5fe2e1ea36b965b7f37e2f1ed477e638d2f316566b5ad",
           "bytes": 2273923,
           "format": "zip",
-          "entry": "mednafen_saturn_libretro.so"
+          "entry": "mednafen_saturn_libretro.so",
+          "rolling": true
         },
         "mesen": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mesen_libretro.so.zip",
           "sha256": "242e9eaa934c027450a533cb67573e8a51291f058022243ddc9daf9abbab6a35",
           "bytes": 1069140,
           "format": "zip",
-          "entry": "mesen_libretro.so"
+          "entry": "mesen_libretro.so",
+          "rolling": true
         },
         "mgba": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mgba_libretro.so.zip",
           "sha256": "4e2050a2aa64f6754a84877f4b156c007362ef247939de2adabf60f00a73dea1",
           "bytes": 524108,
           "format": "zip",
-          "entry": "mgba_libretro.so"
+          "entry": "mgba_libretro.so",
+          "rolling": true
         },
         "mupen64plus_next": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/mupen64plus_next_libretro.so.zip",
           "sha256": "8717d9ee26dcd4ae6f450ad9e235d5006c64d4109c33f50397c16c6aebfe0752",
           "bytes": 2719493,
           "format": "zip",
-          "entry": "mupen64plus_next_libretro.so"
+          "entry": "mupen64plus_next_libretro.so",
+          "rolling": true
         },
         "opera": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/opera_libretro.so.zip",
           "sha256": "5f934ee685b891fa6af9fc434c21b7ac830ff62afb594178cf1d6e28f5bee98a",
           "bytes": 306937,
           "format": "zip",
-          "entry": "opera_libretro.so"
+          "entry": "opera_libretro.so",
+          "rolling": true
         },
         "picodrive": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/picodrive_libretro.so.zip",
           "sha256": "82f982621a7dc8a13e009d603582dd881e370d8edf615395f999438a41e75557",
           "bytes": 864823,
           "format": "zip",
-          "entry": "picodrive_libretro.so"
+          "entry": "picodrive_libretro.so",
+          "rolling": true
         },
         "stella": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/stella_libretro.so.zip",
           "sha256": "911bfc51965031a172737d9c443da0200dd8920f40a7ec7862312844c866175b",
           "bytes": 1944679,
           "format": "zip",
-          "entry": "stella_libretro.so"
+          "entry": "stella_libretro.so",
+          "rolling": true
         },
         "virtualjaguar": {
           "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/virtualjaguar_libretro.so.zip",
           "sha256": "9c089b9c33e0771e0e9eb9acbac6c5ed498288c205e67fc92229d5038045b6d7",
           "bytes": 1032979,
           "format": "zip",
-          "entry": "virtualjaguar_libretro.so"
+          "entry": "virtualjaguar_libretro.so",
+          "rolling": true
+        },
+        "snes9x": {
+          "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/snes9x_libretro.so.zip",
+          "sha256": "ead6a8f10f2c284511468c2e8884c7ec9e963673d49a14598f0473171dba41c9",
+          "bytes": 917066,
+          "format": "zip",
+          "entry": "snes9x_libretro.so",
+          "rolling": true
         }
-      },
-      "core": {
-        "url": "https://buildbot.libretro.com/nightly/linux/x86_64/latest/snes9x_libretro.so.zip",
-        "sha256": "ead6a8f10f2c284511468c2e8884c7ec9e963673d49a14598f0473171dba41c9",
-        "bytes": 917066,
-        "format": "zip",
-        "entry": "snes9x_libretro.so"
       }
     },
     "dolphin": {

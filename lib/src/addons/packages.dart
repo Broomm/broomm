@@ -16,6 +16,7 @@ import 'wii.dart';
 import 'wii_shared.dart';
 import 'psp.dart';
 import 'eden.dart';
+import 'verification.dart';
 import '../switch_content.dart';
 import '../psp.dart';
 
@@ -279,7 +280,7 @@ class GamePackages {
         lease,
         (phase) => progress(DownloadProgress(game, phase, 0, 0)),
       );
-      if (previous != null) await _verify(dir, previous);
+      if (previous != null) await _verify(dir, previous, profile);
       final old = previous?['sources'] as Map? ?? {};
       final unchanged =
           remote.length == old.length &&
@@ -450,6 +451,9 @@ class GamePackages {
             units,
             version,
             cancellation,
+            progress: (file, bytes, total) => progress(
+              DownloadProgress(game, 'Installing Switch $file', bytes, total),
+            ),
           );
         } else if (platform == 'wii') {
           base = await _importWii(
@@ -541,6 +545,14 @@ class GamePackages {
         published = true;
         await addonWrite(File('${dir.path}/current.json'), record);
         checkpoint?.call('generation-published');
+        progress(
+          DownloadProgress(
+            game,
+            'Finishing updates and DLC installation',
+            0,
+            0,
+          ),
+        );
         await _apply(dir, record, profile);
         return AddonResult(
           installed,
@@ -639,7 +651,7 @@ class GamePackages {
     return base;
   }
 
-  Future<void> _verify(Directory dir, Map record) async {
+  Future<void> _verify(Directory dir, Map record, Directory profile) async {
     final payload = Directory(
       await addonPath(dir, '${record['generation']}/payload/.probe'),
     );
@@ -661,7 +673,22 @@ class GamePackages {
         throw const FormatException('Invalid shared Wii content');
       expected['shared/${e.key}.app'] = (e.value as Map)['hash'] as String;
     }
-    if (!sameAddonInventory(await addonInventory(root), expected))
+    final metadata = <String, Object?>{
+      for (final e in (record['units'] as Map).entries)
+        e.key as String: ((e.value as Map)['verification'] as Map?)?[''],
+    };
+    if (!sameAddonInventory(
+      await addonInventory(
+        root,
+        verification: AddonVerification(profile, packageEngine),
+        verified: {
+          for (final e in expected.entries)
+            if (metadata[e.key] != null)
+              e.key: {'hash': e.value, 'stamp': metadata[e.key]},
+        },
+      ),
+      expected,
+    ))
       throw const FileSystemException(
         'Native package content changed; existing files were kept',
       );
@@ -797,7 +824,7 @@ class GamePackages {
     if (platform == 'psp' &&
         (await pspGameMetadata(rom))['DISC_ID'] != record['base'])
       throw const FormatException('Selected PSP game differs from its content');
-    await _verify(dir, record);
+    await _verify(dir, record, profile);
     await _apply(dir, record, profile);
   }
 

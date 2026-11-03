@@ -1,0 +1,200 @@
+{
+  "base_commit": "641595f04eba71dd937427fcb41cd11195b581b1",
+  "uncommitted": true,
+  "commits_created": 0,
+  "macos_tests_passed": 508,
+  "linux_tests_passed": 438,
+  "linux_platform_skips": 22,
+  "analysis": "passed",
+  "format": "passed",
+  "workflow_lint": "passed",
+  "before": {
+    "passed": true,
+    "rows": [
+      {
+        "id": "eden",
+        "phase": "verify",
+        "ms": 10620
+      },
+      {
+        "id": "eden",
+        "phase": "stamps",
+        "ms": 23319
+      },
+      {
+        "id": "dolphin",
+        "phase": "verify",
+        "ms": 9858
+      },
+      {
+        "id": "dolphin",
+        "phase": "stamps",
+        "ms": 29384
+      }
+    ]
+  },
+  "after": {
+    "passed": true,
+    "rows": [
+      {
+        "id": "eden",
+        "phase": "verify",
+        "ms": 148
+      },
+      {
+        "id": "eden",
+        "phase": "stamps",
+        "ms": 316
+      },
+      {
+        "id": "dolphin",
+        "phase": "verify",
+        "ms": 114
+      },
+      {
+        "id": "dolphin",
+        "phase": "stamps",
+        "ms": 381
+      }
+    ]
+  },
+  "native_setup_and_content": {
+    "passed": true,
+    "data": "/home/ptrschneider/Projects/broomm/.tool-cache/research/setup-throughput/integration-JJILNQ",
+    "rows": [
+      {
+        "id": "eden",
+        "phase": "complete-setup-including-network",
+        "ms": 8146
+      },
+      {
+        "id": "dolphin",
+        "phase": "complete-setup-including-network",
+        "ms": 13083
+      },
+      {
+        "phase": "retroarch-two-platforms",
+        "cores": [
+          "gambatte",
+          "mesen"
+        ],
+        "shared-frontend-unchanged": true
+      },
+      {
+        "phase": "repeat-content-apply",
+        "ms": 4426
+      },
+      {
+        "phase": "real-smash-content-stage-and-apply",
+        "title": "01006a800016e000",
+        "packages": 100,
+        "units": 203,
+        "staging-ms": 34850,
+        "total-ms": 70183,
+        "progress-updates": 232
+      }
+    ]
+  },
+  "eden_native_startup": {
+    "passed": true,
+    "native_configuration_guard": "acknowledged",
+    "alive_after_startup": true,
+    "profile_is_disposable": true,
+    "gameplay_verified": false
+  },
+  "eden_native_game": {
+    "passed": true,
+    "problems": [],
+    "native_program": "01006a800016e000",
+    "physical_gameplay_verified": false
+  },
+  "private_fixtures_cleaned": true,
+  "production_data_changed": false,
+  "macos": {
+    "path": "build/releases/Broomm-macOS-setup-speed-eden-preview.zip",
+    "bytes": 21297633,
+    "sha256": "848abd29e1ec569bc626a978bd33b9dd97cee7f0d7a11f4a464d1952c1c5c398",
+    "record": {
+      "product": "Broomm",
+      "version": "0.1.7-dev",
+      "build_number": "1013",
+      "target": "macos-universal",
+      "sha": "641595f04eba71dd937427fcb41cd11195b581b1",
+      "working_tree": true,
+      "source_tree_sha256": "8b86ea0623fec5d21aaf2e2b638f251320831a2828f578f885b367a1d30e2d9d",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "payloads": {
+      "Contents/MacOS/broomm": {
+        "architectures": "x86_64 arm64",
+        "sha256": "5270069e91ca454818e4f2110fe9df3ce35430920e00aaf0d463e1240f49820c"
+      },
+      "Contents/Frameworks/App.framework/Versions/A/App": {
+        "architectures": "x86_64 arm64",
+        "sha256": "a9ecfb0f7c1972a46da313c70b256e2e5a8f6aeadbf8d22e2497a59bdc096c0d"
+      },
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+        "architectures": "x86_64 arm64",
+        "sha256": "6744695e6d369711ab154666738ce5b46ac14ebefe6e198a978434f3900ab71a"
+      },
+      "Contents/Resources/native/broomm-sdl2.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "0c97ab9575a4a0ed3246eefdc8eb3ae8eb44d96e92b4dc3d8f2c8151f048eaf5"
+      },
+      "Contents/Resources/native/broomm-sdl3.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "cb298c575a1c415503963b20a514b1493f21bfbc0497a874b40132263a2c53e7"
+      },
+      "Contents/Resources/native/broomm-astris.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "af2771fe5d47831cb7cb9eb66c68d5bbdfadbaace8bb27884cdb3d7553d0866d"
+      },
+      "Contents/Resources/native/broomm-installer-guard.dylib": {
+        "architectures": "x86_64 arm64",
+        "sha256": "ade3fb870e3e0408ff1a7fb570a131db5bc3cb6406cd3341e594afa3dcd8eb38"
+      }
+    },
+    "signature": "source/fresh extraction deep strict all architectures passed",
+    "archive_integrity": "passed",
+    "bridge_and_linux_asset_readbacks": "passed",
+    "ad_hoc_signed": true,
+    "notarized": false
+  },
+  "linux": {
+    "path": "/home/ptrschneider/Downloads/Broomm-Linux-x64-setup-speed-eden-preview.tar.gz",
+    "bytes": 11982582,
+    "sha256": "7fec1f5f8aa50a07ff76a4b58f47210649faa36e61216c5f3660e619b9d7f352",
+    "record": {
+      "product": "Broomm",
+      "version": "0.1.7-dev",
+      "build_number": "1013",
+      "target": "linux-x64",
+      "sha": "641595f04eba71dd937427fcb41cd11195b581b1",
+      "working_tree": true,
+      "source_tree_sha256": "8b86ea0623fec5d21aaf2e2b638f251320831a2828f578f885b367a1d30e2d9d",
+      "build_host": "CachyOS x64",
+      "entries": [
+        "NATIVE-SOURCES.md",
+        "RUNNING.txt",
+        "broomm",
+        "broomm-release.json",
+        "data",
+        "lib",
+        "share"
+      ]
+    },
+    "archive_integrity": "all payload hashes and executable bits passed",
+    "signature": "Linux package is unsigned"
+  },
+  "unexecuted_native_hosts": [
+    "Windows",
+    "Android"
+  ]
+}

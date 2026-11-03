@@ -1,5 +1,37 @@
 # Implementation plan
 
+Setup throughput follow-up (2026-11-02, uncommitted preview): downloaded emulator
+packages retain one archive checksum and structural/ELF checks; verified packages
+no longer receive repeated per-file hash scans. Linux metadata, copying and
+payload downloads run outside the UI isolate. RetroArch card/Home setup selects
+one platform core with a shared frontend. Default firmware, save/state, artwork,
+setup, APK and application-package downloads now share the background I/O
+approach; custom transports keep their existing behavior. Eden's native NCA
+staging reports bytes, and immutable add-on content uses durable metadata-bound
+receipts after its first verification, preserving ownership and interrupted
+publication checks. Saves remain outside that cache. A real Linux Smash test also corrected Eden's
+cwd/user precedence, blocking Wayland recommendation and disabled native console
+identity output; real title load, virtual port assignment and pause/resume pass in nine seconds.
+All 508 macOS and 438 Linux tests pass (22 existing Linux skips); current preview
+archives/signatures are verified, without committing or pushing.
+See the
+[measurements, verification and test-build walkthrough](docs/setup-throughput.md).
+
+
+Linux setup corrections (2026-11-02, uncommitted preview): official rolling
+Libretro core downloads no longer require historical archive sizes/hashes.
+Explicit setup records actual library identities and selects them durably;
+restarts retain those selections and states remain build-specific, including
+SNES. Linux updates preserve executable TAR modes, and native installation uses
+a private executable helper even when an older updater lost its mode. All nine
+standalone installations pass with that broken source mode; fresh upstream
+RetroArch setup and native ABI loading pass for all fifteen cores. Reset all
+emulators removes managed installations/settings while retaining local progress,
+console identities, installed game content and pending sync, as clarified by the
+owner. All 496 macOS and 427 Linux tests pass (22 Linux platform skips), with
+independent kernel/sanitizer/bundle checks. Preview packaging and owner testing
+are separate from commits/CI publication. See [reproduction and walkthrough](docs/linux-setup-repair.md).
+
 macOS CI controller-test correction (2026-11-02): the hosted native test read
 shortcut events after fixed 50 ms run-loop waits and missed the first Y event.
 Controller tests now acknowledge each native press/release and its queued main

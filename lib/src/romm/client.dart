@@ -8,6 +8,7 @@ import 'transfer.dart';
 import 'credential.dart';
 import 'content_download.dart';
 import 'download_worker.dart';
+import '../io_worker.dart';
 
 part 'saves.dart';
 
@@ -17,15 +18,20 @@ class RommClient with RommSaves {
     HttpClient? http,
     this.deadline = const Duration(seconds: 20),
   }) : _http = http ?? HttpClient(),
-       _backgroundDownloads = http == null {
+       _backgroundDownloads = http == null && HttpOverrides.current == null {
     _http.connectionTimeout = deadline;
     _http.idleTimeout = const Duration(seconds: 15);
     _http.maxConnectionsPerHost = 4;
   }
   final Uri server;
+  @override
+  Uri get serverAddress => server;
   final HttpClient _http;
   final bool _backgroundDownloads;
   final _downloadWorkers = <RommDownloadWorker>{};
+  final _saveWorkers = <IoWorker<void>>{};
+  final _artworkWorkers = <IoWorker<Uint8List>>{};
+  IoContext? _saveIo;
   final Duration deadline;
   String? _access, _refresh;
   DateTime? _expires;
@@ -302,7 +308,7 @@ class RommClient with RommSaves {
     );
     // Explicitly supplied transports retain their own proxy/certificate/test
     // behavior. Ordinary game downloads use a worker's independent event loop.
-    if (_backgroundDownloads && contentPath.first == 'roms') {
+    if (_backgroundDownloads) {
       final worker = RommDownloadWorker(
         uri,
         _access!,
@@ -364,7 +370,22 @@ class RommClient with RommSaves {
   Future<Uint8List?> artwork(String path) async {
     final uri = artworkUri(path);
     if (uri == null) return null;
-    return _bytes('GET', uri, limit: 8 * 1024 * 1024);
+    if (!_backgroundDownloads)
+      return _bytes('GET', uri, limit: 8 * 1024 * 1024);
+    await _ensureToken();
+    final worker = IoWorker(_rommArtworkWorker, [
+      server,
+      uri,
+      _access!,
+      deadline,
+    ]);
+    _artworkWorkers.add(worker);
+    try {
+      if (_closed) worker.cancel();
+      return await worker.run();
+    } finally {
+      _artworkWorkers.remove(worker);
+    }
   }
 
   Future<dynamic> _json(
@@ -491,6 +512,22 @@ class RommClient with RommSaves {
     _access = null;
     _refresh = null;
     for (final worker in _downloadWorkers.toList()) worker.cancel();
+    for (final worker in _saveWorkers.toList()) worker.cancel();
+    for (final worker in _artworkWorkers.toList()) worker.cancel();
     _http.close(force: true);
+  }
+}
+
+Future<Uint8List> _rommArtworkWorker(Object? arguments, IoContext io) async {
+  final a = arguments as List;
+  final client =
+      RommClient(a[0] as Uri, http: HttpClient(), deadline: a[3] as Duration)
+        .._access = a[2] as String
+        .._clientToken = true;
+  io.cancellation.abort = client.close;
+  try {
+    return await client._bytes('GET', a[1] as Uri, limit: 8 * 1024 * 1024);
+  } finally {
+    client.close();
   }
 }

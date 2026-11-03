@@ -6,12 +6,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/progress/zip.dart';
 import 'package:broomm/src/updates/archive.dart';
 
-List<int> tarEntry(String name, List<int> contents, {int type = 48}) {
+List<int> tarEntry(
+  String name,
+  List<int> contents, {
+  int type = 48,
+  int mode = 0x1a4,
+}) {
   final h = Uint8List(512);
   void put(int start, String text) =>
       h.setRange(start, start + text.length, ascii.encode(text));
   put(0, name);
-  put(100, '0000755');
+  put(100, mode.toRadixString(8).padLeft(7, '0'));
   put(108, '0000000');
   put(116, '0000000');
   put(124, contents.length.toRadixString(8).padLeft(11, '0'));
@@ -29,6 +34,45 @@ List<int> tarEntry(String name, List<int> contents, {int type = 48}) {
 }
 
 void main() {
+  test('Linux updates preserve executable helper permissions without making data executable', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'broomm-update-executables-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    final archive = await File('${root.path}/app.tar.gz').writeAsBytes(
+      gzip.encode([
+        ...tarEntry(
+          'bundle/broomm',
+          utf8.encode('#!/bin/sh\nexit 17\n'),
+          mode: 0x1ed,
+        ),
+        ...tarEntry(
+          'bundle/lib/broomm-native-run',
+          utf8.encode('#!/bin/sh\nexit 23\n'),
+          mode: 0x1ed,
+        ),
+        ...tarEntry('bundle/data/asset', [42]),
+        ...List.filled(1024, 0),
+      ]),
+    );
+    final output = Directory('${root.path}/updated app with spaces');
+    await extractUpdate(archive, output, 'linux');
+    expect(
+      (await Process.run('${output.path}/bundle/broomm', [])).exitCode,
+      17,
+    );
+    expect(
+      (await Process.run(
+        '${output.path}/bundle/lib/broomm-native-run',
+        [],
+      )).exitCode,
+      23,
+    );
+    expect(
+      (await File('${output.path}/bundle/data/asset').stat()).mode & 0x49,
+      0,
+    );
+  }, skip: Platform.isWindows);
   test('Linux tar extraction accepts complete bounded bundles and rejects traversal, collisions and links before writes', () async {
     final root = await Directory.systemTemp.createTemp('broomm-update-tar-');
     addTearDown(() => root.delete(recursive: true));

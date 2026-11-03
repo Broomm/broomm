@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
-import '../progress/digest.dart' show progressFileHash;
+import 'verification.dart';
 import 'files.dart';
 
 /// Per-file native ownership for Wii content and Switch selection records.
@@ -11,6 +10,7 @@ import 'files.dart';
 class PackageProfile {
   PackageProfile(this.profile, this.engine, {this.checkpoint});
   final Directory profile;
+  late final verification = AddonVerification(profile, engine);
   final String engine;
   final void Function(String)? checkpoint;
   Directory get user =>
@@ -98,15 +98,7 @@ class PackageProfile {
     return j;
   }
 
-  Future<String?> _fingerprint(String path) async {
-    final type = await FileSystemEntity.type(path, followLinks: false);
-    if (type == FileSystemEntityType.notFound) return null;
-    if (type != FileSystemEntityType.file)
-      throw const FileSystemException(
-        'Native package file is linked or invalid',
-      );
-    return Isolate.run(() => progressFileHash(File(path)));
-  }
+  Future<String?> _fingerprint(String path) => verification.fingerprint(path);
 
   Future<String> _original(String hash) async {
     if (!_hash.hasMatch(hash))
@@ -118,22 +110,8 @@ class PackageProfile {
     );
   }
 
-  Future<void> _copy(String source, String target, String hash) async {
-    if (await addonExists(target))
-      throw const FileSystemException('A Native staging file already exists');
-    await File(target).create(exclusive: true);
-    final sink = File(target).openWrite();
-    try {
-      await sink.addStream(File(source).openRead());
-      await sink.flush();
-    } finally {
-      await sink.close();
-    }
-    if (await _fingerprint(target) != hash)
-      throw const FileSystemException(
-        'Native package copy could not be verified',
-      );
-  }
+  Future<void> _copy(String source, String target, String hash) =>
+      verification.copy(source, target, hash);
 
   Future<void> apply(
     String owner,
@@ -176,6 +154,13 @@ class PackageProfile {
             if (old?['original'] != null) 'original': old!['original'],
           };
           sources[path] = await addonPath(payload, path);
+          final stamp = (unit['verification'] as Map?)?[h.key];
+          if (stamp != null)
+            await verification.remember(
+              File(sources[path]!),
+              h.value as String,
+              expectedStamp: stamp,
+            );
         }
       }
     }
@@ -300,6 +285,10 @@ class PackageProfile {
       if (await addonExists(transaction.path))
         throw const FileSystemException('Native package recovery is pending');
       await stage.rename(transaction.path);
+      await verification.relocated(
+        stage.absolute.path,
+        transaction.absolute.path,
+      );
       published = true;
       checkpoint?.call('prepared');
       await recover();
@@ -381,7 +370,7 @@ class PackageProfile {
           throw const FileSystemException(
             'Native package changed during recovery; files were kept',
           );
-        await File(target).rename(backup);
+        await verification.rename(target, backup, previous);
         actual = null;
         checkpoint?.call('backed-up');
       } else if (saved != previous) {
@@ -396,7 +385,7 @@ class PackageProfile {
           throw const FileSystemException(
             'Pending Native package is incomplete',
           );
-        await File(ready).rename(target);
+        await verification.rename(ready, target, incoming);
         if (await _fingerprint(target) != incoming)
           throw const FileSystemException(
             'Native publication could not be verified',

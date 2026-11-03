@@ -51,7 +51,9 @@ Broomm provisions managed emulator installations shared across its profiles. Use
 
 Automatic provisioning is driven by **setup JSON files**, following PGCS's manifest-based model. Emulator updates are never automatic. Users update a managed emulator manually, or explicitly obtain a newer `setup.json` from Broomm and import/install it through the app. Broomm reads that file and performs the requested installation/update. Selecting an existing system executable does not authorize updating it.
 
-Bundle usable delivery recipes with the application, independently of a developer checkout. Normal supported setup must complete inside Broomm without asking users to obtain an external pack or import a setup JSON. Download available, reviewed emulator/core versions after explicit setup confirmation. Keep optional custom/offline imports for users who choose them. Verify archive and resulting application identities before publishing a managed installation. Unavailable reviewed builds must be reported rather than silently replaced with an unverified rolling version. Retain usable installed cores until explicit setup, preserve ordinary saves, and isolate incompatible save-state builds in both storage and synchronization.
+RetroArch has one shared managed frontend. Setting it up under a platform downloads only that platform's core; it does not configure the other platforms. Later platform setup reuses the frontend and keeps previously installed cores and progress. Normal Home setup and imported-recipe card reviews follow the same rule. Explicit developer/bulk setup may still select all cores.
+
+Bundle usable delivery recipes with the application, independently of a developer checkout. Normal supported setup must complete inside Broomm without asking users to obtain an external pack or import a setup JSON. Download available, reviewed emulator/core versions after explicit setup confirmation. Keep optional custom/offline imports for users who choose them. Check the downloaded package SHA-256 once before extraction, then check safe structure and the required executable architecture before publishing. Do not hash every extracted file again for a verified package or on ordinary launch. Retain macOS signature preparation/verification and metadata-bound native build identity. Extracted-folder imports without a verified package still need their reviewed fingerprints. Unavailable reviewed builds must be reported rather than silently replaced with an unverified rolling version. Retain usable installed cores until explicit setup, preserve ordinary saves, and isolate incompatible save-state builds in both storage and synchronization.
 
 Emulator Settings lists every platform reported by the active RomM server, with supported emulator cards beneath each platform and an explanatory empty state where none is supported. Only configured emulators can be defaults; a platform with none configured has no default. Successful setup makes that emulator the default, including when another emulator was already configured. Users can subsequently select another configured alternative. Home Play uses that choice. Setup review and confirmation expand inside the selected card. Configured cards also offer confirmed removal of the shared managed application and installation resources, preserving all profile configuration, saves/states and shared game files. Removal explains effects on other platforms sharing the same emulator and cannot run during a game.
 
@@ -90,6 +92,22 @@ Required firmware, BIOS, keys, and emulator-specific setup must be explained in 
 PS3 also supports the update/DLC workflow using region/title-matching PKG packages and associated user-provided RAP files. Install privately, reconcile differences from RomM, and remove owned native content when deleting a game while preserving savedata and content still used by another installation. Support extracted PS3 games and ISO images. Download an encrypted ISO's adjacent `.dkey` with the game, retain its matching stem and directory, and let RPCS3 consume the sidecar through its native ISO reader. Do not put key contents in arguments, logs or shared configuration. Nintendo DS uses melonDS and supports importing ordinary raw DS save files for cloud-save testing.
 
 RPCS3 package ownership applies to individual package files: a title directory can also contain files created by the game. Preserve those files during add-on install, repair and removal. Retain pre-existing overlapping files before replacing them, and restore them when Broomm's last package owner is removed. An independently running Broomm instance keeps its download lock; other instances should still display the persisted queue read-only and offer refresh/recovery after the writer exits.
+
+Linux RetroArch core setup uses the current official Libretro downloads at the
+time of an explicit setup. Mutable nightly archives must not be rejected for
+having a different historical size or checksum. Record the installed library's
+actual identity, retain existing saves and separate incompatible state builds.
+Startup and gameplay do not fetch newer cores. This exception applies to core
+delivery; executable builds used by concrete native bridges remain reviewed.
+
+Offer **Reset all emulators** at the top of desktop Emulator Settings, with a
+controller-accessible confirmation. Remove managed applications and setup
+downloads and reset native settings/caches across profiles. Preserve all local
+saves, save states, console identities, installed game content and pending cloud
+sync, as well as games, artwork, accounts and remote content. Reset known settings
+locations rather than deleting whole native user/NAND trees. Restore Broomm's
+default configuration without replacing progress. Active writers block reset;
+interrupted resets remain visible and can be resumed without valid setup records.
 
 ## Starting and controlling a game
 

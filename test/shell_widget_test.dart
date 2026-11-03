@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:broomm/src/shell/app.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
+import 'package:broomm/src/managed_emulators.dart' show SetupPlan;
 import 'package:broomm/src/shell/controls.dart';
 import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/romm/transfer.dart';
@@ -13,6 +14,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'shell_model_test.dart' show FixtureRomm, settleModel;
 import 'support/review_emulators.dart';
+
+class _CompletedReview extends ReviewEmulators {
+  _CompletedReview(super.data, {super.project});
+  Future<SetupPlan>? completion;
+  @override
+  Future<SetupPlan> readPlan({String? file, Set<String>? only}) =>
+      completion = super.readPlan(file: file, only: only);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -370,11 +379,12 @@ void main() {
     'a completed Store download offers Play and Home guides it to the required managed emulator setup',
     (t) async {
       model.dispose();
+      final reviews = _CompletedReview(root, project: Directory.current.path);
       model = ShellModel(
         ShellStorage(root),
         clientFactory: _DownloadFixture.new,
         project: Directory.current.path,
-        emulatorManager: ReviewEmulators(root, project: Directory.current.path),
+        emulatorManager: reviews,
       );
       await t.runAsync(model.start);
       await openHome(t);
@@ -446,10 +456,30 @@ void main() {
       expect(find.text('Set up tested emulators'), findsNothing);
       // Native writer inspection and setup-source reads complete in the real
       // I/O zone. Drain that handoff before injecting the next hardware event.
-      await t.runAsync(() => Future<void>.delayed(Duration.zero));
+      expect(reviews.completion, isNotNull);
+      var completed = false;
+      unawaited(
+        reviews.completion!.then((_) {
+          completed = true;
+        }),
+      );
+      for (var i = 0; i < 100 && !completed; i++) {
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await t.pump(const Duration(milliseconds: 20));
+      }
+      expect(completed, isTrue);
       await press(t, LogicalKeyboardKey.gameButtonB);
       await nativeInput(t, 'accept');
-      await t.runAsync(() => Future<void>.delayed(Duration.zero));
+      // Native recovery and setup reads are asynchronous filesystem work. Wait
+      // for the observable navigation result, not a single zero-delay turn.
+      for (var i = 0; i < 100 && model.screen != ShellScreen.emulators; i++) {
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await t.pump(const Duration(milliseconds: 20));
+      }
       await t.pumpAndSettle();
       expect(
         model.screen,

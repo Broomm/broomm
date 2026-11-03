@@ -5,6 +5,7 @@ import 'dart:io';
 import '../progress/files.dart';
 import '../progress/zip.dart';
 import '../romm/transfer.dart';
+import '../linux_runtime.dart' show prepareLinuxBridge;
 
 const setupExpandedLimit = 8 * 1024 * 1024 * 1024;
 
@@ -61,6 +62,12 @@ class SetupWriterUncertain implements Exception {
   @override
   String toString() =>
       'Archive preparation could not stop or detach safely. Its private staging was kept for recovery; close Broomm before inspecting it.';
+}
+
+/// Dart background writers have no inherited native writer lock. Their owner
+/// must retain its session lease until process exit if closure is unconfirmed.
+class SetupBackgroundWriterUncertain extends SetupWriterUncertain {
+  const SetupBackgroundWriterUncertain();
 }
 
 /// Only native archive/disk-image primitives live here. Selection, validation,
@@ -256,8 +263,13 @@ Future<String> extractSetupArchive(
       await setupTool('/bin/chmod', ['u+x', image.absolute.path], cancellation);
       final destination = Directory('${stage.path}/extracted');
       await destination.create();
-      await setupTool(
+      final privateRunner = await prepareLinuxBridge(
         runner,
+        stage.absolute.path,
+        runner: true,
+      );
+      await setupTool(
+        '${stage.absolute.path}/${privateRunner.substring(2)}',
         [
           destination.path,
           destination.path,

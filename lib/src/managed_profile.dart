@@ -3,14 +3,16 @@ import 'dart:io';
 
 import 'managed_emulators.dart';
 import 'romm/transfer.dart';
+import 'setup/settings_paths.dart';
 
 /// Called only while the application's session/writer lease is held.
 Future<Directory> prepareManagedProfile(
   Directory data,
   String profileId,
   TestedBuild build,
-  Directory release,
-) async {
+  Directory release, {
+  bool resetSettings = false,
+}) async {
   final parent = Directory('${data.path}/profiles/$profileId/emulators');
   await ownedDirectory(parent);
   final destination = Directory('${parent.path}/${build.profileId}');
@@ -18,7 +20,7 @@ Future<Directory> prepareManagedProfile(
     destination.path,
     followLinks: false,
   );
-  if (type != FileSystemEntityType.notFound) {
+  if (type != FileSystemEntityType.notFound && !resetSettings) {
     await ownedDirectory(destination);
     final marker = File('${destination.path}/profile.json');
     if (await FileSystemEntity.type(marker.path, followLinks: false) !=
@@ -113,6 +115,7 @@ Future<Directory> prepareManagedProfile(
     final resources = Directory('${release.path}/resources');
     final cancellation = DownloadCancellation();
     Future<void> resource(String key, String target) async {
+      if (resetSettings) return;
       final source = '${resources.path}/$key';
       if (await FileSystemEntity.type(source, followLinks: false) !=
           FileSystemEntityType.notFound) {
@@ -206,10 +209,11 @@ BIOS=bios.bin
         );
       case 'rpcs3':
         await resource('ps3_firmware', '$user/dev_flash');
-        await copyMissingIcons(
-          '${release.path}/${build.bundle}/Contents/Resources/Icons',
-          '$user/Icons',
-        );
+        if (!resetSettings)
+          await copyMissingIcons(
+            '${release.path}/${build.bundle}/Contents/Resources/Icons',
+            '$user/Icons',
+          );
         await ownedDirectory(Directory('$user/GuiConfigs'));
         await File('$user/GuiConfigs/CurrentSettings.ini').writeAsString('''
 [main_window]
@@ -298,6 +302,37 @@ use_custom_storage=false
       }),
       flush: true,
     );
+    if (resetSettings) {
+      for (final path in emulatorSettingsPaths(build.profileId)) {
+        final source = '${stage.path}/$path';
+        final target = '${destination.path}/$path';
+        final kind = await FileSystemEntity.type(source, followLinks: false);
+        if (kind == FileSystemEntityType.file) {
+          await ownedDirectory(File(target).parent);
+          await copyTree(source, target, DownloadCancellation());
+        } else if (kind == FileSystemEntityType.directory) {
+          await ownedDirectory(Directory(target));
+          await for (final file in Directory(
+            source,
+          ).list(recursive: true, followLinks: false)) {
+            final relative = file.path.substring(source.length + 1);
+            if (file is Directory) {
+              await ownedDirectory(Directory('$target/$relative'));
+            } else if (file is File) {
+              await ownedDirectory(File('$target/$relative').parent);
+              await copyTree(
+                file.path,
+                '$target/$relative',
+                DownloadCancellation(),
+              );
+            }
+          }
+        }
+      }
+      await stage.delete(recursive: true);
+      published = true;
+      return destination;
+    }
     await stage.rename(destination.path);
     published = true;
     return destination;

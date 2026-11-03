@@ -13,8 +13,7 @@
       "sdl": 3,
       "sdl_library": "lib/libSDL3.so.0",
       "native": {},
-      "integrity_asset": "assets/setup/linux-x64/retroarch.integrity.json",
-      "core_sha256": "9b2b6ea9d88f96c156590443ddd05ee56aaf4e495329a889c979921942717a31"
+      "integrity_asset": "assets/setup/linux-x64/retroarch.integrity.json"
     },
     {
       "id": "dolphin",

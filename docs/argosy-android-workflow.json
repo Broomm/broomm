@@ -1,0 +1,425 @@
+{
+  "date": "2026-10-30",
+  "scope": "Research only; source audit and proposal, not Android acceptance",
+  "broomm_revision": "82c953d4858f5229f6fa996e2b852417144a45b0",
+  "upstream": {
+    "repository": "https://github.com/rommapp/argosy-launcher",
+    "commit": "68f1368b61707f8c4ad001b89eb095a705a46143",
+    "committed_at": "2026-10-29T04:27:55Z",
+    "source_version": "2.27.3 (368)",
+    "tree_truncated": false,
+    "retrieved_source_files": 63,
+    "inventory_note": "Retrieved selection; findings cite the inspected owning functions. Not a build or a whole-repository correctness audit.",
+    "files": [
+      {
+        "path": "LICENSE",
+        "bytes": 35149,
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/LICENSE"
+      },
+      {
+        "path": "app/build.gradle.kts",
+        "bytes": 12660,
+        "sha256": "86e1a2535f2d83e11e3520209794bf04df09b01f6d4733fbd3de769482b67e64",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/build.gradle.kts"
+      },
+      {
+        "path": "app/src/main/AndroidManifest.xml",
+        "bytes": 13565,
+        "sha256": "a9bf3dfd8eeadb56aa69428d179b78f0b5af8a840724248c1ef94c297644da9e",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/AndroidManifest.xml"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/BiosPathRegistry.kt",
+        "bytes": 22741,
+        "sha256": "43d8303180beca43e655e76e5e1abb5f895b40e5693b74e9c51c15aae12fa649",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/BiosPathRegistry.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/CoreSystemDataManager.kt",
+        "bytes": 7587,
+        "sha256": "f9dbde2c6c343f563451169a8ccbb4617ab68d0e9be16a10ab32ca3999fcb3ea",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/CoreSystemDataManager.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDetector.kt",
+        "bytes": 7987,
+        "sha256": "c202e6313a09cc6574c12eadd69f941d2b8699ee16c8765d79343f2bc3450865",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDetector.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDownloadManager.kt",
+        "bytes": 12754,
+        "sha256": "87bd8ce30bf4b335d4a5822ce9be0851d2a322a30254739fd0629f37a285ac56",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorDownloadManager.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorRegistry.kt",
+        "bytes": 92794,
+        "sha256": "e860aa70b2bd5f0894db2155ed1b085fdfd7c454a877f62dfd6420e9832be73c",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorRegistry.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorUpdateManager.kt",
+        "bytes": 10467,
+        "sha256": "a7f219ce32a7f43c2e1827159546c5613bab48ec9c0fdbc0188e2b48ea81dc56",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/EmulatorUpdateManager.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/GameLauncher.kt",
+        "bytes": 98578,
+        "sha256": "e9d37b74f2080d2d2f11d0d018d5c812e689109af95fb6c33325bbfbaaa34bec",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/GameLauncher.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/GameSessionService.kt",
+        "bytes": 34698,
+        "sha256": "c86b81e36cb425b0a9981ab6f7b3edb5d8bda4717eff4f677f730497691e534e",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/GameSessionService.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/LibretroSavePathResolver.kt",
+        "bytes": 2575,
+        "sha256": "89703a61b6d1397e1c441b399ca9618741a648a0a8ec2eecc9d6175767b71243",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/LibretroSavePathResolver.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/PlaySessionTracker.kt",
+        "bytes": 54942,
+        "sha256": "89c5a2126e770ba921a5c645b5e750d04de10f70cf4be3bbae9a9b58c62e3ff9",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/PlaySessionTracker.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/RetroArchConfigParser.kt",
+        "bytes": 20579,
+        "sha256": "e3c97a33efb7b353385446c9d677c2566e61dd7576dc35117077ab59165aa472",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/RetroArchConfigParser.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/RetroArchPathResolver.kt",
+        "bytes": 6457,
+        "sha256": "06498f783436acf6caea8c22c1e16f8d385b226c6b2362c93606888ca3361a6f",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/RetroArchPathResolver.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/SavePathRegistry.kt",
+        "bytes": 40348,
+        "sha256": "06d55b76c58edeee3f3e66da9b8fe841b6d7170fd0fcda80ac13f4eed16a52d4",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/SavePathRegistry.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/SessionSaveFinalizer.kt",
+        "bytes": 8082,
+        "sha256": "d67c8b0b1e787d5995df4960ef8a31686e9a29d7a7ae142688ca95e17c6c5258",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/SessionSaveFinalizer.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/SystemDataFetcher.kt",
+        "bytes": 945,
+        "sha256": "5b47b6585f5e8f717ab412e4cca44448bedac7b80bf10d7f6aa05fa8e90ea950",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/SystemDataFetcher.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/PpssppMemoryStick.kt",
+        "bytes": 1682,
+        "sha256": "1019022aa5a81eda142b51b40f3285869194932acbfdfe5a39baf2ca28bed248",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/PpssppMemoryStick.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/SavePathAuthority.kt",
+        "bytes": 13964,
+        "sha256": "d7d30f86ed9d4a9f3aa7a182bbfd4c97d97ae453d83eec6d5552d5d151d24b8b",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/emulator/savepath/SavePathAuthority.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/installer/SeededInstallers.kt",
+        "bytes": 2088,
+        "sha256": "6f592b7b4d90e57b4871e5a0acd7b22dfc193b45a0fe333fd2c355f9faaf1d1a",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/installer/SeededInstallers.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/BiosRepository.kt",
+        "bytes": 46265,
+        "sha256": "3cc30d535a467c1348e5023d28f2f7d4f7620b3c2ee52497e493c34d7116ced8",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/BiosRepository.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/EmulatorConfigRepository.kt",
+        "bytes": 3289,
+        "sha256": "9773225f687c97ffac1055b46e8a528d16f3267cd5ca20d35b4e3709fe2cb6ef",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/EmulatorConfigRepository.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/EmulatorSaveConfigRepository.kt",
+        "bytes": 9334,
+        "sha256": "d697bd8e3beebbfa4d9e3d5343595cf2fab97465c682f3fbb8fbdb1622e64094",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/EmulatorSaveConfigRepository.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncApiClient.kt",
+        "bytes": 34292,
+        "sha256": "4bc8c270987b078f9192e567c7f5b75b79a12e90cd689eefc4803abfcc690ba7",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncApiClient.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncOrchestrator.kt",
+        "bytes": 37310,
+        "sha256": "818fd37d93a3fc8fc22282b7e4edffd1b385b7cf6e302b5b3d1b54a29f3fdf89",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncOrchestrator.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncRepository.kt",
+        "bytes": 26891,
+        "sha256": "3e951e58faf707397627f3d6178c6708ad9177df153a503ff75363667b723ee8",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveSyncRepository.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/repository/SaveUploader.kt",
+        "bytes": 35791,
+        "sha256": "cb62b1f9dac602dd1b26b3ccd246e08c462b18abf4f479c07c52ea818563547d",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/repository/SaveUploader.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/storage/AndroidDataAccessor.kt",
+        "bytes": 10349,
+        "sha256": "4ee74d4eb9daf3f1908186c5f344456ed474e9fa015a2e78709f79b846c18451",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/storage/AndroidDataAccessor.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/storage/AndroidDataMirror.kt",
+        "bytes": 15426,
+        "sha256": "156a1feb6d5e01bb7d4f2252a60f01d6334ba6c01cfdd0aef49cdcd0db86b6b8",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/storage/AndroidDataMirror.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/storage/FileAccessLayerImpl.kt",
+        "bytes": 16625,
+        "sha256": "1e15085319bca7d7bb1f2ed6595eda597db088bf95fc3b6c71da3b8173719989",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/storage/FileAccessLayerImpl.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/storage/ManagedStorageAccessor.kt",
+        "bytes": 21611,
+        "sha256": "bacccb5e6271026703f5241a13ff4c2871f3f2fe55a248b02a409ec3c29018dd",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/storage/ManagedStorageAccessor.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/storage/RootFileAccessor.kt",
+        "bytes": 2561,
+        "sha256": "02cf65dc97eab8da41df1acd0b7fb9fff7b0bc7e0ac544dbab682ec29a1982ff",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/storage/RootFileAccessor.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/SavePathResolver.kt",
+        "bytes": 54435,
+        "sha256": "058b6018b2edc285fb42b7425c0f86dde4482b4fa6f75f9e9cda98e8102dfabf",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/SavePathResolver.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/SaveSyncDownloadObserver.kt",
+        "bytes": 2586,
+        "sha256": "4270d338a711bc3a3dd350e1ecc91568d3efab1958be245184420c1ae31cc165",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/SaveSyncDownloadObserver.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/SaveSyncWorker.kt",
+        "bytes": 4765,
+        "sha256": "1136bafbcfee81e1f46fc7d52c3a917d6c6f67a2e49c323098243424a1a4740f",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/SaveSyncWorker.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/snapshot/SnapshotSyncRouter.kt",
+        "bytes": 5880,
+        "sha256": "f6d750d48d9acc38923bbb3f5bb9faf980a6a31e759ef59697a07ffb73c3d1dd",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/snapshot/SnapshotSyncRouter.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/LegacySaveSyncStrategy.kt",
+        "bytes": 324,
+        "sha256": "e25e4410c7a5e32f5f957d9f851e4a7db543d4b47581318dd8cbd41e5023a147",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/LegacySaveSyncStrategy.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/NegotiatorSaveSyncStrategy.kt",
+        "bytes": 6372,
+        "sha256": "810daf2fecee5c3704e3acee021d1fb031a5364f3173b91b6c71fbfd191e0dae",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/NegotiatorSaveSyncStrategy.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/SaveSyncStrategySelector.kt",
+        "bytes": 636,
+        "sha256": "2af50007bc4a498cce28d6f10d9fd1acc405bb5fad9cb6c288d35d2d294757b6",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/sync/strategy/SaveSyncStrategySelector.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/update/ApkInstallManager.kt",
+        "bytes": 11298,
+        "sha256": "3bac08df2b3292b8b8f5c8ee64f0371fc8da16cfd008c4ab7bee708be1c0a81f",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/update/ApkInstallManager.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/data/update/AppInstaller.kt",
+        "bytes": 2705,
+        "sha256": "4d8c539f2cc8d35f36392ca44bc162ae1c970cefab2b1f5d4d0b2fb6176c7299",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/data/update/AppInstaller.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/domain/usecase/game/LaunchGameUseCase.kt",
+        "bytes": 4896,
+        "sha256": "7c290eb0df1d2df2c50d53c701f505c1c86c1455f4d5bb85266e8e748cee2118",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/domain/usecase/game/LaunchGameUseCase.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/domain/usecase/save/RestoreCachedSaveUseCase.kt",
+        "bytes": 6808,
+        "sha256": "ee3c31cc4d0628b38c50e43c7fcd4bd5bf190b0525d868abfaff8ce67131dc33",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/domain/usecase/save/RestoreCachedSaveUseCase.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/domain/usecase/save/SyncSaveOnSessionEndUseCase.kt",
+        "bytes": 9105,
+        "sha256": "cb66c30970fa9336425ab6f84ccd1d59beee9e3805c3bd7d47745e386ddbc0bd",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/domain/usecase/save/SyncSaveOnSessionEndUseCase.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/libretro/CoreCrashDetector.kt",
+        "bytes": 1663,
+        "sha256": "6593a073fa8de2914ba31d01e839ecc2357303bef7cdc46fe070c61da6fe743d",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/libretro/CoreCrashDetector.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/libretro/LibretroActivity.kt",
+        "bytes": 191305,
+        "sha256": "b886959417aab3cdd56a2d1962f65849e6acc1576863a88bffb295617faf8e84",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/libretro/LibretroActivity.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/libretro/LibretroBuildbot.kt",
+        "bytes": 2307,
+        "sha256": "63fbdf011b90834b8cbd6154ca7ea80eadcdf81d2aa89fbc6d0fe0a60701a3b3",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/libretro/LibretroBuildbot.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/libretro/LibretroCoreManager.kt",
+        "bytes": 22564,
+        "sha256": "4ecf36d6c9ecdb20b7a53f6c0e529f84be1402035975cdf560e0539ad39c2403",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/libretro/LibretroCoreManager.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/libretro/LibretroCoreRegistry.kt",
+        "bytes": 23702,
+        "sha256": "338a4664d27636cd1cfab03e846f4bd8fb8e51b7572689da5ea874e4fc9020b1",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/libretro/LibretroCoreRegistry.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/ui/screens/common/GameLaunchDelegate.kt",
+        "bytes": 39364,
+        "sha256": "da0cd1df28ef73a305a1f7d59da9175dc9fee8438a92f32fe22168be840ece65",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/common/GameLaunchDelegate.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/ui/screens/firstrun/FirstRunViewModel.kt",
+        "bytes": 41850,
+        "sha256": "605782c3ec66bb42250c65ad38dfb33d11013dba0b86e53b90b6a5c049afe3b5",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/firstrun/FirstRunViewModel.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/BiosSettingsDelegate.kt",
+        "bytes": 18033,
+        "sha256": "b1004597126523b37820383fefc0ddbe5ac8f86d84cc7f31915b369611c8402b",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/BiosSettingsDelegate.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/EmulatorSettingsDelegate.kt",
+        "bytes": 47978,
+        "sha256": "03ff96be258a1dc35fa3a98bae4c4665aea4faf304e26cb366576045ee682dc6",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/EmulatorSettingsDelegate.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/PermissionsSettingsDelegate.kt",
+        "bytes": 5599,
+        "sha256": "815f714c2eaf9cc89c45f79f35bd984102b4dcb041f774b861ecdca8f97ea09c",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/ui/screens/settings/delegates/PermissionsSettingsDelegate.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/util/PermissionHelper.kt",
+        "bytes": 11569,
+        "sha256": "b66c5fd0b24502e1e74d2de397fd989cc7f6b3f8cc23b98f6b8bd4f99c31c67e",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/util/PermissionHelper.kt"
+      },
+      {
+        "path": "app/src/main/kotlin/com/nendo/argosy/util/RootShell.kt",
+        "bytes": 2561,
+        "sha256": "08627b97a1c81ebaed23c440ad05675b3509f5738279a4c0d2c50ba7c61404d0",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/app/src/main/kotlin/com/nendo/argosy/util/RootShell.kt"
+      },
+      {
+        "path": "docs/save-sync-flow.md",
+        "bytes": 42693,
+        "sha256": "d88d584b5273083686c2ffaab07ef31b30ed209310ad2574897e0b159cbb64db",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/docs/save-sync-flow.md"
+      },
+      {
+        "path": "libretrodroid/build.gradle",
+        "bytes": 1489,
+        "sha256": "e9bfb66de5bb492857a1077b950b6afc39f38c45ea2a655230a8444ced74b6ac",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/libretrodroid/build.gradle"
+      },
+      {
+        "path": "libretrodroid/src/main/cpp/CMakeLists.txt",
+        "bytes": 6433,
+        "sha256": "2a04d35150ad0c093c2e72f980c4bd75994ac7094b5ac53ec8aaf8c6f6d506b4",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/libretrodroid/src/main/cpp/CMakeLists.txt"
+      },
+      {
+        "path": "libretrodroid/src/main/cpp/libretrodroid.cpp",
+        "bytes": 47035,
+        "sha256": "c576d373762ff8e62f893363f566023ad655b74decaac97df74fa6867495d1ca",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/libretrodroid/src/main/cpp/libretrodroid.cpp"
+      },
+      {
+        "path": "libretrodroid/src/main/java/com/swordfish/libretrodroid/GLRetroView.kt",
+        "bytes": 38493,
+        "sha256": "677b48170c63156787555a19e3f61d226eda87acddddb91f633cd58c49febd9b",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/libretrodroid/src/main/java/com/swordfish/libretrodroid/GLRetroView.kt"
+      },
+      {
+        "path": "settings.gradle.kts",
+        "bytes": 699,
+        "sha256": "537c75c4afe5b4b857305ba7e05b1ee9ccb4a5fbd0a652e632db42e019579bc2",
+        "url": "https://github.com/rommapp/argosy-launcher/blob/68f1368b61707f8c4ad001b89eb095a705a46143/settings.gradle.kts"
+      }
+    ]
+  },
+  "primary_documentation": [
+    "https://github.com/rommapp/argosy-launcher/wiki/Built-in-Emulation",
+    "https://github.com/rommapp/argosy-launcher/wiki/Save-Sync",
+    "https://github.com/rommapp/argosy-launcher/wiki/BIOS",
+    "https://github.com/rommapp/argosy-launcher/wiki/Storage-and-Paths",
+    "https://github.com/rommapp/argosy-launcher/wiki/Emulator-Compatibility",
+    "https://developer.android.com/training/data-storage/manage-all-files"
+  ],
+  "findings": {
+    "automatic_builtin_core_download": "Own private storage; LibretroDroid-based frontend",
+    "external_retroarch_launch": "Names core under external package private core directory; distinct from builtin download",
+    "standalone_apks": "In-app download with package inspection, Android installer confirmation and package event observation",
+    "save_discovery": "Known paths, emulator configuration, evaluated defaults and user overrides",
+    "storage": "Shared access plus attempted managed/alternate routes and optional vendor-root mechanisms; no universal private access",
+    "cloud": "Prelaunch comparison, native units, cached session end, offline queue and background worker",
+    "bios": "RomM metadata and on-demand download; automatic builtin placement; writable external distribution/import limits"
+  },
+  "not_performed": [
+    "Android device or emulator execution",
+    "APK/core/firmware installation",
+    "RomM authenticated operations or progress mutation",
+    "Adoption of embedded frontend, new runtime dependency or vendor-root mechanism"
+  ],
+  "macos_build": {
+    "path": "build/releases/Broomm-macOS-android-saves.zip",
+    "bytes": 20613929,
+    "sha256": "f17604056100722f17096b6e62d4f25d321cac19f5a76e2d16da44409954a3a6",
+    "runtime_unchanged": true,
+    "version": "0.1.4 (1006)",
+    "signing": "Ad-hoc; not notarized"
+  }
+}

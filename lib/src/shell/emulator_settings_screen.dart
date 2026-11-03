@@ -25,6 +25,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
   final problems = <String, String>{};
   final imported = <String, SetupItem>{};
   final setupFocus = <String, FocusNode>{};
+  final resetFocus = FocusNode(debugLabel: 'Reset all emulators');
   final scope = FocusScopeNode(
     debugLabel: 'Emulator settings',
     traversalEdgeBehavior: TraversalEdgeBehavior.parentScope,
@@ -35,6 +36,8 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
   );
   String? active, reviewing, completed, importProblem;
   String path = '';
+  String slugFor(RommPlatform p) =>
+      platformEmulators(p).firstOrNull?.slug ?? p.slug;
   String keyFor(RommPlatform p, TestedBuild b) => '${p.id}:${b.id}';
   @override
   void dispose() {
@@ -42,6 +45,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
       node.dispose();
     }
     scope.dispose();
+    resetFocus.dispose();
     super.dispose();
   }
 
@@ -66,7 +70,8 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
       final plan = imported.containsKey(build.id)
           ? SetupPlan([imported[build.id]!])
           : await m.readPlan(only: {build.id});
-      if (mounted) setState(() => reviews[key] = plan);
+      if (mounted)
+        setState(() => reviews[key] = plan.forPlatform(slugFor(platform)));
     } catch (e) {
       if (mounted) setState(() => problems[key] = '$e');
     } finally {
@@ -97,7 +102,8 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
             final b = m.buildFor(choice.emulator);
             if (b != null && imported.containsKey(b.id)) {
               final key = keyFor(platform, b);
-              reviews[key] = SetupPlan([imported[b.id]!]);
+              reviews[key] = SetupPlan([imported[b.id]!])
+                  .forPlatform(slugFor(platform));
               active ??= key;
             }
           }
@@ -169,6 +175,56 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
         completed = key;
       });
     focusCard(key);
+  }
+
+  Future<void> resetAll() async {
+    final confirmed = await showConsoleDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: ConsoleScrollView(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Reset all emulators?',
+                  style: TextStyle(fontSize: 28),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'This removes Broomm-managed emulator installations, downloaded setup packages and emulator settings across all profiles.\n\nLocal saves, save states, pending cloud uploads, console accounts, installed game content, downloaded games, artwork and RomM sign-ins are kept. System-installed emulators are not changed.',
+                  style: TextStyle(color: muted, height: 1.6),
+                ),
+                const SizedBox(height: 24),
+                ConsoleButton(
+                  autofocus: true,
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(height: 12),
+                ConsoleButton(
+                  key: const ValueKey('confirm-reset-emulators'),
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Reset installations and settings'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() {
+      active = reviewing = completed = importProblem = null;
+      reviews.clear();
+      problems.clear();
+      imported.clear();
+    });
+    await model.resetEmulators();
+    if (mounted) requestConsoleFocus(resetFocus);
   }
 
   bool direction(TraversalDirection direction) {
@@ -249,6 +305,23 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                               child: const ActionLabel(
                                 'Import setup JSON',
                                 icon: Icons.file_open_outlined,
+                              ),
+                            ),
+                            ConsoleButton(
+                              key: const ValueKey('reset-emulators'),
+                              order: 2,
+                              focusNode: resetFocus,
+                              onPressed:
+                                  m.busy ||
+                                      model.busy ||
+                                      model.gameActive ||
+                                      model.downloading ||
+                                      reviewing != null
+                                  ? null
+                                  : resetAll,
+                              child: const ActionLabel(
+                                'Reset all emulators',
+                                icon: Icons.delete_forever_outlined,
                               ),
                             ),
                           ],
@@ -335,7 +408,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
 
   Widget _card(RommPlatform platform, TestedBuild build) {
     final key = keyFor(platform, build);
-    final ready = m.readyFor(build.name, platform.slug);
+    final ready = m.readyFor(build.name, slugFor(platform));
     final sorted = [...model.platforms]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     final order =
@@ -528,7 +601,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                       ),
                     if (item.cores.isNotEmpty)
                       Text(
-                        'Includes ${item.cores.length} additional console cores.',
+                        'Downloads only the selected platform’s core. The RetroArch application is shared.',
                         style: const TextStyle(color: muted, fontSize: 12),
                       ),
                     if (item.cores.isNotEmpty)

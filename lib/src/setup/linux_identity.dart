@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 
 import '../progress/files.dart';
 
@@ -20,6 +21,14 @@ Future<Map<String, int>> linuxFileStamp(File file) async {
 Future<Map<String, Object>> linuxTreeStamp(
   Directory root,
   Iterable<String> names,
+) => _stampWorker(root.path, names.toList());
+
+Future<Map<String, Object>> _stampWorker(String path, List<String> names) =>
+    Isolate.run(() => _stampTree(Directory(path), names));
+
+Future<Map<String, Object>> _stampTree(
+  Directory root,
+  List<String> names,
 ) async => {
   for (final name in names)
     name: await linuxFileStamp(await progressFile(root, name)),
@@ -30,7 +39,8 @@ Future<void> verifyLinuxStamp(
   Iterable<String> names,
   Object? value,
 ) async {
-  final expected = names.toSet();
+  final observedFiles = await linuxTreeStamp(root, names);
+  final expected = observedFiles.keys.toSet();
   if (value is! Map ||
       value.length != expected.length ||
       !expected.containsAll(value.keys))
@@ -38,7 +48,7 @@ Future<void> verifyLinuxStamp(
       'The Linux installation has no complete setup verification record. Verify setup; existing data was kept.',
     );
   for (final name in expected) {
-    final observed = await linuxFileStamp(await progressFile(root, name));
+    final observed = observedFiles[name] as Map;
     final saved = value[name];
     if (saved is! Map ||
         saved.length != observed.length ||

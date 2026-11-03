@@ -82,6 +82,56 @@ void main() {
       )
       .first;
 
+  testWidgets(
+    'reset is controller reachable, cancellation preserves data and confirmation clears emulator data only',
+    (t) async {
+      final emulator = File('${root.path}/emulators/broken-install');
+      final game = File('${root.path}/library/keep/rom');
+      await t.runAsync(() async {
+        await emulator.parent.create(recursive: true);
+        await emulator.writeAsString('configuration');
+        await game.parent.create(recursive: true);
+        await game.writeAsString('game');
+      });
+      await open(t);
+      await key(t, LogicalKeyboardKey.arrowRight);
+      await key(t, LogicalKeyboardKey.arrowRight);
+      expect(
+        buttonNode(t, find.byKey(const ValueKey('reset-emulators'))).hasFocus,
+        isTrue,
+      );
+      await key(t, LogicalKeyboardKey.gameButtonA);
+      expect(
+        find.textContaining('Local saves, save states, pending cloud uploads'),
+        findsOneWidget,
+      );
+      await key(t, LogicalKeyboardKey.gameButtonA); // Safe initial Cancel.
+      expect(await t.runAsync(() => emulator.exists()), isTrue);
+      await t.tap(find.byKey(const ValueKey('reset-emulators')));
+      await t.pumpAndSettle();
+      await t.runAsync(() async {
+        await t.tap(find.byKey(const ValueKey('confirm-reset-emulators')));
+      });
+      for (var i = 0; i < 100; i++) {
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await t.pump(const Duration(milliseconds: 20));
+        if (!model.busy &&
+            !model.emulators.busy &&
+            await t.runAsync(() => emulator.exists()) == false)
+          break;
+      }
+      await t.pumpAndSettle();
+      expect(model.emulators.error, isNull);
+      expect(await t.runAsync(() => emulator.exists()), isFalse);
+      expect(await t.runAsync(() => game.readAsString()), 'game');
+      expect(model.server, isNotNull);
+      expect(model.profile, isNotNull);
+      await t.pumpWidget(const SizedBox());
+    },
+  );
+
   void fullyVisible(WidgetTester t, Finder element) {
     final viewport = t.getRect(getScroll());
     final rect = t.getRect(element);
@@ -218,6 +268,11 @@ void main() {
           find.widgetWithText(ConsoleButton, 'Import setup JSON'),
         ).hasFocus,
         true,
+      );
+      await native(t, 'down');
+      expect(
+        buttonNode(t, find.byKey(const ValueKey('reset-emulators'))).hasFocus,
+        isTrue,
       );
       await native(t, 'down');
       expect(focused(t, 'setup-10:dolphin'), true);

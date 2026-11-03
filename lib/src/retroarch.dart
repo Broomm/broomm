@@ -147,8 +147,9 @@ const retroSystems = [
 RetroSystem? retroSystem(String slug) =>
     retroSystems.where((s) => s.slug == slug).firstOrNull;
 
-String retroSystemByCore(String core) =>
-    retroSystems.firstWhere((s) => s.core == core).label;
+String retroSystemByCore(String core) => core == 'snes9x'
+    ? 'Snes9x'
+    : retroSystems.firstWhere((s) => s.core == core).label;
 
 String retroGameDirectory(String core, String content) {
   if (!retroSystems.any((s) => s.core == core) ||
