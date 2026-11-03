@@ -92,6 +92,8 @@ class _BroommAppState extends State<BroommApp> {
         }
         phase('Finishing emulator launch…');
         await m.finishConfiguration();
+        phase('Finishing the Steam shortcut…');
+        await m.finishSteam();
         phase('Finishing cloud saves…');
         await m.finishCloud();
         phase('Stopping emulator setup…');
@@ -135,6 +137,7 @@ class _BroommAppState extends State<BroommApp> {
               'Finish the Android game session before updating.',
             );
           await m.finishConfiguration();
+          await m.finishSteam();
           await m.finishCloud();
           await m.emulators.finishSetup();
           await m.finishDownloads(requireCheckpoint: true);

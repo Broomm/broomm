@@ -19,13 +19,25 @@ availability depends on the file-manager metadata service. No game/save or
 system-wide configuration changes are involved. For exact output names,
 verification limits and optional cleanup, see [launcher and reconnect checks](docs/linux-launcher-and-reconnect.md).
 
+**Broomm settings → Application → Add to Steam** adds this desktop copy with
+the approved cover, horizontal grid, hero and transparent logo. Keep the full
+bundle in its final folder. Steam must be open, signed in and have local CEF
+debugging enabled (8080 or 8081). Repeat the action to refresh the same shortcut
+after moving Broomm or to finish interrupted artwork. The action reports phases
+and retry guidance; it does not enable debugging or restart Steam. Then close
+Broomm normally and open its shortcut from Steam. If the small library icon is
+stale, exit Steam normally and reopen it. Native Linux API/readback and repeat
+checks pass; visual/controller/Big Picture, macOS Steam and Windows Steam checks
+remain pending. See [setup, effects, recovery and cleanup](docs/add-to-steam.md).
+
 The current Linux preview is deployed at
-`~/Downloads/Broomm-Linux-eden-reconnect-preview/bundle/broomm` on the test
+`~/Downloads/Broomm-Linux-steam-preview/bundle/broomm` on the test
 machine. Close the older Broomm normally before opening it. Its normal account,
-game and progress storage is retained. [Download its archive](build/releases/Broomm-Linux-x64-eden-reconnect-preview.tar.gz).
-Native GIO launch, all 453 applicable Linux Flutter tests, GTK host checks and
-release build/dependencies pass. Native Eden reconnect/normal shutdown also
-passes. A separate immediate-close app smoke hit a Mesa/Flutter raster crash;
+game and progress storage is retained. [Download its archive](build/releases/Broomm-Linux-x64-steam-preview.tar.gz).
+All 470 applicable Linux Flutter tests and the release/dependency checks pass.
+Earlier native GIO launch and GTK host checks, plus the
+native Eden reconnect/normal shutdown check, also passed. A separate
+immediate-close app smoke hit a Mesa/Flutter raster crash;
 see the [evidence and limits](docs/linux-eden-reconnect.md). GNOME icon appearance,
 physical reconnect and Bazzite/Big Picture remain owner acceptance.
 
@@ -41,7 +53,7 @@ For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CS
 
 For Astris, open **Emulator Settings → Nintendo Switch → Astris → Set up**. It downloads the reviewed ARM64 build; firmware and keys use the same RomM provisioning flow as other Switch emulators. Play uses Broomm's loading/pairing screens and in-game controller menu. Astris keeps its own configuration/account/content records. Android's current milestone adds official APK downloading and connected save/state routes for its nine emulator adapters, including MMJ shared storage and both ARMSX2 channels. Native Android acceptance remains pending; see [setup, limits and recovery](docs/android-installation-and-saves.md).
 
-The latest local macOS build is [Broomm with the Eden Linux reconnect fix](build/releases/Broomm-macOS-eden-reconnect-preview.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the [Linux setup corrections and save-preserving reset](docs/linux-setup-repair.md). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This preview uses version 0.1.7-dev (1013); automatic application updates are disabled for this development identity. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
+The latest local macOS build is [Broomm with Add to Steam](build/releases/Broomm-macOS-steam-preview.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the [Linux setup corrections and save-preserving reset](docs/linux-setup-repair.md). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This preview uses version 0.1.7-dev (1013); automatic application updates are disabled for this development identity. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
 
 For the installed Switch game's “complete downloadable file manifest” error, replace only the application with this build, then choose the existing profile and **Home → game → Play**. Repeat with the other profile; no redownload or data cleanup is needed. The [launch correction](docs/switch-installed-launch.md) explains receipt reuse, first-import connection requirements and the read-only diagnostic command.
 

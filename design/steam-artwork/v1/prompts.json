@@ -1,0 +1,36 @@
+{
+  "stage": "v1 approved by owner; bundled for Add to Steam",
+  "generation": "Built-in image_gen; no CLI/API fallback",
+  "assets": [
+    {
+      "file": "cover.png",
+      "width": 600,
+      "height": 900,
+      "source": "exec-db640626-0f63-4a50-afac-5d7c25b2c6cd.png",
+      "prompt": "Use case: compositing / ads-marketing. Transform the supplied Broomm mark into original premium Steam library artwork. Image 1 is the exact existing Broomm logo symbol: preserve its recognizable open-ended infinity silhouette, rounded end caps and proportions. Original Broomm branding, not another company's branding. Coordinated visual family: very dark midnight navy #0B1621 blending into deep teal #193B40, pale mint #BEF1E0 accents, smooth sculptural curved contour lines and restrained luminous light trails. Spacious, elegant, precise, premium console-launcher art, soft atmospheric depth, subtly lit matte/glass surfaces, clear hierarchy at thumbnail size. No characters, game screenshots, controllers, consoles, literal clouds, extra symbols, slogans, badges, mockup frames or watermarks. Full bleed artwork; no borders.\nOutput one VERTICAL PORTRAIT cover at exactly 600 pixels wide by 900 pixels high, aspect ratio 2:3. Center the large mint open-ended Broomm infinity mark in the upper-middle area, softly luminous with subtle physical depth but a crisp silhouette. Below it, in the lower middle, set the single word \"broomm\" (b-r-o-o-m-m) in clean off-white semibold geometric sans-serif, normal letter widths and generous kerning. No other text. Broad quiet dark negative space above, delicate sweeping mint contour lines below/behind the mark, balanced editorial spacing. Make it feel like a polished Steam cover for a game launcher, highly readable when small."
+    },
+    {
+      "file": "horizontal.png",
+      "width": 920,
+      "height": 430,
+      "source": "exec-187252d2-bb2e-41c6-a1ab-1c91f0161e30.png",
+      "prompt": "Use case: compositing / ads-marketing. Transform the supplied Broomm mark into original premium Steam library artwork. Image 1 is the exact existing Broomm logo symbol: preserve its recognizable open-ended infinity silhouette, rounded end caps and proportions. Original Broomm branding, not another company's branding. Coordinated visual family: very dark midnight navy #0B1621 blending into deep teal #193B40, pale mint #BEF1E0 accents, smooth sculptural curved contour lines and restrained luminous light trails. Spacious, elegant, precise, premium console-launcher art, soft atmospheric depth, subtly lit matte/glass surfaces, clear hierarchy at thumbnail size. No characters, game screenshots, controllers, consoles, literal clouds, extra symbols, slogans, badges, mockup frames or watermarks. Full bleed artwork; no borders.\nOutput one WIDE HORIZONTAL library grid artwork at exactly 920 pixels wide by 430 pixels high. Center a horizontal brand lockup consisting of the exact mint open-ended infinity mark on the left and the single lowercase word \"broomm\" (b-r-o-o-m-m) on its right, in large off-white semibold geometric sans-serif. Preserve the mark's shape. Set this readable lockup over a deep midnight/teal atmospheric background with graceful low-contrast curved contour lines and mint light arcs flowing toward the lower-right. Strong central branding, safe margins all around, spacious composition, text and mark occupy the middle half vertically. No other text."
+    },
+    {
+      "file": "hero.png",
+      "width": 1920,
+      "height": 600,
+      "source": "exec-2831d5e1-cc2a-4121-826d-a0d40266acef.png",
+      "prompt": "Use case: compositing / ads-marketing. Transform the supplied Broomm mark into original premium Steam library artwork. Image 1 is the exact existing Broomm logo symbol: preserve its recognizable open-ended infinity silhouette, rounded end caps and proportions. Original Broomm branding, not another company's branding. Coordinated visual family: very dark midnight navy #0B1621 blending into deep teal #193B40, pale mint #BEF1E0 accents, smooth sculptural curved contour lines and restrained luminous light trails. Spacious, elegant, precise, premium console-launcher art, soft atmospheric depth, subtly lit matte/glass surfaces, clear hierarchy at thumbnail size. No characters, game screenshots, controllers, consoles, literal clouds, extra symbols, slogans, badges, mockup frames or watermarks. Full bleed artwork; no borders.\nOutput one ULTRAWIDE HORIZONTAL Steam library hero at exactly 1920 pixels wide by 600 pixels high, aspect ratio 16:5. NO TEXT anywhere. The right half features a large elegant sculptural rendering of the Broomm open-ended infinity motif in softly glowing mint glass, with its recognizable silhouette and rounded caps retained. Fine curved contour lines trail naturally across the lower part of the image. Keep the left 45 percent quiet, very dark midnight navy with restrained teal atmosphere and plenty of clean negative space, because Steam will overlay a separate Broomm wordmark there. Entire composition fits this shallow panoramic crop, no tall poster framing. Cinematic but minimal, no neon oversaturation."
+    },
+    {
+      "file": "logo.png",
+      "width": 1536,
+      "height": 384,
+      "transparent": true,
+      "source": "Native Flutter render of existing Material all_inclusive_rounded mark and app Helvetica Neue typography, mint #BEF1E0 and off-white #EDF4FA; no font file bundled.",
+      "notes": "Replaces rejected AI alpha drafts with clean deterministic edges."
+    }
+  ],
+  "export": "Pinned Flutter renderer; aspect-preserving cover fit and high-quality downsampling to the requested exact dimensions. No application code, settings action, Steam files or asset bindings changed."
+}

@@ -1,5 +1,23 @@
 # Implementation plan
 
+Add to Steam (2026-11-03): Settings → Application has a desktop-only,
+controller-navigable CEF action for the running Broomm copy and approved bundled
+Steam artwork. SDK-only direct loopback transport rejects discovery/handshake
+redirects and remote/ambiguous contexts. Current-account receipts, a stable OS
+lock and retained native creation jobs support retry without duplicate creation.
+Fresh native detail subscriptions avoid Steam's stale unsubscribed cache; bounded
+publication/readback handles its asynchronous overview updates. Actual Linux
+Steam created app ID 3861238242 and verified all four artwork hashes, with the
+same ID on repeat. Per the owner's explicit permission, enabled this test
+installation's CEF flag and reopened Steam; the product action does neither.
+All 539 applicable macOS and 470 Linux Flutter tests pass, as does analysis and
+the Linux release/dependency audit. Mac/Windows Steam, visual artwork, physical
+input and Big Picture/gamescope remain separate acceptance. See
+[workflow, API audit and limits](docs/add-to-steam.md).
+The owner reported the feature working on 2026-11-03, without specifying further
+device/compositor coverage. Re-running either shortcut action refreshes its
+managed entry; replacing the executable at the same path preserves both shortcuts.
+
 Eden Linux reconnect correction (2026-11-03): the owner's Smash disconnect and
 re-pair reached native Resume, then Eden exited 255 with a fatal Wayland
 duplicate commit-timer timestamp. An isolated same-game comparison reproduces

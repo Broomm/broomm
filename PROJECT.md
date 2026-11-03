@@ -43,6 +43,17 @@ the launcher after moving it. Do not relocate the bundle, require root, change
 global associations, or touch games/progress. Try GNOME's per-file custom-icon
 metadata for this executable; unavailable metadata must not prevent installation.
 
+Desktop hosts also provide **Add to Steam**. With Steam open, signed in, and CEF
+debugging enabled locally, explicitly add/update a non-Steam shortcut for the
+running Broomm bundle, including the approved cover, horizontal grid, hero,
+transparent logo and regular application icon. Scope ownership to the active
+Steam account and exact launch target; preserve unrelated shortcuts. Repeating
+the action refreshes the same shortcut and can update its path after relocation.
+Bundle the artwork, use Steam's live CEF APIs rather than editing its shortcut
+database, and retain interrupted work for safe retry. Explain unavailable CEF
+and partial completion in Settings. Do not automatically enable debugging or
+restart Steam. This desktop-only action is absent on Android.
+
 ## Profiles and shared installations
 
 Each Broomm profile represents an account on a saved RomM server. Broomm remembers multiple servers, but only one server can be active at a time. Users select a server first, then choose one of the profiles known for that server or add a profile. Use the server-scoped profile selection, explicit activation, and focus behavior in Teddy as the reference; see the [profile flow](docs/profiles-and-servers.md).

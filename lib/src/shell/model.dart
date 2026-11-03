@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../romm/client.dart';
 import '../romm/models.dart';
@@ -33,6 +34,7 @@ import '../android/session.dart';
 import '../android/progress.dart';
 import '../updates/controller.dart';
 import '../linux_launcher.dart';
+import '../steam/installer.dart';
 
 part 'cloud_model.dart';
 part 'downloads_model.dart';
@@ -70,6 +72,7 @@ class ShellModel extends ChangeNotifier {
     ApplicationUpdates? applicationUpdates,
     EmulatorConfiguration? configurationLauncher,
     LinuxLauncher? launcherInstaller,
+    SteamInstaller? steamInstaller,
   }) : clientFactory = clientFactory ?? ((uri) => RommClient(uri)),
        credentialBackend = credentials ?? PlatformCredentials(),
        _emulatorManager = emulatorManager,
@@ -78,11 +81,65 @@ class ShellModel extends ChangeNotifier {
        _configurationLauncher = configurationLauncher,
        gridFactory = gridFactory ?? SteamGridClient.new,
        updates = applicationUpdates ?? ApplicationUpdates(),
-       launcherInstaller = launcherInstaller ?? LinuxLauncher() {
+       launcherInstaller = launcherInstaller ?? LinuxLauncher(),
+       steamInstaller =
+           steamInstaller ??
+           SteamInstaller(
+             loadAsset: (path) async {
+               final data = await rootBundle.load(path);
+               return data.buffer.asUint8List(
+                 data.offsetInBytes,
+                 data.lengthInBytes,
+               );
+             },
+           ) {
     updates.addListener(_updatesChanged);
   }
   final ApplicationUpdates updates;
   final LinuxLauncher launcherInstaller;
+  final SteamInstaller steamInstaller;
+  bool addingToSteam = false;
+  String? steamStatus;
+  Future<void>? _steamWork;
+  Future<void> addToSteam() {
+    if (addingToSteam ||
+        !steamInstaller.enabled ||
+        applicationUpdating ||
+        closing)
+      return Future.value();
+    addingToSteam = true;
+    final work = _addToSteam();
+    _steamWork = work;
+    return work;
+  }
+
+  Future<void> _addToSteam() async {
+    try {
+      await steamInstaller.install(
+        storage.directory,
+        phase: (phase) {
+          steamStatus = phase;
+          log?.write('Add to Steam: $phase');
+          _emit();
+        },
+      );
+      steamStatus = 'Broomm and its artwork are in your Steam library. Open it from Steam to play. Keep this application folder in place; add it again if you move it. If the small icon is stale, exit Steam normally and reopen it.';
+      log?.write('Broomm Steam shortcut and four artwork assets confirmed.');
+      showNotice('Broomm was added to your Steam library.');
+    } catch (failure) {
+      steamStatus = 'Add to Steam could not finish. $failure';
+      log?.write(steamStatus!, level: 'error');
+      showNotice(steamStatus!, problem: true);
+    } finally {
+      addingToSteam = false;
+      _emit();
+    }
+  }
+
+  Future<void> finishSteam() async {
+    await _steamWork;
+  }
+
   bool installingLauncher = false;
   String? launcherStatus;
   Future<void> installLauncher() async {

@@ -56,6 +56,27 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
             ],
+            if (model.steamInstaller.enabled) ...[
+              ConsoleButton(
+                key: const ValueKey('add-to-steam'),
+                onPressed:
+                    model.addingToSteam ||
+                        model.applicationUpdating ||
+                        model.closing
+                    ? null
+                    : model.addToSteam,
+                child: ActionLabel(
+                  model.addingToSteam ? 'Adding to Steam…' : 'Add to Steam',
+                  icon: Icons.sports_esports_outlined,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                model.steamStatus ?? 'Add this copy and its artwork to the signed-in Steam library. Steam must be open with CEF debugging enabled (ports 8080 or 8081). Running this again refreshes the same shortcut.',
+                style: const TextStyle(color: muted, height: 1.5),
+              ),
+              const SizedBox(height: 24),
+            ],
             const Eyebrow('Application updates', color: muted),
             const SizedBox(height: 12),
             Text(
