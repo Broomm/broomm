@@ -32,6 +32,7 @@ import '../android/emulators.dart';
 import '../android/session.dart';
 import '../android/progress.dart';
 import '../updates/controller.dart';
+import '../linux_launcher.dart';
 
 part 'cloud_model.dart';
 part 'downloads_model.dart';
@@ -68,6 +69,7 @@ class ShellModel extends ChangeNotifier {
     GameAddons? gameAddons,
     ApplicationUpdates? applicationUpdates,
     EmulatorConfiguration? configurationLauncher,
+    LinuxLauncher? launcherInstaller,
   }) : clientFactory = clientFactory ?? ((uri) => RommClient(uri)),
        credentialBackend = credentials ?? PlatformCredentials(),
        _emulatorManager = emulatorManager,
@@ -75,10 +77,42 @@ class ShellModel extends ChangeNotifier {
        _gameAddons = gameAddons,
        _configurationLauncher = configurationLauncher,
        gridFactory = gridFactory ?? SteamGridClient.new,
-       updates = applicationUpdates ?? ApplicationUpdates() {
+       updates = applicationUpdates ?? ApplicationUpdates(),
+       launcherInstaller = launcherInstaller ?? LinuxLauncher() {
     updates.addListener(_updatesChanged);
   }
   final ApplicationUpdates updates;
+  final LinuxLauncher launcherInstaller;
+  bool installingLauncher = false;
+  String? launcherStatus;
+  Future<void> installLauncher() async {
+    if (installingLauncher || !launcherInstaller.enabled || applicationUpdating)
+      return;
+    installingLauncher = true;
+    launcherStatus = 'Installing the launcher…';
+    _emit();
+    try {
+      final result = await launcherInstaller.install();
+      launcherStatus = 'Installed to your launcher. Close Broomm and open it again from Applications. Keep this application folder in place; install again if you move it.';
+      if (!result.fileIconApplied)
+        launcherStatus =
+            '$launcherStatus Your file manager did not accept a custom executable icon; the launcher icon is installed.';
+      log?.write(
+        'Current-user Linux launcher installed: ${result.desktopFile}',
+      );
+      showNotice(
+        'Installed to your launcher. Close Broomm and open it again from Applications.',
+      );
+    } catch (failure) {
+      launcherStatus = 'The launcher could not be installed. $failure';
+      log?.write(launcherStatus!, level: 'error');
+      showNotice(launcherStatus!, problem: true);
+    } finally {
+      installingLauncher = false;
+      _emit();
+    }
+  }
+
   bool _updateCardShown = false;
   String _updatePhase = '';
   int _updateProgressBucket = -1;

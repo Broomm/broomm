@@ -24,7 +24,19 @@ String linuxLaunchPreload(PreparedEmulator emulator, String relative) =>
 /// Use the reviewed bundle's own loader/libraries. In particular Sharun needs
 /// its documented preload opt-in; invoking the native ELF with the host loader
 /// would require a newer system glibc than Ubuntu's supported baseline.
-Map<String, String> linuxLaunchEnvironment(PreparedEmulator emulator) {
+Map<String, String> linuxLaunchEnvironment(
+  PreparedEmulator emulator, {
+  Map<String, String>? environment,
+}) {
+  // The reviewed Eden 0.2.1 Wayland/Vulkan path terminates with a duplicate
+  // wp_commit_timer timestamp on resume after controller reconfiguration.
+  // The same reconnect/player-change sequence passes with xcb.
+  // Scope this to Eden's child; retain native Wayland on hosts without X11.
+  final display = (environment ?? Platform.environment)['DISPLAY'];
+  final backend =
+      emulator.name == 'Eden' && display != null && display.isNotEmpty
+      ? {'QT_QPA_PLATFORM': 'xcb'}
+      : <String, String>{};
   // This build already has $ORIGIN/../lib RUNPATH and explicitly warns before
   // SDL initialization if LD_LIBRARY_PATH is present. Keep the host override
   // out of this child rather than dismissing the emulator's warning dialog.
@@ -34,6 +46,7 @@ Map<String, String> linuxLaunchEnvironment(PreparedEmulator emulator) {
       'SHARUN_ALLOW_LD_PRELOAD': '1',
       'SHARUN_PRINTENV': '0',
       'SHARUN_WORKING_DIR': linuxLaunchDirectory(emulator),
+      ...backend,
     };
   final binary = File(emulator.executable);
   final libraries = emulator.name == 'RetroArch'
@@ -41,7 +54,7 @@ Map<String, String> linuxLaunchEnvironment(PreparedEmulator emulator) {
       : emulator.name == 'Ryubing'
       ? binary.parent.path
       : '${binary.parent.parent.path}/lib';
-  return {'LD_LIBRARY_PATH': libraries};
+  return {'LD_LIBRARY_PATH': libraries, ...backend};
 }
 
 /// Publishes the renderer-ready signal once per launch. Status queries can

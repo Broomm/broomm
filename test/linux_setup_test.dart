@@ -28,6 +28,61 @@ void main() {
     root = await Directory.systemTemp.createTemp('broomm-linux-');
   });
   tearDown(() => root.delete(recursive: true));
+  PreparedEmulator eden() => PreparedEmulator(
+    'Eden',
+    '/private/eden',
+    '/managed/shared/bin/eden',
+    2,
+    null,
+    null,
+    linuxLauncher: '/managed/bin/eden',
+  );
+  test('Eden uses child-only XWayland when an X11 display is available, retaining its private loader context', () {
+    final parent = {'DISPLAY': ':99', 'QT_QPA_PLATFORM': 'wayland'};
+    final child = linuxLaunchEnvironment(eden(), environment: parent);
+    expect(child['QT_QPA_PLATFORM'], 'xcb');
+    expect(child['SHARUN_WORKING_DIR'], '/private/eden/home');
+    expect(child['SHARUN_ALLOW_LD_PRELOAD'], '1');
+    expect(parent, {'DISPLAY': ':99', 'QT_QPA_PLATFORM': 'wayland'});
+  });
+  test('Wayland-only hosts do not receive an unusable forced X11 backend', () {
+    for (final parent in <Map<String, String>>[
+      {},
+      {'WAYLAND_DISPLAY': 'wayland-0'},
+      {'DISPLAY': ''},
+    ]) {
+      expect(
+        linuxLaunchEnvironment(eden(), environment: parent),
+        isNot(contains('QT_QPA_PLATFORM')),
+      );
+    }
+  });
+  test(
+    'the Eden graphics workaround does not change other emulator backends',
+    () {
+      for (final name in [
+        'Dolphin',
+        'Azahar',
+        'PPSSPP',
+        'DuckStation',
+        'RetroArch',
+      ]) {
+        final e = PreparedEmulator(
+          name,
+          '/private/profile',
+          '/managed/bin/emulator',
+          2,
+          '/managed/lib/SDL.so',
+          null,
+          linuxLauncher: name == 'PPSSPP' ? '/managed/launcher' : null,
+        );
+        expect(
+          linuxLaunchEnvironment(e, environment: {'DISPLAY': ':99'}),
+          isNot(contains('QT_QPA_PLATFORM')),
+        );
+      }
+    },
+  );
   test('Eden launches away from its generic portable user folder while keeping its private XDG data and preload', () {
     final e = PreparedEmulator(
       'Eden',

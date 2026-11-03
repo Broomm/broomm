@@ -2,6 +2,14 @@ import 'package:flutter/services.dart';
 
 class DesktopHost {
   static const channel = MethodChannel('app.broomm/prototype');
+  Future<bool> setExecutableIcon() async {
+    try {
+      return await channel.invokeMethod<bool>('setExecutableIcon') ?? false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
   Future<void> show({List<double>? frame, bool overlay = false}) async {
     try {
       await channel.invokeMethod<void>('show', {

@@ -1,5 +1,15 @@
 # RomM platform and emulator support matrix
 
+**Owner Linux acceptance, 2026-11-03:** 🟢 The owner reports validating most
+systems on Linux, with most behavior working well. No individual system or
+save/DLC case was enumerated, so this broad acceptance does not rewrite each
+host-specific cell below. 🟡 Bazzite/Steam Big Picture testing is planned for
+2026-11-04 and remains unverified. Separately, Eden now passes native Linux
+Smash loading/pause and three replacement-source reconnects plus player-count
+changes on XWayland; a scoped workaround follows a reproduced Wayland exit.
+See [the reconnect evidence](linux-eden-reconnect.md) and
+[the setup follow-up](setup-throughput.md).
+
 **Linux standalone update, 2026-11-02:** 🟢 Eight native controller/lifecycle cases cover six console families plus PS3 homebrew; 🟢 native PS3 PUP and 3DS CIA imports; 🟡 Ryubing/Eden Switch runtime and physical/Steam/gamescope acceptance remain pending. All nine reviewed packages install into private profiles. See the [Linux table, versions and limits](linux-standalone.md).
 
 **Linux x64, 2026-11-02:** 🟢 bundled RetroArch installation/private profiles and
@@ -21,7 +31,7 @@ Snapshot: **2026-10-23**, **romm.docubi.casa / RomM 5.4.0**: **29 platforms, 7,6
 
 **28 platforms have progress adapters**, including **18 additional RetroArch routes using 14 pinned cores**. Native macOS game checks now cover **17** of those RA routes, plus PS1 through DuckStation and PS2 through both ARMSX2 and PCSX2/Rosetta. **Fourteen** RA routes have ordinary native-data export/readback/restore checks; 32X additionally has a seeded EEPROM load/round-trip check, without a completed-match claim. Atari 2600 and Lynx use cloud states because the pinned cores expose no ordinary cartridge-save interface. Saturn BIOS provisioning and native progress are verified; Jaguar CD validation is deferred at the owner’s request. PSP now has two native game-created save/state checks through PPSSPP. Switch additionally offers Eden with native input/update checks; its macOS distribution is experimental. PS4 has no built-in emulator.
 
-🟢 = implemented with the indicated native evidence. 🟡 = implemented boundary with the stated prerequisite or native check outstanding. 🔴 = missing integration. ⚪ = not applicable/unavailable. **A green cell does not establish every title, physical input, cross-device cloud acceptance or another host.** `RA` means RetroArch. The delivered runtime pack remains **macOS arm64**; Linux/Steam/gamescope, Windows and Android native delivery remain outstanding.
+🟢 = implemented with the indicated native evidence. 🟡 = implemented boundary with the stated prerequisite or native check outstanding. 🔴 = missing integration. ⚪ = not applicable/unavailable. **A green cell does not establish every title, physical input, cross-device cloud acceptance or another host.** `RA` means RetroArch. The table retains its original **macOS arm64** evidence; managed **Linux x64** delivery and acceptance are recorded above and in the Linux documents. Linux ARM64 managed delivery, Steam/gamescope and Windows/Android native acceptance remain outstanding.
 
 ## Current support
 

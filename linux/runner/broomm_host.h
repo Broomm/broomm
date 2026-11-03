@@ -1,6 +1,7 @@
 #ifndef BROOMM_LINUX_HOST_H
 #define BROOMM_LINUX_HOST_H
 #include "process_identity.h"
+#include "file_icon.h"
 #include <flutter_linux/flutter_linux.h>
 #include <gtk/gtk.h>
 #include <glib-unix.h>
@@ -181,6 +182,7 @@ inline void register_host(FlView* view,GtkWindow* window) {
       else if(!strcmp(method,"hide"))gtk_widget_hide(GTK_WIDGET(host->window));
       else if(!strcmp(method,"close")){host->permit=true;gtk_window_close(host->window);}
       else if(!strcmp(method,"gameWriter")){g_autoptr(FlValue) value=inspect(host,argument(args,"root"));fl_method_call_respond_success(call,value,nullptr);return;}
+      else if(!strcmp(method,"setExecutableIcon")){broomm_file_icon::apply(call);return;}
       else if(!strcmp(method,"controlGameWriter"))control(host,argument(args,"token"),argument(args,"action"));
       else {fl_method_call_respond_not_implemented(call,nullptr);return;}
       fl_method_call_respond_success(call,nullptr,nullptr);

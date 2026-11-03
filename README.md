@@ -4,15 +4,44 @@ Broomm is a native Flutter game launcher in early development for Windows, macOS
 
 The default Flutter application connects to RomM 5.4.0, signs in, and opens a console-style Home with **Broomm settings**, **Game Store**, and **Emulator Settings**. The Store downloads games to Home. On **macOS Apple Silicon**, the managed setup pack configures RetroArch, Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, ARMSX2, PPSSPP, Eden and Astris; supported Home games open controller pairing before play. PCSX2 runs through existing Rosetta. Timestamped BROOMM saves, explicit imports and named backups are available for the documented native formats; see [save history and PS3 ISO support](docs/slotted-saves-and-ps3-iso.md). The earlier six-ROM controller lab is preserved separately.
 
-On **Linux x64**, Emulator Settings now includes RetroArch plus Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden, with automatically selected bundled recipes. Use the [Linux walkthrough, tested versions and remaining acceptance](docs/linux-standalone.md). Linux ARM64 managed recipes and Switch/physical/Steam/gamescope acceptance remain pending; the application build alone does not establish them.
+On **Linux x64**, Emulator Settings includes RetroArch plus Dolphin, RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden, with automatically selected bundled recipes. Use the [Linux walkthrough, tested versions and remaining acceptance](docs/linux-standalone.md). The owner reports most systems working well; Eden also has a native Smash launch/pause check. Linux ARM64 managed recipes, individually enumerated physical/cross-device cases and Steam/gamescope acceptance remain separate.
 
-The uncommitted [Linux setup repair preview](docs/linux-setup-repair.md) fixes rolling core downloads and lost helper permissions. On the Linux test machine, close the old app and run `~/Downloads/Broomm-Linux-setup-fix-preview/bundle/broomm`. **Emulator Settings → Reset all emulators** resets installations/settings while keeping saves, states and pending cloud sync. The preview uses normal storage and disables application updates until an official build replaces it.
+The [Linux setup repairs](docs/linux-setup-repair.md) and [setup/download speed corrections](docs/setup-throughput.md) were committed as `7a1cade`; [all release checks and builds passed](https://github.com/Broomm/broomm/actions/runs/41576682638). **Emulator Settings → Reset all emulators** resets installations/settings while keeping saves, states and pending cloud sync.
+
+**Broomm settings → Application → Install to Launcher** adds this Linux copy to
+your user application menu with the regular icon. Keep the full extracted bundle
+in its final location first. After installation, close Broomm and reopen it from
+Applications. The action uses `$XDG_DATA_HOME/applications` when that environment
+value is absolute, otherwise `~/.local/share/applications`, and copies its icon
+under the same data home's `icons/hicolor/512x512/apps`. If you move Broomm,
+run the action again. It also attempts GNOME Files' custom executable icon;
+availability depends on the file-manager metadata service. No game/save or
+system-wide configuration changes are involved. For exact output names,
+verification limits and optional cleanup, see [launcher and reconnect checks](docs/linux-launcher-and-reconnect.md).
+
+The current Linux preview is deployed at
+`~/Downloads/Broomm-Linux-eden-reconnect-preview/bundle/broomm` on the test
+machine. Close the older Broomm normally before opening it. Its normal account,
+game and progress storage is retained. [Download its archive](build/releases/Broomm-Linux-x64-eden-reconnect-preview.tar.gz).
+Native GIO launch, all 453 applicable Linux Flutter tests, GTK host checks and
+release build/dependencies pass. Native Eden reconnect/normal shutdown also
+passes. A separate immediate-close app smoke hit a Mesa/Flutter raster crash;
+see the [evidence and limits](docs/linux-eden-reconnect.md). GNOME icon appearance,
+physical reconnect and Bazzite/Big Picture remain owner acceptance.
+
+Eden now uses XWayland for its own Linux process when an X11 display is available.
+This fixes the reproduced Wayland protocol exit after Smash controller
+reconnection. The real native default-policy check passes three reconnects and
+one/two/one player changes. Use your existing Eden setup; no emulator reinstall
+or game redownload is needed. See [diagnosis and controller retest](docs/linux-eden-reconnect.md).
+
+
 
 For PSP, set up **PPSSPP** under its platform card and Play a downloaded ISO, CSO v1 or PBP; no BIOS is required. For the additional Switch choice, set up **Eden** or **Astris** (macOS 15+). Successful setup makes the selected emulator the default; a platform with nothing configured has no default. Both use the normal controller-pairing flow and profile-private cloud saves. The [PPSSPP/Eden walkthrough](docs/psp-and-eden-support.md) covers native DLC directories, firmware/keys, cleanup, test commands and the experimental Eden macOS limits. The current [colored support matrix](docs/platform-support-matrix.md) includes both.
 
 For Astris, open **Emulator Settings → Nintendo Switch → Astris → Set up**. It downloads the reviewed ARM64 build; firmware and keys use the same RomM provisioning flow as other Switch emulators. Play uses Broomm's loading/pairing screens and in-game controller menu. Astris keeps its own configuration/account/content records. Android's current milestone adds official APK downloading and connected save/state routes for its nine emulator adapters, including MMJ shared storage and both ARMSX2 channels. Native Android acceptance remains pending; see [setup, limits and recovery](docs/android-installation-and-saves.md).
 
-The latest local macOS build is [Broomm with Linux standalone emulator support](build/releases/Broomm-macOS-linux-setup-fix-preview.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the [Linux setup corrections and save-preserving reset](docs/linux-setup-repair.md). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This preview uses version 0.1.7-dev (1013); automatic application updates are disabled for this development identity. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
+The latest local macOS build is [Broomm with the Eden Linux reconnect fix](build/releases/Broomm-macOS-eden-reconnect-preview.zip), also retaining the Android installation/save milestone, Astris and the installed Switch launch fix. It includes the [Linux setup corrections and save-preserving reset](docs/linux-setup-repair.md). It includes the application and precompiled bridges and uses the normal `~/Library/Application Support/Broomm` folder, including when copied to Applications. All thirteen managed emulator frontends and all fifteen RetroArch cores now download through bundled recipes. No companion pack, setup JSON import, checkout or compiler is required. RetroArch uses Broomm/retroarch v0.1.0; its seven previously offline cores now use verified official Libretro builds. Existing installations remain usable until explicit setup. Managed emulator delivery on macOS currently targets Apple Silicon, with Rosetta required for the explicit Intel choices. This preview uses version 0.1.7-dev (1013); automatic application updates are disabled for this development identity. It is ad-hoc signed, not notarized. See [updater recovery and verification](docs/application-updates.md#update-preparation-correction-2026-10-29).
 
 For the installed Switch game's “complete downloadable file manifest” error, replace only the application with this build, then choose the existing profile and **Home → game → Play**. Repeat with the other profile; no redownload or data cleanup is needed. The [launch correction](docs/switch-installed-launch.md) explains receipt reuse, first-import connection requirements and the read-only diagnostic command.
 

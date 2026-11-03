@@ -1,5 +1,18 @@
 # Linux standalone emulator integration — 2026-11-02
 
+**Eden reconnect, 2026-11-03:** [native Smash comparison](linux-eden-reconnect.md)
+reproduces the owner's Wayland exit 255 after disconnect/resume. Eden's child
+now selects XWayland when an X11 display exists. Three native reconnects,
+replacement IDs, one/two/one player changes and normal exit pass; actual Qt
+backend is confirmed. Physical/Bazzite and Wayland-only acceptance remain.
+
+**Owner follow-up, 2026-11-03:** most systems have now been tested on Linux and
+are reported to work well. The owner did not enumerate individual cases;
+retain the exact automated evidence below separately. Bazzite/Steam Big Picture
+acceptance is planned for 2026-11-04, not yet completed. Subsequent native Eden
+Smash loading/virtual-port/pause verification and setup-performance corrections
+are recorded in [the follow-up](setup-throughput.md).
+
 This milestone follows the owner's completed Linux x64 RetroArch milestone.
 Linux x64 selects its own bundled recipe automatically. It adds Dolphin,
 RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden. There is
@@ -80,7 +93,7 @@ No production saves or RomM assets were changed by these tests.
 | PPSSPP | 1.20.4 / 3a31057 | 🟢 Public PSP2048 PBP and native controller/debugger pause lifecycle/normal exit |
 | RPCS3 | 0.0.42-20031 / d08d568d | 🟢 Native PUP install/liblv2 readback; Basic Water homebrew controller lifecycle/normal exit with fixture-local interpreters |
 | Ryubing | 1.3.3 | 🟡 Installation/private profiles verified; native Switch runtime/physical input pending |
-| Eden | 0.2.1 | 🟡 Installation/private profiles verified; native Switch runtime/physical input pending |
+| Eden | 0.2.1 | 🟢 Smash launch/pause, three native reconnects and player-count changes through XWayland; physical/Bazzite acceptance pending |
 
 All nine production installations and two independent profiles per installation
 were exercised, including full archive verification/extraction/publication.

@@ -1,5 +1,44 @@
 # Implementation plan
 
+Eden Linux reconnect correction (2026-11-03): the owner's Smash disconnect and
+re-pair reached native Resume, then Eden exited 255 with a fatal Wayland
+duplicate commit-timer timestamp. An isolated same-game comparison reproduces
+that error on the first reconnect with actual Qt Wayland; XWayland passes three
+replacement-source cycles, live logical input, one/two/one players and normal
+shutdown. Eden alone now selects child `xcb` when DISPLAY is available, through
+the shared Play/Open emulator boundary. The unforced production-policy native
+check passes the same sequence. All 453 Linux and 522 macOS Flutter tests,
+analysis and Linux release/dependency checks pass; physical/Bazzite and
+Wayland-only acceptance remain separate. A new Linux preview preserves the
+running owner app and its data. See [diagnosis, evidence and retest](docs/linux-eden-reconnect.md).
+An extra fresh-storage/immediate-close Broomm smoke exposed a separate
+Mesa/Flutter raster-thread SIGSEGV; its cause remains unresolved and it is not
+included in the passing Eden/native checks. The earlier preview passed that
+same close check. The core trace and limitation are recorded with the evidence.
+
+Linux launcher and reconnect follow-up (2026-11-03): first committed/pushed the
+previous working tree as `7a1cade`; all jobs and publication in release run
+41576682638 succeeded before new work began. Settings now has Application on
+every host and Linux-only Install to Launcher, generating a current-user XDG
+Desktop Entry and existing icon for the current executable. Optional async GIO
+custom-icon metadata targets only that executable. Generic controller recovery
+races no longer let late resume/hide completions overwrite disconnect pairing,
+and a disconnect supersedes a pending menu. Three held-boundary regressions fail
+before the fix and pass after it. Native follow-up after SSH returned passes
+450 Linux tests (22 existing platform skips), 519 macOS tests (one Linux-only
+skip), analysis, GTK host compilation/recovery, Linux app build/dependency audit,
+and isolated real-app startup/graceful close. GIO's early executable lookup
+rejects percent paths before expansion; installation now fails before publication
+with move/retry guidance, alongside Desktop Entry's prohibited equals sign.
+The verified Linux preview is deployed to Downloads without replacing/stopping
+the owner's existing app. GNOME visual checks remain owner acceptance.
+The owner reports most Linux systems validated and working; Bazzite/Big
+Picture is planned for November 4 and remains unverified. See
+[implementation, sources, walkthrough and limits](docs/linux-launcher-and-reconnect.md).
+
+The two preview entries immediately below describe their original November 2
+delivery state. Their code is now included in the successful `7a1cade` CI run.
+
 Setup throughput follow-up (2026-11-02, uncommitted preview): downloaded emulator
 packages retain one archive checksum and structural/ELF checks; verified packages
 no longer receive repeated per-file hash scans. Linux metadata, copying and

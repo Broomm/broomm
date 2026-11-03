@@ -31,6 +31,18 @@ variants; keep the checked-in artwork and reproducible rendering recipe together
 - Focusing a scroll view's first or last control row reveals its beginning or end, including headings and trailing content. Focused cards remain fully visible when they fit; when a card or surrounding content exceeds the viewport, keep the active control visible. Arrow/controller directions follow the rendered arrangement, including buttons that wrap onto separate rows in smaller windows.
 - Show transfer progress, cancellation, failures and completion. Cancellation/retry may restart the transfer; never expose partial content as a completed game. Completed downloads offer Play for implemented platform/build integrations; other platforms remain browsable and downloadable without claiming launch support.
 
+## Application settings and Linux launcher
+
+Broomm settings includes an **Application** section on every host. Linux adds
+**Install to Launcher**: explicitly install a current-user Desktop Entry for
+the running executable, respecting absolute `XDG_DATA_HOME` and otherwise
+`$HOME/.local/share`. Use the existing Broomm icon and application identity.
+Recommend closing Broomm and reopening it from the launcher after installation.
+Keep the extracted application bundle in place; running the action again updates
+the launcher after moving it. Do not relocate the bundle, require root, change
+global associations, or touch games/progress. Try GNOME's per-file custom-icon
+metadata for this executable; unavailable metadata must not prevent installation.
+
 ## Profiles and shared installations
 
 Each Broomm profile represents an account on a saved RomM server. Broomm remembers multiple servers, but only one server can be active at a time. Users select a server first, then choose one of the profiles known for that server or add a profile. Use the server-scoped profile selection, explicit activation, and focus behavior in Teddy as the reference; see the [profile flow](docs/profiles-and-servers.md).

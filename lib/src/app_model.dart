@@ -201,7 +201,18 @@ class PrototypeModel extends ChangeNotifier {
   }
 
   Future<void> _open(String reason) async {
-    if (_opening) return;
+    if (_opening) {
+      // A later disconnect takes precedence over a menu already waiting for
+      // pause/focus acknowledgement. It must still expose pairing.
+      if (reason != 'menu') {
+        screen = Screen.pairing;
+        pairing?.removeDisconnected(devices);
+        gestures.reset();
+        notice = 'A controller needs attention. Pair a controller to continue.';
+        notifyListeners();
+      }
+      return;
+    }
     final lifetime = _lifetime;
     _opening = true;
     busy = true;
@@ -331,8 +342,29 @@ class PrototypeModel extends ChangeNotifier {
 
   Future<void> play() async {
     if (!canPlay) return;
-    final lifetime = _lifetime;
+    final lifetime = _lifetime, request = _request, origin = screen;
     final players = List<PlayerAssignment>.of(pairing!.players);
+    bool current() {
+      if (lifetime != _lifetime ||
+          request != _request ||
+          screen != origin ||
+          !(pairing?.valid(devices) ?? false) ||
+          pairing!.players.length != players.length)
+        return false;
+      for (var i = 0; i < players.length; i++) {
+        final before = players[i], now = pairing!.players[i];
+        if ((
+              before.deviceId,
+              before.swapFaces,
+              before.wiiMode,
+              before.gyroEnabled,
+            ) !=
+            (now.deviceId, now.swapFaces, now.wiiMode, now.gyroEnabled))
+          return false;
+      }
+      return true;
+    }
+
     notice = 'Release controller buttons to continue.';
     busy = true;
     error = null;
@@ -343,24 +375,29 @@ class PrototypeModel extends ChangeNotifier {
       await session.waitFor(
         (s) => s.ack >= revision && !s.blocked && s.paused == 0,
       );
-      if (lifetime != _lifetime) return;
+      if (!current()) return;
       await host.hide(session.status!.pid);
-      if (lifetime != _lifetime) return;
+      if (!current()) {
+        if (lifetime == _lifetime &&
+            (screen == Screen.pairing || screen == Screen.menu))
+          await _show(overlay: true);
+        return;
+      }
       screen = Screen.playing;
     } catch (e) {
-      if (lifetime != _lifetime) return;
+      if (!current()) return;
       error = 'Could not resume the game: $e';
       try {
         if (session.running) await session.command(players, active: false);
       } catch (gateError) {
         error = '$error\nCould not request pause: $gateError';
       }
-      if (lifetime != _lifetime) return;
+      if (!current()) return;
       screen = Screen.pairing;
       await _show(overlay: true);
     } finally {
       if (lifetime == _lifetime) {
-        busy = false;
+        if (!_opening) busy = false;
         notifyListeners();
       }
     }

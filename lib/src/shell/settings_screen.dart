@@ -34,6 +34,28 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             if (model.error != null) ProblemNotice(model.error!),
+            const Eyebrow('Application', color: muted),
+            const SizedBox(height: 12),
+            if (model.launcherInstaller.enabled) ...[
+              ConsoleButton(
+                key: const ValueKey('install-to-launcher'),
+                onPressed: model.installingLauncher || model.applicationUpdating
+                    ? null
+                    : model.installLauncher,
+                child: ActionLabel(
+                  model.installingLauncher
+                      ? 'Installing launcher…'
+                      : 'Install to Launcher',
+                  icon: Icons.desktop_windows_outlined,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                model.launcherStatus ?? 'Add this copy of Broomm to your application launcher with its icon.',
+                style: const TextStyle(color: muted, height: 1.5),
+              ),
+              const SizedBox(height: 24),
+            ],
             const Eyebrow('Application updates', color: muted),
             const SizedBox(height: 12),
             Text(
