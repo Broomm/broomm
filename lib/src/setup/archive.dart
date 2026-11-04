@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
+import '../linux_runtime.dart' show prepareLinuxBridge;
 import '../progress/files.dart';
 import '../progress/zip.dart';
 import '../romm/transfer.dart';
-import '../linux_runtime.dart' show prepareLinuxBridge;
+
+import 'linux_identity.dart';
 
 const setupExpandedLimit = 8 * 1024 * 1024 * 1024;
 
@@ -233,24 +236,10 @@ Future<String> extractSetupArchive(
           );
         image = candidates.single;
       }
-      final header = await image.open();
-      try {
-        final bytes = await header.read(20);
-        if (bytes.length != 20 ||
-            bytes[0] != 0x7f ||
-            bytes[1] != 69 ||
-            bytes[2] != 76 ||
-            bytes[3] != 70 ||
-            bytes[4] != 2 ||
-            bytes[5] != 1 ||
-            bytes[18] != 62 ||
-            bytes[19] != 0)
-          throw const FormatException(
-            'Expected the reviewed Linux x64 AppImage.',
-          );
-      } finally {
-        await header.close();
-      }
+      await verifyLinuxElf(
+        image,
+        architecture: Abi.current().toString().split('_').last,
+      );
       final packaged =
           '${File(Platform.resolvedExecutable).parent.path}/lib/broomm-native-run';
       final runner = await File(packaged).exists()

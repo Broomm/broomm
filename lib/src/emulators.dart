@@ -29,6 +29,7 @@ class PreparedEmulator {
     this.retroNativeStateNames = false,
     this.retroStateDirectory,
     this.linuxLauncher,
+    this.armadaDualScreen = false,
   });
   final String name, root, executable;
   final String? sdlLibrary, core;
@@ -43,6 +44,10 @@ class PreparedEmulator {
   // A reviewed AppImage may carry a bundled ELF loader. Its launcher remains
   // separately inventoried; executable/build identity refers to the emulator.
   final String? linuxLauncher;
+  final bool armadaDualScreen;
+  bool get armadaGamingMode =>
+      armadaDualScreen &&
+      (Platform.environment['GAMESCOPE_WAYLAND_DISPLAY']?.isNotEmpty ?? false);
   String get user =>
       userDirectory ?? '$root/${name == 'RPCS3' ? 'portable' : 'user'}';
   factory PreparedEmulator.fromJson(Map<String, dynamic> j) => PreparedEmulator(
@@ -161,6 +166,7 @@ class MelonDsAdapter extends EmulatorAdapter {
       config.path,
       patchMelonDsConfig(existing, {
         'Emu': {'DirectBoot': 'true', 'ExternalBIOSEnable': 'false'},
+        if (e.armadaGamingMode) 'Screen': {'UseGL': 'true'},
         'Instance0': {
           'JoystickID': '0',
           'SaveFilePath': jsonEncode('${e.root}/saves/$identity'),
@@ -700,6 +706,10 @@ class AzaharAdapter extends EmulatorAdapter {
       '"$base,axis_x:2,axis_y:3,deadzone:0.1,range:1.0"',
     );
     set('profiles\\1\\motion_device', '"$base"');
+    if (e.armadaGamingMode) {
+      if (!text.contains('[Renderer]')) text += '\n[Renderer]\n';
+      set('graphics_api', '2', section: 'Renderer');
+    }
     await atomicText(file.path, text);
     return [rom];
   }

@@ -34,6 +34,14 @@ final playablePlatforms = [
       retroCore: s.core,
     ),
   GamePlatform('nds', 'melonds', 'melonDS', ControllerTarget.nds, 1, ['nds']),
+  GamePlatform(
+    'nds',
+    'melonds-armada',
+    'melonDS (Armada)',
+    ControllerTarget.nds,
+    1,
+    ['nds'],
+  ),
   GamePlatform('psp', 'ppsspp', 'PPSSPP', ControllerTarget.psp, 1, [
     'iso',
     'cso',
@@ -97,6 +105,14 @@ final playablePlatforms = [
     'cxi',
     'app',
   ]),
+  GamePlatform(
+    '3ds',
+    'azahar-armada',
+    'Azahar (Armada)',
+    ControllerTarget.n3ds,
+    1,
+    ['cci', '3ds', 'cxi', 'app'],
+  ),
   GamePlatform('switch', 'ryubing', 'Ryubing', ControllerTarget.switchPro, 4, [
     'nsp',
     'xci',
@@ -166,7 +182,10 @@ GamePlatform? gamePlatform(RommGame game, List<RommPlatform> platforms) {
       .firstOrNull;
 }
 
-List<GamePlatform> platformEmulators(RommPlatform platform) {
+List<GamePlatform> platformEmulators(
+  RommPlatform platform, {
+  bool armada = false,
+}) {
   final target = gamePlatform(
     RommGame(
       id: 0,
@@ -184,7 +203,8 @@ List<GamePlatform> platformEmulators(RommPlatform platform) {
               (p) =>
                   p.slug == target.slug &&
                   (p.emulatorId != 'rpcs3-intel' || Platform.isMacOS) &&
-                  (p.emulatorId != 'astris' || Platform.isMacOS),
+                  (p.emulatorId != 'astris' || Platform.isMacOS) &&
+                  (armada || !p.emulatorId.endsWith('-armada')),
             )
             .toList();
 }

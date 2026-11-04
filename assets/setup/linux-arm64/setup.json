@@ -132,6 +132,24 @@
           "rolling": true
         }
       }
+    },
+    "melonds-armada": {
+      "source": {
+        "url": "https://github.com/virtudude/melonDS/releases/download/drm-leasing/melonDS-aarch64.AppImage",
+        "sha256": "eb89fb87e08accdb47b6992e8a03f5534bd211b271ebb46e181f3bdce14e1b0c",
+        "bytes": 34626056,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    "azahar-armada": {
+      "source": {
+        "url": "https://github.com/virtudude/Azahar-AppImage-Enhanced/releases/download/drm-leasing/Azahar-d16299140-anylinux-aarch64.AppImage",
+        "sha256": "f2c13c954a23433b7a4d05d397e0871d48be3b058f4963a1736f6e84d6448fd8",
+        "bytes": 84838974,
+        "format": "appimage",
+        "entry": "AppDir"
+      }
     }
   }
 }

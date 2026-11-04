@@ -28,6 +28,7 @@ class TestedBuild {
     : id = j['id'] as String,
       name = j['name'] as String,
       version = j['version'] as String,
+      distribution = j['distribution'] as String?,
       host = j['host'] as String,
       architecture =
           j['architecture'] as String? ?? (j['host'] as String).split('-').last,
@@ -56,6 +57,8 @@ class TestedBuild {
       native = (j['native'] as Map).cast<String, String>();
   final String id, name, version, host, bundle, executable, hash;
   final String architecture;
+  final String? distribution;
+  bool get armadaDualScreen => distribution == 'armada';
   final String integrityAsset;
   final SetupPackage? sourcePackage;
   // Both RPCS3 distributions consume the same native PS3 data format. Keep
@@ -66,8 +69,16 @@ class TestedBuild {
       ? 'rpcs3'
       : isPs2
       ? 'ps2'
-      : id;
-  String get engine => isRpcs3 ? 'RPCS3' : name;
+      : switch (id) {
+          'azahar-armada' => 'azahar',
+          'melonds-armada' => 'melonds',
+          _ => id,
+        };
+  String get engine => switch (id) {
+    'azahar-armada' => 'Azahar',
+    'melonds-armada' => 'melonDS',
+    _ => isRpcs3 ? 'RPCS3' : name,
+  };
   final String? sdlLibrary, coreHash;
   final String? linuxLauncher;
   final bool retroNativeStateNames;
@@ -156,11 +167,12 @@ class ManagedEmulators extends ChangeNotifier {
     Future<String> Function(String)? asset,
     SetupDownloads? downloads,
     this.hostOverride,
+    this.distributionOverride,
   }) : asset = asset ?? rootBundle.loadString,
        downloads = downloads ?? SetupDownloads(data);
   final Directory data;
   final String? project;
-  final String? hostOverride;
+  final String? hostOverride, distributionOverride;
   final SessionLog? log;
   final SetupDownloads downloads;
   double? progress;
@@ -237,6 +249,14 @@ class ManagedEmulators extends ChangeNotifier {
   String get setupAssets => host.startsWith('linux-') && supported
       ? 'assets/setup/$host'
       : 'assets/setup';
+  late final bool armadaDualScreen =
+      host == 'linux-arm64' &&
+      (distributionOverride ?? linuxDistribution()) == 'armada';
+
+  bool _available(TestedBuild build) =>
+      build.distribution == null ||
+      (build.distribution == 'armada' && armadaDualScreen);
+
   String get coreFile => host.startsWith('linux-') ? 'core.so' : 'core.dylib';
   String get snesCoreFile => host.startsWith('linux-')
       ? 'snes9x_libretro.so'
@@ -261,9 +281,11 @@ class ManagedEmulators extends ChangeNotifier {
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         final current = (j['builds'] as List)
             .map((e) => TestedBuild(e as Map))
+            .where(_available)
             .toList();
         final previous = (j['previous_builds'] as List? ?? const [])
             .map((e) => TestedBuild(e as Map))
+            .where(_available)
             .toList();
         if (previous.any(
           (old) => !current.any(
@@ -414,6 +436,10 @@ class ManagedEmulators extends ChangeNotifier {
         'This setup JSON does not match the current host or schema.',
       );
     final entries = (j['launchers'] as Map).cast<String, Map>();
+    if (file == null && !armadaDualScreen) {
+      entries.remove('melonds-armada');
+      entries.remove('azahar-armada');
+    }
     if (entries.isEmpty ||
         entries.keys.any((id) => !builds.any((b) => b.id == id)))
       throw const FormatException(
@@ -1132,7 +1158,9 @@ class ManagedEmulators extends ChangeNotifier {
         final metadata =
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         builds.addAll(
-          (metadata['builds'] as List).map((j) => TestedBuild(j as Map)),
+          (metadata['builds'] as List)
+              .map((j) => TestedBuild(j as Map))
+              .where(_available),
         );
       }
       await resetEmulatorData(
@@ -1358,15 +1386,18 @@ class ManagedEmulators extends ChangeNotifier {
 
   /// The add-on importer runs without an input bridge, inside private staging.
   /// Its caller holds the same session lease as setup and game launch.
-  Future<String> azaharInstaller(DownloadCancellation cancellation) async {
+  Future<String> azaharInstaller(
+    DownloadCancellation cancellation, {
+    String emulator = 'Azahar',
+  }) async {
     if (!supported)
       throw UnsupportedError(
-        '3DS add-on installation needs the tested macOS ARM64 Azahar pack on this build.',
+        '3DS add-on installation needs a managed Azahar build.',
       );
     await load();
-    final b = buildFor('Azahar');
+    final b = buildFor(emulator);
     if (error != null) throw StateError(error!);
-    if (b == null || !ready('Azahar'))
+    if (b == null || b.profileId != 'azahar' || !ready(emulator))
       throw StateError(
         'Set up Azahar in Emulator Settings, then choose Download Updates and DLC again.',
       );
@@ -1379,17 +1410,18 @@ class ManagedEmulators extends ChangeNotifier {
     } else {
       await verifyBundle(b, bundle, cancellation);
     }
-    return '$bundle/${b.executable}';
+    return '$bundle/${b.linuxLauncher ?? b.executable}';
   }
 
   Future<(String, Directory)> prepareAzaharAddons(
     String profileId,
-    DownloadCancellation cancellation,
-  ) async {
+    DownloadCancellation cancellation, {
+    String emulator = 'Azahar',
+  }) async {
     if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(profileId))
       throw const FormatException('Invalid profile identity');
-    final executable = await azaharInstaller(cancellation);
-    final b = buildFor('Azahar')!;
+    final executable = await azaharInstaller(cancellation, emulator: emulator);
+    final b = buildFor(emulator)!;
     final runtime = await prepareManagedProfile(
       data,
       profileId,
@@ -1639,6 +1671,7 @@ class ManagedEmulators extends ChangeNotifier {
             ? null
             : '${release.path}/${b.bundle}/${b.sdlLibrary}',
         core,
+        armadaDualScreen: b.armadaDualScreen,
         coreId: coreId,
         contentId: contentId,
         retroNativeStateNames: b.retroNativeStateNames,
@@ -1660,13 +1693,13 @@ class ManagedEmulators extends ChangeNotifier {
             : '${release.path}/${b.bundle}/${b.linuxLauncher}',
         userDirectory: b.id == 'eden'
             ? '${runtime.path}/data/eden'
-            : b.id == 'melonds'
+            : b.profileId == 'melonds'
             ? '${runtime.path}/launcher/portable'
             : b.isPs2
             ? '${runtime.path}/user/${b.id}/${b.engine}'
             : b.id == 'duckstation'
             ? '${runtime.path}/home/Library/Application Support/DuckStation'
-            : b.id == 'azahar'
+            : b.profileId == 'azahar'
             ? '${runtime.path}/home/Library/Application Support/Azahar'
             : null,
       ),

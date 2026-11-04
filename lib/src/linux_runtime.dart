@@ -33,10 +33,24 @@ Map<String, String> linuxLaunchEnvironment(
   // The same reconnect/player-change sequence passes with xcb.
   // Scope this to Eden's child; retain native Wayland on hosts without X11.
   final display = (environment ?? Platform.environment)['DISPLAY'];
-  final backend =
-      emulator.name == 'Eden' && display != null && display.isNotEmpty
-      ? {'QT_QPA_PLATFORM': 'xcb'}
-      : <String, String>{};
+  final backend = {
+    if ((emulator.name == 'Eden' || emulator.armadaGamingMode) &&
+        display != null &&
+        display.isNotEmpty)
+      'QT_QPA_PLATFORM': 'xcb',
+    if (emulator.armadaDualScreen)
+      if (emulator.name == 'melonDS') ...{
+        'MELONDS_DRM_LEASE': emulator.armadaGamingMode ? '1' : '0',
+        if (emulator.armadaGamingMode) ...{
+          'MELONDS_DRM_LEASE_TOUCH': 'bottom_touchscreen',
+          'USE_EGL_X11': '1',
+        },
+      } else ...{
+        'AZAHAR_DRM_LEASE': emulator.armadaGamingMode ? '1' : '0',
+        if (emulator.armadaGamingMode)
+          'AZAHAR_DRM_LEASE_TOUCH': 'bottom_touchscreen',
+      },
+  };
   // This build already has $ORIGIN/../lib RUNPATH and explicitly warns before
   // SDL initialization if LD_LIBRARY_PATH is present. Keep the host override
   // out of this child rather than dismissing the emulator's warning dialog.

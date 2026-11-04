@@ -21,12 +21,62 @@ handoff remain separate. ARMSX2's Linux build is ARM64, Astris is macOS-only,
 and RPCS3 Intel is a macOS variant; none is advertised as a Linux x64 choice.
 Linux ARM64 has a separate bundled RetroArch recipe with the same 15 core
 choices. Its frontend and core payloads were checked as AArch64 ELF files.
-Standalone packages need separate review. Upstream ARM64 assets exist for
+The Armada-specific variants below are now in the ARM64 setup recipes. Other
+standalone packages need separate review. Upstream ARM64 assets exist for
 melonDS, DuckStation, PPSSPP and ARMSX2. The standalone bridges depend on
 build-specific native symbols, and the SDL dispatch decoder used by some
 adapters currently recognizes x64 instructions. ARMSX2 also offers distinct
 4 KiB and 16 KiB packages. Select that package using the running kernel's
 page size when its standalone integration is reviewed.
+
+
+## AYN Thor dual-screen feasibility
+
+Armada introduced experimental Gaming Mode dual-screen emulation in
+[20260907](https://github.com/armada-os/armada/releases/tag/20260907).
+The [Armada Store catalog](https://github.com/armada-os/armada/blob/main/decky/armada-store/catalog.json)
+points to AArch64 [melonDS](https://github.com/virtudude/melonDS/releases/tag/drm-leasing)
+and [Azahar Enhanced](https://github.com/virtudude/Azahar-AppImage-Enhanced/releases/tag/drm-leasing)
+builds. The emulator presents its top view to Gamescope and leases the bottom
+DRM connector for direct scanout. The lease does not appear as a second Steam
+game window. Armada's
+[Gamescope session patch](https://github.com/armada-os/armada/blob/main/packages/gamescope-session/patches/0005-add-drm-lease-functions.patch)
+sets aside the secondary panel and its touch device. The bottom Plasma
+companion can yield the panel through the
+[lease broker](https://github.com/armada-os/armada/blob/main/packages/gamescope/patches/0016-drm-let-a-socket-lease-holder-yield-to-protocol-clients.patch).
+
+The [melonDS fork](https://github.com/virtudude/melonDS/compare/master...drm-leasing)
+requires its OpenGL display path with EGL for the lease. The
+[Azahar fork](https://github.com/virtudude/azahar/compare/master...drm-leasing)
+requires Vulkan with direct-display support. Both can negotiate the lease over
+the main Gamescope Wayland socket even when their Qt windows use XWayland.
+They read the bottom touch device through evdev. The forks can fall back to
+the normal single-window layout when no lease is available. Desktop Mode
+exposes both panels as desktop outputs and is a separate window-placement path.
+Cemu already has a separate GamePad view. The Armada Store's Cemu entry does
+not identify a Gaming Mode lease-capable build.
+
+Broomm lists **melonDS (Armada)** under Nintendo DS and **Azahar (Armada)**
+under Nintendo 3DS on Linux ARM64 with `ID=armada` in os-release. They have
+separate recipe IDs and installation directories. Each variant uses the
+corresponding Broomm-owned DS or 3DS profile and save format. Stock host
+recipes retain their own identities and download sources. Broomm enables
+the relevant renderer for the variants when launched through Gamescope.
+Normal setup downloads the reviewed AppImages and uses their private
+extraction roots (`squashfs-root` for melonDS and `AppDir` for Azahar).
+
+Both downloaded archives matched the provider SHA-256. Their extracted trees,
+AArch64 executables and SDL dispatch metadata were inspected. Both extracted
+payloads passed Broomm’s normal inventory verification, installation and
+private-profile resolution in disposable storage. The native
+Linux sanitizer fixture checks the captured ARM64 melonDS SDL stub. The
+stripped Azahar ELF uses a build-pinned SDL 2.32.10 dispatch table, identified
+from its relocation array and initializer stubs. The top-panel Settings and
+Controller pairing retain the existing Gamescope handoff. The forks read
+bottom touch through evdev, so verify touch during pause independently on
+the Thor. Lease loss, single-window fallback, suspend/resume, display return
+on exit, per-profile save/state behavior and CIA installation also require
+native device verification.
 
 ## Implemented boundaries
 

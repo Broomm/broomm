@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../game_launch.dart';
 import '../managed_emulators.dart';
 import '../retroarch.dart';
 import '../romm/models.dart';
@@ -37,7 +36,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
   String? active, reviewing, completed, importProblem;
   String path = '';
   String slugFor(RommPlatform p) =>
-      platformEmulators(p).firstOrNull?.slug ?? p.slug;
+      model.emulatorChoices(p).firstOrNull?.slug ?? p.slug;
   String keyFor(RommPlatform p, TestedBuild b) => '${p.id}:${b.id}';
   @override
   void dispose() {
@@ -98,7 +97,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
         }
         active = null;
         for (final platform in model.platforms) {
-          for (final choice in platformEmulators(platform)) {
+          for (final choice in model.emulatorChoices(platform)) {
             final b = m.buildFor(choice.emulator);
             if (b != null && imported.containsKey(b.id)) {
               final key = keyFor(platform, b);
@@ -117,7 +116,9 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
 
   Future<void> remove(RommPlatform platform, TestedBuild build) async {
     final affected = model.platforms
-        .where((p) => platformEmulators(p).any((e) => e.emulator == build.name))
+        .where(
+          (p) => model.emulatorChoices(p).any((e) => e.emulator == build.name),
+        )
         .map((p) => p.name)
         .join(', ');
     final confirmed = await showConsoleDialog<bool>(
@@ -374,7 +375,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                             style: const TextStyle(color: muted, fontSize: 12),
                           ),
                           const SizedBox(height: 16),
-                          if (platformEmulators(p).isEmpty)
+                          if (model.emulatorChoices(p).isEmpty)
                             const Padding(
                               padding: EdgeInsets.only(bottom: 14),
                               child: Text(
@@ -382,7 +383,7 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
                                 style: TextStyle(color: muted),
                               ),
                             ),
-                          for (final choice in platformEmulators(p))
+                          for (final choice in model.emulatorChoices(p))
                             if (m.buildFor(choice.emulator)
                                 case final TestedBuild build)
                               _card(p, build),
@@ -414,7 +415,8 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
     final order =
         10.0 +
         sorted.indexWhere((p) => p.id == platform.id) * 1000 +
-        platformEmulators(platform)
+        model
+                .emulatorChoices(platform)
                 .indexWhere((p) => p.emulator == build.name) *
             10;
     final isDefault = model.defaultEmulator(platform) == build.id;

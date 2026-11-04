@@ -64,6 +64,15 @@ use_custom_storage=false
           // The pinned AppImage contains xcb/Wayland plugins, no offscreen
           // plugin. --install exits before showing its main window.
           requiresDisplay: true,
+          environment: {
+            'AZAHAR_DRM_LEASE': '0',
+            if (await File('${File(executable).parent.parent.path}/sharun')
+                .exists()) ...{
+              'SHARUN_ALLOW_LD_PRELOAD': '1',
+              'SHARUN_WORKING_DIR': home,
+              'LD_LIBRARY_PATH': '',
+            },
+          },
         )
       : await Process.start(
           '/usr/bin/sandbox-exec',

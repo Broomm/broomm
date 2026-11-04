@@ -26,13 +26,18 @@ static void done(int sockets[2]){close(sockets[0]);close(sockets[1]);control_fd=
 int main(void) {
  _Alignas(8) uint8_t stub[128]={0};int32_t distance=64-6;
  stub[0]=0xff;stub[1]=0x25;memcpy(stub+2,&distance,4);
- assert(dispatch_slot(stub)==(void **)(stub+64));
+ assert(x64_dispatch_slot(stub)==(void **)(stub+64));
  memset(stub,0,sizeof(stub));distance=64-7;
  stub[0]=0x48;stub[1]=0x8b;stub[2]=0x05;memcpy(stub+3,&distance,4);stub[7]=0xff;stub[8]=0xe0;
  stub[16]=0xff;stub[17]=0x25; // A neighbouring export must never win.
- assert(dispatch_slot(stub)==(void **)(stub+64));
- stub[0]=0xff;stub[1]=0xe0;assert(dispatch_slot(stub)==NULL);
- puts("PASS SDL dispatch resolves both native stub ABIs without patching a neighbouring export");
+ assert(x64_dispatch_slot(stub)==(void **)(stub+64));
+ stub[0]=0xff;stub[1]=0xe0;assert(x64_dispatch_slot(stub)==NULL);
+ _Alignas(4096) uint32_t arm[] = {0xd0000a42, 0xf944e442, 0xaa0203f0, 0xd61f0200};
+ assert((uintptr_t)arm64_dispatch_slot(arm)==(uintptr_t)arm+(0x14au*4096)+0x9c8u);
+ arm[2]=0xaa0303f0; // A different source register cannot identify a slot.
+ assert(arm64_dispatch_slot(arm)==NULL);
+ assert(dispatch_slot(NULL)==NULL);
+ puts("PASS SDL dispatch resolves the x64 and Armada ARM64 stub ABIs");
  char value[64];
  assert(json_field("{\"game\":{\"ticket\":7},\"ticket\":4}","ticket",value,sizeof(value))&&!strcmp(value,"4"));
  assert(!json_field("{\"game\":{\"ticket\":7}}","ticket",value,sizeof(value)));

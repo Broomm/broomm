@@ -416,7 +416,7 @@ class ShellModel extends ChangeNotifier {
   late final androidSession = AndroidGameSession(android, cloud);
   bool get isAndroid => android.enabled;
   List<GamePlatform> emulatorChoices(RommPlatform platform) => !isAndroid
-      ? platformEmulators(platform)
+      ? platformEmulators(platform, armada: emulators.armadaDualScreen)
       : platformEmulators(platform)
             .where(
               (p) => android.choices(platform).any((e) => e.id == p.emulatorId),
@@ -451,7 +451,16 @@ class ShellModel extends ChangeNotifier {
       GameAddons(
         storage.directory,
         library,
-        prepare: emulators.prepareAzaharAddons,
+        prepare: (profile, cancellation) {
+          const target = RommPlatform(0, 'Nintendo 3DS', '3ds', 0);
+          return emulators.prepareAzaharAddons(
+            profile,
+            cancellation,
+            emulator: defaultEmulator(target) == 'azahar-armada'
+                ? 'Azahar (Armada)'
+                : 'Azahar',
+          );
+        },
         phase: (value) => log?.write(value),
       );
   late final ps3Addons = Ps3Addons(

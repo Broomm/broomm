@@ -213,7 +213,7 @@ static void session_ui(void *unused) {
  else if(had_game){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);if(t.tv_sec+t.tv_nsec/1e9-last_game>1.0)atomic_store(&session_quit,true);}
  void (*visible)(void *,bool)=dlsym(RTLD_DEFAULT,"_ZN7QWidget10setVisibleEb");
  if(visible&&actual>=0){bool hide=hide_game_window();if(hide!=ui_hidden){visible(qt_main,!hide);ui_hidden=hide;}
-  bool (*is_visible)(const void *,const void *)=symbol("_ZNK7QWidget11isVisibleToEPKS_");
+  bool (*is_visible)(const void *,const void *)=dlsym(RTLD_DEFAULT,"_ZNK7QWidget11isVisibleToEPKS_");
   atomic_store(&game_window_visible,!hide&&is_visible&&is_visible(qt_main,NULL));}
  atomic_store(&app_active,actual>=0);
 }

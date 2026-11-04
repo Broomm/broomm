@@ -41,12 +41,12 @@ Future<Directory> prepareManagedProfile(
       'saves',
       'states',
       if (build.isRpcs3 ||
-          build.id == 'azahar' ||
+          build.profileId == 'azahar' ||
           build.id == 'duckstation') ...[
         'home/Library',
         'home/Library/Application Support',
       ],
-      if (build.id == 'azahar') ...[
+      if (build.profileId == 'azahar') ...[
         'home/Library/Application Support/Azahar',
         'home/Library/Application Support/Azahar/config',
       ],
@@ -82,7 +82,10 @@ Future<Directory> prepareManagedProfile(
         '${destination.path}/portable/Icons',
       );
     if (build.host.startsWith('linux-'))
-      await prepareLinuxProfileLinks(destination, build.id);
+      await prepareLinuxProfileLinks(
+        destination,
+        build.armadaDualScreen ? build.profileId : build.id,
+      );
     return destination;
   }
   final stage = await parent.createTemp('.profile-');
@@ -108,7 +111,7 @@ Future<Directory> prepareManagedProfile(
         ? '${stage.path}/data/eden'
         : build.id == 'duckstation'
         ? '${stage.path}/home/Library/Application Support/DuckStation'
-        : build.id == 'azahar'
+        : build.profileId == 'azahar'
         ? '${stage.path}/home/Library/Application Support/Azahar'
         : '${stage.path}/user';
     await ownedDirectory(Directory(user));
@@ -293,7 +296,10 @@ use_custom_storage=false
       await Link('${support.path}/rpcs3').create('../../../portable');
     }
     if (build.host.startsWith('linux-'))
-      await prepareLinuxProfileLinks(stage, build.id);
+      await prepareLinuxProfileLinks(
+        stage,
+        build.armadaDualScreen ? build.profileId : build.id,
+      );
     await File('${stage.path}/profile.json').writeAsString(
       jsonEncode({
         'version': 1,

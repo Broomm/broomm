@@ -178,7 +178,13 @@ as Nintendo Entertainment System or Super Nintendo. The first setup downloads
 the shared frontend and the selected core. Subsequent platform setup reuses
 the frontend. No JSON import is needed. The recipe uses the published frontend
 that targets glibc 2.39 and the existing Linux installer requires Landlock ABI
-3. ARM64 standalone emulators have separate setup work.
+3. On Armada OS, **Emulator Settings** also offers **melonDS (Armada)** under
+Nintendo DS and **Azahar (Armada)** under Nintendo 3DS. Set up either card
+normally and launch a game from Home in Gaming Mode. Check that the upper
+panel shows the top game view and the lower panel accepts touch. Open the
+settings overlay with **R3 + Select**, resume with **Start**, then close the
+game and verify Armada regains the bottom panel. See the
+[dual-screen integration notes](docs/linux-standalone.md#ayn-thor-dual-screen-feasibility).
 
 To verify the Gamescope window handoff, launch Broomm from its Steam shortcut,
 start a game, and press **R3 + Select**. The game pauses and Broomm's settings

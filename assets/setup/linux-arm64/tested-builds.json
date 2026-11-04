@@ -14,6 +14,41 @@
       "sdl_library": "lib/libSDL3.so.0",
       "native": {},
       "integrity_asset": "assets/setup/linux-arm64/retroarch.integrity.json"
+    },
+    {
+      "id": "melonds-armada",
+      "name": "melonDS (Armada)",
+      "version": "1.1 / 12891b6",
+      "host": "linux-arm64",
+      "distribution": "armada",
+      "bundle": "melonDS",
+      "executable": "usr/bin/melonDS",
+      "sha256": "e6401d369badcb4fe92696dd327073a1891d4f5f835d6123925ec3121d99105b",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "20020"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/melonds-armada.integrity.json",
+      "sdl_library": "usr/lib/libSDL2-2.0.so.0"
+    },
+    {
+      "id": "azahar-armada",
+      "name": "Azahar (Armada)",
+      "version": "DRM leasing / d16299140",
+      "host": "linux-arm64",
+      "distribution": "armada",
+      "bundle": "Azahar",
+      "executable": "shared/bin/azahar",
+      "sha256": "feb29b220975b7e454369a63bdd6a1eeadb384f43ac324a9e2ddbe516f5d6971",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_SDL_TABLE": "1f5e1d8",
+        "BROOMM_EXPECT_SDL_VERSION": "23210"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/azahar-armada.integrity.json",
+      "linux_launcher": "bin/azahar"
     }
   ]
 }

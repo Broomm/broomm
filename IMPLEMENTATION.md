@@ -1,5 +1,9 @@
 # Implementation plan
 
+Armada on Linux ARM64 has separate managed melonDS and Azahar cards for
+the upstream DRM-leasing builds. AppImage provenance, ARM64 SDL interop and
+physical acceptance gaps are recorded in [Linux standalone integration](docs/linux-standalone.md#ayn-thor-dual-screen-feasibility).
+
 The Linux ARM64 setup recipe selects the published Broomm RetroArch 1.22.2
 frontend and 15 Libretro AArch64 cores. Linux executable/core checks use the
 selected architecture, and the normal platform card installs its one requested
@@ -8,7 +12,7 @@ manifest. The audited nightly core snapshots contain AArch64 ELF libraries. The 
 setup workflow downloaded the frontend and NES/SNES cores into disposable
 storage and verified one shared frontend and separate core installations.
 Armada OS launch, controller input, saves and Gamescope handoff still need the
-Thor test. Standalone ARM64 setup requires separate build and bridge review.
+Thor test. Other standalone ARM64 builds require separate build and bridge review.
 
 In Steam Gaming Mode on the Ally, the RetroArch bridge recorded the menu
 request and hid its window while Steam still tracked the launcher process.
