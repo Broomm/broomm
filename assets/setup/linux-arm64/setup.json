@@ -1,0 +1,137 @@
+{
+  "schema_version": 2,
+  "host": "linux-arm64",
+  "launchers": {
+    "retroarch": {
+      "source": {
+        "url": "https://github.com/Broomm/retroarch/releases/download/v0.1.0/RetroArch-1.22.2-broomm-0.1.0-linux-arm64.zip",
+        "sha256": "2f41f700f6898d26cfb6e05cccfc8aa04a0f85a3bdb40ee91b886fb35e9179c3",
+        "bytes": 9759303,
+        "format": "zip",
+        "entry": "RetroArch"
+      },
+      "cores": {
+        "fbneo": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/fbneo_libretro.so.zip",
+          "sha256": "a361f5e24915bbbe1baeb6bf5d0d93340752bd9d2bd6add28345d65776b6c83f",
+          "bytes": 19719420,
+          "format": "zip",
+          "entry": "fbneo_libretro.so",
+          "rolling": true
+        },
+        "flycast": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/flycast_libretro.so.zip",
+          "sha256": "4b94dbe33f2b91c9685502f3d2e26a6ef5581b988bd90eea20b180039eb1ee6c",
+          "bytes": 5863482,
+          "format": "zip",
+          "entry": "flycast_libretro.so",
+          "rolling": true
+        },
+        "gambatte": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/gambatte_libretro.so.zip",
+          "sha256": "0936378e4ce8f54f9c2281fb7a8d7172b05705e80203de1151ed553a8c7898dc",
+          "bytes": 519665,
+          "format": "zip",
+          "entry": "gambatte_libretro.so",
+          "rolling": true
+        },
+        "genesis_plus_gx": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/genesis_plus_gx_libretro.so.zip",
+          "sha256": "3cec09ff994a1dcb5fe6bd461a80c7c2fce615b1fae34983ead01091ebd627dd",
+          "bytes": 1240119,
+          "format": "zip",
+          "entry": "genesis_plus_gx_libretro.so",
+          "rolling": true
+        },
+        "mednafen_lynx": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mednafen_lynx_libretro.so.zip",
+          "sha256": "a16acaffb7c590e6d151eb18340bc1bc776b6694dd19f3577cd85945b9c04cf0",
+          "bytes": 95663,
+          "format": "zip",
+          "entry": "mednafen_lynx_libretro.so",
+          "rolling": true
+        },
+        "mednafen_pce_fast": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mednafen_pce_fast_libretro.so.zip",
+          "sha256": "97759163023620a4c99749a99c6a55eeebc532b59fdd8583c9ed9675cac7cafc",
+          "bytes": 614973,
+          "format": "zip",
+          "entry": "mednafen_pce_fast_libretro.so",
+          "rolling": true
+        },
+        "mednafen_saturn": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mednafen_saturn_libretro.so.zip",
+          "sha256": "f2b7fee12308d6c0beb1f17a8be2b250540653c19ddb92291175de3d28b9676b",
+          "bytes": 1688984,
+          "format": "zip",
+          "entry": "mednafen_saturn_libretro.so",
+          "rolling": true
+        },
+        "mesen": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mesen_libretro.so.zip",
+          "sha256": "e9ec67c1f5af465ecf70309aef1a4d97540012abcd243f7c231643aa754bcbfd",
+          "bytes": 1013325,
+          "format": "zip",
+          "entry": "mesen_libretro.so",
+          "rolling": true
+        },
+        "mgba": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mgba_libretro.so.zip",
+          "sha256": "c5d2b28af596c97c3ee46a3ad86d6fa127d02abcf6bad3401d558070b9b4cf4b",
+          "bytes": 525008,
+          "format": "zip",
+          "entry": "mgba_libretro.so",
+          "rolling": true
+        },
+        "mupen64plus_next": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/mupen64plus_next_libretro.so.zip",
+          "sha256": "c976ed5045bbd56c7d798f8d6e388e41ee626fd0eef16119e0119cdf6817da1e",
+          "bytes": 2583131,
+          "format": "zip",
+          "entry": "mupen64plus_next_libretro.so",
+          "rolling": true
+        },
+        "opera": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/opera_libretro.so.zip",
+          "sha256": "9be8fc0bdb6b29183cd9fc6f1ab2d048c3609f67ee97ce184e47abbf386fb16a",
+          "bytes": 298214,
+          "format": "zip",
+          "entry": "opera_libretro.so",
+          "rolling": true
+        },
+        "picodrive": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/picodrive_libretro.so.zip",
+          "sha256": "8db779a111b1614d6d3e643beb509ca22677879f0f2108dc375a073afbbdb227",
+          "bytes": 813108,
+          "format": "zip",
+          "entry": "picodrive_libretro.so",
+          "rolling": true
+        },
+        "stella": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/stella_libretro.so.zip",
+          "sha256": "3f28512c280327116e865e055ae16c09f244dcf78ad2465ba86aab668915b6b1",
+          "bytes": 1856691,
+          "format": "zip",
+          "entry": "stella_libretro.so",
+          "rolling": true
+        },
+        "virtualjaguar": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/virtualjaguar_libretro.so.zip",
+          "sha256": "b395cb83bc418473104a52182feef5fa1e20d8e05783883febf7c2fcb612dce3",
+          "bytes": 928751,
+          "format": "zip",
+          "entry": "virtualjaguar_libretro.so",
+          "rolling": true
+        },
+        "snes9x": {
+          "url": "https://buildbot.libretro.com/nightly/linux/aarch64/latest/snes9x_libretro.so.zip",
+          "sha256": "aa3b5753dce2a409f53b0d05694abdd9f28d2338c43db19f03e974be2bdcdc80",
+          "bytes": 926696,
+          "format": "zip",
+          "entry": "snes9x_libretro.so",
+          "rolling": true
+        }
+      }
+    }
+  }
+}

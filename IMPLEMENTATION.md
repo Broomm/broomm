@@ -1,5 +1,15 @@
 # Implementation plan
 
+The Linux ARM64 setup recipe selects the published Broomm RetroArch 1.22.2
+frontend and 15 Libretro AArch64 cores. Linux executable/core checks use the
+selected architecture, and the normal platform card installs its one requested
+core. Frontend inventory and package digests match the upstream release
+manifest. The audited nightly core snapshots contain AArch64 ELF libraries. The real
+setup workflow downloaded the frontend and NES/SNES cores into disposable
+storage and verified one shared frontend and separate core installations.
+Armada OS launch, controller input, saves and Gamescope handoff still need the
+Thor test. Standalone ARM64 setup requires separate build and bridge review.
+
 In Steam Gaming Mode on the Ally, the RetroArch bridge recorded the menu
 request and hid its window while Steam still tracked the launcher process.
 Gamescope sessions now gate input immediately but wait for Broomm to map

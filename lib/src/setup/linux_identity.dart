@@ -59,7 +59,12 @@ Future<void> verifyLinuxStamp(
   }
 }
 
-Future<void> verifyLinuxElf(File file) async {
+Future<void> verifyLinuxElf(File file, {required String architecture}) async {
+  final machine = switch (architecture) {
+    'x64' => 62,
+    'arm64' => 183,
+    _ => throw ArgumentError.value(architecture, 'architecture'),
+  };
   final handle = await file.open();
   try {
     final b = await handle.read(64);
@@ -70,12 +75,12 @@ Future<void> verifyLinuxElf(File file) async {
         b[3] != 70 ||
         b[4] != 2 ||
         b[5] != 1 ||
-        b[18] != 62 ||
+        b[18] != machine ||
         b[19] != 0 ||
         (b[16] != 2 && b[16] != 3) ||
         b[17] != 0)
       throw StateError(
-        'Expected the reviewed Linux x64 ELF executable. No installation was changed.',
+        'Expected the reviewed Linux $architecture ELF executable. No installation was changed.',
       );
   } finally {
     await handle.close();

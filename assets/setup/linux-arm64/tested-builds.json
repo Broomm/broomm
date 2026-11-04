@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "builds": [
+    {
+      "id": "retroarch",
+      "name": "RetroArch",
+      "version": "1.22.2 / Broomm 0.1.0",
+      "retro_native_state_names": true,
+      "host": "linux-arm64",
+      "bundle": "RetroArch",
+      "executable": "retroarch",
+      "sha256": "55b827c3a7ed276e028ec6c95a73583dcf580cabdc49ccb7865b133724ea08f7",
+      "sdl": 3,
+      "sdl_library": "lib/libSDL3.so.0",
+      "native": {},
+      "integrity_asset": "assets/setup/linux-arm64/retroarch.integrity.json"
+    }
+  ]
+}

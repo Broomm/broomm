@@ -213,7 +213,7 @@ void main() {
     expect(await manager.data.exists(), isFalse);
     final unsupported = ManagedEmulators(
       manager.data,
-      hostOverride: 'linux-arm64',
+      hostOverride: 'linux-riscv64',
       asset: manager.asset,
     );
     addTearDown(unsupported.dispose);
@@ -238,13 +238,45 @@ void main() {
     await expectLater(linuxFileStamp(file), throwsStateError);
     expect(await File('${root.path}/preserved').readAsBytes(), changed);
   });
+  test('Linux ARM64 discovers the bundled RetroArch recipe and selects only the requested core', () async {
+    final manager = ManagedEmulators(
+      Directory('${root.path}/arm-data'),
+      hostOverride: 'linux-arm64',
+      asset: (p) => File(p).readAsString(),
+    );
+    addTearDown(manager.dispose);
+    final plan = await manager.readPlan();
+    final full = plan.items.single;
+    expect(full.build.host, 'linux-arm64');
+    expect(full.build.architecture, 'arm64');
+    expect(full.downloads, hasLength(16));
+    final nes = plan.forPlatform('nes').items.single;
+    expect(nes.cores.keys, ['mesen']);
+    expect(
+      nes.downloads.values.map((p) => p.url!.path),
+      everyElement(anyOf(contains('linux-arm64'), contains('/linux/aarch64/'))),
+    );
+    expect(nes.downloads, hasLength(2));
+    expect(await manager.data.exists(), isFalse);
+  });
   test('ELF validation rejects foreign architecture and truncated native components', () async {
     final file = await File('${root.path}/component').writeAsBytes(elf());
-    await verifyLinuxElf(file);
+    await verifyLinuxElf(file, architecture: 'x64');
+    await expectLater(
+      verifyLinuxElf(file, architecture: 'arm64'),
+      throwsStateError,
+    );
     await file.writeAsBytes(elf(machine: 183));
-    await expectLater(verifyLinuxElf(file), throwsStateError);
+    await verifyLinuxElf(file, architecture: 'arm64');
+    await expectLater(
+      verifyLinuxElf(file, architecture: 'x64'),
+      throwsStateError,
+    );
     await file.writeAsBytes([0x7f, 69, 76, 70]);
-    await expectLater(verifyLinuxElf(file), throwsStateError);
+    await expectLater(
+      verifyLinuxElf(file, architecture: 'x64'),
+      throwsStateError,
+    );
   });
   test('private bridge publication handles spaced paths but preserves unknown or linked destinations', () async {
     final source = await File('${root.path}/component.so').writeAsBytes(elf());

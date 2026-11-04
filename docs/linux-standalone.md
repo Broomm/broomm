@@ -19,7 +19,14 @@ RPCS3, Azahar, Ryubing, melonDS, DuckStation, PCSX2, PPSSPP and Eden. There is
 no setup pack to import. Existing macOS recipes and Android external-app
 handoff remain separate. ARMSX2's Linux build is ARM64, Astris is macOS-only,
 and RPCS3 Intel is a macOS variant; none is advertised as a Linux x64 choice.
-Linux ARM64 application builds continue, but managed ARM64 recipes remain pending.
+Linux ARM64 has a separate bundled RetroArch recipe with the same 15 core
+choices. Its frontend and core payloads were checked as AArch64 ELF files.
+Standalone packages need separate review. Upstream ARM64 assets exist for
+melonDS, DuckStation, PPSSPP and ARMSX2. The standalone bridges depend on
+build-specific native symbols, and the SDL dispatch decoder used by some
+adapters currently recognizes x64 instructions. ARMSX2 also offers distinct
+4 KiB and 16 KiB packages. Select that package using the running kernel's
+page size when its standalone integration is reviewed.
 
 ## Implemented boundaries
 

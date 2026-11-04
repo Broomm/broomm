@@ -172,6 +172,14 @@ On 27 October 2026, the owner requested removal of this checkout's old developme
 
 Remembered sign-ins use macOS Keychain, Windows Credential Manager, Linux Secret Service, or Android Keystore-encrypted private files. Linux requires an available unlocked Secret Service provider in the session, including Steam Gaming Mode. Windows currently enforces Credential Manager's native blob limit; oversized credentials stay session-only with a warning. `authentication-locks/` contains only nonsecret coordination files. Use device sign-out before intentionally discarding account metadata; deleting a data directory does not clear OS credential-store entries. See [Argosy research, storage choices and verification](docs/remembered-signins-and-platform-settings.md).
 
+On an ARM64 Linux build that includes the bundled ARM64 recipe, confirm
+`uname -m` reports `aarch64`, then set up RetroArch from a platform card such
+as Nintendo Entertainment System or Super Nintendo. The first setup downloads
+the shared frontend and the selected core. Subsequent platform setup reuses
+the frontend. No JSON import is needed. The recipe uses the published frontend
+that targets glibc 2.39 and the existing Linux installer requires Landlock ABI
+3. ARM64 standalone emulators have separate setup work.
+
 To verify the Gamescope window handoff, launch Broomm from its Steam shortcut,
 start a game, and press **R3 + Select**. The game pauses and Broomm's settings
 overlay appears. Press **Start** to return to the game, then reopen the overlay

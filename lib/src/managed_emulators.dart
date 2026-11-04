@@ -232,9 +232,11 @@ class ManagedEmulators extends ChangeNotifier {
   String get host =>
       hostOverride ??
       '${Platform.operatingSystem}-${Abi.current().toString().split('_').last}';
-  bool get supported => host == 'macos-arm64' || host == 'linux-x64';
-  String get setupAssets =>
-      host == 'linux-x64' ? 'assets/setup/linux-x64' : 'assets/setup';
+  bool get supported =>
+      const {'macos-arm64', 'linux-x64', 'linux-arm64'}.contains(host);
+  String get setupAssets => host.startsWith('linux-') && supported
+      ? 'assets/setup/$host'
+      : 'assets/setup';
   String get coreFile => host.startsWith('linux-') ? 'core.so' : 'core.dylib';
   String get snesCoreFile => host.startsWith('linux-')
       ? 'snes9x_libretro.so'
@@ -631,7 +633,10 @@ class ManagedEmulators extends ChangeNotifier {
           throw StateError('A managed core changed; its files were kept.');
         }
         if (host.startsWith('linux-')) {
-          await verifyLinuxElf(File('${target.path}/$coreFile'));
+          await verifyLinuxElf(
+            File('${target.path}/$coreFile'),
+            architecture: host.split('-').last,
+          );
           await atomicText(
             '${target.path}/receipt.json',
             jsonEncode({
@@ -651,7 +656,10 @@ class ManagedEmulators extends ChangeNotifier {
           throw const FileSystemException('Core copy verification failed');
         }
         if (host.startsWith('linux-')) {
-          await verifyLinuxElf(File('${stage.path}/$coreFile'));
+          await verifyLinuxElf(
+            File('${stage.path}/$coreFile'),
+            architecture: host.split('-').last,
+          );
           await atomicText(
             '${stage.path}/receipt.json',
             jsonEncode({
@@ -813,7 +821,10 @@ class ManagedEmulators extends ChangeNotifier {
       if (package?.rolling == true) {
         final actual = await sha256File(cores[entry.key]!);
         if (host.startsWith('linux-'))
-          await verifyLinuxElf(File(cores[entry.key]!));
+          await verifyLinuxElf(
+            File(cores[entry.key]!),
+            architecture: host.split('-').last,
+          );
         versions[entry.key] = {
           ...coreBuilds[entry.key]!,
           'managed': 'Broomm libretro core 1',
@@ -1675,11 +1686,20 @@ class ManagedEmulators extends ChangeNotifier {
   ) async {
     final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
     final bundle = Directory('${release.path}/${b.bundle}');
-    await verifyLinuxElf(File('${bundle.path}/${b.executable}'));
+    await verifyLinuxElf(
+      File('${bundle.path}/${b.executable}'),
+      architecture: b.architecture,
+    );
     if (b.sdlLibrary != null)
-      await verifyLinuxElf(File('${bundle.path}/${b.sdlLibrary}'));
+      await verifyLinuxElf(
+        File('${bundle.path}/${b.sdlLibrary}'),
+        architecture: b.architecture,
+      );
     if (b.coreHash != null)
-      await verifyLinuxElf(File('${release.path}/$snesCoreFile'));
+      await verifyLinuxElf(
+        File('${release.path}/$snesCoreFile'),
+        architecture: b.architecture,
+      );
     return {
       'app': await linuxTreeStamp(
         bundle,
