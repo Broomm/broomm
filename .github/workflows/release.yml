@@ -36,6 +36,7 @@ jobs:
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       - id: version
         env:
@@ -53,6 +54,7 @@ jobs:
         with:
           project-path: tool/ci/lint
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       - run: devbox --config tool/ci/lint run check
 
@@ -85,6 +87,7 @@ jobs:
         with:
           project-path: ${{ matrix.devbox }}
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       # Devbox has no native Windows backend. Match the root Devbox Flutter pin,
       # installing only into this workspace, with pre-provisioned MSVC/Windows SDK.
@@ -171,6 +174,7 @@ jobs:
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       - run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
       - name: Compile bridges and host test application
@@ -247,6 +251,7 @@ jobs:
         with:
           project-path: ${{ matrix.devbox }}
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       - id: windows-pin
         if: runner.os == 'Windows'
@@ -319,6 +324,7 @@ jobs:
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
           devbox-version: '0.18.4'
+          refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
