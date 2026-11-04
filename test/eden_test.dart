@@ -11,6 +11,7 @@ import 'package:broomm/src/pairing.dart';
 import 'package:broomm/src/managed_emulators.dart';
 import 'package:broomm/src/managed_profile.dart';
 import 'package:broomm/src/progress/layout.dart';
+import 'package:broomm/src/progress/eden.dart';
 import 'package:broomm/src/progress/ryubing.dart';
 import 'package:broomm/src/progress/store.dart';
 import 'package:broomm/src/session.dart';
@@ -26,6 +27,69 @@ void main() {
     () async => root = await Directory.systemTemp.createTemp('broomm-eden-'),
   );
   tearDown(() async => root.delete(recursive: true));
+  for (final (raw, legacy) in [
+    ('cde3270c6ca84eec4b59b7456231292f', '2F29316245B7594BEC4EA86C0C27E3CD'),
+    ('0123456789abcdff1032547698badcfe', 'FEDCBA9876543210FFCDAB8967452301'),
+  ]) {
+    test('Eden restores into its native account directory for UUID $raw', () async {
+      final e = PreparedEmulator(
+        'Eden',
+        root.path,
+        'unused',
+        2,
+        null,
+        null,
+        userDirectory: '${root.path}/data/eden',
+      );
+      final rom = await File('${root.path}/game.nsp').writeAsBytes([1, 2, 3]);
+      final session = ResolvedSession(e, rom.path, 'a' * 64, {});
+      const program = '01006a800016e000';
+      await recordRyubingGame(
+        session,
+        program,
+        (await switchSourceIdentity(session)).$1,
+      );
+      final profiles = Uint8List(0x650), uuid = _hex(raw);
+      profiles.setAll(0x10, uuid);
+      profiles.setAll(0x20, uuid);
+      final account = File(
+        '${e.user}/nand/system/save/8000000000000010/su/avators/profiles.dat',
+      );
+      await account.parent.create(recursive: true);
+      await account.writeAsBytes(profiles);
+      final native = File(
+        '${e.user}/nand/user/save/0000000000000000/$legacy/${program.toUpperCase()}/save_data/main',
+      );
+      await native.parent.create(recursive: true);
+      await native.writeAsBytes([9, 8, 7]);
+      final layout = await edenProgressLayout(session, 'data/eden');
+      expect((await layout.target('save/save_data/main')).path, native.path);
+      final store = ProgressStore(
+        Directory('${root.path}/snapshot'),
+        layout,
+        42,
+        3,
+      );
+      final snapshot = await store.capture();
+      expect(snapshot.entries.keys, ['save/save_data/main']);
+      await native.writeAsBytes([6]);
+      await store.restore(snapshot, {});
+      expect(await native.readAsBytes(), [9, 8, 7]);
+      // New storage retains the raw-byte UUID convention, and a different
+      // native console account invalidates this already resolved boundary.
+      final future = Directory(
+        '${e.user}/nand/user/save/account/$raw/${program.toUpperCase()}/0',
+      );
+      await future.create(recursive: true);
+      await expectLater(layout.files(), throwsFormatException);
+      final moved = await edenProgressLayout(session, 'data/eden');
+      expect((await moved.target('save/main')).parent.path, future.path);
+      profiles[0x10] ^= 1;
+      profiles[0x20] ^= 1;
+      await account.writeAsBytes(profiles);
+      await expectLater(moved.files(), throwsFormatException);
+    });
+  }
   test('Eden is a separate selectable Switch backend and preserves native renderer settings', () async {
     final choices = platformEmulators(
       const RommPlatform(30, 'Switch', 'switch', 1),

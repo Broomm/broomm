@@ -1,5 +1,18 @@
 # Implementation plan
 
+Eden's Ally investigation found two defects: interleaved stdout/stderr could
+prevent cold initialization from observing the loaded title, and signed 64-bit
+UUID formatting restored cloud progress under an invalid native account folder.
+The parser now separates pipes; desktop/Android Eden encode account IDs directly
+from bytes. Thirty-five targeted tests and analysis pass. The actual copied
+Ally BROOMM snapshot restores with matching hashes under the corrected account.
+An isolated native Eden/Smash launch reaches Pause and exits normally. The current
+macOS preview is packaged and signature/archive verified. After the owner closed
+Broomm, the live Ally folders were repaired under session/writer locks with
+verified save readback and all displaced directories retained for recovery.
+Linux deployment and subsequent Gaming Mode gameplay remain pending. See
+[evidence and save-preserving repair](docs/eden-save-account-repair.md).
+
 Linux ARM64 has separate managed melonDS and Azahar cards for
 the upstream DRM-leasing builds. AppImage provenance, ARM64 SDL interop and
 physical acceptance gaps are recorded in [Linux standalone integration](docs/linux-standalone.md#ayn-thor-dual-screen-feasibility).

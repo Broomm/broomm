@@ -585,10 +585,10 @@ Future<AndroidSavePlan> connectedAndroidProgress(
       final account = accounts.single
           .map((n) => n.toRadixString(16).padLeft(2, '0'))
           .join();
-      final d = ByteData.sublistView(accounts.single),
-          legacy =
-              '${d.getUint64(8, Endian.little).toRadixString(16).padLeft(16, '0')}${d.getUint64(0, Endian.little).toRadixString(16).padLeft(16, '0')}'
-                  .toUpperCase();
+      final legacy = accounts.single.reversed
+          .map((n) => n.toRadixString(16).padLeft(2, '0'))
+          .join()
+          .toUpperCase();
       layout = ProgressLayout(root.path, 'ryubing-directory-v1', title, [
         ProgressArea('save', 'user/save'),
         ProgressArea('device', 'user/device'),

@@ -10,6 +10,7 @@ import 'pairing.dart';
 import 'retroarch_control.dart';
 import 'session_log.dart';
 import 'session_lease.dart';
+import 'switch_launch_identity.dart';
 import 'romm/transfer.dart';
 export 'session_log.dart';
 
@@ -582,41 +583,25 @@ class GameSession {
       _process = process;
       _lastUpdate = DateTime.now();
       final sessionLog = log!;
-      var identityOutput = '';
+      final identityOutput =
+          {'Ryubing', 'Astris', if (Platform.isLinux) 'Eden'}.contains(e.name)
+          ? SwitchLaunchIdentity(e.name)
+          : null;
       void output(List<int> bytes) {
         sessionLog.output(bytes);
       }
 
-      void stdoutOutput(List<int> bytes) {
+      void identityData(List<int> bytes, {required bool stderr}) {
         output(bytes);
-        if ({
-              'Ryubing',
-              'Astris',
-              if (Platform.isLinux) 'Eden',
-            }.contains(e.name) &&
-            nativeProgramId == null) {
-          identityOutput =
-              '$identityOutput${String.fromCharCodes(bytes.take(32768))}';
-          final match =
-              (e.name == 'Eden'
-                      ? RegExp(
-                          r'Core .*Loading [^\r\n]*\((010[0-9a-fA-F]{13})\) \.\.\.',
-                        )
-                      : RegExp(
-                          r'Loader Start: Application Loaded: [^\r\n]*\[(010[0-9a-fA-F]{13})\] \[64-bit\]',
-                        ))
-                  .firstMatch(identityOutput);
-          if (match != null) nativeProgramId = match[1]!.toLowerCase();
-          if (identityOutput.length > 32768)
-            identityOutput = identityOutput.substring(
-              identityOutput.length - 32768,
-            );
+        if (identityOutput != null && nativeProgramId == null) {
+          identityOutput.add(bytes, stderr: stderr);
+          nativeProgramId = identityOutput.program;
         }
       }
 
       final stdoutDone = Completer<void>(), stderrDone = Completer<void>();
       process.stdout.listen(
-        stdoutOutput,
+        (bytes) => identityData(bytes, stderr: false),
         onDone: stdoutDone.complete,
         onError: (Object e) {
           sessionLog.write('Emulator stdout failed: $e');
@@ -624,7 +609,9 @@ class GameSession {
         },
       );
       process.stderr.listen(
-        e.name == 'Eden' && Platform.isLinux ? stdoutOutput : output,
+        e.name == 'Eden' && Platform.isLinux
+            ? (bytes) => identityData(bytes, stderr: true)
+            : output,
         onDone: stderrDone.complete,
         onError: (Object e) {
           sessionLog.write('Emulator stderr failed: $e');

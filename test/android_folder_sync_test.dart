@@ -542,8 +542,15 @@ void main() {
 
   test('Eden follows native per-title legacy/future placement without capturing another console account or NAND contents', () async {
     final external = await connect('eden'), profiles = Uint8List(0x650);
-    profiles[0x10] = 1;
-    profiles[0x20] = 1;
+    // One UUID half has the high bit set. Its native folder must remain 32
+    // hexadecimal digits, matching desktop Eden and not signed Dart integers.
+    const raw = 'cde3270c6ca84eec4b59b7456231292f';
+    final uuid = [
+      for (var i = 0; i < raw.length; i += 2)
+        int.parse(raw.substring(i, i + 2), radix: 16),
+    ];
+    profiles.setAll(0x10, uuid);
+    profiles.setAll(0x20, uuid);
     await put(
       external,
       'nand/system/save/8000000000000010/su/avators/profiles.dat',
@@ -572,7 +579,7 @@ void main() {
     final rom = await put(temp, 'switch.nsp', bytes);
     // An account directory for another title must not select the new layout.
     await Directory(
-      '${external.path}/nand/user/save/account/${'01' + '00' * 15}/0100000000020000/0',
+      '${external.path}/nand/user/save/account/$raw/0100000000020000/0',
     ).create(recursive: true);
     Future<AndroidSavePlan> plan() async => (await androidProgressLayout(
       manager,
@@ -585,9 +592,11 @@ void main() {
     final legacy = await plan();
     expect(legacy.format, 'ryubing-directory-v1');
     expect(legacy.areas, hasLength(2));
-    expect(legacy.remotePath('save/main'), contains('/0000000000000000/'));
-    final future =
-        'nand/user/save/account/${'01' + '00' * 15}/0100000000010000/0';
+    expect(
+      legacy.remotePath('save/main'),
+      'nand/user/save/0000000000000000/2F29316245B7594BEC4EA86C0C27E3CD/0100000000010000/main',
+    );
+    final future = 'nand/user/save/account/$raw/0100000000010000/0';
     await Directory('${external.path}/$future').create(recursive: true);
     final updated = await plan();
     expect(updated.remotePath('save/main'), '$future/main');

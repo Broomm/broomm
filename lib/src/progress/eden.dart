@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import '../session.dart' show ResolvedSession;
 import '../romm/transfer.dart';
@@ -81,19 +80,15 @@ Future<(String, String)> _account(Directory root, String user) async {
         'Eden console account identity is inconsistent',
       );
     }
-    final d = ByteData.sublistView(Uint8List.fromList(bytes));
     return (
       bytes.map((n) => n.toRadixString(16).padLeft(2, '0')).join(),
-      d
-              .getUint64(8, Endian.little)
-              .toRadixString(16)
-              .padLeft(16, '0')
-              .toUpperCase() +
-          d
-              .getUint64(0, Endian.little)
-              .toRadixString(16)
-              .padLeft(16, '0')
-              .toUpperCase(),
+      // Eden's legacy directory is the complete little-endian UUID. Native
+      // Dart ints cannot format an unsigned 64-bit half with its high bit set:
+      // getUint64(...).toRadixString(16) would insert a minus sign instead.
+      bytes.reversed
+          .map((n) => n.toRadixString(16).padLeft(2, '0'))
+          .join()
+          .toUpperCase(),
     );
   }
   throw const FormatException('The private Eden console has no account');
