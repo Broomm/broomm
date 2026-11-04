@@ -416,7 +416,7 @@ class ShellModel extends ChangeNotifier {
   late final androidSession = AndroidGameSession(android, cloud);
   bool get isAndroid => android.enabled;
   List<GamePlatform> emulatorChoices(RommPlatform platform) => !isAndroid
-      ? platformEmulators(platform, armada: emulators.armadaDualScreen)
+      ? platformEmulators(platform, armada: emulators.host == 'linux-arm64')
       : platformEmulators(platform)
             .where(
               (p) => android.choices(platform).any((e) => e.id == p.emulatorId),

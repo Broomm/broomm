@@ -242,16 +242,23 @@ void main() {
     final manager = ManagedEmulators(
       Directory('${root.path}/arm-data'),
       hostOverride: 'linux-arm64',
-      distributionOverride: 'fedora',
       asset: (p) => File(p).readAsString(),
     );
     addTearDown(manager.dispose);
     final plan = await manager.readPlan();
-    final full = plan.items.single;
+    expect(plan.items.map((item) => item.build.id).toSet(), {
+      'retroarch',
+      'melonds-armada',
+      'azahar-armada',
+    });
+    final retro = SetupPlan([
+      plan.items.firstWhere((i) => i.build.id == 'retroarch'),
+    ]);
+    final full = retro.items.single;
     expect(full.build.host, 'linux-arm64');
     expect(full.build.architecture, 'arm64');
     expect(full.downloads, hasLength(16));
-    final nes = plan.forPlatform('nes').items.single;
+    final nes = retro.forPlatform('nes').items.single;
     expect(nes.cores.keys, ['mesen']);
     expect(
       nes.downloads.values.map((p) => p.url!.path),
@@ -260,11 +267,10 @@ void main() {
     expect(nes.downloads, hasLength(2));
     expect(await manager.data.exists(), isFalse);
   });
-  test('Armada selects two separate, platform-scoped builds', () async {
+  test('Linux ARM64 selects two separate Armada builds', () async {
     final manager = ManagedEmulators(
       Directory('${root.path}/armada-data'),
       hostOverride: 'linux-arm64',
-      distributionOverride: 'armada',
       asset: (p) => File(p).readAsString(),
     );
     addTearDown(manager.dispose);
@@ -289,34 +295,6 @@ void main() {
       );
     }
     expect(await manager.data.exists(), isFalse);
-  });
-
-  test('non-Armada Linux ARM64 cannot import the Armada recipes', () async {
-    final manager = ManagedEmulators(
-      Directory('${root.path}/ordinary-data'),
-      hostOverride: 'linux-arm64',
-      distributionOverride: 'fedora',
-      asset: (p) => File(p).readAsString(),
-    );
-    addTearDown(manager.dispose);
-    final bundled = await manager.readPlan();
-    expect(bundled.items.single.build.id, 'retroarch');
-    final variantOnly = await File('${root.path}/setup.json').writeAsString(
-      jsonEncode({
-        'schema_version': 2,
-        'host': 'linux-arm64',
-        'launchers': {'melonds-armada': {}},
-      }),
-    );
-    await expectLater(
-      manager.readPlan(file: variantOnly.path),
-      throwsFormatException,
-    );
-    expect(
-      linuxOsReleaseId('NAME="Armada"\nID=armada\nID_LIKE=fedora\n'),
-      'armada',
-    );
-    expect(linuxOsReleaseId('ID="fedora"\nID_LIKE="armada"\n'), 'fedora');
   });
 
   test('ELF validation rejects foreign architecture and truncated native components', () async {

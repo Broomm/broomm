@@ -3,26 +3,6 @@ import 'dart:isolate';
 
 import '../progress/files.dart';
 
-String? linuxDistribution() {
-  if (!Platform.isLinux) return null;
-  for (final path in ['/etc/os-release', '/usr/lib/os-release']) {
-    try {
-      return linuxOsReleaseId(File(path).readAsStringSync());
-    } on FileSystemException {
-      // Some images expose only the vendor os-release file.
-    }
-  }
-  return null;
-}
-
-String? linuxOsReleaseId(String text) {
-  final value = RegExp(
-    r"""^ID=(?:"([a-z0-9._-]+)"|'([a-z0-9._-]+)'|([a-z0-9._-]+))\s*$""",
-    multiLine: true,
-  ).firstMatch(text);
-  return value?.group(1) ?? value?.group(2) ?? value?.group(3);
-}
-
 Future<Map<String, int>> linuxFileStamp(File file) async {
   if (await FileSystemEntity.type(file.path, followLinks: false) !=
       FileSystemEntityType.file)

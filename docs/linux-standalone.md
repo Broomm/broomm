@@ -57,7 +57,7 @@ Cemu already has a separate GamePad view. The Armada Store's Cemu entry does
 not identify a Gaming Mode lease-capable build.
 
 Broomm lists **melonDS (Armada)** under Nintendo DS and **Azahar (Armada)**
-under Nintendo 3DS on Linux ARM64 with `ID=armada` in os-release. They have
+under Nintendo 3DS on Linux ARM64. They have
 separate recipe IDs and installation directories. Each variant uses the
 corresponding Broomm-owned DS or 3DS profile and save format. Stock host
 recipes retain their own identities and download sources. Broomm enables

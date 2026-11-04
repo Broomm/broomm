@@ -1,6 +1,6 @@
 # Implementation plan
 
-Armada on Linux ARM64 has separate managed melonDS and Azahar cards for
+Linux ARM64 has separate managed melonDS and Azahar cards for
 the upstream DRM-leasing builds. AppImage provenance, ARM64 SDL interop and
 physical acceptance gaps are recorded in [Linux standalone integration](docs/linux-standalone.md#ayn-thor-dual-screen-feasibility).
 

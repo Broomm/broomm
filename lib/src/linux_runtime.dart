@@ -41,14 +41,9 @@ Map<String, String> linuxLaunchEnvironment(
     if (emulator.armadaDualScreen)
       if (emulator.name == 'melonDS') ...{
         'MELONDS_DRM_LEASE': emulator.armadaGamingMode ? '1' : '0',
-        if (emulator.armadaGamingMode) ...{
-          'MELONDS_DRM_LEASE_TOUCH': 'bottom_touchscreen',
-          'USE_EGL_X11': '1',
-        },
+        if (emulator.armadaGamingMode) 'USE_EGL_X11': '1',
       } else ...{
         'AZAHAR_DRM_LEASE': emulator.armadaGamingMode ? '1' : '0',
-        if (emulator.armadaGamingMode)
-          'AZAHAR_DRM_LEASE_TOUCH': 'bottom_touchscreen',
       },
   };
   // This build already has $ORIGIN/../lib RUNPATH and explicitly warns before

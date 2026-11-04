@@ -28,7 +28,6 @@ class TestedBuild {
     : id = j['id'] as String,
       name = j['name'] as String,
       version = j['version'] as String,
-      distribution = j['distribution'] as String?,
       host = j['host'] as String,
       architecture =
           j['architecture'] as String? ?? (j['host'] as String).split('-').last,
@@ -57,8 +56,7 @@ class TestedBuild {
       native = (j['native'] as Map).cast<String, String>();
   final String id, name, version, host, bundle, executable, hash;
   final String architecture;
-  final String? distribution;
-  bool get armadaDualScreen => distribution == 'armada';
+  bool get armadaDualScreen => id == 'azahar-armada' || id == 'melonds-armada';
   final String integrityAsset;
   final SetupPackage? sourcePackage;
   // Both RPCS3 distributions consume the same native PS3 data format. Keep
@@ -167,12 +165,11 @@ class ManagedEmulators extends ChangeNotifier {
     Future<String> Function(String)? asset,
     SetupDownloads? downloads,
     this.hostOverride,
-    this.distributionOverride,
   }) : asset = asset ?? rootBundle.loadString,
        downloads = downloads ?? SetupDownloads(data);
   final Directory data;
   final String? project;
-  final String? hostOverride, distributionOverride;
+  final String? hostOverride;
   final SessionLog? log;
   final SetupDownloads downloads;
   double? progress;
@@ -249,14 +246,6 @@ class ManagedEmulators extends ChangeNotifier {
   String get setupAssets => host.startsWith('linux-') && supported
       ? 'assets/setup/$host'
       : 'assets/setup';
-  late final bool armadaDualScreen =
-      host == 'linux-arm64' &&
-      (distributionOverride ?? linuxDistribution()) == 'armada';
-
-  bool _available(TestedBuild build) =>
-      build.distribution == null ||
-      (build.distribution == 'armada' && armadaDualScreen);
-
   String get coreFile => host.startsWith('linux-') ? 'core.so' : 'core.dylib';
   String get snesCoreFile => host.startsWith('linux-')
       ? 'snes9x_libretro.so'
@@ -281,11 +270,9 @@ class ManagedEmulators extends ChangeNotifier {
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         final current = (j['builds'] as List)
             .map((e) => TestedBuild(e as Map))
-            .where(_available)
             .toList();
         final previous = (j['previous_builds'] as List? ?? const [])
             .map((e) => TestedBuild(e as Map))
-            .where(_available)
             .toList();
         if (previous.any(
           (old) => !current.any(
@@ -436,10 +423,6 @@ class ManagedEmulators extends ChangeNotifier {
         'This setup JSON does not match the current host or schema.',
       );
     final entries = (j['launchers'] as Map).cast<String, Map>();
-    if (file == null && !armadaDualScreen) {
-      entries.remove('melonds-armada');
-      entries.remove('azahar-armada');
-    }
     if (entries.isEmpty ||
         entries.keys.any((id) => !builds.any((b) => b.id == id)))
       throw const FormatException(
@@ -1158,9 +1141,7 @@ class ManagedEmulators extends ChangeNotifier {
         final metadata =
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         builds.addAll(
-          (metadata['builds'] as List)
-              .map((j) => TestedBuild(j as Map))
-              .where(_available),
+          (metadata['builds'] as List).map((j) => TestedBuild(j as Map)),
         );
       }
       await resetEmulatorData(
