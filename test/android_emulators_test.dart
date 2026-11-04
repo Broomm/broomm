@@ -431,7 +431,9 @@ void main() {
     final rom = File('${data.path}/Ranger.nds');
     final bytes = Uint8List(32)..setRange(12, 16, ascii.encode('ARGP'));
     await rom.writeAsBytes(bytes);
-    final platform = playablePlatforms.singleWhere((p) => p.slug == 'nds');
+    final platform = playablePlatforms.singleWhere(
+      (p) => p.emulatorId == 'melonds',
+    );
     final layout = await androidProgressLayout(
       manager,
       profileId,
