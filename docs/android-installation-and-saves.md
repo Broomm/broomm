@@ -89,11 +89,24 @@ and per-source settings activity; activity return alone is not a grant.
 
 **Emulator Settings → platform → Install** downloads the selected official APK
 with byte progress and cancellation, then hands its private file to Android's
-installer. Android still controls unknown-source permission, install confirmation
+installer. Permission guidance, progress and cancellation appear in an installation
+dialog above the invoking card. A failure stays visible with **Try again** and
+**Close**, including when the settings page is scrolled. The Dart staging path
+is `files/broomm/android/apks/<nonce>.apk`; the native installer and APK provider
+share the same confined-path validator. They reject foreign, nested, linked,
+missing and empty files. Android still controls unknown-source permission, install confirmation
 and upgrade signing compatibility. Broomm checks package, exported launcher and
 minimum SDK; a successful download/handoff is not installation success.
 Installed package readback selects a newly installed emulator as default. No
 existing emulator or its data is uninstalled to bypass a signing failure.
+
+Thor evidence on 2026-11-05: build 1033 reached Android's source-permission
+settings and the owner granted access. A read-only app-op query confirmed
+`REQUEST_INSTALL_PACKAGES: allow`. Broomm's own diagnostic log records two
+complete 183,956,821-byte RetroArch transfers followed by immediate native
+handoff failure. Source inspection identified the native/provider expectation
+`files/android/apks`, missing ShellStorage's `broomm` component. This correction
+does not constitute native installer acceptance until exercised with a new APK.
 
 PPSSPP uses its official free APK. melonDS, Azahar vanilla, MMJ normal shared-
 storage and ARMSX2 use their official stable GitHub release assets; unsupported

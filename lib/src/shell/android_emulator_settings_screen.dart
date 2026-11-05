@@ -6,6 +6,7 @@ import '../romm/models.dart';
 import '../progress/service.dart';
 import 'controls.dart';
 import 'android_root_inspection_dialog.dart';
+import 'android_install_dialog.dart';
 import 'model.dart';
 import 'navigation.dart';
 
@@ -24,6 +25,7 @@ class _AndroidEmulatorSettingsScreenState
   AndroidEmulators get manager => model.android;
   String? problem;
   bool working = false;
+  bool installationDialogOpen = false;
   @override
   void initState() {
     super.initState();
@@ -117,6 +119,31 @@ class _AndroidEmulatorSettingsScreenState
     model.showNotice(
       '${emulator.name} save folder connected for all Broomm profiles.',
     );
+  }
+
+  Future<void> install(
+    AndroidEmulator emulator, {
+    bool imported = false,
+  }) async {
+    if (working) return;
+    installationDialogOpen = true;
+    try {
+      await run(() async {
+        await showConsoleDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AndroidInstallDialog(
+            manager: manager,
+            emulator: emulator,
+            install: () => imported
+                ? manager.installApk(emulator, server: model.server!.id)
+                : manager.install(emulator, server: model.server!.id),
+          ),
+        );
+      });
+    } finally {
+      if (mounted) setState(() => installationDialogOpen = false);
+    }
   }
 
   Future<void> recover() async {
@@ -257,9 +284,10 @@ class _AndroidEmulatorSettingsScreenState
         model.profile != null &&
         manager.tree(model.profile!.id, emulator) != null;
     final disabled =
-        working ||
-        manager.busy ||
-        manager.installing != null ||
+        // The modal owns interaction; keep its invoking button focusable so
+        // closing it restores the same card instead of jumping to Refresh.
+        !installationDialogOpen &&
+            (working || manager.busy || manager.installing != null) ||
         model.gameActive ||
         app?.enabled == false;
     return ConsoleFocusRegion(
@@ -320,14 +348,7 @@ class _AndroidEmulatorSettingsScreenState
               runSpacing: 12,
               children: [
                 ConsoleButton(
-                  onPressed: disabled
-                      ? null
-                      : () => run(
-                          () => manager.install(
-                            emulator,
-                            server: model.server!.id,
-                          ),
-                        ),
+                  onPressed: disabled ? null : () => install(emulator),
                   child: Text(
                     emulator.id == 'duckstation'
                         ? 'Open Play Store'
@@ -342,12 +363,7 @@ class _AndroidEmulatorSettingsScreenState
                 ConsoleButton(
                   onPressed: disabled
                       ? null
-                      : () => run(
-                          () => manager.installApk(
-                            emulator,
-                            server: model.server!.id,
-                          ),
-                        ),
+                      : () => install(emulator, imported: true),
                   child: const Text('Install APK…'),
                 ),
                 if (app != null) ...[

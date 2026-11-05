@@ -627,8 +627,10 @@ class AndroidEmulators extends ChangeNotifier {
             : emulator.packages,
         'requiredActivity': emulator.activity,
       });
-    } catch (_) {
-      phase?.call('${emulator.name} APK preparation did not complete.');
+    } catch (e) {
+      phase?.call(
+        '${emulator.name} APK preparation did not complete: ${e is PlatformException ? '${e.code}: ${e.message}' : e.runtimeType}.',
+      );
       if (apk != null && await apk.exists()) await apk.delete();
       if (server != null) await cancelInstallationDefault(server);
       rethrow;

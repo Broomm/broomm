@@ -56,9 +56,7 @@ class BroommEmulators(private val activity: Activity) {
                         "installDownloadedApk" -> {
                             val expected = packages(call.argument<List<String>>("packages"))
                             val apk = File(call.argument<String>("path") ?: error("Missing downloaded APK"))
-                            val base = File(activity.filesDir, "android/apks")
-                            require(apk.parentFile?.canonicalFile == base.canonicalFile && apk.canonicalPath == apk.absolutePath &&
-                                Regex("[a-f0-9]{32}\\.apk").matches(apk.name) && apk.isFile && apk.length() in 1..1024L*1024*1024) { "Invalid downloaded APK" }
+                            require(isDownloadedApk(activity.filesDir, apk)) { "Invalid downloaded APK" }
                             openInstaller(apk, expected, call.argument<String>("requiredActivity"), result)
                         }
                         "installed" -> background(result) {

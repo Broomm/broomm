@@ -194,6 +194,11 @@ jobs:
         run: |
           mkdir -p build/android-checks
           devbox --config tool/android run check-shared-lock 2>&1 | tee build/android-checks/shared-document-lock.log
+      - name: Android downloaded APK path regressions
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/android-checks
+          devbox --config tool/android run check-downloaded-apk 2>&1 | tee build/android-checks/downloaded-apk.log
       - name: Android root inspection process regressions
         if: ${{ !cancelled() }}
         run: |

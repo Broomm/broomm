@@ -1,5 +1,41 @@
 # Implementation plan
 
+## Android downloaded APK handoff and visible feedback — 2026-11-05
+
+The Thor's installed PR build 1033 successfully requested install permission;
+the owner granted it and the OS app-op confirms `allow`. Read-only inspection
+of Broomm's own log shows two complete RetroArch APK downloads (183,956,821
+bytes each), then immediate handoff failure. Native code and the content
+provider expected `files/android/apks`, while ShellStorage and the downloader
+use `files/broomm/android/apks`. Both native consumers now share one validated
+staging-path check. Foreign/nested paths, links, traversal, missing/empty files
+and the existing size/name constraints remain rejected.
+
+The Install and Install APK actions now open an installation dialog with
+permission guidance, transfer progress/cancellation and persistent failure
+feedback with retry/close. Previously these appeared only above the long
+settings list, outside the owner's GBA viewport. Successful OS handoff closes
+the dialog without claiming package installation; existing readback owns that
+decision. Native handoff errors now include their platform reason in phase logs.
+
+Regression checks exercise the production JVM path validator and the actual
+scrolled settings card's permission, transfer, handoff, failure/retry, imported
+APK failure and cancellation feedback. All **575 Flutter tests pass** (one
+existing Linux-only skip on macOS), static analysis is clean, JVM path checks
+pass and the Android bridge compiles with only the two existing updater
+deprecation warnings. Workflow/shell lint pass. The current universal
+[macOS archive](build/releases/Broomm-macOS-install-handoff-preview.zip) is
+24,328,544 bytes, SHA-256
+`b7c786b9fb6fe14559328d22d7f74a5b8763600b5fa62bcb683eb340b72bb34f`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture code
+signatures pass; all seven Mach-O files are universal. Version `0.1.16-dev`
+remains ad-hoc signed, uses normal Application Support and disables development
+self-updates. Logs and the source-bound package receipt are under
+`.tool-cache/android-install-handoff/`. Read-only device inspection also confirms
+the staging directory has the expected canonical path on the Thor.
+The updated Android installer handoff still needs native
+acceptance; no emulator save writes or root-save round trip are claimed.
+
 ## Android emulator install permission — 2026-11-05
 
 After PR #1's APK was installed on the Thor (Android 13, user 0; Broomm
