@@ -1,0 +1,5 @@
+libsu core and service 6.0.0
+Copyright John "topjohnwu" Wu and contributors.
+Apache License, Version 2.0.
+Source: https://github.com/topjohnwu/libsu/tree/8c3e80ffe466b89ff875471e542d77e6a1b480c5
+Unmodified published library artifacts; no nio/io modules.

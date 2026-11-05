@@ -40,10 +40,10 @@ class RootInspection(private val activity: Activity) {
                             active = request to command
                             worker.execute {
                                 try {
-                                    val before = identity(pkg)
+                                    val before = identity(activity, pkg)
                                     require(before["build"] == build) { "Emulator changed. Refresh installed apps before inspecting." }
                                     val metadata = command.inspect(pkg, before["uid"] as Int, before["user"] as Int, before["dataDir"] as String)
-                                    require(identity(pkg) == before) { "Emulator changed during inspection. Refresh and retry." }
+                                    require(identity(activity, pkg) == before) { "Emulator changed during inspection. Refresh and retry." }
                                     val report = before + metadata + mapOf("device" to "${Build.MANUFACTURER} ${Build.MODEL}",
                                         "android" to Build.VERSION.RELEASE, "sdk" to Build.VERSION.SDK_INT, "abis" to Build.SUPPORTED_ABIS.toList())
                                     main.post { active = null; result.success(report) }
@@ -60,15 +60,23 @@ class RootInspection(private val activity: Activity) {
         }
     }
 
+
+    fun close() {
+        active?.second?.cancel()
+        channel?.setMethodCallHandler(null)
+        channel = null
+        worker.shutdown()
+    }
+
+    companion object {
     @Suppress("DEPRECATION")
-    private fun identity(pkg: String): Map<String, Any> {
-        val pm = activity.packageManager
+    internal fun identity(context: android.content.Context, pkg: String, user: Int = Process.myUid() / 100000): Map<String, Any> {
+        val pm = context.packageManager
         val info = pm.getPackageInfo(pkg, if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES)
         val app = info.applicationInfo ?: error("Missing emulator identity")
         require(app.enabled && info.sharedUserId == null) { "Disabled or shared-UID emulator packages are unsupported for root inspection." }
         val launcher = pm.getActivityInfo(ComponentName(pkg, activities.getValue(pkg)), 0)
         require(launcher.exported && launcher.enabled && launcher.applicationInfo.uid == app.uid) { "The expected emulator launcher is unavailable." }
-        val user = Process.myUid() / 100000
         require(app.uid / 100000 == user) { "Emulator belongs to another Android user." }
         val signatures = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
         require(!signatures.isNullOrEmpty()) { "Emulator signing identity is unavailable." }
@@ -83,14 +91,6 @@ class RootInspection(private val activity: Activity) {
             "signer" to signer, "user" to user, "uid" to app.uid, "dataDir" to app.dataDir)
     }
 
-    fun close() {
-        active?.second?.cancel()
-        channel?.setMethodCallHandler(null)
-        channel = null
-        worker.shutdown()
-    }
-
-    companion object {
         private fun ByteArray.hex() = joinToString("") { "%02x".format(it.toInt() and 255) }
         private val activities = mapOf(
             "com.retroarch.aarch64" to "com.retroarch.browser.retroactivity.RetroActivityFuture",

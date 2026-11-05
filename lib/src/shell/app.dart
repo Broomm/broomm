@@ -647,7 +647,7 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final cloudReady =
-        m.android.folder(emulator) != null &&
+        m.android.connected(profile.id, emulator, platform: platform.slug) &&
         m.android.progressSupported(emulator);
     if (!cloudReady) {
       m.gameActive = false;
@@ -737,7 +737,7 @@ class _BroommAppState extends State<BroommApp> {
             if (m.server?.id == record['server'] &&
                 m.profile?.id == record['profile'] &&
                 entry != null &&
-                m.android.tree(m.profile!.id, emulator) != null &&
+                m.android.connected(m.profile!.id, emulator) &&
                 m.android.progressSupported(emulator)) {
               game = await m.cloudGame(
                 entry.game.id,

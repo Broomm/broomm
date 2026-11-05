@@ -36,12 +36,14 @@ class BroommEmulators(private val activity: Activity) {
     private val installRequest = 6204
     private var installingApk: Pair<String, File>? = null
     private val sharedFolder = SharedSaveFolder(activity)
+    private val rootSaves = RootSaveAccess(activity)
     private val installPermission = ApkInstallPermission(activity)
     fun register(engine: FlutterEngine) {
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, channelName).also { c ->
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace" -> rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)
                         "aesEcb" -> background(result) {
@@ -176,8 +178,16 @@ class BroommEmulators(private val activity: Activity) {
                                         val core = call.argument<String>("core") ?: error("Select a RetroArch core first")
                                         require(Regex("[a-z][a-z0-9_]{0,63}").matches(core))
                                         val nativeData = activity.packageManager.getApplicationInfo(pkg, 0).dataDir
+                                        val nativeApp = activity.packageManager.getApplicationInfo(pkg, 0)
+                                        val external = android.os.Environment.getExternalStorageDirectory().path
                                         putExtra("ROM", uri.toString())
                                         putExtra("LIBRETRO", "$nativeData/cores/${core}_libretro_android.so")
+                                        putExtra("DATADIR", nativeData)
+                                        putExtra("APK", nativeApp.sourceDir)
+                                        putExtra("SDCARD", external)
+                                        putExtra("EXTERNAL", "$external/Android/data/$pkg/files")
+                                        putExtra("IME", android.provider.Settings.Secure.getString(activity.contentResolver,
+                                            android.provider.Settings.Secure.DEFAULT_INPUT_METHOD))
                                         call.argument<String>("configuration")?.let { config ->
                                             val allowed = listOf("$nativeData/files/Broomm/", "/data/data/$pkg/files/Broomm/")
                                             require(allowed.any { config.startsWith(it) } && config.endsWith(".cfg") &&
@@ -210,7 +220,7 @@ class BroommEmulators(private val activity: Activity) {
                             result.success(null)
                         }
                         "writers" -> result.success(EmulatorDocumentsProvider.writers.get() + if (sharedFolder.busy()) 1 else 0)
-                        "ioBusy" -> result.success(sharedFolder.busy())
+                        "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
                         "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"))
                         "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
                             background(result) { sharedFolder.operation(call) }
@@ -362,6 +372,7 @@ class BroommEmulators(private val activity: Activity) {
     fun close() {
         installPermission.close()
         sharedFolder.close()
+        rootSaves.close()
         pending?.error("android-activity", "The Android activity was closed. Retry the operation.", null)
         pending = null; channel?.setMethodCallHandler(null); channel = null; worker.shutdown()
     }

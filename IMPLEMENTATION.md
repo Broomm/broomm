@@ -1,5 +1,57 @@
 # Implementation plan
 
+## Rooted Android GBA ordinary-save route — 2026-11-05
+
+The owner installed mGBA, saved RetroArch's configuration and selected The Minish
+Cap (RomM ROM 2338). A verified ROM-only test copy and owner-created save establish
+its actual 128 KiB `.srm` under `RetroArch/saves/mGBA`; the active configuration
+is external `Android/data`, outside the previous adapter's candidates. The
+standalone test save, existing macOS save and remote RomM progress remain intact.
+Automatic Android core download inside Broomm is now an explicit subsequent
+setup requirement; manual mGBA setup is temporary.
+
+The owner approved libsu **6.0.0 core/service** after the recorded dependency
+comparison. The modules are strictly pinned, restricted to their JitPack group,
+hash-verified through Gradle, and accompanied by bundled license/source notices.
+A non-daemon bound root service performs only package-bound filesystem operations;
+Dart retains save plans, session leases, profile/cloud decisions and recovery.
+The native service keeps an OS lock through its actual effects, bounds requests
+and payloads, rejects unknown access/path/identity observations, preserves native
+ownership/mode/SELinux labels, flushes staged data and directories, and resumes
+interrupted staging/publication using the Dart journal's operation token.
+
+**Connect GBA root saves** explicitly verifies the installed mGBA core and current
+configuration before persisting a separate root identity. GBA sessions use exact
+ordinary-save selection and generated configuration under the emulator's private
+`files/Broomm/<profile>/<content>` boundary. Standalone shared-storage saves are
+not adopted or overwritten. Existing save journals own snapshot/install/capture/
+restore, including denial and interrupted writes. Save states, other rooted
+emulator routes and automatic core installation are not implemented by this slice.
+Read-only root inspection and existing folder connections remain available.
+RetroArch receives its frontend startup extras. The shared-I/O lock now resolves
+Android's trusted framework filesDir alias while still refusing linked children.
+
+Three new Dart cases pass for explicit/persisted setup and profile boundaries,
+ordinary-save capture/restoration with metadata, and interrupted/revoked access
+with identity refusal. The Kotlin bridge compiles. The actual file primitives
+pass an isolated root harness on the Thor: replacement and metadata restoration,
+changed/linked paths, interrupted stage/link publication, expired requests and
+a held production lock excluding a separate Android process. Fixture files were
+removed; no emulator save was used by that harness. These results do not yet
+establish the packaged Binder service, in-app launch or a real RomM round trip.
+All **579 Flutter tests** pass (one existing Linux-only skip on macOS), static
+analysis and workflow/shell lint are clean, and Kotlin compilation plus native
+inspection/lock regressions pass. The new lock cases accept the trusted Android
+filesDir alias and reject linked child paths. The fresh universal macOS archive
+is [Broomm-macOS-rooted-gba-preview.zip](build/releases/Broomm-macOS-rooted-gba-preview.zip),
+24,323,530 bytes, SHA-256
+`99cf148b747821d6ca5ee80bd33bcd95d5227dbe03324001639ec4218e06377d`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O payloads are universal. It remains ad-hoc signed, uses
+normal Application Support and disables development self-updates. PR APK and
+in-app device acceptance remain separate checks. See the
+[implementation and walkthrough](docs/android-root-access.md).
+
 ## Magisk root-inspection namespace correction — 2026-11-05
 
 The owner confirms successful RetroArch installation through build 1035 and

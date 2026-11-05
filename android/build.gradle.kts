@@ -2,6 +2,20 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "approvedLibsu"
+                    url = uri("https://jitpack.io")
+                    metadataSources {
+                        mavenPom()
+                        artifact()
+                        ignoreGradleMetadataRedirection()
+                    }
+                }
+            }
+            filter { includeGroup("com.github.topjohnwu.libsu") }
+        }
     }
 }
 

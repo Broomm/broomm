@@ -21,7 +21,11 @@ extension ShellCloudSaves on ShellModel {
               isAndroid &&
                   (androidEmulator == null ||
                       !android.progressSupported(androidEmulator) ||
-                      android.tree(p.id, androidEmulator) == null)
+                      !android.connected(
+                        p.id,
+                        androidEmulator,
+                        platform: platform.slug,
+                      ))
           ? CloudSaveStatus.attention
           : await readCloudSaveStatus(
               storage.directory,

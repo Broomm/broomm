@@ -7,6 +7,7 @@ import '../progress/layout.dart';
 import '../session.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
+import 'root_saves.dart';
 
 /// The emulator uses a user-selected Android DocumentsProvider directory whose
 /// bytes remain in this profile's Broomm storage. No external app-private path
@@ -35,6 +36,16 @@ Future<ProgressLayout> androidProgressLayout(
     );
   final app = manager.app(emulator, package: package);
   if (app == null) throw StateError('Install ${emulator.name} first.');
+  if (manager.folder(emulator, package: package)?['access'] == 'root-gba-v1')
+    return rootedGbaProgress(
+      manager,
+      profile,
+      emulator,
+      platform,
+      rom,
+      contentId ?? File(rom).parent.path.split('/').last,
+      package: package,
+    );
   if (manager.folder(emulator, package: package) != null)
     return connectedAndroidProgress(
       manager,

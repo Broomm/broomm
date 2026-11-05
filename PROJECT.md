@@ -220,6 +220,13 @@ Android-user and directory identity without treating successful inspection as
 save readiness. Verify the installed frontend/core and actual save paths on
 that device before implementing privileged save publication.
 
+Android RetroArch setup must eventually download and install the selected
+platform's core from inside Broomm, reusing the frontend and retaining other
+cores and progress. The owner reaffirmed this requirement during the Thor GBA
+validation. Manually downloading mGBA in RetroArch is a temporary acceptance-test
+prerequisite, not the finished setup experience. Keep downloads part of explicit
+setup; this does not authorize unattended core updates.
+
 ## Progress across devices
 
 Broomm automatically synchronizes in-game saves and supported save states with the active profile's RomM account so play can continue on another device. Pull current progress before starting a connected session, preserve local changes, and upload completed progress when it is safe to do so. Failed transfers remain visible and retryable.

@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-05",
+  "status": "local and isolated native checks; packaged integration pending",
+  "source_base": "90cca33bba6cddaedf75f0f4b82aaf9bf4956186",
+  "working_tree": true,
+  "source_files": {
+    "RootSaveFiles.kt": "dbbb699e25d793961a367b623914eae9ee455c0a1fe801d5b6abf9daf3c8ef43",
+    "RootSaveService.kt": "2e46383538f6486b36237ffa161b19cebcfe348fe79531e089972e3ab35c125c",
+    "RootSaveAccess.kt": "58273c9e4a80f66994a4c35fdead1028d4e45eff285f465f90ed48f4e6675da0",
+    "SharedDocumentLock.kt": "20c5f0c6639637102a170225829633cddfed6c1e7f40129ec8aa9670af1263b5"
+  },
+  "device": {
+    "serial": "1b8e0a3e",
+    "model": "AYN Thor",
+    "android": "13",
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch_package": "com.retroarch.aarch64",
+    "retroarch_version": "1.22.2_GIT",
+    "core_sha256": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545"
+  },
+  "native_fixture": {
+    "exit": 0,
+    "stdout": "PASS: atomic save replacement, UID/GID/mode/label restoration, compare-before-write and linked/path refusal\nPASS: interrupted partial stage, interrupted exclusive publication and expired request recovery\nPASS: held production OS lock excludes a separate Android process and permits it after release\n",
+    "stderr": "",
+    "fixture": "/data/local/tmp/broomm-root-test-99ea1c7fffa64d1ba9e4704e6877fd1a",
+    "dex_sha256": "9aa68aa5064fd952aaf067b3e5af30a350e26c09f5097d5023f01152301b8c9e"
+  },
+  "flutter_tests": {
+    "passed": 579,
+    "skipped": 1,
+    "skip": "existing Linux-only case on macOS"
+  },
+  "checks": {
+    "analysis": "pass",
+    "kotlin": "pass; deprecation warnings only",
+    "native_inspection": "pass",
+    "native_lock": "pass including trusted filesDir alias and linked child rejection",
+    "workflow_and_shell_lint": "pass"
+  },
+  "macos": {
+    "created_utc": "2026-11-05T22:30:59.631049+00:00",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.16-dev",
+      "build_number": "1",
+      "sha": "90cca33bba6cddaedf75f0f4b82aaf9bf4956186",
+      "target": "macos-universal",
+      "working_tree": true,
+      "source_tree_sha256": "342725ce596197d20eb8a557cd116f0ea74541703859287f537ea3e3003d43dd",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "archive": "build/releases/Broomm-macOS-rooted-gba-preview.zip",
+    "bytes": 24323530,
+    "sha256": "99cf148b747821d6ca5ee80bd33bcd95d5227dbe03324001639ec4218e06377d",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "architectures": {
+      "Contents/MacOS/broomm": "x86_64 arm64",
+      "Contents/Resources/native/broomm-astris.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": "x86_64 arm64",
+      "Contents/Frameworks/App.framework/Versions/A/App": "x86_64 arm64"
+    }
+  },
+  "not_verified": [
+    "packaged libsu Binder service on Thor",
+    "Broomm game launch with managed config",
+    "real RomM upload/change/restore/in-game load",
+    "multi-profile/offline/conflict device acceptance",
+    "other Android devices, users and root managers"
+  ]
+}

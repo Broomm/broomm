@@ -1,5 +1,69 @@
 # Android root inspection and first save target
 
+## Rooted GBA route: implementation and validation status
+
+The owner approved libsu 6.0.0 core/service for the narrow privileged file
+adapter. The first route now connects **GBA/mGBA ordinary saves on Android user
+0**; other rooted emulator/user combinations remain unsupported. Read-only
+inspection is independent. The actual mGBA core, external configuration and
+owner-created Minish Cap save have been identified on the Thor. Native file
+primitives pass isolated device tests; the complete APK/Binder/launch/RomM
+round trip still requires acceptance. Automatic core download inside Broomm
+remains required future setup work.
+
+1. Install RetroArch and its **Nintendo – Game Boy Advance (mGBA)** core, save
+   the RetroArch configuration, and choose **Quit RetroArch**.
+2. In Broomm, choose **Emulator Settings → Game Boy Advance → RetroArch →
+   Connect GBA root saves → RetroArch closed · Connect**. Allow Magisk if asked.
+   Expect a confirmed connection or a visible actionable error. Opening the
+   card does not request root. Denial preserves the previous connection.
+3. Install the selected GBA game from your RomM account. Choose it on Home and
+   start the connected session only after closing RetroArch. Broomm verifies
+   package/user/signer/build identity, checks cloud progress and prepares a
+   separate game/profile save directory plus session configuration under
+   `/data/user/0/<retroarch-package>/files/Broomm/<profile>/<content>`.
+4. Save in-game and **Quit RetroArch**, return to Broomm, then choose
+   **Emulator closed · Sync progress**. Returning alone is not closure evidence.
+   The existing Dart workflow captures progress, synchronizes the selected
+   account's BROOMM history and restores the session directory's pre-launch
+   contents. The ordinary standalone `RetroArch/saves/mGBA` file is untouched.
+5. For acceptance, retain the earlier history, create an independently changed
+   save, use Broomm's existing history restore flow, relaunch and verify the
+   earlier in-game position. Denial, lost connectivity and conflicts must retain
+   progress and offer recovery; no successful round trip is claimed yet.
+
+Recovery copies/journals remain in Broomm's private
+`files/broomm/android/shared-session` and `shared-swap.json`; the session marker
+is `android/session.json`. Do not clear Broomm data, remove its root connection
+or delete emulator session directories while recovery is pending. Generated
+session configurations and interrupted private stages can remain as evidence;
+cleanup is not part of a failed transaction. No standalone save is auto-imported.
+Save states and BIOS/core downloads are not added by this route.
+
+Run local checks with the pinned environments:
+
+```sh
+devbox run -- flutter analyze --no-pub
+devbox run -- flutter test --no-pub
+devbox --config tool/android run check
+devbox --config tool/android run check-shared-lock
+devbox --config tool/android run check-root-inspection
+devbox --config tool/android run build-root-save-test
+```
+
+The last command builds an Android `app_process` test archive, not a host test
+pass. D8 **9.5.29** is a development-only official Google artifact cached under
+`.tool-cache/research/android`, pinned to SHA-256
+`f8c762ff84640b10083b934a47278758a7665977e618fab0c927fff00521dea3`.
+It is not shipped in Broomm. CI independently compiles the device harness;
+physical root execution requires the explicitly selected device.
+The Thor run executes the production `RootSaveFiles` and `SharedDocumentLock`
+inside an exclusively created `/data/local/tmp/broomm-root-test-<nonce>` root.
+It passes replacement, native metadata restoration, changed/linked-path refusal,
+interrupted partial staging and exclusive publication, expiry and cross-process
+lock exclusion. The fixture removes only its own temporary files. No emulator
+save was mutated. Local logs/receipts are under `.tool-cache/rooted-gba/`.
+
 ## Thor Magisk namespace failure — 2026-11-05
 
 The owner confirmed RetroArch installed successfully through Broomm build 1035
@@ -23,13 +87,14 @@ complete report in the global namespace. Separately, the owner confirmed
 **Read-only inspection completed** in the actual Broomm **build 1036** dialog
 on 2026-11-05 after requesting inspection and allowing Magisk. This is
 owner-performed in-app acceptance on this Thor/RetroArch/Magisk combination;
-the mGBA core, active save paths and save synchronization are not yet verified.
+at that checkpoint, the mGBA core, active save paths and save synchronization
+were not yet verified. The subsequent GBA evidence appears below.
 
 Evidence is under `.tool-cache/android-root-failure/`. The Thor was held by an
 existing ADB server on port 5038; use the project ADB with `-P 5038 -s 1b8e0a3e`
 for that session. Neither ADB nor the diagnostic changed root grants.
 
-## Current scope — 2026-11-05
+## Initial inspection increment — 2026-11-05
 
 The owner selected the **Thor running Android**, using **GBA**, as the first
 rooted-device save target. Broomm's existing GBA adapter selects RetroArch/mGBA.
@@ -162,6 +227,116 @@ that restriction. An initial lint invocation used the config directory as its
 working directory; the corrected invocation explicitly enters this project.
 
 ## Next acceptance gate: Thor GBA
+
+### mGBA initialization and Minish Cap fixture — 2026-11-05
+
+The owner downloaded mGBA through RetroArch and saved its configuration. Read-only
+ADB inspection found `cores/mgba_libretro_android.so` beneath the verified
+RetroArch private root: 2,472,240 bytes, SHA-256
+`b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545`,
+UID/GID 10118, mode 600, with the package's existing SELinux label. This is the
+installed payload identity; no upstream revision is inferred from its filename.
+
+The active configuration is actually
+`/storage/emulated/0/Android/data/com.retroarch.aarch64/files/retroarch.cfg`,
+outside the two private-root configuration candidates in the existing SAF
+adapter. It selects `/storage/emulated/0/RetroArch/saves`, core sorting enabled,
+content-directory sorting disabled, uncompressed saves, and automatic overrides
+enabled. The shared save and override inventories were empty before this test.
+A root adapter must inspect the real configuration and explicitly isolate its
+session paths; a root grant alone cannot resolve this existing configuration gap.
+
+The owner selected **The Legend of Zelda: The Minish Cap**, RomM ROM 2338. A copy
+of the already-installed 16,777,216-byte USA ROM was staged in a new timestamped
+Thor Download subdirectory, with SHA-256 readback
+`bedc74df62755f705398273de8ed3bc59be610cf55760d0b9aa277f1f5035e73`.
+The existing macOS save and remote RomM progress were not modified or imported.
+The first launch reached an existing RetroArch menu and exited without showing
+the game. The v1.22.2
+[activity implementation](https://github.com/libretro/RetroArch/blob/v1.22.2/pkg/android/phoenix/src/com/retroarch/browser/retroactivity/RetroActivityFuture.java)
+exits on different content delivered through `onNewIntent`; device activity logs
+match that sequence. An explicit subsequent cold launch using the
+[frontend startup parameters](https://github.com/libretro/RetroArch/blob/v1.22.2/pkg/android/phoenix/src/com/retroarch/browser/mainmenu/MainMenuActivity.java)
+logs the correct ROM and mGBA paths. The owner then reported the test save was
+created after being asked to save in-game and quit. Read-only inspection found
+`/storage/emulated/0/RetroArch/saves/mGBA/Legend of Zelda, The - The Minish Cap (USA).srm`,
+131,072 bytes, SHA-256
+`db607737305566abae63754664bcbad987e2b002edc25f336bd93e3fe2bb7924`.
+Its shared-storage view reports UID 10109, GID 1023, mode 660 and
+`u:object_r:fuse:s0`; these differ from private package metadata and must not be
+treated as interchangeable. No override files were present. This establishes
+the first ordinary-save correspondence on the Thor. It is a CLI validation
+fixture with owner gameplay, not a Broomm launch or synchronization acceptance
+result. No save payload was imported, uploaded, replaced or deleted.
+
+The owner's automatic Android core-download requirement is now explicit in
+PROJECT.md. Manual core setup is temporary. No dependency or core-distribution
+mechanism has been newly selected, and unattended updates remain excluded.
+Local fixture metadata is in `.tool-cache/rooted-gba/device-session.json`.
+Retain the test save until synchronization/restoration verification is complete;
+cleanup must target only the recorded staged ROM directory and explicitly
+identified disposable test data.
+
+### Privileged file operations: approved dependency and implementation
+
+The read-only process runner cannot safely become a write runner merely by
+adding shell commands. On the Thor, Toybox 0.8.6 provides `flock` on an open file
+descriptor and `dd conv=fsync`, but its `sync` has no per-file/per-directory
+option. A shell implementation would need its own durable operation receipts,
+permission-prompt expiry, descendant-held locks, metadata restoration and
+interrupted staging recovery. Killing the Java `su` client does not establish
+that a privileged writer has stopped. A local shell draft was investigated but
+is excluded from application sources; no device save writes were attempted.
+
+The owner approved **libsu 6.0.0 `service` and its `core` dependency**, using an
+application-bound, non-daemon root service exclusively for narrow Android file
+primitives. Dart continues to own game/profile resolution, transactions,
+durable journals, cloud synchronization and recovery decisions. Do not expose
+an arbitrary shell or remote filesystem API. The `nio` and legacy `io` modules
+are excluded. Gradle now strictly pins the two approved modules and verifies their
+reviewed POM/AAR hashes. The published Gradle module metadata has mismatched
+component coordinates, so this scoped repository uses the verified Maven POMs
+and explicitly ignores module-metadata redirection. License/source notices are
+bundled in Android assets. This does not change desktop dependencies.
+
+| Option | Concrete tradeoffs |
+| --- | --- |
+| libsu core + service 6.0.0 (approved and integrated) | Android-only Java/Binder library; the inspected AARs contain no ABI-specific native payloads. Upstream minimum API is 19, below Broomm's current Android floor. Published service POM depends only on core; core POM declares no runtime dependencies. AndroidX annotations 1.6.0 are compile-only upstream. Apache-2.0 license requires retained license/notices. Uses JitPack, adding a build-distribution endpoint that must be scoped to this group and pinned with artifact verification. Normal root services are tied to bound clients; daemon mode is unnecessary and excluded. We still implement deadlines, cancellation acknowledgments, writer locks, metadata/path validation, atomic publication and recovery, and test binder/process death. Desktop builds and their dependencies remain unchanged. |
+| Own Kotlin root-process bootstrap | Avoids a shipped root library but makes Broomm maintain privileged `app_process` startup, class loading, Binder authentication, namespace selection, process/client death and Android-version compatibility. It still needs the same file-operation and recovery tests. No reduction in root authority or save-correctness obligations. |
+| Own small native executable | Provides direct descriptor-relative access, atomic publication and directory flushing, with a smaller file-primitive API. Adds an owned executable distribution/build surface for each Android ABI, source/license/hash receipts, root process protocol and cancellation/lifetime handling. Broomm must maintain and natively validate that machinery. No third-party runtime library is required, but current APK packaging does not ship such a helper. |
+| Extend shell commands | No new binary/library, but stronger dependence on device utility semantics and substantially more interruption/metadata/publication protocol work. Retain the current fixed shell for read-only capability checks; it is not yet a verified write mechanism. |
+
+The latest published GitHub release observed on 2026-11-05 is 6.0.0, published
+2024-06-28; this is an old release, not evidence of recent release cadence or
+Thor compatibility. Tag 6.0.0 resolves to commit
+`8c3e80ffe466b89ff875471e542d77e6a1b480c5`. Research downloaded and inspected
+the published POMs/AAR inventories before approval:
+
+- core AAR: 40,221 bytes, SHA-256
+  `a1ca5a8adb9ab11c42b71fc2d2a61b5a95cb4cdd06df0eb8c204c06813c2bb5b`.
+- service AAR: 41,331 bytes, SHA-256
+  `528bbcc3f057e8b5ea6f69a2deea1e0ff536880602e99e98763d7b74cf1d0659`.
+
+Sources: [release](https://github.com/topjohnwu/libsu/releases/tag/6.0.0),
+[pinned build definition](https://github.com/topjohnwu/libsu/blob/6.0.0/build.gradle.kts),
+[service build](https://github.com/topjohnwu/libsu/blob/6.0.0/service/build.gradle.kts),
+[core build](https://github.com/topjohnwu/libsu/blob/6.0.0/core/build.gradle.kts),
+[license](https://github.com/topjohnwu/libsu/blob/6.0.0/LICENSE),
+[service lifecycle contract](https://github.com/topjohnwu/libsu/blob/6.0.0/service/src/main/java/com/topjohnwu/superuser/ipc/RootService.java),
+[published service POM](https://jitpack.io/com/github/topjohnwu/libsu/service/6.0.0/service-6.0.0.pom),
+[published core POM](https://jitpack.io/com/github/topjohnwu/libsu/core/6.0.0/core-6.0.0.pom).
+The complete local fetch/hash receipt is
+`.tool-cache/rooted-gba/libsu-research/receipt.json`.
+
+The implementation adds a GBA-only root binding and separate session
+configuration in `files/Broomm/<profile>/<content>` beneath the verified emulator
+root, leaving the observed standalone shared-storage save intact. The first route
+selects the exact `.srm` and reuses the existing Android session lease/Dart swap
+journal. Native file primitives preserve data and metadata through failures.
+Before deployment, exercise deterministic denied/delayed permission, changed
+identity, interrupted publication, surviving worker and retry cases. Then build
+the PR APK and perform the actual RomM upload/changed-save/restore/in-game-load
+sequence. Automatic core provisioning remains the subsequent setup requirement.
 
 Connect the Thor booted into Android over authorized USB/Wi-Fi ADB, and record
 its Android user/version, root manager and RetroArch package/core builds.

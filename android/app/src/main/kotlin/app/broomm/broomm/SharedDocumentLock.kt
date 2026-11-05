@@ -11,6 +11,9 @@ class SharedDocumentBusy : IllegalStateException("A shared save transfer is stil
  * Never open/close another descriptor while this process holds the same POSIX
  * lock: closing it can silently release the first descriptor's OS exclusion. */
 object SharedDocumentLock {
+    // Android may alias its trusted framework filesDir through /data/data.
+    // Resolve that boundary only; linked descendants still fail in path().
+    fun appDirectory(filesDir: File): File = File(filesDir.canonicalFile, "android")
     private val gate = Any()
     private val held = HashSet<String>()
     private fun path(directory: File): File {

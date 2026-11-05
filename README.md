@@ -4,8 +4,8 @@
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
 recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
 The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
-Its first increment now implements [explicit read-only root inspection](docs/android-root-access.md);
-root-backed save synchronization remains pending. The first device/game-system
+Implementation now includes [read-only inspection and a GBA root-save route](docs/android-root-access.md);
+the complete in-app save/upload/restore acceptance remains pending. The first device/game-system
 target is the owner's **Thor running Android with GBA through RetroArch/mGBA**.
 Pushes to `main`
 start the normal [release workflow](https://github.com/Broomm/broomm/actions/workflows/release.yml).
@@ -17,11 +17,12 @@ is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
 The latest local preview includes root inspection, APK-install permission handling,
-downloaded-APK path/visible-feedback corrections and Magisk root-namespace handling,
+downloaded-APK path/visible-feedback corrections, Magisk root-namespace handling
+and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-root-namespace-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-rooted-gba-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -40,6 +41,19 @@ after a root grant. It does not change Magisk settings. Root managers without
 that option fail visibly. The exact script has been checked under Broomm's UID
 and app namespace on Magisk 31.1; the owner confirmed successful in-app
 read-only inspection with build 1036 on the Thor.
+
+The first root save route adds **Connect GBA root saves** on that GBA card.
+Prerequisites are Android user 0, installed mGBA, and a saved RetroArch
+configuration. Quit RetroArch, select the connection action, confirm it is
+closed and allow Magisk if prompted. Broomm reports the verified connection and
+selects RetroArch for GBA. Install Minish Cap from your RomM library, then launch
+it from Home. Sessions use separate profile/game files beneath RetroArch's
+private `files/Broomm` directory; your ordinary standalone saves remain intact.
+After saving in-game, choose **Quit RetroArch**, return to Broomm and confirm
+**Emulator closed · Sync progress**. Retain pending recovery data and follow the
+[full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
+This first route handles ordinary saves only. Manual core download is temporary;
+automatic Android core provisioning inside Broomm is still required and deferred.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install
@@ -77,8 +91,8 @@ correction resolves the trusted OS root while continuing to reject links inside
 APK staging; native regression cases reproduce the device's namespace layout.
 The owner subsequently confirmed successful RetroArch installation with build
 1035 and successful in-app root inspection with build 1036. The next acceptance
-gate is verifying the mGBA core and save paths, then a real GBA
-save/upload/restore/load round trip.
+gate now has a verified mGBA core/configuration and an owner-created Minish Cap
+save. The remaining gate is the complete Broomm save/upload/restore/load round trip.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
 the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator

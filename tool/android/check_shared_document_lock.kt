@@ -41,6 +41,17 @@ fun main(args: Array<String>) {
         try { SharedDocumentLock.acquire(bad).use { error("Linked lock was accepted") } }
         catch (_: IllegalArgumentException) { }
         check(foreign.readText() == "preserve")
+        val trusted = File(fixture, "framework-files").apply { mkdir() }
+        val alias = File(fixture, "framework-alias")
+        Files.createSymbolicLink(alias.toPath(), trusted.toPath())
+        SharedDocumentLock.acquire(SharedDocumentLock.appDirectory(alias)).use { }
+        check(File(trusted, "android/mmj-document-io.lock").isFile)
+        val linkedFiles = File(fixture, "linked-files").apply { mkdir() }
+        Files.createSymbolicLink(File(linkedFiles, "android").toPath(), trusted.toPath())
+        try { SharedDocumentLock.acquire(SharedDocumentLock.appDirectory(linkedFiles)).use { error("Linked child directory was accepted") } }
+        catch (_: IllegalArgumentException) { }
+        File(linkedFiles, "android").delete(); alias.delete()
+        println("PASS: trusted Android filesDir alias; linked child directory refusal")
         println("PASS: held transfer, concurrent activity query, cross-process exclusion, release and linked-file preservation")
     } finally { fixture.deleteRecursively() }
 }

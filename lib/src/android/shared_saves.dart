@@ -37,6 +37,14 @@ class SharedAndroidSaves {
           v['bytes'] > progressMaxFileBytes ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
+      if (plan.rooted &&
+          (v['metadata'] is! String ||
+              !RegExp(
+                '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
+              ).hasMatch(v['metadata'] as String)))
+        throw const FormatException(
+          'Root save ownership metadata is incomplete.',
+        );
       total += v['bytes'] as int;
       if (total > progressMaxBytes)
         throw const FormatException('Android progress exceeds its size limit');
@@ -46,12 +54,16 @@ class SharedAndroidSaves {
 
   bool same(Map a, Map b) =>
       progressEntriesDigest(a.cast<String, dynamic>()) ==
-      progressEntriesDigest(b.cast<String, dynamic>());
+          progressEntriesDigest(b.cast<String, dynamic>()) &&
+      a.keys.every((key) => a[key]['metadata'] == b[key]['metadata']);
   Future<Map<String, dynamic>> list(AndroidSavePlan plan) async => inventory(
-    await manager.channel.invokeMapMethod<String, dynamic>('sharedList', {
-      ...plan.arguments,
-      'areas': plan.remoteAreas.map((a) => a.selector).toList(),
-    }),
+    await manager.channel.invokeMapMethod<String, dynamic>(
+      plan.method('List'),
+      {
+        ...plan.arguments,
+        'areas': plan.remoteAreas.map((a) => a.selector).toList(),
+      },
+    ),
     plan,
   );
   Future<Map<String, dynamic>> record(
@@ -67,6 +79,7 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
+        plan.binding.entries.any((e) => r[e.key] != e.value) ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(r['transaction'] as String? ?? '') ||
         !{
@@ -115,7 +128,7 @@ class SharedAndroidSaves {
         '$where/${e.key}',
         createParents: true,
       );
-      await manager.channel.invokeMethod<void>('sharedRead', {
+      await manager.channel.invokeMethod<void>(plan.method('Read'), {
         ...plan.arguments,
         'path': e.key,
         'target': target.path,
@@ -144,7 +157,10 @@ class SharedAndroidSaves {
       throw const FormatException(
         'Android save root belongs to another profile',
       );
-    await manager.channel.invokeMethod<void>('sharedCheck', plan.arguments);
+    await manager.channel.invokeMethod<void>(
+      plan.method('Check'),
+      plan.arguments,
+    );
     final r = <String, dynamic>{
       'version': 1,
       'transaction': progressNonce(),
@@ -167,6 +183,10 @@ class SharedAndroidSaves {
           metadata = {
             'bytes': await e.value.length(),
             'sha256': await progressFileHash(e.value),
+            if (plan.rooted)
+              'metadata':
+                  (r['original'] as Map)[remote]?['metadata'] ??
+                  '${plan.binding['uid']} ${plan.binding['uid']} 600 ${plan.binding['label']}',
           };
       if (working.containsKey(remote))
         throw const FormatException('Ambiguous Android save mapping');
@@ -208,7 +228,7 @@ class SharedAndroidSaves {
       );
       await source.writeAsString(text, flush: true);
       final after = await progressFileHash(source);
-      await manager.channel.invokeMethod<void>('sharedReplace', {
+      await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
         'before': null,
@@ -237,12 +257,13 @@ class SharedAndroidSaves {
         throw StateError(
           'Android recovery copy is damaged. Native files were kept.',
         );
-      await manager.channel.invokeMethod<void>('sharedReplace', {
+      await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
+        if (plan.rooted) 'metadata': after[path]?['metadata'],
         'token': '${r['transaction']}-${afterKey == 'working' ? 'in' : 'out'}',
       });
     }

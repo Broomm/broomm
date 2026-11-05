@@ -8,6 +8,7 @@ import '../retroarch.dart';
 import '../progress/files.dart';
 import '../romm/models.dart';
 import 'apk_download.dart';
+import 'root_saves.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -236,6 +237,53 @@ class AndroidEmulators extends ChangeNotifier {
         : _folders['${emulator.id}:${selected.package}'];
   }
 
+  bool connected(String profile, AndroidEmulator emulator, {String? platform}) {
+    final binding = folder(emulator);
+    if (binding?['access'] == 'root-gba-v1')
+      return platform == null || platform == 'gba';
+    return binding != null || tree(profile, emulator) != null;
+  }
+
+  Future<void> connectGbaRoot(AndroidEmulator emulator) async {
+    if (!settingsKnown || emulator.id != 'retroarch')
+      throw StateError('Refresh RetroArch before connecting root saves.');
+    if (await progressExists('${data.path}/android/session.json') ||
+        await progressExists('${data.path}/android/shared-swap.json'))
+      throw StateError(
+        'Finish the pending Android session before changing its storage connection.',
+      );
+    await ensureNoWriters(closureConfirmed: true);
+    final selected = app(emulator);
+    if (selected == null || !selected.enabled)
+      throw StateError('Install and enable RetroArch first.');
+    phase?.call(
+      'Inspecting mGBA and the saved RetroArch configuration with root access.',
+    );
+    final report = await inspectAndroidGbaRoot(this, selected);
+    final binding = <String, String>{
+      'access': 'root-gba-v1',
+      for (final key in [
+        'package',
+        'user',
+        'uid',
+        'dataDir',
+        'build',
+        'signer',
+        'label',
+      ])
+        key: report[key] as String,
+    };
+    final next = {..._folders, '${emulator.id}:${selected.package}': binding};
+    await _save(folders: next);
+    _folders
+      ..clear()
+      ..addAll(next);
+    phase?.call(
+      'GBA root save connection verified. Standalone emulator saves were kept.',
+    );
+    _emit();
+  }
+
   bool progressSupported(AndroidEmulator emulator) =>
       androidEmulators.contains(emulator);
 
@@ -330,7 +378,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 2,
+        'version': 3,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'fingerprints': _fingerprints,
@@ -387,7 +435,7 @@ class AndroidEmulators extends ChangeNotifier {
         await progressFile(data, 'android/emulators.json');
       if (await progressExists(file.path)) {
         final record = await progressJson(file);
-        if (![1, 2].contains(record['version']) || record['trees'] is! Map)
+        if (![1, 2, 3].contains(record['version']) || record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
         final trees = (record['trees'] as Map).cast<String, String>();
         for (final entry in trees.entries) {
@@ -407,7 +455,15 @@ class AndroidEmulators extends ChangeNotifier {
               .where((e) => entry.key == '${e.id}:${binding['package']}')
               .firstOrNull;
           if (emulator == null ||
-              !sharedTree(emulator, binding['package']!, binding['tree']!))
+              !(binding['access'] == 'root-gba-v1'
+                  ? record['version'] == 3 &&
+                        emulator.id == 'retroarch' &&
+                        androidRootBinding(binding)
+                  : sharedTree(
+                      emulator,
+                      binding['package']!,
+                      binding['tree']!,
+                    )))
             throw const FormatException('Invalid connected emulator folder');
           checked[entry.key] = binding;
         }

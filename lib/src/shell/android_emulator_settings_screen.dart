@@ -178,7 +178,7 @@ class _AndroidEmulatorSettingsScreenState
         model.profile?.id == record['profile'] &&
         model.installation(record['rom'] as int) != null &&
         manager.progressSupported(emulator) &&
-        manager.tree(model.profile!.id, emulator) != null)
+        manager.connected(model.profile!.id, emulator))
       game = await model.cloudGame(
         record['rom'] as int,
         androidRom: record['selected'] as String?,
@@ -282,7 +282,7 @@ class _AndroidEmulatorSettingsScreenState
         app?.enabled == true && model.defaultEmulator(platform) == emulator.id;
     final configured =
         model.profile != null &&
-        manager.tree(model.profile!.id, emulator) != null;
+        manager.connected(model.profile!.id, emulator, platform: platform.slug);
     final disabled =
         // The modal owns interaction; keep its invoking button focusable so
         // closing it restores the same card instead of jumping to Refresh.
@@ -334,7 +334,9 @@ class _AndroidEmulatorSettingsScreenState
             if (manager.progressSupported(emulator)) ...[
               const SizedBox(height: 8),
               Text(
-                manager.folder(emulator) != null
+                manager.folder(emulator)?['access'] == 'root-gba-v1'
+                    ? 'Root access connected for GBA/mGBA ordinary saves. Standalone saves are preserved; other platforms need shared-folder setup.'
+                    : manager.folder(emulator) != null
                     ? 'Save folder connected for all Broomm profiles. Finish and sync after closing the emulator.'
                     : configured
                     ? 'Legacy profile folder connected. Configure saves to use one folder across profiles.'
@@ -384,6 +386,47 @@ class _AndroidEmulatorSettingsScreenState
                           }),
                     child: const Text('Inspect root access'),
                   ),
+                  if (emulator.id == 'retroarch' && platform.slug == 'gba')
+                    ConsoleButton(
+                      onPressed: disabled
+                          ? null
+                          : () => run(() async {
+                              final accepted = await showConsoleDialog<bool>(
+                                context: context,
+                                builder: (c) => AlertDialog(
+                                  title: const Text(
+                                    'Connect GBA saves with root',
+                                  ),
+                                  content: const Text(
+                                    'Save and quit RetroArch first. Broomm will request root access to verify mGBA and its configuration, then use separate per-profile game saves. Your standalone RetroArch saves remain untouched. This first route synchronizes in-game saves only; install mGBA in RetroArch before connecting.',
+                                  ),
+                                  actions: [
+                                    ConsoleButton(
+                                      autofocus: true,
+                                      onPressed: () => Navigator.pop(c, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ConsoleButton(
+                                      onPressed: () => Navigator.pop(c, true),
+                                      child: const Text(
+                                        'RetroArch closed · Connect',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (accepted != true) return;
+                              await manager.connectGbaRoot(emulator);
+                              await model.setDefaultEmulator(
+                                platform,
+                                emulator.id,
+                              );
+                              model.showNotice(
+                                'GBA root saves connected. Launch an installed game from Home.',
+                              );
+                            }),
+                      child: const Text('Connect GBA root saves'),
+                    ),
                   ConsoleButton(
                     onPressed: disabled
                         ? null

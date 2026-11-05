@@ -9,9 +9,11 @@ macOS application build do not establish real Android emulator behavior.
 
 On **2026-11-05**, the owner deferred further Linux ARM64 investigation and
 selected the Android root route as the next milestone. This section records
-the adopted direction and staged acceptance. The first implementation now adds
-[explicit read-only root inspection](android-root-access.md); **root save access
-is not implemented yet**. The APK/connected-folder behavior below remains current.
+the adopted direction and staged acceptance. Implementation now includes
+[read-only inspection and a first GBA root-save route](android-root-access.md).
+Isolated native file-operation checks pass; packaged service and complete RomM
+round-trip acceptance remain pending. The APK/connected-folder behavior below
+remains available.
 The owner selected the **Thor running Android and GBA through RetroArch/mGBA**
 for the first real save round trip.
 

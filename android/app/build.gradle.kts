@@ -52,6 +52,7 @@ android {
 
     buildTypes {
         release {
+            proguardFiles("proguard-rules.pro")
             // PR/local builds retain debug signing. The publisher requires secrets.
             signingConfig = signingConfigs.getByName(
                 if (broommSigningFile.exists()) "broommRelease" else "debug"
@@ -68,4 +69,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.github.topjohnwu.libsu:core:6.0.0") { version { strictly("6.0.0") } }
+    implementation("com.github.topjohnwu.libsu:service:6.0.0") { version { strictly("6.0.0") } }
 }

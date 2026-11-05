@@ -23,6 +23,10 @@ fi
 [[ "$(hash_file "$broomm_android_cache/api/android.jar")" == 2642c84655ceb87e009f04b279b4c60edcc1a869de80c707322f6c3da3b687fd ]] || { echo 'Android API jar hash mismatch' >&2; exit 1; }
 fetch flutter-embedding.jar https://storage.googleapis.com/download.flutter.io/io/flutter/flutter_embedding_release/1.0.0-5f77625673248ee5846fbcaf5d3e1a3878386fd7/flutter_embedding_release-1.0.0-5f77625673248ee5846fbcaf5d3e1a3878386fd7.jar 99d41bef0e3aa240b310cdaf1df6406e606b841336826cee9c9a5159db58280f
 fetch lifecycle-common.jar https://dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common/2.7.0/lifecycle-common-2.7.0.jar 533ded8ee0645a18f6653da53fe1ec5a15430e7f36a737d45e410531f30f3318
+fetch libsu-core-6.0.0.aar https://jitpack.io/com/github/topjohnwu/libsu/core/6.0.0/core-6.0.0.aar a1ca5a8adb9ab11c42b71fc2d2a61b5a95cb4cdd06df0eb8c204c06813c2bb5b
+fetch libsu-service-6.0.0.aar https://jitpack.io/com/github/topjohnwu/libsu/service/6.0.0/service-6.0.0.aar 528bbcc3f057e8b5ea6f69a2deea1e0ff536880602e99e98763d7b74cf1d0659
+unzip -p "$broomm_android_cache/libsu-core-6.0.0.aar" classes.jar > "$broomm_android_cache/libsu-core.jar"
+unzip -p "$broomm_android_cache/libsu-service-6.0.0.aar" classes.jar > "$broomm_android_cache/libsu-service.jar"
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/*.kt -jvm-target 17 \
-  -classpath "$broomm_android_cache/api/android.jar:$broomm_android_cache/flutter-embedding.jar:$broomm_android_cache/lifecycle-common.jar" \
+  -classpath "$broomm_android_cache/api/android.jar:$broomm_android_cache/flutter-embedding.jar:$broomm_android_cache/lifecycle-common.jar:$broomm_android_cache/libsu-core.jar:$broomm_android_cache/libsu-service.jar" \
   -d "$broomm_android_cache/bridge.jar"
