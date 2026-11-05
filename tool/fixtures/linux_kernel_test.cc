@@ -67,18 +67,30 @@ int main(int argc,char** argv) {
   fd=open(outside.c_str(),O_CREAT|O_WRONLY,0600);assert(fd>=0&&write(fd,"saved",5)==5);close(fd);
   assert(symlink(outside.c_str(),(profile+"/linked-save").c_str())==0);
   // Exercise the namespace backend even on Landlock-capable CI kernels.
-  // Some hosts forbid unprivileged namespaces; establish that independently
-  // before asserting the optional fallback, without masking later failures.
+  // Some hosts allow user namespace creation but deny mount capabilities
+  // inside it (Ubuntu's AppArmor default). Probe the actual mount privilege
+  // independently; production setup failures must still fail the assertions.
   child=fork();assert(child>=0);
-  if(!child){if(unshare(CLONE_NEWUSER|CLONE_NEWNS)==0)_exit(0);
-    assert(errno==EPERM||errno==ENOSYS||errno==EINVAL);_exit(77);}
+  if(!child){
+    if(unshare(CLONE_NEWUSER|CLONE_NEWNS)){
+      int error=errno;fprintf(stderr,"OBSERVED: user/mount namespace creation unavailable: %s (%d)\n",strerror(error),error);
+      assert(error==EPERM||error==EACCES||error==ENOSYS||error==EINVAL);_exit(77);
+    }
+    if(mount(nullptr,"/",nullptr,MS_REC|MS_PRIVATE,nullptr)){
+      int error=errno;fprintf(stderr,"OBSERVED: namespace mount capability denied: %s (%d)\n",strerror(error),error);
+      assert(error==EPERM||error==EACCES);_exit(77);
+    }
+    _exit(0);
+  }
   int probe=0;assert(waitpid(child,&probe,0)==child&&WIFEXITED(probe));
   bool namespaces=WEXITSTATUS(probe)==0;assert(namespaces||WEXITSTATUS(probe)==77);
   for(int backend=0;backend<2;++backend){
    if(backend==1&&!namespaces){puts("OBSERVED: host forbids the optional user/mount namespace backend");continue;}
    child=fork();assert(child>=0);
    if(!child){pid_t original_pid=getpid();uid_t original_uid=getuid();gid_t original_gid=getgid();
-    assert(backend?namespace_private_writes(profile.c_str()):private_writes(profile.c_str()));
+    bool confined=backend?namespace_private_writes(profile.c_str()):private_writes(profile.c_str());
+    if(!confined){int error=errno;fprintf(stderr,"FAIL: %s write protection: %s (%d)\n",backend?"direct namespace":"automatic",strerror(error),error);}
+    assert(confined);
     assert(getpid()==original_pid&&getuid()==original_uid&&getgid()==original_gid);
     int output=open((profile+"/save").c_str(),O_CREAT|O_WRONLY,0600);assert(output>=0&&write(output,"local",5)==5);close(output);
     assert(open(outside.c_str(),O_WRONLY|O_TRUNC)<0&&(errno==EACCES||errno==EROFS));

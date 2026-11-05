@@ -24,6 +24,20 @@ and JSON reports remain under `.tool-cache/checkpoint-*` and
 checks remain separate CI results; these Mac checks do not establish Android
 root support or resolve the deferred Thor gameplay failures.
 
+The first [checkpoint release run](https://github.com/Broomm/broomm/actions/runs/42046704526)
+builds all five targets successfully and passes macOS/Windows checks plus native
+macOS acceptance. Publication is blocked by Linux checks: the pinned Devbox CLI
+download failed with curl exit 22, and independently scheduled kernel/sanitizer
+fixtures reached the new direct-namespace assertion. The optional backend's
+probe had checked namespace creation without checking mount capabilities.
+Ubuntu can permit the former while denying the latter. The fixture now probes
+mount privilege independently, reports the unavailable operation, and retains
+mandatory automatic confinement plus all save-boundary assertions. Any actual
+production sandbox setup failure still fails with its backend/errno visible.
+This changes test capability detection, not application confinement or emulator
+behavior. Subsequent hosted verification uses the same release workflow; no
+dependency pin, host security setting or acceptance threshold is changed.
+
 The Thor gameplay investigation reproduces Eden/Smash and Azahar crashes
 without Broomm's input bridge or process supervisor. Single-core Eden survives
 bounded startup checks but still hangs in the owner's retry; it is not a

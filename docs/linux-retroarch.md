@@ -150,6 +150,16 @@ production `session.lock`/`writer.lock`, profiles, cloud recovery or downloads.
 CI schedules Linux kernel/sanitizer checks independently and recovery adapter
 checks on both build architectures; hosted results are still pending.
 
+The November 5 checkpoint CI follow-up corrects the optional namespace backend's
+capability probe: namespace creation alone does not establish mount permission.
+[Ubuntu's documented restriction](https://documentation.ubuntu.com/release-notes/24.04/#unprivileged-user-namespace-restrictions)
+can allow creation while denying capabilities inside that namespace. The fixture
+independently checks a private mount operation before selecting that optional
+case. Automatic confinement, outside-write/symlink rejection, process ownership
+and capability-drop assertions remain mandatory when their backend is available;
+production setup failures are not reclassified as unsupported observations.
+The original failing run and correction are recorded in IMPLEMENTATION.md.
+
 The delivered local packages are version **0.1.6 (1013)** with the official
 update stream enabled for newer releases, production data locations and no
 checkout binding. [macOS ZIP](../build/releases/Broomm-macOS-linux-retroarch.zip)
