@@ -9,8 +9,11 @@ macOS application build do not establish real Android emulator behavior.
 
 On **2026-11-05**, the owner deferred further Linux ARM64 investigation and
 selected the Android root route as the next milestone. This section records
-the adopted direction and staged acceptance; **root access is not implemented
-in this checkpoint**. The APK/connected-folder behavior below remains current.
+the adopted direction and staged acceptance. The first implementation now adds
+[explicit read-only root inspection](android-root-access.md); **root save access
+is not implemented yet**. The APK/connected-folder behavior below remains current.
+The owner selected the **Thor running Android and GBA through RetroArch/mGBA**
+for the first real save round trip.
 
 Support an optional access mode on an **already rooted device**, retaining the
 shared-folder/provider route. Begin by identifying the actual device, Android
@@ -43,8 +46,9 @@ change its security policy or install global services as a setup shortcut.
 
 This work does not add desktop input injection, overlays or unattended emulator
 updates. BIOS, firmware and update/DLC installation remain separately scoped.
-No root-capable APK, root-device check or native save round trip is delivered
-by this documentation checkpoint.
+The earlier documentation checkpoint delivered no root-capable APK or native
+save round trip. The inspection increment's separate verification record must
+not be read as native device or save acceptance.
 
 ## Adopted scope
 

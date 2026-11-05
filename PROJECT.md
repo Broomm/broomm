@@ -204,6 +204,13 @@ contract until a replacement has native verification. Root does not extend
 Android into the desktop controller/injection/overlay scope. See the
 [next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
 
+The first device acceptance target is the owner's **Thor running Android**, with
+**Game Boy Advance through RetroArch/mGBA**. Offer an explicit read-only root
+inspection in Emulator Settings before any root save connection. Report package,
+Android-user and directory identity without treating successful inspection as
+save readiness. Verify the installed frontend/core and actual save paths on
+that device before implementing privileged save publication.
+
 ## Progress across devices
 
 Broomm automatically synchronizes in-game saves and supported save states with the active profile's RomM account so play can continue on another device. Pull current progress before starting a connected session, preserve local changes, and upload completed progress when it is safe to do so. Failed transfers remain visible and retryable.

@@ -15,6 +15,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     private var controls: MethodChannel? = null
     private var credentials: BroommCredentials? = null
     private var emulators: BroommEmulators? = null
+    private var rootInspection: RootInspection? = null
     private var updates: BroommUpdates? = null
     private val handler = Handler(Looper.getMainLooper())
     private var held: String? = null
@@ -41,6 +42,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         super.configureFlutterEngine(engine)
         credentials = BroommCredentials(this).also { it.register(engine) }
         emulators = BroommEmulators(this).also { it.register(engine) }
+        rootInspection = RootInspection(this).also { it.register(engine) }
         updates = BroommUpdates(this).also { it.register(engine) }
         controls = MethodChannel(engine.dartExecutor.binaryMessenger, "app.broomm/prototype")
         inputs = getSystemService(INPUT_SERVICE) as InputManager
@@ -119,5 +121,5 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         enters.removeAll { it.startsWith("$deviceId-") }
     }
     override fun onPause() { held = null; handler.removeCallbacks(repeat); for (key in shifts.toList()) shift(key, false); enters.clear(); super.onPause() }
-    override fun onDestroy() { inputs?.unregisterInputDeviceListener(this); inputs = null; handler.removeCallbacks(repeat); credentials?.close(); credentials = null; emulators?.close(); emulators = null; updates?.close(); updates = null; controls = null; super.onDestroy() }
+    override fun onDestroy() { inputs?.unregisterInputDeviceListener(this); inputs = null; handler.removeCallbacks(repeat); credentials?.close(); credentials = null; emulators?.close(); emulators = null; rootInspection?.close(); rootInspection = null; updates?.close(); updates = null; controls = null; super.onDestroy() }
 }

@@ -3,8 +3,11 @@
 **2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
 recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
-The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access);
-root support is planned and is not present in this build. Pushes to `main`
+The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
+Its first increment now implements [explicit read-only root inspection](docs/android-root-access.md);
+root-backed save synchronization remains pending. The first device/game-system
+target is the owner's **Thor running Android with GBA through RetroArch/mGBA**.
+Pushes to `main`
 start the normal [release workflow](https://github.com/Broomm/broomm/actions/workflows/release.yml).
 
 [Broomm v0.1.15](https://github.com/Broomm/broomm/releases/tag/v0.1.15) is published
@@ -13,13 +16,32 @@ The [official macOS package](https://github.com/Broomm/broomm/releases/download/
 is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
-The latest local preview preserves the owner's emulator fullscreen/window
-preferences, and retains the [Eden launch/save-account fixes](docs/eden-save-account-repair.md)
-and [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-checkpoint-preview.zip).
-It is version `0.1.14-dev`, ad-hoc signed, uses the normal application data folder
+The latest local preview is built from the root-inspection source increment,
+preserves the owner's emulator fullscreen/window preferences, and retains the
+[Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
+[Thor input fix](docs/linux-input-performance.md):
+[Download the macOS build](build/releases/Broomm-macOS-root-inspection-preview.zip).
+It is version `0.1.15-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
+
+On Android, open **Emulator Settings → Game Boy Advance → RetroArch → Inspect
+root access → Request root inspection**. The first dialog does not request
+root. Review/allow or deny the existing root manager's prompt; expect verified
+package/user/directory metadata or an actionable error. **Cancel inspection**
+and closing the dialog discard the request. Reports are temporary and do not
+connect saves; **Configure saves** remains the existing folder route. No game,
+emulator settings or progress files are changed. No cleanup is needed beyond
+closing the dialog; root-manager permission history is managed there.
+
+Prerequisites, exact commands, log/scratch locations and cleanup are in the
+[walkthrough](docs/android-root-access.md). Local analysis, 569 Flutter tests
+(one existing Linux-only skip), Kotlin bridge compilation, process regressions
+and workflow/shell lint pass. The macOS ZIP and source/extracted signatures are
+verified, with all seven Mach-O files universal. It cannot exercise Android
+root access. **No current Android APK was built:** this host lacks a full Android
+SDK, and ADB found no connected device. The Thor/root-manager inspection and
+real GBA save/upload/restore/load remain unverified.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
 the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator

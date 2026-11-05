@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../android/emulators.dart';
+import '../android/root_inspection.dart';
 import '../romm/models.dart';
 import '../progress/service.dart';
 import 'controls.dart';
+import 'android_root_inspection_dialog.dart';
 import 'model.dart';
 import 'navigation.dart';
 
@@ -345,6 +347,23 @@ class _AndroidEmulatorSettingsScreenState
                   child: const Text('Install APK…'),
                 ),
                 if (app != null) ...[
+                  ConsoleButton(
+                    onPressed: disabled
+                        ? null
+                        : () => run(() async {
+                            await showConsoleDialog<void>(
+                              context: context,
+                              builder: (_) => AndroidRootInspectionDialog(
+                                emulator: emulator,
+                                app: app,
+                                inspector: AndroidRootInspector(
+                                  phase: manager.phase,
+                                ),
+                              ),
+                            );
+                          }),
+                    child: const Text('Inspect root access'),
+                  ),
                   ConsoleButton(
                     onPressed: disabled
                         ? null

@@ -1,5 +1,43 @@
 # Implementation plan
 
+## Rooted Android: first implementation increment — 2026-11-05
+
+The owner selected the Thor running Android and GBA for the first real save
+round trip. Emulator Settings now provides **Inspect root access** for installed
+emulators. A separate explicit request invokes a bounded read-only Android
+adapter. It verifies the selected enabled package/launcher, signing/build
+observation, current Android user, resolved private data-directory boundary,
+UID/GID, mode and SELinux label. Reports are temporary; no root save connection,
+privileged save write, lifecycle probe or successful cloud status is inferred.
+Denial, unavailable access, cancellation, timeout and incomplete/mismatched
+observations remain visible. Connected-folder sync is unchanged.
+
+The adapter uses existing Android/JVM APIs and a fixed `su` inspection script;
+no root library, manager, service, native payload or SDK pin is added. Workflows
+and future save transactions remain in Dart. The [implementation record](docs/android-root-access.md)
+includes the alternatives, commands, effects, verification and remaining
+acceptance. ADB inspection found no connected device. The Thor's Android/root
+manager, installed RetroArch/mGBA, save-path correspondence and real upload /
+restore / in-game load still need native evidence before progressing to writes.
+
+Local analysis is clean; **569 Flutter tests pass**, with one existing Linux-only
+test skipped on macOS. The 37 focused Android cases include six new root-flow
+regressions. Kotlin bridge compilation passes with the two existing updater
+deprecation warnings; JVM process regressions and workflow/shell lint pass.
+Android APK creation stops at **No Android SDK found**. No Android native root
+execution, root-manager compatibility or save round trip is claimed.
+
+The fresh [universal macOS preview](build/releases/Broomm-macOS-root-inspection-preview.zip)
+is **24,325,487 bytes**, SHA-256
+`b96d9c9f05d2cc7f472787c3a8f60440f87944591f4af933454bad2cb4bf25cc`.
+Archive integrity and source/fresh-extraction deep/strict/all-architecture
+signatures pass; all seven Mach-O files contain ARM64 and x86_64. Version
+`0.1.15-dev` uses production Application Support, ad-hoc signing and disabled
+development self-updates. It does not provide Android runtime acceptance.
+
+The following checkpoint describes the preceding published release; it does
+not include this working-tree increment.
+
 **Checkpoint — 2026-11-05:** the owner deferred further Linux ARM64 work and
 requested committing/pushing the current implementation to generate a release
 build. [v0.1.15 is published](https://github.com/Broomm/broomm/releases/tag/v0.1.15)
