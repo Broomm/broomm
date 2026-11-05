@@ -1,5 +1,14 @@
 # GitHub builds, versions and releases
 
+**Current checkpoint — 2026-11-05:** [v0.1.15](https://github.com/Broomm/broomm/releases/tag/v0.1.15)
+is published from `79ef7e825287a4613e7120393ed284496c939e0b`.
+[All release gates pass](https://github.com/Broomm/broomm/actions/runs/42053405473),
+including native macOS checks, Linux kernel/sanitizer checks, Windows checks
+and all five packages. These are build/automated results, not new emulator
+gameplay or Android-device acceptance. Linux ARM64 investigation is deferred;
+[root-backed Android storage access](android-installation-and-saves.md#next-milestone-root-backed-storage-access)
+is the next milestone and is not implemented in this release.
+
 The owner selected the workflow and version policy from the sibling Teddy
 project. Broomm adapts its `.github/workflows/release.yml`,
 `scripts/release_version.py`, `scripts/publish_release.py` and packaging/signing
@@ -60,17 +69,22 @@ These are **early application builds**, not proof of emulator parity. The
 [support matrix](platform-support-matrix.md) remains authoritative: the desktop
 bridge/managed emulator pack is verified on macOS Apple Silicon, with the Intel
 RPCS3 alternative separately tested. A universal Broomm binary does not add an
-Intel-host emulator pack. Linux/Windows emulator bridges and Steam/gamescope
-acceptance remain pending. Android's external-app/save/package support is partial
+Intel-host emulator pack. Linux now has [RetroArch](linux-retroarch.md),
+[x64 standalones](linux-standalone.md) and [ARM64 packages](linux-arm64-standalone-audit.md)
+with their own native evidence and remaining host/title/physical acceptance.
+Thor's unresolved Eden/Azahar failures remain separate from successful package
+builds. Windows emulator acceptance remains separate from its build/tests.
+Android's external-app/save/package support is partial
 and still needs a device run. CI requires no private RomM service, credentials,
 ROMs, firmware, keys or locally prepared emulator executables. Those native
 integration suites remain explicit owner/developer checks, not fake CI passes.
 
-macOS packages build all three universal libraries, verify architectures and deep
+macOS packages build all shipped native bridges, verify universal architectures and deep
 signatures and use ad-hoc signing; they are **not notarized**. Windows packages
 retain DLLs and `data/` beside `broomm.exe` and are unsigned. Linux tarballs retain
-the complete Flutter bundle and require a host with GTK 3, Secret Service,
-a compatible glibc (Ubuntu 24.04 baseline) and graphics drivers. CI checks
+the complete Flutter bundle and require a host with GTK 3, a compatible glibc
+(Ubuntu 24.04 baseline) and graphics drivers. Secret Service is required only
+for the optional Linux keyring; the default private token file does not need it. CI checks
 linked libraries against the host loader with Nix overrides removed and rejects
 remaining Nix RPATH/interpreter/dependency references. It does not bundle the Nix
 store, install packages on the user's OS, or establish graphical/native gameplay
@@ -78,12 +92,13 @@ acceptance. Keep the Linux bundle's `lib/` and `data/` beside `broomm`.
 
 Release macOS builds use `tool/build_app.sh --release --portable`: they do not
 embed this checkout as `BROOMM_PROJECT_ROOT`. Ordinary developer builds retain
-their prior checkout-based workflow. Release setup still imports the reviewed
-local emulator bundles using explicit source paths; remote emulator provisioning
-and Linux/Windows emulator packs are not added by the release workflow. Neither
+their prior checkout-based workflow. The application bundles reviewed per-host
+setup recipes and downloads emulator packages only after explicit setup review.
+The release workflow packages those recipes and Broomm interop rather than
+downloading or embedding the emulators themselves. Neither
 the app archives nor this repository should contain emulator, ROM, firmware, key
-or account payloads. The current built-in `tested:` setup aliases require the
-developer fixtures; use the documented explicit setup JSON sources elsewhere.
+or account payloads. Developer-only fixture aliases remain separate from normal
+in-app setup and optional explicit setup JSON imports.
 
 ## Toolchains and dependency choices
 
@@ -229,6 +244,22 @@ other progress data. A release publication check/command requires GitHub event
 identity and should run only in the authorized workflow.
 
 ## Verification record
+
+### Release checkpoint — 2026-11-05
+
+[Run 42046704526](https://github.com/Broomm/broomm/actions/runs/42046704526)
+built all five targets but could not publish because Linux checks failed.
+One pinned Devbox CLI download returned curl exit 22. Independently scheduled
+kernel/sanitizer checks also exposed an incomplete optional-namespace probe:
+successful namespace creation alone did not prove mount capability. The probe
+now checks mount permission independently and preserves all mandatory automatic
+confinement/save-boundary assertions. Production setup failures remain failures
+with backend/errno diagnostics; no runtime or host-security change was made.
+
+The corrected [run 42053405473](https://github.com/Broomm/broomm/actions/runs/42053405473)
+passes every gate and publishes v0.1.15. Native Android emulator/root behavior,
+physical controls and the deferred Thor gameplay cases retain their own
+acceptance status. Earlier records below remain historical.
 
 Workflow implementation and locked tool resolution were prepared on macOS,
 2026-10-26, against the existing local base `4c28719` plus the cumulative working

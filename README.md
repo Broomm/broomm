@@ -7,6 +7,12 @@ The next milestone is [Android with root-backed storage access](docs/android-ins
 root support is planned and is not present in this build. Pushes to `main`
 start the normal [release workflow](https://github.com/Broomm/broomm/actions/workflows/release.yml).
 
+[Broomm v0.1.15](https://github.com/Broomm/broomm/releases/tag/v0.1.15) is published
+from `79ef7e8`; [all CI gates and five target packages passed](https://github.com/Broomm/broomm/actions/runs/42053405473).
+The [official macOS package](https://github.com/Broomm/broomm/releases/download/v0.1.15/Broomm-0.1.15-macos-universal.zip)
+is universal and ad-hoc signed, not notarized. The local preview below remains
+available separately with development-build automatic updates disabled.
+
 The latest local preview preserves the owner's emulator fullscreen/window
 preferences, and retains the [Eden launch/save-account fixes](docs/eden-save-account-repair.md)
 and [Thor input fix](docs/linux-input-performance.md):
@@ -51,7 +57,8 @@ The native correction is installed in the Thor's existing
 `~/Applications/Broomm` copy. Reopen Broomm and retry **Setup** for both Armada
 emulators. Native extraction, CLI startup and lifecycle checks pass; physical
 dual-screen/controller and end-to-end UI setup verification remain pending.
-No new GitHub release has been published for this correction yet.
+The implementation is included in v0.1.15; the deferred emulator/title failures
+are not resolved by publishing the application package.
 
 Broomm is a native Flutter game launcher in early development for Windows, macOS, Linux, and Android, initially targeting RomM 5.4.0 with macOS/Linux validation first. Its controller-first Home and Store take inspiration from the PS5 interface. Users select a saved server, then a known profile; ROMs are shared while saves/states stay private. Only one game runs at a time.
 

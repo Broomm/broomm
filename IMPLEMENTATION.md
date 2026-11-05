@@ -2,7 +2,9 @@
 
 **Checkpoint — 2026-11-05:** the owner deferred further Linux ARM64 work and
 requested committing/pushing the current implementation to generate a release
-build. Preserve the implemented ARM64 packages, kernel confinement, launcher
+build. [v0.1.15 is published](https://github.com/Broomm/broomm/releases/tag/v0.1.15)
+from `79ef7e8`, with [every release gate and all five packages passing](https://github.com/Broomm/broomm/actions/runs/42053405473).
+Preserve the implemented ARM64 packages, kernel confinement, launcher
 input fix and emulator display-preference correction. Eden startup/shutdown and
 Azahar dual-screen failures remain unresolved; no custom Eden build or added Qt
 SDK is authorized. Physical melonDS window-width acceptance remains open.
@@ -35,7 +37,8 @@ mount privilege independently, reports the unavailable operation, and retains
 mandatory automatic confinement plus all save-boundary assertions. Any actual
 production sandbox setup failure still fails with its backend/errno visible.
 This changes test capability detection, not application confinement or emulator
-behavior. Subsequent hosted verification uses the same release workflow; no
+behavior. The corrected hosted run above passes Linux kernel/sanitizer and
+full-size save checks plus the other release gates. No
 dependency pin, host security setting or acceptance threshold is changed.
 
 The Thor gameplay investigation reproduces Eden/Smash and Azahar crashes
