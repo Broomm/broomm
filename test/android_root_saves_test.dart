@@ -30,15 +30,17 @@ void main() {
   final metadata = <String, String>{};
   final calls = <String>[];
   late Map<String, dynamic> observation;
-  Future<AndroidSavePlan> plan([String profile = profileId]) async =>
-      await androidProgressLayout(
-        manager,
-        profile,
-        emulator,
-        platform,
-        '/game/Minish Cap.gba',
-        contentId: '42',
-      ) as AndroidSavePlan;
+  Future<AndroidSavePlan> plan([
+    String profile = profileId,
+    String content = '42',
+  ]) async => await androidProgressLayout(
+    manager,
+    profile,
+    emulator,
+    platform,
+    '/game/Minish Cap.gba',
+    contentId: content,
+  ) as AndroidSavePlan;
   Future<File> put(String relative, List<int> bytes) async {
     final file = File('${native.path}/$relative');
     await file.parent.create(recursive: true);
@@ -232,6 +234,32 @@ void main() {
       expect(await saves.pending, isTrue);
       expect(await working.readAsBytes(), [1, 2, 3]);
       expect(api.records, isEmpty);
+    },
+  );
+  test(
+    'same-named games and other profiles retain separate local working saves',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final a = await plan(),
+          b = await plan(profileId, '43'),
+          c = await plan('d' * 32);
+      final files = [
+        await a.target('save/game.srm'),
+        await b.target('save/game.srm'),
+        await c.target('save/game.srm'),
+      ];
+      for (var i = 0; i < files.length; i++) {
+        await files[i].parent.create(recursive: true);
+        await files[i].writeAsBytes([i + 1]);
+      }
+      for (var i = 0; i < files.length; i++) {
+        expect(await files[i].readAsBytes(), [i + 1]);
+      }
+      expect({
+        a.remotePath('save/game.srm'),
+        b.remotePath('save/game.srm'),
+        c.remotePath('save/game.srm'),
+      }, hasLength(3));
     },
   );
 }

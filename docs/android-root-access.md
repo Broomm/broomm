@@ -101,8 +101,18 @@ alias into the actual `files/broomm/library`, refusing linked descendants,
 foreign/old roots and traversal. Native regressions cover the actual library,
 canonical/aliased readback and rejected paths, plus both processes' lock path.
 The missing-working-save regression preserves recovery instead of publishing
-empty progress. None of these checks establishes emulator closure; the owner
+empty progress. Local working files also use the game identity, so two
+ROMs with the same filename cannot share a save. A regression writes distinct
+saves for two content IDs and a second profile, then reads each back unchanged. None of these checks establishes emulator closure; the owner
 must still save and quit explicitly.
+
+The production file adapter additionally passed publication, replacement and
+restoration in an exclusively named disposable profile beneath the actual
+RetroArch private root. Readback preserved UID/GID 10118, mode 600 and label
+`u:object_r:app_data_file:s0:c118,c256,c512,c768`. The disposable profile and
+execution archive were removed. This test used generated 128 KiB payloads;
+it did not access the standalone save/configuration or RomM, and does not prove
+that mGBA loaded a restored game. Receipt: `.tool-cache/rooted-gba/package-device.json`.
 
 ## Thor Magisk namespace failure — 2026-11-05
 

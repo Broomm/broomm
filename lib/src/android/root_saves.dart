@@ -116,7 +116,7 @@ Future<AndroidSavePlan> rootedGbaProgress(
   progressRelative('$stem.srm');
   final area = ProgressArea(
     'save',
-    'user/saves',
+    'root-gba/$content/saves',
     prefix: stem,
     exact: '$stem.srm',
   );
