@@ -14,8 +14,10 @@ void main() {
   test(
     'native standalone downloads install and resolve private Linux profiles',
     () async {
-      final fixture = Directory('.tool-cache/research/linux-standalone')
-          .absolute;
+      final fixture = Directory(
+        Platform.environment['BROOMM_LINUX_FIXTURE_ROOT'] ??
+            '.tool-cache/research/linux-standalone',
+      ).absolute;
       final input = File('${fixture.path}/all-downloads.json');
       expect(
         await input.exists(),
@@ -42,9 +44,22 @@ void main() {
       });
       final full = await manager.readPlan();
       final plan = SetupPlan(
-        full.items.where((i) => i.build.id != 'retroarch').toList(),
+        full.items
+            .where(
+              (i) => manager.host == 'linux-arm64'
+                  ? {
+                      'dolphin',
+                      'rpcs3',
+                      'duckstation',
+                      'armsx2',
+                      'ppsspp',
+                      'eden',
+                    }.contains(i.build.id)
+                  : i.build.id != 'retroarch',
+            )
+            .toList(),
       );
-      expect(plan.items.length, 9);
+      expect(plan.items.length, manager.host == 'linux-arm64' ? 6 : 9);
       for (final item in plan.items) {
         for (final package in item.downloads.values) {
           final upstream = downloaded[item.build.id] as Map;

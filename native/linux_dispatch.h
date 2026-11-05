@@ -14,22 +14,30 @@ static inline void **x64_dispatch_slot(void *function) {
  return NULL;
 }
 
-// The Armada melonDS SDL2 library uses ADRP; LDR Xt,[Xn,#imm]; MOV X16,Xt;
-// BR X16. Bind only this complete, register-consistent stub.
+// Reviewed ARM64 packages use a direct ADRP/LDR/BR tail jump (RPCS3),
+// a MOV-to-X16 variant (Dolphin/DuckStation/ARMSX2/Armada), or a balanced
+// frame prologue around ADRP (PPSSPP). Match from the export entry only;
+// never scan into the next function or accept inconsistent registers.
 static inline void **arm64_dispatch_slot(void *function) {
  if(!function)return NULL;
- uint32_t code[4];
- memcpy(code,function,sizeof(code));
- const uint32_t base=code[0]&31, target=code[1]&31;
- if((code[0]&0x9f000000u)!=0x90000000u ||
-    (code[1]&0xffc00000u)!=0xf9400000u ||
-    ((code[1]>>5)&31)!=base || base==31 || target==31 ||
-    code[2]!=(0xaa0003f0u|(target<<16)) || code[3]!=0xd61f0200u)
-  return NULL;
- uint32_t imm=((code[0]>>29)&3)|(((code[0]>>5)&0x7ffffu)<<2);
+ uint32_t code[6];memcpy(code,function,sizeof(code));
+ int address=0,load=1,branch=2;
+ if(code[0]==0xa9bf7bfdu) {
+  if(code[2]!=0x910003fdu||code[3]!=0xa8c17bfdu)return NULL;
+  address=1;load=4;branch=5;
+ }
+ const uint32_t base=code[address]&31,target=code[load]&31;
+ if((code[address]&0x9f000000u)!=0x90000000u ||
+    (code[load]&0xffc00000u)!=0xf9400000u ||
+    ((code[load]>>5)&31)!=base ||base==31||target==31 ||
+    (address==1&&(base==29||base==30)))return NULL;
+ if(code[branch]!=(0xd61f0000u|(target<<5))) {
+  if(address!=0||code[2]!=(0xaa0003f0u|(target<<16))||code[3]!=0xd61f0200u)return NULL;
+ }
+ uint32_t imm=((code[address]>>29)&3)|(((code[address]>>5)&0x7ffffu)<<2);
  int64_t pages=(int64_t)imm-((imm&0x100000u)?0x200000:0);
- uintptr_t page=(uintptr_t)function&~(uintptr_t)0xfff;
- return (void **)(page+pages*4096+((code[1]>>10)&0xfffu)*8);
+ uintptr_t page=((uintptr_t)function+address*4)&~(uintptr_t)0xfff;
+ return (void **)(page+pages*4096+((code[load]>>10)&0xfffu)*8);
 }
 
 static void **dispatch_slot(void *function) {

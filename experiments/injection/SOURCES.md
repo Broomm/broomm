@@ -83,3 +83,17 @@ and its [walkthrough](../../docs/linux-retroarch.md).
 ## Linux standalone follow-up — 2026-11-02
 
 Original Broomm Linux C adapters call the reviewed emulator SDL/Qt/native debugger APIs without importing upstream implementation. The complete [source/contracts and tradeoffs](../../docs/linux-standalone.md#source-and-implementation-choices) and host-specific [evidence](../../docs/linux-standalone.json) accompany pinned official archive hashes and runtime/link inventories under `assets/setup/linux-x64/`. Qt timer ABI, both x64 SDL dispatch forms and Linux SDL2 slot ordering are inspected independently; imported licenses/notices stay with their packages. Linux kernel Landlock, OFD locks, pidfd identity and subreaper behavior require no new helper service/runtime. The media-header AES primitive is original Dart following FIPS 197, checked against NIST vectors and Apple CommonCrypto; it adds no third-party code and is not a credential encryption API.
+
+## Linux ARM64 standalone packages (2026-11-04)
+
+The [ARM64 support record](../../docs/linux-arm64-standalone-audit.md) lists the
+official Dolphin 2609-166, Eden 0.2.1, DuckStation 0.1-12083, ARMSX2
+nightly-20261031, RPCS3 d08d568d and PPSSPP 1.20.4 releases. Exact URLs, archive
+hashes, executable hashes, safe file/link inventories and native addresses are
+under `assets/setup/linux-arm64/`. ARMSX2 has separately captured 4K/16K
+packages and maps. These are user-initiated upstream downloads, not embedded
+emulator/runtime binaries. Their upstream licenses/notices remain in each
+package (Dolphin GPL-2.0-or-later, Eden/ARMSX2 GPL-3.0 family, RPCS3
+GPL-2.0 family, PPSSPP GPL-2.0-or-later; DuckStation's release-specific license applies). Original
+Broomm C interop resolves the installed package's SDL/Qt symbols and reviewed
+ARM64 DynAPI stubs; no emulator implementation is copied.

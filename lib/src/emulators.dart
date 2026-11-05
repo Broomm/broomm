@@ -435,7 +435,7 @@ class DolphinAdapter extends EmulatorAdapter {
             'CPUThread': 'True',
           for (var p = 0; p < 4; p++) 'SIDevice$p': '0',
         },
-        'Display': {'RenderToMain': 'True', 'Fullscreen': 'False'},
+        'Display': {'RenderToMain': 'True'},
         'Input': {'BackgroundInput': 'True'},
         'Analytics': {'PermissionAsked': 'True', 'Enabled': 'False'},
       }),
@@ -588,13 +588,6 @@ class Rpcs3Adapter extends EmulatorAdapter {
         ? guiText.replaceAll(update, 'checkUpdateStart=false')
         : guiText.replaceFirst('[Meta]', '[Meta]\ncheckUpdateStart=false');
     await atomicText(gui.path, guiText);
-    final main = File('${e.user}/config.yml');
-    var settings = await main.readAsString();
-    settings = settings.replaceAll(
-      'Start games in fullscreen mode: true',
-      'Start games in fullscreen mode: false',
-    );
-    await atomicText(main.path, settings);
     final cfg = '${e.user}/input_configs/global';
     await Directory(cfg).create(recursive: true);
     final text = StringBuffer();

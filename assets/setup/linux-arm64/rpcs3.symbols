@@ -1,0 +1,9 @@
+43146f8 Emu
+1437b08 _ZN11main_window13OnPlayOrPauseEv
+63603b4 g_progr_fdone
+63603c0 g_progr_fknown_bits
+63603b0 g_progr_ftotal
+63603b8 g_progr_ftotal_bits
+63603cc g_progr_pdone
+63603c8 g_progr_ptotal
+4176ff0 g_progr_text

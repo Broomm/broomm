@@ -27,7 +27,7 @@ __attribute__((constructor))static void initialize(void) {
 }
 __attribute__((noreturn))void abort(void) {
  const char *mode=getenv("BROOMM_INSTALLER_ABORT_MODE");
- if(enabled&&mode&&!strcmp(mode,"rpcs3-cli-v1")){static const char text[]="\nBROOMM_RPCS3_CLI_ABORT_V1\n";write(2,text,sizeof(text)-1);_exit(86);}
+ if(enabled&&mode&&!strcmp(mode,"rpcs3-cli-v1")){static const char text[]="\nBROOMM_RPCS3_CLI_ABORT_V1\n";ssize_t written=write(2,text,sizeof(text)-1);_exit(written==(ssize_t)sizeof(text)-1?86:87);}
  void (*next)(void)=dlsym(RTLD_NEXT,"abort");next();_exit(134);
 }
 static void import_wad(void) {
@@ -47,5 +47,5 @@ static void import_wad(void) {
  // reads this long representation synchronously and never takes its ownership.
  struct {const char *data;size_t size;union{size_t capacity;char local[16];} storage;} text={.data=path,.size=strlen(path),.storage={.capacity=strlen(path)}};
  bool result=((bool(*)(const void *))address)(&text);
- if(result){static const char ok[]="BROOMM_DOLPHIN_WAD_V1_OK\n";write(1,ok,sizeof(ok)-1);}_exit(result?0:81);
+ if(result){static const char ok[]="BROOMM_DOLPHIN_WAD_V1_OK\n";if(write(1,ok,sizeof(ok)-1)!=(ssize_t)sizeof(ok)-1)_exit(82);}_exit(result?0:81);
 }

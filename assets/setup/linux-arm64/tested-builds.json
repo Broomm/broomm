@@ -47,6 +47,162 @@
       },
       "integrity_asset": "assets/setup/linux-arm64/azahar-armada.integrity.json",
       "linux_launcher": "bin/azahar"
+    },
+    {
+      "id": "dolphin",
+      "name": "Dolphin",
+      "version": "2609-166 / d182533d363e",
+      "host": "linux-arm64",
+      "bundle": "Dolphin",
+      "executable": "usr/bin/dolphin-emu",
+      "sha256": "8c93a39079a35553fd9e9aafa178f4dfe655c380ae58a5973f344c2e72684703",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004016"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/dolphin.integrity.json",
+      "source_package": {
+        "url": "https://dl.dolphin-emu.org/builds/e8/4e/dolphin-master-2609-166-arm64.AppImage",
+        "sha256": "55fdc342053e3461e5d583187f9fd84f1234b5a345cd2ddb0ccca312789b45d0",
+        "bytes": 93022728,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    {
+      "id": "rpcs3",
+      "name": "RPCS3",
+      "version": "0.0.42-20031 d08d568d",
+      "host": "linux-arm64",
+      "bundle": "RPCS3",
+      "executable": "usr/bin/rpcs3",
+      "sha256": "2f9912c123747b0eebb511364bd77f53875161f74ff3ba07bcf6fd99770081f9",
+      "sdl": 3,
+      "native": {
+        "BROOMM_EMU_STATUS": "43146f8",
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004014"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/rpcs3.integrity.json",
+      "source_package": {
+        "url": "https://github.com/RPCS3/rpcs3-binaries-linux-arm64/releases/download/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3-v0.0.42-20031-d08d568d_linux_aarch64.AppImage",
+        "sha256": "896d5fd9b61a49758b3a41cdb5038c1bb5dc9cb77fd8a8860bdcb97548d373f1",
+        "bytes": 80381295,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "sdl_library": "usr/lib/libSDL3.so.0"
+    },
+    {
+      "id": "duckstation",
+      "name": "DuckStation",
+      "version": "0.1-12083-g00e299795",
+      "host": "linux-arm64",
+      "bundle": "DuckStation",
+      "executable": "usr/bin/duckstation-qt",
+      "sha256": "57455dcb1ea9782dac4c500be00423ce24500bd05ab6396668c0da3865b4e304",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004016"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/duckstation.integrity.json",
+      "source_package": {
+        "url": "https://github.com/stenzek/duckstation/releases/download/v0.1-12083/DuckStation-arm64.AppImage",
+        "sha256": "0c3a005183f65538f78fa0231d4c97aa2333684b481985c8d4cfab0640e297c7",
+        "bytes": 86483200,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      },
+      "sdl_library": "usr/lib/libSDL3.so.0"
+    },
+    {
+      "id": "ppsspp",
+      "name": "PPSSPP",
+      "version": "1.20.4 / 3a31057",
+      "host": "linux-arm64",
+      "bundle": "PPSSPP",
+      "executable": "shared/bin/PPSSPPSDL",
+      "sha256": "f6b1be7b49892ed2f90c298a56a5127b6487d9a2b375c101a10cac73d6ce8bcf",
+      "sdl": 2,
+      "native": {
+        "BROOMM_LINUX_UI": "sdl",
+        "BROOMM_EXPECT_SDL_VERSION": "23208"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/ppsspp.integrity.json",
+      "source_package": {
+        "url": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPP-v1.20.4-anylinux-aarch64.AppImage",
+        "sha256": "18c1d515fd99b0b10ca5fa8cbab192f6d4c9d8a10381e16f5de8fb8f9d39bbe1",
+        "bytes": 48581283,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "sdl_library": "shared/lib/libSDL2-2.0.so",
+      "linux_launcher": "bin/PPSSPPSDL"
+    },
+    {
+      "id": "eden",
+      "name": "Eden",
+      "version": "0.2.1",
+      "host": "linux-arm64",
+      "bundle": "Eden",
+      "executable": "shared/bin/eden",
+      "sha256": "03ba7d98e46e13f46f8aac66774ea71e36c676082d61b5f618e4ed78dd2b0263",
+      "sdl": 2,
+      "native": {
+        "BROOMM_SDL_TABLE": "2209dd8",
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "23300"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/eden.integrity.json",
+      "source_package": {
+        "url": "https://stable.eden-emu.dev/v0.2.1/Eden-Linux-v0.2.1-aarch64-clang-pgo.AppImage",
+        "sha256": "b64f926cbf74fd870a39b144971084323d895d51919b91e906328e7f81bea087",
+        "bytes": 63437527,
+        "format": "appimage",
+        "entry": "AppDir"
+      },
+      "linux_launcher": "bin/eden"
+    },
+    {
+      "id": "armsx2",
+      "name": "ARMSX2",
+      "version": "nightly-20261031 / cb78946d6e / 4K pages",
+      "host": "linux-arm64",
+      "bundle": "ARMSX2",
+      "executable": "usr/bin/armsx2-qt",
+      "sha256": "dd9a84c47e19839c7c7d5eb13da604c39b61c43e8536f06440fca1daa482b63a",
+      "sdl": 3,
+      "native": {
+        "BROOMM_LINUX_UI": "qt",
+        "BROOMM_EXPECT_SDL_VERSION": "3004016"
+      },
+      "integrity_asset": "assets/setup/linux-arm64/armsx2.integrity.json",
+      "source_package": {
+        "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261031/ARMSX2-nightly-20261031-cb78946d6e-Linux-arm64-4K-pages.AppImage",
+        "sha256": "e7a215614f6c0572994ffdba09bc18e938bb6f8257ee5099d1979a47c1d74ba6",
+        "bytes": 62974472,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      },
+      "linux_page_bytes": 4096,
+      "sdl_library": "usr/lib/libSDL3.so.0",
+      "linux_page_variants": {
+        "16384": {
+          "version": "nightly-20261031 / cb78946d6e / 16K pages",
+          "sha256": "6e029267a76fbb80f57ba282cc62e8cdf8ed2d4b5069fc5919e3d882520cee6b",
+          "integrity_asset": "assets/setup/linux-arm64/armsx2-16k.integrity.json",
+          "symbols_asset": "assets/setup/linux-arm64/armsx2-16k.symbols",
+          "source_package": {
+            "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261031/ARMSX2-nightly-20261031-cb78946d6e-Linux-arm64-16K-pages.AppImage",
+            "sha256": "27582d0240d8d3a8f9f9706b997f9216159500711c35fa36dd7fbedb510faf9d",
+            "bytes": 62966280,
+            "format": "appimage",
+            "entry": "squashfs-root"
+          }
+        }
+      }
     }
   ]
 }

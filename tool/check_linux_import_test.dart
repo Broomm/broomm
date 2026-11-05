@@ -15,8 +15,10 @@ void main() {
   test(
     'native Linux firmware and CIA imports use only private staging',
     () async {
-      final fixture = Directory('.tool-cache/research/linux-standalone')
-          .absolute;
+      final fixture = Directory(
+        Platform.environment['BROOMM_LINUX_FIXTURE_ROOT'] ??
+            '.tool-cache/research/linux-standalone',
+      ).absolute;
       final installed = (await File(
         '${fixture.path}/current-integration.txt',
       ).readAsString()).trim();
@@ -45,7 +47,7 @@ void main() {
           greaterThan(1024),
         );
         final flash = '${ps3.emulator.user}/dev_flash';
-        if (!await Directory(flash).exists())
+        if (!await File('$flash/sys/external/liblv2.sprx').exists())
           await copyTree(
             '${user.path}/dev_flash',
             flash,
@@ -55,6 +57,16 @@ void main() {
           await sha256File('$flash/sys/external/liblv2.sprx'),
           await sha256File('${user.path}/dev_flash/sys/external/liblv2.sprx'),
         );
+        if (Platform.environment['BROOMM_LINUX_TEST_FIRMWARE_ONLY'] == '1') {
+          await File('${fixture.path}/firmware-observations.json')
+              .writeAsString(
+                jsonEncode({
+                  'firmware': 'native PUP install and liblv2 readback',
+                  'firmwareStage': stage.path,
+                }),
+              );
+          return;
+        }
         final azahar = await manager.resolveConfiguration('Azahar', 'e' * 32);
         final cia = await fixture.createTemp('cia-');
         await installAzaharCia(

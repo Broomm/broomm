@@ -1,5 +1,17 @@
 # Linux standalone emulator integration — 2026-11-02
 
+**Checkpoint — 2026-11-05:** the owner deferred Linux ARM64 investigation and
+selected [root-backed Android access](android-installation-and-saves.md#next-milestone-root-backed-storage-access)
+as the next milestone. Retain the ARM64 package, confinement, input and display
+preference work. Thor's Eden startup/shutdown, Azahar dual-screen abort and
+melonDS width acceptance remain unresolved; no custom Eden build is authorized.
+See [the host-specific evidence](thor-gameplay-investigation.md). Earlier Linux
+x64 results below remain independent of these ARM64 failures.
+
+**Thor follow-up, 2026-11-04:** the [ARM64 audit](linux-arm64-standalone-audit.md)
+records the shared Landlock setup failure, the native-verified namespace fallback,
+the installed Thor preview, and upstream ARM64 packages for the missing consoles.
+
 **Eden reconnect, 2026-11-03:** [native Smash comparison](linux-eden-reconnect.md)
 reproduces the owner's Wayland exit 255 after disconnect/resume. Eden's child
 now selects XWayland when an X11 display exists. Three native reconnects,
@@ -21,13 +33,12 @@ handoff remain separate. ARMSX2's Linux build is ARM64, Astris is macOS-only,
 and RPCS3 Intel is a macOS variant; none is advertised as a Linux x64 choice.
 Linux ARM64 has a separate bundled RetroArch recipe with the same 15 core
 choices. Its frontend and core payloads were checked as AArch64 ELF files.
-The Armada-specific variants below are now in the ARM64 setup recipes. Other
-standalone packages need separate review. Upstream ARM64 assets exist for
-melonDS, DuckStation, PPSSPP and ARMSX2. The standalone bridges depend on
-build-specific native symbols, and the SDL dispatch decoder used by some
-adapters currently recognizes x64 instructions. ARMSX2 also offers distinct
-4 KiB and 16 KiB packages. Select that package using the running kernel's
-page size when its standalone integration is reviewed.
+The Armada-specific variants below remain separate DS/3DS choices. The ARM64
+recipe also includes Dolphin (GC/Wii), Eden (Switch), DuckStation (PS1), ARMSX2
+(PS2), RPCS3 (PS3) and PPSSPP (PSP). ARMSX2 uses the running kernel's 4K/16K
+page size to select its package and symbols. See the [ARM64 package and native
+acceptance table](linux-arm64-standalone-audit.md); the dated x64 evidence below
+does not establish ARM64 gameplay.
 
 
 ## AYN Thor dual-screen feasibility
@@ -95,8 +106,11 @@ interop only. AppImage extraction runs without FUSE, inside a kernel-confined
 private stage; ZIP/tar staging retains path/link/collision/size limits. The
 supervisor drains its process group and adopted daemon children before releasing
 an inherited writer lock. Installer networking is denied except local Unix IPC.
-Linux needs Landlock ABI 3 (normally kernel 6.2+); unsupported kernels fail with
-existing data preserved. No OS packages or global settings are installed.
+Linux prefers Landlock ABI 3 (normally kernel 6.2+). When that feature is absent
+or older, the native adapter uses unprivileged user/mount namespaces and recursive
+mount attributes to keep writes private. Both backends retain the original PID
+and UID. If neither boundary can be established, execution fails with existing
+data preserved. No OS packages or global settings are installed.
 
 Game sessions discover physical controllers through the emulator's own SDL.
 Stable logical ports receive Broomm's pairing/mapping/motion output; native

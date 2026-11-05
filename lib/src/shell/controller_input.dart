@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 // Launcher navigation only. Gameplay assignment still uses the emulator's own
@@ -8,25 +9,20 @@ import 'dart:typed_data';
 class ShellControllerInput {
   ShellControllerInput({required this.dispatch});
   final void Function(String) dispatch;
-  Timer? _timer, _scan;
+  Timer? _timer;
   _WindowsPads? _windows;
-  _LinuxPads? _linux;
+  LinuxControllerInput? _linux;
   void start() {
     try {
       if (Platform.isWindows) _windows = _WindowsPads(dispatch);
       if (Platform.isLinux) {
-        _linux = _LinuxPads(dispatch);
-        unawaited(_linux!.scan());
-        _scan = Timer.periodic(
-          const Duration(seconds: 2),
-          (_) => unawaited(_linux!.scan()),
-        );
+        _linux = LinuxControllerInput(dispatch: dispatch)..start();
       }
-      if (_windows != null || _linux != null)
+      if (_windows != null) {
         _timer = Timer.periodic(const Duration(milliseconds: 16), (_) {
           _windows?.poll();
-          _linux?.poll();
         });
+      }
     } on ArgumentError {
       /* Unsupported native API: keyboard/Steam key events remain available. */
     }
@@ -34,9 +30,153 @@ class ShellControllerInput {
 
   void dispose() {
     _timer?.cancel();
-    _scan?.cancel();
     _windows?.close();
     _linux?.close();
+  }
+}
+
+/// Linux evdev close can wait for a kernel RCU grace period even when opened
+/// O_NONBLOCK. Keep discovery, polling and descriptor teardown off Flutter's UI
+/// isolate. Only navigation actions cross this boundary; no device IDs from it
+/// are reused for gameplay pairing.
+class LinuxControllerInput {
+  LinuxControllerInput({
+    required this.dispatch,
+    void Function(SendPort)? entryPoint,
+  }) : _entryPoint = entryPoint ?? _linuxControllerMain;
+
+  final void Function(String) dispatch;
+  final void Function(SendPort) _entryPoint;
+  final _done = Completer<void>();
+  ReceivePort? _messages;
+  SendPort? _control;
+  bool _started = false, _closed = false;
+
+  Future<void> get done => _done.future;
+
+  void start() {
+    if (_started || _closed) return;
+    _started = true;
+    final messages = _messages = ReceivePort();
+    messages.listen((message) {
+      if (message is SendPort) {
+        _control = message;
+        if (_closed) message.send(null);
+      } else if (message is String) {
+        if (!_closed) dispatch(message);
+      } else if (message == null) {
+        _finish();
+      }
+      // An unavailable native API falls back to keyboard/Steam key events, as
+      // before. Isolate errors arrive separately from its final exit message.
+    });
+    unawaited(
+      Isolate.spawn(
+        _entryPoint,
+        messages.sendPort,
+        onError: messages.sendPort,
+        onExit: messages.sendPort,
+      ).then<void>((_) {}, onError: (Object _, StackTrace __) => _finish()),
+    );
+  }
+
+  void close() {
+    _closed = true;
+    _control?.send(null);
+    if (!_started) _finish();
+  }
+
+  void _finish() {
+    _closed = true;
+    _messages?.close();
+    _messages = null;
+    _control = null;
+    if (!_done.isCompleted) _done.complete();
+  }
+}
+
+void _linuxControllerMain(SendPort output) async {
+  final control = ReceivePort(), stopped = Completer<void>();
+  _LinuxPads? pads;
+  Timer? poll, scan;
+  Future<void>? discovery;
+  void fail(Object error, StackTrace stack) {
+    if (!stopped.isCompleted) stopped.completeError(error, stack);
+  }
+
+  try {
+    pads = _LinuxPads((action) => output.send(action));
+    control.listen((_) {
+      if (!stopped.isCompleted) stopped.complete();
+    });
+    output.send(control.sendPort);
+    void discover() {
+      if (stopped.isCompleted || discovery != null) return;
+      discovery = pads!.scan().then<void>(
+        (_) {
+          discovery = null;
+        },
+        onError: (Object error, StackTrace stack) {
+          discovery = null;
+          fail(error, stack);
+        },
+      );
+    }
+
+    discover();
+    scan = Timer.periodic(const Duration(seconds: 2), (_) => discover());
+    poll = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      try {
+        pads!.poll();
+      } catch (error, stack) {
+        fail(error, stack);
+      }
+    });
+    await stopped.future;
+  } finally {
+    poll?.cancel();
+    scan?.cancel();
+    if (pads != null) pads.closed = true;
+    await discovery;
+    pads?.close();
+    control.close();
+  }
+}
+
+/// Sysfs exports native unsigned-long words most-significant first. An unknown
+/// or unreadable capability bitmap falls back to the descriptor ioctl; it is
+/// never treated as proof that a device is absent or is not a gamepad.
+bool? linuxHasGamepadButton(String bitmap, {int? wordBits}) {
+  final bits = wordBits ?? sizeOf<IntPtr>() * 8;
+  final words = bitmap.trim().split(RegExp(r'\s+'));
+  if ((bits != 32 && bits != 64) || bitmap.length > 4096 || words.length > 32)
+    return null;
+  final limit = BigInt.one << bits;
+  final values = <BigInt>[];
+  for (final word in words.reversed) {
+    if (!RegExp(r'^[0-9a-fA-F]+$').hasMatch(word)) return null;
+    final value = BigInt.tryParse(word, radix: 16);
+    if (value == null || value >= limit) return null;
+    values.add(value);
+  }
+  const button = 304; // BTN_GAMEPAD/BTN_SOUTH, verified again on the opened fd.
+  final index = button ~/ bits;
+  return index < values.length &&
+      (values[index] & (BigInt.one << (button % bits))) != BigInt.zero;
+}
+
+Future<bool?> linuxEvdevGamepadCandidate(
+  String path, {
+  String sysfsRoot = '/sys/class/input',
+}) async {
+  final name = path.split('/').last;
+  if (!RegExp(r'^event\d+$').hasMatch(name)) return null;
+  try {
+    return linuxHasGamepadButton(
+      await File('$sysfsRoot/$name/device/capabilities/key').readAsString(),
+    );
+  } on FileSystemException {
+    return null;
   }
 }
 
@@ -248,6 +388,8 @@ class _LinuxPads {
           closeFd(existing.fd);
           devices.remove(entry.path);
         }
+        if (closed) continue;
+        if (await linuxEvdevGamepadCandidate(entry.path) == false) continue;
         if (closed) continue;
         final path = calloc(entry.path.length + 1, 1);
         path

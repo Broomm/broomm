@@ -5,6 +5,47 @@ save folders for the nine Android adapters. **Native Android acceptance remains
 pending.** Flutter filesystem/channel regressions, Kotlin compilation and a
 macOS application build do not establish real Android emulator behavior.
 
+## Next milestone: root-backed storage access
+
+On **2026-11-05**, the owner deferred further Linux ARM64 investigation and
+selected the Android root route as the next milestone. This section records
+the adopted direction and staged acceptance; **root access is not implemented
+in this checkpoint**. The APK/connected-folder behavior below remains current.
+
+Support an optional access mode on an **already rooted device**, retaining the
+shared-folder/provider route. Begin by identifying the actual device, Android
+version/user, root manager and selected emulator packages/builds. No root
+manager or new root library is selected or approved here. Do not root a device,
+change its security policy or install global services as a setup shortcut.
+
+1. **Inspect capability and identity first.** Make the root request explicit
+   and bounded, handle denial/unavailable access, and verify the selected
+   package, signing/build identity, Android user and real storage paths.
+   Initial inspection is read-only. Root availability alone does not establish
+   correct access or correspondence with the active RomM account.
+2. **Implement one ordinary-save route.** Reuse Dart's existing RomM history,
+   profile ownership, conflict/offline handling and save transactions. Preserve
+   standalone emulator progress and console identities. Operate only on the
+   selected game's verified save boundaries, rather than copying or replacing
+   an entire application sandbox. Expand the roster after a real round trip.
+3. **Keep privilege narrow and recovery durable.** Put platform access behind
+   an Android adapter; keep synchronization decisions and journals in Dart.
+   Use literal arguments and validated paths, bounded/cancellable transfers,
+   and verification of native UID/GID, modes and security labels. Preserve
+   recovery copies and writer exclusion through interruption. Failed access
+   is unknown data, not an empty save or permission to overwrite it.
+4. **Accept on the actual device.** Create a save in game, upload it to the
+   correct RomM history, restore an independently changed version and load it
+   in game. Exercise two profiles, offline progress, conflicting changes,
+   denied access and interrupted publication. Retain the current explicit
+   save/close confirmation until a replacement has native verification; root
+   access or returning to Broomm does not prove that the emulator stopped.
+
+This work does not add desktop input injection, overlays or unattended emulator
+updates. BIOS, firmware and update/DLC installation remain separately scoped.
+No root-capable APK, root-device check or native save round trip is delivered
+by this documentation checkpoint.
+
 ## Adopted scope
 
 - Detect current ARMSX2 **`com.armsx2`** and **`com.armsx2.nightly`**, using their

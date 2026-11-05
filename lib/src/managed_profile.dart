@@ -364,6 +364,7 @@ Future<void> prepareLinuxProfileLinks(Directory root, String id) async {
     'melonds' => {'config/melonDS': '../launcher/portable'},
     'ppsspp' => {'config/ppsspp': '../user'},
     'pcsx2' => {'user/pcsx2/inis': 'PCSX2/inis'},
+    'armsx2' => {'user/armsx2/inis': 'ARMSX2/inis'},
     _ => <String, String>{},
   };
   if (id == 'melonds')

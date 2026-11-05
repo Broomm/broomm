@@ -3,6 +3,7 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ffi';
 
 import 'package:broomm/src/catalogue.dart';
 import 'package:broomm/src/emulators.dart';
@@ -19,7 +20,10 @@ void main() {
     ('Azahar', '3ds', '3ds.3dsx', ControllerTarget.n3ds),
     ('melonDS', 'nds', 'ds.nds', ControllerTarget.nds),
     ('DuckStation', 'psx', 'psx.exe', ControllerTarget.psx),
-    ('PCSX2', 'ps2', 'ps2.elf', ControllerTarget.ps2),
+    if (Abi.current() == Abi.linuxArm64)
+      ('ARMSX2', 'ps2', 'ps2.elf', ControllerTarget.ps2)
+    else
+      ('PCSX2', 'ps2', 'ps2.elf', ControllerTarget.ps2),
     ('PPSSPP', 'psp', 'psp.pbp', ControllerTarget.psp),
     if (Platform.environment['BROOMM_LINUX_TEST_PS3'] == '1')
       (
@@ -35,8 +39,10 @@ void main() {
     test(
       'native ${item.$1} launch, pairing, remap, menu, reconnect and shutdown',
       () async {
-        final fixture = Directory('.tool-cache/research/linux-standalone')
-            .absolute;
+        final fixture = Directory(
+          Platform.environment['BROOMM_LINUX_FIXTURE_ROOT'] ??
+              '.tool-cache/research/linux-standalone',
+        ).absolute;
         final installed = (await File(
           '${fixture.path}/current-integration.txt',
         ).readAsString()).trim();
@@ -50,26 +56,35 @@ void main() {
         final prepared = await manager.resolveConfiguration(item.$1, 'e' * 32);
         final e = prepared.emulator;
         if (item.$1 == 'RPCS3') {
-          // The original CPU loop needs no firmware LLVM compilation. Keep
-          // interpreter selection local to this disposable native fixture.
+          // Optional host font for firmware-free original CPU-loop fixtures.
+          // No production profile or firmware preference is changed.
+          final font = File('${fixture.path}/inputs/ps3-font.ttf');
+          if (await font.exists()) {
+            await Directory('${e.root}/data/fonts').create(recursive: true);
+            await font.copy('${e.root}/data/fonts/Arial.ttf');
+          }
+          // Keep the x64 interpreter fixture local to this disposable profile.
+          // ARM64 checks retain the production LLVM decoder configuration.
           final config = File('${e.user}/config.yml');
-          await config.writeAsString(
-            (await config.readAsString())
-                .replaceAll(
-                  RegExp(r'PPU Decoder: .*'),
-                  'PPU Decoder: Interpreter (static)',
-                )
-                .replaceAll(
-                  RegExp(r'SPU Decoder: .*'),
-                  'SPU Decoder: Interpreter (static)',
-                ),
-          );
+          if (Abi.current() != Abi.linuxArm64)
+            await config.writeAsString(
+              (await config.readAsString())
+                  .replaceAll(
+                    RegExp(r'PPU Decoder: .*'),
+                    'PPU Decoder: Interpreter (static)',
+                  )
+                  .replaceAll(
+                    RegExp(r'SPU Decoder: .*'),
+                    'SPU Decoder: Interpreter (static)',
+                  ),
+            );
         }
         if (item.$2 == 'psx' || item.$2 == 'ps2') {
           await File('${fixture.path}/inputs/${item.$2}-bios.bin')
               .copy('${e.root}/system/bios.bin');
         }
         if (item.$1 == 'Dolphin') {
+          await Directory('${e.user}/Config').create(recursive: true);
           await File('${e.user}/Config/Logger.ini').writeAsString(
             '[Options]\nVerbosity=4\nWriteToConsole=True\nWriteToFile=True\n[Logs]\nBOOT=True\nCORE=True\nCOMMON=True\nVIDEO=True\n',
           );

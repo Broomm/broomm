@@ -77,6 +77,16 @@ Prefer a compatible installed emulator app; otherwise offer installation through
 
 Android still observes one active Broomm game session. Use a supported completion signal where available. If the external app exposes none, a return to Broomm is not proof of flush: use an explicit finish/reconcile step and document its limits before allowing another launch. Do not add injection, privileged controller tricks or a bundled emulator engine to solve this boundary.
 
+The next Android milestone adds optional root-backed storage access on an
+already rooted device. A narrow native adapter must bind privileged operations
+to a verified emulator package, Android user and data boundary. Domain decisions,
+save journals and RomM synchronization stay in Dart. Preserve native ownership,
+permissions, security labels and existing progress; root availability alone is
+not an access or writer-exit guarantee. The existing non-root route and explicit
+closure confirmation remain valid. This does not expand Android into desktop
+input or overlays. See the [staged plan](android-installation-and-saves.md#next-milestone-root-backed-storage-access);
+no root adapter is implemented by the November 5 checkpoint.
+
 ## Session and synchronization lifecycle
 
 ```mermaid

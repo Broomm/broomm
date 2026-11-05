@@ -44,9 +44,14 @@ Pause/resume uses identity-checked native RetroArch commands and preserves pause
 made inside RetroArch. No emulator implementation source or new runtime library
 is added to Broomm.
 
-The bridge uses Linux Landlock ABI 3 or newer (normally kernel 6.2+) to restrict
+The bridge prefers Linux Landlock ABI 3 or newer (normally kernel 6.2+) to restrict
 filesystem mutations to the private profile, allowing writes to existing GPU,
-audio and input devices. Unsupported kernels fail closed and retain data. No
+audio and input devices. Kernels without that feature use the original C
+adapter's user/mount namespace fallback, retaining the native PID/UID, a read-only
+outside filesystem and a writable private root after dropping administrative
+capabilities. The Thor's native filesystem/lifecycle checks pass; physical
+RetroArch gameplay on this fallback is separate acceptance. Kernels without
+either usable boundary fail closed and retain data. No
 OS permissions, services or system emulator configuration are changed. A native
 writer lock survives the launcher. Open emulator starts an independent no-game
 window; Broomm neither hides nor watches it, and the native child retains locks.

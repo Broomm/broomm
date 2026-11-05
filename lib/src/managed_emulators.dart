@@ -37,6 +37,8 @@ class TestedBuild {
       sdl = j['sdl'] as int,
       sdlLibrary = j['sdl_library'] as String?,
       linuxLauncher = j['linux_launcher'] as String?,
+      linuxPageBytes = j['linux_page_bytes'] as int?,
+      symbolsAsset = j['symbols_asset'] as String?,
       coreHash = j['core_sha256'] as String?,
       retroNativeStateNames = j['retro_native_state_names'] == true,
       integrityAsset =
@@ -79,6 +81,8 @@ class TestedBuild {
   };
   final String? sdlLibrary, coreHash;
   final String? linuxLauncher;
+  final int? linuxPageBytes;
+  final String? symbolsAsset;
   final bool retroNativeStateNames;
   final int sdl;
   final Map<String, String> native;
@@ -165,11 +169,14 @@ class ManagedEmulators extends ChangeNotifier {
     Future<String> Function(String)? asset,
     SetupDownloads? downloads,
     this.hostOverride,
+    this.linuxPageBytesOverride,
   }) : asset = asset ?? rootBundle.loadString,
        downloads = downloads ?? SetupDownloads(data);
   final Directory data;
   final String? project;
   final String? hostOverride;
+  final int? linuxPageBytesOverride;
+  int get linuxPageBytes => linuxPageBytesOverride ?? linuxKernelPageBytes();
   final SessionLog? log;
   final SetupDownloads downloads;
   double? progress;
@@ -268,9 +275,18 @@ class ManagedEmulators extends ChangeNotifier {
       if (builds.isEmpty) {
         final j =
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
-        final current = (j['builds'] as List)
-            .map((e) => TestedBuild(e as Map))
-            .toList();
+        final current = <TestedBuild>[], pageAlternatives = <TestedBuild>[];
+        for (final value in j['builds'] as List) {
+          final versions = linuxPageBuilds(value as Map)
+              .map(TestedBuild.new)
+              .toList();
+          final selected = versions.firstWhere(
+            (b) => b.linuxPageBytes == linuxPageBytes,
+            orElse: () => versions.first,
+          );
+          current.add(selected);
+          pageAlternatives.addAll(versions.where((b) => b != selected));
+        }
         final previous = (j['previous_builds'] as List? ?? const [])
             .map((e) => TestedBuild(e as Map))
             .toList();
@@ -283,6 +299,7 @@ class ManagedEmulators extends ChangeNotifier {
         }
         builds.addAll(current);
         previousBuilds.addAll(previous);
+        previousBuilds.addAll(pageAlternatives);
       }
       if (coreBuilds.isEmpty && builds.any((b) => b.id == 'retroarch')) {
         final j =
@@ -434,8 +451,12 @@ class ManagedEmulators extends ChangeNotifier {
       var b = builds.firstWhere((b) => b.id == entry.key);
       // Importing an older reviewed setup pack explicitly selects its build.
       // The bundled recipe always selects the current release instead.
-      if (j['schema_version'] == 2 && entry.value['source'] is Map) {
-        final source = SetupPackage.fromJson(entry.value['source'] as Map);
+      final sourceValue = linuxPageSource(
+        entry.value['source'],
+        linuxPageBytes,
+      );
+      if (j['schema_version'] == 2 && sourceValue is Map) {
+        final source = SetupPackage.fromJson(sourceValue);
         b =
             previousBuilds
                 .where(
@@ -510,7 +531,7 @@ class ManagedEmulators extends ChangeNotifier {
       items.add(
         SetupItem(
           b,
-          await path(entry.value['source'], 'source'),
+          await path(sourceValue, 'source'),
           entry.value['core'] == null
               ? null
               : await path(entry.value['core'], 'core'),
@@ -543,6 +564,7 @@ class ManagedEmulators extends ChangeNotifier {
           ? (entry['cores'] as Map? ?? {})[slot.substring(6)]
           : entry[slot];
     }
+    if (slot == 'source') value = linuxPageSource(value, linuxPageBytes);
     final accepted =
         value is Map && package.samePayload(SetupPackage.fromJson(value)) ||
         slot == 'source' && build.sourcePackage?.samePayload(package) == true ||
@@ -940,7 +962,7 @@ class ManagedEmulators extends ChangeNotifier {
             if (item.core != null)
               await File(item.core!).copy('${staging.path}/$snesCoreFile');
             await File('${staging.path}/local-symbols.txt').writeAsString(
-              await asset('$setupAssets/${b.id}.symbols'),
+              await asset(b.symbolsAsset ?? '$setupAssets/${b.id}.symbols'),
               flush: true,
             );
             for (final entry in item.resources.entries) {
@@ -1141,7 +1163,15 @@ class ManagedEmulators extends ChangeNotifier {
         final metadata =
             jsonDecode(await asset('$setupAssets/tested-builds.json')) as Map;
         builds.addAll(
-          (metadata['builds'] as List).map((j) => TestedBuild(j as Map)),
+          (metadata['builds'] as List).map((j) {
+            final versions = linuxPageBuilds(j as Map)
+                .map(TestedBuild.new)
+                .toList();
+            return versions.firstWhere(
+              (b) => b.linuxPageBytes == linuxPageBytes,
+              orElse: () => versions.first,
+            );
+          }),
         );
       }
       await resetEmulatorData(
@@ -1308,6 +1338,13 @@ class ManagedEmulators extends ChangeNotifier {
   }
 
   Future<void> requireRuntime(TestedBuild build) async {
+    if (host.startsWith('linux-') &&
+        build.linuxPageBytes != null &&
+        build.linuxPageBytes != linuxPageBytes) {
+      throw StateError(
+        '${build.name} needs the reviewed $linuxPageBytes-byte page build. Verify setup; progress was kept.',
+      );
+    }
     if (build.architecture != 'x64' || host != 'macos-arm64') return;
     ProcessResult result;
     try {
@@ -1639,9 +1676,10 @@ class ManagedEmulators extends ChangeNotifier {
       );
     if (coreId == 'flycast')
       await prepareFlycastSaves(runtime.path, contentId!, rom);
-    await File(
-      '${runtime.path}/local-symbols.txt',
-    ).writeAsString(await asset('$setupAssets/${b.id}.symbols'), flush: true);
+    await File('${runtime.path}/local-symbols.txt').writeAsString(
+      await asset(b.symbolsAsset ?? '$setupAssets/${b.id}.symbols'),
+      flush: true,
+    );
     return ResolvedSession(
       PreparedEmulator(
         b.engine,

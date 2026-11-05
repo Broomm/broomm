@@ -32,12 +32,22 @@ int main(void) {
  stub[16]=0xff;stub[17]=0x25; // A neighbouring export must never win.
  assert(x64_dispatch_slot(stub)==(void **)(stub+64));
  stub[0]=0xff;stub[1]=0xe0;assert(x64_dispatch_slot(stub)==NULL);
- _Alignas(4096) uint32_t arm[] = {0xd0000a42, 0xf944e442, 0xaa0203f0, 0xd61f0200};
+ _Alignas(4096) uint32_t arm[8] = {0xd0000a42, 0xf944e442, 0xaa0203f0, 0xd61f0200};
  assert((uintptr_t)arm64_dispatch_slot(arm)==(uintptr_t)arm+(0x14au*4096)+0x9c8u);
  arm[2]=0xaa0303f0; // A different source register cannot identify a slot.
  assert(arm64_dispatch_slot(arm)==NULL);
+ uint32_t direct[6]={0xf0001448,0xf9445900,0xd61f0000,0xf0001448,0xf9445d01,0xd61f0020};
+ assert((uintptr_t)arm64_dispatch_slot(direct)==((uintptr_t)direct&~(uintptr_t)0xfff)+(0x28bu*4096)+0x8b0u);
+ direct[2]=0xd61f0020;assert(arm64_dispatch_slot(direct)==NULL); // Wrong jump register.
+ uint32_t framed[8]={0xa9bf7bfd,0xd0000d01,0x910003fd,0xa8c17bfd,0xf9478030,0xd61f0200};
+ assert((uintptr_t)arm64_dispatch_slot(framed)==(((uintptr_t)framed+4)&~(uintptr_t)0xfff)+(0x1a2u*4096)+0xf00u);
+ framed[3]=0xd503201f;assert(arm64_dispatch_slot(framed)==NULL); // Unbalanced stack.
+ framed[3]=0xa8c17bfd;framed[1]=(framed[1]&~31u)|29u;framed[4]=(framed[4]&~0x3e0u)|(29u<<5);
+ assert(arm64_dispatch_slot(framed)==NULL); // Frame restoration clobbers the address base.
+ framed[0]=0xd65f03c0; // A terminal return must not find the following export.
+ assert(arm64_dispatch_slot(framed)==NULL);
  assert(dispatch_slot(NULL)==NULL);
- puts("PASS SDL dispatch resolves the x64 and Armada ARM64 stub ABIs");
+ puts("PASS SDL dispatch resolves the x64 and reviewed ARM64 stub ABIs");
  char value[64];
  assert(json_field("{\"game\":{\"ticket\":7},\"ticket\":4}","ticket",value,sizeof(value))&&!strcmp(value,"4"));
  assert(!json_field("{\"game\":{\"ticket\":7}}","ticket",value,sizeof(value)));

@@ -1,0 +1,25 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#llvmPackages_18.clang": {
+      "last_modified": "1970-01-01T00:00:00Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#llvmPackages_18.clang"
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#patchelf": {
+      "last_modified": "1970-01-01T00:00:00Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#patchelf"
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#pkg-config": {
+      "last_modified": "1970-01-01T00:00:00Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#pkg-config"
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#xorg.libX11^out,dev": {
+      "last_modified": "1970-01-01T00:00:00Z",
+      "resolved": "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#xorg.libX11^dev,out"
+    },
+    "github:NixOS/nixpkgs/nixpkgs-unstable": {
+      "last_modified": "2026-11-03T19:55:20Z",
+      "resolved": "github:NixOS/nixpkgs/9d3b8db48266c17be0b5f9c6360c3ecfbac3d1f5?lastModified=1793735720&narHash=sha256-smoxPKrzAhdGuFd2LLnG4m8P6IrZuW95DVyzjnlab7w%3D"
+    }
+  }
+}

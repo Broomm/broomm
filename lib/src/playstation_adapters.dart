@@ -86,7 +86,7 @@ class DuckStationAdapter extends EmulatorAdapter {
         'Pad2': _sonyButtons(1, ps2: false),
       }),
     );
-    return ['-batch', '-nofullscreen', '--', rom];
+    return ['-batch', '--', rom];
   }
 }
 
@@ -136,13 +136,6 @@ class Ps2Adapter extends EmulatorAdapter {
         'Pad2': _sonyButtons(1, ps2: true),
       }),
     );
-    return [
-      '-datapath',
-      Directory(e.user).parent.path,
-      '-batch',
-      '-nofullscreen',
-      '--',
-      rom,
-    ];
+    return ['-datapath', Directory(e.user).parent.path, '-batch', '--', rom];
   }
 }

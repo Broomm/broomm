@@ -27,7 +27,7 @@ int main(int argc,char **argv) {
   assert(argc>=3);
   if(!strcmp(argv[1],"guest")) {
     std::string root=argv[2];
-    assert(open((root+"/../preserved").c_str(),O_WRONLY|O_TRUNC)<0&&errno==EACCES);
+    assert(open((root+"/../preserved").c_str(),O_WRONLY|O_TRUNC)<0&&(errno==EACCES||errno==EROFS));
     assert(socket(AF_INET,SOCK_STREAM,0)<0&&errno==EACCES);
     assert(socket(AF_INET6,SOCK_STREAM,0)<0&&errno==EACCES);
     int local=socket(AF_UNIX,SOCK_STREAM,0);assert(local>=0);close(local);

@@ -57,7 +57,6 @@ class EdenAdapter extends EmulatorAdapter {
       'UI': {
         'firstStart': 'false',
         'singleWindowMode': 'true',
-        'fullscreen': 'false',
         'check_for_updates': 'false',
         'confirmStop': '2',
         'pauseWhenInBackground': 'false',

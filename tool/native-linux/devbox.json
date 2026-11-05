@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": {
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#llvmPackages_18.clang": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#pkg-config": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#patchelf": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    },
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#xorg.libX11^out,dev": {
+      "platforms": ["x86_64-linux", "aarch64-linux"]
+    }
+  }
+}

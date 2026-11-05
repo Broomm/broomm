@@ -91,7 +91,12 @@ int main(int argc,char **argv) {
     if(child<0)return 73;
     if(!child) {
         setpgid(0,0);
-        if(prctl(PR_SET_PDEATHSIG,SIGKILL)||getppid()==1||!private_writes(root)||!offline_installer())_exit(73);
+        if(prctl(PR_SET_PDEATHSIG,SIGKILL)||getppid()==1)_exit(73);
+        if(!private_writes(root)){
+            fprintf(stderr,"Broomm private archive writes unavailable: %s. The kernel must support Landlock ABI 3 or unprivileged user/mount namespaces.\n",strerror(errno));
+            _exit(73);
+        }
+        if(!offline_installer())_exit(73);
         // Bound a single extracted file and handle count. Dart verifies the
         // exact complete inventory, cumulative bytes and links before publish.
         // RPCS3's reviewed VM startup creates a 32 GiB sparse backing file,

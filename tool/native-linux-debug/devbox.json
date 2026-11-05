@@ -1,0 +1,8 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
+  "packages": {
+    "github:NixOS/nixpkgs/5ed627539ac84809c78b2dd6d26a5cebeb5ae269#gdb": {
+      "platforms": ["aarch64-linux", "x86_64-linux"]
+    }
+  }
+}

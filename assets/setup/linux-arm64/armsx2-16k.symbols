@@ -1,0 +1,4 @@
+ea7fe8 _ZN9EmuThread15saveStateToSlotEi
+ea7ca0 _ZN9EmuThread17loadStateFromSlotEib
+695cc4 _ZN9VMManager8GetStateEv
+e447ff0 g_emu_thread

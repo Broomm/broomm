@@ -150,6 +150,71 @@
         "format": "appimage",
         "entry": "AppDir"
       }
+    },
+    "dolphin": {
+      "source": {
+        "url": "https://dl.dolphin-emu.org/builds/e8/4e/dolphin-master-2609-166-arm64.AppImage",
+        "sha256": "55fdc342053e3461e5d583187f9fd84f1234b5a345cd2ddb0ccca312789b45d0",
+        "bytes": 93022728,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    "rpcs3": {
+      "source": {
+        "url": "https://github.com/RPCS3/rpcs3-binaries-linux-arm64/releases/download/build-d08d568d5edf4f21508d9b8e471197e6d6f499ad/rpcs3-v0.0.42-20031-d08d568d_linux_aarch64.AppImage",
+        "sha256": "896d5fd9b61a49758b3a41cdb5038c1bb5dc9cb77fd8a8860bdcb97548d373f1",
+        "bytes": 80381295,
+        "format": "appimage",
+        "entry": "AppDir"
+      }
+    },
+    "duckstation": {
+      "source": {
+        "url": "https://github.com/stenzek/duckstation/releases/download/v0.1-12083/DuckStation-arm64.AppImage",
+        "sha256": "0c3a005183f65538f78fa0231d4c97aa2333684b481985c8d4cfab0640e297c7",
+        "bytes": 86483200,
+        "format": "appimage",
+        "entry": "squashfs-root"
+      }
+    },
+    "ppsspp": {
+      "source": {
+        "url": "https://github.com/hrydgard/ppsspp/releases/download/v1.20.4/PPSSPP-v1.20.4-anylinux-aarch64.AppImage",
+        "sha256": "18c1d515fd99b0b10ca5fa8cbab192f6d4c9d8a10381e16f5de8fb8f9d39bbe1",
+        "bytes": 48581283,
+        "format": "appimage",
+        "entry": "AppDir"
+      }
+    },
+    "eden": {
+      "source": {
+        "url": "https://stable.eden-emu.dev/v0.2.1/Eden-Linux-v0.2.1-aarch64-clang-pgo.AppImage",
+        "sha256": "b64f926cbf74fd870a39b144971084323d895d51919b91e906328e7f81bea087",
+        "bytes": 63437527,
+        "format": "appimage",
+        "entry": "AppDir"
+      }
+    },
+    "armsx2": {
+      "source": {
+        "linux_page_variants": {
+          "4096": {
+            "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261031/ARMSX2-nightly-20261031-cb78946d6e-Linux-arm64-4K-pages.AppImage",
+            "sha256": "e7a215614f6c0572994ffdba09bc18e938bb6f8257ee5099d1979a47c1d74ba6",
+            "bytes": 62974472,
+            "format": "appimage",
+            "entry": "squashfs-root"
+          },
+          "16384": {
+            "url": "https://github.com/ARMSX2/ARMSX2/releases/download/nightly-20261031/ARMSX2-nightly-20261031-cb78946d6e-Linux-arm64-16K-pages.AppImage",
+            "sha256": "27582d0240d8d3a8f9f9706b997f9216159500711c35fa36dd7fbedb510faf9d",
+            "bytes": 62966280,
+            "format": "appimage",
+            "entry": "squashfs-root"
+          }
+        }
+      }
     }
   }
 }

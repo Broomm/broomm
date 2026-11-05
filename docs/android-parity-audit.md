@@ -1,5 +1,11 @@
 # Android parity: feasibility and limits
 
+**Priority update — 2026-11-05:** the owner deferred Linux ARM64 work and selected
+[root-backed Android storage access](android-installation-and-saves.md#next-milestone-root-backed-storage-access)
+as the next milestone. That direction is adopted; no root adapter, root-manager
+dependency or native root acceptance is delivered here. The October 30 audit
+below remains historical evidence about the earlier non-root implementation.
+
 Research date: **2026-10-30**. This is an audit and implementation proposal,
 not a claim of Android acceptance. The owner requested investigation before
 fixes. No application behavior was changed for this audit. No emulator was run

@@ -1,5 +1,95 @@
 # Implementation plan
 
+**Checkpoint — 2026-11-05:** the owner deferred further Linux ARM64 work and
+requested committing/pushing the current implementation to generate a release
+build. Preserve the implemented ARM64 packages, kernel confinement, launcher
+input fix and emulator display-preference correction. Eden startup/shutdown and
+Azahar dual-screen failures remain unresolved; no custom Eden build or added Qt
+SDK is authorized. Physical melonDS window-width acceptance remains open.
+
+The next milestone is **Android through a root-backed access route**, starting
+with device/root capability and selected-emulator storage/lifecycle inspection,
+then one real save round trip before expanding the roster. This is an adopted
+direction, not implemented root support. Existing Android APK acquisition and
+connected-folder workflows retain their stated scope and native-verification
+gaps. No new root dependency or root-manager choice is made by this checkpoint.
+See [the staged work and acceptance](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
+
+Checkpoint validation on macOS: static analysis, formatting and workflow/shell
+lint pass; the main Flutter suite passes 561 tests, with one Linux-only GIO
+case skipped on this host. The two full-size save cases pass separately, and
+the current macOS universal release app builds successfully. Logs
+and JSON reports remain under `.tool-cache/checkpoint-*` and
+`build/test-results/checkpoint-*`. Native Linux, Windows and Android release
+checks remain separate CI results; these Mac checks do not establish Android
+root support or resolve the deferred Thor gameplay failures.
+
+The Thor gameplay investigation reproduces Eden/Smash and Azahar crashes
+without Broomm's input bridge or process supervisor. Single-core Eden survives
+bounded startup checks but still hangs in the owner's retry; it is not a
+verified workaround. Azahar's failure follows its Vulkan
+second-screen lease path. Neither has confirmed gameplay acceptance from this
+investigation. The owner will configure fullscreen in the emulators. Broomm
+now preserves the existing native fullscreen/windowed settings and removes
+the unnecessary PlayStation `-nofullscreen` arguments. Forty affected Flutter
+tests pass on each of macOS and native ARM64 Linux; analysis is clean. melonDS
+window width still needs owner verification in the original launch flow.
+See [the findings and limits](docs/thor-gameplay-investigation.md).
+
+The owner's next Eden launch hung after scheduler assertions at 4.549 s,
+with the process alive and consuming about three CPU cores. Runtime logs
+confirmed NCE and multicore still enabled. The bridge stayed responsive but
+native readiness/pause remained unknown; startup-failure feedback is still a
+gap. This was a read-only diagnosis, with no live settings or progress changes.
+
+The next owner retry confirms single-core NCE active for Captain Toad 1.4.2.
+Native pause is acknowledged, then the first-launch/shutdown path stalls; the
+owner also cannot close normally. Private Desktop Mode controls reproduce the
+paused-exit problem. A native-Stop prototype and skipping controller
+reconfiguration do not resolve it. No production change from those probes is
+deployed. The owner approved the [project-local GDB plan](docs/eden-native-debugging.md)
+after its initial approval-review rejection. Pinned GDB 15.1 is provisioned for
+native ARM64 diagnosis, with its Devbox recipe and lock retained in the project.
+The later Gaming Mode probe runs the actual `GameSession` workflow and reproduces
+the paused-close timeout. GDB-started comparisons capture a native lock cycle:
+the CPU thread waits for the process-list mutex owned by the shutdown thread,
+while native close waits for that shutdown. Single-core JIT and two private
+close-order prototypes still fail. The stock GCC build also crashes Smash;
+an unpaused Captain Toad startup/close comparison succeeds, without gameplay
+acceptance. An Eden process-list patch is prepared and passes application to the
+pinned source, but is not compiled or deployed. On November 5 the owner declined
+the custom Eden build and stopped that investigation; no additional Qt SDK or
+modified Eden is authorized. The subsequent Azahar investigation is also
+deferred at the checkpoint above. Nine temporary Eden
+profile roots were removed; live bridges and all 291 current application build
+inputs remain unchanged. See [native evidence and the rebuild proposal](docs/eden-native-debugging.md).
+
+The Thor launcher performance investigation found synchronous evdev descriptor
+closes blocking the UI thread during its two-second discovery scan. A measured
+scan took 315.61 ms. Linux navigation now filters non-gamepads using sysfs and
+owns discovery/polling/teardown in a dedicated Dart isolate. The same-device
+Thor event-loop comparison reduced the maximum gap from 285.915 ms to 9.212 ms,
+with no gaps above 33 ms after the fix. Native macOS/ARM64 input races and
+seventeen related Flutter regressions pass; packaged Gaming Mode visual/input
+acceptance remains owner testing. See [evidence and preview](docs/linux-input-performance.md).
+
+The Thor setup investigation found that its Armada kernel disables Landlock;
+both verified AppImages failed before extraction. A kernel-only user/mount
+namespace fallback is implemented in the native write policy. Native ARM64
+confinement, lifecycle, lock, daemon-drain, cancellation and SDL/control fixtures
+pass on the Thor. The actual melonDS and Azahar AppImages extract successfully
+in 0.37 s and 1.58 s, and both CLI startup checks exit normally with private write
+protection active. Four fixed native components are installed in its closed
+Broomm copy, with the originals backed up and all user data preserved. Full UI
+setup, gameplay and physical dual-screen/controller acceptance remain owner
+verification; a new GitHub release has not been published. The ARM64 standalone expansion adds Dolphin, Eden, DuckStation, ARMSX2,
+RPCS3 and PPSSPP with architecture-specific packages, hook maps and inventories.
+ARMSX2 selects its 4K/16K package using the running kernel page size. All six
+install and resolve private profiles on Thor. Native GC/Wii/PS1/PS2/PSP
+controller/pause/reconnect lifecycle checks and RPCS3 PUP import pass. Analysis
+and 64 related Flutter regressions pass; PS3/Switch game and physical acceptance
+remain separate. See [the ARM64 evidence](docs/linux-arm64-standalone-audit.md).
+
 Eden's Ally investigation found two defects: interleaved stdout/stderr could
 prevent cold initialization from observing the loaded title, and signed 64-bit
 UUID formatting restored cloud progress under an invalid native account folder.
@@ -25,7 +115,8 @@ manifest. The audited nightly core snapshots contain AArch64 ELF libraries. The 
 setup workflow downloaded the frontend and NES/SNES cores into disposable
 storage and verified one shared frontend and separate core installations.
 Armada OS launch, controller input, saves and Gamescope handoff still need the
-Thor test. Other standalone ARM64 builds require separate build and bridge review.
+Thor test. The six additional standalone ARM64 integrations and their acceptance scope are
+recorded in the ARM64 audit above.
 
 In Steam Gaming Mode on the Ally, the RetroArch bridge recorded the menu
 request and hid its window while Steam still tracked the launcher process.

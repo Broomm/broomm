@@ -1,10 +1,57 @@
 # Broomm
 
-The latest local macOS preview includes the [Eden launch/save-account fixes](docs/eden-save-account-repair.md):
-[Download the macOS build](build/releases/Broomm-macOS-eden-save-account-preview.zip).
-It is version `0.1.13-dev`, ad-hoc signed, uses the normal application data folder
+**2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
+Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
+recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
+The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access);
+root support is planned and is not present in this build. Pushes to `main`
+start the normal [release workflow](https://github.com/Broomm/broomm/actions/workflows/release.yml).
+
+The latest local preview preserves the owner's emulator fullscreen/window
+preferences, and retains the [Eden launch/save-account fixes](docs/eden-save-account-repair.md)
+and [Thor input fix](docs/linux-input-performance.md):
+[Download the macOS build](build/releases/Broomm-macOS-checkpoint-preview.zip).
+It is version `0.1.14-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
+
+The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
+the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator
+Settings**, use **Open emulator** to choose fullscreen/windowed mode for the
+active profile, close that emulator, and launch its game normally. Broomm keeps
+that choice, including on repeated launches, while still configuring private
+storage and input. melonDS receives its game path without an added fullscreen
+argument. This preview does not silently apply the diagnostic CPU/lease
+workarounds; physical gameplay and the reported melonDS width require owner
+verification. The Mac archive and extracted app signature are verified; it is
+ad-hoc signed and not notarized. User data and emulator installations are not
+replaced by extracting the app.
+
+The same preference correction is staged on the Thor at
+`~/Downloads/Broomm-Linux-arm64-emulator-preferences-preview/broomm`;
+close the existing Broomm before opening that binary. The November 5 Gaming Mode
+capture observed this preview running through Steam. Alternatively,
+[download the ARM64 Linux archive](build/releases/Broomm-Linux-arm64-emulator-preferences-preview.tar.gz),
+extract it into a new directory, and open `bundle/broomm`. Keep its `lib/` and
+`data/` directories together. Native dependency, bundled-asset and staged-file
+readback checks pass. Removing the extracted preview directory cleans up the
+preview without deleting the normal Broomm data folder.
+
+Single-core Eden survives short private startup tests, but the owner's next
+single-core retry still hangs during first-launch/shutdown preparation for
+Captain Toad 1.4.2. It is not a verified workaround. Private Gaming Mode captures
+identify a native Eden process-list cleanup lock cycle. The owner declined the
+[custom-build proposal](docs/eden-native-debugging.md); that investigation is
+stopped and no shutdown change is included in this preview. Azahar's dual-screen startup failure also remains
+unresolved in the reviewed emulator build.
+
+The [Thor/ARM64 investigation](docs/linux-arm64-standalone-audit.md) records the
+Armada setup failure and available upstream packages for the missing consoles.
+The native correction is installed in the Thor's existing
+`~/Applications/Broomm` copy. Reopen Broomm and retry **Setup** for both Armada
+emulators. Native extraction, CLI startup and lifecycle checks pass; physical
+dual-screen/controller and end-to-end UI setup verification remain pending.
+No new GitHub release has been published for this correction yet.
 
 Broomm is a native Flutter game launcher in early development for Windows, macOS, Linux, and Android, initially targeting RomM 5.4.0 with macOS/Linux validation first. Its controller-first Home and Store take inspiration from the PS5 interface. Users select a saved server, then a known profile; ROMs are shared while saves/states stay private. Only one game runs at a time.
 
@@ -565,3 +612,43 @@ Current preview downloads: [Linux x64](build/releases/Broomm-Linux-x64-setup-spe
 and [macOS](build/releases/Broomm-macOS-setup-speed-eden-preview.zip). On the SSH
 Linux machine, the extracted executable is
 `~/Downloads/Broomm-Linux-setup-speed-eden-preview/bundle/broomm`.
+
+### Linux ARM64 standalone setup
+
+Open **Emulator Settings**, expand the desired platform and choose **Setup**
+for Dolphin (GameCube/Wii), Eden (Switch), DuckStation (PlayStation), ARMSX2
+(PlayStation 2), RPCS3 (PlayStation 3) or PPSSPP (PSP). Review the source on the
+card and confirm installation. No external setup pack or distro detection is
+required. The existing Armada DS/3DS cards stay separate. ARMSX2 selects its
+4K/16K Linux build automatically; its card identifies the pinned nightly.
+
+Configure required BIOS/firmware/keys through the existing platform setup and
+launch a downloaded game from Home. Controller pairing and R3 + Select use the
+same desktop flow. Ordinary progress uses the existing private per-profile cloud
+contract; executable-specific save states remain separate. **Open emulator**
+opens the private configuration independently. **Remove** retains progress.
+Native ARM64 packages and acceptance limits are in the
+[Thor support record](docs/linux-arm64-standalone-audit.md).
+
+Current local ARM64 preview on the Thor:
+`~/Downloads/Broomm-Linux-arm64-standalone-preview/broomm`. Close the existing
+Broomm instance first. It uses the normal saved servers/profiles and library.
+[Linux ARM64 archive](build/releases/Broomm-Linux-arm64-standalone-preview.tar.gz) ·
+[current macOS preview](build/releases/Broomm-macOS-linux-arm64-support-preview.zip).
+The PS3 title/host startup test remains unresolved and the Switch game check
+requires configured keys; neither is counted as native gameplay acceptance.
+
+### Thor launcher performance preview
+
+Linux controller discovery now runs outside the UI isolate and filters out
+non-gamepad devices before opening evdev descriptors. This removes the measured
+two-second scan hitches without changing VRR or display/power settings.
+Close the existing Broomm instance, then run the corrected Thor preview:
+`~/Downloads/Broomm-Linux-arm64-input-latency-preview/broomm`. It uses the normal
+server/profile/library data and download queue. Check controller navigation in
+Home and Store, including during downloads and after reconnecting a controller.
+The [measurement record](docs/linux-input-performance.md) distinguishes event-loop
+verification from owner-performed rendered-frame/input acceptance.
+
+[Linux ARM64 preview](build/releases/Broomm-Linux-arm64-input-latency-preview.tar.gz) ·
+[macOS preview](build/releases/Broomm-macOS-input-latency-preview.zip).

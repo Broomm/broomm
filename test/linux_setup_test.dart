@@ -250,6 +250,12 @@ void main() {
       'retroarch',
       'melonds-armada',
       'azahar-armada',
+      'dolphin',
+      'eden',
+      'duckstation',
+      'armsx2',
+      'rpcs3',
+      'ppsspp',
     });
     final retro = SetupPlan([
       plan.items.firstWhere((i) => i.build.id == 'retroarch'),
@@ -294,6 +300,134 @@ void main() {
         item.build.hash,
       );
     }
+    expect(await manager.data.exists(), isFalse);
+  });
+
+  test('ARM64 standalone recipes bind official packages to native hook and private profile identities', () async {
+    final manager = ManagedEmulators(
+      Directory('${root.path}/standalone'),
+      hostOverride: 'linux-arm64',
+      linuxPageBytesOverride: 4096,
+      asset: (p) => File(p).readAsString(),
+    );
+    addTearDown(manager.dispose);
+    final plan = await manager.readPlan(
+      only: {'dolphin', 'eden', 'duckstation', 'armsx2', 'rpcs3', 'ppsspp'},
+    );
+    expect(plan.items, hasLength(6));
+    for (final item in plan.items) {
+      final build = item.build;
+      final package = item.downloads.values.single;
+      expect(package.sha256, build.sourcePackage!.sha256);
+      expect(package.url, build.sourcePackage!.url);
+      expect(package.format, 'appimage');
+      expect(build.architecture, 'arm64');
+      final inventory =
+          jsonDecode(await manager.asset(build.integrityAsset)) as Map;
+      expect((inventory['files'] as Map)[build.executable], build.hash);
+      if (build.sdlLibrary != null)
+        expect(
+          {
+            ...(inventory['files'] as Map),
+            ...(inventory['links'] as Map),
+          }.containsKey(build.sdlLibrary),
+          isTrue,
+        );
+      expect(build.native['BROOMM_EXPECT_SDL_VERSION'], isNotEmpty);
+      expect(
+        await manager.asset(
+          build.symbolsAsset ?? 'assets/setup/linux-arm64/${build.id}.symbols',
+        ),
+        isA<String>(),
+      );
+    }
+    expect(
+      plan.items.singleWhere((i) => i.build.id == 'armsx2').build.profileId,
+      'ps2',
+    );
+    expect(
+      plan.items
+          .singleWhere((i) => i.build.id == 'rpcs3')
+          .build
+          .native['BROOMM_EMU_STATUS'],
+      '43146f8',
+    );
+    expect(await manager.data.exists(), isFalse);
+  });
+  test('ARMSX2 selects matching 4K and 16K packages and keeps ordinary profile identity across page builds', () async {
+    final managers = <ManagedEmulators>[];
+    for (final bytes in [4096, 16384]) {
+      final manager = ManagedEmulators(
+        Directory('${root.path}/pages-$bytes'),
+        hostOverride: 'linux-arm64',
+        linuxPageBytesOverride: bytes,
+        asset: (p) => File(p).readAsString(),
+      );
+      managers.add(manager);
+      addTearDown(manager.dispose);
+      final item = (await manager.readPlan(only: {'armsx2'})).items.single;
+      expect(item.build.linuxPageBytes, bytes);
+      expect(item.build.profileId, 'ps2');
+      expect(
+        item.downloads.values.single.url!.path,
+        contains(bytes == 4096 ? '4K-pages' : '16K-pages'),
+      );
+      expect(
+        item.downloads.values.single.sha256,
+        item.build.sourcePackage!.sha256,
+      );
+      final alternate = manager.previousBuilds.singleWhere(
+        (b) => b.id == 'armsx2',
+      );
+      expect(alternate.linuxPageBytes, isNot(bytes));
+      manager.installed['armsx2'] = alternate.hash;
+      expect(manager.buildFor('ARMSX2')!.hash, alternate.hash);
+      await expectLater(manager.requireRuntime(alternate), throwsStateError);
+      await manager.requireRuntime(item.build);
+      final inventory =
+          jsonDecode(await manager.asset(item.build.integrityAsset)) as Map;
+      expect(
+        (inventory['files'] as Map)[item.build.executable],
+        item.build.hash,
+      );
+      expect(
+        await manager.asset(
+          item.build.symbolsAsset ?? 'assets/setup/linux-arm64/armsx2.symbols',
+        ),
+        contains('_ZN9VMManager8GetStateEv'),
+      );
+    }
+    expect(
+      managers[0].builds.singleWhere((b) => b.id == 'armsx2').hash,
+      isNot(managers[1].builds.singleWhere((b) => b.id == 'armsx2').hash),
+    );
+  });
+  test('page variants cannot replace card identity and incomplete package selections fail without writes', () async {
+    expect(
+      () => linuxPageBuilds({
+        'host': 'linux-arm64',
+        'linux_page_bytes': 4096,
+        'linux_page_variants': {
+          '16384': {'id': 'another'},
+        },
+      }),
+      throwsFormatException,
+    );
+    final manager = ManagedEmulators(
+      Directory('${root.path}/unknown-pages'),
+      hostOverride: 'linux-arm64',
+      linuxPageBytesOverride: 65536,
+      asset: (p) => File(p).readAsString(),
+    );
+    addTearDown(manager.dispose);
+    await expectLater(
+      manager.readPlan(only: {'armsx2'}),
+      throwsFormatException,
+    );
+    expect(
+      (await manager.readPlan(only: {'dolphin'})).items.single.build.id,
+      'dolphin',
+    );
     expect(await manager.data.exists(), isFalse);
   });
 
@@ -404,7 +538,19 @@ void main() {
                   .readAsString(),
             ) as Map)['builds']
             as List;
+    records.add(
+      (jsonDecode(
+        await File('assets/setup/linux-arm64/tested-builds.json')
+            .readAsString(),
+      ) as Map)['builds'].cast<Map>().singleWhere(
+        (Map b) => b['id'] == 'armsx2',
+      ),
+    );
     final paths = {
+      'armsx2': (
+        'user/armsx2/inis/native.ini',
+        'user/armsx2/ARMSX2/inis/native.ini',
+      ),
       'azahar': (
         'data/azahar-emu/sdmc/progress.bin',
         'home/Library/Application Support/Azahar/sdmc/progress.bin',

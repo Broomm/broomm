@@ -82,6 +82,12 @@ Emulator Settings lists every platform reported by the active RomM server, with 
 
 Give the default emulator card a green outline. Configured cards offer **Open emulator**, without a game, for changing this profile's private Broomm settings. Hand the application to the OS and leave Broomm visible and navigable. Do not treat it as a game session, watch its lifetime, wait for its exit, restore focus on exit or require it to close before quitting Broomm. Keep the same profile-local data as gameplay and passive native file locks protecting concurrent writes. On macOS, launch complete app bundles through Launch Services, including Azahar; the private portable melonDS executable uses a detached launch. Do not run controller preparation or change system installation preferences for this action.
 
+Emulator launch arguments and session settings supply the game, private profile,
+input and other required integration controls. Leave optional fullscreen/window
+preferences to the owner in the emulator's Broomm-private settings. Do not force
+fullscreen/windowed mode through launch arguments or rewrite that preference on
+each game launch.
+
 The initial emulator roster is the concrete PGCS roster: RetroArch, PCSX2, ARMSX2, Dolphin, DuckStation, RPCS3, PPSSPP, Vita3K, xemu, melonDS, Azahar, Cemu, and Ryubing. The owner additionally selected **Eden** as a Nintendo Switch alternative, **Astris for macOS** and **Citra MMJ for Android**. See the [emulator inventory](docs/emulator-support.md) for systems and host distinctions. Tight support for this small set takes priority over a general-purpose emulator framework.
 
 PlayStation uses DuckStation with profile/game-private whole memory cards. PlayStation 2 offers PCSX2 and ARMSX2 where supported by the host/build; both use the same ordinary memory cards for a given profile/game, with separate emulator settings and build-specific save states. Missing BIOS images can be obtained from that platform's RomM firmware catalogue, preserving existing private firmware. Normal native settings remain within Broomm. Alternate executables must not cause progress to cross profile boundaries or make incompatible save states appear interchangeable.
@@ -169,7 +175,7 @@ For Citra MMJ, assume shared `citra-emu` storage and request a persistent folder
 
 Installation uses user-confirmed app/store or APK installer actions and subsequent package inspection; opening an installer is not confirmation of installation. Data-folder grants retain profile identity. Returning to Broomm does not establish emulator shutdown: require suitable writer-exit evidence or explicit closure confirmation before save capture/restore, retain interrupted-session recovery and never silently apply desktop installers on Android. The [Android audit](docs/android-emulators.md) records the current partial implementation. Cloud save/state and update/DLC parity remain product requirements.
 
-For the current Android milestone, Install downloads the official compatible APK
+For the implemented Android APK/connected-folder milestone, Install downloads the official compatible APK
 and opens Android's confirmation flow, with store-only/paid exceptions explained.
 Detect ARMSX2 stable `com.armsx2` and nightly `com.armsx2.nightly`, preferring
 enabled stable when both exist. Connect a stable emulator/package folder once
@@ -180,6 +186,23 @@ The owner's explicit confirmation is sufficient; do not add process-exit hooks
 or OS probing. Broomm's own transfer/session locks still apply. BIOS/firmware
 and new content installers are later work. No additional Wii update support is
 required for the owner's library; preserve existing desktop WAD/DLC behavior.
+
+The owner selected a **root-backed Android route** as the next milestone on
+2026-11-05. Add an explicit, optional access mode for an already rooted device
+to reach the selected external emulator's verified save locations. Keep the
+existing shared-folder/provider route available. Root access does not imply a
+particular root manager, dependency, device compatibility or completed feature.
+Do not root a device or change its system security configuration as setup.
+
+Keep package/Android-user identity, native console identities and each RomM
+profile's progress separate. Restrict privileged operations to resolved,
+emulator-specific data boundaries; preserve existing standalone progress and
+native file ownership, permissions and labels. Keep synchronization decisions,
+transactions and recovery in Dart behind a narrow Android access adapter.
+Existing explicit save/close confirmation remains the implemented lifecycle
+contract until a replacement has native verification. Root does not extend
+Android into the desktop controller/injection/overlay scope. See the
+[next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
 
 ## Progress across devices
 

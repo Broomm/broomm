@@ -1,5 +1,26 @@
 # RomM platform and emulator support matrix
 
+**Checkpoint — 2026-11-05:** further Linux ARM64 work is deferred. The package,
+confinement and native-fixture results below remain scoped evidence. Thor
+gameplay still has unresolved Eden/Smash startup and paused-close failures,
+Azahar's empty secondary-surface format list/SIGABRT, and owner-reported melonDS
+window width. No custom Eden build is authorized. See the
+[Thor investigation](thor-gameplay-investigation.md).
+
+The next milestone is [root-backed Android storage access](android-installation-and-saves.md#next-milestone-root-backed-storage-access).
+It is planned, not implemented or natively accepted. Existing Android
+APK/connected-folder coverage and its native-verification gaps remain unchanged.
+
+**Linux ARM64 expansion, 2026-11-04:** 🟢 Managed installation and two-profile
+resolution pass on the Thor for Dolphin (GC/Wii), Eden (Switch), DuckStation
+(PS1), ARMSX2 (PS2), RPCS3 (PS3) and PPSSPP (PSP). 🟢 Native CPU-session
+pairing/remap/menu/pause/reconnect/shutdown checks pass for GC/Wii, PS1, PS2 and
+PSP; 🟢 real RPCS3 PUP import/readback passes. 🟡 PS3/Switch game acceptance,
+physical controls and new ARM64 cloud round trips remain separate. ARMSX2
+selects 4K/16K builds; the 16K package is not executed on this 4K host. Existing
+RetroArch and separate Armada DS/3DS entries remain available on any Linux
+ARM64 OS. See the [package/evidence table](linux-arm64-standalone-audit.md).
+
 **Owner Linux acceptance, 2026-11-03:** 🟢 The owner reports validating most
 systems on Linux, with most behavior working well. No individual system or
 save/DLC case was enumerated, so this broad acceptance does not rewrite each

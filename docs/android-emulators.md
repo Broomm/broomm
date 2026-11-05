@@ -1,5 +1,11 @@
 # Android emulator status
 
+**Next milestone, selected 2026-11-05:** implement an optional root-backed
+storage route on an already rooted Android device. Linux ARM64 investigation is
+deferred. Root access is not implemented or natively accepted by this checkpoint;
+the coverage below describes the existing APK/connected-folder implementation.
+See [stages and acceptance](android-installation-and-saves.md#next-milestone-root-backed-storage-access).
+
 2026-10-30. **Android native acceptance and content/firmware parity remain incomplete.** APK downloading and connected save adapters now exist for the full Android roster. This table separates code, compilation/workflow tests and actual Android acceptance; macOS green cells do not describe Android. See the current [installation/save walkthrough and limits](android-installation-and-saves.md).
 
 **Historical research, earlier on 2026-10-30:** the owner reported that the installed Android

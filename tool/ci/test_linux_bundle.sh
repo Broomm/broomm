@@ -21,6 +21,11 @@ if [[ $# == 4 && "$1" == "$BROOMM_TEST_BUNDLE" && "$2" == -type && "$3" == f && 
   else
     printf '%s\0' "$1/lib/libflutter_linux_gtk.so" "$1/broomm"
   fi
+  while IFS= read -r -d '' extra; do
+    if [[ "$extra" != "$1/broomm" && "$extra" != "$1/lib/libflutter_linux_gtk.so" ]]; then
+      printf '%s\0' "$extra"
+    fi
+  done < <("$BROOMM_TEST_FIND" "$@")
 else
   exec "$BROOMM_TEST_FIND" "$@"
 fi
@@ -51,6 +56,11 @@ prepare_fixture() {
   env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_fixture_cc" -fuse-ld=/usr/bin/ld \
     "$broomm_fixture/main.c" -L"$BROOMM_TEST_BUNDLE/lib" -lflutter_linux_gtk \
     -o "$BROOMM_TEST_BUNDLE/broomm"
+  # The process helper also needs preparation before executing it. Its old SDK
+  # RPATH cannot find this bundle-only dependency until normalized to ORIGIN.
+  cp "$BROOMM_TEST_BUNDLE/lib/libflutter_linux_gtk.so" "$BROOMM_TEST_BUNDLE/lib/libbroomm_fixture_helper.so"
+  patchelf --add-needed libbroomm_fixture_helper.so "$BROOMM_TEST_BUNDLE/lib/broomm-native-run"
+  patchelf --set-rpath "$broomm_fixture_sdk" "$BROOMM_TEST_BUNDLE/lib/broomm-native-run"
   # Like the real Flutter engine, this library resolves a unique dependency from
   # its SDK RUNPATH until prepared. The fixture never writes to the actual SDK.
   patchelf --set-rpath "$broomm_fixture_sdk" "$BROOMM_TEST_BUNDLE/broomm"

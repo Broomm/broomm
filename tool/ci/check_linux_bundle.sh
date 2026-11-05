@@ -7,10 +7,6 @@ if [[ ! -x "$broomm_bundle/lib/broomm-native-run" ]]; then
   printf 'Linux process helper is missing or not executable: %s\n' "$broomm_bundle/lib/broomm-native-run" >&2
   exit 1
 fi
-# Exercise the shipped executable, rather than only inspecting its ELF headers.
-broomm_helper_status=0
-"$broomm_bundle/lib/broomm-native-run" >/dev/null 2>&1 || broomm_helper_status=$?
-test "$broomm_helper_status" -eq 64
 broomm_elfs=()
 while IFS= read -r -d '' broomm_elf; do
   if readelf -h "$broomm_elf" >/dev/null 2>&1; then
@@ -37,6 +33,10 @@ for broomm_elf in "${broomm_elfs[@]}"; do
     fi
   done <<< "$broomm_needed_entries"
 done
+# Exercise the shipped executable, rather than only inspecting its ELF headers.
+broomm_helper_status=0
+"$broomm_bundle/lib/broomm-native-run" >/dev/null 2>&1 || broomm_helper_status=$?
+test "$broomm_helper_status" -eq 64
 for broomm_elf in "${broomm_elfs[@]}"; do
   printf 'Checking Linux dependencies: %s\n' "${broomm_elf#"$broomm_bundle"/}"
   if readelf -l -d "$broomm_elf" | rg '/nix/store/'; then
@@ -56,12 +56,15 @@ for broomm_elf in "${broomm_elfs[@]}"; do
 done
 cat > "$broomm_bundle/RUNNING.txt" <<'EOF'
 Run ./broomm from this extracted directory. Keep data/ and lib/ beside it.
-Requires a desktop with GTK 3, a Secret Service, and graphics drivers.
+Requires a desktop with GTK 3 and graphics drivers. A Secret Service is optional
+when using the opt-in Linux keyring; the default private token file does not need it.
 Official CI builds target Ubuntu 24.04 (glibc 2.39); local builds retain their
 host compiler baseline. Broomm does not install OS dependencies.
 Linux x64 includes managed RetroArch and nine standalone emulator integrations.
-Use Emulator Settings to review/install the bundled setup. It requires kernel Landlock ABI 3
-or newer for private emulator writes (normally Linux 6.2+).
-Linux ARM64 managed setup remains pending. Switch runtime, physical controller,
+Use Emulator Settings to review/install the bundled setup. Private emulator writes
+require Landlock ABI 3 or unprivileged user/mount namespaces. Kernel version alone
+does not establish availability. Linux ARM64 includes RetroArch, Armada DS/3DS
+choices, Dolphin, Eden, DuckStation, ARMSX2, RPCS3 and PPSSPP. ARMSX2 selects its
+4K/16K page build automatically. Switch runtime, physical controller,
 gyro and Steam/gamescope acceptance are separate from native test fixtures.
 EOF

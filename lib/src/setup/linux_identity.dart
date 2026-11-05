@@ -1,7 +1,68 @@
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:ffi';
 
 import '../progress/files.dart';
+
+/// Native page size matters for ARMSX2's distinct Linux ARM64 builds. A
+/// non-Linux inspection host uses 4K; callers can supply a fixture value.
+int linuxKernelPageBytes() => Platform.isLinux
+    ? DynamicLibrary.process().lookupFunction<Int32 Function(), int Function()>(
+        'getpagesize',
+      )()
+    : 4096;
+
+const _pageBuildFields = {
+  'version',
+  'executable',
+  'sha256',
+  'native',
+  'integrity_asset',
+  'symbols_asset',
+  'source_package',
+  'sdl',
+  'sdl_library',
+  'linux_launcher',
+};
+
+/// The trusted build inventory retains one emulator/card identity while its
+/// executable, native symbols and save-state build identity follow the kernel.
+List<Map> linuxPageBuilds(Map build) {
+  final variants = build['linux_page_variants'];
+  if (variants == null) return [build];
+  if (build['host'] != 'linux-arm64' ||
+      variants is! Map ||
+      build['linux_page_bytes'] is! int) {
+    throw const FormatException('Invalid Linux page-specific build inventory');
+  }
+  final result = <Map>[build];
+  for (final entry in variants.entries) {
+    final bytes = int.tryParse(entry.key.toString());
+    if (bytes == null ||
+        !{4096, 16384}.contains(bytes) ||
+        entry.value is! Map ||
+        (entry.value as Map).keys.any((k) => !_pageBuildFields.contains(k))) {
+      throw const FormatException('Invalid Linux page-specific build variant');
+    }
+    result.add({...build, ...(entry.value as Map), 'linux_page_bytes': bytes});
+  }
+  return result;
+}
+
+Object? linuxPageSource(Object? source, int bytes) {
+  if (source is! Map || !source.containsKey('linux_page_variants'))
+    return source;
+  final variants = source['linux_page_variants'];
+  if (source.length != 1 ||
+      variants is! Map ||
+      variants.keys.any((k) => !{'4096', '16384'}.contains(k)) ||
+      variants['$bytes'] is! Map) {
+    throw const FormatException(
+      'No reviewed emulator package matches the Linux page size',
+    );
+  }
+  return variants['$bytes'];
+}
 
 Future<Map<String, int>> linuxFileStamp(File file) async {
   if (await FileSystemEntity.type(file.path, followLinks: false) !=

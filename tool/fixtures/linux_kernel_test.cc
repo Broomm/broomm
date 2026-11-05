@@ -65,13 +65,39 @@ int main(int argc,char** argv) {
   std::string profile=root+"/profile",outside=root+"/preserved";
   assert(mkdir(profile.c_str(),0700)==0);
   fd=open(outside.c_str(),O_CREAT|O_WRONLY,0600);assert(fd>=0&&write(fd,"saved",5)==5);close(fd);
+  assert(symlink(outside.c_str(),(profile+"/linked-save").c_str())==0);
+  // Exercise the namespace backend even on Landlock-capable CI kernels.
+  // Some hosts forbid unprivileged namespaces; establish that independently
+  // before asserting the optional fallback, without masking later failures.
   child=fork();assert(child>=0);
-  if(!child){assert(private_writes(profile.c_str()));
+  if(!child){if(unshare(CLONE_NEWUSER|CLONE_NEWNS)==0)_exit(0);
+    assert(errno==EPERM||errno==ENOSYS||errno==EINVAL);_exit(77);}
+  int probe=0;assert(waitpid(child,&probe,0)==child&&WIFEXITED(probe));
+  bool namespaces=WEXITSTATUS(probe)==0;assert(namespaces||WEXITSTATUS(probe)==77);
+  for(int backend=0;backend<2;++backend){
+   if(backend==1&&!namespaces){puts("OBSERVED: host forbids the optional user/mount namespace backend");continue;}
+   child=fork();assert(child>=0);
+   if(!child){pid_t original_pid=getpid();uid_t original_uid=getuid();gid_t original_gid=getgid();
+    assert(backend?namespace_private_writes(profile.c_str()):private_writes(profile.c_str()));
+    assert(getpid()==original_pid&&getuid()==original_uid&&getgid()==original_gid);
     int output=open((profile+"/save").c_str(),O_CREAT|O_WRONLY,0600);assert(output>=0&&write(output,"local",5)==5);close(output);
-    assert(open(outside.c_str(),O_WRONLY|O_TRUNC)<0&&errno==EACCES);
-    assert(open((root+"/escape").c_str(),O_CREAT|O_WRONLY,0600)<0&&errno==EACCES);
+    assert(open(outside.c_str(),O_WRONLY|O_TRUNC)<0&&(errno==EACCES||errno==EROFS));
+    assert(open((root+"/escape").c_str(),O_CREAT|O_WRONLY,0600)<0&&(errno==EACCES||errno==EROFS));
+    assert(open((profile+"/linked-save").c_str(),O_WRONLY|O_TRUNC)<0&&(errno==EACCES||errno==EROFS));
     assert(rename(outside.c_str(),(profile+"/stolen").c_str())<0);
-    assert(unlink(outside.c_str())<0);_exit(0);}
-  exited(child);assert(file(outside)=="saved"&&file(profile+"/save")=="local");
+    assert(unlink(outside.c_str())<0);
+    int device=open("/dev/null",O_WRONLY);assert(device>=0);close(device);
+    if(backend){
+      assert(mount(nullptr,"/",nullptr,MS_BIND|MS_REMOUNT,nullptr)<0&&errno==EPERM);
+      struct __user_cap_header_struct h={};h.version=_LINUX_CAPABILITY_VERSION_3;
+      struct __user_cap_data_struct caps[2]={};assert(syscall(SYS_capget,&h,caps)==0);
+      for(const auto& c:caps)assert(!c.permitted&&!c.effective&&!c.inheritable);
+    }
+    _exit(0);}
+   exited(child);assert(file(outside)=="saved"&&file(profile+"/save")=="local");
+   fd=open(outside.c_str(),O_WRONLY);assert(fd>=0);close(fd); // Parent mount table is unaffected.
+  }
+  assert(!namespace_private_writes("/")&&errno==EINVAL);
+  assert(!namespace_private_writes(nullptr)&&errno==EINVAL);
   puts("PASS: native sandbox permits private saves and rejects outside creation/truncation/removal");
 }
