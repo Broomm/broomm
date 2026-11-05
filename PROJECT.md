@@ -175,6 +175,15 @@ For Citra MMJ, assume shared `citra-emu` storage and request a persistent folder
 
 Installation uses user-confirmed app/store or APK installer actions and subsequent package inspection; opening an installer is not confirmation of installation. Data-folder grants retain profile identity. Returning to Broomm does not establish emulator shutdown: require suitable writer-exit evidence or explicit closure confirmation before save capture/restore, retain interrupted-session recovery and never silently apply desktop installers on Android. The [Android audit](docs/android-emulators.md) records the current partial implementation. Cloud save/state and update/DLC parity remain product requirements.
 
+When the player chooses Install or Install APK, check Broomm's Android APK-install
+permission before downloading or picking a file. If missing, open Broomm's
+**Allow from this source** settings and continue the chosen action after fresh
+permission readback on return. Denial or an interrupted request must explain how
+to retry without claiming an installation or creating a pending default.
+Do not repeat the permission request while the grant remains valid. Store-only
+actions need no APK permission. Installed-emulator status and install permission
+are separate observations; a permission failure must not report an app absent.
+
 For the implemented Android APK/connected-folder milestone, Install downloads the official compatible APK
 and opens Android's confirmation flow, with store-only/paid exceptions explained.
 Detect ARMSX2 stable `com.armsx2` and nightly `com.armsx2.nightly`, preferring

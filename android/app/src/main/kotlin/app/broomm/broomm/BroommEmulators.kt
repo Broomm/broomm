@@ -36,11 +36,14 @@ class BroommEmulators(private val activity: Activity) {
     private val installRequest = 6204
     private var installingApk: Pair<String, File>? = null
     private val sharedFolder = SharedSaveFolder(activity)
+    private val installPermission = ApkInstallPermission(activity)
     fun register(engine: FlutterEngine) {
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, channelName).also { c ->
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
+                        "canInstallPackages" -> result.success(installPermission.allowed())
+                        "requestInstallPermission" -> installPermission.request(result)
                         "aesEcb" -> background(result) {
                             val bytes = call.argument<ByteArray>("bytes")!!; val key = call.argument<ByteArray>("key")!!
                             require(key.size == 16 && bytes.isNotEmpty() && bytes.size % 16 == 0 && bytes.size <= 65536)
@@ -75,6 +78,7 @@ class BroommEmulators(private val activity: Activity) {
                             result.success(null)
                         }
                         "installApk" -> {
+                            requireInstallPermission()
                             require(pending == null) { "A file picker is already open" }
                             apkPackages = packages(call.argument<List<String>>("packages"))
                             apkActivity = call.argument<String>("requiredActivity")
@@ -230,6 +234,7 @@ class BroommEmulators(private val activity: Activity) {
         return values.map { packageName(it) }.distinct()
     }
     private fun openInstaller(apk: File, expected: List<String>, expectedActivity: String?, result: MethodChannel.Result) {
+        requireInstallPermission()
         require(installingApk == null) { "An Android package installer is already active" }
         val info = activity.packageManager.getPackageArchiveInfo(apk.path, PackageManager.GET_ACTIVITIES) ?: error("Invalid emulator APK")
         require(info.packageName in expected) { "The APK is for a different emulator" }
@@ -276,6 +281,7 @@ class BroommEmulators(private val activity: Activity) {
     }
     @Suppress("DEPRECATION")
     fun activityResult(request: Int, code: Int, data: Intent?): Boolean {
+        if (installPermission.activityResult(request)) return true
         if (sharedFolder.activityResult(request, code, data)) return true
         if (request == gameRequest) {
             // Activity return is deliberately not called "game stopped": some
@@ -334,6 +340,7 @@ class BroommEmulators(private val activity: Activity) {
                     check(activity.getSharedPreferences("apk-grants", 0).edit().putString(token, apk.path).commit())
                     val grant = Uri.parse("content://${activity.packageName}.apks/$token")
                     main.post { try {
+                        requireInstallPermission()
                         require(!activity.isFinishing && !activity.isDestroyed) { "Android activity was closed. Retry installation." }
                         require(installingApk == null) { "An Android package installer is already active" }
                         activity.startActivityForResult(Intent(Intent.ACTION_VIEW).apply {
@@ -355,8 +362,13 @@ class BroommEmulators(private val activity: Activity) {
         return true
     }
     fun close() {
+        installPermission.close()
         sharedFolder.close()
         pending?.error("android-activity", "The Android activity was closed. Retry the operation.", null)
         pending = null; channel?.setMethodCallHandler(null); channel = null; worker.shutdown()
+    }
+
+    private fun requireInstallPermission() {
+        require(installPermission.allowed()) { "Android install permission is missing or was revoked. Retry Install to allow Broomm to install apps." }
     }
 }

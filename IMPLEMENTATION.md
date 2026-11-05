@@ -1,5 +1,43 @@
 # Implementation plan
 
+## Android emulator install permission — 2026-11-05
+
+After PR #1's APK was installed on the Thor (Android 13, user 0; Broomm
+0.1.16/build 1032), the owner found only Install/Install APK on the GBA card.
+Read-only ADB inspection confirmed no RetroArch package. The root action is
+intentionally installed-app-only; install permission does not control discovery.
+The owner requested automatic guidance when Broomm lacks APK-install permission.
+
+Emulator installation previously relied on the system installer's missing-source
+dialog. Install and Install APK now check permission before a transfer/picker,
+request Broomm's per-source settings only when needed and resume the chosen action
+after OS readback. Denial, timeout, closure and revoked handoff remain failures,
+without a new pending default or false installation result. Granted permission
+is reused; store handoffs are unchanged. Dart retains the installation workflow;
+the Kotlin adapter only owns OS permission inspection/settings activity results.
+The card wording now explicitly says **Emulator app not installed**.
+
+Three regression cases cover grant/reuse/store bypass, denial/unknown status
+without effects, and concurrent requests/failure/retry. The existing download
+case now checks permission before transfer. Thirty-one focused Flutter cases,
+analysis and Kotlin compilation pass locally (only the two existing updater
+deprecation warnings). Native permission grant/denial and resumed installation
+remain owner/device acceptance. See the [walkthrough](docs/android-installation-and-saves.md#install-flow).
+
+The full local suite passes **572 tests** (one existing Linux-only skip); after
+the final concurrent-store exclusion correction, analysis and all 31 affected
+cases pass again. The fresh universal
+[macOS preview](build/releases/Broomm-macOS-install-permission-preview.zip) is
+24,325,544 bytes, SHA-256
+`10526ac97dc71f676f1e4c13a3862c669d7bbe16d267ef76933f4491db2d8717`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O files are universal. Version `0.1.16-dev` remains ad-hoc
+signed, uses normal Application Support and has development self-updates disabled.
+Logs and the source-bound packaging receipt are retained under
+`.tool-cache/android-install-permission/`. No device permission was changed;
+the Android 13 app-op inspection reports its default state. The new Android
+permission flow still requires the updated PR APK and owner/native acceptance.
+
 ## Rooted Android: first implementation increment — 2026-11-05
 
 The owner selected the Thor running Android and GBA for the first real save

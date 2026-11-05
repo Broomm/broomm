@@ -183,6 +183,10 @@ class _AndroidEmulatorSettingsScreenState
             ),
             const SizedBox(height: 20),
             if (working || manager.busy) const LinearProgressIndicator(),
+            if (manager.requestingInstallPermission)
+              const Text(
+                'Android permission required: enable Allow from this source for Broomm, then return here. Installation will continue automatically.',
+              ),
             if (manager.installing != null) ...[
               LinearProgressIndicator(
                 value:
@@ -282,7 +286,7 @@ class _AndroidEmulatorSettingsScreenState
             Text(
               app == null
                   ? (manager.error == null
-                        ? 'Not installed'
+                        ? 'Emulator app not installed'
                         : 'Installation status unavailable')
                   : !app.enabled
                   ? 'Disabled in Android app settings'

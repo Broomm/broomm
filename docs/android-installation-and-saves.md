@@ -68,6 +68,25 @@ not be read as native device or save acceptance.
 
 ## Install flow
 
+**Install** and **Install APK…** first check Android's per-source APK permission.
+On Android 8+, if Broomm cannot request installs, it opens its own **Install
+unknown apps → Allow from this source** page. Enable it and return to Broomm;
+the selected download or file picker continues after a fresh OS permission
+check. A cancelled/denied request stops before any transfer/picker/default
+checkpoint. Retry the original action to ask again. No request is repeated while
+Android reports permission granted. Settings requests time out after two minutes;
+closing/recreating the activity requires retry. Android 7's legacy installer
+confirmation remains OS-owned. Store-only DuckStation does not need this grant.
+
+This permission does not control installed-app discovery or grant root access.
+An **Emulator app not installed** card means the package query found no supported
+emulator. **Inspect root access** is available only after that emulator is
+installed and detected. Revocation before installer handoff fails visibly and
+requires retry; Broomm does not change Android permissions using root or ADB.
+The platform contract is Android's
+[canRequestPackageInstalls](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls())
+and per-source settings activity; activity return alone is not a grant.
+
 **Emulator Settings → platform → Install** downloads the selected official APK
 with byte progress and cancellation, then hands its private file to Android's
 installer. Android still controls unknown-source permission, install confirmation

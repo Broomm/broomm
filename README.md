@@ -16,12 +16,12 @@ The [official macOS package](https://github.com/Broomm/broomm/releases/download/
 is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
-The latest local preview is built from the root-inspection source increment,
+The latest local preview includes root inspection and APK-install permission handling,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-root-inspection-preview.zip).
-It is version `0.1.15-dev`, ad-hoc signed, uses the normal application data folder
+[Download the macOS build](build/releases/Broomm-macOS-install-permission-preview.zip).
+It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
 
@@ -34,14 +34,25 @@ connect saves; **Configure saves** remains the existing folder route. No game,
 emulator settings or progress files are changed. No cleanup is needed beyond
 closing the dialog; root-manager permission history is managed there.
 
+If the card says **Emulator app not installed**, first choose **Install** (or
+**Install APK…** for a file you already have). Broomm now checks its APK-install
+permission before proceeding. If Android settings opens, enable **Allow from
+this source** for Broomm and return; the original action continues automatically.
+Denial stops it with a retry message. Granting permission does not itself install
+the emulator; approve Android's subsequent installer, then refresh installed
+apps. This permission is separate from root and is reused while granted.
+
 Prerequisites, exact commands, log/scratch locations and cleanup are in the
-[walkthrough](docs/android-root-access.md). Local analysis, 569 Flutter tests
-(one existing Linux-only skip), Kotlin bridge compilation, process regressions
-and workflow/shell lint pass. The macOS ZIP and source/extracted signatures are
-verified, with all seven Mach-O files universal. It cannot exercise Android
-root access. **No current Android APK was built:** this host lacks a full Android
-SDK, and ADB found no connected device. The Thor/root-manager inspection and
-real GBA save/upload/restore/load remain unverified.
+[walkthrough](docs/android-root-access.md). The initial inspection increment passed
+569 Flutter tests plus Kotlin/process/CI checks. The permission follow-up passed
+572 tests, then 31 affected cases after tightening concurrent-store exclusion;
+analysis and Kotlin compilation pass. The macOS ZIP and source/extracted
+signatures are verified, with all seven Mach-O files universal. It cannot
+exercise Android root access. PR #1's first APK (build 1032) is installed on
+the Thor (Android 13, user 0), with package/version readback confirmed. That
+APK predates this permission follow-up; the host still lacks a full Android SDK.
+Native permission-flow, Thor/root-manager inspection and real GBA
+save/upload/restore/load remain unverified.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
 the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator

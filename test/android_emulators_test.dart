@@ -113,6 +113,8 @@ void main() {
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
           switch (call.method) {
+            case 'canInstallPackages':
+              return true;
             case 'ioBusy':
               return false;
             case 'installed':

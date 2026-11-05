@@ -180,6 +180,8 @@ class AndroidEmulators extends ChangeNotifier {
   bool busy = false, _disposed = false;
   AndroidApkDownload? _download;
   String? installing;
+  bool requestingInstallPermission = false;
+  bool _installActionActive = false;
   int downloadedBytes = 0;
   int? downloadBytes;
   void cancelDownload() => _download?.cancel();
@@ -523,7 +525,60 @@ class AndroidEmulators extends ChangeNotifier {
     if (record['server'] == server) await _installation.delete();
   }
 
-  Future<void> install(AndroidEmulator emulator, {String? server}) async {
+  Future<void> _withInstallPermission(
+    Future<void> Function() action, {
+    bool requiresApkPermission = true,
+  }) async {
+    if (_installActionActive || installing != null)
+      throw StateError('Finish the current emulator installation first.');
+    _installActionActive = true;
+    try {
+      final allowed = requiresApkPermission
+          ? await channel.invokeMethod<bool>('canInstallPackages')
+          : true;
+      if (allowed == null)
+        throw StateError(
+          'Android install permission could not be checked. Retry Install.',
+        );
+      if (!allowed) {
+        requestingInstallPermission = true;
+        phase?.call('Requesting Android permission to install emulator APKs.');
+        _emit();
+        final granted = await channel
+            .invokeMethod<bool>('requestInstallPermission')
+            .timeout(
+              const Duration(seconds: 125),
+              onTimeout: () => throw StateError(
+                'Install permission was not confirmed. Return to Broomm and retry Install.',
+              ),
+            );
+        if (granted != true)
+          throw StateError(
+            'Installation permission was not granted. Choose Install again and enable Allow from this source for Broomm in Android settings.',
+          );
+        phase?.call(
+          'Android installation permission confirmed. Continuing installation.',
+        );
+      }
+      requestingInstallPermission = false;
+      _emit();
+      if (_disposed)
+        throw StateError('Broomm closed before installation could continue.');
+      await action();
+    } finally {
+      requestingInstallPermission = false;
+      _installActionActive = false;
+      _emit();
+    }
+  }
+
+  Future<void> install(AndroidEmulator emulator, {String? server}) =>
+      _withInstallPermission(
+        () => _install(emulator, server: server),
+        requiresApkPermission: emulator.id != 'duckstation',
+      );
+
+  Future<void> _install(AndroidEmulator emulator, {String? server}) async {
     if (installing != null)
       throw StateError('Finish the current emulator installation first.');
     await _requestInstallation(emulator, server);
@@ -585,7 +640,10 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> installApk(AndroidEmulator emulator, {String? server}) async {
+  Future<void> installApk(AndroidEmulator emulator, {String? server}) =>
+      _withInstallPermission(() => _installApk(emulator, server: server));
+
+  Future<void> _installApk(AndroidEmulator emulator, {String? server}) async {
     await _requestInstallation(emulator, server);
     try {
       await channel.invokeMethod<void>('installApk', {
