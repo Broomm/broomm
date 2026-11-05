@@ -93,8 +93,12 @@ installer. Permission guidance, progress and cancellation appear in an installat
 dialog above the invoking card. A failure stays visible with **Try again** and
 **Close**, including when the settings page is scrolled. The Dart staging path
 is `files/broomm/android/apks/<nonce>.apk`; the native installer and APK provider
-share the same confined-path validator. They reject foreign, nested, linked,
-missing and empty files. Android still controls unknown-source permission, install confirmation
+share the same confined-path validator. Android's framework-provided files root
+may contain a system alias; only that root is canonicalized. The exact logical
+or canonical APK filename is accepted, and the verified canonical file is used
+for package inspection and provider access. Foreign/nested paths, traversal,
+links below that root, missing and empty files remain rejected.
+Android still controls unknown-source permission, install confirmation
 and upgrade signing compatibility. Broomm checks package, exported launcher and
 minimum SDK; a successful download/handoff is not installation success.
 Installed package readback selects a newly installed emulator as default. No
@@ -106,7 +110,13 @@ settings and the owner granted access. A read-only app-op query confirmed
 complete 183,956,821-byte RetroArch transfers followed by immediate native
 handoff failure. Source inspection identified the native/provider expectation
 `files/android/apks`, missing ShellStorage's `broomm` component. This correction
-does not constitute native installer acceptance until exercised with a new APK.
+did not resolve installation on build 1034: the owner saw the now-visible path
+error after another complete download. Inspection inside Broomm's own mount
+namespace found `/data/user/0 -> /data/data`; the root shell's view did not
+contain that symlink. This matches Android's
+[app-data isolation setup](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r25/core/jni/com_android_internal_os_Zygote.cpp).
+The trusted-root alias correction above is covered by native JVM regressions;
+the updated APK still needs system-installer acceptance on the Thor.
 
 PPSSPP uses its official free APK. melonDS, Azahar vanilla, MMJ normal shared-
 storage and ARMSX2 use their official stable GitHub release assets; unsupported

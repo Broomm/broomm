@@ -1,5 +1,36 @@
 # Implementation plan
 
+## Android app-namespace APK alias correction — 2026-11-05
+
+The owner reproduced `android-emulator: Invalid downloaded APK` on build 1034.
+Its app log confirms another complete transfer and immediate path rejection.
+The previous correction fixed the missing `broomm` component but did not account
+for Android's isolated app mount namespace: read-only `/proc/<pid>/root` and
+`nsenter -t <pid> -m -- readlink -f ...` show `/data/user/0` is a symlink to
+`/data/data` inside Broomm, while the ADB root shell sees a directory. The earlier
+shell-only canonical-path observation did not establish the app's view.
+
+The downloaded APK validator now resolves only the framework-supplied files
+root. It accepts the exact logical or canonical staging filename, rejects
+traversal/foreign paths and any linked component below that root, and returns
+the canonical file for package inspection and the one-file provider grant.
+Failure messages identify the rejected boundary without exposing account data.
+No application-storage migration or save-path change is made. Regression cases
+reproduce the trusted root alias, canonical grant readback, file/directory links
+under the aliased root and a foreign user's staging path. Native JVM checks and
+Android bridge compilation pass (the two existing updater warnings remain).
+The new alias regression fails against the previous validator and passes with
+the correction. All 28 affected Flutter tests pass. The current universal
+[macOS archive](build/releases/Broomm-macOS-android-path-alias-preview.zip) is
+24,328,539 bytes, SHA-256
+`30291d5245ce431ff60403cae99031ed3e5fd94732c5ac2e274e70112efeddb3`.
+Archive integrity and source/fresh-extraction deep/strict/all-architecture
+signatures pass; all seven Mach-O files are universal. Version `0.1.16-dev`
+uses normal Application Support, ad-hoc signing and disabled development
+self-updates. Updated APK installer acceptance still requires device execution.
+
+Evidence and build logs are under `.tool-cache/android-apk-rejection/`.
+
 ## Android downloaded APK handoff and visible feedback — 2026-11-05
 
 The Thor's installed PR build 1033 successfully requested install permission;

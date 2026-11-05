@@ -19,10 +19,11 @@ class ApkContentProvider : ContentProvider() {
         val path = context!!.getSharedPreferences("apk-grants", 0).getString(token, null) ?: throw FileNotFoundException()
         val file = File(path)
         val emulator = file.parentFile?.canonicalFile == File(context!!.cacheDir, "install-apk").canonicalFile
-        val downloaded = isDownloadedApk(context!!.filesDir, file)
+        val downloaded = runCatching { downloadedApk(context!!.filesDir, file) }.getOrNull()
+        if (downloaded != null) return downloaded
         val update = file.parentFile?.parentFile?.canonicalFile == File(context!!.cacheDir, "application-updates").canonicalFile &&
             file.parentFile!!.name.startsWith(".broomm-update-") && file.extension == "apk"
-        if (!file.isFile || file.canonicalPath != file.absolutePath || !(emulator || downloaded || update)) throw FileNotFoundException()
+        if (!file.isFile || file.canonicalPath != file.absolutePath || !(emulator || update)) throw FileNotFoundException()
         return file
     }
     override fun getType(uri: Uri) = "application/vnd.android.package-archive"

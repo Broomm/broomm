@@ -55,8 +55,8 @@ class BroommEmulators(private val activity: Activity) {
                         "device" -> result.success(mapOf("abis" to Build.SUPPORTED_ABIS.toList(), "sdk" to Build.VERSION.SDK_INT))
                         "installDownloadedApk" -> {
                             val expected = packages(call.argument<List<String>>("packages"))
-                            val apk = File(call.argument<String>("path") ?: error("Missing downloaded APK"))
-                            require(isDownloadedApk(activity.filesDir, apk)) { "Invalid downloaded APK" }
+                            val apk = downloadedApk(activity.filesDir,
+                                File(call.argument<String>("path") ?: error("Missing downloaded APK")))
                             openInstaller(apk, expected, call.argument<String>("requiredActivity"), result)
                         }
                         "installed" -> background(result) {

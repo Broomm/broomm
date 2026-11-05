@@ -17,11 +17,11 @@ is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
 The latest local preview includes root inspection, APK-install permission handling
-and the downloaded-APK handoff/visible-feedback correction,
+and downloaded-APK path/visible-feedback corrections,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-install-handoff-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-android-path-alias-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -65,7 +65,11 @@ exercise Android root access. PR #1's build 1033 was installed on the Thor
 preview and erasing Broomm's local data. The owner confirmed the permission
 settings handoff; app-op readback and the app log confirm grant and complete
 RetroArch downloads. The native handoff then rejected the wrong staging-root
-expectation, now corrected in source. Updated Android installer acceptance,
+expectation. Build 1034 corrected that layout but still rejected Android's
+system directory alias inside Broomm's isolated mount namespace. The latest
+correction resolves the trusted OS root while continuing to reject links inside
+APK staging; native regression cases reproduce the device's namespace layout.
+Updated Android installer acceptance,
 Thor/root-manager inspection and real GBA save/upload/restore/load remain open.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
