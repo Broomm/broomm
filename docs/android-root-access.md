@@ -1,12 +1,38 @@
 # Android root inspection and first save target
 
+## Thor Magisk namespace failure — 2026-11-05
+
+The owner confirmed RetroArch installed successfully through Broomm build 1035
+and granted Broomm superuser access in Magisk. Inspection still failed because
+Android's app-private mount namespace hid RetroArch's directory, even from UID
+zero. On the Thor (Android 13/user 0, Magisk `31.1:MAGISKSU`), the exact fixed
+inspection script was exercised under Broomm UID 10117 and its app namespace:
+`su -c` failed at the directory check; `su -M -c` returned complete read-only
+metadata. RetroArch `com.retroarch.aarch64` is `1.22.2_GIT`, version code
+1763607214, UID/GID 10118, mode 700, label
+`u:object_r:app_data_file:s0:c118,c256,c512,c768`.
+
+The adapter now requests the global mount namespace for this one bounded
+command using Magisk's documented `-M` option. It does not change Magisk policy,
+Broomm's namespace, system security, emulator files or save connections. Root
+managers lacking this option fail visibly; no compatibility beyond the observed
+Magisk build is claimed. Directory, root identity and metadata failures have
+distinct bounded codes, logged without arbitrary `su` output. The updated exact
+script returns directory-unavailable (62) in the inherited namespace and a
+complete report in the global namespace. This ADB-assisted reproduction is
+not yet an in-app acceptance result for the next APK.
+
+Evidence is under `.tool-cache/android-root-failure/`. The Thor was held by an
+existing ADB server on port 5038; use the project ADB with `-P 5038 -s 1b8e0a3e`
+for that session. Neither ADB nor the diagnostic changed root grants.
+
 ## Current scope — 2026-11-05
 
 The owner selected the **Thor running Android**, using **GBA**, as the first
 rooted-device save target. Broomm's existing GBA adapter selects RetroArch/mGBA.
-The exact installed Android version, root manager, APK/core builds and active
-save paths are still unknown. The project-local ADB 37.0.1 inventory returned
-no devices. No root request was sent to an owner device.
+Initial inspection implementation preceded device availability. The subsequent
+Thor check above establishes Android 13, Magisk 31.1 and the RetroArch frontend
+build; the mGBA core build and active save paths still require inspection.
 
 This increment implements **read-only capability/package-directory inspection**.
 It does not read save payloads or preferences, inspect/stop emulator processes,
@@ -20,8 +46,9 @@ the implemented gameplay contract.
 
 Prerequisites: an already rooted Android device, this source revision built as
 an Android APK, and an installed supported emulator. A root manager that provides
-compatible `su -c` behavior and Android's `id`, `readlink` and `stat` utilities
-is required for inspection; no particular manager is claimed compatible yet.
+compatible `su -M -c` behavior and Android's `id`, `readlink` and `stat` utilities
+is required for inspection. The fixed script has device evidence on the Thor's
+Magisk 31.1; the complete APK flow still needs owner acceptance.
 For the selected first test, use the Thor's existing RetroArch installation and
 its mGBA core. Do not uninstall an emulator or migrate existing saves to test.
 
@@ -78,7 +105,7 @@ observation includes signing certificates, version, installation time and ABI;
 the report separately includes the signing-certificate digest. This is not a
 new APK payload hash or a save-state compatibility group.
 
-The process receives literal arguments `su`, `-c`, and a constant script.
+The process receives literal arguments `su`, `-M`, `-c`, and a constant script.
 The validated package data-directory path travels over stdin and is used only
 as a quoted argument. No metadata becomes shell source. Only current-user
 `/data/user/<user>/<package>` and the user-zero `/data/data/<package>` alias

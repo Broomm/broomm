@@ -119,6 +119,26 @@ class AndroidRootInspector {
         code: 'timeout',
         message: 'Root inspection timed out. Check your root manager and retry explicitly.',
       );
+    } on PlatformException catch (e) {
+      // Codes are Broomm-owned phase identities. Never log arbitrary su output
+      // or platform exception details that may contain private values.
+      const phases = {
+        'request-unreadable',
+        'root-identity',
+        'directory-unavailable',
+        'directory-unresolved',
+        'metadata-unavailable',
+        'failed',
+        'unavailable',
+        'cancelled',
+        'timeout',
+        'output-limit',
+        'inspection-failed',
+      };
+      _phase(
+        '${phases.contains(e.code) ? e.code : 'platform failure'}; no result accepted.',
+      );
+      rethrow;
     } catch (_) {
       _phase('request failed or cancelled; no result accepted.');
       rethrow;

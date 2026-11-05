@@ -22,7 +22,10 @@ class RootInspectionCommand(
         require(dataDir in roots && dataDir.length < 256) { "Unsupported Android application data location; nothing was changed." }
         if (cancelled.get()) throw RootInspectionFailure("cancelled", "Root inspection cancelled.")
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
-        val process = try { start(listOf("su", "-c", SCRIPT)) }
+        // Root UID alone does not expose other apps through Android's isolated
+        // app-data mounts. Select the global namespace for this command only;
+        // never modify root-manager policy or the application's namespace.
+        val process = try { start(listOf("su", "-M", "-c", SCRIPT)) }
         catch (_: IOException) { throw RootInspectionFailure("unavailable", "Root command unavailable. Use connected folders or check your existing root manager.") }
         val stdout = ByteArrayOutputStream()
         val stderr = ByteArrayOutputStream()
@@ -53,7 +56,14 @@ class RootInspectionCommand(
                 if (exit != null) {
                     drain(process.inputStream, stdout)
                     drain(process.errorStream, stderr)
-                    if (exit != 0) throw RootInspectionFailure("failed", "Root access was denied or inspection failed. No storage connection was created.")
+                    if (exit != 0) throw when (exit) {
+                        60 -> RootInspectionFailure("request-unreadable", "Root inspection could not read its request. Retry inspection.")
+                        61 -> RootInspectionFailure("root-identity", "Root UID could not be verified. Check Broomm's grant in your root manager.")
+                        62 -> RootInspectionFailure("directory-unavailable", "The emulator directory is unavailable to root inspection. Check that your root manager supports the global mount namespace (-M); granting root alone may leave other apps hidden.")
+                        63 -> RootInspectionFailure("directory-unresolved", "The emulator directory could not be resolved. No storage connection was created.")
+                        64 -> RootInspectionFailure("metadata-unavailable", "Emulator directory metadata could not be read. No storage connection was created.")
+                        else -> RootInspectionFailure("failed", "Root command failed (exit $exit). Check Broomm's root grant and root-manager support for the global mount namespace (-M). No storage connection was created.")
+                    }
                     // Do not log arbitrary su diagnostics (which can contain secrets
                     // or terminal controls), or mistake partial stdout for success.
                     if (stderr.size() != 0) throw RootInspectionFailure("failed", "Root inspection returned unexpected diagnostics. No storage connection was created.")
@@ -75,12 +85,13 @@ class RootInspectionCommand(
         // Absolute Android tools avoid a root manager's customized utility PATH.
         val SCRIPT = """
             set -eu
-            IFS= read -r root
-            [ "${'$'}(/system/bin/id -u)" = 0 ]
-            [ -d "${'$'}root" ]
-            real="${'$'}(/system/bin/readlink -f "${'$'}root")"
-            printf 'BROOMM_ROOT_V1\n0\n%s\n' "${'$'}real"
-            /system/bin/stat -c '%u %g %a %C' "${'$'}real"
+            IFS= read -r root || exit 60
+            identity="${'$'}(/system/bin/id -u)" || exit 61
+            [ "${'$'}identity" = 0 ] || exit 61
+            [ -d "${'$'}root" ] || exit 62
+            real="${'$'}(/system/bin/readlink -f "${'$'}root")" || exit 63
+            metadata="${'$'}(/system/bin/stat -c '%u %g %a %C' "${'$'}real")" || exit 64
+            printf 'BROOMM_ROOT_V1\n0\n%s\n%s\n' "${'$'}real" "${'$'}metadata"
         """.trimIndent()
 
         fun parse(output: String, roots: Set<String>, uid: Int): Map<String, Any> {

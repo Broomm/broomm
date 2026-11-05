@@ -16,12 +16,12 @@ The [official macOS package](https://github.com/Broomm/broomm/releases/download/
 is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
-The latest local preview includes root inspection, APK-install permission handling
-and downloaded-APK path/visible-feedback corrections,
+The latest local preview includes root inspection, APK-install permission handling,
+downloaded-APK path/visible-feedback corrections and Magisk root-namespace handling,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-android-path-alias-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-root-namespace-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -34,6 +34,11 @@ and closing the dialog discard the request. Reports are temporary and do not
 connect saves; **Configure saves** remains the existing folder route. No game,
 emulator settings or progress files are changed. No cleanup is needed beyond
 closing the dialog; root-manager permission history is managed there.
+For the Thor's Magisk route, inspection uses the command-local global mount
+namespace (`su -M`) so Android's app isolation does not hide RetroArch's directory
+after a root grant. It does not change Magisk settings. Root managers without
+that option fail visibly. The exact script has been checked under Broomm's UID
+and app namespace on Magisk 31.1; the new APK still needs in-app acceptance.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install
@@ -69,8 +74,9 @@ expectation. Build 1034 corrected that layout but still rejected Android's
 system directory alias inside Broomm's isolated mount namespace. The latest
 correction resolves the trusted OS root while continuing to reject links inside
 APK staging; native regression cases reproduce the device's namespace layout.
-Updated Android installer acceptance,
-Thor/root-manager inspection and real GBA save/upload/restore/load remain open.
+The owner subsequently confirmed successful RetroArch installation with build
+1035. In-app root inspection with the namespace correction and the real GBA
+save/upload/restore/load round trip remain open.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
 the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator

@@ -157,6 +157,30 @@ void main() {
     },
   );
 
+  test('failure logs distinguish bounded stages without leaking platform diagnostics', () async {
+    inspector.dispose();
+    final phases = <String>[];
+    inspector = AndroidRootInspector(channel: channel, phase: phases.add);
+    for (final code in ['directory-unavailable', 'secret-code']) {
+      handler = (_) async => throw PlatformException(
+        code: code,
+        message: 'secret diagnostic',
+        details: 'secret details',
+      );
+      await expectLater(
+        inspector.inspect(emulator, app),
+        throwsA(isA<PlatformException>()),
+      );
+      expect(
+        phases.last,
+        contains(code == 'directory-unavailable' ? code : 'platform failure'),
+      );
+      expect(phases.join(), isNot(contains('secret')));
+    }
+    handler = (_) async => report();
+    expect((await inspector.inspect(emulator, app)).values['uid'], 10123);
+  });
+
   testWidgets(
     'closing the inspection cancels its native request without accepting a late reply',
     (tester) async {

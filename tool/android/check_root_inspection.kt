@@ -20,6 +20,9 @@ fun main(args: Array<String>) {
         when (args[0]) {
             "success" -> print(report())
             "denied" -> { print(report()); exitProcess(1) }
+            "identity" -> exitProcess(61)
+            "directory" -> exitProcess(62)
+            "metadata" -> { System.err.print("secret\u001b[31m"); exitProcess(64) }
             "diagnostic" -> { print(report()); System.err.print("secret\u001b[31m") }
             "partial" -> print(report().dropLast(1))
             "flood" -> { while (true) { System.out.print("x".repeat(1024)); System.err.print("y".repeat(1024)) } }
@@ -34,8 +37,8 @@ fun main(args: Array<String>) {
     }
     val children = mutableListOf<Process>()
     fun command(mode: String, timeout: Long = 5000, started: CountDownLatch? = null) = RootInspectionCommand(start = { argv ->
-        check(argv == listOf("su", "-c", RootInspectionCommand.SCRIPT))
-        check(!argv[2].contains(pkg)) // Paths remain stdin data, never shell source.
+        check(argv == listOf("su", "-M", "-c", RootInspectionCommand.SCRIPT))
+        check(!argv.last().contains(pkg)) // Paths remain stdin data, never shell source.
         ProcessBuilder(File(System.getProperty("java.home"), "bin/java").path,
             "-cp", System.getProperty("java.class.path"), "Check_root_inspectionKt", mode).start().also {
             synchronized(children) { children.add(it) }; started?.countDown()
@@ -46,6 +49,9 @@ fun main(args: Array<String>) {
         val result = command("success").run()
         check(result["uid"] == uid && result["dataDir"] == root && result["label"] == label)
         for (mode in listOf("denied", "diagnostic")) expectFailure("failed") { command(mode).run() }
+        expectFailure("root-identity") { command("identity").run() }
+        expectFailure("directory-unavailable") { command("directory").run() }
+        expectFailure("metadata-unavailable") { command("metadata").run() }
         expectFailure { command("partial").run() }
         expectFailure("output-limit") { command("flood").run() }
         expectFailure("timeout") { command("wait", 200).run() }

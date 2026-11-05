@@ -1,5 +1,35 @@
 # Implementation plan
 
+## Magisk root-inspection namespace correction — 2026-11-05
+
+The owner confirms successful RetroArch installation through build 1035 and
+an explicit Magisk grant to Broomm. Root inspection still failed: Android's
+isolated app namespace hides the other app's directory despite UID zero.
+The exact command was reproduced read-only on the Thor under Broomm's UID and
+namespace: inherited namespace fails; Magisk's command-local global namespace
+(`su -M`) returns complete RetroArch owner/mode/SELinux metadata. The adapter now
+uses that option, preserving package/user/path verification and bounded output,
+cancellation and timeout. It never changes root-manager policy or emulator files.
+
+Fixed stage codes distinguish unreadable request, unverified root identity,
+hidden/unresolved directory and metadata failure. Dart logs allowlisted codes
+without exposing platform diagnostics. Native regressions cover those refusal
+boundaries; the exact updated device script returns exit 62 in the isolated
+namespace and a complete report in the global namespace. This is native script
+evidence, not yet in-app acceptance of the next APK. See the
+[device evidence](docs/android-root-access.md#thor-magisk-namespace-failure--2026-11-05).
+
+Local evidence and build results are under `.tool-cache/android-root-failure/`.
+All 576 Flutter tests pass (one existing Linux-only skip on macOS), static
+analysis is clean, native process regressions pass and the Android bridge
+compiles with its two existing updater deprecation warnings. The current
+[universal macOS archive](build/releases/Broomm-macOS-root-namespace-preview.zip)
+is 24,328,539 bytes, SHA-256
+`be387ddec322a9bdaeb916e16c76586035795e3247a1cdb2004590e080ef6a9c`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O files are universal. Version `0.1.16-dev` remains ad-hoc
+signed with normal Application Support and disabled development self-updates.
+
 ## Android app-namespace APK alias correction — 2026-11-05
 
 The owner reproduced `android-emulator: Invalid downloaded APK` on build 1034.
