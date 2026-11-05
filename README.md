@@ -38,7 +38,8 @@ For the Thor's Magisk route, inspection uses the command-local global mount
 namespace (`su -M`) so Android's app isolation does not hide RetroArch's directory
 after a root grant. It does not change Magisk settings. Root managers without
 that option fail visibly. The exact script has been checked under Broomm's UID
-and app namespace on Magisk 31.1; the new APK still needs in-app acceptance.
+and app namespace on Magisk 31.1; the owner confirmed successful in-app
+read-only inspection with build 1036 on the Thor.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install
@@ -75,8 +76,9 @@ system directory alias inside Broomm's isolated mount namespace. The latest
 correction resolves the trusted OS root while continuing to reject links inside
 APK staging; native regression cases reproduce the device's namespace layout.
 The owner subsequently confirmed successful RetroArch installation with build
-1035. In-app root inspection with the namespace correction and the real GBA
-save/upload/restore/load round trip remain open.
+1035 and successful in-app root inspection with build 1036. The next acceptance
+gate is verifying the mGBA core and save paths, then a real GBA
+save/upload/restore/load round trip.
 
 The [Thor gameplay investigation](docs/thor-gameplay-investigation.md) separates
 the Eden/Azahar native crashes from Broomm's presentation changes. In **Emulator

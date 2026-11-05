@@ -19,8 +19,11 @@ managers lacking this option fail visibly; no compatibility beyond the observed
 Magisk build is claimed. Directory, root identity and metadata failures have
 distinct bounded codes, logged without arbitrary `su` output. The updated exact
 script returns directory-unavailable (62) in the inherited namespace and a
-complete report in the global namespace. This ADB-assisted reproduction is
-not yet an in-app acceptance result for the next APK.
+complete report in the global namespace. Separately, the owner confirmed
+**Read-only inspection completed** in the actual Broomm **build 1036** dialog
+on 2026-11-05 after requesting inspection and allowing Magisk. This is
+owner-performed in-app acceptance on this Thor/RetroArch/Magisk combination;
+the mGBA core, active save paths and save synchronization are not yet verified.
 
 Evidence is under `.tool-cache/android-root-failure/`. The Thor was held by an
 existing ADB server on port 5038; use the project ADB with `-P 5038 -s 1b8e0a3e`
@@ -48,7 +51,7 @@ Prerequisites: an already rooted Android device, this source revision built as
 an Android APK, and an installed supported emulator. A root manager that provides
 compatible `su -M -c` behavior and Android's `id`, `readlink` and `stat` utilities
 is required for inspection. The fixed script has device evidence on the Thor's
-Magisk 31.1; the complete APK flow still needs owner acceptance.
+Magisk 31.1, and the owner confirmed the complete inspection flow in build 1036.
 For the selected first test, use the Thor's existing RetroArch installation and
 its mGBA core. Do not uninstall an emulator or migrate existing saves to test.
 

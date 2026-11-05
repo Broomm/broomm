@@ -16,7 +16,10 @@ hidden/unresolved directory and metadata failure. Dart logs allowlisted codes
 without exposing platform diagnostics. Native regressions cover those refusal
 boundaries; the exact updated device script returns exit 62 in the isolated
 namespace and a complete report in the global namespace. This is native script
-evidence, not yet in-app acceptance of the next APK. See the
+evidence. The owner subsequently confirmed **Read-only inspection completed**
+inside Broomm build **1036** on the Thor with Magisk. This completes the first
+read-only root-inspection acceptance gate for this device/frontend combination;
+mGBA core/save-path verification and a real save round trip remain pending. See the
 [device evidence](docs/android-root-access.md#thor-magisk-namespace-failure--2026-11-05).
 
 Local evidence and build results are under `.tool-cache/android-root-failure/`.
