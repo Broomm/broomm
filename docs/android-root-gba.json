@@ -1,13 +1,15 @@
 {
   "date": "2026-11-05",
-  "status": "local and isolated native checks; packaged integration pending",
-  "source_base": "90cca33bba6cddaedf75f0f4b82aaf9bf4956186",
+  "status": "packaged root connection accepted; startup/path/recovery follow-up awaits APK acceptance",
+  "source_base": "2efaba26893ff4ce848fb0878cb456320bba5e7a",
   "working_tree": true,
   "source_files": {
     "RootSaveFiles.kt": "dbbb699e25d793961a367b623914eae9ee455c0a1fe801d5b6abf9daf3c8ef43",
-    "RootSaveService.kt": "2e46383538f6486b36237ffa161b19cebcfe348fe79531e089972e3ab35c125c",
-    "RootSaveAccess.kt": "58273c9e4a80f66994a4c35fdead1028d4e45eff285f465f90ed48f4e6675da0",
-    "SharedDocumentLock.kt": "20c5f0c6639637102a170225829633cddfed6c1e7f40129ec8aa9670af1263b5"
+    "RootSaveService.kt": "573cc75c91cbbb3da563131bc310887e3418360857dfc1135d74a3bbabc0f9ed",
+    "RootSaveAccess.kt": "251d1d784c1dba3a8d26b3613130e22222d92d9455ba764ac6d9b398190b513d",
+    "SharedDocumentLock.kt": "20c5f0c6639637102a170225829633cddfed6c1e7f40129ec8aa9670af1263b5",
+    "lib/src/android/shared_saves.dart": "7e0b2ac646e541208e80a05742be982e7c8f1ebc04f2da69edd4a59f35840eb6",
+    "GameLibraryFile.kt": "4ad85155ec3fd3cb4f4979e8438cd2318f8b9f24fd85104e635790a98abd6828"
   },
   "device": {
     "serial": "1b8e0a3e",
@@ -27,7 +29,7 @@
     "dex_sha256": "9aa68aa5064fd952aaf067b3e5af30a350e26c09f5097d5023f01152301b8c9e"
   },
   "flutter_tests": {
-    "passed": 579,
+    "passed": 580,
     "skipped": 1,
     "skip": "existing Linux-only case on macOS"
   },
@@ -36,18 +38,19 @@
     "kotlin": "pass; deprecation warnings only",
     "native_inspection": "pass",
     "native_lock": "pass including trusted filesDir alias and linked child rejection",
-    "workflow_and_shell_lint": "pass"
+    "workflow_and_shell_lint": "pass",
+    "game_library": "pass: actual Broomm library, trusted alias, old/foreign/traversal/missing/linked path refusal"
   },
   "macos": {
-    "created_utc": "2026-11-05T22:30:59.631049+00:00",
+    "created_utc": "2026-11-05T22:58:43.180481+00:00",
     "source": {
       "product": "Broomm",
       "version": "0.1.16-dev",
       "build_number": "1",
-      "sha": "90cca33bba6cddaedf75f0f4b82aaf9bf4956186",
+      "sha": "2efaba26893ff4ce848fb0878cb456320bba5e7a",
       "target": "macos-universal",
       "working_tree": true,
-      "source_tree_sha256": "342725ce596197d20eb8a557cd116f0ea74541703859287f537ea3e3003d43dd",
+      "source_tree_sha256": "a0d825150f847700a447912f16a11f1608ccd36837f9281c312f3385854d390a",
       "entries": [
         "AppIcon.icns",
         "Assets.car",
@@ -58,8 +61,8 @@
       ]
     },
     "archive": "build/releases/Broomm-macOS-rooted-gba-preview.zip",
-    "bytes": 24323530,
-    "sha256": "99cf148b747821d6ca5ee80bd33bcd95d5227dbe03324001639ec4218e06377d",
+    "bytes": 24323567,
+    "sha256": "202575457d916f257c72611c7a9162948373695e1eac20039c905d15b911df15",
     "signature_source": "passed deep/strict/all-architectures",
     "signature_extracted": "passed deep/strict/all-architectures",
     "zip_integrity": "passed",
@@ -74,10 +77,23 @@
     }
   },
   "not_verified": [
-    "packaged libsu Binder service on Thor",
+    "updated startup/lock/library corrections in the final APK",
     "Broomm game launch with managed config",
     "real RomM upload/change/restore/in-game load",
     "multi-profile/offline/conflict device acceptance",
     "other Android devices, users and root managers"
-  ]
+  ],
+  "ci": {
+    "run": 42122253927,
+    "source": "2efaba26893ff4ce848fb0878cb456320bba5e7a",
+    "conclusion": "success",
+    "scope": "all checks and packages; precedes missing-working-save guard"
+  },
+  "thor_install": {
+    "build": 1038,
+    "apk_sha256": "adb3e97b9774ff066a918bc4ea3bf26bdbee363a3598d9362ba023d644daa9b5",
+    "installed": true,
+    "packaged_connection": "owner confirmed after full app reopen; log confirms at 2026-11-05T22:55:16.821810Z",
+    "preinstall": "No Broomm saves or recovery files; standalone save SHA unchanged"
+  }
 }

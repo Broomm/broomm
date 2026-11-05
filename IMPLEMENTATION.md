@@ -31,25 +31,37 @@ Read-only root inspection and existing folder connections remain available.
 RetroArch receives its frontend startup extras. The shared-I/O lock now resolves
 Android's trusted framework filesDir alias while still refusing linked children.
 
-Three new Dart cases pass for explicit/persisted setup and profile boundaries,
+Four new Dart cases pass for explicit/persisted setup and profile boundaries,
 ordinary-save capture/restoration with metadata, and interrupted/revoked access
-with identity refusal. The Kotlin bridge compiles. The actual file primitives
+with identity refusal. A missing previously installed working save retains
+recovery and cannot become an empty upload. The Kotlin bridge compiles. The actual file primitives
 pass an isolated root harness on the Thor: replacement and metadata restoration,
 changed/linked paths, interrupted stage/link publication, expired requests and
 a held production lock excluding a separate Android process. Fixture files were
 removed; no emulator save was used by that harness. These results do not yet
-establish the packaged Binder service, in-app launch or a real RomM round trip.
-All **579 Flutter tests** pass (one existing Linux-only skip on macOS), static
+establish in-app launch or a real RomM round trip. The owner subsequently
+confirmed the packaged Binder/core/config connection in build 1038 after
+reopening Broomm. A follow-up obtains Magisk permission before registering the
+libsu binding, reports startup phases and refuses late replies. It also unifies
+the root and app transfer-lock path, initializes the inode as the app, and fixes
+the launcher/provider library boundary to the actual `files/broomm/library`.
+Native path/lock regressions pass; the updated APK still needs device checks.
+All **580 Flutter tests** pass (one existing Linux-only skip on macOS), static
 analysis and workflow/shell lint are clean, and Kotlin compilation plus native
 inspection/lock regressions pass. The new lock cases accept the trusted Android
 filesDir alias and reject linked child paths. The fresh universal macOS archive
 is [Broomm-macOS-rooted-gba-preview.zip](build/releases/Broomm-macOS-rooted-gba-preview.zip),
-24,323,530 bytes, SHA-256
-`99cf148b747821d6ca5ee80bd33bcd95d5227dbe03324001639ec4218e06377d`.
+24,323,567 bytes, SHA-256
+`202575457d916f257c72611c7a9162948373695e1eac20039c905d15b911df15`.
 ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
 pass; all seven Mach-O payloads are universal. It remains ad-hoc signed, uses
 normal Application Support and disables development self-updates. PR APK and
-in-app device acceptance remain separate checks. See the
+in-app device acceptance remain separate checks. Actions run
+[42122253927](https://github.com/Broomm/broomm/actions/runs/42122253927)
+passes every check/package job for `2efaba2`. Its verified APK build 1038 is
+installed on the Thor for the packaged root-connection check; it precedes the
+additional missing-save guard. No Broomm progress/recovery existed before the
+approved reinstall, and the standalone Minish Cap hash remains unchanged. See the
 [implementation and walkthrough](docs/android-root-access.md).
 
 ## Magisk root-inspection namespace correction — 2026-11-05

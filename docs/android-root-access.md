@@ -7,8 +7,9 @@ adapter. The first route now connects **GBA/mGBA ordinary saves on Android user
 0**; other rooted emulator/user combinations remain unsupported. Read-only
 inspection is independent. The actual mGBA core, external configuration and
 owner-created Minish Cap save have been identified on the Thor. Native file
-primitives pass isolated device tests; the complete APK/Binder/launch/RomM
-round trip still requires acceptance. Automatic core download inside Broomm
+primitives pass isolated device tests. The owner confirmed the packaged Binder
+connection in build 1038 after reopening Broomm; launch and the RomM round trip
+still require acceptance. Automatic core download inside Broomm
 remains required future setup work.
 
 1. Install RetroArch and its **Nintendo – Game Boy Advance (mGBA)** core, save
@@ -37,7 +38,9 @@ Recovery copies/journals remain in Broomm's private
 is `android/session.json`. Do not clear Broomm data, remove its root connection
 or delete emulator session directories while recovery is pending. Generated
 session configurations and interrupted private stages can remain as evidence;
-cleanup is not part of a failed transaction. No standalone save is auto-imported.
+cleanup is not part of a failed transaction. If an installed working save is
+missing at capture, Broomm retains recovery and refuses to publish empty progress.
+No standalone save is auto-imported.
 Save states and BIOS/core downloads are not added by this route.
 
 Run local checks with the pinned environments:
@@ -63,6 +66,43 @@ It passes replacement, native metadata restoration, changed/linked-path refusal,
 interrupted partial staging and exclusive publication, expiry and cross-process
 lock exclusion. The fixture removes only its own temporary files. No emulator
 save was mutated. Local logs/receipts are under `.tool-cache/rooted-gba/`.
+
+## Packaged GBA connection and follow-up — 2026-11-05
+
+Actions run [42122253927](https://github.com/Broomm/broomm/actions/runs/42122253927)
+passed all checks and packages for `2efaba2`. Verified APK build **1038** was
+installed on the Thor using the existing reinstall approval. Before uninstall,
+a recursive inventory found no Broomm saves, session or swap journals. The
+standalone Minish Cap `.srm` still matched its original SHA-256.
+
+The owner reported repeated root-connection timeouts. Read-only diagnostics
+found no libsu bootstrap file or running root service, and Broomm's workers were
+idle. After the owner completely closed/reopened Broomm, connection succeeded;
+the application log confirms `GBA root save connection verified` at
+`2026-11-05T22:55:16.821810Z`. This establishes packaged Binder/core/config access,
+not game launch or progress synchronization.
+
+The pinned [libsu binding implementation](https://github.com/topjohnwu/libsu/blob/6.0.0/service/src/main/java/com/topjohnwu/superuser/internal/RootServiceManager.java)
+records a pending startup before the root shell runs and clears it only when a
+service connects. This explains the observed retry behavior after an initial
+startup failure; the initial failure itself was not captured. The follow-up
+obtains Magisk permission before registering a binding, requests `su -M` without
+an isolated-namespace fallback, retains the shell until connection, rejects late
+replies and reports the failed phase. Failed registered startups explicitly ask
+for an app restart instead of repeatedly timing out. This lifecycle correction
+still requires the updated APK's device regression check.
+
+Review also found that the root service's lock differed from the existing
+shared-transfer status lock and was created as UID/GID 0 (confirmed read-only
+on the Thor). Both now use the existing `files/android` lock inode, initialized
+by the app before root access. The old unused root lock is not repurposed or
+removed. Game grants and the launch boundary now resolve the trusted framework
+alias into the actual `files/broomm/library`, refusing linked descendants,
+foreign/old roots and traversal. Native regressions cover the actual library,
+canonical/aliased readback and rejected paths, plus both processes' lock path.
+The missing-working-save regression preserves recovery instead of publishing
+empty progress. None of these checks establishes emulator closure; the owner
+must still save and quit explicitly.
 
 ## Thor Magisk namespace failure — 2026-11-05
 

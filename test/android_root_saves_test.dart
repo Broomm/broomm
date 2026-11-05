@@ -218,4 +218,20 @@ void main() {
     expect(await original.readAsBytes(), [7]);
     expect(await working.readAsBytes(), [1]);
   });
+  test(
+    'a missing installed root save is damaged recovery, not an empty upload',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+      final working = await p.target('save/game.srm');
+      await working.parent.create(recursive: true);
+      await working.writeAsBytes([1, 2, 3]);
+      await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+      await File('${native.path}/${p.remotePath('save/game.srm')}').delete();
+      await expectLater(saves.capture(g, cloud, p), throwsStateError);
+      expect(await saves.pending, isTrue);
+      expect(await working.readAsBytes(), [1, 2, 3]);
+      expect(api.records, isEmpty);
+    },
+  );
 }

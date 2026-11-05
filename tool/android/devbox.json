@@ -9,6 +9,7 @@
       "check-shared-lock": "bash check_shared_document_lock.sh",
       "check-root-inspection": "bash check_root_inspection.sh",
       "check-downloaded-apk": "bash check_downloaded_apk.sh",
+      "check-game-library": "bash check_game_library.sh",
       "build-root-save-test": "bash build_root_save_test.sh"
     }
   },

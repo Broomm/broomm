@@ -291,6 +291,10 @@ class SharedAndroidSaves {
       return false;
     }
     final files = await list(plan), capture = 'captures/${progressNonce()}';
+    if (plan.rooted && files.isEmpty && (r['working'] as Map).isNotEmpty)
+      throw StateError(
+        'The installed GBA working save is missing. Recovery copies were kept; restore the working file before syncing.',
+      );
     if (files.isEmpty)
       cloud.notice(
         'No save files were found in ${plan.emulator.name}’s connected folder. If you saved in-game, check its folder and memory-card settings.',

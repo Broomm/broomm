@@ -44,7 +44,12 @@ fun main(args: Array<String>) {
         val trusted = File(fixture, "framework-files").apply { mkdir() }
         val alias = File(fixture, "framework-alias")
         Files.createSymbolicLink(alias.toPath(), trusted.toPath())
-        SharedDocumentLock.acquire(SharedDocumentLock.appDirectory(alias)).use { }
+        SharedDocumentLock.acquire(SharedDocumentLock.appDirectory(alias)).use {
+            // RootService reconstructs filesDir from ApplicationInfo.dataDir.
+            // It must observe the same inode as the app's aliased framework path.
+            val rootServiceFiles = File(fixture, "framework-files")
+            check(SharedDocumentLock.busy(SharedDocumentLock.appDirectory(rootServiceFiles)))
+        }
         check(File(trusted, "android/mmj-document-io.lock").isFile)
         val linkedFiles = File(fixture, "linked-files").apply { mkdir() }
         Files.createSymbolicLink(File(linkedFiles, "android").toPath(), trusted.toPath())

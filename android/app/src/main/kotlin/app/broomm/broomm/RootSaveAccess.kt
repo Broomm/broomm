@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Parcel
 import android.os.SystemClock
+import android.util.Log
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ipc.RootService
 import io.flutter.plugin.common.MethodCall
@@ -17,7 +18,10 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.Executors
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /** Short-lived app-bound root connection. No daemon or automatic permission request. */
 class RootSaveAccess(private val activity: Activity) {
@@ -26,16 +30,28 @@ class RootSaveAccess(private val activity: Activity) {
     private val running = AtomicBoolean(false)
     private var connection: ServiceConnection? = null
     private var closed = false
+    private var restartRequired = false
     fun busy() = running.get()
     fun operation(call: MethodCall, result: MethodChannel.Result) {
         check(!closed && running.compareAndSet(false, true)) { "A root file operation is already running." }
+        if (restartRequired) {
+            running.set(false)
+            result.error("android-root-save", "Root service startup failed. Close and reopen Broomm before retrying; recovery was kept.", null)
+            return
+        }
         val done = AtomicBoolean(false)
+        val connected = CountDownLatch(1)
+        var registered = false
+        val stage = AtomicReference("validating")
+        fun phase(value: String) { stage.set(value); Log.i("BroommRoot", "${call.method}: $value") }
         fun finish(value: Any? = null, error: String? = null) {
             if (!done.compareAndSet(false, true)) return
+            if (registered && connected.count != 0L) restartRequired = true
             running.set(false)
+            Log.i("BroommRoot", "${call.method}: ${if (error == null) "completed" else "failed at ${stage.get()}"}")
             if (error == null) result.success(value) else result.error("android-root-save", error, null)
         }
-        val timeout = Runnable { finish(error = "Root access timed out. Check Magisk, then retry; recovery was kept.") }
+        val timeout = Runnable { finish(error = "Root access timed out during ${stage.get()}. Close and reopen Broomm before retrying; recovery was kept.") }
         main.postDelayed(timeout, 35000)
         try {
             val pkg = call.argument<String>("package")!!
@@ -45,8 +61,10 @@ class RootSaveAccess(private val activity: Activity) {
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
             if (call.method != "rootInspect") for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
-            val storage = File(activity.filesDir.canonicalFile, "broomm/android")
-            require(storage.canonicalPath == storage.absolutePath && (storage.isDirectory || storage.mkdirs()))
+            val storage = SharedDocumentLock.appDirectory(activity.filesDir)
+            // Create the shared inode as the app, before root can acquire it.
+            // The same path also makes a surviving root worker visible to ioBusy.
+            SharedDocumentLock.acquire(storage).use { }
             val request = Bundle().apply {
                 for ((key, value) in identity) putString(key, value.toString())
                 putLong("deadline", SystemClock.elapsedRealtime() + 30000)
@@ -82,7 +100,9 @@ class RootSaveAccess(private val activity: Activity) {
             // already verified by the read-only inspection on the Thor.
             val conn = object : ServiceConnection {
                 override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+                    connected.countDown()
                     if (closed || done.get()) { RootService.unbind(this); return }
+                    phase("file operation")
                     worker.execute {
                         try {
                             val input = Parcel.obtain(); val output = Parcel.obtain()
@@ -91,6 +111,7 @@ class RootSaveAccess(private val activity: Activity) {
                                 check(binder.transact(RootSaveService.REQUEST, input, output, 0))
                                 output.readException(); output.readBundle(javaClass.classLoader) ?: error("Missing root reply")
                             } finally { input.recycle(); output.recycle() }
+                            check(!closed && !done.get()) { "Root reply arrived after the request ended. Recovery was kept." }
                             answer.getString("error")?.let { error(it) }
                             require(RootInspection.identity(activity, pkg) == identity) { "Emulator changed during root access. Recovery was kept." }
                             val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
@@ -116,16 +137,43 @@ class RootSaveAccess(private val activity: Activity) {
                 override fun onServiceDisconnected(name: ComponentName) {
                     finish(error = "Root service disconnected. Recovery was kept; close the emulator before retrying.")
                 }
+                override fun onNullBinding(name: ComponentName) {
+                    connected.countDown()
+                    finish(error = "Root service could not bind. Close and reopen Broomm; recovery was kept.")
+                }
             }
-            connection = conn
-            val task = RootService.bindOrTask(Intent(activity, RootSaveService::class.java), main::post, conn)
-            if (task != null) worker.execute {
+            worker.execute {
                 try {
-                    Shell.Builder.create().setFlags(Shell.FLAG_MOUNT_MASTER).setTimeout(30).build().use { shell ->
+                    phase("Magisk permission")
+                    // Obtain permission before libsu records a pending binding.
+                    // Use the verified global namespace with no isolated fallback.
+                    Shell.Builder.create().setCommands("su", "-M").setTimeout(25).build().use { shell ->
                         check(shell.isRoot) { "Magisk did not grant Broomm root access." }
-                        if (!closed && !done.get()) shell.execTask(task)
+                        if (closed || done.get()) return@use
+                        val ready = CountDownLatch(1)
+                        val bootstrap = AtomicReference<Shell.Task?>()
+                        val failure = AtomicReference<Exception?>()
+                        main.post {
+                            try {
+                                if (!closed && !done.get()) {
+                                    phase("service startup")
+                                    connection = conn
+                                    registered = true
+                                    bootstrap.set(RootService.bindOrTask(Intent(activity, RootSaveService::class.java), main::post, conn))
+                                }
+                            } catch (e: Exception) { failure.set(e) }
+                            finally { ready.countDown() }
+                        }
+                        check(ready.await(5, TimeUnit.SECONDS)) { "Root binding could not reach the app." }
+                        failure.get()?.let { throw it }
+                        if (closed || done.get()) return@use
+                        bootstrap.get()?.let { shell.execTask(it) }
+                        // execTask only writes a background launch command. Keep
+                        // the shell alive until the service actually connects.
+                        val remaining = request.getLong("deadline") - SystemClock.elapsedRealtime()
+                        check(remaining > 0 && connected.await(remaining, TimeUnit.MILLISECONDS)) { "Root service did not connect. Close and reopen Broomm before retrying." }
                     }
-                } catch (e: Exception) { main.post { finish(error = e.message ?: "Root service could not start.") } }
+                } catch (e: Exception) { main.post { finish(error = "${stage.get()}: ${e.message ?: "Root service could not start."}") } }
             }
         } catch (e: Exception) { main.removeCallbacks(timeout); finish(error = e.message ?: "Root request is invalid.") }
     }

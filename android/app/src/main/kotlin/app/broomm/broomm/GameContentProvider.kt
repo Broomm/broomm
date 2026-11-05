@@ -27,12 +27,8 @@ class GameContentProvider : ContentProvider() {
         if (relative.any { it.isEmpty() || it == "." || it == ".." || it.contains('\\') || it.contains('/') || it.contains('\u0000') }) throw FileNotFoundException("Invalid game path")
         val path = value.getString("base") + "/" + relative.joinToString("/")
         if (!(0 until files.length()).any { files.getString(it) == path }) throw FileNotFoundException("Unknown game file")
-        val file = File(path)
-        val library = File(context!!.filesDir, "library").canonicalFile
-        if (!file.canonicalPath.startsWith(library.path + File.separator) ||
-            file.canonicalPath != file.absolutePath || !file.isFile)
-            throw FileNotFoundException("Game file is missing or linked")
-        return file
+        return try { gameLibraryFile(context!!.filesDir, path) }
+        catch (_: Exception) { throw FileNotFoundException("Game file is missing or linked") }
     }
     override fun getType(uri: Uri) = "application/octet-stream"
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?,

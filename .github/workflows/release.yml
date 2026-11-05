@@ -199,6 +199,11 @@ jobs:
         run: |
           mkdir -p build/android-checks
           devbox --config tool/android run check-downloaded-apk 2>&1 | tee build/android-checks/downloaded-apk.log
+      - name: Android game library path regressions
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/android-checks
+          devbox --config tool/android run check-game-library 2>&1 | tee build/android-checks/game-library.log
       - name: Android root inspection process regressions
         if: ${{ !cancelled() }}
         run: |

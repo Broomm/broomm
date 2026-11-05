@@ -50,7 +50,7 @@ class RootSaveService : RootService() {
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
         if (request.getString("operation") != "inspect") require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
-        val storage = File(File(applicationInfo.dataDir).canonicalFile, "files/broomm/android")
+        val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         return SharedDocumentLock.acquire(storage).use {
             live()

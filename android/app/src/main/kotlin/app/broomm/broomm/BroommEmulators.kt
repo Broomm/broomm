@@ -135,10 +135,12 @@ class BroommEmulators(private val activity: Activity) {
                             val pkg = packageName(call.argument<String>("package"))
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
-                            val files = call.argument<List<String>>("files") ?: error("Missing game manifest")
-                            val selected = call.argument<String>("selected") ?: error("Missing game selection")
+                            val files = (call.argument<List<String>>("files") ?: error("Missing game manifest"))
+                                .map { gameLibraryFile(activity.filesDir, it).path }
+                            val selected = gameLibraryFile(activity.filesDir,
+                                call.argument<String>("selected") ?: error("Missing game selection")).path
                             require(files.size in 1..10000 && files.toSet().size == files.size && files.contains(selected))
-                            val base = File(activity.filesDir, "library").canonicalPath + File.separator
+                            val base = File(activity.filesDir.canonicalFile, "broomm/library").path + File.separator
                             for (path in files) {
                                 val f = File(path)
                                 require(f.isFile && f.canonicalPath == f.absolutePath && f.canonicalPath.startsWith(base)) { "Game file is missing or outside the library" }
