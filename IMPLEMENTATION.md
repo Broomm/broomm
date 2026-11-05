@@ -63,7 +63,11 @@ passes every check/package job for `2efaba2`. Its verified APK build 1038 is
 installed on the Thor for the packaged root-connection check; it precedes the
 additional missing-save guard. No Broomm progress/recovery existed before the
 approved reinstall, and the standalone Minish Cap hash remains unchanged. See the
-[implementation and walkthrough](docs/android-root-access.md).
+[implementation and walkthrough](docs/android-root-access.md). Final application source `bcc0f07` passes all checks and
+packages in [run 42127441352](https://github.com/Broomm/broomm/actions/runs/42127441352).
+Its hash-verified APK **build 1040** is installed on the Thor; owner launch/save/
+sync acceptance is pending. The reinstall again confirmed no Broomm progress
+or recovery data beforehand.
 
 ## Magisk root-inspection namespace correction — 2026-11-05
 

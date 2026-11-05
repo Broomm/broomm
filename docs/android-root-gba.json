@@ -103,5 +103,18 @@
     "stderr": "",
     "disposable_profile": "aa08e1a5518349dfb4fc835c4911fb76",
     "dex_sha256": "1c6418fe7679cdfe1d185ddde014d6e8ae91d57f716e0e6ee260b78861406966"
+  },
+  "ci_final": {
+    "run": 42127441352,
+    "source": "bcc0f07a4e949d6c760b0602bf6502160b43921c",
+    "conclusion": "success",
+    "scope": "all check and package jobs"
+  },
+  "thor_final_install": {
+    "build": 1040,
+    "apk_sha256": "3a1ec0a07caa222566fd264ab88d117b9e578e06f9ad7ae5da63d3a54560c6c8",
+    "installed": true,
+    "preinstall": "Recursive inventory confirms no Broomm game saves, session or swap journals; standalone Minish Cap hash unchanged",
+    "gameplay": "owner test pending"
   }
 }

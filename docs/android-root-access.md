@@ -114,6 +114,15 @@ execution archive were removed. This test used generated 128 KiB payloads;
 it did not access the standalone save/configuration or RomM, and does not prove
 that mGBA loaded a restored game. Receipt: `.tool-cache/rooted-gba/package-device.json`.
 
+Final application source `bcc0f07` passes every check/package job in
+[Actions run 42127441352](https://github.com/Broomm/broomm/actions/runs/42127441352).
+The current PR head/merge identity, archive digest and APK size/hash were verified
+before installing **build 1040** on the Thor. APK SHA-256:
+`3a1ec0a07caa222566fd264ab88d117b9e578e06f9ad7ae5da63d3a54560c6c8`.
+The approved reinstall preserved RetroArch; a fresh recursive Broomm inventory
+contained no gameplay saves or recovery journals. Launch/save/sync acceptance
+of this APK remains pending owner interaction.
+
 ## Thor Magisk namespace failure — 2026-11-05
 
 The owner confirmed RetroArch installed successfully through Broomm build 1035
