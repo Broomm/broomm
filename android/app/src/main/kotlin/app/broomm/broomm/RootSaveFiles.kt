@@ -77,10 +77,12 @@ internal class RootSaveFiles(
         }
     }
     fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String) =
-        publish(relative, before, after, payload, wantedMetadata, token, MAX_BYTES)
+        publish(relative, before, after, payload, wantedMetadata, token, MAX_BYTES,
+            sessionConfiguration = relative.endsWith(".cfg"))
 
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
-                        wantedMetadata: String?, token: String, limit: Int, beforeCommit: () -> Unit = {}) {
+                        wantedMetadata: String?, token: String, limit: Int,
+                        sessionConfiguration: Boolean = false, beforeCommit: () -> Unit = {}) {
         live()
         require(Regex("[a-f0-9]{32}-(in|out)").matches(token))
         require(listOfNotNull(before, after).all { Regex("[a-f0-9]{64}").matches(it) })
@@ -108,7 +110,7 @@ internal class RootSaveFiles(
             live(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
         }
         parents(relative, token)
-        if (relative.endsWith(".cfg")) {
+        if (sessionConfiguration) {
             parents(relative.substringBeforeLast('/') + "/saves/reserved.srm", token)
             parents(relative.substringBeforeLast('/') + "/states/reserved.state", token)
         }
@@ -171,7 +173,7 @@ internal class RootSaveFiles(
         }
         ensureClosed()
         mgba(abi, recoverPublication = true)?.let { return it }
-        publish(MGBA_PATH, null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, ensureClosed)
+        publish(MGBA_PATH, null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
         return expected
     }
 
@@ -196,9 +198,9 @@ internal class RootSaveFiles(
         ensureClosed()
         val token = build.take(32) + "-in"
         for ((name, bytes) in profiles)
-            replace("$target/android/$name", null, digest(bytes), bytes, null, token)
+            publish("$target/android/$name", null, digest(bytes), bytes, null, token, MAX_BYTES)
         val marker = build.toByteArray()
-        replace("$target/.complete", null, digest(marker), marker, null, token)
+        publish("$target/.complete", null, digest(marker), marker, null, token, MAX_BYTES)
     }
 
     private fun controllerProfilePath(build: String): String {
