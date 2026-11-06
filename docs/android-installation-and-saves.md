@@ -11,9 +11,9 @@ On **2026-11-05**, the owner deferred further Linux ARM64 investigation and
 selected the Android root route as the next milestone. This section records
 the adopted direction and staged acceptance. Implementation now includes
 [read-only inspection and a first GBA root-save route](android-root-access.md).
-Isolated native file-operation checks pass; packaged service and complete RomM
-round-trip acceptance remain pending. The APK/connected-folder behavior below
-remains available.
+The Thor verified gameplay, rooted save capture, RomM upload/download verification
+and root connection reuse. Loading a selected restored version in game is a
+separate device check. The APK and connected-folder routes remain available.
 The owner selected the **Thor running Android and GBA through RetroArch/mGBA**
 for the first real save round trip.
 
@@ -81,9 +81,9 @@ closing/recreating the activity requires retry. Android 7's legacy installer
 confirmation remains OS-owned. Store-only DuckStation does not need this grant.
 
 This permission does not control installed-app discovery or grant root access.
-An **Emulator app not installed** card means the package query found no supported
-emulator. **Inspect root access** is available only after that emulator is
-installed and detected. Revocation before installer handoff fails visibly and
+The **Not installed** status means the package query found no supported
+emulator. **Inspect root access** at the top of Emulator Settings lists the
+installed, enabled targets. Revocation before installer handoff fails visibly and
 requires retry; Broomm does not change Android permissions using root or ADB.
 The platform contract is Android's
 [canRequestPackageInstalls](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls())
@@ -138,7 +138,7 @@ to the official delivery services. No runtime plugin or emulator APK is bundled.
 
 ## Connect once, use every Broomm profile
 
-Close the emulator, then choose **Configure saves** on its card. Read its
+Close the emulator, then choose **Save folder…** on its card. Read its
 instructions, configure the emulator's location and grant Broomm the same root.
 The picker needs a shared folder or the emulator's own provider, not another
 app's private `Android/data` directory through the system storage provider.
@@ -164,7 +164,7 @@ storage. An installed emulator without a connected folder leads to Emulator
 Settings before Play; it no longer silently launches with unsynchronized saves.
 
 Existing profile-specific Broomm provider roots and the original MMJ journal
-remain readable for compatibility/recovery. Use Configure saves to adopt the
+remain readable for compatibility/recovery. Use **Save folder…** to adopt the
 new shared connection before starting another game. Legacy ordinary progress
 remains available for recovery/cloud actions; its unprovenanced states stay
 local rather than being silently assigned to a newly computed build group.

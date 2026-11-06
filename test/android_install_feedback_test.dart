@@ -63,7 +63,7 @@ void main() {
     model = ShellModel(ShellStorage(root), androidManager: manager)
       ..server = SavedServer('a' * 32, 'https://example.invalid', '5.4.0')
       ..platforms = [
-        for (var i = 0; i < 6; i++)
+        for (var i = 0; i < 12; i++)
           RommPlatform(i, 'A filler $i', 'unknown', 0),
         const RommPlatform(10, 'Game Boy Advance', 'gba', 1),
       ];
@@ -91,6 +91,46 @@ void main() {
 
   Finder inDialog(Finder target) =>
       find.descendant(of: find.byType(AndroidInstallDialog), matching: target);
+
+  testWidgets(
+    'root inspection is one page action and selects the installed app',
+    (t) async {
+      const retroarch = 'com.retroarch.aarch64', ppsspp = 'org.ppsspp.ppsspp';
+      manager.installed[retroarch] = const AndroidApp(
+        retroarch,
+        '1.22.2',
+        'retro',
+      );
+      manager.installed[ppsspp] = const AndroidApp(ppsspp, '1.19', 'psp');
+      model.platforms = [
+        const RommPlatform(10, 'Game Boy Advance', 'gba', 1),
+        const RommPlatform(11, 'Super Nintendo', 'snes', 1),
+      ];
+      await t.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: AndroidEmulatorSettingsScreen(model: model)),
+        ),
+      );
+      await t.pumpAndSettle();
+      final inspect = find.text('Inspect root access');
+      expect(inspect, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('android-emulator-10:retroarch')),
+          matching: inspect,
+        ),
+        findsNothing,
+      );
+      expect(find.text('Root saves…'), findsOneWidget);
+      await t.tap(inspect);
+      await t.pumpAndSettle();
+      expect(find.text('Choose an emulator to inspect'), findsOneWidget);
+      await t.tap(find.text('PPSSPP · $ppsspp'));
+      await t.pumpAndSettle();
+      expect(find.text('Selected app: $ppsspp · 1.19'), findsOneWidget);
+      expect(find.text('Request root inspection'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'scrolled card keeps permission and download progress visible until OS handoff',

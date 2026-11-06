@@ -94,7 +94,7 @@ Future<AndroidSavePlan> rootedGbaProgress(
     throw UnsupportedError(
       'Root save access currently supports Game Boy Advance with mGBA only. Configure a shared folder for other platforms.',
     );
-  final binding = manager.folder(emulator, package: package)!;
+  final binding = manager.gbaRoot(emulator, package: package)!;
   if (!androidRootBinding(binding))
     throw const FormatException('Invalid root save connection.');
   final app = manager.app(emulator, package: package)!;

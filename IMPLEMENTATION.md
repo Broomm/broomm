@@ -1,5 +1,18 @@
 # Implementation plan
 
+## Compact Android emulator settings and independent GBA binding — 2026-11-06
+
+Android emulator cards show the app, a short status and compact actions.
+Setup instructions remain in the dialogs. **Inspect root access** is a
+single page action with an installed-emulator picker when needed.
+
+Settings version 4 stores the GBA root binding separately from the shared
+folder. Existing version 3 root bindings load into the new slot, preserving
+their package and recovery identity. GBA prefers its root connection, and
+other RetroArch systems retain their shared-folder route. Disconnecting GBA
+root saves returns to the configured folder and retains progress. Regressions
+exercise both layouts, legacy settings migration and the page action.
+
 ## Root connection reuse and Thor save verification — 2026-11-06
 
 The owner confirmed Minish Cap gameplay and sync on build 1042. Broomm's
@@ -15,6 +28,11 @@ the Broomm activity, including emulator handoff. Each request still verifies
 package identity and uses the same deadline and file lock. Connection loss
 reports failure without replaying an uncertain operation. Activity destruction
 releases the binding. See [the device check](docs/android-root-access.md#root-connection-reuse--2026-11-06).
+
+The owner confirmed the notification fix on build 1043. After an initial
+permission failure, one service startup served 18 successful operations
+through play and sync. Broomm uploaded and verified RomM save 203 and cleared
+the active journals. The cancelled macOS baseline check was requested again.
 
 ## Rooted GBA launch handoff — 2026-11-06
 

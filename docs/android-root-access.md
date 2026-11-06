@@ -15,7 +15,8 @@ remains required future setup work.
 1. Install RetroArch and its **Nintendo – Game Boy Advance (mGBA)** core, save
    the RetroArch configuration, and choose **Quit RetroArch**.
 2. In Broomm, choose **Emulator Settings → Game Boy Advance → RetroArch →
-   Connect GBA root saves → RetroArch closed · Connect**. Allow Magisk if asked.
+   Root saves… → RetroArch closed · Connect**. Allow Magisk if asked. The
+   existing shared-folder connection remains available to other systems.
    Expect a confirmed connection or a visible actionable error. Opening the
    card does not request root. Denial preserves the previous connection.
 3. Install the selected GBA game from your RomM account. Choose it on Home and
@@ -63,6 +64,11 @@ same binding. Root I/O still runs only on request with the existing package
 checks, deadline and lock. Closing Broomm releases the binding. A lost binding
 fails the in-flight operation, leaving a subsequent user retry to reacquire
 root. The separate read-only **Inspect root access** button remains a diagnostic.
+
+The owner confirmed that repeated notifications stopped on build 1043. After an
+initial permission failure, one startup served 18 successful operations through
+play and sync. Broomm uploaded and verified RomM save 203, removed the staged
+ROM, cleared the active journals and preserved the standalone save hash.
 
 To check the new behavior on the Thor, open Broomm and play Minish Cap, then
 quit RetroArch and confirm sync. The `BroommRoot` log should show one Magisk
@@ -259,7 +265,7 @@ Magisk 31.1, and the owner confirmed the complete inspection flow in build 1036.
 For the selected first test, use the Thor's existing RetroArch installation and
 its mGBA core. Do not uninstall an emulator or migrate existing saves to test.
 
-1. Open **Emulator Settings → Game Boy Advance → RetroArch → Inspect root access**.
+1. Open **Emulator Settings → Inspect root access** and select RetroArch if asked.
    Opening the dialog does not request root.
 2. Review the selected APK package/version and choose **Request root inspection**.
    If the device's root manager asks, grant or deny that explicit request. The
@@ -276,7 +282,7 @@ its mGBA core. Do not uninstall an emulator or migrate existing saves to test.
    native operation; Dart also bounds an unresponsive channel. Retry is explicit.
    Root managers can retain their own permission prompt/process after the client
    stops; Broomm neither changes their policy nor claims to control their lifetime.
-5. **Configure saves** remains the existing folder route. Inspection never
+5. **Save folder…** remains the existing folder route. Inspection never
    changes that connection, the default emulator, working progress or cloud status.
 
 The report is kept only in the open dialog. Operational logs contain request,

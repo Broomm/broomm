@@ -22,17 +22,17 @@ and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-rooted-gba-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-android-settings-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
 
-On Android, open **Emulator Settings → Game Boy Advance → RetroArch → Inspect
-root access → Request root inspection**. The first dialog does not request
-root. Review/allow or deny the existing root manager's prompt; expect verified
+On Android, choose **Inspect root access** at the top of **Emulator Settings**,
+select an installed emulator if asked, then choose **Request root inspection**.
+Review the root manager's prompt. Expect verified
 package/user/directory metadata or an actionable error. **Cancel inspection**
 and closing the dialog discard the request. Reports are temporary and do not
-connect saves; **Configure saves** remains the existing folder route. No game,
+connect saves; **Save folder…** remains the existing folder route. No game,
 emulator settings or progress files are changed. No cleanup is needed beyond
 closing the dialog; root-manager permission history is managed there.
 For the Thor's Magisk route, inspection uses the command-local global mount
@@ -42,7 +42,9 @@ that option fail visibly. The exact script has been checked under Broomm's UID
 and app namespace on Magisk 31.1; the owner confirmed successful in-app
 read-only inspection with build 1036 on the Thor.
 
-The first root save route adds **Connect GBA root saves** on that GBA card.
+On the GBA RetroArch card, choose **Root saves…**. This keeps the shared folder
+connection available for other RetroArch systems. Use the same action to
+disconnect GBA root saves and fall back to the shared folder.
 Prerequisites are Android user 0, installed mGBA, and a saved RetroArch
 configuration. Quit RetroArch, select the connection action, confirm it is
 closed and allow Magisk if prompted. Broomm reports the verified connection and
@@ -266,9 +268,9 @@ See the [application update walkthrough and recovery notes](docs/application-upd
 
 The native Nintendo Switch homebrew app lives in the sibling [broomm-nsw project](../broomm-nsw/README.md), with its own requirements, implementation status and build environment. General Broomm decisions, the Flutter application and Switch emulator integration remain here.
 
-Android has APK installation/discovery and connected save adapters, with **native device verification and content/firmware parity still outstanding**; see the [Android status](docs/android-emulators.md). Open **Emulator Settings → Refresh installed apps**, then **Install** to download the official APK and open Android's confirmation flow, or **Install APK…** for your own compatible APK. DuckStation uses its store and PPSSPP Gold remains a paid entitlement. Stable `com.armsx2` and nightly `com.armsx2.nightly` are both detected; enabled stable wins when both exist. Successful package readback selects the installed emulator as default. Play opens the app without controller pairing.
+Android has APK installation/discovery and connected save adapters. See the [Android status](docs/android-emulators.md) for each emulator's verification and content support. Open **Emulator Settings → Refresh apps**, then **Install** to download the official APK and open Android's confirmation flow, or **Install APK…** for your own compatible APK. DuckStation uses its store and PPSSPP Gold remains a paid entitlement. Stable `com.armsx2` and nightly `com.armsx2.nightly` are both detected; enabled stable wins when both exist. Successful package readback selects the installed emulator as default. Play opens the app without controller pairing.
 
-Choose **Configure saves**, follow that app's location instructions and grant the same shared folder or its own provider. This connection serves every Broomm profile; no folder reselection is needed on profile changes. PPSSPP uses a Memory Stick root, melonDS a custom save folder with states in the save directory, and Azahar a user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker sidebar. ARMSX2 needs a shared custom data root and global cards; DuckStation needs accessible memcards/states and Shared cards. The [per-app checklist](docs/android-installation-and-saves.md#connect-once-use-every-broomm-profile) has exact settings, prerequisites and limits. Missing setup leads to Emulator Settings before Play.
+Choose **Save folder…**, follow that app's location instructions and grant the same shared folder or its own provider. This connection serves every Broomm profile; no folder reselection is needed on profile changes. PPSSPP uses a Memory Stick root, melonDS a custom save folder with states in the save directory, and Azahar a user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker sidebar. ARMSX2 needs a shared custom data root and global cards; DuckStation needs accessible memcards/states and Shared cards. The [per-app checklist](docs/android-installation-and-saves.md#connect-once-use-every-broomm-profile) has exact settings, prerequisites and limits. Missing setup leads to Emulator Settings before Play.
 
 The owner has requested a smoother Android setup. The [Argosy workflow audit](docs/argosy-android-workflow.md) separates its automatic built-in core downloads from external-app installation, save discovery, RomM sync and BIOS distribution. Automatic discovery and an optional embedded frontend are proposals; the manual workflow above remains the current implementation.
 

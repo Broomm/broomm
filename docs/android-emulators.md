@@ -47,7 +47,7 @@ Citra MMJ still requires the exact shared `citra-emu` folder and storage warning
 
 ## Save storage and lifecycle
 
-**Configure saves** now connects one stable emulator/package folder for every Broomm profile. Follow its app-specific location instructions, close the emulator and grant its shared root or its own provider. Setup verifies disposable file creation/write/readback/rename/delete. Each profile/game uses private working data and a journaled native swap, preserving/restoring standalone progress. Folder reselection on profile changes is no longer required. Native verification must still establish that the emulator retained and uses that choice.
+**Save folder…** connects one stable emulator/package folder for every Broomm profile. Follow its app-specific location instructions, close the emulator and grant its shared root or its own provider. Setup verifies disposable file creation/write/readback/rename/delete. Each profile/game uses private working data and a journaled native swap, preserving/restoring standalone progress. Folder reselection on profile changes is no longer required. Native verification must still establish that the emulator retained and uses that choice.
 
 Legacy profile-specific Broomm provider IDs remain readable and never follow the active login. Credentials/recovery/ownership stay outside their grant. New external connections are allowlisted per emulator/package; paths outside the selected root, ambiguous accounts and ownership changes fail without adoption. Original/working/captured copies survive interruption. Revoked access can be regranted for the original tree; explicit keep-folder resolution can finish without further writes/upload.
 

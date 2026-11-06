@@ -66,11 +66,7 @@ class _AndroidRootInspectionDialogState
           Text('Selected app: ${widget.app.package} · ${widget.app.version}'),
           const SizedBox(height: 12),
           const Text(
-            'For an already rooted device. Requesting inspection may open your root manager’s permission prompt. Broomm checks this app’s identity and private data-directory metadata without reading saves or changing files. The request times out after 30 seconds.',
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'This is the first root-support step. It does not connect saves, prove the emulator has stopped, or enable root synchronization. Continue using Configure saves for the existing folder route.',
+            'On an already rooted device, check this app’s identity and private folder metadata. Magisk or your root manager may ask for permission. The read-only check times out after 30 seconds.',
           ),
           if (busy) ...[
             const SizedBox(height: 12),

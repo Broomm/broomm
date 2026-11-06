@@ -218,6 +218,12 @@ Broomm activity, including while the player is in the emulator. Release it
 when the activity closes. Keep root requests tied to user actions and preserve
 recovery if the connection is lost.
 
+Keep Android emulator cards compact and put setup instructions in their
+dialogs. Provide one read-only root inspection action in Emulator Settings
+with an installed-app picker when needed. Keep GBA root and shared RetroArch
+folder connections independently so configuring GBA leaves other systems'
+save access available.
+
 The first device acceptance target is the owner's **Thor running Android**, with
 **Game Boy Advance through RetroArch/mGBA**. Offer an explicit read-only root
 inspection in Emulator Settings before any root save connection. Report package,

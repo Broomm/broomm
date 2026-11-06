@@ -182,10 +182,60 @@ void main() {
       manager.connectGbaRoot(emulator),
       throwsA(isA<PlatformException>()),
     );
-    expect(manager.folder(emulator)!['build'], 'a' * 64);
+    expect(manager.gbaRoot(emulator)!['build'], 'a' * 64);
     denied = false;
     observation['uid'] = '10119';
     await expectLater(plan(), throwsStateError);
+  });
+
+  test('GBA root and shared RetroArch saves coexist across reloads', () async {
+    final tree = 'content://$pkg.documents/tree/%2Fdata%2Fuser%2F0%2F$pkg';
+    fixture.trees[tree] = native;
+    await put(
+      'files/retroarch.cfg',
+      utf8.encode('input_joypad_driver = "android"\n'),
+    );
+    await put('cores/snes9x_libretro_android.so', [1]);
+    await put('cores/mgba_libretro_android.so', [2]);
+    await manager.confirmSharedStorage(emulator, tree);
+    await manager.connectGbaRoot(emulator);
+    await manager.load();
+    expect((await plan()).rooted, isTrue);
+    final snes = await androidProgressLayout(
+      manager,
+      profileId,
+      emulator,
+      playablePlatforms.firstWhere((p) => p.slug == 'snes'),
+      '/game/SNES game.sfc',
+      contentId: '43',
+    ) as AndroidSavePlan;
+    expect(snes.rooted, isFalse);
+    expect(snes.binding['tree'], tree);
+    expect(manager.connected(profileId, emulator, platform: 'snes'), isTrue);
+    await manager.disconnectGbaRoot(emulator);
+    await manager.load();
+    expect((await plan()).binding['tree'], tree);
+  });
+
+  test('version 3 root connections survive adding a shared folder', () async {
+    await manager.connectGbaRoot(emulator);
+    final settings = File('${data.path}/android/emulators.json');
+    await settings.writeAsString(
+      jsonEncode({
+        'version': 3,
+        'trees': {},
+        'folders': {'retroarch:$pkg': manager.gbaRoot(emulator)},
+      }),
+    );
+    await manager.load();
+    expect((await plan()).rooted, isTrue);
+    expect(manager.folder(emulator), isNull);
+    final tree = 'content://$pkg.documents/tree/%2Fdata%2Fuser%2F0%2F$pkg';
+    fixture.trees[tree] = native;
+    await manager.confirmSharedStorage(emulator, tree);
+    await manager.load();
+    expect((await plan()).rooted, isTrue);
+    expect(manager.folder(emulator)?['tree'], tree);
   });
 
   test('root journal captures profile progress and restores originals with native metadata', () async {
@@ -246,6 +296,7 @@ void main() {
     expect(await saves.pending, isTrue);
     denied = false;
     await expectLater(manager.connectGbaRoot(emulator), throwsStateError);
+    await expectLater(manager.disconnectGbaRoot(emulator), throwsStateError);
     final changed = AndroidSavePlan(p, emulator, {
       ...p.binding,
       'uid': '10119',
