@@ -8,6 +8,40 @@ import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
 
+enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
+
+Future<({AndroidRetroArchState state, int? elapsed, Map<String, int>? process})>
+readAndroidRetroArchState(
+  AndroidEmulators manager,
+  Map<String, String> binding, {
+  int? launchedAfter,
+  Map<String, int>? process,
+}) async {
+  final report = await manager.channel.invokeMapMethod<String, dynamic>(
+    'rootLifecycle',
+    {
+      ...binding,
+      if (launchedAfter != null) 'launchedAfter': launchedAfter,
+      if (process != null) 'process': process,
+    },
+  );
+  final state = AndroidRetroArchState.values
+      .where((state) => state.name == report?['state'])
+      .firstOrNull;
+  if (state == null)
+    throw const FormatException('Invalid RetroArch process report.');
+  const keys = ['pid', 'startTicks', 'observedElapsed', 'observedWall'];
+  return (
+    state: state,
+    elapsed: report?['elapsed'] as int?,
+    process:
+        state == AndroidRetroArchState.running &&
+            keys.every((k) => report?[k] is int && (report![k] as int) > 0)
+        ? {for (final k in keys) k: report![k] as int}
+        : null,
+  );
+}
+
 /// Persisted identity for the explicitly connected GBA route, never an inferred
 /// grant. The native service rechecks every field before each file operation.
 bool androidRootBinding(Map<String, String> binding) {

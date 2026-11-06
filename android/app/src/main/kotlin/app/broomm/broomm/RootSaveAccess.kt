@@ -123,6 +123,20 @@ class RootSaveAccess(private val activity: Activity) {
                 for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label"))
                     putString(key, call.argument<String>(key))
             }
+            if (call.method == "rootLifecycle") {
+                call.argument<Number>("launchedAfter")?.toLong()?.let {
+                    require(it in 0..SystemClock.elapsedRealtime())
+                    request.putLong("launchedAfter", it)
+                }
+                call.argument<Map<String, Number>>("process")?.let {
+                    require(it.keys == setOf("pid", "startTicks", "observedElapsed", "observedWall"))
+                    val pid = it.getValue("pid").toLong()
+                    require(pid in 1..Int.MAX_VALUE.toLong() && it.values.all { n -> n.toLong() > 0 })
+                    request.putInt("pid", pid.toInt())
+                    for (key in listOf("startTicks", "observedElapsed", "observedWall"))
+                        request.putLong(key, it.getValue(key).toLong())
+                }
+            }
             var listPath: String? = null
             if (call.method == "rootStageRom") {
                 // The app and root mount namespaces can expose different
@@ -169,6 +183,7 @@ class RootSaveAccess(private val activity: Activity) {
                         val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                         val value: Any? = when (call.method) {
                             "rootInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootLifecycle" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootList" -> if (answer.getBoolean("missing")) emptyMap<String, Any>() else mapOf(listPath!! to mapped)
                             "rootRead" -> {

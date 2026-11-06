@@ -42,9 +42,10 @@ change its security policy or install global services as a setup shortcut.
 4. **Accept on the actual device.** Create a save in game, upload it to the
    correct RomM history, restore an independently changed version and load it
    in game. Exercise two profiles, offline progress, conflicting changes,
-   denied access and interrupted publication. Retain the current explicit
-   save/close confirmation until a replacement has native verification; root
-   access or returning to Broomm does not prove that the emulator stopped.
+   denied access and interrupted publication. The rooted RetroArch route
+   checks for live processes and uses the observed process's normal exit
+   record before automatic sync. Retain explicit recovery for uncertain
+   exits. Verify this behavior on the Thor before extending it.
 
 This work does not add desktop input injection, overlays or unattended emulator
 updates. BIOS, firmware and update/DLC installation remain separately scoped.

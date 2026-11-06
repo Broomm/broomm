@@ -8,9 +8,9 @@ adapter. The first route now connects **GBA/mGBA ordinary saves on Android user
 inspection is independent. The actual mGBA core, external configuration and
 owner-created Minish Cap save have been identified on the Thor. Native file
 primitives pass isolated device tests. The owner confirmed the packaged Binder
-connection in build 1038 after reopening Broomm; launch and the RomM round trip
-still require acceptance. Automatic core download inside Broomm
-remains required future setup work.
+connection in build 1038 after reopening Broomm, followed by gameplay and save
+upload in builds 1042 and 1043. Automatic core download inside Broomm remains
+required future setup work.
 
 1. Install RetroArch and its **Nintendo – Game Boy Advance (mGBA)** core, save
    the RetroArch configuration, and choose **Quit RetroArch**.
@@ -19,14 +19,16 @@ remains required future setup work.
    existing shared-folder connection remains available to other systems.
    Expect a confirmed connection or a visible actionable error. Opening the
    card does not request root. Denial preserves the previous connection.
-3. Install the selected GBA game from your RomM account. Choose it on Home and
-   start the connected session only after closing RetroArch. Broomm verifies
+3. Install the selected GBA game from your RomM account. With RetroArch closed,
+   choose the game on Home and press **Play**. Broomm checks closure and verifies
    package/user/signer/build identity, checks cloud progress and prepares a
    separate game/profile save directory plus session configuration under
    `/data/user/0/<retroarch-package>/files/Broomm/<profile>/<content>`.
-4. Save in-game and **Quit RetroArch**, return to Broomm, then choose
-   **Emulator closed · Sync progress**. Returning alone is not closure evidence.
-   The existing Dart workflow captures progress, synchronizes the selected
+4. Save in-game, choose **Quit RetroArch**, and return to Broomm. A verified
+   normal exit starts sync automatically. If RetroArch is still running, choose
+   **Return to emulator** and quit it there. For an uncertain or interrupted
+   exit, use **Review and finish session** after quitting. The existing Dart
+   workflow captures progress, synchronizes the selected
    account's BROOMM history and restores the session directory's pre-launch
    contents. The ordinary standalone `RetroArch/saves/mGBA` file is untouched.
 5. For acceptance, retain the earlier history, create an independently changed
@@ -43,6 +45,20 @@ cleanup is not part of a failed transaction. If an installed working save is
 missing at capture, Broomm retains recovery and refuses to publish empty progress.
 No standalone save is auto-imported.
 Save states and BIOS/core downloads are not added by this route.
+
+### Verified closure
+
+The rooted route checks the selected Android user and package UID for live
+processes before save preparation and launch. A bounded observation after
+handoff records the launched process's PID, kernel start time, and monotonic
+and wall-clock observation times for the current Broomm activity. On return,
+the root service checks Android 11 or later's exit history for a single fresh
+record matching that process. A normal self-exit with status zero plus a
+fresh check for live writers enables automatic sync. An unavailable probe,
+an app restart, an ambiguous record, or an abnormal exit leaves recovery
+available. Manual recovery also refuses to proceed while a writer is detected.
+No process is stopped by Broomm. The unrooted folder route still uses explicit
+closure confirmation.
 
 ## Root connection reuse — 2026-11-06
 

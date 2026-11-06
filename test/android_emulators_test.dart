@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
+import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/files.dart';
@@ -40,6 +41,16 @@ class RecordingCloud extends CloudSaves {
   Future<void> afterPlay(CloudGame g, int exit) async {
     calls.add('after:$exit');
     finalized.add(g);
+  }
+}
+
+class ObservedRetroArchSession extends AndroidGameSession {
+  ObservedRetroArchSession(super.manager, super.cloud);
+  AndroidRetroArchState exit = AndroidRetroArchState.running;
+  @override
+  Future<AndroidRetroArchState> finishIfRetroArchClosed() async {
+    if (exit == AndroidRetroArchState.closed) active = false;
+    return exit;
   }
 }
 
@@ -627,7 +638,7 @@ void main() {
           title: 'Minish Cap',
           emulator: 'RetroArch',
           cloudReady: true,
-          start: () async {},
+          start: ({required bool emulatorClosed}) async {},
           finish: () async {},
         ),
       ),
@@ -643,6 +654,62 @@ void main() {
   });
 
   testWidgets(
+    'rooted RetroArch launches and syncs without confirmation when verified',
+    (t) async {
+      final session = ObservedRetroArchSession(manager, RecordingCloud(data));
+      var launches = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => AndroidSessionScreen(
+                    session: session,
+                    title: 'Minish Cap',
+                    emulator: 'RetroArch',
+                    cloudReady: true,
+                    rooted: true,
+                    resume: () async {},
+                    start: ({required bool emulatorClosed}) async {
+                      expect(emulatorClosed, isFalse);
+                      launches++;
+                      session.active = true;
+                    },
+                    finish: () async =>
+                        fail('A verified exit needs no confirmation.'),
+                  ),
+                ),
+              ),
+              child: const Text('Play'),
+            ),
+          ),
+        ),
+      );
+      await t.tap(find.text('Play'));
+      await t.pumpAndSettle();
+      expect(launches, 1);
+      expect(find.text('Emulator closed · Sync and play'), findsNothing);
+
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(find.text('Return to emulator'), findsOneWidget);
+      expect(find.text('Finished? Sync progress'), findsNothing);
+
+      session.exit = AndroidRetroArchState.closed;
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(find.byType(AndroidSessionScreen), findsNothing);
+      expect(find.text('Play'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets(
     'Android game route launches directly and never shows controller pairing',
     (t) async {
       final session = AndroidGameSession(manager, RecordingCloud(data));
@@ -653,7 +720,7 @@ void main() {
             session: session,
             title: 'A game',
             emulator: 'PPSSPP',
-            start: () async {
+            start: ({required bool emulatorClosed}) async {
               ++launches;
             },
             finish: () => session.finish(emulatorClosed: true),

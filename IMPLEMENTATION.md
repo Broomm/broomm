@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Verified RetroArch closure on rooted Android — 2026-11-06
+
+The GBA session verifies RetroArch is idle before starting without a prompt.
+The bound root service observes the verified package UID and identifies the
+launched process using its PID and kernel start time. On return to Broomm, it
+matches the observed process to Android's exit history and checks for a live
+writer before save capture and restoration. A normal exit allows automatic
+sync. A running process leaves the session active. Unknown and interrupted
+exits keep recovery available, with unclean progress kept locally for review.
+Shared-folder sessions use the existing explicit confirmation.
+
 ## Compact Android emulator settings and independent GBA binding — 2026-11-06
 
 Android emulator cards show the app, a short status and compact actions.

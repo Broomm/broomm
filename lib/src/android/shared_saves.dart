@@ -9,7 +9,7 @@ import 'emulators.dart';
 import 'save_plan.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
-/// the user confirms emulator closure. No process probing or OS hook is used.
+/// the session supplies emulator-closure evidence before save operations.
 class SharedAndroidSaves {
   SharedAndroidSaves(this.manager, {this.phase});
   final AndroidEmulators manager;

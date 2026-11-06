@@ -15,7 +15,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.MessageDigest
 
-/** Only verified package file primitives execute as root. No cloud/session workflow. */
+/** Verified package file operations and read-only RetroArch process evidence. */
 class RootSaveService : RootService() {
     private val binder = object : Binder() {
         override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
@@ -24,7 +24,7 @@ class RootSaveService : RootService() {
             val caller = Binder.getCallingUid()
             require(caller == packageManager.getApplicationInfo(packageName, 0).uid)
             val request = data.readBundle(javaClass.classLoader) ?: error("Missing root request")
-            val result = try { operation(request, caller) }
+            val result = try { operation(request, caller, Binder.getCallingPid()) }
             catch (e: Exception) { Bundle().apply { putString("error", e.message?.take(300) ?: "Root file operation failed. Recovery was kept.") } }
             reply.writeNoException(); reply.writeBundle(result)
             return true
@@ -32,7 +32,7 @@ class RootSaveService : RootService() {
     }
     override fun onBind(intent: Intent): IBinder = binder
 
-    private fun operation(request: Bundle, caller: Int): Bundle {
+    private fun operation(request: Bundle, caller: Int, callerPid: Int): Bundle {
         require(Process.myUid() == 0 && caller / 100000 == 0) { "The first root save route requires Android user 0." }
         val deadline = request.getLong("deadline")
         fun live() { check(SystemClock.elapsedRealtime() <= deadline) { "Root operation expired. Recovery was kept." } }
@@ -65,6 +65,7 @@ class RootSaveService : RootService() {
                     Bundle().apply { putString("core", hash); putByteArray("config", bytes); putString("root", root.path); putString("label", String(label).trimEnd('\u0000')) }
                 }
                 "check" -> Bundle()
+                "lifecycle" -> RootRetroArchProcess(this, pkg, uid, ::live).observe(request, callerPid, caller)
                 "stagerom" -> {
                     val path = request.getString("path")!!
                     val filesDir = File(applicationInfo.dataDir, "files")

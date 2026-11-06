@@ -646,6 +646,9 @@ class _BroommAppState extends State<BroommApp> {
     if (app == null)
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
+    final rooted =
+        platform.slug == 'gba' &&
+        m.android.gbaRoot(emulator, package: app.package) != null;
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
         m.android.progressSupported(emulator);
@@ -665,7 +668,8 @@ class _BroommAppState extends State<BroommApp> {
           title: entry.game.name,
           emulator: emulator.name,
           cloudReady: cloudReady,
-          start: () async {
+          rooted: rooted,
+          start: ({required bool emulatorClosed}) async {
             final files = await m.library.contentFiles(
               entry,
               excludeAddons: true,
@@ -678,6 +682,8 @@ class _BroommAppState extends State<BroommApp> {
               app: app,
               files: files,
               selected: selected,
+              rooted: rooted,
+              emulatorClosed: emulatorClosed,
               core:
                   platform.retroCore ??
                   (platform.slug == 'snes' ? 'snes9x' : null),

@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
+import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/save_plan.dart';
+import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
@@ -29,6 +31,13 @@ void main() {
   late CloudSaves cloud;
   var denied = false;
   var refuseRomCleanup = false;
+  var processState = 'idle', exitState = 'unknown';
+  const process = {
+    'pid': 1188,
+    'startTicks': 25,
+    'observedElapsed': 350,
+    'observedWall': 123456,
+  };
   final metadata = <String, String>{};
   final calls = <String>[];
   late Map<String, dynamic> observation;
@@ -59,6 +68,26 @@ void main() {
     client: api,
     layout: p,
   );
+  Future<void> launchRooted(
+    AndroidGameSession session, {
+    bool emulatorClosed = false,
+  }) async {
+    final rom = await File('${temp.path}/Minish Cap.gba').writeAsBytes([5, 6]);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: emulator,
+      app: manager.app(emulator)!,
+      files: [rom.path],
+      selected: rom.path,
+      core: 'mgba',
+      rooted: true,
+      emulatorClosed: emulatorClosed,
+      prepare: () async => game(await plan()),
+    );
+  }
+
   setUp(() async {
     temp = await Directory.systemTemp.createTemp('broomm-root-');
     data = await Directory('${temp.path}/data').create();
@@ -68,6 +97,8 @@ void main() {
     cloud = CloudSaves(data, notice: (_, _) {});
     denied = false;
     refuseRomCleanup = false;
+    processState = 'idle';
+    exitState = 'unknown';
     metadata.clear();
     calls.clear();
     observation = {
@@ -88,6 +119,7 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call.method);
+          if (call.method == 'launch') processState = 'running';
           if (!call.method.startsWith('root')) return fixture.call(call);
           if (denied)
             throw PlatformException(
@@ -95,6 +127,21 @@ void main() {
               message: 'Denied',
             );
           if (call.method == 'rootInspect') return observation;
+          if (call.method == 'rootLifecycle') {
+            final args = call.arguments as Map;
+            if (args['process'] != null) {
+              expect(args['process'], process);
+              return {
+                'state': processState == 'running' ? 'running' : exitState,
+              };
+            }
+            return {
+              'state': processState,
+              if (processState == 'idle') 'elapsed': 100,
+              if (processState == 'running' && args['launchedAfter'] == 100)
+                ...process,
+            };
+          }
           final args = Map<String, dynamic>.from(call.arguments as Map)
             ..['tree'] = 'root-fixture';
           if (call.method == 'rootStageRom') {
@@ -141,6 +188,88 @@ void main() {
     manager = AndroidEmulators(data, channel: channel, enabled: true);
     await manager.load();
   });
+
+  test(
+    'rooted launch blocks a running writer and asks only on unknown closure',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final session = AndroidGameSession(manager, cloud);
+      addTearDown(session.dispose);
+      processState = 'running';
+      await expectLater(
+        launchRooted(session, emulatorClosed: true),
+        throwsStateError,
+      );
+      expect(await session.pending(), isNull);
+      expect(calls, isNot(contains('rootReplace')));
+      expect(calls, isNot(contains('launch')));
+      processState = 'unknown';
+      await expectLater(
+        launchRooted(session),
+        throwsA(isA<AndroidClosureUnverified>()),
+      );
+      expect(await session.pending(), isNull);
+      await launchRooted(session, emulatorClosed: true);
+      expect(await session.pending(), isNotNull);
+      expect(calls, contains('launch'));
+    },
+  );
+
+  test('a live rooted session waits, then a verified normal exit syncs automatically', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), remote = p.remotePath('save/game.srm');
+    final standalone = await put(remote, [7]);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    await launchRooted(session);
+    await put(remote, [2, 3]);
+    expect(
+      await session.finishIfRetroArchClosed(),
+      AndroidRetroArchState.running,
+    );
+    await expectLater(session.finish(emulatorClosed: true), throwsStateError);
+    expect(await standalone.readAsBytes(), [2, 3]);
+    expect(api.records, isEmpty);
+    expect(await session.pending(), isNotNull);
+    processState = 'idle';
+    exitState = 'closed';
+    expect(
+      await session.finishIfRetroArchClosed(),
+      AndroidRetroArchState.closed,
+    );
+    expect(await standalone.readAsBytes(), [7]);
+    expect(api.contents[api.records.values.single.id], [2, 3]);
+    expect(await session.pending(), isNull);
+  });
+
+  test(
+    'missing exit evidence and a crash retain the rooted save for review',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final p = await plan(), remote = p.remotePath('save/game.srm');
+      final session = AndroidGameSession(manager, cloud);
+      addTearDown(session.dispose);
+      await launchRooted(session);
+      final changed = await put(remote, [3, 4]);
+      processState = 'idle';
+      expect(
+        await session.finishIfRetroArchClosed(),
+        AndroidRetroArchState.unknown,
+      );
+      exitState = 'interrupted';
+      expect(
+        await session.finishIfRetroArchClosed(),
+        AndroidRetroArchState.interrupted,
+      );
+      expect(await session.pending(), isNotNull);
+      expect(await changed.readAsBytes(), [3, 4]);
+      expect(api.records, isEmpty);
+      await session.finish(emulatorClosed: true);
+      expect(await (await p.target('save/game.srm')).readAsBytes(), [3, 4]);
+      expect((await cloud.store(game(p)).state())['unclean'], isTrue);
+      expect(api.records, isEmpty);
+    },
+  );
   tearDown(() async {
     manager.dispose();
     api.close();

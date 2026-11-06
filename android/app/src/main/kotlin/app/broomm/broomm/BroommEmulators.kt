@@ -43,7 +43,7 @@ class BroommEmulators(private val activity: Activity) {
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
-                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom" ->
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom", "rootLifecycle" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)

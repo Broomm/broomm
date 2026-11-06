@@ -208,9 +208,12 @@ profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and
 native file ownership, permissions and labels. Keep synchronization decisions,
 transactions and recovery in Dart behind a narrow Android access adapter.
-Existing explicit save/close confirmation remains the implemented lifecycle
-contract until a replacement has native verification. Root does not extend
-Android into the desktop controller/injection/overlay scope. See the
+For the rooted GBA RetroArch route, start from **Play** when a privileged check
+verifies RetroArch is closed. On return, sync automatically after matching a
+normal exit to the launched emulator process and verifying its writer is gone.
+A running emulator blocks save changes. Keep manual recovery when the exit is
+uncertain or interrupted. Root does not extend Android into the desktop
+controller/injection/overlay scope. See the
 [next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
 
 After the first requested root save action, reuse that connection for the

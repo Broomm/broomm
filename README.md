@@ -22,7 +22,7 @@ and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-android-session-spacing-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-verified-retroarch-closure-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -57,8 +57,11 @@ staged copy.
 Broomm reuses the root connection through play and sync while its Android
 activity remains open. The first root save action after reopening can prompt
 through Magisk again.
-After saving in-game, choose **Quit RetroArch**, return to Broomm and confirm
-**Emulator closed · Sync progress**. Retain pending recovery data and follow the
+Choose **Play** with RetroArch closed to launch directly. After saving in-game,
+choose **Quit RetroArch** and return to Broomm. It syncs automatically after a
+verified normal exit. Switching back while RetroArch is still running leaves
+the session active. If the exit cannot be verified, use **Review and finish
+session** after quitting RetroArch. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
 This first route handles ordinary saves only. Manual core download is temporary;
 automatic Android core provisioning inside Broomm is still required and deferred.
