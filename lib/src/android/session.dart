@@ -307,16 +307,21 @@ class AndroidGameSession extends ChangeNotifier {
       if (root != null) {
         final process = _retroArchProcess;
         if (process != null) {
-          // Android can publish exit history shortly after Broomm resumes.
-          for (var attempt = 0; attempt < (automatic ? 3 : 1); attempt++) {
+          // The emulator can still be shutting down when Broomm resumes.
+          // Give both the process and its exit record a bounded settling time.
+          const checks = 5;
+          for (var attempt = 0; attempt < (automatic ? checks : 1); attempt++) {
             rootExit = (await readAndroidRetroArchState(
               manager,
               root,
               process: process,
             )).state;
-            if (rootExit != AndroidRetroArchState.unknown || !automatic) break;
-            if (attempt < 2)
-              await Future<void>.delayed(const Duration(milliseconds: 200));
+            if (!automatic ||
+                rootExit == AndroidRetroArchState.closed ||
+                rootExit == AndroidRetroArchState.interrupted)
+              break;
+            if (attempt < checks - 1)
+              await Future<void>.delayed(const Duration(milliseconds: 250));
           }
         } else {
           rootExit = (await readAndroidRetroArchState(manager, root)).state;

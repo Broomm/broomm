@@ -32,6 +32,7 @@ void main() {
   var denied = false;
   var refuseRomCleanup = false;
   var processState = 'idle', exitState = 'unknown';
+  var reportsBeforeExit = 0;
   const process = {
     'pid': 1188,
     'startTicks': 25,
@@ -99,6 +100,7 @@ void main() {
     refuseRomCleanup = false;
     processState = 'idle';
     exitState = 'unknown';
+    reportsBeforeExit = 0;
     metadata.clear();
     calls.clear();
     observation = {
@@ -131,6 +133,10 @@ void main() {
             final args = call.arguments as Map;
             if (args['process'] != null) {
               expect(args['process'], process);
+              if (reportsBeforeExit > 0) {
+                reportsBeforeExit--;
+                return {'state': 'running'};
+              }
               return {
                 'state': processState == 'running' ? 'running' : exitState,
               };
@@ -233,6 +239,7 @@ void main() {
     expect(await session.pending(), isNotNull);
     processState = 'idle';
     exitState = 'closed';
+    reportsBeforeExit = 1;
     expect(
       await session.finishIfRetroArchClosed(),
       AndroidRetroArchState.closed,
