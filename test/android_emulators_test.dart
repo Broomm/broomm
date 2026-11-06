@@ -15,6 +15,7 @@ import 'package:broomm/src/progress/service.dart';
 import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/session_lease.dart';
 import 'package:broomm/src/shell/android_session_screen.dart';
+import 'package:broomm/src/shell/controls.dart' show ConsoleButton;
 import 'package:broomm/src/widgets/pairing_screen.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
@@ -614,6 +615,32 @@ void main() {
       session.dispose();
     },
   );
+
+  testWidgets('Android sync and play and Back have separate touch bounds', (
+    t,
+  ) async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    await t.pumpWidget(
+      MaterialApp(
+        home: AndroidSessionScreen(
+          session: session,
+          title: 'Minish Cap',
+          emulator: 'RetroArch',
+          cloudReady: true,
+          start: () async {},
+          finish: () async {},
+        ),
+      ),
+    );
+    final play = find.widgetWithText(
+      ConsoleButton,
+      'Emulator closed · Sync and play',
+    );
+    final back = find.widgetWithText(ConsoleButton, 'Back');
+    expect(t.getRect(back).top - t.getRect(play).bottom, 12);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
 
   testWidgets(
     'Android game route launches directly and never shows controller pairing',

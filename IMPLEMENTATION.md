@@ -13,6 +13,9 @@ other RetroArch systems retain their shared-folder route. Disconnecting GBA
 root saves returns to the configured folder and retains progress. Regressions
 exercise both layouts, legacy settings migration and the page action.
 
+The Android pre-launch screen separates **Sync and play** and **Back** by 12
+logical pixels. A widget regression checks the gap between the touch targets.
+
 ## Root connection reuse and Thor save verification — 2026-11-06
 
 The owner confirmed Minish Cap gameplay and sync on build 1042. Broomm's

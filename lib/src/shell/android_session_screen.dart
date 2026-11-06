@@ -290,11 +290,13 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                                 : 'Finish game session',
                           ),
                         ),
-                      ] else if (!session.busy)
+                      ] else if (!session.busy) ...[
+                        if (!started) const SizedBox(height: 12),
                         ConsoleButton(
                           onPressed: () => Navigator.pop(context),
                           child: const Text('Back'),
                         ),
+                      ],
                     ],
                   ),
                 ),
