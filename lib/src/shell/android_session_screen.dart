@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../android/root_saves.dart';
 import '../android/session.dart';
 import 'controls.dart';
 import 'navigation.dart';
@@ -15,12 +16,14 @@ class AndroidSessionScreen extends StatefulWidget {
     this.resume,
     this.cloudReady = false,
     this.recovering = false,
+    this.rooted = false,
   });
   final AndroidGameSession session;
   final String title, emulator;
-  final Future<void> Function()? start, resume;
+  final Future<void> Function({required bool emulatorClosed})? start;
+  final Future<void> Function()? resume;
   final Future<void> Function() finish;
-  final bool cloudReady, recovering;
+  final bool cloudReady, recovering, rooted;
   @override
   State<AndroidSessionScreen> createState() => _AndroidSessionScreenState();
 }
@@ -30,6 +33,8 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   bool started = false;
   bool completed = false;
   String? error;
+  bool _manualStart = false;
+  AndroidRetroArchState? _retroArchState;
   bool _leftForEmulator = false, _offerSync = false, _promptOpen = false;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -52,8 +57,38 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     _offerSync = false;
     _promptOpen = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) await run(finishPrompt);
+      if (mounted) await run(widget.rooted ? finishRooted : finishPrompt);
       _promptOpen = false;
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  Future<void> start({required bool emulatorClosed}) async {
+    started = true;
+    await run(() async {
+      try {
+        await widget.start!(emulatorClosed: emulatorClosed);
+      } catch (e) {
+        if (widget.rooted && !widget.session.active) {
+          started = false;
+          _manualStart = e is AndroidClosureUnverified;
+        }
+        rethrow;
+      }
+    });
+  }
+
+  Future<void> finishRooted() async {
+    _retroArchState = await widget.session.finishIfRetroArchClosed();
+    if (_retroArchState == AndroidRetroArchState.closed) complete();
+  }
+
+  void complete() {
+    if (!mounted) return;
+    setState(() => completed = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && ModalRoute.of(context)?.isCurrent == true)
+        Navigator.pop(context);
     });
   }
 
@@ -80,9 +115,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     );
     if (confirmed != true) return;
     await widget.finish();
-    if (!mounted) return;
-    setState(() => completed = true);
-    Navigator.pop(context);
+    complete();
   }
 
   Future<void> run(Future<void> Function() action) async {
@@ -100,13 +133,9 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.session.addListener(_showReturnPrompt);
-    // With no shared save storage there is nothing to restore before handoff.
-    if (!widget.recovering && !widget.cloudReady) {
+    if (!widget.recovering && (widget.rooted || !widget.cloudReady)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          started = true;
-          run(widget.start!);
-        }
+        if (mounted) start(emulatorClosed: !widget.rooted);
       });
     }
   }
@@ -124,6 +153,10 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     builder: (context, _) {
       final session = widget.session;
       final active = session.active || widget.recovering && !completed;
+      final checkExit =
+          widget.rooted &&
+          _retroArchState != AndroidRetroArchState.unknown &&
+          _retroArchState != AndroidRetroArchState.interrupted;
       return PopScope(
         canPop: !session.busy && !active,
         child: Scaffold(
@@ -157,6 +190,8 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                             ? 'A previous external emulator session still needs to be finished. Save and close the emulator before continuing.'
                             : session.phase.isNotEmpty
                             ? session.phase
+                            : widget.rooted
+                            ? 'Checking whether RetroArch is closed…'
                             : 'Save and close any open emulator before Broomm restores cloud progress and launches the game.',
                         style: const TextStyle(height: 1.6),
                       ),
@@ -227,11 +262,15 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                           autofocus: true,
                           onPressed: session.busy
                               ? null
-                              : () {
-                                  started = true;
-                                  run(widget.start!);
-                                },
-                          child: const Text('Emulator closed · Sync and play'),
+                              : () => start(
+                                  emulatorClosed:
+                                      !widget.rooted || _manualStart,
+                                ),
+                          child: Text(
+                            widget.rooted && !_manualStart
+                                ? 'Check and play'
+                                : 'Emulator closed · Sync and play',
+                          ),
                         ),
                       if (active) ...[
                         if (widget.resume != null)
@@ -246,6 +285,8 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                           autofocus: true,
                           onPressed: session.busy
                               ? null
+                              : checkExit
+                              ? () => run(finishRooted)
                               : () => run(() async {
                                   final confirmed =
                                       await showConsoleDialog<bool>(
@@ -276,25 +317,25 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                                       );
                                   if (confirmed != true) return;
                                   await widget.finish();
-                                  if (!mounted) return;
-                                  setState(() => completed = true);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    if (mounted) Navigator.pop(context);
-                                  });
+                                  complete();
                                 }),
                           child: Text(
-                            widget.cloudReady
+                            checkExit
+                                ? 'Check for exit'
+                                : widget.rooted
+                                ? 'Review and finish session'
+                                : widget.cloudReady
                                 ? 'Finish and sync progress'
                                 : 'Finish game session',
                           ),
                         ),
-                      ] else if (!session.busy)
+                      ] else if (!session.busy) ...[
+                        if (!started) const SizedBox(height: 12),
                         ConsoleButton(
                           onPressed: () => Navigator.pop(context),
                           child: const Text('Back'),
                         ),
+                      ],
                     ],
                   ),
                 ),

@@ -9,8 +9,13 @@ macOS application build do not establish real Android emulator behavior.
 
 On **2026-11-05**, the owner deferred further Linux ARM64 investigation and
 selected the Android root route as the next milestone. This section records
-the adopted direction and staged acceptance; **root access is not implemented
-in this checkpoint**. The APK/connected-folder behavior below remains current.
+the adopted direction and staged acceptance. Implementation now includes
+[read-only inspection and a first GBA root-save route](android-root-access.md).
+The Thor verified gameplay, rooted save capture, RomM upload/download verification
+and root connection reuse. Loading a selected restored version in game is a
+separate device check. The APK and connected-folder routes remain available.
+The owner selected the **Thor running Android and GBA through RetroArch/mGBA**
+for the first real save round trip.
 
 Support an optional access mode on an **already rooted device**, retaining the
 shared-folder/provider route. Begin by identifying the actual device, Android
@@ -37,14 +42,16 @@ change its security policy or install global services as a setup shortcut.
 4. **Accept on the actual device.** Create a save in game, upload it to the
    correct RomM history, restore an independently changed version and load it
    in game. Exercise two profiles, offline progress, conflicting changes,
-   denied access and interrupted publication. Retain the current explicit
-   save/close confirmation until a replacement has native verification; root
-   access or returning to Broomm does not prove that the emulator stopped.
+   denied access and interrupted publication. The rooted RetroArch route
+   checks for live processes and uses the observed process's normal exit
+   record before automatic sync. Retain explicit recovery for uncertain
+   exits. Verify this behavior on the Thor before extending it.
 
 This work does not add desktop input injection, overlays or unattended emulator
 updates. BIOS, firmware and update/DLC installation remain separately scoped.
-No root-capable APK, root-device check or native save round trip is delivered
-by this documentation checkpoint.
+The earlier documentation checkpoint delivered no root-capable APK or native
+save round trip. The inspection increment's separate verification record must
+not be read as native device or save acceptance.
 
 ## Adopted scope
 
@@ -64,13 +71,55 @@ by this documentation checkpoint.
 
 ## Install flow
 
+**Install** and **Install APK…** first check Android's per-source APK permission.
+On Android 8+, if Broomm cannot request installs, it opens its own **Install
+unknown apps → Allow from this source** page. Enable it and return to Broomm;
+the selected download or file picker continues after a fresh OS permission
+check. A cancelled/denied request stops before any transfer/picker/default
+checkpoint. Retry the original action to ask again. No request is repeated while
+Android reports permission granted. Settings requests time out after two minutes;
+closing/recreating the activity requires retry. Android 7's legacy installer
+confirmation remains OS-owned. Store-only DuckStation does not need this grant.
+
+This permission does not control installed-app discovery or grant root access.
+The **Not installed** status means the package query found no supported
+emulator. **Inspect root access** at the top of Emulator Settings lists the
+installed, enabled targets. Revocation before installer handoff fails visibly and
+requires retry; Broomm does not change Android permissions using root or ADB.
+The platform contract is Android's
+[canRequestPackageInstalls](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls())
+and per-source settings activity; activity return alone is not a grant.
+
 **Emulator Settings → platform → Install** downloads the selected official APK
 with byte progress and cancellation, then hands its private file to Android's
-installer. Android still controls unknown-source permission, install confirmation
+installer. Permission guidance, progress and cancellation appear in an installation
+dialog above the invoking card. A failure stays visible with **Try again** and
+**Close**, including when the settings page is scrolled. The Dart staging path
+is `files/broomm/android/apks/<nonce>.apk`; the native installer and APK provider
+share the same confined-path validator. Android's framework-provided files root
+may contain a system alias; only that root is canonicalized. The exact logical
+or canonical APK filename is accepted, and the verified canonical file is used
+for package inspection and provider access. Foreign/nested paths, traversal,
+links below that root, missing and empty files remain rejected.
+Android still controls unknown-source permission, install confirmation
 and upgrade signing compatibility. Broomm checks package, exported launcher and
 minimum SDK; a successful download/handoff is not installation success.
 Installed package readback selects a newly installed emulator as default. No
 existing emulator or its data is uninstalled to bypass a signing failure.
+
+Thor evidence on 2026-11-05: build 1033 reached Android's source-permission
+settings and the owner granted access. A read-only app-op query confirmed
+`REQUEST_INSTALL_PACKAGES: allow`. Broomm's own diagnostic log records two
+complete 183,956,821-byte RetroArch transfers followed by immediate native
+handoff failure. Source inspection identified the native/provider expectation
+`files/android/apks`, missing ShellStorage's `broomm` component. This correction
+did not resolve installation on build 1034: the owner saw the now-visible path
+error after another complete download. Inspection inside Broomm's own mount
+namespace found `/data/user/0 -> /data/data`; the root shell's view did not
+contain that symlink. This matches Android's
+[app-data isolation setup](https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-11.0.0_r25/core/jni/com_android_internal_os_Zygote.cpp).
+The trusted-root alias correction above is covered by native JVM regressions;
+the updated APK still needs system-installer acceptance on the Thor.
 
 PPSSPP uses its official free APK. melonDS, Azahar vanilla, MMJ normal shared-
 storage and ARMSX2 use their official stable GitHub release assets; unsupported
@@ -90,7 +139,7 @@ to the official delivery services. No runtime plugin or emulator APK is bundled.
 
 ## Connect once, use every Broomm profile
 
-Close the emulator, then choose **Configure saves** on its card. Read its
+Close the emulator, then choose **Save folder…** on its card. Read its
 instructions, configure the emulator's location and grant Broomm the same root.
 The picker needs a shared folder or the emulator's own provider, not another
 app's private `Android/data` directory through the system storage provider.
@@ -116,7 +165,7 @@ storage. An installed emulator without a connected folder leads to Emulator
 Settings before Play; it no longer silently launches with unsynchronized saves.
 
 Existing profile-specific Broomm provider roots and the original MMJ journal
-remain readable for compatibility/recovery. Use Configure saves to adopt the
+remain readable for compatibility/recovery. Use **Save folder…** to adopt the
 new shared connection before starting another game. Legacy ordinary progress
 remains available for recovery/cloud actions; its unprovenanced states stay
 local rather than being silently assigned to a newly computed build group.

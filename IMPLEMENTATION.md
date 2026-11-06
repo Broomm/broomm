@@ -1,5 +1,324 @@
 # Implementation plan
 
+## Verified RetroArch closure on rooted Android — 2026-11-06
+
+The GBA session verifies RetroArch is idle before starting without a prompt.
+The bound root service observes the verified package UID and identifies the
+launched process using its PID and kernel start time. On return to Broomm, it
+matches the observed process to Android's exit history and checks for a live
+writer before save capture and restoration. A normal exit allows automatic
+sync. A running process leaves the session active. Unknown and interrupted
+exits keep recovery available, with unclean progress kept locally for review.
+Shared-folder sessions use the existing explicit confirmation.
+
+## Compact Android emulator settings and independent GBA binding — 2026-11-06
+
+Android emulator cards show the app, a short status and compact actions.
+Setup instructions remain in the dialogs. **Inspect root access** is a
+single page action with an installed-emulator picker when needed.
+
+Settings version 4 stores the GBA root binding separately from the shared
+folder. Existing version 3 root bindings load into the new slot, preserving
+their package and recovery identity. GBA prefers its root connection, and
+other RetroArch systems retain their shared-folder route. Disconnecting GBA
+root saves returns to the configured folder and retains progress. Regressions
+exercise both layouts, legacy settings migration and the page action.
+
+The Android pre-launch screen separates **Sync and play** and **Back** by 12
+logical pixels. A widget regression checks the gap between the touch targets.
+
+## Root connection reuse and Thor save verification — 2026-11-06
+
+The owner confirmed Minish Cap gameplay and sync on build 1042. Broomm's
+completed swap journal records a changed 8 KiB save. RomM save 199 was
+uploaded and downloaded for verification, the previous emulator file was
+restored, the staged ROM was removed and the active journals cleared. The
+standalone save hash still matches its original value. Loading save 199 in a
+subsequent gameplay session remains unverified.
+
+Build 1042 starts a Magisk shell for each privileged call. The follow-up
+starts the existing non-daemon root service lazily and keeps its binder for
+the Broomm activity, including emulator handoff. Each request still verifies
+package identity and uses the same deadline and file lock. Connection loss
+reports failure without replaying an uncertain operation. Activity destruction
+releases the binding. See [the device check](docs/android-root-access.md#root-connection-reuse--2026-11-06).
+
+The owner confirmed the notification fix on build 1043. After an initial
+permission failure, one service startup served 18 successful operations
+through play and sync. Broomm uploaded and verified RomM save 203 and cleared
+the active journals. The cancelled macOS baseline check was requested again.
+
+## Rooted GBA launch handoff — 2026-11-06
+
+The owner reported a black screen and an Android not-responding dialog on the
+Thor with build 1040. RetroArch 1.22.2 received Broomm's `content://` ROM URI
+and stopped during startup. Broomm downloaded existing RomM save 180 for ROM
+2338, installed it for the session and captured the same 8,192 bytes after
+closure. This establishes a download and unchanged capture. The game did not
+run, so a new save upload and in-game restore remain unverified.
+
+The rooted GBA route now stages the selected verified `.gba` as a private,
+read-only native file and passes that path to RetroArch. It bounds the transfer
+to 32 MiB and checks the staged bytes before handoff. The save journal records
+the staging identity before the copy and removes it after confirmed closure
+and save restoration. Earlier journals are still recoverable. Dart regressions
+and the disposable native file harness passed. See
+[the Thor launch evidence](docs/android-root-access.md#thor-launch-failure--2026-11-06).
+
+Build 1041 exposed two integration errors before it could hand off the game.
+The app passed an absolute library path across a namespace boundary, and the
+recovery call omitted the staged ROM checksum. The app now sends a validated
+library-relative path, which the service resolves in its own namespace. The
+recovery call passes the journaled checksum and can finish an existing restored
+swap. An isolated launch on the Thor loaded the actual ROM by native path and
+initialized mGBA, video and audio. The corrected packaged handoff and a
+changed-save round trip remain pending.
+
+## Rooted Android GBA ordinary-save route — 2026-11-05
+
+The owner installed mGBA, saved RetroArch's configuration and selected The Minish
+Cap (RomM ROM 2338). A verified ROM-only test copy and owner-created save establish
+its actual 128 KiB `.srm` under `RetroArch/saves/mGBA`; the active configuration
+is external `Android/data`, outside the previous adapter's candidates. The
+standalone test save, existing macOS save and remote RomM progress remain intact.
+Automatic Android core download inside Broomm is now an explicit subsequent
+setup requirement; manual mGBA setup is temporary.
+
+The owner approved libsu **6.0.0 core/service** after the recorded dependency
+comparison. The modules are strictly pinned, restricted to their JitPack group,
+hash-verified through Gradle, and accompanied by bundled license/source notices.
+A non-daemon bound root service performs only package-bound filesystem operations;
+Dart retains save plans, session leases, profile/cloud decisions and recovery.
+The native service keeps an OS lock through its actual effects, bounds requests
+and payloads, rejects unknown access/path/identity observations, preserves native
+ownership/mode/SELinux labels, flushes staged data and directories, and resumes
+interrupted staging/publication using the Dart journal's operation token.
+
+**Connect GBA root saves** explicitly verifies the installed mGBA core and current
+configuration before persisting a separate root identity. GBA sessions use exact
+ordinary-save selection and generated configuration under the emulator's private
+`files/Broomm/<profile>/<content>` boundary. Standalone shared-storage saves are
+not adopted or overwritten. Existing save journals own snapshot/install/capture/
+restore, including denial and interrupted writes. Save states, other rooted
+emulator routes and automatic core installation are not implemented by this slice.
+Read-only root inspection and existing folder connections remain available.
+RetroArch receives its frontend startup extras. The shared-I/O lock now resolves
+Android's trusted framework filesDir alias while still refusing linked children.
+
+Five new Dart cases pass for explicit/persisted setup and profile boundaries,
+ordinary-save capture/restoration with metadata, and interrupted/revoked access
+with identity refusal. A missing previously installed working save retains
+recovery and cannot become an empty upload. Same-named games use distinct
+local working paths based on content identity, with separate profile readback. The Kotlin bridge compiles. The actual file primitives
+pass an isolated root harness on the Thor: replacement and metadata restoration,
+changed/linked paths, interrupted stage/link publication, expired requests and
+a held production lock excluding a separate Android process. Fixture files were
+removed; no emulator save was used by that harness. These results do not yet
+establish in-app launch or a real RomM round trip. The owner subsequently
+confirmed the packaged Binder/core/config connection in build 1038 after
+reopening Broomm. A follow-up obtains Magisk permission before registering the
+libsu binding, reports startup phases and refuses late replies. It also unifies
+the root and app transfer-lock path, initializes the inode as the app, and fixes
+the launcher/provider library boundary to the actual `files/broomm/library`.
+Native path/lock regressions pass; the updated APK still needs device checks.
+All **581 Flutter tests** pass (one existing Linux-only skip on macOS), static
+analysis and workflow/shell lint are clean, and Kotlin compilation plus native
+inspection/lock regressions pass. The new lock cases accept the trusted Android
+filesDir alias and reject linked child paths. The fresh universal macOS archive
+is [Broomm-macOS-rooted-gba-preview.zip](build/releases/Broomm-macOS-rooted-gba-preview.zip),
+24,323,563 bytes, SHA-256
+`50a88c76a8e9bebb2b5bc17458669ca6dbe214edb845c55676cebdf87b5c5442`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O payloads are universal. It remains ad-hoc signed, uses
+normal Application Support and disables development self-updates. PR APK and
+in-app device acceptance remain separate checks. Actions run
+[42122253927](https://github.com/Broomm/broomm/actions/runs/42122253927)
+passes every check/package job for `2efaba2`. Its verified APK build 1038 is
+installed on the Thor for the packaged root-connection check; it precedes the
+additional missing-save guard. No Broomm progress/recovery existed before the
+approved reinstall, and the standalone Minish Cap hash remains unchanged. See the
+[implementation and walkthrough](docs/android-root-access.md). Final application source `bcc0f07` passes all checks and
+packages in [run 42127441352](https://github.com/Broomm/broomm/actions/runs/42127441352).
+Its hash-verified APK **build 1040** is installed on the Thor; owner launch/save/
+sync acceptance is pending. The reinstall again confirmed no Broomm progress
+or recovery data beforehand.
+
+## Magisk root-inspection namespace correction — 2026-11-05
+
+The owner confirms successful RetroArch installation through build 1035 and
+an explicit Magisk grant to Broomm. Root inspection still failed: Android's
+isolated app namespace hides the other app's directory despite UID zero.
+The exact command was reproduced read-only on the Thor under Broomm's UID and
+namespace: inherited namespace fails; Magisk's command-local global namespace
+(`su -M`) returns complete RetroArch owner/mode/SELinux metadata. The adapter now
+uses that option, preserving package/user/path verification and bounded output,
+cancellation and timeout. It never changes root-manager policy or emulator files.
+
+Fixed stage codes distinguish unreadable request, unverified root identity,
+hidden/unresolved directory and metadata failure. Dart logs allowlisted codes
+without exposing platform diagnostics. Native regressions cover those refusal
+boundaries; the exact updated device script returns exit 62 in the isolated
+namespace and a complete report in the global namespace. This is native script
+evidence. The owner subsequently confirmed **Read-only inspection completed**
+inside Broomm build **1036** on the Thor with Magisk. This completes the first
+read-only root-inspection acceptance gate for this device/frontend combination;
+mGBA core/save-path verification and a real save round trip remain pending. See the
+[device evidence](docs/android-root-access.md#thor-magisk-namespace-failure--2026-11-05).
+
+Local evidence and build results are under `.tool-cache/android-root-failure/`.
+All 576 Flutter tests pass (one existing Linux-only skip on macOS), static
+analysis is clean, native process regressions pass and the Android bridge
+compiles with its two existing updater deprecation warnings. The current
+[universal macOS archive](build/releases/Broomm-macOS-root-namespace-preview.zip)
+is 24,328,539 bytes, SHA-256
+`be387ddec322a9bdaeb916e16c76586035795e3247a1cdb2004590e080ef6a9c`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O files are universal. Version `0.1.16-dev` remains ad-hoc
+signed with normal Application Support and disabled development self-updates.
+
+## Android app-namespace APK alias correction — 2026-11-05
+
+The owner reproduced `android-emulator: Invalid downloaded APK` on build 1034.
+Its app log confirms another complete transfer and immediate path rejection.
+The previous correction fixed the missing `broomm` component but did not account
+for Android's isolated app mount namespace: read-only `/proc/<pid>/root` and
+`nsenter -t <pid> -m -- readlink -f ...` show `/data/user/0` is a symlink to
+`/data/data` inside Broomm, while the ADB root shell sees a directory. The earlier
+shell-only canonical-path observation did not establish the app's view.
+
+The downloaded APK validator now resolves only the framework-supplied files
+root. It accepts the exact logical or canonical staging filename, rejects
+traversal/foreign paths and any linked component below that root, and returns
+the canonical file for package inspection and the one-file provider grant.
+Failure messages identify the rejected boundary without exposing account data.
+No application-storage migration or save-path change is made. Regression cases
+reproduce the trusted root alias, canonical grant readback, file/directory links
+under the aliased root and a foreign user's staging path. Native JVM checks and
+Android bridge compilation pass (the two existing updater warnings remain).
+The new alias regression fails against the previous validator and passes with
+the correction. All 28 affected Flutter tests pass. The current universal
+[macOS archive](build/releases/Broomm-macOS-android-path-alias-preview.zip) is
+24,328,539 bytes, SHA-256
+`30291d5245ce431ff60403cae99031ed3e5fd94732c5ac2e274e70112efeddb3`.
+Archive integrity and source/fresh-extraction deep/strict/all-architecture
+signatures pass; all seven Mach-O files are universal. Version `0.1.16-dev`
+uses normal Application Support, ad-hoc signing and disabled development
+self-updates. Updated APK installer acceptance still requires device execution.
+
+Evidence and build logs are under `.tool-cache/android-apk-rejection/`.
+
+## Android downloaded APK handoff and visible feedback — 2026-11-05
+
+The Thor's installed PR build 1033 successfully requested install permission;
+the owner granted it and the OS app-op confirms `allow`. Read-only inspection
+of Broomm's own log shows two complete RetroArch APK downloads (183,956,821
+bytes each), then immediate handoff failure. Native code and the content
+provider expected `files/android/apks`, while ShellStorage and the downloader
+use `files/broomm/android/apks`. Both native consumers now share one validated
+staging-path check. Foreign/nested paths, links, traversal, missing/empty files
+and the existing size/name constraints remain rejected.
+
+The Install and Install APK actions now open an installation dialog with
+permission guidance, transfer progress/cancellation and persistent failure
+feedback with retry/close. Previously these appeared only above the long
+settings list, outside the owner's GBA viewport. Successful OS handoff closes
+the dialog without claiming package installation; existing readback owns that
+decision. Native handoff errors now include their platform reason in phase logs.
+
+Regression checks exercise the production JVM path validator and the actual
+scrolled settings card's permission, transfer, handoff, failure/retry, imported
+APK failure and cancellation feedback. All **575 Flutter tests pass** (one
+existing Linux-only skip on macOS), static analysis is clean, JVM path checks
+pass and the Android bridge compiles with only the two existing updater
+deprecation warnings. Workflow/shell lint pass. The current universal
+[macOS archive](build/releases/Broomm-macOS-install-handoff-preview.zip) is
+24,328,544 bytes, SHA-256
+`b7c786b9fb6fe14559328d22d7f74a5b8763600b5fa62bcb683eb340b72bb34f`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture code
+signatures pass; all seven Mach-O files are universal. Version `0.1.16-dev`
+remains ad-hoc signed, uses normal Application Support and disables development
+self-updates. Logs and the source-bound package receipt are under
+`.tool-cache/android-install-handoff/`. Read-only device inspection also confirms
+the staging directory has the expected canonical path on the Thor.
+The updated Android installer handoff still needs native
+acceptance; no emulator save writes or root-save round trip are claimed.
+
+## Android emulator install permission — 2026-11-05
+
+After PR #1's APK was installed on the Thor (Android 13, user 0; Broomm
+0.1.16/build 1032), the owner found only Install/Install APK on the GBA card.
+Read-only ADB inspection confirmed no RetroArch package. The root action is
+intentionally installed-app-only; install permission does not control discovery.
+The owner requested automatic guidance when Broomm lacks APK-install permission.
+
+Emulator installation previously relied on the system installer's missing-source
+dialog. Install and Install APK now check permission before a transfer/picker,
+request Broomm's per-source settings only when needed and resume the chosen action
+after OS readback. Denial, timeout, closure and revoked handoff remain failures,
+without a new pending default or false installation result. Granted permission
+is reused; store handoffs are unchanged. Dart retains the installation workflow;
+the Kotlin adapter only owns OS permission inspection/settings activity results.
+The card wording now explicitly says **Emulator app not installed**.
+
+Three regression cases cover grant/reuse/store bypass, denial/unknown status
+without effects, and concurrent requests/failure/retry. The existing download
+case now checks permission before transfer. Thirty-one focused Flutter cases,
+analysis and Kotlin compilation pass locally (only the two existing updater
+deprecation warnings). Native permission grant/denial and resumed installation
+remain owner/device acceptance. See the [walkthrough](docs/android-installation-and-saves.md#install-flow).
+
+The full local suite passes **572 tests** (one existing Linux-only skip); after
+the final concurrent-store exclusion correction, analysis and all 31 affected
+cases pass again. The fresh universal
+[macOS preview](build/releases/Broomm-macOS-install-permission-preview.zip) is
+24,325,544 bytes, SHA-256
+`10526ac97dc71f676f1e4c13a3862c669d7bbe16d267ef76933f4491db2d8717`.
+ZIP integrity and source/fresh-extraction deep/strict/all-architecture signatures
+pass; all seven Mach-O files are universal. Version `0.1.16-dev` remains ad-hoc
+signed, uses normal Application Support and has development self-updates disabled.
+Logs and the source-bound packaging receipt are retained under
+`.tool-cache/android-install-permission/`. No device permission was changed;
+the Android 13 app-op inspection reports its default state. The new Android
+permission flow still requires the updated PR APK and owner/native acceptance.
+
+## Rooted Android: first implementation increment — 2026-11-05
+
+The owner selected the Thor running Android and GBA for the first real save
+round trip. Emulator Settings now provides **Inspect root access** for installed
+emulators. A separate explicit request invokes a bounded read-only Android
+adapter. It verifies the selected enabled package/launcher, signing/build
+observation, current Android user, resolved private data-directory boundary,
+UID/GID, mode and SELinux label. Reports are temporary; no root save connection,
+privileged save write, lifecycle probe or successful cloud status is inferred.
+Denial, unavailable access, cancellation, timeout and incomplete/mismatched
+observations remain visible. Connected-folder sync is unchanged.
+
+The adapter uses existing Android/JVM APIs and a fixed `su` inspection script;
+no root library, manager, service, native payload or SDK pin is added. Workflows
+and future save transactions remain in Dart. The [implementation record](docs/android-root-access.md)
+includes the alternatives, commands, effects, verification and remaining
+acceptance. ADB inspection found no connected device. The Thor's Android/root
+manager, installed RetroArch/mGBA, save-path correspondence and real upload /
+restore / in-game load still need native evidence before progressing to writes.
+
+Local analysis is clean; **569 Flutter tests pass**, with one existing Linux-only
+test skipped on macOS. The 37 focused Android cases include six new root-flow
+regressions. Kotlin bridge compilation passes with the two existing updater
+deprecation warnings; JVM process regressions and workflow/shell lint pass.
+Android APK creation stops at **No Android SDK found**. No Android native root
+execution, root-manager compatibility or save round trip is claimed.
+
+The fresh [universal macOS preview](build/releases/Broomm-macOS-root-inspection-preview.zip)
+is **24,325,487 bytes**, SHA-256
+`b96d9c9f05d2cc7f472787c3a8f60440f87944591f4af933454bad2cb4bf25cc`.
+Archive integrity and source/fresh-extraction deep/strict/all-architecture
+signatures pass; all seven Mach-O files contain ARM64 and x86_64. Version
+`0.1.15-dev` uses production Application Support, ad-hoc signing and disabled
+development self-updates. It does not provide Android runtime acceptance.
+
+The following checkpoint describes the preceding published release; it does
+not include this working-tree increment.
+
 **Checkpoint — 2026-11-05:** the owner deferred further Linux ARM64 work and
 requested committing/pushing the current implementation to generate a release
 build. [v0.1.15 is published](https://github.com/Broomm/broomm/releases/tag/v0.1.15)

@@ -7,6 +7,7 @@ import '../progress/layout.dart';
 import '../session.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
+import 'root_saves.dart';
 
 /// The emulator uses a user-selected Android DocumentsProvider directory whose
 /// bytes remain in this profile's Broomm storage. No external app-private path
@@ -28,13 +29,23 @@ Future<ProgressLayout> androidProgressLayout(
     throw UnsupportedError(
       'Cloud saves for ${emulator.name} on Android need an emulator-specific storage adapter. External progress is kept.',
     );
-  if (manager.folder(emulator, package: package) == null &&
-      manager.tree(profile, emulator) == null)
+  final app = manager.app(emulator, package: package);
+  if (app == null) throw StateError('Install ${emulator.name} first.');
+  if (platform.slug == 'gba' &&
+      manager.gbaRoot(emulator, package: package) != null)
+    return rootedGbaProgress(
+      manager,
+      profile,
+      emulator,
+      platform,
+      rom,
+      contentId ?? File(rom).parent.path.split('/').last,
+      package: package,
+    );
+  if (manager.tree(profile, emulator, package: package) == null)
     throw StateError(
       'Configure ${emulator.name}’s Broomm save folder in Emulator Settings first. Android cannot read another app’s private saves.',
     );
-  final app = manager.app(emulator, package: package);
-  if (app == null) throw StateError('Install ${emulator.name} first.');
   if (manager.folder(emulator, package: package) != null)
     return connectedAndroidProgress(
       manager,

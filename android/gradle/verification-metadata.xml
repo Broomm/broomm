@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<verification-metadata xmlns="https://schema.gradle.org/dependency-verification">
+   <configuration>
+      <verify-metadata>true</verify-metadata>
+      <verify-signatures>false</verify-signatures>
+      <!-- Introduce verification for the newly approved modules only. Existing
+           Flutter/Android dependencies retain their previous verification policy. -->
+      <trusted-artifacts>
+         <trust group="^(?!com[.]github[.]topjohnwu[.]libsu$).*" regex="true"/>
+      </trusted-artifacts>
+   </configuration>
+   <components>
+      <component group="com.github.topjohnwu.libsu" name="core" version="6.0.0">
+         <artifact name="core-6.0.0.pom"><sha256 value="16bc770ce1a36c957027c55e150cad31fa9a5b0b140fb6fcaa5fde13e949e587" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
+         <artifact name="core-6.0.0.aar"><sha256 value="a1ca5a8adb9ab11c42b71fc2d2a61b5a95cb4cdd06df0eb8c204c06813c2bb5b" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
+      </component>
+      <component group="com.github.topjohnwu.libsu" name="service" version="6.0.0">
+         <artifact name="service-6.0.0.pom"><sha256 value="5837c29b3e53270f237306c3e34a1abfb26e000e76274d49eef785e9684b0ca6" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
+         <artifact name="service-6.0.0.aar"><sha256 value="528bbcc3f057e8b5ea6f69a2deea1e0ff536880602e99e98763d7b74cf1d0659" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
+      </component>
+   </components>
+</verification-metadata>

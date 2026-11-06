@@ -1,6 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.18.4/.schema/devbox.schema.json",
-  "packages": {"kotlin": "2.4.0"},
-  "shell": {"scripts": {"check": "bash check_bridge.sh", "check-shared-lock": "bash check_shared_document_lock.sh"}},
-  "env": {"GRADLE_USER_HOME": "$PWD/../../.tool-cache/android/gradle"}
+  "packages": {
+    "kotlin": "2.4.0"
+  },
+  "shell": {
+    "scripts": {
+      "check": "bash check_bridge.sh",
+      "check-shared-lock": "bash check_shared_document_lock.sh",
+      "check-root-inspection": "bash check_root_inspection.sh",
+      "check-downloaded-apk": "bash check_downloaded_apk.sh",
+      "check-game-library": "bash check_game_library.sh",
+      "build-root-save-test": "bash build_root_save_test.sh"
+    }
+  },
+  "env": {
+    "GRADLE_USER_HOME": "$PWD/../../.tool-cache/android/gradle"
+  }
 }

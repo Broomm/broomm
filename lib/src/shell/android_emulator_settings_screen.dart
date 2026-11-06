@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../android/emulators.dart';
+import '../android/root_inspection.dart';
 import '../romm/models.dart';
 import '../progress/service.dart';
 import 'controls.dart';
+import 'android_root_inspection_dialog.dart';
+import 'android_install_dialog.dart';
 import 'model.dart';
 import 'navigation.dart';
 
@@ -22,6 +25,7 @@ class _AndroidEmulatorSettingsScreenState
   AndroidEmulators get manager => model.android;
   String? problem;
   bool working = false;
+  bool installationDialogOpen = false;
   @override
   void initState() {
     super.initState();
@@ -117,6 +121,31 @@ class _AndroidEmulatorSettingsScreenState
     );
   }
 
+  Future<void> install(
+    AndroidEmulator emulator, {
+    bool imported = false,
+  }) async {
+    if (working) return;
+    installationDialogOpen = true;
+    try {
+      await run(() async {
+        await showConsoleDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AndroidInstallDialog(
+            manager: manager,
+            emulator: emulator,
+            install: () => imported
+                ? manager.installApk(emulator, server: model.server!.id)
+                : manager.install(emulator, server: model.server!.id),
+          ),
+        );
+      });
+    } finally {
+      if (mounted) setState(() => installationDialogOpen = false);
+    }
+  }
+
   Future<void> recover() async {
     final record = await model.androidSession.pending();
     if (record == null || !mounted) return;
@@ -149,7 +178,7 @@ class _AndroidEmulatorSettingsScreenState
         model.profile?.id == record['profile'] &&
         model.installation(record['rom'] as int) != null &&
         manager.progressSupported(emulator) &&
-        manager.tree(model.profile!.id, emulator) != null)
+        manager.connected(model.profile!.id, emulator))
       game = await model.cloudGame(
         record['rom'] as int,
         androidRom: record['selected'] as String?,
@@ -160,11 +189,103 @@ class _AndroidEmulatorSettingsScreenState
     );
   }
 
+  List<(AndroidEmulator, AndroidApp)> get rootTargets => [
+    for (final emulator in androidEmulators)
+      for (final package in emulator.packages)
+        if (manager.app(emulator, package: package) case final app?)
+          if (app.enabled) (emulator, app),
+  ];
+
+  Future<void> inspectRoot() async {
+    final targets = rootTargets;
+    if (targets.isEmpty) return;
+    final target = targets.length == 1
+        ? targets.single
+        : await showConsoleDialog<(AndroidEmulator, AndroidApp)>(
+            context: context,
+            builder: (c) => AlertDialog(
+              scrollable: true,
+              title: const Text('Choose an emulator to inspect'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (emulator, app) in targets)
+                    ConsoleButton(
+                      onPressed: () => Navigator.pop(c, (emulator, app)),
+                      child: Text('${emulator.name} · ${app.package}'),
+                    ),
+                ],
+              ),
+              actions: [
+                ConsoleButton(
+                  onPressed: () => Navigator.pop(c),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          );
+    if (target == null || !mounted) return;
+    final (emulator, app) = target;
+    await showConsoleDialog<void>(
+      context: context,
+      builder: (_) => AndroidRootInspectionDialog(
+        emulator: emulator,
+        app: app,
+        inspector: AndroidRootInspector(phase: manager.phase),
+      ),
+    );
+  }
+
+  Future<void> configureRootSaves(
+    RommPlatform platform,
+    AndroidEmulator emulator,
+  ) async {
+    final connected = manager.gbaRoot(emulator) != null;
+    final accepted = await showConsoleDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(
+          connected ? 'Disconnect GBA root saves?' : 'Connect GBA root saves',
+        ),
+        content: Text(
+          connected
+              ? 'Quit RetroArch first. Broomm keeps your saves and uses the shared folder for GBA if one is connected.'
+              : 'Install mGBA and quit RetroArch. Allow root access when asked. This connects ordinary GBA saves for Broomm profiles.',
+        ),
+        actions: [
+          ConsoleButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancel'),
+          ),
+          ConsoleButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(
+              connected
+                  ? 'RetroArch closed · Disconnect'
+                  : 'RetroArch closed · Connect',
+            ),
+          ),
+        ],
+      ),
+    );
+    if (accepted != true || !mounted) return;
+    if (connected) {
+      await manager.disconnectGbaRoot(emulator);
+      model.showNotice('GBA root saves disconnected.');
+    } else {
+      await manager.connectGbaRoot(emulator);
+      await model.setDefaultEmulator(platform, emulator.id);
+      model.showNotice('GBA root saves connected.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([model, manager]),
     builder: (context, _) => ConsoleScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: FocusTraversalGroup(
         policy: ConsoleTraversalPolicy(),
         child: Column(
@@ -172,15 +293,14 @@ class _AndroidEmulatorSettingsScreenState
           children: [
             const Text(
               'Emulator Settings',
-              style: TextStyle(fontSize: 38, fontWeight: FontWeight.w300),
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w300),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Android uses installed emulator apps. Games open directly; controller setup and overlays stay in the emulator.',
-              style: TextStyle(color: muted, height: 1.6),
-            ),
-            const SizedBox(height: 20),
             if (working || manager.busy) const LinearProgressIndicator(),
+            if (manager.requestingInstallPermission)
+              const Text(
+                'Android permission required: enable Allow from this source for Broomm, then return here. Installation will continue automatically.',
+              ),
             if (manager.installing != null) ...[
               LinearProgressIndicator(
                 value:
@@ -212,27 +332,40 @@ class _AndroidEmulatorSettingsScreenState
                       );
               },
             ),
-            ConsoleButton(
-              autofocus: true,
-              onPressed: working || manager.busy
-                  ? null
-                  : () => run(manager.load),
-              child: const ActionLabel(
-                'Refresh installed apps',
-                icon: Icons.refresh,
-              ),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ConsoleButton(
+                  autofocus: true,
+                  onPressed: working || manager.busy
+                      ? null
+                      : () => run(manager.load),
+                  child: const ActionLabel('Refresh apps', icon: Icons.refresh),
+                ),
+                ConsoleButton(
+                  onPressed:
+                      working ||
+                          manager.busy ||
+                          model.gameActive ||
+                          rootTargets.isEmpty
+                      ? null
+                      : () => run(inspectRoot),
+                  child: const Text('Inspect root access'),
+                ),
+              ],
             ),
             if (problem != null) ProblemNotice(problem!),
             if (manager.error != null) ProblemNotice(manager.error!),
             for (final platform in [
               ...model.platforms,
             ]..sort((a, b) => a.name.compareTo(b.name))) ...[
-              const SizedBox(height: 28),
-              Text(platform.name, style: const TextStyle(fontSize: 25)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              Text(platform.name, style: const TextStyle(fontSize: 20)),
+              const SizedBox(height: 6),
               if (manager.choices(platform).isEmpty)
                 const Text(
-                  'No supported Android emulator integration for this platform yet. Games remain available to download.',
+                  'No supported emulator',
                   style: TextStyle(color: muted),
                 ),
               for (final emulator in manager.choices(platform))
@@ -249,18 +382,22 @@ class _AndroidEmulatorSettingsScreenState
         app?.enabled == true && model.defaultEmulator(platform) == emulator.id;
     final configured =
         model.profile != null &&
-        manager.tree(model.profile!.id, emulator) != null;
+        manager.connected(model.profile!.id, emulator, platform: platform.slug);
+    final rootCard = emulator.id == 'retroarch' && platform.slug == 'gba';
+    final rooted = rootCard && manager.gbaRoot(emulator) != null;
+    const actionPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
     final disabled =
-        working ||
-        manager.busy ||
-        manager.installing != null ||
+        // The modal owns interaction; keep its invoking button focusable so
+        // closing it restores the same card instead of jumping to Refresh.
+        !installationDialogOpen &&
+            (working || manager.busy || manager.installing != null) ||
         model.gameActive ||
         app?.enabled == false;
     return ConsoleFocusRegion(
       child: Container(
         key: ValueKey('android-emulator-${platform.id}:${emulator.id}'),
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(24),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xff14202d),
           borderRadius: BorderRadius.circular(20),
@@ -274,54 +411,37 @@ class _AndroidEmulatorSettingsScreenState
           children: [
             Text(
               '${emulator.name}${isDefault ? ' · Default' : ''}',
-              style: const TextStyle(fontSize: 23),
+              style: const TextStyle(fontSize: 19),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 3),
             Text(
               app == null
                   ? (manager.error == null
                         ? 'Not installed'
-                        : 'Installation status unavailable')
+                        : 'Status unavailable')
                   : !app.enabled
-                  ? 'Disabled in Android app settings'
-                  : 'Installed · ${app.version}',
-              style: TextStyle(color: app == null ? muted : accent),
-            ),
-            const SizedBox(height: 12),
-            if (emulator.id == 'armsx2')
-              Text(
-                'Detected channels: ${[if (manager.installed.containsKey('com.armsx2')) 'Stable', if (manager.installed.containsKey('com.armsx2.nightly')) 'Nightly'].join(' · ')}${app?.package == 'com.armsx2' ? ' · Stable preferred' : ''}',
-                style: const TextStyle(color: muted),
+                  ? 'Disabled in Android'
+                  : [
+                      app.version,
+                      if (rooted)
+                        'Root saves'
+                      else if (configured)
+                        'Folder saves'
+                      else
+                        'Saves not connected',
+                    ].join(' · '),
+              style: TextStyle(
+                color: app?.enabled == true && configured ? accent : muted,
               ),
-            Text(
-              emulator.saveNote ?? '',
-              style: const TextStyle(color: muted, height: 1.5),
             ),
-            if (manager.progressSupported(emulator)) ...[
-              const SizedBox(height: 8),
-              Text(
-                manager.folder(emulator) != null
-                    ? 'Save folder connected for all Broomm profiles. Finish and sync after closing the emulator.'
-                    : configured
-                    ? 'Legacy profile folder connected. Configure saves to use one folder across profiles.'
-                    : 'Connect a save folder once to enable cloud saves.',
-                style: TextStyle(color: configured ? accent : muted),
-              ),
-            ],
-            const SizedBox(height: 18),
+            const SizedBox(height: 8),
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 ConsoleButton(
-                  onPressed: disabled
-                      ? null
-                      : () => run(
-                          () => manager.install(
-                            emulator,
-                            server: model.server!.id,
-                          ),
-                        ),
+                  padding: actionPadding,
+                  onPressed: disabled ? null : () => install(emulator),
                   child: Text(
                     emulator.id == 'duckstation'
                         ? 'Open Play Store'
@@ -330,36 +450,45 @@ class _AndroidEmulatorSettingsScreenState
                         ? 'Download free PPSSPP'
                         : app == null
                         ? 'Install'
-                        : 'Download installer',
+                        : 'Get APK',
                   ),
                 ),
                 ConsoleButton(
+                  padding: actionPadding,
                   onPressed: disabled
                       ? null
-                      : () => run(
-                          () => manager.installApk(
-                            emulator,
-                            server: model.server!.id,
-                          ),
-                        ),
+                      : () => install(emulator, imported: true),
                   child: const Text('Install APK…'),
                 ),
                 if (app != null) ...[
+                  if (rootCard)
+                    ConsoleButton(
+                      padding: actionPadding,
+                      onPressed: disabled
+                          ? null
+                          : () => run(
+                              () => configureRootSaves(platform, emulator),
+                            ),
+                      child: const Text('Root saves…'),
+                    ),
                   ConsoleButton(
+                    padding: actionPadding,
                     onPressed: disabled
                         ? null
                         : () => run(() => manager.open(emulator)),
-                    child: const Text('Open emulator'),
+                    child: const Text('Open'),
                   ),
                   if (manager.progressSupported(emulator))
                     ConsoleButton(
+                      padding: actionPadding,
                       onPressed: disabled
                           ? null
                           : () => run(() => configure(emulator)),
-                      child: const Text('Configure saves'),
+                      child: const Text('Save folder…'),
                     ),
                   if (!isDefault)
                     ConsoleButton(
+                      padding: actionPadding,
                       onPressed: disabled
                           ? null
                           : () => run(
@@ -368,7 +497,7 @@ class _AndroidEmulatorSettingsScreenState
                                 emulator.id,
                               ),
                             ),
-                      child: const Text('Set as default'),
+                      child: const Text('Set default'),
                     ),
                 ],
               ],

@@ -8,6 +8,7 @@ import '../retroarch.dart';
 import '../progress/files.dart';
 import '../romm/models.dart';
 import 'apk_download.dart';
+import 'root_saves.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -19,13 +20,11 @@ class AndroidEmulator {
     this.platforms,
     this.installUrl,
     this.activity,
-    this.action, {
-    this.saveNote,
-  });
+    this.action,
+  );
   final String id, name, activity, action, installUrl;
   final Set<String> platforms;
   final List<String> packages;
-  final String? saveNote;
 }
 
 const androidEmulators = [
@@ -57,7 +56,6 @@ const androidEmulators = [
     'https://www.retroarch.com/?page=platforms',
     'com.retroarch.browser.retroactivity.RetroActivityFuture',
     'android.intent.action.MAIN',
-    saveNote: 'Install the platform’s core, then connect RetroArch’s Core Data provider. Saves use a separate session configuration; states require the matching Android app/core. Automatic core and BIOS provisioning is deferred.',
   ),
   AndroidEmulator(
     'ppsspp',
@@ -67,7 +65,6 @@ const androidEmulators = [
     'https://www.ppsspp.org/download/',
     'org.ppsspp.ppsspp.PpssppActivity',
     'android.intent.action.VIEW',
-    saveNote: 'Use PPSSPP’s Memory Stick folder. Savedata and matching Android states can be synchronized after the emulator is closed.',
   ),
   AndroidEmulator(
     'melonds',
@@ -77,7 +74,6 @@ const androidEmulators = [
     'https://github.com/rafaelvcaetano/melonDS-android/releases',
     'me.magnum.melonds.ui.emulator.EmulatorActivity',
     'me.magnum.melonds.LAUNCH_ROM',
-    saveNote: 'Connect melonDS’s custom save folder and set states to the save directory. Ordinary .sav files and build-specific Android states are synchronized after you finish playing.',
   ),
   AndroidEmulator(
     'azahar',
@@ -87,7 +83,6 @@ const androidEmulators = [
     'https://github.com/azahar-emu/azahar/releases',
     'org.citra.citra_emu.activities.EmulationActivity',
     'android.intent.action.VIEW',
-    saveNote: 'Select Azahar’s user folder in Android’s document picker. CIA installation uses Azahar’s own installer; desktop native importers cannot run on Android.',
   ),
   AndroidEmulator(
     'citra-mmj',
@@ -97,7 +92,6 @@ const androidEmulators = [
     'https://github.com/weihuoya/citra/releases',
     'org.citra.emu.ui.EmulationActivity',
     'android.intent.action.VIEW',
-    saveNote: 'Connect MMJ’s shared citra-emu folder. Private Android/data (“Storage Access”) builds are unsupported. Profile saves and matching-build states are swapped while MMJ is closed. Automatic CIA installation is deferred.',
   ),
   AndroidEmulator(
     'dolphin',
@@ -107,7 +101,6 @@ const androidEmulators = [
     'https://dolphin-emu.org/download/',
     'org.dolphinemu.dolphinemu.ui.main.MainActivity',
     'android.intent.action.MAIN',
-    saveNote: 'Grant Dolphin’s data provider for GameCube/Wii saves and matching Android states. GameCube requires GCI Folder cards. Standalone saves are preserved; automatic package installation is deferred.',
   ),
   AndroidEmulator(
     'eden',
@@ -117,7 +110,6 @@ const androidEmulators = [
     'https://git.eden-emu.dev/eden-emu/eden/releases',
     'org.yuzu.yuzu_emu.activities.EmulationActivity',
     'android.intent.action.VIEW',
-    saveNote: 'Grant Eden’s data provider to connect game saves for its console account. Keys and firmware must already be configured in Eden; automatic installation is deferred. Eden has no save states.',
   ),
   AndroidEmulator(
     'armsx2',
@@ -127,7 +119,6 @@ const androidEmulators = [
     'https://github.com/ARMSX2/ARMSX2/releases',
     'com.armsx2.MainActivity',
     'android.intent.action.VIEW',
-    saveNote: 'Connect a shared custom data folder using standard global memory cards. Broomm keeps separate profile/game cards and matching-build states. Stable is preferred when stable and nightly are both installed.',
   ),
   AndroidEmulator(
     'duckstation',
@@ -137,7 +128,6 @@ const androidEmulators = [
     'https://play.google.com/store/apps/details?id=com.github.stenzek.duckstation',
     'com.github.stenzek.duckstation.EmulationActivity',
     'android.intent.action.MAIN',
-    saveNote: 'Configure accessible memcards/savestates folders and Shared Between All Games cards. Broomm swaps separate cards per profile/game and restores your standalone cards afterward. Older private-only builds need migration first.',
   ),
 ];
 
@@ -176,10 +166,13 @@ class AndroidEmulators extends ChangeNotifier {
   final installed = <String, AndroidApp>{};
   final _trees = <String, String>{};
   final _folders = <String, Map<String, String>>{};
+  final _gbaRoots = <String, Map<String, String>>{};
   final _fingerprints = <String, String>{};
   bool busy = false, _disposed = false;
   AndroidApkDownload? _download;
   String? installing;
+  bool requestingInstallPermission = false;
+  bool _installActionActive = false;
   int downloadedBytes = 0;
   int? downloadBytes;
   void cancelDownload() => _download?.cancel();
@@ -225,13 +218,84 @@ class AndroidEmulators extends ChangeNotifier {
     return '$profile:${emulator.id}';
   }
 
-  String? tree(String profile, AndroidEmulator emulator) =>
-      folder(emulator)?['tree'] ?? _trees[_key(profile, emulator)];
+  String? tree(String profile, AndroidEmulator emulator, {String? package}) =>
+      folder(emulator, package: package)?['tree'] ??
+      _trees[_key(profile, emulator)];
   Map<String, String>? folder(AndroidEmulator emulator, {String? package}) {
     final selected = app(emulator, package: package);
     return selected == null
         ? null
         : _folders['${emulator.id}:${selected.package}'];
+  }
+
+  Map<String, String>? gbaRoot(AndroidEmulator emulator, {String? package}) {
+    final selected = app(emulator, package: package);
+    return emulator.id == 'retroarch' && selected != null
+        ? _gbaRoots[selected.package]
+        : null;
+  }
+
+  bool connected(
+    String profile,
+    AndroidEmulator emulator, {
+    String? platform,
+  }) =>
+      ((platform == null || platform == 'gba') && gbaRoot(emulator) != null) ||
+      tree(profile, emulator) != null;
+
+  Future<AndroidApp> _checkGbaRootChange(AndroidEmulator emulator) async {
+    if (!settingsKnown || emulator.id != 'retroarch')
+      throw StateError('Refresh RetroArch before connecting root saves.');
+    if (await progressExists('${data.path}/android/session.json') ||
+        await progressExists('${data.path}/android/shared-swap.json'))
+      throw StateError(
+        'Finish the pending Android session before changing its storage connection.',
+      );
+    await ensureNoWriters(closureConfirmed: true);
+    final selected = app(emulator);
+    if (selected == null || !selected.enabled)
+      throw StateError('Install and enable RetroArch first.');
+    return selected;
+  }
+
+  Future<void> connectGbaRoot(AndroidEmulator emulator) async {
+    final selected = await _checkGbaRootChange(emulator);
+    phase?.call(
+      'Inspecting mGBA and the saved RetroArch configuration with root access.',
+    );
+    final report = await inspectAndroidGbaRoot(this, selected);
+    final binding = <String, String>{
+      'access': 'root-gba-v1',
+      for (final key in [
+        'package',
+        'user',
+        'uid',
+        'dataDir',
+        'build',
+        'signer',
+        'label',
+      ])
+        key: report[key] as String,
+    };
+    final next = {..._gbaRoots, selected.package: binding};
+    await _save(gbaRoots: next);
+    _gbaRoots
+      ..clear()
+      ..addAll(next);
+    phase?.call(
+      'GBA root save connection verified. Standalone emulator saves were kept.',
+    );
+    _emit();
+  }
+
+  Future<void> disconnectGbaRoot(AndroidEmulator emulator) async {
+    final selected = await _checkGbaRootChange(emulator);
+    final next = {..._gbaRoots}..remove(selected.package);
+    await _save(gbaRoots: next);
+    _gbaRoots
+      ..clear()
+      ..addAll(next);
+    _emit();
   }
 
   bool progressSupported(AndroidEmulator emulator) =>
@@ -324,13 +388,15 @@ class AndroidEmulators extends ChangeNotifier {
   Future<void> _save({
     Map<String, String>? trees,
     Map<String, Map<String, String>>? folders,
+    Map<String, Map<String, String>>? gbaRoots,
   }) async {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 2,
+        'version': 4,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
+        'gbaRoots': gbaRoots ?? _gbaRoots,
         'fingerprints': _fingerprints,
       },
     );
@@ -385,7 +451,8 @@ class AndroidEmulators extends ChangeNotifier {
         await progressFile(data, 'android/emulators.json');
       if (await progressExists(file.path)) {
         final record = await progressJson(file);
-        if (![1, 2].contains(record['version']) || record['trees'] is! Map)
+        if (![1, 2, 3, 4].contains(record['version']) ||
+            record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
         final trees = (record['trees'] as Map).cast<String, String>();
         for (final entry in trees.entries) {
@@ -399,12 +466,20 @@ class AndroidEmulators extends ChangeNotifier {
         final folders = (record['folders'] as Map? ?? {})
             .cast<String, dynamic>();
         final checked = <String, Map<String, String>>{};
+        final roots = <String, Map<String, String>>{};
         for (final entry in folders.entries) {
           final binding = (entry.value as Map).cast<String, String>();
           final emulator = androidEmulators
               .where((e) => entry.key == '${e.id}:${binding['package']}')
               .firstOrNull;
+          if (record['version'] == 3 &&
+              emulator?.id == 'retroarch' &&
+              androidRootBinding(binding)) {
+            roots[binding['package']!] = binding;
+            continue;
+          }
           if (emulator == null ||
+              binding['tree'] == null ||
               !sharedTree(emulator, binding['package']!, binding['tree']!))
             throw const FormatException('Invalid connected emulator folder');
           checked[entry.key] = binding;
@@ -412,6 +487,19 @@ class AndroidEmulators extends ChangeNotifier {
         _folders
           ..clear()
           ..addAll(checked);
+        if (record['version'] == 4) {
+          final savedRoots = (record['gbaRoots'] as Map)
+              .cast<String, dynamic>();
+          for (final entry in savedRoots.entries) {
+            final binding = (entry.value as Map).cast<String, String>();
+            if (binding['package'] != entry.key || !androidRootBinding(binding))
+              throw const FormatException('Invalid GBA root connection');
+            roots[entry.key] = binding;
+          }
+        }
+        _gbaRoots
+          ..clear()
+          ..addAll(roots);
         final hashes = (record['fingerprints'] as Map? ?? {})
             .cast<String, String>();
         if (hashes.entries.any(
@@ -426,6 +514,7 @@ class AndroidEmulators extends ChangeNotifier {
       } else {
         _trees.clear();
         _folders.clear();
+        _gbaRoots.clear();
       }
       settingsKnown = true;
       final rows = await channel.invokeListMethod<Object?>('installed', {
@@ -523,7 +612,60 @@ class AndroidEmulators extends ChangeNotifier {
     if (record['server'] == server) await _installation.delete();
   }
 
-  Future<void> install(AndroidEmulator emulator, {String? server}) async {
+  Future<void> _withInstallPermission(
+    Future<void> Function() action, {
+    bool requiresApkPermission = true,
+  }) async {
+    if (_installActionActive || installing != null)
+      throw StateError('Finish the current emulator installation first.');
+    _installActionActive = true;
+    try {
+      final allowed = requiresApkPermission
+          ? await channel.invokeMethod<bool>('canInstallPackages')
+          : true;
+      if (allowed == null)
+        throw StateError(
+          'Android install permission could not be checked. Retry Install.',
+        );
+      if (!allowed) {
+        requestingInstallPermission = true;
+        phase?.call('Requesting Android permission to install emulator APKs.');
+        _emit();
+        final granted = await channel
+            .invokeMethod<bool>('requestInstallPermission')
+            .timeout(
+              const Duration(seconds: 125),
+              onTimeout: () => throw StateError(
+                'Install permission was not confirmed. Return to Broomm and retry Install.',
+              ),
+            );
+        if (granted != true)
+          throw StateError(
+            'Installation permission was not granted. Choose Install again and enable Allow from this source for Broomm in Android settings.',
+          );
+        phase?.call(
+          'Android installation permission confirmed. Continuing installation.',
+        );
+      }
+      requestingInstallPermission = false;
+      _emit();
+      if (_disposed)
+        throw StateError('Broomm closed before installation could continue.');
+      await action();
+    } finally {
+      requestingInstallPermission = false;
+      _installActionActive = false;
+      _emit();
+    }
+  }
+
+  Future<void> install(AndroidEmulator emulator, {String? server}) =>
+      _withInstallPermission(
+        () => _install(emulator, server: server),
+        requiresApkPermission: emulator.id != 'duckstation',
+      );
+
+  Future<void> _install(AndroidEmulator emulator, {String? server}) async {
     if (installing != null)
       throw StateError('Finish the current emulator installation first.');
     await _requestInstallation(emulator, server);
@@ -572,8 +714,10 @@ class AndroidEmulators extends ChangeNotifier {
             : emulator.packages,
         'requiredActivity': emulator.activity,
       });
-    } catch (_) {
-      phase?.call('${emulator.name} APK preparation did not complete.');
+    } catch (e) {
+      phase?.call(
+        '${emulator.name} APK preparation did not complete: ${e is PlatformException ? '${e.code}: ${e.message}' : e.runtimeType}.',
+      );
       if (apk != null && await apk.exists()) await apk.delete();
       if (server != null) await cancelInstallationDefault(server);
       rethrow;
@@ -585,7 +729,10 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> installApk(AndroidEmulator emulator, {String? server}) async {
+  Future<void> installApk(AndroidEmulator emulator, {String? server}) =>
+      _withInstallPermission(() => _installApk(emulator, server: server));
+
+  Future<void> _installApk(AndroidEmulator emulator, {String? server}) async {
     await _requestInstallation(emulator, server);
     try {
       await channel.invokeMethod<void>('installApk', {
@@ -739,6 +886,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? core,
     String? profile,
     String? configuration,
+    String? nativeRom,
   }) async {
     if (!settingsKnown)
       throw StateError(
@@ -760,6 +908,7 @@ class AndroidEmulators extends ChangeNotifier {
       'selected': selected,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
+      if (nativeRom != null) 'nativeRom': nativeRom,
       if (profile != null &&
           folder(emulator) == null &&
           emulator.id != 'citra-mmj' &&

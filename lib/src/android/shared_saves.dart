@@ -9,7 +9,7 @@ import 'emulators.dart';
 import 'save_plan.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
-/// the user confirms emulator closure. No process probing or OS hook is used.
+/// the session supplies emulator-closure evidence before save operations.
 class SharedAndroidSaves {
   SharedAndroidSaves(this.manager, {this.phase});
   final AndroidEmulators manager;
@@ -37,6 +37,14 @@ class SharedAndroidSaves {
           v['bytes'] > progressMaxFileBytes ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
+      if (plan.rooted &&
+          (v['metadata'] is! String ||
+              !RegExp(
+                '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
+              ).hasMatch(v['metadata'] as String)))
+        throw const FormatException(
+          'Root save ownership metadata is incomplete.',
+        );
       total += v['bytes'] as int;
       if (total > progressMaxBytes)
         throw const FormatException('Android progress exceeds its size limit');
@@ -46,12 +54,16 @@ class SharedAndroidSaves {
 
   bool same(Map a, Map b) =>
       progressEntriesDigest(a.cast<String, dynamic>()) ==
-      progressEntriesDigest(b.cast<String, dynamic>());
+          progressEntriesDigest(b.cast<String, dynamic>()) &&
+      a.keys.every((key) => a[key]['metadata'] == b[key]['metadata']);
   Future<Map<String, dynamic>> list(AndroidSavePlan plan) async => inventory(
-    await manager.channel.invokeMapMethod<String, dynamic>('sharedList', {
-      ...plan.arguments,
-      'areas': plan.remoteAreas.map((a) => a.selector).toList(),
-    }),
+    await manager.channel.invokeMapMethod<String, dynamic>(
+      plan.method('List'),
+      {
+        ...plan.arguments,
+        'areas': plan.remoteAreas.map((a) => a.selector).toList(),
+      },
+    ),
     plan,
   );
   Future<Map<String, dynamic>> record(
@@ -67,6 +79,7 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
+        plan.binding.entries.any((e) => r[e.key] != e.value) ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(r['transaction'] as String? ?? '') ||
         !{
@@ -115,7 +128,7 @@ class SharedAndroidSaves {
         '$where/${e.key}',
         createParents: true,
       );
-      await manager.channel.invokeMethod<void>('sharedRead', {
+      await manager.channel.invokeMethod<void>(plan.method('Read'), {
         ...plan.arguments,
         'path': e.key,
         'target': target.path,
@@ -144,7 +157,10 @@ class SharedAndroidSaves {
       throw const FormatException(
         'Android save root belongs to another profile',
       );
-    await manager.channel.invokeMethod<void>('sharedCheck', plan.arguments);
+    await manager.channel.invokeMethod<void>(
+      plan.method('Check'),
+      plan.arguments,
+    );
     final r = <String, dynamic>{
       'version': 1,
       'transaction': progressNonce(),
@@ -167,6 +183,10 @@ class SharedAndroidSaves {
           metadata = {
             'bytes': await e.value.length(),
             'sha256': await progressFileHash(e.value),
+            if (plan.rooted)
+              'metadata':
+                  (r['original'] as Map)[remote]?['metadata'] ??
+                  '${plan.binding['uid']} ${plan.binding['uid']} 600 ${plan.binding['label']}',
           };
       if (working.containsKey(remote))
         throw const FormatException('Ambiguous Android save mapping');
@@ -208,7 +228,7 @@ class SharedAndroidSaves {
       );
       await source.writeAsString(text, flush: true);
       final after = await progressFileHash(source);
-      await manager.channel.invokeMethod<void>('sharedReplace', {
+      await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
         'before': null,
@@ -217,6 +237,33 @@ class SharedAndroidSaves {
         'token': '${r['transaction']}-in',
       });
     }
+  }
+
+  Future<String> stageRootRom(CloudGame game, AndroidSavePlan plan) async {
+    final r = await record(game, plan);
+    final source = File(r['selected'] as String);
+    final name = source.uri.pathSegments.last;
+    progressRelative(name);
+    if (!name.toLowerCase().endsWith('.gba') ||
+        !plan.rooted ||
+        r['phase'] != 'installed')
+      throw StateError('Rooted GBA launch requires a single .gba game file.');
+    final config = plan.launch['configPath']!;
+    final parent = config.substring(0, config.lastIndexOf('/'));
+    final path = '$parent/rom-${r['transaction']}/$name';
+    final bytes = await source.length();
+    if (bytes < 1 || bytes > 32 * 1024 * 1024)
+      throw StateError('The GBA game file must be between 1 byte and 32 MiB.');
+    final hash = await progressFileHash(source);
+    r['romStage'] = path;
+    r['romStageSha256'] = hash;
+    await progressWrite(journal, r);
+    return (await manager.channel.invokeMethod<String>('rootStageRom', {
+      ...plan.arguments,
+      'path': path,
+      'source': source.path,
+      'sha256': hash,
+    }))!;
   }
 
   Future<void> apply(
@@ -237,12 +284,13 @@ class SharedAndroidSaves {
         throw StateError(
           'Android recovery copy is damaged. Native files were kept.',
         );
-      await manager.channel.invokeMethod<void>('sharedReplace', {
+      await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
+        if (plan.rooted) 'metadata': after[path]?['metadata'],
         'token': '${r['transaction']}-${afterKey == 'working' ? 'in' : 'out'}',
       });
     }
@@ -270,6 +318,10 @@ class SharedAndroidSaves {
       return false;
     }
     final files = await list(plan), capture = 'captures/${progressNonce()}';
+    if (plan.rooted && files.isEmpty && (r['working'] as Map).isNotEmpty)
+      throw StateError(
+        'The installed GBA working save is missing. Recovery copies were kept; restore the working file before syncing.',
+      );
     if (files.isEmpty)
       cloud.notice(
         'No save files were found in ${plan.emulator.name}’s connected folder. If you saved in-game, check its folder and memory-card settings.',
@@ -330,6 +382,21 @@ class SharedAndroidSaves {
     }
     if (r['phase'] != 'restored')
       throw StateError('Capture progress before restoring standalone saves.');
+    if (r['romStage'] case final String path when plan.rooted) {
+      final config = plan.launch['configPath']!;
+      final parent = config.substring(0, config.lastIndexOf('/'));
+      final name = File(r['selected'] as String).uri.pathSegments.last;
+      final hash = r['romStageSha256'];
+      if (path != '$parent/rom-${r['transaction']}/$name' ||
+          hash is! String ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
+        throw const FormatException('Rooted GBA staging identity changed.');
+      await manager.channel.invokeMethod<void>('rootRemoveRom', {
+        ...plan.arguments,
+        'path': path,
+        'sha256': hash,
+      });
+    }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }

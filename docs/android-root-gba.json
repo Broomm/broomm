@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-05",
+  "status": "packaged root connection accepted; startup/path/recovery follow-up awaits APK acceptance",
+  "source_base": "bcfcc4c53ea306c1f536d7fd7cc1a8b915d2ce0f",
+  "working_tree": true,
+  "source_files": {
+    "RootSaveFiles.kt": "dbbb699e25d793961a367b623914eae9ee455c0a1fe801d5b6abf9daf3c8ef43",
+    "RootSaveService.kt": "573cc75c91cbbb3da563131bc310887e3418360857dfc1135d74a3bbabc0f9ed",
+    "RootSaveAccess.kt": "251d1d784c1dba3a8d26b3613130e22222d92d9455ba764ac6d9b398190b513d",
+    "SharedDocumentLock.kt": "20c5f0c6639637102a170225829633cddfed6c1e7f40129ec8aa9670af1263b5",
+    "lib/src/android/shared_saves.dart": "7e0b2ac646e541208e80a05742be982e7c8f1ebc04f2da69edd4a59f35840eb6",
+    "GameLibraryFile.kt": "4ad85155ec3fd3cb4f4979e8438cd2318f8b9f24fd85104e635790a98abd6828",
+    "lib/src/android/root_saves.dart": "cf1b7182830a57aecf024f0fa3372655224b340c9785240ff04c699cb9932651"
+  },
+  "device": {
+    "serial": "1b8e0a3e",
+    "model": "AYN Thor",
+    "android": "13",
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch_package": "com.retroarch.aarch64",
+    "retroarch_version": "1.22.2_GIT",
+    "core_sha256": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545"
+  },
+  "native_fixture": {
+    "exit": 0,
+    "stdout": "PASS: atomic save replacement, UID/GID/mode/label restoration, compare-before-write and linked/path refusal\nPASS: interrupted partial stage, interrupted exclusive publication and expired request recovery\nPASS: held production OS lock excludes a separate Android process and permits it after release\n",
+    "stderr": "",
+    "fixture": "/data/local/tmp/broomm-root-test-99ea1c7fffa64d1ba9e4704e6877fd1a",
+    "dex_sha256": "9aa68aa5064fd952aaf067b3e5af30a350e26c09f5097d5023f01152301b8c9e"
+  },
+  "flutter_tests": {
+    "passed": 581,
+    "skipped": 1,
+    "skip": "existing Linux-only case on macOS"
+  },
+  "checks": {
+    "analysis": "pass",
+    "kotlin": "pass; deprecation warnings only",
+    "native_inspection": "pass",
+    "native_lock": "pass including trusted filesDir alias and linked child rejection",
+    "workflow_and_shell_lint": "pass",
+    "game_library": "pass: actual Broomm library, trusted alias, old/foreign/traversal/missing/linked path refusal"
+  },
+  "macos": {
+    "created_utc": "2026-11-05T23:08:55.038812+00:00",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.16-dev",
+      "build_number": "1",
+      "sha": "bcfcc4c53ea306c1f536d7fd7cc1a8b915d2ce0f",
+      "target": "macos-universal",
+      "working_tree": true,
+      "source_tree_sha256": "6c53f6f9a49df567fe775b9059cd28f7406b607ec8153101e9a93dd8b27fcaab",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "archive": "build/releases/Broomm-macOS-rooted-gba-preview.zip",
+    "bytes": 24323563,
+    "sha256": "50a88c76a8e9bebb2b5bc17458669ca6dbe214edb845c55676cebdf87b5c5442",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "architectures": {
+      "Contents/MacOS/broomm": "x86_64 arm64",
+      "Contents/Resources/native/broomm-astris.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": "x86_64 arm64",
+      "Contents/Frameworks/App.framework/Versions/A/App": "x86_64 arm64"
+    }
+  },
+  "not_verified": [
+    "updated startup/lock/library corrections in the final APK",
+    "Broomm game launch with managed config",
+    "real RomM upload/change/restore/in-game load",
+    "multi-profile/offline/conflict device acceptance",
+    "other Android devices, users and root managers"
+  ],
+  "ci": {
+    "run": 42122253927,
+    "source": "2efaba26893ff4ce848fb0878cb456320bba5e7a",
+    "conclusion": "success",
+    "scope": "all checks and packages; precedes missing-working-save guard"
+  },
+  "thor_install": {
+    "build": 1038,
+    "apk_sha256": "adb3e97b9774ff066a918bc4ea3bf26bdbee363a3598d9362ba023d644daa9b5",
+    "installed": true,
+    "packaged_connection": "owner confirmed after full app reopen; log confirms at 2026-11-05T22:55:16.821810Z",
+    "preinstall": "No Broomm saves or recovery files; standalone save SHA unchanged"
+  },
+  "actual_package_fixture": {
+    "exit": 0,
+    "stdout": "PASS: actual RetroArch private storage publication/replacement/restoration; 10118 10118 600 u:object_r:app_data_file:s0:c118,c256,c512,c768\nPASS: disposable profile removed; standalone save and configuration were not accessed\n",
+    "stderr": "",
+    "disposable_profile": "aa08e1a5518349dfb4fc835c4911fb76",
+    "dex_sha256": "1c6418fe7679cdfe1d185ddde014d6e8ae91d57f716e0e6ee260b78861406966"
+  },
+  "ci_final": {
+    "run": 42127441352,
+    "source": "bcc0f07a4e949d6c760b0602bf6502160b43921c",
+    "conclusion": "success",
+    "scope": "all check and package jobs"
+  },
+  "thor_final_install": {
+    "build": 1040,
+    "apk_sha256": "3a1ec0a07caa222566fd264ab88d117b9e578e06f9ad7ae5da63d3a54560c6c8",
+    "installed": true,
+    "preinstall": "Recursive inventory confirms no Broomm game saves, session or swap journals; standalone Minish Cap hash unchanged",
+    "gameplay": "owner test pending"
+  }
+}

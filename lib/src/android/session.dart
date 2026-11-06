@@ -8,11 +8,19 @@ import '../progress/layout.dart';
 import '../session_lease.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
+import 'root_saves.dart';
 import 'save_plan.dart';
 import 'shared_saves.dart';
 
-/// A separate supervisor for external Android activities. Activity resume/result
-/// is not writer-exit evidence. The owner explicitly confirms emulator closure.
+class AndroidClosureUnverified implements Exception {
+  const AndroidClosureUnverified();
+  @override
+  String toString() =>
+      'Could not verify RetroArch is closed. Quit it before continuing.';
+}
+
+/// A separate supervisor for external Android activities. Rooted RetroArch can
+/// supply process evidence. Other sessions use explicit closure confirmation.
 /// A durable marker blocks new sessions after process/activity destruction.
 class AndroidGameSession extends ChangeNotifier {
   AndroidGameSession(this.manager, this.cloud);
@@ -21,6 +29,7 @@ class AndroidGameSession extends ChangeNotifier {
   SessionLease? _lease;
   CloudGame? _game;
   bool _launched = false;
+  Map<String, int>? _retroArchProcess;
   bool busy = false, active = false, disposed = false;
   String phase = '', error = '';
   File get marker => File('${manager.data.path}/android/session.json');
@@ -66,6 +75,8 @@ class AndroidGameSession extends ChangeNotifier {
     CloudGame? game,
     ProgressResolver? resolve,
     Future<CloudGame?> Function()? prepare,
+    bool rooted = false,
+    bool emulatorClosed = true,
   }) async {
     if (![
           server,
@@ -79,6 +90,7 @@ class AndroidGameSession extends ChangeNotifier {
     error = '';
     _emit();
     try {
+      String? nativeRom;
       _lease = await SessionLease.acquire(manager.data);
       if (await pending() != null)
         throw StateError(
@@ -89,8 +101,19 @@ class AndroidGameSession extends ChangeNotifier {
           'MMJ has an unfinished shared-folder restore. Finish its original game session before starting another game.',
         );
       await manager.ensureNoWriters(closureConfirmed: true);
+      final root = rooted
+          ? manager.gbaRoot(emulator, package: app.package)
+          : null;
+      if (rooted && root == null)
+        throw StateError('Reconnect RetroArch root saves before playing.');
+      if (root != null) {
+        phase = 'Checking whether RetroArch is closed…';
+        _emit();
+        await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
+      }
       _game = game;
       _launched = false;
+      _retroArchProcess = null;
       // Publish before sync or handoff. An exception/unknown platform reply
       // keeps the marker until closure is confirmed; it cannot be a false exit.
       await progressWrite(
@@ -107,10 +130,17 @@ class AndroidGameSession extends ChangeNotifier {
           'emulator': emulator.id,
           'package': app.package,
           'selected': selected,
+          if (rooted) 'rooted': true,
         },
       );
       active = true;
       _game = prepare == null ? game : await prepare();
+      final layout = _game?.layout;
+      if (root != null &&
+          (layout is! AndroidSavePlan || !mapEquals(layout.binding, root)))
+        throw StateError(
+          'The RetroArch root save route changed. Progress was kept.',
+        );
       if (_game != null) {
         if (_game!.server != server ||
             _game!.profile != profile ||
@@ -131,7 +161,14 @@ class AndroidGameSession extends ChangeNotifier {
         if (_game!.layout case final AndroidSavePlan plan) {
           phase = 'Preparing ${emulator.name}’s connected save folder…';
           _emit();
+          if (root != null)
+            await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
           await _shared.begin(_game!, plan, app.build, selected: selected);
+          if (plan.rooted) {
+            phase = 'Preparing the game file for RetroArch…';
+            _emit();
+            nativeRom = await _shared.stageRootRom(_game!, plan);
+          }
         } else if (emulator.id == 'citra-mmj') {
           phase = 'Preparing MMJ’s shared save folder…';
           _emit();
@@ -140,6 +177,9 @@ class AndroidGameSession extends ChangeNotifier {
       }
       phase = 'Opening ${emulator.name}…';
       _emit();
+      final launchClock = root == null
+          ? null
+          : await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
       await manager.launch(
         emulator,
         app,
@@ -147,13 +187,40 @@ class AndroidGameSession extends ChangeNotifier {
         selected,
         core: core,
         profile: profile,
+        nativeRom: nativeRom,
         configuration: _game?.layout is AndroidSavePlan
             ? (_game!.layout as AndroidSavePlan).launch['configNative']
             : null,
       );
       _launched = true;
-      phase =
-          'Game handed to ${emulator.name}. Save and exit the emulator, then finish this session.';
+      phase = root == null
+          ? 'Game handed to ${emulator.name}. Save and exit the emulator, then finish this session.'
+          : 'Save and quit RetroArch, then return to Broomm.';
+      if (root != null && launchClock != null) {
+        try {
+          for (var attempt = 0; attempt < 6 && !disposed; attempt++) {
+            final report = await readAndroidRetroArchState(
+              manager,
+              root,
+              launchedAfter: launchClock,
+            );
+            if (report.process != null) {
+              _retroArchProcess = report.process;
+              cloud.phase?.call(
+                'RetroArch process identified for this session.',
+              );
+              break;
+            }
+            if (report.state == AndroidRetroArchState.unknown) break;
+            if (attempt < 5)
+              await Future<void>.delayed(const Duration(milliseconds: 200));
+          }
+        } catch (_) {
+          cloud.phase?.call(
+            'RetroArch process could not be tracked. Recovery remains available.',
+          );
+        }
+      }
     } catch (e) {
       error = '$e';
       if (!active) {
@@ -167,12 +234,56 @@ class AndroidGameSession extends ChangeNotifier {
     }
   }
 
+  Future<int?> _checkRetroArchIdle(
+    Map<String, String> root, {
+    required bool emulatorClosed,
+  }) async {
+    final report = await readAndroidRetroArchState(manager, root);
+    if (report.state == AndroidRetroArchState.running)
+      throw StateError(
+        'RetroArch is still running. Save and quit RetroArch, then try again.',
+      );
+    if (report.state == AndroidRetroArchState.idle && report.elapsed != null)
+      return report.elapsed;
+    if (!emulatorClosed) throw const AndroidClosureUnverified();
+    return null;
+  }
+
+  Future<Map<String, String>?> _recoveryRoot(Map record) async {
+    if (record['emulator'] != 'retroarch') return null;
+    if (record['rooted'] != true &&
+        record['access'] != 'root-gba-v1' &&
+        !(await _shared.pending &&
+            (await progressJson(_shared.journal))['access'] == 'root-gba-v1'))
+      return null;
+    final emulator = androidEmulators.singleWhere((e) => e.id == 'retroarch');
+    final root = manager.gbaRoot(
+      emulator,
+      package: record['package'] as String?,
+    );
+    if (root == null)
+      throw StateError(
+        'Reconnect the original RetroArch root save route before finishing.',
+      );
+    return root;
+  }
+
   Future<void> finish({
     required bool emulatorClosed,
     CloudGame? recovery,
   }) async {
     if (!emulatorClosed)
       throw StateError('Close the emulator before synchronizing progress.');
+    await _finish(recovery: recovery);
+  }
+
+  Future<AndroidRetroArchState> finishIfRetroArchClosed() =>
+      _finish(automatic: true);
+
+  Future<AndroidRetroArchState> _finish({
+    CloudGame? recovery,
+    bool automatic = false,
+  }) async {
     if (busy) throw StateError('The Android session is still busy.');
     busy = true;
     error = '';
@@ -187,10 +298,52 @@ class AndroidGameSession extends ChangeNotifier {
         active = false;
         await _lease?.release();
         _lease = null;
-        return;
+        return AndroidRetroArchState.closed;
       }
       _lease ??= await SessionLease.acquire(manager.data);
-      await manager.ensureNoWriters(closureConfirmed: emulatorClosed);
+      await manager.ensureNoWriters(closureConfirmed: true);
+      final root = await _recoveryRoot(record);
+      var rootExit = AndroidRetroArchState.unknown;
+      if (root != null) {
+        final process = _retroArchProcess;
+        if (process != null) {
+          // The emulator can still be shutting down when Broomm resumes.
+          // Give both the process and its exit record a bounded settling time.
+          const checks = 5;
+          for (var attempt = 0; attempt < (automatic ? checks : 1); attempt++) {
+            rootExit = (await readAndroidRetroArchState(
+              manager,
+              root,
+              process: process,
+            )).state;
+            if (!automatic ||
+                rootExit == AndroidRetroArchState.closed ||
+                rootExit == AndroidRetroArchState.interrupted)
+              break;
+            if (attempt < checks - 1)
+              await Future<void>.delayed(const Duration(milliseconds: 250));
+          }
+        } else {
+          rootExit = (await readAndroidRetroArchState(manager, root)).state;
+        }
+        if (rootExit == AndroidRetroArchState.running) {
+          phase =
+              'RetroArch is still running. Save and quit it to sync progress.';
+          if (automatic) return rootExit;
+          throw StateError(phase);
+        }
+      }
+      if (automatic &&
+          (rootExit != AndroidRetroArchState.closed ||
+              !_launched ||
+              _game == null)) {
+        phase = 'RetroArch’s normal exit could not be verified. Progress was kept for recovery.';
+        return rootExit == AndroidRetroArchState.interrupted
+            ? rootExit
+            : AndroidRetroArchState.unknown;
+      }
+      if (automatic)
+        cloud.phase?.call('Verified RetroArch exit. Synchronizing progress.');
       var game = recovery ?? _game;
       final sharedPending = await _shared.pending;
       final sharedPlan = game?.layout is AndroidSavePlan
@@ -240,16 +393,23 @@ class AndroidGameSession extends ChangeNotifier {
         }
         phase = 'Keeping your progress safe…';
         _emit();
-        // A restart is unclean recovery, requiring the existing explicit
-        // conflict/review flow. Mere resume never certifies a clean shutdown.
+        if (root != null)
+          await _checkRetroArchIdle(root, emulatorClosed: !automatic);
         final capture = sharedPending
             ? await _shared.capture(game, cloud, sharedPlan!)
             : !mmjPending || await _mmj.capture(game, cloud);
-        if (capture)
-          await cloud.afterPlay(
-            game,
-            _game == null || !_launched || changedBuild ? 1 : 0,
-          );
+        if (capture) {
+          if (root != null)
+            await _checkRetroArchIdle(root, emulatorClosed: !automatic);
+          final unclean =
+              _game == null ||
+              !_launched ||
+              changedBuild ||
+              root != null && rootExit != AndroidRetroArchState.closed;
+          await cloud.afterPlay(game, unclean ? 1 : 0);
+        }
+        if (root != null)
+          await _checkRetroArchIdle(root, emulatorClosed: !automatic);
         if (mmjPending) await _mmj.restoreOriginal(game);
         if (sharedPending) await _shared.restoreOriginal(game, sharedPlan!);
       }
@@ -258,11 +418,13 @@ class AndroidGameSession extends ChangeNotifier {
       active = false;
       _game = null;
       _launched = false;
+      _retroArchProcess = null;
       phase = game == null
           ? 'Session finished. Progress remains in the external emulator.'
           : 'Session finished. Local recovery and pending cloud transfers were retained.';
       await _lease?.release();
       _lease = null;
+      return AndroidRetroArchState.closed;
     } catch (e) {
       error = '$e';
       rethrow;
@@ -321,6 +483,8 @@ class AndroidGameSession extends ChangeNotifier {
         throw StateError('There is no Android session to finish.');
       _lease ??= await SessionLease.acquire(manager.data);
       await manager.ensureNoWriters(closureConfirmed: emulatorClosed);
+      final root = await _recoveryRoot(record);
+      if (root != null) await _checkRetroArchIdle(root, emulatorClosed: true);
       // Do not inspect potentially incomplete native/shadow working files here.
       // Existing sealed snapshots remain authoritative until explicit review.
       final stateFile = await progressFile(
@@ -351,6 +515,7 @@ class AndroidGameSession extends ChangeNotifier {
       active = false;
       _game = null;
       _launched = false;
+      _retroArchProcess = null;
       error = '';
       phase = 'MMJ’s shared folder was left unchanged. Recovery copies were kept; no further progress was uploaded.';
       await _lease?.release();

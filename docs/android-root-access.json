@@ -1,0 +1,153 @@
+{
+  "recorded_utc": "2026-11-05T16:47:47.616171+00:00",
+  "scope": "Explicit read-only rooted Android package-directory inspection; first target Thor Android / GBA / RetroArch mGBA",
+  "revision": "921e7751a7d18a110c15d85efe4fde0bbb96559d",
+  "working_tree": true,
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "flutter": "3.47.0-sdk-links",
+    "kotlin": "2.4.0",
+    "android_compile_api": "36-ext19_r01"
+  },
+  "checks": {
+    "analysis": "passed",
+    "flutter_focused": {
+      "passed": 37,
+      "new_root_cases": 6
+    },
+    "flutter_full": {
+      "passed": 569,
+      "existing_platform_skips": 1
+    },
+    "kotlin_bridge": "passed; two existing BroommUpdates versionCode deprecation warnings",
+    "jvm_root_process_regressions": "passed; real host subprocesses, no su or Android execution",
+    "workflow_and_shell_lint": "passed",
+    "android_apk": {
+      "status": "blocked",
+      "error": "No Android SDK found"
+    },
+    "adb": {
+      "version": "37.0.1-15733141",
+      "devices": []
+    },
+    "native_root_device": "not executed",
+    "native_save_round_trip": "not executed",
+    "hosted_ci": "not run for this working tree"
+  },
+  "sources": {
+    "android/app/src/main/kotlin/app/broomm/broomm/MainActivity.kt": "f4ebb1b26f5b400b5ffd5bee7e904cc628fe7444322620b8193f768910dd9c9b",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootInspection.kt": "8e4f0870c93f8051f0c12c6aa8f86abfacc6e851f7b2af7674245927b436bf3a",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootInspectionCommand.kt": "fdccb701fc2371350d3c5cbaea9b918b3d82ee2f12e255689d77746a828b7378",
+    "lib/src/android/root_inspection.dart": "de06e50ec4601386858d9708e0f85caab008b70ee6324947f064f6ed9f31acc1",
+    "lib/src/shell/android_root_inspection_dialog.dart": "af0dfbf1dadbda5beaed6d7b89fcd3657a29d89c4370ae6dbd356407582456fd",
+    "lib/src/shell/android_emulator_settings_screen.dart": "e0301790be0522ff5538f3e4f7498c21f041164bfb059ab76096ba489c0c1e10",
+    "test/android_root_inspection_test.dart": "30866bf21a82a8f5137747fd364c384b34fc62cd191cfccd718669a06fa47aaf",
+    "tool/android/check_root_inspection.kt": "0703edaad6d6b9e425a0574dc63306dad336ddab65dfaecb70e51142b7937914",
+    "tool/android/check_root_inspection.sh": "a737f37d8462fd658044f39ba22c6c5105e6b50c9d02f114c1660baffba8cad3",
+    "tool/android/devbox.json": "72f6c88ae7fd86cf2574d86cbb1bd16064aae88c85c6e9470584f72750869e05",
+    ".github/workflows/release.yml": "891fa012bd891c69c159ad45573b39067a8464c4c18960aeead9bd79d8814382"
+  },
+  "package": {
+    "created_utc": "2026-11-05T16:44:45.840409+00:00",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.15-dev",
+      "build_number": "1",
+      "sha": "921e7751a7d18a110c15d85efe4fde0bbb96559d",
+      "target": "macos-universal",
+      "working_tree": true,
+      "source_tree_sha256": "c86f0d13e1dcc716672fd4975053e3bdd238190d5a704f94651073141d970d02",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "archive": "build/releases/Broomm-macOS-root-inspection-preview.zip",
+    "bytes": 24325487,
+    "sha256": "b96d9c9f05d2cc7f472787c3a8f60440f87944591f4af933454bad2cb4bf25cc",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "architectures": {
+      "Contents/MacOS/broomm": "x86_64 arm64",
+      "Contents/Resources/native/broomm-astris.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": "x86_64 arm64",
+      "Contents/Frameworks/App.framework/Versions/A/App": "x86_64 arm64"
+    },
+    "extracted": ".tool-cache/rooted-android/package-readback-2ll9sqzy/broomm.app"
+  },
+  "logs": {
+    ".tool-cache/rooted-android/all-tests.log": {
+      "bytes": 102059,
+      "sha256": "d84804d67a4116d009dec95b1ac33acd27a61694df56303bbd72cb925e85b0fe"
+    },
+    ".tool-cache/rooted-android/analyze.log": {
+      "bytes": 249,
+      "sha256": "cafe86eb3f397c61137c13152cb405c3db0d90f3b139b8b226a3e8867c36f5f9"
+    },
+    ".tool-cache/rooted-android/android-build.log": {
+      "bytes": 294,
+      "sha256": "72a67a5f1234313d659dfbb5932e12f597aab580ee113490efb8d011a9d7adfe"
+    },
+    ".tool-cache/rooted-android/focused-tests-sandbox.log": {
+      "bytes": 5990,
+      "sha256": "d9370606e48934604bb4a2e740b5ae5d911e09734d22260f5404d66d78d24121"
+    },
+    ".tool-cache/rooted-android/focused-tests.log": {
+      "bytes": 6573,
+      "sha256": "899fcfb2053586a8ec71169e1c8d53be67590cf1eb77a84a25ab3e43732a95ce"
+    },
+    ".tool-cache/rooted-android/lint-corrected.log": {
+      "bytes": 163,
+      "sha256": "2d5a7a33d30781828f776905a26c795a96c5db6b94b5fe212258e8a9328e96ce"
+    },
+    ".tool-cache/rooted-android/macos-build.log": {
+      "bytes": 1864,
+      "sha256": "d8bf6e45411656edc4c68d915c834d6c71b7d895b15965136ff1e2598ddec68e"
+    },
+    ".tool-cache/rooted-android/package.log": {
+      "bytes": 1372,
+      "sha256": "16fade2594827c5ae172acd93197fcff0e600a86322b825f33a093fda9732516"
+    },
+    ".tool-cache/rooted-android/workflow-lint.log": {
+      "bytes": 284,
+      "sha256": "d16b5223f5e8dc3e7af765730d9540a171490af7ddf6a8d3210c27c49d01ca27"
+    },
+    "build/android-checks/root-bridge-compile.log": {
+      "bytes": 972,
+      "sha256": "89eec0d9e6b1ab3f56deb28a76964b1104db3c6848c2e3ab71f5a8bf7725b7f0"
+    },
+    "build/android-checks/root-inspection-sandbox.log": {
+      "bytes": 768,
+      "sha256": "4e7561aa08ed73280ff077ae22c8def0183b9d792c63cfac0a44abffb0ddd757"
+    },
+    "build/android-checks/root-inspection.log": {
+      "bytes": 371,
+      "sha256": "7db40647761179c87195627e82a258bc4232584013f7e3bd4df1312a1a3801cc"
+    }
+  },
+  "limitations": [
+    "No root manager or device compatibility is established.",
+    "Root data-directory metadata is not a save-folder or writer-lifecycle verification.",
+    "No privileged save writes, per-file metadata preservation, root save binding or RomM root round trip implemented.",
+    "No Android APK available from this host; pinned bridge API compilation is not an APK/device check.",
+    "Windows/Linux/Android native execution and physical UI/controller acceptance not run."
+  ],
+  "preserved_failures": [
+    "Initial Flutter and Devbox runs blocked by sandbox socket restrictions; authorized unchanged commands rerun outside sandbox.",
+    "Initial workflow lint invoked from Devbox config directory; corrected explicit repository working directory passed."
+  ],
+  "effects": [
+    "No emulator data, owner saves, credentials, root policy or RomM content modified.",
+    "Local ADB inventory started its existing server; no device attached and no device root request sent.",
+    "macOS preview built and ad-hoc signed in project build storage."
+  ]
+}

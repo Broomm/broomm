@@ -71,7 +71,7 @@ class SharedSaveFolder(private val activity: Activity) {
         pending?.error("mmj-folder", "Folder selection was interrupted. Select the shared folder again.", null)
         pending = null
     }
-    fun busy(): Boolean = SharedDocumentLock.busy(File(activity.filesDir, "android"))
+    fun busy(): Boolean = SharedDocumentLock.busy(SharedDocumentLock.appDirectory(activity.filesDir))
     private fun tree(value: String, emulator: String? = null, pkg: String? = null): Uri {
         val uri = Uri.parse(value)
         require(value.length < 4096 && '\u0000' !in value && uri.scheme == "content" &&
@@ -219,7 +219,7 @@ class SharedSaveFolder(private val activity: Activity) {
     }
     fun operation(call: MethodCall): Any? {
         check(!closed.get()) { "The Android activity closed; retry save recovery." }
-        val lock = SharedDocumentLock.acquire(File(activity.filesDir, "android"))
+        val lock = SharedDocumentLock.acquire(SharedDocumentLock.appDirectory(activity.filesDir))
         val op = Operation()
         running.set(op)
         if (closed.get()) op.cancel()

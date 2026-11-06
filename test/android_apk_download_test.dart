@@ -121,6 +121,8 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call.method);
+          if (call.method == 'canInstallPackages') return false;
+          if (call.method == 'requestInstallPermission') return true;
           if (call.method == 'installed') return [];
           if (call.method == 'device')
             return {
@@ -146,9 +148,141 @@ void main() {
       );
       expect(path, isNotNull);
       expect(calls, contains('installDownloadedApk'));
+      expect(
+        calls.indexOf('requestInstallPermission'),
+        lessThan(calls.indexOf('device')),
+      );
       expect(calls, isNot(contains('installPage')));
       expect(manager.installed, isEmpty);
       expect(client.closed, true);
+    } finally {
+      manager.dispose();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    }
+  });
+  test('install permission is requested once, read back and reused for later APK picks; store needs no grant', () async {
+    const channel = MethodChannel('app.broomm/install-permission-test');
+    var allowed = false;
+    final calls = <String>[];
+    final manager = AndroidEmulators(data, channel: channel, enabled: true);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          switch (call.method) {
+            case 'canInstallPackages':
+              return allowed;
+            case 'requestInstallPermission':
+              expect(manager.requestingInstallPermission, true);
+              allowed = true;
+              return true;
+            case 'installApk':
+              expect(manager.requestingInstallPermission, false);
+              return null;
+            case 'installPage':
+              return null;
+            default:
+              throw StateError(call.method);
+          }
+        });
+    try {
+      final emulator = androidEmulators.first;
+      await manager.installApk(emulator);
+      await manager.installApk(emulator);
+      allowed = false;
+      await manager.install(
+        androidEmulators.singleWhere((e) => e.id == 'duckstation'),
+      );
+      expect(calls, [
+        'canInstallPackages',
+        'requestInstallPermission',
+        'installApk',
+        'canInstallPackages',
+        'installApk',
+        'installPage',
+      ]);
+    } finally {
+      manager.dispose();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    }
+  });
+  test('denied or unknown install permission cannot download, open a picker or create pending defaults', () async {
+    const channel = MethodChannel('app.broomm/install-permission-test');
+    final manager = AndroidEmulators(data, channel: channel, enabled: true);
+    final calls = <String>[];
+    bool? allowed = false;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          calls.add(call.method);
+          if (call.method == 'canInstallPackages') return allowed;
+          if (call.method == 'requestInstallPermission') return false;
+          throw StateError('Unexpected external effect: ${call.method}');
+        });
+    try {
+      final emulator = androidEmulators.first;
+      for (final value in [false, null]) {
+        allowed = value;
+        await expectLater(
+          manager.install(emulator, server: 'a' * 32),
+          throwsStateError,
+        );
+        await expectLater(
+          manager.installApk(emulator, server: 'a' * 32),
+          throwsStateError,
+        );
+        expect(manager.requestingInstallPermission, false);
+        expect(manager.installing, isNull);
+        expect(await data.list().isEmpty, true);
+      }
+      expect(calls.where((c) => c == 'requestInstallPermission').length, 2);
+    } finally {
+      manager.dispose();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    }
+  });
+  test('a pending permission request excludes another install and a failed request permits retry', () async {
+    const channel = MethodChannel('app.broomm/install-permission-test');
+    final manager = AndroidEmulators(data, channel: channel, enabled: true);
+    final entered = Completer<void>();
+    final permission = Completer<bool>();
+    var allowed = false;
+    var picks = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'canInstallPackages') return allowed;
+          if (call.method == 'requestInstallPermission') {
+            entered.complete();
+            return permission.future;
+          }
+          if (call.method == 'installApk') {
+            picks++;
+            return null;
+          }
+          throw StateError(call.method);
+        });
+    try {
+      final emulator = androidEmulators.first;
+      final request = manager.installApk(emulator);
+      final failed = expectLater(request, throwsA(isA<PlatformException>()));
+      await entered.future;
+      await expectLater(manager.install(emulator), throwsStateError);
+      await expectLater(
+        manager.install(
+          androidEmulators.singleWhere((e) => e.id == 'duckstation'),
+        ),
+        throwsStateError,
+      );
+      permission.completeError(
+        PlatformException(code: 'install-permission-timeout'),
+      );
+      await failed;
+      expect(picks, 0);
+      expect(manager.requestingInstallPermission, false);
+      allowed = true;
+      await manager.installApk(emulator);
+      expect(picks, 1);
     } finally {
       manager.dispose();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

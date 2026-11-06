@@ -175,6 +175,15 @@ For Citra MMJ, assume shared `citra-emu` storage and request a persistent folder
 
 Installation uses user-confirmed app/store or APK installer actions and subsequent package inspection; opening an installer is not confirmation of installation. Data-folder grants retain profile identity. Returning to Broomm does not establish emulator shutdown: require suitable writer-exit evidence or explicit closure confirmation before save capture/restore, retain interrupted-session recovery and never silently apply desktop installers on Android. The [Android audit](docs/android-emulators.md) records the current partial implementation. Cloud save/state and update/DLC parity remain product requirements.
 
+When the player chooses Install or Install APK, check Broomm's Android APK-install
+permission before downloading or picking a file. If missing, open Broomm's
+**Allow from this source** settings and continue the chosen action after fresh
+permission readback on return. Denial or an interrupted request must explain how
+to retry without claiming an installation or creating a pending default.
+Do not repeat the permission request while the grant remains valid. Store-only
+actions need no APK permission. Installed-emulator status and install permission
+are separate observations; a permission failure must not report an app absent.
+
 For the implemented Android APK/connected-folder milestone, Install downloads the official compatible APK
 and opens Android's confirmation flow, with store-only/paid exceptions explained.
 Detect ARMSX2 stable `com.armsx2` and nightly `com.armsx2.nightly`, preferring
@@ -199,10 +208,38 @@ profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and
 native file ownership, permissions and labels. Keep synchronization decisions,
 transactions and recovery in Dart behind a narrow Android access adapter.
-Existing explicit save/close confirmation remains the implemented lifecycle
-contract until a replacement has native verification. Root does not extend
-Android into the desktop controller/injection/overlay scope. See the
+For the rooted GBA RetroArch route, start from **Play** when a privileged check
+verifies RetroArch is closed. On return, sync automatically after matching a
+normal exit to the launched emulator process and verifying its writer is gone.
+A running emulator blocks save changes. Keep manual recovery when the exit is
+uncertain or interrupted. Root does not extend Android into the desktop
+controller/injection/overlay scope. See the
 [next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
+
+After the first requested root save action, reuse that connection for the
+Broomm activity, including while the player is in the emulator. Release it
+when the activity closes. Keep root requests tied to user actions and preserve
+recovery if the connection is lost.
+
+Keep Android emulator cards compact and put setup instructions in their
+dialogs. Provide one read-only root inspection action in Emulator Settings
+with an installed-app picker when needed. Keep GBA root and shared RetroArch
+folder connections independently so configuring GBA leaves other systems'
+save access available.
+
+The first device acceptance target is the owner's **Thor running Android**, with
+**Game Boy Advance through RetroArch/mGBA**. Offer an explicit read-only root
+inspection in Emulator Settings before any root save connection. Report package,
+Android-user and directory identity without treating successful inspection as
+save readiness. Verify the installed frontend/core and actual save paths on
+that device before implementing privileged save publication.
+
+Android RetroArch setup must eventually download and install the selected
+platform's core from inside Broomm, reusing the frontend and retaining other
+cores and progress. The owner reaffirmed this requirement during the Thor GBA
+validation. Manually downloading mGBA in RetroArch is a temporary acceptance-test
+prerequisite, not the finished setup experience. Keep downloads part of explicit
+setup; this does not authorize unattended core updates.
 
 ## Progress across devices
 

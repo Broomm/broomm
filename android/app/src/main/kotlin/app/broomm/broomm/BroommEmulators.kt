@@ -36,11 +36,17 @@ class BroommEmulators(private val activity: Activity) {
     private val installRequest = 6204
     private var installingApk: Pair<String, File>? = null
     private val sharedFolder = SharedSaveFolder(activity)
+    private val rootSaves = RootSaveAccess(activity)
+    private val installPermission = ApkInstallPermission(activity)
     fun register(engine: FlutterEngine) {
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, channelName).also { c ->
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom", "rootLifecycle" ->
+                            rootSaves.operation(call, result)
+                        "canInstallPackages" -> result.success(installPermission.allowed())
+                        "requestInstallPermission" -> installPermission.request(result)
                         "aesEcb" -> background(result) {
                             val bytes = call.argument<ByteArray>("bytes")!!; val key = call.argument<ByteArray>("key")!!
                             require(key.size == 16 && bytes.isNotEmpty() && bytes.size % 16 == 0 && bytes.size <= 65536)
@@ -52,10 +58,8 @@ class BroommEmulators(private val activity: Activity) {
                         "device" -> result.success(mapOf("abis" to Build.SUPPORTED_ABIS.toList(), "sdk" to Build.VERSION.SDK_INT))
                         "installDownloadedApk" -> {
                             val expected = packages(call.argument<List<String>>("packages"))
-                            val apk = File(call.argument<String>("path") ?: error("Missing downloaded APK"))
-                            val base = File(activity.filesDir, "android/apks")
-                            require(apk.parentFile?.canonicalFile == base.canonicalFile && apk.canonicalPath == apk.absolutePath &&
-                                Regex("[a-f0-9]{32}\\.apk").matches(apk.name) && apk.isFile && apk.length() in 1..1024L*1024*1024) { "Invalid downloaded APK" }
+                            val apk = downloadedApk(activity.filesDir,
+                                File(call.argument<String>("path") ?: error("Missing downloaded APK")))
                             openInstaller(apk, expected, call.argument<String>("requiredActivity"), result)
                         }
                         "installed" -> background(result) {
@@ -75,6 +79,7 @@ class BroommEmulators(private val activity: Activity) {
                             result.success(null)
                         }
                         "installApk" -> {
+                            requireInstallPermission()
                             require(pending == null) { "A file picker is already open" }
                             apkPackages = packages(call.argument<List<String>>("packages"))
                             apkActivity = call.argument<String>("requiredActivity")
@@ -131,10 +136,12 @@ class BroommEmulators(private val activity: Activity) {
                             val pkg = packageName(call.argument<String>("package"))
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
-                            val files = call.argument<List<String>>("files") ?: error("Missing game manifest")
-                            val selected = call.argument<String>("selected") ?: error("Missing game selection")
+                            val files = (call.argument<List<String>>("files") ?: error("Missing game manifest"))
+                                .map { gameLibraryFile(activity.filesDir, it).path }
+                            val selected = gameLibraryFile(activity.filesDir,
+                                call.argument<String>("selected") ?: error("Missing game selection")).path
                             require(files.size in 1..10000 && files.toSet().size == files.size && files.contains(selected))
-                            val base = File(activity.filesDir, "library").canonicalPath + File.separator
+                            val base = File(activity.filesDir.canonicalFile, "broomm/library").path + File.separator
                             for (path in files) {
                                 val f = File(path)
                                 require(f.isFile && f.canonicalPath == f.absolutePath && f.canonicalPath.startsWith(base)) { "Game file is missing or outside the library" }
@@ -153,17 +160,20 @@ class BroommEmulators(private val activity: Activity) {
                                     for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)
                                 }.build() }
                             val uri = uris[files.indexOf(selected)]
+                            val nativeRom = call.argument<String>("nativeRom")
                             val target = call.argument<String>("activity") ?: error("Missing emulator activity")
                             require(Regex("[A-Za-z][A-Za-z0-9_.]+[A-Za-z0-9]").matches(target))
                             val action = call.argument<String>("action") ?: error("Missing emulator action")
                             require(action in setOf(Intent.ACTION_VIEW, Intent.ACTION_MAIN, "me.magnum.melonds.LAUNCH_ROM"))
                             val intent = Intent(action).apply {
                                 component = ComponentName(pkg, target)
-                                setDataAndType(uri, "application/octet-stream")
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                // Dolphin treats every ClipData item as a disc.
-                                // Related files get separate grants, not fake discs.
-                                clipData = ClipData.newRawUri("Game", uri)
+                                if (nativeRom == null) {
+                                    setDataAndType(uri, "application/octet-stream")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    // Dolphin treats every ClipData item as a disc.
+                                    // Related files get separate grants, not fake discs.
+                                    clipData = ClipData.newRawUri("Game", uri)
+                                } else require(call.argument<String>("emulator") == "retroarch")
                                 when (call.argument<String>("emulator")) {
                                     "melonds" -> putExtra("uri", uri)
                                     "azahar" -> { putExtra("SelectedGame", uri.toString()); putExtra("launchedFromShortcut", true) }
@@ -174,9 +184,28 @@ class BroommEmulators(private val activity: Activity) {
                                         val core = call.argument<String>("core") ?: error("Select a RetroArch core first")
                                         require(Regex("[a-z][a-z0-9_]{0,63}").matches(core))
                                         val nativeData = activity.packageManager.getApplicationInfo(pkg, 0).dataDir
-                                        putExtra("ROM", uri.toString())
+                                        val nativeApp = activity.packageManager.getApplicationInfo(pkg, 0)
+                                        val external = android.os.Environment.getExternalStorageDirectory().path
+                                        val config = call.argument<String>("configuration")
+                                        if (nativeRom != null) {
+                                            require(core == "mgba" && config != null &&
+                                                pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+                                            val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
+                                                .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
+                                                ?: error("GBA ROM is outside RetroArch's private session")
+                                            val parts = RootSaveFiles.romPath(nativeRom.removePrefix("$root/"))
+                                            require(parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name &&
+                                                config.substringAfter("/files/Broomm/").substringBeforeLast('/') == "${parts[0]}/${parts[1]}")
+                                        }
+                                        putExtra("ROM", nativeRom ?: uri.toString())
                                         putExtra("LIBRETRO", "$nativeData/cores/${core}_libretro_android.so")
-                                        call.argument<String>("configuration")?.let { config ->
+                                        putExtra("DATADIR", nativeData)
+                                        putExtra("APK", nativeApp.sourceDir)
+                                        putExtra("SDCARD", external)
+                                        putExtra("EXTERNAL", "$external/Android/data/$pkg/files")
+                                        putExtra("IME", android.provider.Settings.Secure.getString(activity.contentResolver,
+                                            android.provider.Settings.Secure.DEFAULT_INPUT_METHOD))
+                                        config?.let {
                                             val allowed = listOf("$nativeData/files/Broomm/", "/data/data/$pkg/files/Broomm/")
                                             require(allowed.any { config.startsWith(it) } && config.endsWith(".cfg") &&
                                                 config.split('/').none { it == "." || it == ".." || '\\' in it || '\u0000' in it }) { "Invalid RetroArch session configuration" }
@@ -188,7 +217,9 @@ class BroommEmulators(private val activity: Activity) {
                             try {
                                 val info = activity.packageManager.getActivityInfo(intent.component!!, 0)
                                 require(info.exported && info.enabled) { "This emulator version does not export its game launcher" }
-                                for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                if (nativeRom == null) {
+                                    for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
                                 activity.startActivityForResult(intent, gameRequest)
                             } catch (e: Exception) {
                                 for (other in uris) activity.revokeUriPermission(other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -208,7 +239,7 @@ class BroommEmulators(private val activity: Activity) {
                             result.success(null)
                         }
                         "writers" -> result.success(EmulatorDocumentsProvider.writers.get() + if (sharedFolder.busy()) 1 else 0)
-                        "ioBusy" -> result.success(sharedFolder.busy())
+                        "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
                         "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"))
                         "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
                             background(result) { sharedFolder.operation(call) }
@@ -230,6 +261,7 @@ class BroommEmulators(private val activity: Activity) {
         return values.map { packageName(it) }.distinct()
     }
     private fun openInstaller(apk: File, expected: List<String>, expectedActivity: String?, result: MethodChannel.Result) {
+        requireInstallPermission()
         require(installingApk == null) { "An Android package installer is already active" }
         val info = activity.packageManager.getPackageArchiveInfo(apk.path, PackageManager.GET_ACTIVITIES) ?: error("Invalid emulator APK")
         require(info.packageName in expected) { "The APK is for a different emulator" }
@@ -276,6 +308,7 @@ class BroommEmulators(private val activity: Activity) {
     }
     @Suppress("DEPRECATION")
     fun activityResult(request: Int, code: Int, data: Intent?): Boolean {
+        if (installPermission.activityResult(request)) return true
         if (sharedFolder.activityResult(request, code, data)) return true
         if (request == gameRequest) {
             // Activity return is deliberately not called "game stopped": some
@@ -334,6 +367,7 @@ class BroommEmulators(private val activity: Activity) {
                     check(activity.getSharedPreferences("apk-grants", 0).edit().putString(token, apk.path).commit())
                     val grant = Uri.parse("content://${activity.packageName}.apks/$token")
                     main.post { try {
+                        requireInstallPermission()
                         require(!activity.isFinishing && !activity.isDestroyed) { "Android activity was closed. Retry installation." }
                         require(installingApk == null) { "An Android package installer is already active" }
                         activity.startActivityForResult(Intent(Intent.ACTION_VIEW).apply {
@@ -355,8 +389,14 @@ class BroommEmulators(private val activity: Activity) {
         return true
     }
     fun close() {
+        installPermission.close()
         sharedFolder.close()
+        rootSaves.close()
         pending?.error("android-activity", "The Android activity was closed. Retry the operation.", null)
         pending = null; channel?.setMethodCallHandler(null); channel = null; worker.shutdown()
+    }
+
+    private fun requireInstallPermission() {
+        require(installPermission.allowed()) { "Android install permission is missing or was revoked. Retry Install to allow Broomm to install apps." }
     }
 }
