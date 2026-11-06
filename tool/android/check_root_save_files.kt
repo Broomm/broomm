@@ -74,6 +74,24 @@ fun main(args: Array<String>) {
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
         println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
 
+        val core = ByteArray(20).apply {
+            byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
+            this[16] = 3; this[18] = 183.toByte()
+        }
+        val coreSource = File(root, "reviewed-mgba.so").apply { writeBytes(core) }
+        val coreHash = RootSaveFiles.digest(core)
+        failure { files.installMgba(coreSource, 0, coreHash, "armeabi-v7a") {} }
+        failure { files.installMgba(coreSource, 0, oldHash, "arm64-v8a") {} }
+        check(files.mgba() == null)
+        val interruptedCore = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Interrupted core publication") })
+        failure { interruptedCore.installMgba(coreSource, 0, coreHash, "arm64-v8a") {} }
+        check(files.mgba("arm64-v8a", recoverPublication = true) == coreHash)
+        val anotherCore = core.copyOf().apply { this[7] = 1 }
+        coreSource.writeBytes(anotherCore)
+        check(files.installMgba(coreSource, 0, RootSaveFiles.digest(anotherCore), "arm64-v8a") {} == coreHash)
+        check(files.mgba("arm64-v8a") == coreHash && files.hash(target) == oldHash)
+        println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
+
         fun probe(): String {
             val process = ProcessBuilder("/system/bin/app_process", "/system/bin", "app.broomm.broomm.Check_root_save_filesKt", "probe", root.path).start()
             check(process.waitFor(20, TimeUnit.SECONDS))

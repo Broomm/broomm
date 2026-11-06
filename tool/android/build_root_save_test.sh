@@ -13,6 +13,7 @@ if command -v sha256sum >/dev/null 2>&1; then broomm_hash="$(sha256sum "$broomm_
 else broomm_hash="$(shasum -a 256 "$broomm_d8" | cut -d ' ' -f 1)"; fi
 [[ "$broomm_hash" == f8c762ff84640b10083b934a47278758a7665977e618fab0c927fff00521dea3 ]]
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootSaveFiles.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RetroArchCoreAbi.kt \
   android/app/src/main/kotlin/app/broomm/broomm/SharedDocumentLock.kt \
   tool/android/check_root_save_files.kt -jvm-target 17 -include-runtime \
   -classpath "$broomm_android_cache/api/android.jar" -d "$broomm_android_cache/root-save-test.jar"

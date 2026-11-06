@@ -14,6 +14,7 @@ import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/service.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
+import 'android_apk_download_test.dart' show ApkClient, ApkReply;
 import 'cloud_saves_test.dart' show SaveServer, profileId, serverId;
 
 void main() {
@@ -30,6 +31,7 @@ void main() {
   late SaveServer api;
   late CloudSaves cloud;
   var denied = false;
+  var missingCore = false;
   var refuseRomCleanup = false;
   var processState = 'idle', exitState = 'unknown';
   var reportsBeforeExit = 0;
@@ -97,6 +99,7 @@ void main() {
     api = SaveServer();
     cloud = CloudSaves(data, notice: (_, _) {});
     denied = false;
+    missingCore = false;
     refuseRomCleanup = false;
     processState = 'idle';
     exitState = 'unknown';
@@ -129,6 +132,12 @@ void main() {
               message: 'Denied',
             );
           if (call.method == 'rootInspect') return observation;
+          if (call.method == 'rootMgbaSetup')
+            return {
+              ...observation,
+              'abi': 'arm64-v8a',
+              if (missingCore) 'core': null,
+            };
           if (call.method == 'rootLifecycle') {
             final args = call.arguments as Map;
             if (args['process'] != null) {
@@ -194,6 +203,56 @@ void main() {
     manager = AndroidEmulators(data, channel: channel, enabled: true);
     await manager.load();
   });
+
+  test(
+    'root setup reuses mGBA and reconnects a newly installed RetroArch build',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      expect(calls, isNot(contains('rootInstallMgba')));
+      const replacement = AndroidApp(
+        pkg,
+        '1.22.2',
+        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      );
+      manager.installed[pkg] = replacement;
+      expect(manager.hasCurrentGbaRoot(emulator), isFalse);
+      observation['build'] = replacement.build;
+      observation['config'] = Uint8List(0);
+      await manager.connectGbaRoot(emulator);
+      expect(manager.hasCurrentGbaRoot(emulator), isTrue);
+      expect(
+        (await plan()).launch['configText'],
+        contains('savefile_directory'),
+      );
+      expect(calls, isNot(contains('rootInstallMgba')));
+    },
+  );
+
+  test(
+    'a changed mGBA archive never reaches root publication or connects saves',
+    () async {
+      missingCore = true;
+      final client = ApkClient((_) => ApkReply([1, 2, 3]));
+      await HttpOverrides.runZoned(
+        () => expectLater(
+          manager.connectGbaRoot(emulator),
+          throwsFormatException,
+        ),
+        createHttpClient: (_) => client,
+      );
+      expect(
+        client.requests.single.path,
+        endsWith('/arm64-v8a/mgba_libretro_android.so.zip'),
+      );
+      expect(client.closed, isTrue);
+      expect(calls, isNot(contains('rootInstallMgba')));
+      expect(manager.gbaRoot(emulator), isNull);
+      expect(
+        await Directory('${data.path}/android/mgba-stage').list().toList(),
+        isEmpty,
+      );
+    },
+  );
 
   test(
     'rooted launch blocks a running writer and asks only on unknown closure',

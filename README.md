@@ -22,7 +22,7 @@ and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-verified-retroarch-closure-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-android-mgba-setup-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -42,14 +42,15 @@ that option fail visibly. The exact script has been checked under Broomm's UID
 and app namespace on Magisk 31.1; the owner confirmed successful in-app
 read-only inspection with build 1036 on the Thor.
 
-On the GBA RetroArch card, choose **Root saves…**. This keeps the shared folder
-connection available for other RetroArch systems. Use the same action to
-disconnect GBA root saves and fall back to the shared folder.
-Prerequisites are Android user 0, installed mGBA, and a saved RetroArch
-configuration. Quit RetroArch, select the connection action, confirm it is
-closed and allow Magisk if prompted. Broomm reports the verified connection and
-selects RetroArch for GBA. Install Minish Cap from your RomM library, then launch
-it from Home. Sessions use separate profile/game files beneath RetroArch's
+On a rooted Android device in user 0, install RetroArch from the GBA card and
+accept Android's installer confirmation. With RetroArch closed, choose
+**Root saves… → Set up GBA** and allow Magisk if prompted. Broomm reuses a
+compatible mGBA core or downloads and installs the reviewed core for the
+installed RetroArch ABI. Successful setup selects RetroArch for GBA and keeps
+the shared-folder connection available to other systems. Use **Root saves…**
+again to disconnect and return to the shared folder for GBA.
+Install Minish Cap from your RomM library, then launch it from Home. Sessions
+use separate profile/game files beneath RetroArch's
 private `files/Broomm` directory; your ordinary standalone saves remain intact.
 The rooted route stages a verified copy of the selected `.gba` in that private
 directory for RetroArch to open by path. Finishing the session removes the
@@ -63,8 +64,8 @@ verified normal exit. Switching back while RetroArch is still running leaves
 the session active. If the exit cannot be verified, use **Review and finish
 session** after quitting RetroArch. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
-This first route handles ordinary saves only. Manual core download is temporary;
-automatic Android core provisioning inside Broomm is still required and deferred.
+This first route handles ordinary saves. For a verified-archive mismatch, use a
+compatible mGBA core installed through RetroArch and retry **Set up GBA**.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install

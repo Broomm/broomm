@@ -49,20 +49,45 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (request.getString("operation") != "inspect") require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        val operation = request.getString("operation")
+        if (operation !in setOf("inspect", "mgbasetup")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         return SharedDocumentLock.acquire(storage).use {
             live()
             val files = RootSaveFiles(root, uid, label, ::live)
-            val result = when (request.getString("operation")) {
+            fun ensureClosed() {
+                val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
+                check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up mGBA." }
+            }
+            fun abi() = retroArchFrontendAbi(packageManager.getApplicationInfo(pkg, 0).nativeLibraryDir)
+            val result = when (operation) {
                 "inspect" -> {
-                    val core = files.existing("cores/mgba_libretro_android.so")
-                    val hash = files.hash(core, 32 * 1024 * 1024)
+                    val hash = files.mgba() ?: error("Set up mGBA in Broomm’s GBA RetroArch settings first.")
                     val config = File("/storage/emulated/0/Android/data/$pkg/files/retroarch.cfg")
-                    require(config.canonicalPath == config.path && OsConstants.S_ISREG(Os.lstat(config.path).st_mode)) { "Open RetroArch, save its configuration and quit before connecting root saves." }
-                    val bytes = files.bytes(config, MAX_BYTES)
+                    val bytes = if (files.present(config)) {
+                        require(config.canonicalPath == config.path && OsConstants.S_ISREG(Os.lstat(config.path).st_mode)) { "RetroArch’s saved configuration is linked or invalid." }
+                        files.bytes(config, MAX_BYTES)
+                    } else ByteArray(0)
                     Bundle().apply { putString("core", hash); putByteArray("config", bytes); putString("root", root.path); putString("label", String(label).trimEnd('\u0000')) }
+                }
+                "mgbasetup" -> {
+                    ensureClosed()
+                    val abi = abi()
+                    val core = files.mgba(abi, recoverPublication = true)
+                    Bundle().apply {
+                        putString("abi", abi); putString("core", core)
+                        putString("label", String(label).trimEnd('\u0000'))
+                    }
+                }
+                "installmgba" -> {
+                    val stage = request.getString("stage") ?: error("Missing mGBA staging identity")
+                    require(Regex("[a-f0-9]{32}").matches(stage))
+                    val source = File(File(applicationInfo.dataDir, "files").canonicalFile,
+                        "broomm/android/mgba-stage/$stage/mgba_libretro_android.so")
+                    require(source.canonicalPath == source.absolutePath) { "mGBA staging contains a linked path." }
+                    val core = files.installMgba(source, caller, request.getString("sha256")!!, abi(), ::ensureClosed)
+                    Bundle().apply { putString("core", core) }
                 }
                 "check" -> Bundle()
                 "lifecycle" -> RootRetroArchProcess(this, pkg, uid, ::live).observe(request, callerPid, caller)

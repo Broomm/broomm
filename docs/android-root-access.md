@@ -9,13 +9,14 @@ inspection is independent. The actual mGBA core, external configuration and
 owner-created Minish Cap save have been identified on the Thor. Native file
 primitives pass isolated device tests. The owner confirmed the packaged Binder
 connection in build 1038 after reopening Broomm, followed by gameplay and save
-upload in builds 1042 and 1043. Automatic core download inside Broomm remains
-required future setup work.
+upload in builds 1042 and 1043. The owner confirmed loading an older Minish Cap
+save before PR #1 merged. Automatic mGBA setup is the follow-up below.
 
-1. Install RetroArch and its **Nintendo – Game Boy Advance (mGBA)** core, save
-   the RetroArch configuration, and choose **Quit RetroArch**.
+1. Install RetroArch from Broomm's GBA card and accept Android's installer
+   confirmation. Close RetroArch if it is open.
 2. In Broomm, choose **Emulator Settings → Game Boy Advance → RetroArch →
-   Root saves… → RetroArch closed · Connect**. Allow Magisk if asked. The
+   Root saves… → Set up GBA**. Allow Magisk if asked. Broomm installs a
+   compatible mGBA core if it is absent. The
    existing shared-folder connection remains available to other systems.
    Expect a confirmed connection or a visible actionable error. Opening the
    card does not request root. Denial preserves the previous connection.
@@ -34,7 +35,7 @@ required future setup work.
 5. For acceptance, retain the earlier history, create an independently changed
    save, use Broomm's existing history restore flow, relaunch and verify the
    earlier in-game position. Denial, lost connectivity and conflicts must retain
-   progress and offer recovery; no successful round trip is claimed yet.
+   progress and offer recovery.
 
 Recovery copies/journals remain in Broomm's private
 `files/broomm/android/shared-session` and `shared-swap.json`; the session marker
@@ -44,7 +45,37 @@ session configurations and interrupted private stages can remain as evidence;
 cleanup is not part of a failed transaction. If an installed working save is
 missing at capture, Broomm retains recovery and refuses to publish empty progress.
 No standalone save is auto-imported.
-Save states and BIOS/core downloads are not added by this route.
+The first rooted route handles ordinary saves.
+
+### Automatic mGBA setup
+
+The follow-up uses the existing Android APK install flow and root binding.
+Broomm verifies that the selected RetroArch package is closed, reads the actual
+frontend ELF ABI and reuses an existing compatible mGBA core. If absent, it
+downloads one ZIP, validates the archive and extracted library against the
+reviewed SHA-256 values, and asks the bound root service to publish it at
+`cores/mgba_libretro_android.so`. The native service verifies package identity,
+core ABI, staged checksum and owner, then publishes with exclusive file creation
+and readback. A retry can recover an interrupted publication without replacing
+an existing compatible core. **Cancel download** discards Broomm's staging.
+
+The source is [Libretro's Android core Buildbot](https://docs.libretro.com/guides/download-cores/#installing-cores-manually)
+and the [Libretro mGBA port](https://github.com/libretro/mgba) under MPL 2.0.
+The reviewed archives were fetched on 2026-11-06 from
+`nightly/android/latest/<abi>/mgba_libretro_android.so.zip`. The ARM64, ARMv7,
+x86 and x86-64 archives each contain one ELF shared library. Archive and
+payload hashes are pinned in `lib/src/android/mgba_setup.dart`. The ARM64
+payload matches the previously tested Thor core. Buildbot's `latest` URLs
+can change. If an archive differs from the reviewed bytes, setup stops before
+publication. A durable pinned distribution URL is still needed for a release
+that can download these same bytes after Buildbot rotates them.
+
+Broomm reads RetroArch's saved preferences when present. A fresh app can use
+RetroArch defaults and the generated Broomm session configuration. Test this
+from a clean Android installation by installing RetroArch, setting up GBA,
+then launching Minish Cap, saving in-game and quitting to verify sync. Repeat
+setup with mGBA already present to verify the core is reused. The Thor's
+RetroArch package and standalone data were cleared for this test.
 
 ### Verified closure
 

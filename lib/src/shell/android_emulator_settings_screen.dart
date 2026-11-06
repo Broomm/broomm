@@ -241,17 +241,17 @@ class _AndroidEmulatorSettingsScreenState
     RommPlatform platform,
     AndroidEmulator emulator,
   ) async {
-    final connected = manager.gbaRoot(emulator) != null;
+    final connected = manager.hasCurrentGbaRoot(emulator);
     final accepted = await showConsoleDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
         title: Text(
-          connected ? 'Disconnect GBA root saves?' : 'Connect GBA root saves',
+          connected ? 'Disconnect GBA root saves?' : 'Set up rooted GBA',
         ),
         content: Text(
           connected
               ? 'Quit RetroArch first. Broomm keeps your saves and uses the shared folder for GBA if one is connected.'
-              : 'Install mGBA and quit RetroArch. Allow root access when asked. This connects ordinary GBA saves for Broomm profiles.',
+              : 'Quit RetroArch if it is open. Broomm installs mGBA if needed and connects GBA saves. Allow root access when asked.',
         ),
         actions: [
           ConsoleButton(
@@ -262,9 +262,7 @@ class _AndroidEmulatorSettingsScreenState
           ConsoleButton(
             onPressed: () => Navigator.pop(c, true),
             child: Text(
-              connected
-                  ? 'RetroArch closed · Disconnect'
-                  : 'RetroArch closed · Connect',
+              connected ? 'RetroArch closed · Disconnect' : 'Set up GBA',
             ),
           ),
         ],
@@ -309,7 +307,7 @@ class _AndroidEmulatorSettingsScreenState
                     : manager.downloadedBytes / manager.downloadBytes!,
               ),
               Text(
-                'Downloading emulator APK · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+                'Downloading ${manager.installing == 'mgba' ? 'mGBA' : 'emulator APK'} · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
               ),
               ConsoleButton(
                 onPressed: manager.cancelDownload,
@@ -384,7 +382,7 @@ class _AndroidEmulatorSettingsScreenState
         model.profile != null &&
         manager.connected(model.profile!.id, emulator, platform: platform.slug);
     final rootCard = emulator.id == 'retroarch' && platform.slug == 'gba';
-    final rooted = rootCard && manager.gbaRoot(emulator) != null;
+    final rooted = rootCard && manager.hasCurrentGbaRoot(emulator);
     const actionPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
     final disabled =
         // The modal owns interaction; keep its invoking button focusable so

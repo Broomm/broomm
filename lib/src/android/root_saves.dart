@@ -94,6 +94,16 @@ Future<Map<String, dynamic>> inspectAndroidGbaRoot(
       'Root GBA inspection returned incomplete or mismatched data.',
     );
   }
+  androidGbaRootIdentity(value, app);
+  // Fail on undecodable/conflicting configuration before publishing a binding.
+  androidIni(utf8.decode(value['config'] as Uint8List));
+  return value;
+}
+
+Map<String, String> androidGbaRootIdentity(
+  Map<String, dynamic> value,
+  AndroidApp app,
+) {
   final binding = <String, String>{
     'access': 'root-gba-v1',
     for (final key in [
@@ -107,11 +117,11 @@ Future<Map<String, dynamic>> inspectAndroidGbaRoot(
     ])
       key: value[key] as String,
   };
-  if (!androidRootBinding(binding))
+  if (!androidRootBinding(binding) ||
+      binding['package'] != app.package ||
+      binding['build'] != app.build)
     throw const FormatException('Invalid root GBA identity.');
-  // Fail on undecodable/conflicting configuration before publishing a binding.
-  androidIni(utf8.decode(value['config'] as Uint8List));
-  return value;
+  return binding;
 }
 
 Future<AndroidSavePlan> rootedGbaProgress(

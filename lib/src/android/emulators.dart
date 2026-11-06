@@ -7,7 +7,9 @@ import '../game_launch.dart';
 import '../retroarch.dart';
 import '../progress/files.dart';
 import '../romm/models.dart';
+import '../session_lease.dart';
 import 'apk_download.dart';
+import 'mgba_setup.dart';
 import 'root_saves.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
@@ -235,12 +237,19 @@ class AndroidEmulators extends ChangeNotifier {
         : null;
   }
 
+  bool hasCurrentGbaRoot(AndroidEmulator emulator, {String? package}) {
+    final binding = gbaRoot(emulator, package: package);
+    return binding != null &&
+        binding['build'] == app(emulator, package: package)?.build;
+  }
+
   bool connected(
     String profile,
     AndroidEmulator emulator, {
     String? platform,
   }) =>
-      ((platform == null || platform == 'gba') && gbaRoot(emulator) != null) ||
+      (platform == null && gbaRoot(emulator) != null) ||
+      (platform == 'gba' && hasCurrentGbaRoot(emulator)) ||
       tree(profile, emulator) != null;
 
   Future<AndroidApp> _checkGbaRootChange(AndroidEmulator emulator) async {
@@ -258,34 +267,77 @@ class AndroidEmulators extends ChangeNotifier {
     return selected;
   }
 
-  Future<void> connectGbaRoot(AndroidEmulator emulator) async {
-    final selected = await _checkGbaRootChange(emulator);
-    phase?.call(
-      'Inspecting mGBA and the saved RetroArch configuration with root access.',
-    );
-    final report = await inspectAndroidGbaRoot(this, selected);
-    final binding = <String, String>{
-      'access': 'root-gba-v1',
-      for (final key in [
-        'package',
-        'user',
-        'uid',
-        'dataDir',
-        'build',
-        'signer',
-        'label',
-      ])
-        key: report[key] as String,
-    };
-    final next = {..._gbaRoots, selected.package: binding};
-    await _save(gbaRoots: next);
-    _gbaRoots
-      ..clear()
-      ..addAll(next);
-    phase?.call(
-      'GBA root save connection verified. Standalone emulator saves were kept.',
-    );
-    _emit();
+  Future<void> connectGbaRoot(AndroidEmulator emulator) =>
+      _withInstallPermission(
+        () => _connectGbaRoot(emulator),
+        requiresApkPermission: false,
+      );
+
+  Future<void> _connectGbaRoot(AndroidEmulator emulator) async {
+    final lease = await SessionLease.acquire(data);
+    try {
+      final selected = await _checkGbaRootChange(emulator);
+      phase?.call('Checking the installed RetroArch build and mGBA core.');
+      final setup = await channel.invokeMapMethod<String, dynamic>(
+        'rootMgbaSetup',
+        {'package': selected.package, 'build': selected.build},
+      );
+      if (setup == null ||
+          setup['abi'] is! String ||
+          (setup['core'] != null &&
+              (setup['core'] is! String ||
+                  !RegExp(r'^[a-f0-9]{64}$')
+                      .hasMatch(setup['core'] as String))))
+        throw const FormatException('Invalid mGBA setup report.');
+      final identity = androidGbaRootIdentity(setup, selected);
+      var verifiedCore = setup['core'] as String?;
+      if (verifiedCore == null) {
+        final download = _download = AndroidApkDownload();
+        installing = 'mgba';
+        downloadedBytes = 0;
+        downloadBytes = null;
+        _emit();
+        phase?.call('Downloading the reviewed Android mGBA core.');
+        try {
+          await downloadAndroidMgba(
+            data,
+            setup['abi'] as String,
+            download,
+            progress: (bytes, total) {
+              downloadedBytes = bytes;
+              downloadBytes = total;
+              _emit();
+            },
+            publish: (stage, sha256) async {
+              installing = null;
+              _emit();
+              phase?.call('Installing the verified mGBA core in RetroArch.');
+              verifiedCore = await channel.invokeMethod<String>(
+                'rootInstallMgba',
+                {...identity, 'stage': stage, 'sha256': sha256},
+              );
+            },
+          );
+        } finally {
+          installing = null;
+          _download = null;
+          _emit();
+        }
+      }
+      final report = await inspectAndroidGbaRoot(this, selected);
+      final binding = androidGbaRootIdentity(report, selected);
+      if (!mapEquals(identity, binding) || report['core'] != verifiedCore)
+        throw StateError('RetroArch changed during setup. Refresh and retry.');
+      final next = {..._gbaRoots, selected.package: binding};
+      await _save(gbaRoots: next);
+      _gbaRoots
+        ..clear()
+        ..addAll(next);
+      phase?.call('mGBA and GBA root save access verified.');
+      _emit();
+    } finally {
+      await lease.release();
+    }
   }
 
   Future<void> disconnectGbaRoot(AndroidEmulator emulator) async {

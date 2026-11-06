@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Automatic mGBA setup on rooted Android — 2026-11-06
+
+The owner confirmed the older Minish Cap save loaded in-game. PR #1 merged into
+`main` as `f7ffa1a`. The Thor's RetroArch package and app-owned private and shared
+data were removed before the new cold-install test.
+
+The GBA card can now use the existing root service to inspect the installed
+RetroArch ABI and reuse a compatible mGBA. If the core is missing, Dart verifies
+the selected Libretro ZIP and stages the checked payload in Broomm's private
+storage. The root service revalidates ABI, identity and closure before exclusive
+publication. A missing standalone configuration uses RetroArch defaults with
+Broomm's isolated session overrides. Cold setup and gameplay on the Thor are
+pending. See [source provenance and the setup walkthrough](docs/android-root-access.md#automatic-mgba-setup).
+
 ## Verified RetroArch closure on rooted Android — 2026-11-06
 
 The GBA session verifies RetroArch is idle before starting without a prompt.

@@ -648,7 +648,7 @@ class _BroommAppState extends State<BroommApp> {
     final profile = m.profile!, server = m.server!;
     final rooted =
         platform.slug == 'gba' &&
-        m.android.gbaRoot(emulator, package: app.package) != null;
+        m.android.hasCurrentGbaRoot(emulator, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
         m.android.progressSupported(emulator);
