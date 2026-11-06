@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.MessageDigest
+import java.util.zip.ZipFile
 
 /** Descriptor/metadata checks and atomic publication; independently exercised on device. */
 internal class RootSaveFiles(
@@ -175,6 +176,20 @@ internal class RootSaveFiles(
         mgba(abi, recoverPublication = true)?.let { return it }
         publish(MGBA_PATH, null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
         return expected
+    }
+
+    // Recognize the standard bundle before asking the player to initialize it.
+    // The stock launcher extracts the resources as the emulator's own UID.
+    fun needsFrontendAssets(apk: () -> File): Boolean {
+        val menuFiles = listOf("assets/ozone/regular.ttf", "assets/ozone/bold.ttf",
+            "assets/ozone/png/icons/settings.png")
+        if (menuFiles.all { relative ->
+            val file = File(root, relative)
+            file.canonicalPath == file.absolutePath && file.isFile && file.length() > 0
+        }) return false
+        return ZipFile(apk()).use { zip ->
+            menuFiles.all { zip.getEntry("assets/$it")?.size?.let { size -> size > 0 } == true }
+        }
     }
 
     fun needsControllerProfiles(): Boolean {

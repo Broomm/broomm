@@ -273,9 +273,31 @@ class _AndroidEmulatorSettingsScreenState
       await manager.disconnectGbaRoot(emulator);
       model.showNotice('GBA root saves disconnected.');
     } else {
-      await manager.connectGbaRoot(emulator);
+      final setup = await manager.connectGbaRoot(emulator);
       await model.setDefaultEmulator(platform, emulator.id);
       model.showNotice('GBA root saves connected.');
+      if (setup == null || !mounted) return;
+      final open = await showConsoleDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Finish RetroArch setup'),
+          content: const Text(
+            'RetroArch installs its bundled resources on first open. Wait for its main menu, then quit RetroArch and return to Broomm.',
+          ),
+          actions: [
+            ConsoleButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Later'),
+            ),
+            ConsoleButton(
+              autofocus: true,
+              onPressed: () => Navigator.pop(c, true),
+              child: const Text('Open RetroArch'),
+            ),
+          ],
+        ),
+      );
+      if (open == true) await manager.open(emulator, package: setup.package);
     }
   }
 

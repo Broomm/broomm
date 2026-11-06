@@ -124,6 +124,17 @@ Map<String, String> androidGbaRootIdentity(
   return binding;
 }
 
+bool androidRetroArchNeedsSetup(Map<String, dynamic> report, AndroidApp app) {
+  if (report['frontendAssetsPending'] != true) return false;
+  final config = androidIni(utf8.decode(report['config'] as Uint8List));
+  final path = config['assets_directory']?.replaceFirst(RegExp(r'/+$'), '');
+  return path == null ||
+      path.isEmpty ||
+      path == 'default' ||
+      path == '/data/user/0/${app.package}/assets' ||
+      path == '/data/data/${app.package}/assets';
+}
+
 Future<AndroidSavePlan> rootedGbaProgress(
   AndroidEmulators manager,
   String profile,
@@ -210,6 +221,7 @@ Future<AndroidSavePlan> rootedGbaProgress(
       'configPath': configPath,
       'configNative': '$native/$configPath',
       'configText': config,
+      if (androidRetroArchNeedsSetup(report, app)) 'frontendSetup': 'true',
       if (bundledProfiles && report['controllerProfilesReady'] != true)
         'prepareControllerProfiles': 'true',
     },

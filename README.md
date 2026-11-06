@@ -46,14 +46,19 @@ On a rooted Android device in user 0, install RetroArch from the GBA card and
 accept Android's installer confirmation. With RetroArch closed, choose
 **Root saves… → Set up GBA** and allow Magisk if prompted. Broomm reuses a
 compatible mGBA core or downloads and installs the reviewed core for the
-installed RetroArch ABI. Successful setup selects RetroArch for GBA and keeps
+installed RetroArch ABI. If **Finish RetroArch setup** appears, choose
+**Open RetroArch**, allow its requested Android permission, and wait for its
+main menu. Then quit RetroArch and return to Broomm. This first open installs
+the official APK's bundled resources, including its menu fonts and icons.
+Successful setup selects RetroArch for GBA and keeps
 the shared-folder connection available to other systems. Use **Root saves…**
 again to disconnect and return to the shared folder for GBA.
 Install Minish Cap from your RomM library, then launch it from Home. Sessions
 use separate profile/game files beneath RetroArch's
 private `files/Broomm` directory; your ordinary standalone saves remain intact.
-When a fresh RetroArch installation has no default controller profiles, Broomm
-prepares the Android profiles from the installed APK before the first game.
+If the first-run resources are still missing when you choose **Play**, use
+**Open RetroArch**, then quit it and choose **Check and play**. The first-run
+check happens before Broomm starts save synchronization.
 The rooted route stages a verified copy of the selected `.gba` in that private
 directory for RetroArch to open by path. Finishing the session removes the
 staged copy.

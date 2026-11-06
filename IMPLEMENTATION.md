@@ -1,5 +1,23 @@
 # Implementation plan
 
+## Standard RetroArch first open on rooted Android — 2026-11-06
+
+The owner confirmed the build 1052 controller fix and reported missing
+settings icons and a pixelated font. The Thor's APK matched the official
+RetroArch 1.22.2 arm64 download by SHA-256. The APK included the menu resources,
+while the installed stock menu directories were empty. Direct gameplay skipped
+the normal Android launcher that initializes RetroArch's bundled files.
+
+Rooted GBA setup now offers RetroArch's standard first open when bundled menu
+resources are missing. Direct play checks readiness before creating a game
+journal or synchronizing saves. The user can open RetroArch from that screen
+and retry play after quitting. The package installer and configured custom
+asset directories are preserved. The Kotlin bridge compiled, the disposable
+resource check passed on the Thor, and focused Dart tests verified that
+incomplete setup creates no game journal and can be retried. Visual
+acceptance of the menu is pending. See
+[the first-run walkthrough](docs/android-root-access.md#automatic-mgba-setup).
+
 ## Cold RetroArch controller profiles — 2026-11-06
 
 Build 1050 downloaded and verified mGBA on a fresh Thor and launched Minish Cap.
@@ -12,7 +30,8 @@ owner closed RetroArch and confirmed sync before the second clean uninstall.
 The rooted launch now stages Android profiles from the verified installed APK
 under a build-specific Broomm directory when the default profiles are missing.
 It uses that directory in the generated session config and preserves explicit
-controller preferences. Fresh-build visual verification on the Thor is pending.
+controller preferences. The owner confirmed this works on the Thor with
+build 1052.
 
 ## Automatic mGBA setup on rooted Android — 2026-11-06
 

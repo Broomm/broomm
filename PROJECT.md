@@ -203,6 +203,11 @@ existing shared-folder/provider route available. Root access does not imply a
 particular root manager, dependency, device compatibility or completed feature.
 Do not root a device or change its system security configuration as setup.
 
+Install the regular official RetroArch APK. When its bundled frontend resources
+need initialization, guide the player through RetroArch's standard first open
+before starting a rooted game session. Preserve existing RetroArch settings
+and leave APK installation and permission prompts with Android.
+
 Keep package/Android-user identity, native console identities and each RomM
 profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and

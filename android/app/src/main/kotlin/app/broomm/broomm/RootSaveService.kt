@@ -61,6 +61,12 @@ class RootSaveService : RootService() {
                 check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up mGBA." }
             }
             fun abi() = retroArchFrontendAbi(packageManager.getApplicationInfo(pkg, 0).nativeLibraryDir)
+            fun installedApk(): File {
+                val apk = File(packageManager.getApplicationInfo(pkg, 0).sourceDir)
+                require(apk.canonicalPath == apk.absolutePath && apk.path.startsWith("/data/app/") &&
+                    OsConstants.S_ISREG(Os.lstat(apk.path).st_mode)) { "Invalid installed RetroArch APK path." }
+                return apk
+            }
             val result = when (operation) {
                 "inspect" -> {
                     val hash = files.mgba() ?: error("Set up mGBA in Broomm’s GBA RetroArch settings first.")
@@ -72,6 +78,7 @@ class RootSaveService : RootService() {
                     Bundle().apply {
                         putString("core", hash); putByteArray("config", bytes); putString("root", root.path)
                         putString("label", String(label).trimEnd('\u0000'))
+                        putBoolean("frontendAssetsPending", files.needsFrontendAssets(::installedApk))
                         if (files.needsControllerProfiles()) {
                             putBoolean("bundledControllerProfiles", true)
                             putBoolean("controllerProfilesReady", files.controllerProfilesReady(before["build"] as String))
@@ -79,10 +86,7 @@ class RootSaveService : RootService() {
                     }
                 }
                 "controllerprofiles" -> {
-                    val apk = File(packageManager.getApplicationInfo(pkg, 0).sourceDir)
-                    require(apk.canonicalPath == apk.absolutePath && apk.path.startsWith("/data/app/") &&
-                        OsConstants.S_ISREG(Os.lstat(apk.path).st_mode)) { "Invalid installed RetroArch APK path." }
-                    files.prepareControllerProfiles(apk, before["build"] as String, ::ensureClosed)
+                    files.prepareControllerProfiles(installedApk(), before["build"] as String, ::ensureClosed)
                     Bundle()
                 }
                 "mgbasetup" -> {

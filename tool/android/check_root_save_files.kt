@@ -121,6 +121,29 @@ fun main(args: Array<String>) {
         files.prepareControllerProfiles(apk, frontendBuild) {}
         println("PASS: scoped APK controller profiles, interrupted setup recovery, and reuse")
 
+        val menuFiles = listOf("assets/ozone/regular.ttf", "assets/ozone/bold.ttf",
+            "assets/ozone/png/icons/settings.png")
+        profiles("Odin_Controller.cfg")
+        check(!files.needsFrontendAssets { apk })
+        ZipOutputStream(apk.outputStream()).use { zip ->
+            for (name in menuFiles) {
+                zip.putNextEntry(ZipEntry("assets/$name"))
+                zip.write(1); zip.closeEntry()
+            }
+        }
+        check(files.needsFrontendAssets { apk })
+        for (name in menuFiles.dropLast(1)) {
+            File(root, name).apply { parentFile!!.mkdirs(); writeText("font") }
+        }
+        check(files.needsFrontendAssets { apk })
+        val icon = File(root, menuFiles.last())
+        icon.parentFile!!.mkdirs()
+        check(icon.createNewFile())
+        check(files.needsFrontendAssets { apk })
+        icon.writeText("icon")
+        check(!files.needsFrontendAssets { error("A complete install needs no APK read") })
+        println("PASS: stock menu resources, incomplete extraction, and alternate APK layouts")
+
         fun probe(): String {
             val process = ProcessBuilder("/system/bin/app_process", "/system/bin", "app.broomm.broomm.Check_root_save_filesKt", "probe", root.path).start()
             check(process.waitFor(20, TimeUnit.SECONDS))

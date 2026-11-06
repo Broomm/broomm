@@ -18,6 +18,9 @@ save before PR #1 merged. Automatic mGBA setup is the follow-up below.
    Root saves… → Set up GBA**. Allow Magisk if asked. Broomm installs a
    compatible mGBA core if it is absent. The
    existing shared-folder connection remains available to other systems.
+   If Broomm offers **Finish RetroArch setup**, choose **Open RetroArch**.
+   Allow RetroArch's requested Android permission and wait for its main menu,
+   then quit it. The normal launcher extracts the regular APK's resources.
    Expect a confirmed connection or a visible actionable error. Opening the
    card does not request root. Denial preserves the previous connection.
 3. Install the selected GBA game from your RomM account. With RetroArch closed,
@@ -70,17 +73,28 @@ can change. If an archive differs from the reviewed bytes, setup stops before
 publication. A durable pinned distribution URL is still needed for a release
 that can download these same bytes after Buildbot rotates them.
 
-Broomm reads RetroArch's saved preferences when present. A fresh app can use
-RetroArch defaults and the generated Broomm session configuration. Cold game
-launches can bypass RetroArch's normal APK asset extraction. When its default
-Android profiles are absent, Broomm stages the profiles from the installed APK
-into a build-specific private directory and points the session at them. It
-preserves explicit profile directories and the user's autodetection preference.
-RetroArch's bundled Odin profile includes the Back menu binding. Test this
-from a clean Android installation by installing RetroArch, setting up GBA,
-then launching Minish Cap, saving in-game and quitting to verify sync. Repeat
-setup with mGBA already present to verify the core is reused. The Thor's
-RetroArch package and standalone data were cleared for this test.
+Broomm hands the official APK unchanged to Android's installer. The Thor's
+installed 183,956,821-byte arm64 APK matched the official 1.22.2 Buildbot
+download (SHA-256
+`7bd5d208dfe93cc8e2ea6c04608948ce1a045980f160a58ca2d0993aa20ad213`).
+It contains menu assets, Android controller profiles, databases, filters,
+core information, overlays and shaders. Opening
+[RetroArch's normal Android launcher](https://github.com/libretro/RetroArch/blob/v1.22.2/pkg/android/phoenix/src/com/retroarch/browser/mainmenu/MainMenuActivity.java#L188-L203)
+triggers extraction under RetroArch's own UID. Direct gameplay with build
+1052 had an empty standalone configuration and missing menu files. Its private
+controller fallback worked on the Odin, but the owner reported missing menu
+icons and a pixelated font.
+
+During rooted setup and before direct play, Broomm checks for the default
+Ozone menu fonts and settings icon. If the APK includes them and the stock
+copies are missing, it offers the standard launcher. After first open and
+quit, **Check and play** rechecks closure and the files. This check runs
+before a game journal or save sync. Broomm preserves a configured custom
+assets directory. The separate controller fallback still handles APK layouts
+whose default profiles are unavailable, subject to the user's input
+preferences. From a clean install, verify the settings icons and Back in
+Minish Cap, then save and quit to verify sync. Repeat setup with mGBA already
+present to verify the core is reused.
 
 ### Verified closure
 

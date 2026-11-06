@@ -267,13 +267,14 @@ class AndroidEmulators extends ChangeNotifier {
     return selected;
   }
 
-  Future<void> connectGbaRoot(AndroidEmulator emulator) =>
+  /// Returns the package whose standard first run still needs to be opened.
+  Future<AndroidApp?> connectGbaRoot(AndroidEmulator emulator) =>
       _withInstallPermission(
         () => _connectGbaRoot(emulator),
         requiresApkPermission: false,
       );
 
-  Future<void> _connectGbaRoot(AndroidEmulator emulator) async {
+  Future<AndroidApp?> _connectGbaRoot(AndroidEmulator emulator) async {
     final lease = await SessionLease.acquire(data);
     try {
       final selected = await _checkGbaRootChange(emulator);
@@ -335,6 +336,7 @@ class AndroidEmulators extends ChangeNotifier {
         ..addAll(next);
       phase?.call('mGBA and GBA root save access verified.');
       _emit();
+      return androidRetroArchNeedsSetup(report, selected) ? selected : null;
     } finally {
       await lease.release();
     }
@@ -664,8 +666,8 @@ class AndroidEmulators extends ChangeNotifier {
     if (record['server'] == server) await _installation.delete();
   }
 
-  Future<void> _withInstallPermission(
-    Future<void> Function() action, {
+  Future<T> _withInstallPermission<T>(
+    Future<T> Function() action, {
     bool requiresApkPermission = true,
   }) async {
     if (_installActionActive || installing != null)
@@ -703,7 +705,7 @@ class AndroidEmulators extends ChangeNotifier {
       _emit();
       if (_disposed)
         throw StateError('Broomm closed before installation could continue.');
-      await action();
+      return await action();
     } finally {
       requestingInstallPermission = false;
       _installActionActive = false;

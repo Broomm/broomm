@@ -245,6 +245,42 @@ void main() {
   });
 
   test(
+    'missing stock assets block direct play before any save journal',
+    () async {
+      observation['frontendAssetsPending'] = true;
+      observation['config'] = Uint8List(0);
+      expect((await manager.connectGbaRoot(emulator))?.package, pkg);
+      final session = AndroidGameSession(manager, cloud);
+      addTearDown(session.dispose);
+      calls.clear();
+      await expectLater(
+        launchRooted(session),
+        throwsA(isA<AndroidRetroArchSetupRequired>()),
+      );
+      expect(await session.pending(), isNull);
+      expect(session.active, isFalse);
+      expect(calls, isNot(contains('rootReplace')));
+      expect(calls, isNot(contains('launch')));
+
+      observation['frontendAssetsPending'] = false;
+      await launchRooted(session);
+      expect(calls, contains('launch'));
+    },
+  );
+
+  test('rooted launch retains a configured custom assets directory', () async {
+    observation['frontendAssetsPending'] = true;
+    const custom = '/storage/emulated/0/RetroArch/custom-assets/';
+    observation['config'] = Uint8List.fromList(
+      utf8.encode('assets_directory = "$custom"\n'),
+    );
+    expect(await manager.connectGbaRoot(emulator), isNull);
+    final p = await plan();
+    expect(p.launch, isNot(contains('frontendSetup')));
+    expect(androidIni(p.launch['configText']!)['assets_directory'], custom);
+  });
+
+  test(
     'root setup reuses mGBA and reconnects a newly installed RetroArch build',
     () async {
       await manager.connectGbaRoot(emulator);

@@ -19,6 +19,13 @@ class AndroidClosureUnverified implements Exception {
       'Could not verify RetroArch is closed. Quit it before continuing.';
 }
 
+class AndroidRetroArchSetupRequired implements Exception {
+  const AndroidRetroArchSetupRequired();
+  @override
+  String toString() =>
+      'Open RetroArch to install its bundled resources. Wait for its main menu, quit RetroArch, then try Play again.';
+}
+
 /// A separate supervisor for external Android activities. Rooted RetroArch can
 /// supply process evidence. Other sessions use explicit closure confirmation.
 /// A durable marker blocks new sessions after process/activity destruction.
@@ -111,6 +118,20 @@ class AndroidGameSession extends ChangeNotifier {
         _emit();
         await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
       }
+      // Check first-run readiness before creating a recovery journal or
+      // touching cloud progress. The standalone setup has no game session.
+      final rootedGame = root != null && prepare != null
+          ? await prepare()
+          : game;
+      if (root != null) {
+        final layout = rootedGame?.layout;
+        if (layout is! AndroidSavePlan || !mapEquals(layout.binding, root))
+          throw StateError(
+            'The RetroArch root save route changed. Progress was kept.',
+          );
+        if (layout.launch['frontendSetup'] == 'true')
+          throw const AndroidRetroArchSetupRequired();
+      }
       _game = game;
       _launched = false;
       _retroArchProcess = null;
@@ -134,13 +155,8 @@ class AndroidGameSession extends ChangeNotifier {
         },
       );
       active = true;
-      _game = prepare == null ? game : await prepare();
+      _game = root != null || prepare == null ? rootedGame : await prepare();
       final layout = _game?.layout;
-      if (root != null &&
-          (layout is! AndroidSavePlan || !mapEquals(layout.binding, root)))
-        throw StateError(
-          'The RetroArch root save route changed. Progress was kept.',
-        );
       if (_game != null) {
         if (_game!.server != server ||
             _game!.profile != profile ||

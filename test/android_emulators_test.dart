@@ -709,6 +709,43 @@ void main() {
     },
   );
 
+  testWidgets('cold RetroArch offers its normal launcher and a play retry', (
+    t,
+  ) async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    var setupOpened = false, played = false;
+    await t.pumpWidget(
+      MaterialApp(
+        home: AndroidSessionScreen(
+          session: session,
+          title: 'Minish Cap',
+          emulator: 'RetroArch',
+          cloudReady: true,
+          rooted: true,
+          start: ({required bool emulatorClosed}) async {
+            expect(emulatorClosed, isFalse);
+            if (!setupOpened) throw const AndroidRetroArchSetupRequired();
+            played = true;
+          },
+          resume: () async => setupOpened = true,
+          finish: () async => fail('Opening setup does not start save sync.'),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    expect(played, isFalse);
+    await t.tap(find.text('Open RetroArch'));
+    await t.pumpAndSettle();
+    expect(setupOpened, isTrue);
+    expect(played, isFalse);
+    await t.tap(find.text('Check and play'));
+    await t.pumpAndSettle();
+    expect(played, isTrue);
+    expect(find.text('Open RetroArch'), findsNothing);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
+
   testWidgets(
     'Android game route launches directly and never shows controller pairing',
     (t) async {
