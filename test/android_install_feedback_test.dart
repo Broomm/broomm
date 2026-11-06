@@ -123,12 +123,24 @@ void main() {
       );
       expect(find.text('Root saves…'), findsOneWidget);
       await t.tap(inspect);
-      await t.pumpAndSettle();
+      // The page keeps animating its busy indicator while the dialog is open.
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
       expect(find.text('Choose an emulator to inspect'), findsOneWidget);
       await t.tap(find.text('PPSSPP · $ppsspp'));
-      await t.pumpAndSettle();
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
       expect(find.text('Selected app: $ppsspp · 1.19'), findsOneWidget);
       expect(find.text('Request root inspection'), findsOneWidget);
+      await t.tap(find.text('Close'));
+      await t.pumpAndSettle();
+      await t.tap(inspect);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.text('Choose an emulator to inspect'), findsOneWidget);
+      await t.tap(find.text('Cancel'));
+      await t.pumpAndSettle();
+      expect(find.text('Choose an emulator to inspect'), findsNothing);
     },
   );
 
