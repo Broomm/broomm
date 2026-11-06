@@ -239,6 +239,33 @@ class SharedAndroidSaves {
     }
   }
 
+  Future<String> stageRootRom(CloudGame game, AndroidSavePlan plan) async {
+    final r = await record(game, plan);
+    final source = File(r['selected'] as String);
+    final name = source.uri.pathSegments.last;
+    progressRelative(name);
+    if (!name.toLowerCase().endsWith('.gba') ||
+        !plan.rooted ||
+        r['phase'] != 'installed')
+      throw StateError('Rooted GBA launch requires a single .gba game file.');
+    final config = plan.launch['configPath']!;
+    final parent = config.substring(0, config.lastIndexOf('/'));
+    final path = '$parent/rom-${r['transaction']}/$name';
+    final bytes = await source.length();
+    if (bytes < 1 || bytes > 32 * 1024 * 1024)
+      throw StateError('The GBA game file must be between 1 byte and 32 MiB.');
+    final hash = await progressFileHash(source);
+    r['romStage'] = path;
+    r['romStageSha256'] = hash;
+    await progressWrite(journal, r);
+    return (await manager.channel.invokeMethod<String>('rootStageRom', {
+      ...plan.arguments,
+      'path': path,
+      'source': source.path,
+      'sha256': hash,
+    }))!;
+  }
+
   Future<void> apply(
     Map<String, dynamic> r,
     AndroidSavePlan plan,
@@ -260,6 +287,7 @@ class SharedAndroidSaves {
       await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
+        'sha256': r['romStageSha256'],
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
@@ -355,6 +383,17 @@ class SharedAndroidSaves {
     }
     if (r['phase'] != 'restored')
       throw StateError('Capture progress before restoring standalone saves.');
+    if (r['romStage'] case final String path when plan.rooted) {
+      final config = plan.launch['configPath']!;
+      final parent = config.substring(0, config.lastIndexOf('/'));
+      final name = File(r['selected'] as String).uri.pathSegments.last;
+      if (path != '$parent/rom-${r['transaction']}/$name')
+        throw const FormatException('Rooted GBA staging identity changed.');
+      await manager.channel.invokeMethod<void>('rootRemoveRom', {
+        ...plan.arguments,
+        'path': path,
+      });
+    }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }

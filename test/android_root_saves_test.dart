@@ -94,6 +94,18 @@ void main() {
           if (call.method == 'rootInspect') return observation;
           final args = Map<String, dynamic>.from(call.arguments as Map)
             ..['tree'] = 'root-fixture';
+          if (call.method == 'rootStageRom') {
+            final target = await put(
+              args['path'] as String,
+              await File(args['source'] as String).readAsBytes(),
+            );
+            return target.path;
+          }
+          if (call.method == 'rootRemoveRom') {
+            final target = File('${native.path}/${args['path']}');
+            if (await target.exists()) await target.delete();
+            return null;
+          }
           final value = await fixture.call(
             MethodCall(call.method.replaceFirst('root', 'shared'), args),
           );
@@ -176,12 +188,17 @@ void main() {
     final working = await p.target('save/game.srm');
     await working.parent.create(recursive: true);
     await working.writeAsBytes([1, 1]);
-    await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+    final rom = await File('${temp.path}/Minish Cap.gba').writeAsBytes([5, 6]);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    expect(await staged.readAsBytes(), [5, 6]);
     expect(await original.readAsBytes(), [1, 1]);
     await put(path, [2, 2, 2]);
     expect(await saves.capture(g, cloud, p), isTrue);
     expect(await working.readAsBytes(), [2, 2, 2]);
     await saves.restoreOriginal(g, p);
+    expect(await staged.exists(), isFalse);
+    expect(await rom.readAsBytes(), [5, 6]);
     expect(await original.readAsBytes(), [7, 7]);
     expect(metadata[path], attributes);
     expect(await unrelated.readAsBytes(), [9, 9]);

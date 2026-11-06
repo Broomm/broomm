@@ -49,6 +49,9 @@ closed and allow Magisk if prompted. Broomm reports the verified connection and
 selects RetroArch for GBA. Install Minish Cap from your RomM library, then launch
 it from Home. Sessions use separate profile/game files beneath RetroArch's
 private `files/Broomm` directory; your ordinary standalone saves remain intact.
+The rooted route stages a verified copy of the selected `.gba` in that private
+directory for RetroArch to open by path. Finishing the session removes the
+staged copy.
 After saving in-game, choose **Quit RetroArch**, return to Broomm and confirm
 **Emulator closed · Sync progress**. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).

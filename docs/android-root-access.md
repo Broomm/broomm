@@ -43,6 +43,38 @@ missing at capture, Broomm retains recovery and refuses to publish empty progres
 No standalone save is auto-imported.
 Save states and BIOS/core downloads are not added by this route.
 
+## Thor launch failure — 2026-11-06
+
+Build 1040 reached the installed RetroArch 1.22.2 mGBA activity twice. The owner
+saw a black screen and an Android not-responding dialog. The device ANR report
+shows the native activity thread waiting and the startup log ends after the
+environment banner. Both attempts supplied a Broomm `content://` URI in the
+`ROM` extra. The
+[upstream RetroArch changelog](https://github.com/libretro/RetroArch/blob/master/CHANGES.md)
+lists external launcher URI support as a future change relative to 1.22.2.
+
+Broomm downloaded save 180 for RomM ROM 2338 and verified its 8,192 bytes before
+handoff. The captured managed save and Broomm's working copy both have SHA-256
+`8aeee69c1208bee1dc705e799472f31f84ec80e6782b6f07e40c4d4baf70274b`.
+The standalone 128 KiB save retains its original hash. The first swap finished,
+and a second launch left session and swap markers. No new gameplay save was
+observed. Device observations are in `.tool-cache/rooted-gba/roundtrip-black-screen.json`
+and `.tool-cache/rooted-gba/retroarch-anr-1040.txt`.
+
+For rooted GBA sessions Broomm now supplies a native path in `ROM`. The
+selected raw `.gba` is copied from the verified library into a transaction-specific
+directory beneath the same private profile/game root as the config. The root
+service rejects linked, oversized or changed files and verifies the SHA-256
+before publishing the copy with emulator ownership, its security label and
+read-only mode. Broomm records the intended path before copying and cleans up
+the owned copy after the existing closure and save-restoration flow. If
+interrupted, finish the pending session in Broomm. Earlier session journals need
+no migration.
+
+The Thor native harness verifies normal staging, refusal of an existing target,
+rejection of a changed digest, partial-copy cleanup and preservation of save
+data. Full launch and the save round trip still require the packaged APK check.
+
 Run local checks with the pinned environments:
 
 ```sh

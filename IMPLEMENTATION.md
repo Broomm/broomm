@@ -1,5 +1,22 @@
 # Implementation plan
 
+## Rooted GBA launch handoff — 2026-11-06
+
+The owner reported a black screen and an Android not-responding dialog on the
+Thor with build 1040. RetroArch 1.22.2 received Broomm's `content://` ROM URI
+and stopped during startup. Broomm downloaded existing RomM save 180 for ROM
+2338, installed it for the session and captured the same 8,192 bytes after
+closure. This establishes a download and unchanged capture. The game did not
+run, so a new save upload and in-game restore remain unverified.
+
+The rooted GBA route now stages the selected verified `.gba` as a private,
+read-only native file and passes that path to RetroArch. It bounds the transfer
+to 32 MiB and checks the staged bytes before handoff. The save journal records
+the staging identity before the copy and removes it after confirmed closure
+and save restoration. Earlier journals are still recoverable. Dart regressions
+and the disposable native file harness passed. See
+[the Thor launch evidence](docs/android-root-access.md#thor-launch-failure--2026-11-06).
+
 ## Rooted Android GBA ordinary-save route — 2026-11-05
 
 The owner installed mGBA, saved RetroArch's configuration and selected The Minish

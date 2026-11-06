@@ -56,6 +56,24 @@ fun main(args: Array<String>) {
         check(files.hash(target) == oldHash)
         println("PASS: interrupted partial stage, interrupted exclusive publication and expired request recovery")
 
+        val rom = File(root, "library/42/content/Minish Cap.gba")
+        check(rom.parentFile!!.mkdirs())
+        rom.writeBytes(next)
+        val romPath = prefix.replace("/saves/", "/rom-${"c".repeat(32)}/") + rom.name
+        val staged = files.stageRom(romPath, rom, 0, nextHash)
+        check(files.hash(staged) == nextHash && files.metadata(staged).startsWith("2000 2000 400 "))
+        failure { files.stageRom(romPath, rom, 0, nextHash) }
+        failure { files.removeRom(romPath, oldHash) }
+        check(staged.exists() && rom.readBytes().contentEquals(next))
+        files.removeRom(romPath, nextHash)
+        files.removeRom(romPath, nextHash)
+        check(!staged.parentFile!!.exists())
+        failure { files.stageRom(romPath, rom, 0, oldHash) }
+        check(!staged.exists())
+        files.removeRom(romPath, oldHash)
+        check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
+        println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
+
         fun probe(): String {
             val process = ProcessBuilder("/system/bin/app_process", "/system/bin", "app.broomm.broomm.Check_root_save_filesKt", "probe", root.path).start()
             check(process.waitFor(20, TimeUnit.SECONDS))

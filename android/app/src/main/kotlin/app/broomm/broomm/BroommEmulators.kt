@@ -43,7 +43,8 @@ class BroommEmulators(private val activity: Activity) {
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
-                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace" -> rootSaves.operation(call, result)
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom" ->
+                            rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)
                         "aesEcb" -> background(result) {
@@ -159,17 +160,20 @@ class BroommEmulators(private val activity: Activity) {
                                     for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)
                                 }.build() }
                             val uri = uris[files.indexOf(selected)]
+                            val nativeRom = call.argument<String>("nativeRom")
                             val target = call.argument<String>("activity") ?: error("Missing emulator activity")
                             require(Regex("[A-Za-z][A-Za-z0-9_.]+[A-Za-z0-9]").matches(target))
                             val action = call.argument<String>("action") ?: error("Missing emulator action")
                             require(action in setOf(Intent.ACTION_VIEW, Intent.ACTION_MAIN, "me.magnum.melonds.LAUNCH_ROM"))
                             val intent = Intent(action).apply {
                                 component = ComponentName(pkg, target)
-                                setDataAndType(uri, "application/octet-stream")
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                // Dolphin treats every ClipData item as a disc.
-                                // Related files get separate grants, not fake discs.
-                                clipData = ClipData.newRawUri("Game", uri)
+                                if (nativeRom == null) {
+                                    setDataAndType(uri, "application/octet-stream")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    // Dolphin treats every ClipData item as a disc.
+                                    // Related files get separate grants, not fake discs.
+                                    clipData = ClipData.newRawUri("Game", uri)
+                                } else require(call.argument<String>("emulator") == "retroarch")
                                 when (call.argument<String>("emulator")) {
                                     "melonds" -> putExtra("uri", uri)
                                     "azahar" -> { putExtra("SelectedGame", uri.toString()); putExtra("launchedFromShortcut", true) }
@@ -182,7 +186,18 @@ class BroommEmulators(private val activity: Activity) {
                                         val nativeData = activity.packageManager.getApplicationInfo(pkg, 0).dataDir
                                         val nativeApp = activity.packageManager.getApplicationInfo(pkg, 0)
                                         val external = android.os.Environment.getExternalStorageDirectory().path
-                                        putExtra("ROM", uri.toString())
+                                        val config = call.argument<String>("configuration")
+                                        if (nativeRom != null) {
+                                            require(core == "mgba" && config != null &&
+                                                pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+                                            val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
+                                                .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
+                                                ?: error("GBA ROM is outside RetroArch's private session")
+                                            val parts = RootSaveFiles.romPath(nativeRom.removePrefix("$root/"))
+                                            require(parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name &&
+                                                config.substringAfter("/files/Broomm/").substringBeforeLast('/') == "${parts[0]}/${parts[1]}")
+                                        }
+                                        putExtra("ROM", nativeRom ?: uri.toString())
                                         putExtra("LIBRETRO", "$nativeData/cores/${core}_libretro_android.so")
                                         putExtra("DATADIR", nativeData)
                                         putExtra("APK", nativeApp.sourceDir)
@@ -190,7 +205,7 @@ class BroommEmulators(private val activity: Activity) {
                                         putExtra("EXTERNAL", "$external/Android/data/$pkg/files")
                                         putExtra("IME", android.provider.Settings.Secure.getString(activity.contentResolver,
                                             android.provider.Settings.Secure.DEFAULT_INPUT_METHOD))
-                                        call.argument<String>("configuration")?.let { config ->
+                                        config?.let {
                                             val allowed = listOf("$nativeData/files/Broomm/", "/data/data/$pkg/files/Broomm/")
                                             require(allowed.any { config.startsWith(it) } && config.endsWith(".cfg") &&
                                                 config.split('/').none { it == "." || it == ".." || '\\' in it || '\u0000' in it }) { "Invalid RetroArch session configuration" }
@@ -202,7 +217,9 @@ class BroommEmulators(private val activity: Activity) {
                             try {
                                 val info = activity.packageManager.getActivityInfo(intent.component!!, 0)
                                 require(info.exported && info.enabled) { "This emulator version does not export its game launcher" }
-                                for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                if (nativeRom == null) {
+                                    for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
                                 activity.startActivityForResult(intent, gameRequest)
                             } catch (e: Exception) {
                                 for (other in uris) activity.revokeUriPermission(other, Intent.FLAG_GRANT_READ_URI_PERMISSION)

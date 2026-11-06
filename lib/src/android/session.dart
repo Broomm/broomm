@@ -79,6 +79,7 @@ class AndroidGameSession extends ChangeNotifier {
     error = '';
     _emit();
     try {
+      String? nativeRom;
       _lease = await SessionLease.acquire(manager.data);
       if (await pending() != null)
         throw StateError(
@@ -132,6 +133,11 @@ class AndroidGameSession extends ChangeNotifier {
           phase = 'Preparing ${emulator.name}’s connected save folder…';
           _emit();
           await _shared.begin(_game!, plan, app.build, selected: selected);
+          if (plan.rooted) {
+            phase = 'Preparing the game file for RetroArch…';
+            _emit();
+            nativeRom = await _shared.stageRootRom(_game!, plan);
+          }
         } else if (emulator.id == 'citra-mmj') {
           phase = 'Preparing MMJ’s shared save folder…';
           _emit();
@@ -147,6 +153,7 @@ class AndroidGameSession extends ChangeNotifier {
         selected,
         core: core,
         profile: profile,
+        nativeRom: nativeRom,
         configuration: _game?.layout is AndroidSavePlan
             ? (_game!.layout as AndroidSavePlan).launch['configNative']
             : null,

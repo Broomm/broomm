@@ -65,6 +65,16 @@ class RootSaveService : RootService() {
                     Bundle().apply { putString("core", hash); putByteArray("config", bytes); putString("root", root.path); putString("label", String(label).trimEnd('\u0000')) }
                 }
                 "check" -> Bundle()
+                "stagerom" -> {
+                    val path = request.getString("path")!!
+                    val source = gameLibraryFile(File(applicationInfo.dataDir, "files"), request.getString("source")!!)
+                    val rom = files.stageRom(path, source, caller, request.getString("sha256")!!)
+                    Bundle().apply { putString("rom", rom.path) }
+                }
+                "removerom" -> {
+                    files.removeRom(request.getString("path")!!, request.getString("sha256")!!)
+                    Bundle()
+                }
                 "list", "read" -> {
                     val path = request.getString("path")!!
                     RootSaveFiles.managedPath(path, saveOnly = true)

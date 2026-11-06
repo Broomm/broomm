@@ -73,6 +73,10 @@ class RootSaveAccess(private val activity: Activity) {
                     putString(key, call.argument<String>(key))
             }
             var listPath: String? = null
+            if (call.method == "rootStageRom") {
+                val source = gameLibraryFile(activity.filesDir, call.argument<String>("source")!!)
+                request.putString("source", source.path)
+            }
             if (call.method == "rootList") {
                 val areas = call.argument<List<Map<String, String>>>("areas")!!
                 require(areas.size == 1 && areas.single().keys == setOf("path", "exact"))
@@ -117,6 +121,7 @@ class RootSaveAccess(private val activity: Activity) {
                             val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                             val value: Any? = when (call.method) {
                                 "rootInspect" -> identity.mapValues { it.value.toString() } + mapped
+                                "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                                 "rootList" -> if (answer.getBoolean("missing")) emptyMap<String, Any>() else mapOf(listPath!! to mapped)
                                 "rootRead" -> {
                                     require(!answer.getBoolean("missing")) { "A save disappeared during capture." }

@@ -855,6 +855,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? core,
     String? profile,
     String? configuration,
+    String? nativeRom,
   }) async {
     if (!settingsKnown)
       throw StateError(
@@ -876,6 +877,7 @@ class AndroidEmulators extends ChangeNotifier {
       'selected': selected,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
+      if (nativeRom != null) 'nativeRom': nativeRom,
       if (profile != null &&
           folder(emulator) == null &&
           emulator.id != 'citra-mmj' &&
