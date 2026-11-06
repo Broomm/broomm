@@ -213,6 +213,11 @@ contract until a replacement has native verification. Root does not extend
 Android into the desktop controller/injection/overlay scope. See the
 [next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
 
+After the first requested root save action, reuse that connection for the
+Broomm activity, including while the player is in the emulator. Release it
+when the activity closes. Keep root requests tied to user actions and preserve
+recovery if the connection is lost.
+
 The first device acceptance target is the owner's **Thor running Android**, with
 **Game Boy Advance through RetroArch/mGBA**. Offer an explicit read-only root
 inspection in Emulator Settings before any root save connection. Report package,

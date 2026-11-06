@@ -1,5 +1,21 @@
 # Implementation plan
 
+## Root connection reuse and Thor save verification — 2026-11-06
+
+The owner confirmed Minish Cap gameplay and sync on build 1042. Broomm's
+completed swap journal records a changed 8 KiB save. RomM save 199 was
+uploaded and downloaded for verification, the previous emulator file was
+restored, the staged ROM was removed and the active journals cleared. The
+standalone save hash still matches its original value. Loading save 199 in a
+subsequent gameplay session remains unverified.
+
+Build 1042 starts a Magisk shell for each privileged call. The follow-up
+starts the existing non-daemon root service lazily and keeps its binder for
+the Broomm activity, including emulator handoff. Each request still verifies
+package identity and uses the same deadline and file lock. Connection loss
+reports failure without replaying an uncertain operation. Activity destruction
+releases the binding. See [the device check](docs/android-root-access.md#root-connection-reuse--2026-11-06).
+
 ## Rooted GBA launch handoff — 2026-11-06
 
 The owner reported a black screen and an Android not-responding dialog on the

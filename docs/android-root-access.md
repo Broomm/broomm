@@ -43,6 +43,35 @@ missing at capture, Broomm retains recovery and refuses to publish empty progres
 No standalone save is auto-imported.
 Save states and BIOS/core downloads are not added by this route.
 
+## Root connection reuse — 2026-11-06
+
+The owner confirmed gameplay and sync on the Thor with build 1042. The
+completed Minish Cap journal records an 8 KiB working save with SHA-256
+`8aeee69c1208bee1dc705e799472f31f84ec80e6782b6f07e40c4d4baf70274b`
+and a changed capture with SHA-256
+`a779acffbbecf4015fbc7a2fd644ce9c9653662153561cae4e597ad2793b1b23`.
+The RomM log records uploading and verifying save 199. Broomm restored the
+original emulator file, removed the staged ROM and cleared the active journals.
+The separate standalone save retains its original hash. A later in-game load
+of save 199 remains unverified.
+
+The owner saw a Magisk notification at each root call. Build 1042 opens a fresh
+shell and binds for every file operation. The follow-up acquires root on the
+first requested save action and keeps the normal libsu connection while
+Broomm's activity remains alive. Switching to RetroArch and returning uses the
+same binding. Root I/O still runs only on request with the existing package
+checks, deadline and lock. Closing Broomm releases the binding. A lost binding
+fails the in-flight operation, leaving a subsequent user retry to reacquire
+root. The separate read-only **Inspect root access** button remains a diagnostic.
+
+To check the new behavior on the Thor, open Broomm and play Minish Cap, then
+quit RetroArch and confirm sync. The `BroommRoot` log should show one Magisk
+permission/startup pair and reuse on the remaining operations. Completely
+close Broomm, reopen it and request a root save action to verify that a new
+activity establishes its own connection. Magisk controls whether it shows a
+dialog or a notification. Record the actual APK and device observations before
+claiming this check has passed.
+
 ## Thor launch failure — 2026-11-06
 
 Build 1040 reached the installed RetroArch 1.22.2 mGBA activity twice. The owner

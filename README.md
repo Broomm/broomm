@@ -52,6 +52,9 @@ private `files/Broomm` directory; your ordinary standalone saves remain intact.
 The rooted route stages a verified copy of the selected `.gba` in that private
 directory for RetroArch to open by path. Finishing the session removes the
 staged copy.
+Broomm reuses the root connection through play and sync while its Android
+activity remains open. The first root save action after reopening can prompt
+through Magisk again.
 After saving in-game, choose **Quit RetroArch**, return to Broomm and confirm
 **Emulator closed · Sync progress**. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
