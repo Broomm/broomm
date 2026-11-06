@@ -1,4 +1,6 @@
 import app.broomm.broomm.gameLibraryFile
+import app.broomm.broomm.gameLibraryFromRelative
+import app.broomm.broomm.gameLibraryRelative
 import java.io.File
 import java.nio.file.Files
 
@@ -12,6 +14,17 @@ fun main() {
         val rom = File(real, relative).apply { parentFile.mkdirs(); writeBytes(byteArrayOf(1, 2)) }
         check(gameLibraryFile(alias, File(alias, relative).path) == rom)
         check(gameLibraryFile(alias, rom.path) == rom)
+        // Separate mount names can both be canonical. The receiving side
+        // resolves the validated relative path beneath its own library.
+        val serviceFiles = File(fixture, "service-files").apply { mkdir() }
+        val serviceRom = File(serviceFiles, relative).apply {
+            parentFile.mkdirs()
+            writeBytes(rom.readBytes())
+        }
+        check(runCatching { gameLibraryFile(serviceFiles, rom.path) }.isFailure)
+        val handoff = gameLibraryRelative(alias, File(alias, relative).path)
+        check(gameLibraryFromRelative(serviceFiles, handoff) == serviceRom)
+        check(runCatching { gameLibraryFromRelative(serviceFiles, "../library/$handoff") }.isFailure)
         fun rejected(path: String) {
             check(runCatching { gameLibraryFile(alias, path) }.isFailure) { "Accepted $path" }
         }

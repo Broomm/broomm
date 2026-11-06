@@ -8,6 +8,7 @@ import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/game_launch.dart';
+import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/service.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
@@ -27,6 +28,7 @@ void main() {
   late SaveServer api;
   late CloudSaves cloud;
   var denied = false;
+  var refuseRomCleanup = false;
   final metadata = <String, String>{};
   final calls = <String>[];
   late Map<String, dynamic> observation;
@@ -65,6 +67,7 @@ void main() {
     api = SaveServer();
     cloud = CloudSaves(data, notice: (_, _) {});
     denied = false;
+    refuseRomCleanup = false;
     metadata.clear();
     calls.clear();
     observation = {
@@ -103,7 +106,15 @@ void main() {
           }
           if (call.method == 'rootRemoveRom') {
             final target = File('${native.path}/${args['path']}');
-            if (await target.exists()) await target.delete();
+            if (await target.exists()) {
+              if (args['sha256'] != await progressFileHash(target) ||
+                  refuseRomCleanup)
+                throw PlatformException(
+                  code: 'android-root-save',
+                  message: 'Staged ROM could not be removed',
+                );
+              await target.delete();
+            }
             return null;
           }
           final value = await fixture.call(
@@ -196,6 +207,15 @@ void main() {
     await put(path, [2, 2, 2]);
     expect(await saves.capture(g, cloud, p), isTrue);
     expect(await working.readAsBytes(), [2, 2, 2]);
+    refuseRomCleanup = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await original.readAsBytes(), [7, 7]);
+    expect(await staged.exists(), isTrue);
+    expect(await saves.pending, isTrue);
+    refuseRomCleanup = false;
     await saves.restoreOriginal(g, p);
     expect(await staged.exists(), isFalse);
     expect(await rom.readAsBytes(), [5, 6]);

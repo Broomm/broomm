@@ -17,6 +17,15 @@ and save restoration. Earlier journals are still recoverable. Dart regressions
 and the disposable native file harness passed. See
 [the Thor launch evidence](docs/android-root-access.md#thor-launch-failure--2026-11-06).
 
+Build 1041 exposed two integration errors before it could hand off the game.
+The app passed an absolute library path across a namespace boundary, and the
+recovery call omitted the staged ROM checksum. The app now sends a validated
+library-relative path, which the service resolves in its own namespace. The
+recovery call passes the journaled checksum and can finish an existing restored
+swap. An isolated launch on the Thor loaded the actual ROM by native path and
+initialized mGBA, video and audio. The corrected packaged handoff and a
+changed-save round trip remain pending.
+
 ## Rooted Android GBA ordinary-save route — 2026-11-05
 
 The owner installed mGBA, saved RetroArch's configuration and selected The Minish

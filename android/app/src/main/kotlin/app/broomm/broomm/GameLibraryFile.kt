@@ -2,6 +2,14 @@ package app.broomm.broomm
 
 import java.io.File
 
+internal fun gameLibraryRelative(filesDir: File, value: String): String {
+    val file = gameLibraryFile(filesDir, value)
+    return file.relativeTo(File(filesDir.canonicalFile, "broomm/library")).invariantSeparatorsPath
+}
+
+internal fun gameLibraryFromRelative(filesDir: File, relative: String): File =
+    gameLibraryFile(filesDir, "${filesDir.absolutePath}/broomm/library/$relative")
+
 /** Resolve only the framework filesDir alias, never a link within the library. */
 internal fun gameLibraryFile(filesDir: File, value: String): File {
     val base = File(filesDir.canonicalFile, "broomm/library")

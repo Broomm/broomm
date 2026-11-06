@@ -67,12 +67,15 @@ class RootSaveService : RootService() {
                 "check" -> Bundle()
                 "stagerom" -> {
                     val path = request.getString("path")!!
-                    val source = gameLibraryFile(File(applicationInfo.dataDir, "files"), request.getString("source")!!)
+                    val filesDir = File(applicationInfo.dataDir, "files")
+                    val relative = request.getString("libraryRelative") ?: error("Missing GBA library path")
+                    val source = gameLibraryFromRelative(filesDir, relative)
                     val rom = files.stageRom(path, source, caller, request.getString("sha256")!!)
                     Bundle().apply { putString("rom", rom.path) }
                 }
                 "removerom" -> {
-                    files.removeRom(request.getString("path")!!, request.getString("sha256")!!)
+                    val hash = request.getString("sha256") ?: error("Missing GBA ROM recovery checksum")
+                    files.removeRom(request.getString("path")!!, hash)
                     Bundle()
                 }
                 "list", "read" -> {

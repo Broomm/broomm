@@ -75,6 +75,25 @@ The Thor native harness verifies normal staging, refusal of an existing target,
 rejection of a changed digest, partial-copy cleanup and preservation of save
 data. Full launch and the save round trip still require the packaged APK check.
 
+Build 1041 was reinstalled from the verified PR artifact. All 64 Broomm data
+files were restored and checked by hash. The user reported a worse experience.
+Device logs show that ROM staging failed before handoff, then ROM cleanup failed
+after the save swap reached `restored`. The standalone save retained its hash.
+
+The installed 1041 root code was exercised in a disposable profile on the Thor.
+It staged and removed the ROM using its own `/data/user/0` path and the
+journaled checksum, but rejected the `/data/data` spelling. Both library names
+refer to the same inode. The bridge now sends the verified relative library
+path, and the service resolves and validates it under its own framework
+directory. Cleanup now sends the recorded SHA-256. Regressions cover both
+namespace names, traversal refusal and retry after interrupted cleanup.
+
+A separate native-path control used the real Minish Cap ROM with a disposable
+configuration and save directory. RetroArch 1.22.2 loaded mGBA and the content,
+initialized video and audio, and logged the isolated SRAM path. This verifies
+the native-path startup independently of the Broomm APK. The owner still needs
+to verify the corrected packaged launch and a new gameplay save round trip.
+
 Run local checks with the pinned environments:
 
 ```sh

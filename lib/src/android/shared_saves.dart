@@ -287,7 +287,6 @@ class SharedAndroidSaves {
       await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
-        'sha256': r['romStageSha256'],
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
@@ -387,11 +386,15 @@ class SharedAndroidSaves {
       final config = plan.launch['configPath']!;
       final parent = config.substring(0, config.lastIndexOf('/'));
       final name = File(r['selected'] as String).uri.pathSegments.last;
-      if (path != '$parent/rom-${r['transaction']}/$name')
+      final hash = r['romStageSha256'];
+      if (path != '$parent/rom-${r['transaction']}/$name' ||
+          hash is! String ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
         throw const FormatException('Rooted GBA staging identity changed.');
       await manager.channel.invokeMethod<void>('rootRemoveRom', {
         ...plan.arguments,
         'path': path,
+        'sha256': hash,
       });
     }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
