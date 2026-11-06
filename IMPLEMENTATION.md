@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Cold RetroArch controller profiles — 2026-11-06
+
+Build 1050 downloaded and verified mGBA on a fresh Thor and launched Minish Cap.
+The owner reported the Odin fallback notice and that Back no longer opened the
+menu. RetroArch's standalone configuration was empty and the default profile
+directory had no files. The APK contains the Odin Controller profile for
+8224/273, including Back as Menu Toggle. F1 opened the menu over ADB and the
+owner closed RetroArch and confirmed sync before the second clean uninstall.
+
+The rooted launch now stages Android profiles from the verified installed APK
+under a build-specific Broomm directory when the default profiles are missing.
+It uses that directory in the generated session config and preserves explicit
+controller preferences. Fresh-build visual verification on the Thor is pending.
+
 ## Automatic mGBA setup on rooted Android — 2026-11-06
 
 The owner confirmed the older Minish Cap save loaded in-game. PR #1 merged into

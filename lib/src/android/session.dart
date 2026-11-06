@@ -155,6 +155,16 @@ class AndroidGameSession extends ChangeNotifier {
               if (area.id.startsWith('states-')) area.id,
           ],
         });
+        if (layout is AndroidSavePlan &&
+            layout.rooted &&
+            layout.launch['prepareControllerProfiles'] == 'true') {
+          phase = 'Preparing RetroArch controller profiles…';
+          _emit();
+          await manager.channel.invokeMethod<void>(
+            'rootControllerProfiles',
+            layout.arguments,
+          );
+        }
         phase = 'Checking BROOMM cloud saves…';
         _emit();
         await cloud.beforePlay(_game!, resolve: resolve);

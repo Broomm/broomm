@@ -132,6 +132,10 @@ void main() {
               message: 'Denied',
             );
           if (call.method == 'rootInspect') return observation;
+          if (call.method == 'rootControllerProfiles') {
+            observation['controllerProfilesReady'] = true;
+            return null;
+          }
           if (call.method == 'rootMgbaSetup')
             return {
               ...observation,
@@ -202,6 +206,42 @@ void main() {
         });
     manager = AndroidEmulators(data, channel: channel, enabled: true);
     await manager.load();
+  });
+
+  test('cold rooted launch prepares APK controller profiles before publishing its configuration', () async {
+    observation['bundledControllerProfiles'] = true;
+    observation['config'] = Uint8List(0);
+    await manager.connectGbaRoot(emulator);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    final cold = await plan();
+    expect(
+      androidIni(cold.launch['configText']!)['joypad_autoconfig_dir'],
+      '/data/user/0/$pkg/files/Broomm/controller-profiles-${'a' * 64}',
+    );
+    await launchRooted(session);
+    expect(calls.indexOf('rootControllerProfiles'), greaterThanOrEqualTo(0));
+    expect(
+      calls.indexOf('rootControllerProfiles'),
+      lessThan(calls.indexOf('rootReplace')),
+    );
+    expect((await plan()).launch, isNot(contains('prepareControllerProfiles')));
+  });
+
+  test('rooted launch retains a custom controller profile directory', () async {
+    observation['bundledControllerProfiles'] = true;
+    observation['config'] = Uint8List.fromList(
+      utf8.encode(
+        'joypad_autoconfig_dir = "/storage/emulated/0/RetroArch/custom"\n',
+      ),
+    );
+    await manager.connectGbaRoot(emulator);
+    final p = await plan();
+    expect(
+      androidIni(p.launch['configText']!)['joypad_autoconfig_dir'],
+      '/storage/emulated/0/RetroArch/custom',
+    );
+    expect(p.launch, isNot(contains('prepareControllerProfiles')));
   });
 
   test(

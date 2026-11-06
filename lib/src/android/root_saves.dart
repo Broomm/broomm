@@ -166,24 +166,35 @@ Future<AndroidSavePlan> rootedGbaProgress(
   );
   final configPath = '$base/config-${progressNonce()}.cfg';
   final native = binding['dataDir']!;
-  final config = androidRetroConfig(
-    utf8.decode(report['config'] as Uint8List),
-    {
-      'savefile_directory': '$native/$base/saves',
-      'savestate_directory': '$native/$base/states',
-      'sort_savefiles_enable': 'false',
-      'sort_savefiles_by_content_enable': 'false',
-      'sort_savestates_enable': 'false',
-      'sort_savestates_by_content_enable': 'false',
-      'savefiles_in_content_dir': 'false',
-      'savestates_in_content_dir': 'false',
-      'config_save_on_exit': 'false',
-      'auto_overrides_enable': 'false',
-      'save_file_compression': 'false',
-      'savestate_auto_load': 'false',
-      'savestate_auto_save': 'false',
-    },
-  );
+  final savedConfig = utf8.decode(report['config'] as Uint8List);
+  final preferences = androidIni(savedConfig);
+  final configuredProfiles = preferences['joypad_autoconfig_dir'];
+  final bundledProfiles =
+      report['bundledControllerProfiles'] == true &&
+      preferences['input_autodetect_enable'] != 'false' &&
+      (configuredProfiles == null ||
+          configuredProfiles.isEmpty ||
+          configuredProfiles == 'default' ||
+          configuredProfiles == '/data/user/0/${app.package}/autoconfig' ||
+          configuredProfiles == '/data/data/${app.package}/autoconfig');
+  final config = androidRetroConfig(savedConfig, {
+    'savefile_directory': '$native/$base/saves',
+    'savestate_directory': '$native/$base/states',
+    'sort_savefiles_enable': 'false',
+    'sort_savefiles_by_content_enable': 'false',
+    'sort_savestates_enable': 'false',
+    'sort_savestates_by_content_enable': 'false',
+    'savefiles_in_content_dir': 'false',
+    'savestates_in_content_dir': 'false',
+    'config_save_on_exit': 'false',
+    'auto_overrides_enable': 'false',
+    'save_file_compression': 'false',
+    'savestate_auto_load': 'false',
+    'savestate_auto_save': 'false',
+    if (bundledProfiles)
+      'joypad_autoconfig_dir':
+          '$native/files/Broomm/controller-profiles-${app.build}',
+  });
   return AndroidSavePlan(
     ProgressLayout(
       root.path,
@@ -199,6 +210,8 @@ Future<AndroidSavePlan> rootedGbaProgress(
       'configPath': configPath,
       'configNative': '$native/$configPath',
       'configText': config,
+      if (bundledProfiles && report['controllerProfilesReady'] != true)
+        'prepareControllerProfiles': 'true',
     },
   );
 }

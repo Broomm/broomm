@@ -4,6 +4,8 @@ import android.system.Os
 import android.system.OsConstants
 import java.io.File
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 fun main(args: Array<String>) {
     require(args.size == 2)
@@ -91,6 +93,33 @@ fun main(args: Array<String>) {
         check(files.installMgba(coreSource, 0, RootSaveFiles.digest(anotherCore), "arm64-v8a") {} == coreHash)
         check(files.mgba("arm64-v8a") == coreHash && files.hash(target) == oldHash)
         println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
+
+        val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"
+        val apk = File(root, "frontend.apk")
+        fun profiles(name: String) {
+            ZipOutputStream(apk.outputStream()).use { zip ->
+                zip.putNextEntry(ZipEntry("assets/autoconfig/android/$name"))
+                zip.write(profile.toByteArray()); zip.closeEntry()
+                zip.putNextEntry(ZipEntry("assets/autoconfig/linux/ignored.cfg"))
+                zip.write(profile.toByteArray()); zip.closeEntry()
+            }
+        }
+        val frontendBuild = "d".repeat(64)
+        profiles("../foreign.cfg")
+        failure { files.prepareControllerProfiles(apk, frontendBuild) {} }
+        check(!files.controllerProfilesReady(frontendBuild))
+        profiles("Odin_Controller.cfg")
+        val interruptedProfiles = RootSaveFiles(root, 2000, label, {}, { if (it == "staged") error("Interrupted profile publication") })
+        failure { interruptedProfiles.prepareControllerProfiles(apk, frontendBuild) {} }
+        check(!files.controllerProfilesReady(frontendBuild))
+        files.prepareControllerProfiles(apk, frontendBuild) {}
+        check(files.controllerProfilesReady(frontendBuild) && files.needsControllerProfiles())
+        val managed = files.path("files/Broomm/controller-profiles-$frontendBuild/android/Odin_Controller.cfg")
+        check(managed.readText() == profile && files.metadata(managed).startsWith("2000 2000 600 "))
+        check(managed.parentFile!!.list()!!.toList() == listOf("Odin_Controller.cfg"))
+        check(apk.delete())
+        files.prepareControllerProfiles(apk, frontendBuild) {}
+        println("PASS: scoped APK controller profiles, interrupted setup recovery, and reuse")
 
         fun probe(): String {
             val process = ProcessBuilder("/system/bin/app_process", "/system/bin", "app.broomm.broomm.Check_root_save_filesKt", "probe", root.path).start()

@@ -71,7 +71,12 @@ publication. A durable pinned distribution URL is still needed for a release
 that can download these same bytes after Buildbot rotates them.
 
 Broomm reads RetroArch's saved preferences when present. A fresh app can use
-RetroArch defaults and the generated Broomm session configuration. Test this
+RetroArch defaults and the generated Broomm session configuration. Cold game
+launches can bypass RetroArch's normal APK asset extraction. When its default
+Android profiles are absent, Broomm stages the profiles from the installed APK
+into a build-specific private directory and points the session at them. It
+preserves explicit profile directories and the user's autodetection preference.
+RetroArch's bundled Odin profile includes the Back menu binding. Test this
 from a clean Android installation by installing RetroArch, setting up GBA,
 then launching Minish Cap, saving in-game and quitting to verify sync. Repeat
 setup with mGBA already present to verify the core is reused. The Thor's

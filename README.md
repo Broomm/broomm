@@ -22,7 +22,7 @@ and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the
 [Eden launch/save-account fixes](docs/eden-save-account-repair.md) and
 [Thor input fix](docs/linux-input-performance.md):
-[Download the macOS build](build/releases/Broomm-macOS-android-mgba-setup-preview.zip).
+[Download the macOS build](build/releases/Broomm-macOS-android-controller-profiles-preview.zip).
 It is version `0.1.16-dev`, ad-hoc signed, uses the normal application data folder
 and has development-build automatic updates disabled. Existing malformed Eden
 save directories need the documented save-preserving repair before retesting.
@@ -52,6 +52,8 @@ again to disconnect and return to the shared folder for GBA.
 Install Minish Cap from your RomM library, then launch it from Home. Sessions
 use separate profile/game files beneath RetroArch's
 private `files/Broomm` directory; your ordinary standalone saves remain intact.
+When a fresh RetroArch installation has no default controller profiles, Broomm
+prepares the Android profiles from the installed APK before the first game.
 The rooted route stages a verified copy of the selected `.gba` in that private
 directory for RetroArch to open by path. Finishing the session removes the
 staged copy.

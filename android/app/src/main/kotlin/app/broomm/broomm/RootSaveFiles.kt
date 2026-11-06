@@ -175,6 +175,37 @@ internal class RootSaveFiles(
         return expected
     }
 
+    fun needsControllerProfiles(): Boolean {
+        val dir = File(root, "autoconfig/android")
+        if (dir.canonicalPath != dir.absolutePath) return false
+        return dir.list()?.none { it.endsWith(".cfg") } ?: true
+    }
+
+    fun controllerProfilesReady(build: String): Boolean {
+        val marker = path("${controllerProfilePath(build)}/.complete")
+        if (!present(marker)) return false
+        metadata(marker)
+        require(hash(marker) == digest(build.toByteArray())) { "The managed controller profile record changed." }
+        return true
+    }
+
+    fun prepareControllerProfiles(apk: File, build: String, ensureClosed: () -> Unit) {
+        if (controllerProfilesReady(build)) return
+        val target = controllerProfilePath(build)
+        val profiles = RetroArchControllerProfiles.read(apk, live)
+        ensureClosed()
+        val token = build.take(32) + "-in"
+        for ((name, bytes) in profiles)
+            replace("$target/android/$name", null, digest(bytes), bytes, null, token)
+        val marker = build.toByteArray()
+        replace("$target/.complete", null, digest(marker), marker, null, token)
+    }
+
+    private fun controllerProfilePath(build: String): String {
+        require(Regex("[a-f0-9]{64}").matches(build))
+        return "files/Broomm/controller-profiles-$build"
+    }
+
     private fun transferRom(file: File, owner: Int, out: FileOutputStream? = null, links: Long = 1): String {
         val fd = Os.open(file.path, OsConstants.O_RDONLY or OsConstants.O_NOFOLLOW or OsConstants.O_NONBLOCK, 0)
         return FileInputStream(fd).use { input ->

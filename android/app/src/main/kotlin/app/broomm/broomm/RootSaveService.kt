@@ -69,7 +69,21 @@ class RootSaveService : RootService() {
                         require(config.canonicalPath == config.path && OsConstants.S_ISREG(Os.lstat(config.path).st_mode)) { "RetroArch’s saved configuration is linked or invalid." }
                         files.bytes(config, MAX_BYTES)
                     } else ByteArray(0)
-                    Bundle().apply { putString("core", hash); putByteArray("config", bytes); putString("root", root.path); putString("label", String(label).trimEnd('\u0000')) }
+                    Bundle().apply {
+                        putString("core", hash); putByteArray("config", bytes); putString("root", root.path)
+                        putString("label", String(label).trimEnd('\u0000'))
+                        if (files.needsControllerProfiles()) {
+                            putBoolean("bundledControllerProfiles", true)
+                            putBoolean("controllerProfilesReady", files.controllerProfilesReady(before["build"] as String))
+                        }
+                    }
+                }
+                "controllerprofiles" -> {
+                    val apk = File(packageManager.getApplicationInfo(pkg, 0).sourceDir)
+                    require(apk.canonicalPath == apk.absolutePath && apk.path.startsWith("/data/app/") &&
+                        OsConstants.S_ISREG(Os.lstat(apk.path).st_mode)) { "Invalid installed RetroArch APK path." }
+                    files.prepareControllerProfiles(apk, before["build"] as String, ::ensureClosed)
+                    Bundle()
                 }
                 "mgbasetup" -> {
                     ensureClosed()
