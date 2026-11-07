@@ -1,0 +1,184 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../session_lease.dart';
+import 'emulators.dart';
+
+enum AndroidSetupStep { install, waitingInstall, initialize, folder, ready }
+
+/// One setup operation shared by the compact settings cards and their dialog.
+class AndroidEmulatorSetup extends ChangeNotifier {
+  AndroidEmulatorSetup(
+    this.manager,
+    this.emulator,
+    this.platform,
+    this.profile,
+  ) {
+    manager.addListener(_installed);
+  }
+
+  final AndroidEmulators manager;
+  final AndroidEmulator emulator;
+  final String platform;
+  final String profile;
+  AndroidSetupStep step = AndroidSetupStep.install;
+  bool busy = false, _disposed = false, _shared = false, _opened = false;
+  String? problem;
+  Map<String, String> _previousBuilds = {};
+
+  bool get _rooted =>
+      !_shared &&
+      emulator.id == 'retroarch' &&
+      platform == 'gba' &&
+      (manager.gbaRoot(emulator) != null ||
+          manager.tree(profile, emulator) == null);
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (busy || _disposed) return;
+    busy = true;
+    problem = null;
+    notifyListeners();
+    try {
+      await manager.ensureSetupAllowed();
+      await action();
+    } catch (e) {
+      problem = '$e';
+    } finally {
+      busy = false;
+      if (!_disposed) {
+        notifyListeners();
+        _installed();
+      }
+    }
+  }
+
+  void _installed() {
+    final app = manager.app(emulator);
+    if (!_disposed &&
+        !busy &&
+        step == AndroidSetupStep.waitingInstall &&
+        !manager.busy &&
+        manager.settingsKnown &&
+        manager.error == null &&
+        app?.enabled == true &&
+        app!.build != _previousBuilds[app.package]) {
+      // Change the phase before dispatch so repeated inventory notifications
+      // cannot start a second setup operation.
+      step = AndroidSetupStep.install;
+      unawaited(verify());
+    }
+  }
+
+  Future<void> verify() => _run(() async {
+    final app = manager.app(emulator);
+    if (app == null) {
+      step = AndroidSetupStep.install;
+      return;
+    }
+    if (!app.enabled)
+      throw StateError('Enable ${emulator.name} in Android settings first.');
+    if (_rooted) {
+      step = AndroidSetupStep.initialize;
+      final firstOpen = await manager.connectGbaRoot(emulator);
+      step = firstOpen == null
+          ? AndroidSetupStep.ready
+          : AndroidSetupStep.initialize;
+    } else {
+      final binding = manager.folder(emulator);
+      if (binding == null) {
+        step = AndroidSetupStep.folder;
+      } else {
+        final lease = await SessionLease.acquire(manager.data);
+        try {
+          await manager.ensureSetupAllowed();
+          await manager.confirmSharedStorage(emulator, binding['tree']!);
+          step = AndroidSetupStep.ready;
+        } finally {
+          await lease.release();
+        }
+      }
+    }
+  });
+
+  Future<void> install({bool imported = false}) => _run(() async {
+    _previousBuilds = {
+      for (final package in emulator.packages)
+        if (manager.installed[package] case final app?) package: app.build,
+    };
+    step = AndroidSetupStep.waitingInstall;
+    if (imported) {
+      await manager.installApk(emulator);
+    } else {
+      await manager.install(emulator);
+    }
+  });
+
+  Future<void> refresh() async {
+    if (busy) return;
+    await manager.load();
+    _installed();
+  }
+
+  Future<void> open() => _run(() async {
+    await manager.open(emulator);
+    _opened = true;
+  });
+
+  Future<void> resumed() async {
+    if (busy) return;
+    if (step == AndroidSetupStep.waitingInstall) {
+      await refresh();
+    } else if (step == AndroidSetupStep.initialize && _opened) {
+      _opened = false;
+      await verify();
+    }
+  }
+
+  Future<void> useSharedFolder() => _run(() async {
+    if (manager.gbaRoot(emulator) != null)
+      await manager.disconnectGbaRoot(emulator);
+    _shared = true;
+    step = AndroidSetupStep.folder;
+  });
+
+  Future<void> selectFolder() => _run(() async {
+    final lease = await SessionLease.acquire(manager.data);
+    try {
+      await manager.ensureSetupAllowed();
+      final app = manager.app(emulator);
+      if (app == null) throw StateError('Install ${emulator.name} first.');
+      final uri = await manager.chooseFolder(emulator);
+      if (uri == null) return;
+      if (manager.app(emulator)?.build != app.build)
+        throw StateError('The emulator changed. Select its save folder again.');
+      await manager.confirmSharedStorage(emulator, uri);
+      step = AndroidSetupStep.ready;
+    } finally {
+      await lease.release();
+    }
+  });
+
+  @override
+  void dispose() {
+    _disposed = true;
+    manager.removeListener(_installed);
+    super.dispose();
+  }
+}
+
+String androidSetupInstructions(AndroidEmulator emulator) =>
+    switch (emulator.id) {
+      'ppsspp' => 'In PPSSPP, select a shared Memory Stick folder. Select that same folder here; it contains PSP/SAVEDATA and PSP/PPSSPP_STATE.',
+      'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
+      'azahar' => 'In Azahar, select a shared user-data folder. Select that same folder here, containing sdmc and states.',
+      'citra-mmj' => 'Use MMJ’s normal shared citra-emu folder, usually Internal storage/citra-emu. Private Android/data and Storage Access builds are unsupported. Check that MMJ uses this folder.',
+      'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder.',
+      'retroarch' => 'Install the required core in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root containing cores and files.',
+      'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game cards. Select the full folder containing PCSX2-Android.ini, memcards and sstates.',
+      'duckstation' => 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
+      'eden' => 'Initialize its console account and configure keys and firmware in Eden. Select Eden from the picker sidebar and grant its full user-data root.',
+      _ => throw UnsupportedError(
+        'No Android setup instructions for ${emulator.name}.',
+      ),
+    };

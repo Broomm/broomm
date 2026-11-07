@@ -110,7 +110,7 @@ class RootSaveAccess(private val activity: Activity) {
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method != "rootInspect") for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -120,7 +120,7 @@ class RootSaveAccess(private val activity: Activity) {
                 for ((key, value) in identity) putString(key, value.toString())
                 putLong("deadline", SystemClock.elapsedRealtime() + 30000)
                 putString("operation", call.method.removePrefix("root").lowercase())
-                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label"))
+                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage"))
                     putString(key, call.argument<String>(key))
             }
             if (call.method == "rootLifecycle") {
@@ -182,9 +182,10 @@ class RootSaveAccess(private val activity: Activity) {
                         require(RootInspection.identity(activity, pkg) == identity) { "Emulator changed during root access. Recovery was kept." }
                         val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                         val value: Any? = when (call.method) {
-                            "rootInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootInspect", "rootMgbaSetup" -> identity.mapValues { it.value.toString() } + mapped
                             "rootLifecycle" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
+                            "rootInstallMgba" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
                             "rootList" -> if (answer.getBoolean("missing")) emptyMap<String, Any>() else mapOf(listPath!! to mapped)
                             "rootRead" -> {
                                 require(!answer.getBoolean("missing")) { "A save disappeared during capture." }

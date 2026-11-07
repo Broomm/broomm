@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * and recovery are Dart workflows. Only the standard shared-storage provider is
  * admitted; a user grant cannot bypass another app's Android/data sandbox. */
 class SharedSaveFolder(private val activity: Activity) {
-    private val picker = 6205
+    private val picker = 6206
     private var pending: MethodChannel.Result? = null
     private var pickingEmulator: String? = null
     private var pickingPackage: String? = null

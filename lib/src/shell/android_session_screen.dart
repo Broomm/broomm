@@ -33,7 +33,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   bool started = false;
   bool completed = false;
   String? error;
-  bool _manualStart = false;
+  bool _manualStart = false, _frontendSetup = false;
   AndroidRetroArchState? _retroArchState;
   bool _leftForEmulator = false, _offerSync = false, _promptOpen = false;
   @override
@@ -65,6 +65,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
 
   Future<void> start({required bool emulatorClosed}) async {
     started = true;
+    _frontendSetup = false;
     await run(() async {
       try {
         await widget.start!(emulatorClosed: emulatorClosed);
@@ -72,6 +73,8 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
         if (widget.rooted && !widget.session.active) {
           started = false;
           _manualStart = e is AndroidClosureUnverified;
+          _frontendSetup = e is AndroidRetroArchSetupRequired;
+          if (_frontendSetup) return;
         }
         rethrow;
       }
@@ -202,6 +205,20 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                           style: TextStyle(color: muted, height: 1.6),
                         ),
                       ],
+                      if (_frontendSetup) ...[
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Open RetroArch to install its bundled resources. Wait for its main menu, then quit RetroArch and return here.',
+                        ),
+                        if (widget.resume != null)
+                          ConsoleButton(
+                            autofocus: true,
+                            onPressed: session.busy
+                                ? null
+                                : () => run(widget.resume!),
+                            child: const Text('Open RetroArch'),
+                          ),
+                      ],
                       if (error != null) ProblemNotice(error!),
                       if (error != null && active)
                         ConsoleButton(
@@ -259,7 +276,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                       const SizedBox(height: 24),
                       if (!active && !started)
                         ConsoleButton(
-                          autofocus: true,
+                          autofocus: !_frontendSetup,
                           onPressed: session.busy
                               ? null
                               : () => start(

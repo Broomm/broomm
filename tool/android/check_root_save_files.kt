@@ -4,6 +4,8 @@ import android.system.Os
 import android.system.OsConstants
 import java.io.File
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 fun main(args: Array<String>) {
     require(args.size == 2)
@@ -73,6 +75,74 @@ fun main(args: Array<String>) {
         files.removeRom(romPath, oldHash)
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
         println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
+
+        val core = ByteArray(20).apply {
+            byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
+            this[16] = 3; this[18] = 183.toByte()
+        }
+        val coreSource = File(root, "reviewed-mgba.so").apply { writeBytes(core) }
+        val coreHash = RootSaveFiles.digest(core)
+        failure { files.installMgba(coreSource, 0, coreHash, "armeabi-v7a") {} }
+        failure { files.installMgba(coreSource, 0, oldHash, "arm64-v8a") {} }
+        check(files.mgba() == null)
+        val interruptedCore = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Interrupted core publication") })
+        failure { interruptedCore.installMgba(coreSource, 0, coreHash, "arm64-v8a") {} }
+        check(files.mgba("arm64-v8a", recoverPublication = true) == coreHash)
+        val anotherCore = core.copyOf().apply { this[7] = 1 }
+        coreSource.writeBytes(anotherCore)
+        check(files.installMgba(coreSource, 0, RootSaveFiles.digest(anotherCore), "arm64-v8a") {} == coreHash)
+        check(files.mgba("arm64-v8a") == coreHash && files.hash(target) == oldHash)
+        println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
+
+        val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"
+        val apk = File(root, "frontend.apk")
+        fun profiles(name: String) {
+            ZipOutputStream(apk.outputStream()).use { zip ->
+                zip.putNextEntry(ZipEntry("assets/autoconfig/android/$name"))
+                zip.write(profile.toByteArray()); zip.closeEntry()
+                zip.putNextEntry(ZipEntry("assets/autoconfig/linux/ignored.cfg"))
+                zip.write(profile.toByteArray()); zip.closeEntry()
+            }
+        }
+        val frontendBuild = "d".repeat(64)
+        profiles("../foreign.cfg")
+        failure { files.prepareControllerProfiles(apk, frontendBuild) {} }
+        check(!files.controllerProfilesReady(frontendBuild))
+        profiles("Odin_Controller.cfg")
+        val interruptedProfiles = RootSaveFiles(root, 2000, label, {}, { if (it == "staged") error("Interrupted profile publication") })
+        failure { interruptedProfiles.prepareControllerProfiles(apk, frontendBuild) {} }
+        check(!files.controllerProfilesReady(frontendBuild))
+        files.prepareControllerProfiles(apk, frontendBuild) {}
+        check(files.controllerProfilesReady(frontendBuild) && files.needsControllerProfiles())
+        val managed = files.path("files/Broomm/controller-profiles-$frontendBuild/android/Odin_Controller.cfg")
+        check(managed.readText() == profile && files.metadata(managed).startsWith("2000 2000 600 "))
+        check(managed.parentFile!!.list()!!.toList() == listOf("Odin_Controller.cfg"))
+        check(apk.delete())
+        files.prepareControllerProfiles(apk, frontendBuild) {}
+        println("PASS: scoped APK controller profiles, interrupted setup recovery, and reuse")
+
+        val menuFiles = listOf("assets/ozone/regular.ttf", "assets/ozone/bold.ttf",
+            "assets/ozone/png/icons/settings.png")
+        profiles("Odin_Controller.cfg")
+        check(!files.needsFrontendAssets { apk })
+        ZipOutputStream(apk.outputStream()).use { zip ->
+            for (name in menuFiles) {
+                zip.putNextEntry(ZipEntry("assets/$name"))
+                zip.write(1); zip.closeEntry()
+            }
+        }
+        check(files.needsFrontendAssets { apk })
+        for (name in menuFiles.dropLast(1)) {
+            File(root, name).apply { parentFile!!.mkdirs(); writeText("font") }
+        }
+        check(files.needsFrontendAssets { apk })
+        val icon = File(root, menuFiles.last())
+        icon.parentFile!!.mkdirs()
+        check(icon.createNewFile())
+        check(files.needsFrontendAssets { apk })
+        icon.writeText("icon")
+        check(!files.needsFrontendAssets { error("A complete install needs no APK read") })
+        println("PASS: stock menu resources, incomplete extraction, and alternate APK layouts")
 
         fun probe(): String {
             val process = ProcessBuilder("/system/bin/app_process", "/system/bin", "app.broomm.broomm.Check_root_save_filesKt", "probe", root.path).start()

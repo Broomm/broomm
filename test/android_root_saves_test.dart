@@ -9,11 +9,13 @@ import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
+import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/service.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
+import 'android_apk_download_test.dart' show ApkClient, ApkReply;
 import 'cloud_saves_test.dart' show SaveServer, profileId, serverId;
 
 void main() {
@@ -30,6 +32,7 @@ void main() {
   late SaveServer api;
   late CloudSaves cloud;
   var denied = false;
+  var missingCore = false;
   var refuseRomCleanup = false;
   var processState = 'idle', exitState = 'unknown';
   var reportsBeforeExit = 0;
@@ -97,6 +100,7 @@ void main() {
     api = SaveServer();
     cloud = CloudSaves(data, notice: (_, _) {});
     denied = false;
+    missingCore = false;
     refuseRomCleanup = false;
     processState = 'idle';
     exitState = 'unknown';
@@ -129,6 +133,16 @@ void main() {
               message: 'Denied',
             );
           if (call.method == 'rootInspect') return observation;
+          if (call.method == 'rootControllerProfiles') {
+            observation['controllerProfilesReady'] = true;
+            return null;
+          }
+          if (call.method == 'rootMgbaSetup')
+            return {
+              ...observation,
+              'abi': 'arm64-v8a',
+              if (missingCore) 'core': null,
+            };
           if (call.method == 'rootLifecycle') {
             final args = call.arguments as Map;
             if (args['process'] != null) {
@@ -194,6 +208,161 @@ void main() {
     manager = AndroidEmulators(data, channel: channel, enabled: true);
     await manager.load();
   });
+
+  test('cold rooted launch prepares APK controller profiles before publishing its configuration', () async {
+    observation['bundledControllerProfiles'] = true;
+    observation['config'] = Uint8List(0);
+    await manager.connectGbaRoot(emulator);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    final cold = await plan();
+    expect(
+      androidIni(cold.launch['configText']!)['joypad_autoconfig_dir'],
+      '/data/user/0/$pkg/files/Broomm/controller-profiles-${'a' * 64}',
+    );
+    await launchRooted(session);
+    expect(calls.indexOf('rootControllerProfiles'), greaterThanOrEqualTo(0));
+    expect(
+      calls.indexOf('rootControllerProfiles'),
+      lessThan(calls.indexOf('rootReplace')),
+    );
+    expect((await plan()).launch, isNot(contains('prepareControllerProfiles')));
+  });
+
+  test('rooted launch retains a custom controller profile directory', () async {
+    observation['bundledControllerProfiles'] = true;
+    observation['config'] = Uint8List.fromList(
+      utf8.encode(
+        'joypad_autoconfig_dir = "/storage/emulated/0/RetroArch/custom"\n',
+      ),
+    );
+    await manager.connectGbaRoot(emulator);
+    final p = await plan();
+    expect(
+      androidIni(p.launch['configText']!)['joypad_autoconfig_dir'],
+      '/storage/emulated/0/RetroArch/custom',
+    );
+    expect(p.launch, isNot(contains('prepareControllerProfiles')));
+  });
+
+  test(
+    'missing stock assets block direct play before any save journal',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      observation['frontendAssetsPending'] = true;
+      observation['config'] = Uint8List(0);
+      expect((await manager.connectGbaRoot(emulator))?.package, pkg);
+      final session = AndroidGameSession(manager, cloud);
+      addTearDown(session.dispose);
+      calls.clear();
+      await expectLater(
+        launchRooted(session),
+        throwsA(isA<AndroidRetroArchSetupRequired>()),
+      );
+      expect(await session.pending(), isNull);
+      expect(session.active, isFalse);
+      expect(calls, isNot(contains('rootReplace')));
+      expect(calls, isNot(contains('launch')));
+
+      observation['frontendAssetsPending'] = false;
+      await launchRooted(session);
+      expect(calls, contains('launch'));
+    },
+  );
+
+  test('one setup operation prepares GBA and waits for the first open before connecting', () async {
+    observation['frontendAssetsPending'] = true;
+    final setup = AndroidEmulatorSetup(manager, emulator, 'gba', profileId);
+    addTearDown(setup.dispose);
+    await setup.verify();
+    expect(setup.problem, isNull);
+    expect(setup.step, AndroidSetupStep.initialize);
+    expect(manager.gbaRoot(emulator), isNull);
+    observation['frontendAssetsPending'] = false;
+    await setup.verify();
+    expect(setup.step, AndroidSetupStep.ready);
+    expect(manager.hasCurrentGbaRoot(emulator), isTrue);
+    expect(calls, isNot(contains('installDownloadedApk')));
+  });
+
+  test(
+    'denied root setup remains retryable without publishing a connection',
+    () async {
+      denied = true;
+      final setup = AndroidEmulatorSetup(manager, emulator, 'gba', profileId);
+      addTearDown(setup.dispose);
+      await setup.verify();
+      expect(setup.problem, contains('Denied'));
+      expect(setup.step, AndroidSetupStep.initialize);
+      expect(manager.gbaRoot(emulator), isNull);
+      denied = false;
+      await setup.verify();
+      expect(setup.problem, isNull);
+      expect(setup.step, AndroidSetupStep.ready);
+    },
+  );
+
+  test('rooted launch retains a configured custom assets directory', () async {
+    observation['frontendAssetsPending'] = true;
+    const custom = '/storage/emulated/0/RetroArch/custom-assets/';
+    observation['config'] = Uint8List.fromList(
+      utf8.encode('assets_directory = "$custom"\n'),
+    );
+    expect(await manager.connectGbaRoot(emulator), isNull);
+    final p = await plan();
+    expect(p.launch, isNot(contains('frontendSetup')));
+    expect(androidIni(p.launch['configText']!)['assets_directory'], custom);
+  });
+
+  test(
+    'root setup reuses mGBA and reconnects a newly installed RetroArch build',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      expect(calls, isNot(contains('rootInstallMgba')));
+      const replacement = AndroidApp(
+        pkg,
+        '1.22.2',
+        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      );
+      manager.installed[pkg] = replacement;
+      expect(manager.hasCurrentGbaRoot(emulator), isFalse);
+      observation['build'] = replacement.build;
+      observation['config'] = Uint8List(0);
+      await manager.connectGbaRoot(emulator);
+      expect(manager.hasCurrentGbaRoot(emulator), isTrue);
+      expect(
+        (await plan()).launch['configText'],
+        contains('savefile_directory'),
+      );
+      expect(calls, isNot(contains('rootInstallMgba')));
+    },
+  );
+
+  test(
+    'a changed mGBA archive never reaches root publication or connects saves',
+    () async {
+      missingCore = true;
+      final client = ApkClient((_) => ApkReply([1, 2, 3]));
+      await HttpOverrides.runZoned(
+        () => expectLater(
+          manager.connectGbaRoot(emulator),
+          throwsFormatException,
+        ),
+        createHttpClient: (_) => client,
+      );
+      expect(
+        client.requests.single.path,
+        endsWith('/arm64-v8a/mgba_libretro_android.so.zip'),
+      );
+      expect(client.closed, isTrue);
+      expect(calls, isNot(contains('rootInstallMgba')));
+      expect(manager.gbaRoot(emulator), isNull);
+      expect(
+        await Directory('${data.path}/android/mgba-stage').list().toList(),
+        isEmpty,
+      );
+    },
+  );
 
   test(
     'rooted launch blocks a running writer and asks only on unknown closure',

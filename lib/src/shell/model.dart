@@ -400,6 +400,7 @@ class ShellModel extends ChangeNotifier {
       ManagedEmulators(storage.directory, project: project, log: log);
   late final android = (_androidManager ?? AndroidEmulators(storage.directory))
     ..onInstalled = _androidInstalled
+    ..onRemoved = _androidRemoved
     ..phase = (message) => log?.write(message);
   Future<void> _androidInstalled(
     String serverId,
@@ -410,6 +411,14 @@ class ShellModel extends ChangeNotifier {
       for (final slug in emulator.platforms) slug: emulator.id,
     });
     _cloudGames.clear();
+    _emit();
+  }
+
+  Future<void> _androidRemoved(AndroidEmulator emulator) async {
+    records = await storage.removeEmulatorDefaults(emulator.id);
+    _cloudGames.clear();
+    _cloudStatus.clear();
+    ++_cloudStatusRevision;
     _emit();
   }
 
@@ -425,7 +434,12 @@ class ShellModel extends ChangeNotifier {
   bool emulatorReady(GamePlatform platform) => isAndroid
       ? androidEmulators
             .where((e) => e.id == platform.emulatorId)
-            .any((e) => android.app(e)?.enabled == true)
+            .any(
+              (e) =>
+                  android.app(e)?.enabled == true &&
+                  profile != null &&
+                  android.connected(profile!.id, e, platform: platform.slug),
+            )
       : emulators.readyFor(platform.emulator, platform.slug);
   final ShellStorage storage;
   final RommClient Function(Uri) clientFactory;
@@ -1344,7 +1358,7 @@ class ShellModel extends ChangeNotifier {
     final options = emulatorChoices(platform);
     final preferred = defaultEmulator(platform);
     return options.where((p) => p.emulatorId == preferred).firstOrNull ??
-        (isAndroid ? null : gamePlatform(game, platforms));
+        (isAndroid ? options.firstOrNull : gamePlatform(game, platforms));
   }
 
   Future<void> setDefaultEmulator(

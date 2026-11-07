@@ -169,6 +169,10 @@ This staging retains the full Windows/macOS/Linux/Android product targets.
 
 Android detects and uses compatible installed emulator apps and can guide users through installing an emulator when absent. It launches the selected emulator with the ROM and the profile's save/save-state inputs through that emulator's supported contract. It does not run the desktop controller join/assignment machinery, inject bridges, render in-game Broomm overlays, or attempt desktop-style sandboxing of the emulator app.
 
+During installation and save setup, ask the player to open each emulator once,
+complete its first-run setup and permissions, then close it before playing from
+Broomm. Keep this guidance in the setup flows.
+
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 
 For Citra MMJ, assume shared `citra-emu` storage and request a persistent folder grant. Warn that private `Android/data` / Storage Access builds are unsupported, and reject a folder outside this shared-root contract. Keep profile progress separately in Broomm, copy the active game's saves into MMJ's required paths only while it is closed, and preserve/restore existing standalone MMJ progress. Do not assume that selecting a folder proves MMJ is configured to consume it. An interrupted or uncertain swap must retain recovery copies and offer an explicit way to finish without overwriting the shared folder.
@@ -203,6 +207,11 @@ existing shared-folder/provider route available. Root access does not imply a
 particular root manager, dependency, device compatibility or completed feature.
 Do not root a device or change its system security configuration as setup.
 
+Install the regular official RetroArch APK. When its bundled frontend resources
+need initialization, guide the player through RetroArch's standard first open
+before starting a rooted game session. Preserve existing RetroArch settings
+and leave APK installation and permission prompts with Android.
+
 Keep package/Android-user identity, native console identities and each RomM
 profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and
@@ -221,8 +230,18 @@ Broomm activity, including while the player is in the emulator. Release it
 when the activity closes. Keep root requests tied to user actions and preserve
 recovery if the connection is lost.
 
-Keep Android emulator cards compact and put setup instructions in their
-dialogs. Provide one read-only root inspection action in Emulator Settings
+Keep Android emulator cards compact with the desktop actions **Set up**,
+**Verify setup**, **Open emulator**, **Set as default** and **Remove**. Setup
+owns installation, first-open guidance and save access. On supported rooted GBA
+RetroArch installations it requests root and provisions mGBA automatically.
+Other routes request their Android folder grant within Setup. Select a default
+only after setup is complete. Removal asks Android to uninstall the selected
+external app and clears its Broomm connections/defaults after verified absence.
+Explain that uninstall deletes the external app's private settings, cores and
+standalone saves. Keep Broomm's saved progress, recovery data and game downloads.
+Interrupted removals remain retryable.
+
+Keep setup instructions in the dialogs. Provide one read-only root inspection action in Emulator Settings
 with an installed-app picker when needed. Keep GBA root and shared RetroArch
 folder connections independently so configuring GBA leaves other systems'
 save access available.

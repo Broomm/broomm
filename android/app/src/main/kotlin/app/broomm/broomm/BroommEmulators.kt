@@ -38,15 +38,36 @@ class BroommEmulators(private val activity: Activity) {
     private val sharedFolder = SharedSaveFolder(activity)
     private val rootSaves = RootSaveAccess(activity)
     private val installPermission = ApkInstallPermission(activity)
+    private val uninstall = EmulatorUninstall(activity, ::app)
     fun register(engine: FlutterEngine) {
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, channelName).also { c ->
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
-                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom", "rootLifecycle" ->
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootControllerProfiles" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)
+                        "uninstall" -> {
+                            val pkg = packageName(call.argument<String>("package"))
+                            require(RootInspection.supports(pkg)) { "Unsupported emulator package." }
+                            uninstall.request(pkg,
+                                call.argument<String>("build") ?: error("Missing emulator build"), result)
+                        }
+                        "clearEmulatorSetup" -> {
+                            val pkg = packageName(call.argument<String>("package"))
+                            val emulator = call.argument<String>("emulator")!!
+                            require(RootInspection.supports(pkg) && app(pkg) == null) { "Confirm emulator removal before clearing setup." }
+                            require(emulator in setOf("retroarch", "ppsspp", "melonds", "azahar",
+                                "citra-mmj", "dolphin", "eden", "armsx2", "duckstation"))
+                            val prefs = activity.getSharedPreferences("emulator-roots", 0)
+                            val edit = prefs.edit()
+                            for (key in prefs.all.keys.filter { it.endsWith(":$emulator") }) edit.remove(key)
+                            check(edit.commit()) { "Emulator setup could not be cleared. Retry removal." }
+                            activity.contentResolver.notifyChange(
+                                DocumentsContract.buildRootsUri("${activity.packageName}.emulator-data"), null)
+                            result.success(null)
+                        }
                         "aesEcb" -> background(result) {
                             val bytes = call.argument<ByteArray>("bytes")!!; val key = call.argument<ByteArray>("key")!!
                             require(key.size == 16 && bytes.isNotEmpty() && bytes.size % 16 == 0 && bytes.size <= 65536)
@@ -308,6 +329,7 @@ class BroommEmulators(private val activity: Activity) {
     }
     @Suppress("DEPRECATION")
     fun activityResult(request: Int, code: Int, data: Intent?): Boolean {
+        if (uninstall.activityResult(request)) return true
         if (installPermission.activityResult(request)) return true
         if (sharedFolder.activityResult(request, code, data)) return true
         if (request == gameRequest) {
@@ -389,6 +411,7 @@ class BroommEmulators(private val activity: Activity) {
         return true
     }
     fun close() {
+        uninstall.close()
         installPermission.close()
         sharedFolder.close()
         rootSaves.close()

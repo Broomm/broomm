@@ -336,6 +336,19 @@ class ShellStorage {
     ),
   );
 
+  Future<ShellRecords> removeEmulatorDefaults(String emulator) => _change(
+    (s) => ShellRecords(
+      servers: s.servers,
+      profiles: s.profiles,
+      lastServer: s.lastServer,
+      preferences: s.preferences,
+      emulatorDefaults: {
+        for (final entry in s.emulatorDefaults.entries)
+          if (entry.value != emulator) entry.key: entry.value,
+      },
+    ),
+  );
+
   Future<ShellRecords> emulatorDefaults(
     String serverId,
     Map<String, String> choices,

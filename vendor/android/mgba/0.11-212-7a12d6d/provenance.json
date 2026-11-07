@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "core": "mgba",
+  "build_version": "0.11-212-7a12d6d",
+  "source_repository": "https://github.com/libretro/mgba",
+  "source_commit": "7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6",
+  "source_archive": "https://github.com/libretro/mgba/archive/7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6.tar.gz",
+  "license": "MPL-2.0",
+  "entry": "mgba_libretro_android.so",
+  "archives": {
+    "arm64-v8a": {
+      "archive_sha256": "126bbc51bd6ba2737e05c92b00512aa7c4b60cab60e211b23523de0ebd481c55",
+      "payload_sha256": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "bytes": 419371,
+      "original_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mgba_libretro_android.so.zip",
+      "captured": "2026-11-06"
+    },
+    "armeabi-v7a": {
+      "archive_sha256": "c71a49b9c94fe3b6c1531272269f685ebc272e9d0d442d9e3a02e159c5584f49",
+      "payload_sha256": "a976a807a7bd79a7dabbc42cfc02620fca17ec7011e887730e9d768689a4d651",
+      "bytes": 383098,
+      "original_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/mgba_libretro_android.so.zip",
+      "captured": "2026-11-06"
+    },
+    "x86": {
+      "archive_sha256": "c9dd8dd6e8ec430fd918114d8d0280b70884b86e72402319991cc3565a0dfb6a",
+      "payload_sha256": "80fab1051294b375b9b9101d81ff4f7611f21ffcc6a658c8a5c388ba4c98ee5a",
+      "bytes": 422718,
+      "original_url": "https://buildbot.libretro.com/nightly/android/latest/x86/mgba_libretro_android.so.zip",
+      "captured": "2026-11-06"
+    },
+    "x86_64": {
+      "archive_sha256": "7a535185fc12d4aa7a726013811174fb109511faf96e54fa285f37266fc8b2f9",
+      "payload_sha256": "946c8d859ccf1391c2bfbbc23aef8b7a27870425b0b8e689fbb30dbd3d2927e1",
+      "bytes": 420304,
+      "original_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/mgba_libretro_android.so.zip",
+      "captured": "2026-11-06"
+    }
+  }
+}

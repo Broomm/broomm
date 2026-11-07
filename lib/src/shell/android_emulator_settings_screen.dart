@@ -6,7 +6,7 @@ import '../romm/models.dart';
 import '../progress/service.dart';
 import 'controls.dart';
 import 'android_root_inspection_dialog.dart';
-import 'android_install_dialog.dart';
+import 'android_setup_dialog.dart';
 import 'model.dart';
 import 'navigation.dart';
 
@@ -59,30 +59,60 @@ class _AndroidEmulatorSettingsScreenState
     }
   }
 
-  Future<void> configure(AndroidEmulator emulator) async {
-    if (await model.androidSession.pending() != null)
-      throw StateError(
-        'Finish the previous game before changing save folders.',
+  Future<void> setup(RommPlatform platform, AndroidEmulator emulator) async {
+    if (working) return;
+    final profile = model.profile, server = model.server;
+    if (profile == null || server == null) {
+      model.showNotice(
+        'Choose a profile before setting up an emulator.',
+        problem: true,
       );
-    final instructions = switch (emulator.id) {
-      'ppsspp' => 'In PPSSPP, select a shared Memory Stick folder. Select that same folder here; it contains PSP/SAVEDATA and PSP/PPSSPP_STATE.',
-      'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
-      'azahar' => 'In Azahar, select a shared user-data folder. Select that same folder here, containing sdmc and states.',
-      'citra-mmj' => 'Use MMJ’s normal shared citra-emu folder, usually Internal storage/citra-emu. Select that folder here. Private Android/data / Storage Access builds are unsupported. Verify MMJ actually uses shared storage; Broomm cannot read that private setting.',
-      'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder in Dolphin.',
-      'retroarch' => 'Install the needed cores in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root (the one containing cores and files). Broomm uses a separate session configuration; your normal settings remain available.',
-      'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game memory cards. Close ARMSX2, then select its full custom data folder here. Stable and nightly keep separate connections.',
-      'duckstation' => 'Use a DuckStation version with configurable data locations. Put memory cards in memcards and states in savestates under one shared folder. Set both slots to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder here. Broomm swaps a separate card per profile/game and restores standalone cards afterward.',
-      'eden' => 'Initialize Eden and configure its keys/firmware in Eden. Select Eden from the Android picker’s sidebar and grant its full data root. Broomm reads its console account to find game saves. Eden does not support save states.',
-      _ => throw StateError('No save-folder instructions for this emulator.'),
-    };
-    final yes = await showConsoleDialog<bool>(
+      return;
+    }
+    installationDialogOpen = true;
+    try {
+      await run(() async {
+        await manager.ensureSetupAllowed();
+        final slug = model
+            .emulatorChoices(platform)
+            .firstWhere((e) => e.emulatorId == emulator.id)
+            .slug;
+        final complete = await showConsoleDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AndroidSetupDialog(
+            manager: manager,
+            emulator: emulator,
+            platform: slug,
+            profile: profile.id,
+            autoComplete: !manager.connected(
+              profile.id,
+              emulator,
+              platform: slug,
+            ),
+          ),
+        );
+        if (complete != true) return;
+        if (model.profile?.id != profile.id || model.server?.id != server.id)
+          throw StateError(
+            'The active profile changed. Choose this emulator again.',
+          );
+        await model.setDefaultEmulator(platform, emulator.id);
+        model.showNotice('${emulator.name} is ready to play.');
+      });
+    } finally {
+      if (mounted) setState(() => installationDialogOpen = false);
+    }
+  }
+
+  Future<void> remove(AndroidEmulator emulator) async {
+    final app = manager.app(emulator);
+    final accepted = await showConsoleDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        scrollable: true,
-        title: Text('Connect ${emulator.name} saves'),
+        title: Text('Remove ${emulator.name}?'),
         content: Text(
-          '$instructions\n\nClose the emulator before continuing. This connection is shared by Broomm profiles; no folder reselection is needed when switching profiles. Each profile’s game progress stays separate. Existing standalone saves are preserved and restored after play; use Use existing save file to import progress from RomM.',
+          'This uninstalls ${emulator.name}${app == null ? '' : ' (${app.package})'}, including its cores, settings and standalone saves. Broomm’s connections and defaults for this emulator are cleared across profiles and platforms. Saved progress in Broomm and downloaded games are kept. Android will ask you to confirm uninstalling the app.',
         ),
         actions: [
           ConsoleButton(
@@ -91,59 +121,15 @@ class _AndroidEmulatorSettingsScreenState
             child: const Text('Cancel'),
           ),
           ConsoleButton(
-            onPressed: () async {
-              try {
-                await manager.open(emulator);
-              } catch (e) {
-                model.showNotice('$e', problem: true);
-              }
-            },
-            child: const Text('Open emulator'),
-          ),
-          ConsoleButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Emulator closed · Select folder'),
+            child: const Text('Remove emulator'),
           ),
         ],
       ),
     );
-    if (yes != true) return;
-    final package = manager.app(emulator)?.package;
-    final uri = await manager.chooseFolder(emulator);
-    if (uri == null) return;
-    if (manager.app(emulator)?.package != package)
-      throw StateError(
-        'The installed emulator changed. Select its folder again.',
-      );
-    await manager.confirmSharedStorage(emulator, uri);
-    model.showNotice(
-      '${emulator.name} save folder connected for all Broomm profiles.',
-    );
-  }
-
-  Future<void> install(
-    AndroidEmulator emulator, {
-    bool imported = false,
-  }) async {
-    if (working) return;
-    installationDialogOpen = true;
-    try {
-      await run(() async {
-        await showConsoleDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => AndroidInstallDialog(
-            manager: manager,
-            emulator: emulator,
-            install: () => imported
-                ? manager.installApk(emulator, server: model.server!.id)
-                : manager.install(emulator, server: model.server!.id),
-          ),
-        );
-      });
-    } finally {
-      if (mounted) setState(() => installationDialogOpen = false);
-    }
+    if (accepted != true) return;
+    if (await manager.remove(emulator, expected: app))
+      model.showNotice('${emulator.name} removed.');
   }
 
   Future<void> recover() async {
@@ -237,50 +223,6 @@ class _AndroidEmulatorSettingsScreenState
     );
   }
 
-  Future<void> configureRootSaves(
-    RommPlatform platform,
-    AndroidEmulator emulator,
-  ) async {
-    final connected = manager.gbaRoot(emulator) != null;
-    final accepted = await showConsoleDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text(
-          connected ? 'Disconnect GBA root saves?' : 'Connect GBA root saves',
-        ),
-        content: Text(
-          connected
-              ? 'Quit RetroArch first. Broomm keeps your saves and uses the shared folder for GBA if one is connected.'
-              : 'Install mGBA and quit RetroArch. Allow root access when asked. This connects ordinary GBA saves for Broomm profiles.',
-        ),
-        actions: [
-          ConsoleButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancel'),
-          ),
-          ConsoleButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(
-              connected
-                  ? 'RetroArch closed · Disconnect'
-                  : 'RetroArch closed · Connect',
-            ),
-          ),
-        ],
-      ),
-    );
-    if (accepted != true || !mounted) return;
-    if (connected) {
-      await manager.disconnectGbaRoot(emulator);
-      model.showNotice('GBA root saves disconnected.');
-    } else {
-      await manager.connectGbaRoot(emulator);
-      await model.setDefaultEmulator(platform, emulator.id);
-      model.showNotice('GBA root saves connected.');
-    }
-  }
-
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([model, manager]),
@@ -296,7 +238,8 @@ class _AndroidEmulatorSettingsScreenState
               style: TextStyle(fontSize: 30, fontWeight: FontWeight.w300),
             ),
             const SizedBox(height: 12),
-            if (working || manager.busy) const LinearProgressIndicator(),
+            if (!installationDialogOpen && (working || manager.busy))
+              const LinearProgressIndicator(),
             if (manager.requestingInstallPermission)
               const Text(
                 'Android permission required: enable Allow from this source for Broomm, then return here. Installation will continue automatically.',
@@ -309,7 +252,7 @@ class _AndroidEmulatorSettingsScreenState
                     : manager.downloadedBytes / manager.downloadBytes!,
               ),
               Text(
-                'Downloading emulator APK · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+                'Downloading ${manager.installing == 'mgba' ? 'mGBA' : 'emulator APK'} · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
               ),
               ConsoleButton(
                 onPressed: manager.cancelDownload,
@@ -341,7 +284,10 @@ class _AndroidEmulatorSettingsScreenState
                   onPressed: working || manager.busy
                       ? null
                       : () => run(manager.load),
-                  child: const ActionLabel('Refresh apps', icon: Icons.refresh),
+                  child: const ActionLabel(
+                    'Refresh status',
+                    icon: Icons.refresh,
+                  ),
                 ),
                 ConsoleButton(
                   onPressed:
@@ -381,18 +327,16 @@ class _AndroidEmulatorSettingsScreenState
     final isDefault =
         app?.enabled == true && model.defaultEmulator(platform) == emulator.id;
     final configured =
+        app?.enabled == true &&
         model.profile != null &&
         manager.connected(model.profile!.id, emulator, platform: platform.slug);
-    final rootCard = emulator.id == 'retroarch' && platform.slug == 'gba';
-    final rooted = rootCard && manager.gbaRoot(emulator) != null;
     const actionPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 12);
     final disabled =
         // The modal owns interaction; keep its invoking button focusable so
         // closing it restores the same card instead of jumping to Refresh.
         !installationDialogOpen &&
             (working || manager.busy || manager.installing != null) ||
-        model.gameActive ||
-        app?.enabled == false;
+        model.gameActive;
     return ConsoleFocusRegion(
       child: Container(
         key: ValueKey('android-emulator-${platform.id}:${emulator.id}'),
@@ -423,12 +367,7 @@ class _AndroidEmulatorSettingsScreenState
                   ? 'Disabled in Android'
                   : [
                       app.version,
-                      if (rooted)
-                        'Root saves'
-                      else if (configured)
-                        'Folder saves'
-                      else
-                        'Saves not connected',
+                      configured ? 'Ready to play' : 'Not set up',
                     ].join(' · '),
               style: TextStyle(
                 color: app?.enabled == true && configured ? accent : muted,
@@ -441,65 +380,48 @@ class _AndroidEmulatorSettingsScreenState
               children: [
                 ConsoleButton(
                   padding: actionPadding,
-                  onPressed: disabled ? null : () => install(emulator),
-                  child: Text(
-                    emulator.id == 'duckstation'
-                        ? 'Open Play Store'
-                        : emulator.id == 'ppsspp' &&
-                              app?.package == 'org.ppsspp.ppssppgold'
-                        ? 'Download free PPSSPP'
-                        : app == null
-                        ? 'Install'
-                        : 'Get APK',
-                  ),
-                ),
-                ConsoleButton(
-                  padding: actionPadding,
-                  onPressed: disabled
+                  onPressed: disabled || manager.removalEmulator != null
                       ? null
-                      : () => install(emulator, imported: true),
-                  child: const Text('Install APK…'),
+                      : () => setup(platform, emulator),
+                  child: Text(configured ? 'Verify setup' : 'Set up'),
                 ),
-                if (app != null) ...[
-                  if (rootCard)
-                    ConsoleButton(
-                      padding: actionPadding,
-                      onPressed: disabled
-                          ? null
-                          : () => run(
-                              () => configureRootSaves(platform, emulator),
-                            ),
-                      child: const Text('Root saves…'),
-                    ),
+                if (app != null || manager.removalEmulator == emulator.id)
                   ConsoleButton(
                     padding: actionPadding,
                     onPressed: disabled
                         ? null
-                        : () => run(() => manager.open(emulator)),
-                    child: const Text('Open'),
+                        : () => run(() => remove(emulator)),
+                    child: Text(
+                      manager.removalEmulator == emulator.id
+                          ? 'Finish removal'
+                          : 'Remove',
+                    ),
                   ),
-                  if (manager.progressSupported(emulator))
-                    ConsoleButton(
-                      padding: actionPadding,
-                      onPressed: disabled
-                          ? null
-                          : () => run(() => configure(emulator)),
-                      child: const Text('Save folder…'),
-                    ),
-                  if (!isDefault)
-                    ConsoleButton(
-                      padding: actionPadding,
-                      onPressed: disabled
-                          ? null
-                          : () => run(
-                              () => model.setDefaultEmulator(
-                                platform,
-                                emulator.id,
-                              ),
-                            ),
-                      child: const Text('Set default'),
-                    ),
-                ],
+                if (app != null)
+                  ConsoleButton(
+                    padding: actionPadding,
+                    onPressed:
+                        disabled ||
+                            !app.enabled ||
+                            manager.removalEmulator != null
+                        ? null
+                        : () => run(() => manager.open(emulator)),
+                    child: const Text('Open emulator'),
+                  ),
+                if (!isDefault)
+                  ConsoleButton(
+                    padding: actionPadding,
+                    onPressed:
+                        disabled ||
+                            !configured ||
+                            manager.removalEmulator != null
+                        ? null
+                        : () => run(
+                            () =>
+                                model.setDefaultEmulator(platform, emulator.id),
+                          ),
+                    child: const Text('Set as default'),
+                  ),
               ],
             ),
           ],

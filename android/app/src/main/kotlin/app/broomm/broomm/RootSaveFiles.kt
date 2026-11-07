@@ -6,6 +6,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.MessageDigest
+import java.util.zip.ZipFile
 
 /** Descriptor/metadata checks and atomic publication; independently exercised on device. */
 internal class RootSaveFiles(
@@ -76,12 +77,18 @@ internal class RootSaveFiles(
             parent = target
         }
     }
-    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String) {
+    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String) =
+        publish(relative, before, after, payload, wantedMetadata, token, MAX_BYTES,
+            sessionConfiguration = relative.endsWith(".cfg"))
+
+    private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
+                        wantedMetadata: String?, token: String, limit: Int,
+                        sessionConfiguration: Boolean = false, beforeCommit: () -> Unit = {}) {
         live()
         require(Regex("[a-f0-9]{32}-(in|out)").matches(token))
         require(listOfNotNull(before, after).all { Regex("[a-f0-9]{64}").matches(it) })
         require((after == null) == (payload == null))
-        if (payload != null) require(payload.size <= MAX_BYTES && digest(payload) == after)
+        if (payload != null) require(payload.size <= limit && digest(payload) == after)
         val file = path(relative)
         val stage = File(file.parentFile, ".${file.name}.broomm-$token")
         // Reclaim ONLY the deterministic private stage named by this journal's
@@ -89,11 +96,11 @@ internal class RootSaveFiles(
         if (present(file) && present(stage)) {
             val a = Os.lstat(file.path); val b = Os.lstat(stage.path)
             if (a.st_ino == b.st_ino && a.st_dev == b.st_dev) {
-                require(after != null && a.st_nlink == 2L && metadata(file, 2) == metadata(stage, 2) && hash(file) == after)
+                require(after != null && a.st_nlink == 2L && metadata(file, 2) == metadata(stage, 2) && hash(file, limit) == after)
                 live(); Os.remove(stage.path); flushDirectory(file.parentFile!!)
             }
         }
-        fun current(): String? = if (present(file)) { metadata(file); hash(file) } else null
+        fun current(): String? = if (present(file)) { metadata(file); hash(file, limit) } else null
         val observed = current()
         if (observed == after) {
             if (present(file) && wantedMetadata != null) require(metadata(file) == wantedMetadata)
@@ -104,7 +111,7 @@ internal class RootSaveFiles(
             live(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
         }
         parents(relative, token)
-        if (relative.endsWith(".cfg")) {
+        if (sessionConfiguration) {
             parents(relative.substringBeforeLast('/') + "/saves/reserved.srm", token)
             parents(relative.substringBeforeLast('/') + "/states/reserved.state", token)
         }
@@ -122,8 +129,8 @@ internal class RootSaveFiles(
                 attributes(stage, mode); Os.fsync(fd)
             }
         }
-        require(hash(stage) == after && metadata(stage) == mode)
-        live(); require(current() == before)
+        require(hash(stage, limit) == after && metadata(stage) == mode)
+        live(); beforeCommit(); require(current() == before)
         // Existing destination replacement is atomic. New publication uses an
         // exclusive hard-link; the deterministic stage permits interrupted-link recovery.
         if (before == null) {
@@ -134,6 +141,86 @@ internal class RootSaveFiles(
         } else Os.rename(stage.path, file.path)
         flushDirectory(file.parentFile!!)
         require(current() == after && metadata(file) == mode)
+    }
+
+    fun mgba(abi: String? = null, recoverPublication: Boolean = false): String? {
+        val file = path(MGBA_PATH)
+        if (!present(file)) return null
+        val stat = Os.lstat(file.path)
+        metadata(file, if (recoverPublication && stat.st_nlink == 2L) 2 else 1)
+        val payload = bytes(file, 32 * 1024 * 1024)
+        if (abi != null) require(retroArchElfAbi(payload) == abi) {
+            "The installed mGBA core does not match this RetroArch build. Repair it in RetroArch before continuing."
+        }
+        val digest = digest(payload)
+        if (stat.st_nlink == 2L) {
+            val stage = File(file.parentFile, ".${file.name}.broomm-${digest.take(32)}-in")
+            val linked = Os.lstat(stage.path)
+            require(linked.st_dev == stat.st_dev && linked.st_ino == stat.st_ino &&
+                metadata(stage, 2) == metadata(file, 2)) { "Unexpected mGBA links. Existing files were kept." }
+            live(); Os.remove(stage.path); flushDirectory(file.parentFile!!)
+        }
+        metadata(file)
+        return digest
+    }
+
+    fun installMgba(source: File, caller: Int, expected: String, abi: String, ensureClosed: () -> Unit): String {
+        require(Regex("[a-f0-9]{64}").matches(expected))
+        val stat = Os.lstat(source.path)
+        require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == caller && stat.st_nlink == 1L)
+        val payload = bytes(source, MAX_CORE_BYTES)
+        require(digest(payload) == expected && retroArchElfAbi(payload) == abi) {
+            "The staged mGBA core failed ABI or checksum verification."
+        }
+        ensureClosed()
+        mgba(abi, recoverPublication = true)?.let { return it }
+        publish(MGBA_PATH, null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
+        return expected
+    }
+
+    // Recognize the standard bundle before asking the player to initialize it.
+    // The stock launcher extracts the resources as the emulator's own UID.
+    fun needsFrontendAssets(apk: () -> File): Boolean {
+        val menuFiles = listOf("assets/ozone/regular.ttf", "assets/ozone/bold.ttf",
+            "assets/ozone/png/icons/settings.png")
+        if (menuFiles.all { relative ->
+            val file = File(root, relative)
+            file.canonicalPath == file.absolutePath && file.isFile && file.length() > 0
+        }) return false
+        return ZipFile(apk()).use { zip ->
+            menuFiles.all { zip.getEntry("assets/$it")?.size?.let { size -> size > 0 } == true }
+        }
+    }
+
+    fun needsControllerProfiles(): Boolean {
+        val dir = File(root, "autoconfig/android")
+        if (dir.canonicalPath != dir.absolutePath) return false
+        return dir.list()?.none { it.endsWith(".cfg") } ?: true
+    }
+
+    fun controllerProfilesReady(build: String): Boolean {
+        val marker = path("${controllerProfilePath(build)}/.complete")
+        if (!present(marker)) return false
+        metadata(marker)
+        require(hash(marker) == digest(build.toByteArray())) { "The managed controller profile record changed." }
+        return true
+    }
+
+    fun prepareControllerProfiles(apk: File, build: String, ensureClosed: () -> Unit) {
+        if (controllerProfilesReady(build)) return
+        val target = controllerProfilePath(build)
+        val profiles = RetroArchControllerProfiles.read(apk, live)
+        ensureClosed()
+        val token = build.take(32) + "-in"
+        for ((name, bytes) in profiles)
+            publish("$target/android/$name", null, digest(bytes), bytes, null, token, MAX_BYTES)
+        val marker = build.toByteArray()
+        publish("$target/.complete", null, digest(marker), marker, null, token, MAX_BYTES)
+    }
+
+    private fun controllerProfilePath(build: String): String {
+        require(Regex("[a-f0-9]{64}").matches(build))
+        return "files/Broomm/controller-profiles-$build"
     }
 
     private fun transferRom(file: File, owner: Int, out: FileOutputStream? = null, links: Long = 1): String {
@@ -218,6 +305,8 @@ internal class RootSaveFiles(
 
     companion object {
         const val MAX_BYTES = 262144
+        private const val MAX_CORE_BYTES = 8 * 1024 * 1024
+        private const val MGBA_PATH = "cores/mgba_libretro_android.so"
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false) {
             val suffix = if (saveOnly) "saves/[^/]+\\.srm" else "(?:saves/[^/]+\\.srm|config-[a-f0-9]{32}\\.cfg)"

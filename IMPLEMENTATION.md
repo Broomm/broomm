@@ -1,5 +1,92 @@
 # Implementation plan
 
+## Unified Android setup and versioned mGBA — 2026-11-07
+
+Android retains compact cards with the desktop **Set up / Verify setup**,
+**Remove**, **Open emulator** and **Set as default** actions. Setup guides
+installation and first open, requests root and provisions mGBA for GBA
+RetroArch, or guides the existing shared-folder grant. It resumes from package
+readback and verifies resources before publishing a fresh root connection.
+Only configured platforms participate in default selection. Optional APK
+imports and explicit reinstall remain inside Verify setup.
+
+The four reviewed mGBA archives are mirrored under
+`vendor/android/mgba/0.11-212-7a12d6d` with original hashes, MPL license and
+exact source provenance. Download URLs pin artifact commit `c6156ac`, retained
+by tag `android-mgba-0.11-212-7a12d6d`. These are the previously tested bytes.
+The installer retains ABI, checksum and exclusive publication checks.
+
+The owner selected external-app uninstall and configuration clearing for
+Remove. Android owns uninstall confirmation. A durable removal record blocks
+play while the result is uncertain. Confirmed absence permits cleanup of
+connections, legacy provider registrations and defaults. Cancellation retains
+setup, and interrupted cleanup is idempotently resumable. Broomm's saved
+progress and game content are retained.
+
+Analysis, 54 focused tests and the full 605-test Flutter suite pass, with one
+existing native-host skip. The Android bridge and device regression archive
+compile. The isolated Activity fixture passed on the Thor and verifies intent
+construction, cancellation/readback, late callbacks and the folder-permission
+request-code collision fix. It captures intents in a test Activity. The new
+packaged setup UI and actual Android uninstall confirmation remain device
+acceptance work.
+
+## Emulator first-open guidance — 2026-11-07
+
+The owner confirmed that opening RetroArch separately restored the normal menu.
+The installation and save-folder dialogs now ask players to open each Android
+emulator once, finish its first-run setup and permissions, then close it before
+playing from Broomm. Rooted RetroArch retains its resource-readiness check.
+The owner requested keeping this source change for the next feature build.
+
+## Standard RetroArch first open on rooted Android — 2026-11-06
+
+The owner confirmed the build 1052 controller fix and reported missing
+settings icons and a pixelated font. The Thor's APK matched the official
+RetroArch 1.22.2 arm64 download by SHA-256. The APK included the menu resources,
+while the installed stock menu directories were empty. Direct gameplay skipped
+the normal Android launcher that initializes RetroArch's bundled files.
+
+Rooted GBA setup now offers RetroArch's standard first open when bundled menu
+resources are missing. Direct play checks readiness before creating a game
+journal or synchronizing saves. The user can open RetroArch from that screen
+and retry play after quitting. The package installer and configured custom
+asset directories are preserved. The Kotlin bridge compiled, the disposable
+resource check passed on the Thor, and focused Dart tests verified that
+incomplete setup creates no game journal and can be retried. On 2026-11-07,
+the owner confirmed that opening RetroArch separately restored its normal
+appearance. The Broomm prompt still needs packaged-device acceptance. See
+[the first-run walkthrough](docs/android-root-access.md#automatic-mgba-setup).
+
+## Cold RetroArch controller profiles — 2026-11-06
+
+Build 1050 downloaded and verified mGBA on a fresh Thor and launched Minish Cap.
+The owner reported the Odin fallback notice and that Back no longer opened the
+menu. RetroArch's standalone configuration was empty and the default profile
+directory had no files. The APK contains the Odin Controller profile for
+8224/273, including Back as Menu Toggle. F1 opened the menu over ADB and the
+owner closed RetroArch and confirmed sync before the second clean uninstall.
+
+The rooted launch now stages Android profiles from the verified installed APK
+under a build-specific Broomm directory when the default profiles are missing.
+It uses that directory in the generated session config and preserves explicit
+controller preferences. The owner confirmed this works on the Thor with
+build 1052.
+
+## Automatic mGBA setup on rooted Android — 2026-11-06
+
+The owner confirmed the older Minish Cap save loaded in-game. PR #1 merged into
+`main` as `f7ffa1a`. The Thor's RetroArch package and app-owned private and shared
+data were removed before the new cold-install test.
+
+The GBA card can now use the existing root service to inspect the installed
+RetroArch ABI and reuse a compatible mGBA. If the core is missing, Dart verifies
+the selected Libretro ZIP and stages the checked payload in Broomm's private
+storage. The root service revalidates ABI, identity and closure before exclusive
+publication. A missing standalone configuration uses RetroArch defaults with
+Broomm's isolated session overrides. Cold setup and gameplay on the Thor are
+pending. See [source provenance and the setup walkthrough](docs/android-root-access.md#automatic-mgba-setup).
+
 ## Verified RetroArch closure on rooted Android — 2026-11-06
 
 The GBA session verifies RetroArch is idle before starting without a prompt.
