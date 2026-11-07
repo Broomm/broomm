@@ -9,7 +9,10 @@ journaled native boundary, raw PCE SRAM, state-only Stella progress and
 build-matched states. No disc/firmware or compressed-content acceptance is added.
 Clean analysis and 628 Flutter tests pass with one existing native-host skip;
 the bridge compiles and ten real Thor filesystem groups pass in disposable
-storage. Packaged Stella/PCE gameplay is pending. See [scope and
+storage. Build 1062 passed normal Setup, Adventure state upload/reload and
+Neutopia's in-game File Cabinet SRAM plus manual-state round trip. All five
+installed cores, six platform bindings and prior progress/settings were
+preserved; native temporary files were removed. See [scope and
 provenance](docs/android-retroarch-cores.md#atari-2600-and-tg16-cartridge-increment).
 
 ## Remaining rooted RetroArch cores — 2026-11-07

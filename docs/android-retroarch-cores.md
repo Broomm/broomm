@@ -7,7 +7,7 @@ OS locks, recovery and RomM contracts remain. No new runtime library is added.
 GBA/mGBA and SNES/Snes9x are merged and device-verified. Current source adds
 Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
 checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
-cartridges; their packaged device checks remain pending. The other ten selected
+cartridges; build 1062 passed their packaged Thor checks below. The other ten selected
 cores remain research, not implementation.
 
 ## Gambatte source and behavior
@@ -100,8 +100,26 @@ Clean analysis and all 628 Flutter tests pass, with one existing native-host
 skip. The updated Kotlin bridge compiles and ten native Thor filesystem fault
 groups pass. Tests exercise version-6 migration, independent setup/removal,
 state-only and raw-SRAM cloud readback/restoration into fresh profile storage,
-cartridge staging and unsupported-disc refusal. Real Stella/PCE gameplay remains
-pending the new APK.
+cartridge staging and unsupported-disc refusal. All PR jobs passed for runtime
+`32b3ec0`. Build **1062** then passed real account-2 Setup/Play/Quit on Thor:
+Adventure rendered, published its manual state as primary 226 and loaded that
+state on relaunch. Neutopia's Book of Revival and new File Cabinet slot 1 were
+created in-game. Its 2,048-byte SRAM and manual state published as primary 227
+with a state companion. Relaunch restored SRAM byte-for-byte, Continue → File
+Cabinet listed the saved slot and loaded it, and the manual state loaded too.
+
+Normal final exit left no session/swap journal or new managed native files. All
+19 existing managed files, original standalone settings and eight prior GBA/SNES
+progress files stayed unchanged. Five core hashes and six independent bindings
+matched expectations. The reviewed 85 operational log lines had no warning or
+error. This is one arm64 device/account for the two new cores; earlier GB/GBC
+acceptance separately exercised both accounts. The [cartridge evidence](android-retroarch-cartridges.json)
+records exact revisions, files and checks. The current macOS archive was rebuilt
+from runtime `32b3ec0` and passed ZIP and source/extracted deep strict signatures:
+24,348,825 bytes, SHA-256
+`800aa2a46b156f5f0453538bcd3daa856487c3aa60830895b90301321a1effdf`.
+It is ad-hoc signed, not notarized. The earlier GB/GBC evidence retains its own
+historical runtime/build fingerprints.
 
 ## Remaining boundaries
 
