@@ -132,6 +132,27 @@ fun main(args: Array<String>) {
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
         println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
 
+        val launchData = "/data/user/0/com.retroarch.aarch64"
+        val launchBase = "$launchData/files/Broomm/${"b".repeat(32)}/42"
+        val launchConfig = "$launchBase/config-${"a".repeat(32)}.cfg"
+        val launchContent = "/data/user/0/app.broomm.broomm/files/broomm/library/${"d".repeat(32)}/42/content"
+        fun launch(core: String, name: String, selected: String, config: String? = launchConfig, content: String = launchContent) =
+            validateRootRetroArchLaunch(core, "com.retroarch.aarch64", launchData,
+                "$launchBase/rom-${"c".repeat(32)}/$name", config, content, "$content/$selected")
+        for ((core, name) in listOf("mgba" to "Game.gba", "snes9x" to "Game.sfc", "gambatte" to "Game.gbc",
+            "stella" to "Game.a26", "mednafen_pce_fast" to "Game.pce", "genesis_plus_gx" to "Game.md",
+            "genesis_plus_gx" to "Game.sms", "genesis_plus_gx" to "Game.gg", "picodrive" to "Game.32x")) {
+            launch(core, name, name)
+            launch(core, name, "Game.ZIP")
+            failure { launch(core, name, "Other.zip") }
+        }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.gen") }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", content = launchContent.replace("/42/", "/43/")) }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = launchConfig.replace("b".repeat(32), "f".repeat(32))) }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = null) }
+        failure { launch("mgba", "Game.md", "Game.zip") }
+        println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
+
         val gameboyBase = "files/Broomm/${"b".repeat(32)}/44/"
         val gameboySave = gameboyBase + "saves/Pokemon.srm"
         val gameboyClock = gameboyBase + "saves/Pokemon.rtc"

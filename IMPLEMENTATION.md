@@ -9,6 +9,17 @@ namespace. Foreign transactions, filenames, traversal and links are refused.
 The bridge and native fixture compile; JVM path checks and eleven disposable
 Thor filesystem groups pass. Packaged ZIP acceptance remains pending.
 
+Build 1068 passed that private source handoff, then exposed the launch adapter's
+separate exact-filename check. The follow-up accepts the unchanged archive stem
+with the validated extracted extension and retains core/game/profile/configuration
+checks. The complete production launch validator is included in the disposable
+Android fixture, with raw/ZIP routes and wrong filename, game, core and profile
+cases. Packaged ZIP acceptance remains pending.
+
+The updated bridge and fixture compile; all twelve Thor fixture groups pass,
+including the actual launch validator. The previously passing 638-test Dart
+suite is unchanged by this native-only correction.
+
 Sega catalogue checks found ordinary single-cartridge ZIP downloads, which the
 earlier rooted handoff refused. Current source validates ZIP structure and
 extracts privately in Dart before the existing native cartridge staging. It

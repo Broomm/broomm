@@ -169,6 +169,15 @@ compiles and eleven real Thor filesystem groups pass with prepared-source
 staging and wrong-transaction refusal. The failed game session retains recovery;
 this is not packaged ZIP acceptance.
 
+Build 1068 then passed private staging but refused Android launch because that
+adapter still compared the complete `.zip` filename with the extracted cartridge
+name. The next correction accepts the original archive stem plus a core-accepted
+extension, preserving raw filename matching and the selected game/profile/config
+correspondence. The complete production launch validator is now exercised by
+the native fixture for raw and ZIP cases across the implemented cores, including
+wrong stems, raw-extension changes, different games/profiles and core mismatch.
+No successful packaged ZIP game launch is claimed yet.
+
 The Sega catalogue supplied ZIPs for Genesis, Master System and Game Gear.
 Current source therefore prepares single-cartridge ZIPs for the implemented
 rooted cartridge routes in Dart. The existing ZIP validator checks every entry's

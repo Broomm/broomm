@@ -15,6 +15,7 @@ else broomm_hash="$(shasum -a 256 "$broomm_d8" | cut -d ' ' -f 1)"; fi
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootSaveFiles.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RootSaveTransfer.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RetroArchCoreAbi.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RetroArchRootLaunch.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RetroArchControllerProfiles.kt \
   android/app/src/main/kotlin/app/broomm/broomm/SharedDocumentLock.kt \
   tool/android/check_root_save_files.kt -jvm-target 17 -include-runtime \
