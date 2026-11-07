@@ -9,8 +9,8 @@ Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
 checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
 cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
-1066/1069 passed the scoped device checks below. The other eight selected cores
-remain research.
+1066/1069 passed the scoped device checks below. N64 has the source/file increment
+below, with packaged acceptance pending. Seven other selected cores remain research.
 
 ## Gambatte source and behavior
 
@@ -241,6 +241,43 @@ arcade archive support.
 
 ## Remaining boundaries
 
+### Nintendo 64 source increment
+
+Current source adds **Nintendo 64 → RetroArch → Set up** using the retained
+[Mupen64Plus-Next archives](../vendor/android/mupen64plus_next/3.0-15bada8/README.md).
+The four archives pin artifact `bb01c67`, retained by
+`android-mupen64plus-next-20261107`, and embed source `15bada8`.
+Android uses `mupen64plus_next_gles3_libretro_android.so`; the logical core and
+desktop-compatible `libretro-mupen64plus_next-v1` save identity stay unchanged.
+ARM versions identify Vulkan and x86 versions GLES3. Exact upstream build
+reproduction is not claimed; recipe, dependencies and notices are recorded.
+
+Raw `.z64/.v64/.n64` cartridges up to 64 MiB, or exactly one such cartridge in
+a validated ZIP, use the journaled private staging workflow. N64 ZIP input and
+aggregate expanded content are bounded to 128 MiB. Ordinary save files retain
+all 296,960 bytes of EEPROM, four controller paks, SRAM and Flash RAM. N64 states
+have a 32 MiB per-file boundary because this source's uncompressed serialized
+state is 16,793,412 bytes. Other cores retain their earlier limits; configuration
+remains 256 KiB and aggregate native progress remains 64 MiB/128 files.
+Version 9 settings read versions 1–8 without losing earlier bindings. Recovery
+retains the selected core and original platform, including the N64 limits.
+
+Clean analysis, all 642 Flutter tests (one existing native-host skip) and 51
+focused setup/root/download tests pass. The final 42-test root suite also
+passes after the limit helper cleanup. Thirteen real
+Thor filesystem groups pass in disposable storage, including full SRAM,
+interrupted large-state publication/retry, exact 64 MiB cartridge staging and
+oversized refusal without widening earlier limits. Packaged N64 gameplay is
+pending. This does not add 64DD/Transfer Pak media,
+texture-pack installation or an N64 gameplay claim. The [upstream core guide](https://docs.libretro.com/library/mupen64plus/)
+describes broader core capabilities separately from Broomm's accepted scope.
+
+The Windows diagnostic follow-up `cf75b58` passed all CI jobs in
+[run 42412917045](https://github.com/Broomm/broomm/actions/runs/42412917045).
+Its native updater became ready after 1,770 ms (`Process.start`: 7 ms). This
+successful execution does not identify the earlier timeout's cause; the
+failure-only observation remains enabled without altering the pass deadline.
+
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
 arm64 library is about 73 MiB. Native core transport now streams up to 96 MiB
 through a 64 KiB buffer and small ELF header, preserving descriptor/path identity,
@@ -258,8 +295,9 @@ without changing any property:
 
 Use a fresh disposable directory and remove the pushed DEX afterward. This is
 native file-mechanism acceptance; Genesis Plus GX now uses it, while the other
-larger download recipes and actual core integrations remain pending. N64 save RAM
-and Saturn backup cartridges also exceed the existing small-save boundary.
+larger download recipes and actual core integrations remain pending. Saturn
+backup cartridges still exceed the existing small-save boundary; N64's concrete
+limits are implemented in the source increment above.
 
 Disc content needs safe file-set staging and firmware from RomM. Opera and FBNeo
 have nested native saves. Flycast requires private VMUs on every port and its

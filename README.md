@@ -350,6 +350,16 @@ unsafe, linked, oversized or corrupt archives fail visibly and retain recovery;
 finish that session before retrying. Build 1069 passed ZIP launch and save/state
 round trips with Sonic 3, Phantasy Star and Defenders of Oasis on the Thor.
 
+The next source increment adds **Nintendo 64 → RetroArch → Set up** for pinned
+Mupen64Plus-Next. Use `.z64/.v64/.n64` cartridges up to 64 MiB or a ZIP containing
+exactly one. Save in-game or create a manual state, Quit RetroArch normally, and
+wait for Broomm's sync confirmation before switching accounts. Full SRAM and
+controller-pak data stay private to the selected profile/game; states require
+the same APK/ABI/core build. Existing standalone progress and settings are
+restored, and recorded native session files are removed after completion.
+Source/native file checks pass; packaged N64 gameplay remains pending. 64DD and
+Transfer Pak media are outside this increment's acceptance.
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

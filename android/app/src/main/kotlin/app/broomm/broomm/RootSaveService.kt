@@ -57,7 +57,9 @@ class RootSaveService : RootService() {
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         return SharedDocumentLock.acquire(storage).use {
             live()
-            val files = RootSaveFiles(root, uid, label, ::live)
+            val coreName = request.getString("coreName") ?: "mgba"
+            RootSaveFiles.corePath(coreName)
+            val files = RootSaveFiles(root, uid, label, ::live, coreName = coreName)
             fun ensureClosed() {
                 val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
                 check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up RetroArch." }
@@ -69,8 +71,6 @@ class RootSaveService : RootService() {
                     OsConstants.S_ISREG(Os.lstat(apk.path).st_mode)) { "Invalid installed RetroArch APK path." }
                 return apk
             }
-            val coreName = request.getString("coreName") ?: "mgba"
-            RootSaveFiles.corePath(coreName)
             val result = when (operation) {
                 "inspect" -> {
                     val hash = files.core(abi(), coreName = coreName) ?: error("Set up $coreName in Broomm’s RetroArch settings first.")
@@ -106,7 +106,7 @@ class RootSaveService : RootService() {
                     val stage = request.getString("stage") ?: error("Missing mGBA staging identity")
                     require(Regex("[a-f0-9]{32}").matches(stage))
                     val source = File(File(applicationInfo.dataDir, "files").canonicalFile,
-                        "broomm/android/${coreName}-stage/$stage/${coreName}_libretro_android.so")
+                        "broomm/android/${coreName}-stage/$stage/${RootSaveFiles.corePath(coreName).substringAfter('/')}")
                     require(source.canonicalPath == source.absolutePath) { "mGBA staging contains a linked path." }
                     val core = files.installCore(source, caller, request.getString("sha256")!!, abi(), coreName = coreName, ensureClosed = ::ensureClosed)
                     Bundle().apply { putString("core", core) }
@@ -145,7 +145,7 @@ class RootSaveService : RootService() {
                     RootSaveFiles.managedPath(path, saveOnly = true)
                     val file = files.path(path)
                     val metadata = files.metadata(file)
-                    val bytes = files.bytes(file, RootSaveFiles.limit(path))
+                    val bytes = files.bytes(file, files.progressLimit(path))
                     require(RootSaveFiles.digest(bytes) == request.getString("sha256") &&
                         bytes.size.toLong() == request.getLong("bytes") && metadata == request.getString("metadata")) {
                         "Save changed during capture. Close the emulator and retry."
@@ -157,7 +157,7 @@ class RootSaveService : RootService() {
                     val path = request.getString("path")!!
                     RootSaveFiles.managedPath(path)
                     val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
-                        RootSaveTransfer.read(it, caller, RootSaveFiles.limit(path), ::live)
+                        RootSaveTransfer.read(it, caller, files.progressLimit(path), ::live)
                     }
                     files.replace(path, request.getString("before"), request.getString("after"),
                         payload, request.getString("metadata"), request.getString("token")!!, request.getString("stateGroup"))

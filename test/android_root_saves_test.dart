@@ -1088,6 +1088,146 @@ void main() {
     }
   });
 
+  test('N64 setup migrates version 8 while retaining every earlier platform binding', () async {
+    const previous = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+    ];
+    for (final slug in previous) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final old = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    old['version'] = 8;
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    await manager.connectGbaRoot(emulator, platform: 'n64');
+    await manager.load();
+    for (final slug in [...previous, 'n64']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'n64');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'n64'), false);
+    for (final slug in previous) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+  });
+
+  test('N64 full native SRAM and uncompressed states survive cloud restore and standalone recovery', () async {
+    await manager.connectGbaRoot(emulator, platform: 'n64');
+    final rom = await File('${temp.path}/Cartridge.z64')
+        .writeAsBytes([0x80, 0x37, 0x12, 0x40]);
+    final p = await gameboyPlan('n64', rom.path), g = game(p);
+    expect(p.format, 'libretro-mupen64plus_next-v1');
+    expect(p.arguments['coreName'], 'mupen64plus_next');
+    final original = await put(p.remotePath('save/game.srm'), [8, 9]);
+    final saves = SharedAndroidSaves(manager);
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final sram = Uint8List.fromList(List.generate(296960, (i) => i % 251));
+    final state = Uint8List(16793412)..[0] = 3;
+    state[state.length - 1] = 7;
+    final stateKey = '${p.areas.last.id}/game.state';
+    await put(p.remotePath('save/game.srm'), sram);
+    await put(p.remotePath(stateKey), state);
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    expect(await original.readAsBytes(), [8, 9]);
+    await cloud.afterPlay(g, 0);
+    final next = ProgressLayout(
+      '${temp.path}/other-device/profiles/$profileId/emulators/retroarch',
+      p.format,
+      p.game,
+      p.areas,
+    );
+    final remote = CloudGame(
+      server: serverId,
+      profile: profileId,
+      user: api.user,
+      rom: 42,
+      client: api,
+      layout: next,
+    );
+    final otherCloud = CloudSaves(
+      Directory('${temp.path}/other-device'),
+      notice: (_, _) {},
+    );
+    await otherCloud.beforePlay(remote);
+    expect(
+      await progressFileHash(await next.target('save/game.srm')),
+      await progressFileHash(await p.target('save/game.srm')),
+    );
+    expect(
+      await progressFileHash(await next.target(stateKey)),
+      await progressFileHash(await p.target(stateKey)),
+    );
+    expect(await (await next.target('save/game.srm')).length(), sram.length);
+    expect(await (await next.target(stateKey)).length(), state.length);
+    expect((await cloud.store(g).state())['pending'], false);
+    expect(await saves.pending, false);
+  });
+
+  test('N64 resource limits accept its cartridge and refuse oversized progress without widening GBA', () async {
+    await manager.connectGbaRoot(emulator, platform: 'n64');
+    await manager.connectGbaRoot(emulator);
+    final rom = File('${temp.path}/Large.n64');
+    final handle = await rom.open(mode: FileMode.writeOnly);
+    await handle.truncate(33 * 1024 * 1024);
+    await handle.close();
+    final p = await gameboyPlan('n64', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = await saves.stageRootRom(g, p);
+    expect(await File(staged).length(), 33 * 1024 * 1024);
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    final oversized = await rom.open(mode: FileMode.writeOnly);
+    await oversized.truncate(64 * 1024 * 1024 + 1);
+    await oversized.close();
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    await expectLater(saves.stageRootRom(g, p), throwsStateError);
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    Map<String, dynamic> entry(AndroidSavePlan plan, String key, int bytes) => {
+      plan.remotePath(key): {
+        'bytes': bytes,
+        'sha256': 'd' * 64,
+        'metadata': attributes,
+      },
+    };
+    expect(saves.inventory(entry(p, 'save/game.srm', 296960), p), isNotEmpty);
+    expect(
+      () => saves.inventory(entry(p, 'save/game.srm', 296961), p),
+      throwsFormatException,
+    );
+    final state = '${p.areas.last.id}/game.state';
+    expect(
+      () => saves.inventory(entry(p, state, 32 * 1024 * 1024 + 1), p),
+      throwsFormatException,
+    );
+    final gba = await plan();
+    expect(
+      () => saves.inventory(entry(gba, 'save/game.srm', 296960), gba),
+      throwsFormatException,
+    );
+    expect(
+      () => saves.inventory(
+        entry(gba, '${gba.areas.last.id}/game.state', 16793412),
+        gba,
+      ),
+      throwsFormatException,
+    );
+  });
+
   for (final (slug, core, extension, sram) in [
     ('atari2600', 'stella', 'a26', false),
     ('tg16', 'mednafen_pce_fast', 'pce', true),

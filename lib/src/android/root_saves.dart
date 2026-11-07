@@ -19,6 +19,7 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'tg16' => 'mednafen_pce_fast',
   'genesis' || 'sms' || 'gamegear' => 'genesis_plus_gx',
   'sega32' => 'picodrive',
+  'n64' => 'mupen64plus_next',
   _ => null,
 };
 
@@ -31,7 +32,8 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'genesis' ||
   'sms' ||
   'gamegear' ||
-  'sega32' => 'root-cartridge-v1',
+  'sega32' ||
+  'n64' => 'root-cartridge-v1',
   _ => null,
 };
 
@@ -288,6 +290,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     ],
     launch: {
       'platform': platform.slug,
+      'coreName': core,
       'configPath': configPath,
       'stateGroup': group,
       'configNative': '$native/$configPath',

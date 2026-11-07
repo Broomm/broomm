@@ -13,6 +13,7 @@ import '../retroarch.dart';
 import '../session.dart';
 import '../switch_content.dart';
 import 'emulators.dart';
+import 'retroarch_core_setup.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -79,7 +80,11 @@ class AndroidSavePlan extends ProgressLayout {
   final Map<String, String> binding;
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
-  Map<String, String> get arguments => {...binding, 'emulator': emulator.id};
+  Map<String, String> get arguments => {
+    ...binding,
+    'emulator': emulator.id,
+    if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
+  };
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
@@ -417,7 +422,8 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         throw StateError(
           'Select RetroArch’s Core Data/app-data provider root, not its shared saves subfolder.',
         );
-      final corePath = 'cores/${core}_libretro_android.so';
+      final coreFile = androidRetroCoreFile(core);
+      final corePath = 'cores/$coreFile';
       Future<Map<String, dynamic>?> stat() =>
           manager.channel.invokeMapMethod<String, dynamic>('sharedStat', {
             ...reader.arguments,
@@ -443,7 +449,7 @@ Future<AndroidSavePlan> connectedAndroidProgress(
           {
             ...reader.arguments,
             'areas': [
-              {'path': 'cores', 'exact': '${core}_libretro_android.so'},
+              {'path': 'cores', 'exact': coreFile},
             ],
           },
         );

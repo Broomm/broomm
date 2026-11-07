@@ -13,7 +13,9 @@ internal class RootSaveFiles(
     private val root: File, private val uid: Int, private val label: ByteArray,
     private val live: () -> Unit,
     private val checkpoint: (String) -> Unit = {},
+    private val coreName: String = "mgba",
 ) {
+    fun progressLimit(path: String): Int = limit(path, coreName)
     fun present(file: File): Boolean = try { Os.lstat(file.path); true }
         catch (e: android.system.ErrnoException) { if (e.errno == OsConstants.ENOENT) false else throw e }
     fun path(relative: String): File {
@@ -112,7 +114,7 @@ internal class RootSaveFiles(
                 require(!result.containsKey(relative) && result.size < 128) { "Too many rooted save files." }
                 val file = path(relative)
                 val metadata = metadata(file)
-                val bytes = bytes(file, limit(relative))
+                val bytes = bytes(file, progressLimit(relative))
                 total += bytes.size
                 require(total <= 64L * 1024 * 1024) { "Rooted progress exceeds 64 MiB." }
                 result[relative] = BundleEntry(bytes.size.toLong(), digest(bytes), metadata)
@@ -123,7 +125,7 @@ internal class RootSaveFiles(
     data class BundleEntry(val bytes: Long, val sha256: String, val metadata: String)
 
     fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) =
-        publish(relative, before, after, payload, wantedMetadata, token, limit(relative),
+        publish(relative, before, after, payload, wantedMetadata, token, progressLimit(relative),
             sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
 
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
@@ -329,11 +331,10 @@ internal class RootSaveFiles(
         return "files/Broomm/controller-profiles-$build"
     }
 
-    private fun transferRom(file: File, owner: Int, out: FileOutputStream? = null, links: Long = 1): String {
+    private fun transferRom(file: File, owner: Int, out: FileOutputStream? = null, links: Long = 1, limit: Long = 32L * 1024 * 1024): String {
         val fd = Os.open(file.path, OsConstants.O_RDONLY or OsConstants.O_NOFOLLOW or OsConstants.O_NONBLOCK, 0)
         return FileInputStream(fd).use { input ->
             val stat = Os.fstat(fd)
-            val limit = 32L * 1024 * 1024
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == owner &&
                 stat.st_nlink == links && stat.st_size in 1..limit) { "Invalid RetroArch ROM file" }
             val hash = MessageDigest.getInstance("SHA-256")
@@ -358,6 +359,7 @@ internal class RootSaveFiles(
 
     fun stageRom(relative: String, source: File, caller: Int, expected: String, prepared: Boolean = false): File {
         val parts = romPath(relative)
+        val limit = romLimit(parts[3])
         require(source.name == parts[3])
         if (prepared) {
             require(Regex("cartridge-[a-zA-Z0-9_-]+").matches(source.parentFile!!.name) &&
@@ -372,11 +374,11 @@ internal class RootSaveFiles(
         val mode = "$uid $uid 400 ${String(label).trimEnd('\u0000')}"
         val fd = Os.open(stage.path, OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_NOFOLLOW, 384)
         FileOutputStream(fd).use { out ->
-            require(transferRom(source, caller, out) == expected) { "RetroArch ROM changed before staging" }
+            require(transferRom(source, caller, out, limit = limit) == expected) { "RetroArch ROM changed before staging" }
             attributes(stage, mode)
             Os.fsync(fd)
         }
-        require(transferRom(stage, uid) == expected && metadata(stage) == mode) { "Staged RetroArch ROM failed verification" }
+        require(transferRom(stage, uid, limit = limit) == expected && metadata(stage) == mode) { "Staged RetroArch ROM failed verification" }
         live()
         Os.link(stage.path, target.path)
         Os.remove(stage.path)
@@ -403,7 +405,7 @@ internal class RootSaveFiles(
                 require(stat.st_dev == other.st_dev && stat.st_ino == other.st_ino)
             }
             if (entry == target || stat.st_uid != 0) metadata(entry, stat.st_nlink)
-            if (entry == target) require(transferRom(entry, uid, links = stat.st_nlink) == expected) {
+            if (entry == target) require(transferRom(entry, uid, links = stat.st_nlink, limit = romLimit(target.name)) == expected) {
                 "Staged RetroArch ROM changed. Its files were kept."
             }
         }
@@ -414,15 +416,22 @@ internal class RootSaveFiles(
         flushDirectory(directory.parentFile!!)
     }
 
+    private fun romLimit(name: String): Long =
+        (if (coreName == "mupen64plus_next" && name.substringAfterLast('.').lowercase() in setOf("z64", "v64", "n64")) 64L else 32L) * 1024 * 1024
+
     companion object {
         const val MAX_BYTES = 262144
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive"))
-            return "cores/${core}_libretro_android.so"
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next"))
+            return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
-        fun limit(path: String): Int = if (path.contains("/states/")) MAX_STATE_BYTES else MAX_BYTES
+        fun limit(path: String, core: String = "mgba"): Int = when {
+            path.contains("/states/") -> if (core == "mupen64plus_next") 32 * 1024 * 1024 else MAX_STATE_BYTES
+            core == "mupen64plus_next" && path.endsWith(".srm") -> 296960
+            else -> MAX_BYTES
+        }
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false) {
             val save = "saves/[^/]+\\.(?:srm|rtc)"
@@ -435,7 +444,7 @@ internal class RootSaveFiles(
 
         fun romPath(path: String): List<String> {
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x))")
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64))")
                     .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }

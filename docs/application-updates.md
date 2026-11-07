@@ -268,4 +268,7 @@ assertion has already failed, it writes `cancel`, observes up to eight seconds
 for late acknowledgement/exit, then retains the original failure with those
 diagnostics. Late readiness cannot pass the test or permit installation. The
 passing deadline and production helper are unchanged. Native Windows execution
-is required for the new diagnostics; this host only compiles that test path.
+is required for the new diagnostics. Revision `cf75b58` subsequently passed
+all CI jobs in run `42412917045`; Windows readiness was 1,770 ms, with
+`Process.start` returning after 7 ms. This is a successful independent execution,
+not a cause established for the earlier failure. The diagnostics remain enabled.

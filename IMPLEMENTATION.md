@@ -1,5 +1,22 @@
 # Implementation plan
 
+## Rooted Nintendo 64 source increment — 2026-11-07
+
+Current source adds independent N64 Setup, pinned four-ABI Mupen64Plus-Next
+delivery with its actual Android GLES3 filename, raw/ZIP cartridge staging up
+to 64 MiB, the full 296,960-byte native save and 32 MiB states. Earlier cores'
+limits remain unchanged. Version 9 settings retain earlier bindings; core-aware
+file mechanics and original platform records retain recovery behavior.
+
+Clean analysis, all 642 Flutter tests (one existing native-host skip), 51 focused
+Dart checks and thirteen native Thor filesystem groups pass. The final 42-test
+root suite also passes after the limit helper cleanup. Native checks include
+exact 64 MiB staging, oversized refusal, full SRAM and interrupted large-state
+recovery. Packaged N64 acceptance remains pending; seven other cores remain research. See the
+[concrete scope](docs/android-retroarch-cores.md#nintendo-64-source-increment).
+The separate Windows diagnostic revision `cf75b58` passed all CI jobs; native
+readiness was 1,770 ms. The earlier failure's cause remains unknown.
+
 ## Sega cartridge device acceptance — 2026-11-07
 
 Build 1069 (`f00df30`) passed the three downloaded Sega ZIP launches, Sonic 3

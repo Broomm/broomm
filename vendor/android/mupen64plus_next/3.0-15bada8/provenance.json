@@ -7,7 +7,7 @@
   "source_archive": "https://codeload.github.com/libretro/mupen64plus-libretro-nx/tar.gz/15bada85906593376e8fd697f1b0b3af3a20f512",
   "source_sha256": "0b739581f2610fa6967891a657c749557fa4f7555d6a7e2e3475c9b397302b13",
   "captured": "2026-11-07",
-  "license": "GPL-2.0-or-later and retained component notices",
+  "license": "Libretro documents GPLv3; pinned source components include GPL-2.0-or-later, GPLv3/LGPL and other retained licenses.",
   "entry": "mupen64plus_next_gles3_libretro_android.so",
   "build_recipe": "https://github.com/libretro/mupen64plus-libretro-nx/blob/15bada85906593376e8fd697f1b0b3af3a20f512/libretro/jni/Android.mk",
   "recipe_inputs": {
@@ -117,5 +117,6 @@
     "mupen64plus-rsp-paraLLEl/lightning/COPYING.DOC": "5ae033045108dac293940c2292d311ce8b58de976dff2269c22280b8df6cfd27",
     "mupen64plus-rsp-paraLLEl/lightning/COPYING.LESSER": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c",
     "mupen64plus-video-paraLLEl/parallel-rdp/LICENSE": "29e3d9c8af52aa066b05be4ed348b2184052e99b793779c38baca2c6e00240c5"
-  }
+  },
+  "upstream_documentation": "https://docs.libretro.com/library/mupen64plus/"
 }

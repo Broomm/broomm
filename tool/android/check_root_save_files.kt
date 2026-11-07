@@ -141,7 +141,8 @@ fun main(args: Array<String>) {
                 "$launchBase/rom-${"c".repeat(32)}/$name", config, content, "$content/$selected")
         for ((core, name) in listOf("mgba" to "Game.gba", "snes9x" to "Game.sfc", "gambatte" to "Game.gbc",
             "stella" to "Game.a26", "mednafen_pce_fast" to "Game.pce", "genesis_plus_gx" to "Game.md",
-            "genesis_plus_gx" to "Game.sms", "genesis_plus_gx" to "Game.gg", "picodrive" to "Game.32x")) {
+            "genesis_plus_gx" to "Game.sms", "genesis_plus_gx" to "Game.gg", "picodrive" to "Game.32x",
+            "mupen64plus_next" to "Game.z64", "mupen64plus_next" to "Game.v64", "mupen64plus_next" to "Game.n64")) {
             launch(core, name, name)
             launch(core, name, "Game.ZIP")
             failure { launch(core, name, "Other.zip") }
@@ -150,6 +151,7 @@ fun main(args: Array<String>) {
         failure { launch("genesis_plus_gx", "Game.md", "Game.zip", content = launchContent.replace("/42/", "/43/")) }
         failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = launchConfig.replace("b".repeat(32), "f".repeat(32))) }
         failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = null) }
+        failure { launch("mupen64plus_next", "Game.gba", "Game.zip") }
         failure { launch("mgba", "Game.md", "Game.zip") }
         println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
 
@@ -187,6 +189,7 @@ fun main(args: Array<String>) {
         }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
         println("PASS: Atari/PCE/Sega cartridge staging, source preservation and unsupported disc refusal")
+        checkN64Storage(root, label)
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -207,7 +210,7 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive")) {
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next")) {
             check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
             check(files.core("arm64-v8a", coreName = name) == coreHash)
         }
@@ -282,6 +285,57 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+private fun checkN64Storage(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected N64 refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected N64 refusal") }
+    }
+    val ordinary = RootSaveFiles(root, 2000, label, {})
+    val n64 = RootSaveFiles(root, 2000, label, {}, coreName = "mupen64plus_next")
+    check(RootSaveFiles.corePath("mupen64plus_next") == "cores/mupen64plus_next_gles3_libretro_android.so")
+    val base = "files/Broomm/${"b".repeat(32)}/45"
+    val token = "a".repeat(32) + "-in"
+    val save = "$base/saves/N64.srm"
+    val ram = ByteArray(296960) { (it % 251).toByte() }
+    val ramHash = RootSaveFiles.digest(ram)
+    n64.replace(save, null, ramHash, ram, null, token)
+    val areas = listOf(mapOf("path" to "$base/saves", "exact" to "N64.srm"))
+    check(n64.inventory(areas).getValue(save).sha256 == ramHash)
+    refused { ordinary.inventory(areas) }
+    refused { n64.replace(save, ramHash, RootSaveFiles.digest(ByteArray(296961)), ByteArray(296961), null, token) }
+    val state = "$base/states/states-${"a".repeat(16)}-android/N64.state"
+    val stateBytes = ByteArray(16793412) { (it % 239).toByte() }
+    val stateHash = RootSaveFiles.digest(stateBytes)
+    val interrupted = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Interrupted N64 state") }, "mupen64plus_next")
+    refused { interrupted.replace(state, null, stateHash, stateBytes, null, token) }
+    n64.replace(state, null, stateHash, stateBytes, null, token)
+    check(n64.hash(n64.path(state), n64.progressLimit(state)) == stateHash)
+    check(Os.lstat(n64.path(state).path).st_nlink == 1L)
+    refused { ordinary.bytes(n64.path(state), ordinary.progressLimit(state)) }
+    check(n64.progressLimit(state) == 32 * 1024 * 1024)
+    check(n64.progressLimit("$base/config-${"a".repeat(32)}.cfg") == 262144)
+    val source = File(root, "library/45/content/Large.z64")
+    check(source.parentFile!!.mkdirs())
+    java.io.RandomAccessFile(source, "rw").use { it.setLength(64L * 1024 * 1024) }
+    val romHash = java.security.MessageDigest.getInstance("SHA-256").also { hash ->
+        source.inputStream().use { input ->
+            val buffer = ByteArray(65536)
+            while (true) { val count = input.read(buffer); if (count < 0) break; hash.update(buffer, 0, count) }
+        }
+    }.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    val romPath = "$base/rom-${"1".repeat(32)}/Large.z64"
+    val rom = n64.stageRom(romPath, source, 0, romHash)
+    check(rom.length() == 64L * 1024 * 1024 && source.length() == rom.length())
+    n64.removeRom(romPath, romHash)
+    refused { ordinary.stageRom(romPath, source, 0, romHash) }
+    ordinary.removeRom(romPath, romHash)
+    java.io.RandomAccessFile(source, "rw").use { it.setLength(64L * 1024 * 1024 + 1) }
+    refused { n64.stageRom(romPath, source, 0, romHash) }
+    n64.removeRom(romPath, romHash)
+    println("PASS: N64 full SRAM, large interrupted state recovery, exact 64 MiB cartridge, oversized refusal and unchanged earlier limits")
 }
 
 /** Real descriptors and publications; the 80 MiB payload is never allocated as an array. */

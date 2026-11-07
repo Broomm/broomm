@@ -212,7 +212,8 @@ class BroommEmulators(private val activity: Activity) {
                                             validateRootRetroArchLaunch(core, pkg, nativeData, nativeRom, config, content, selected)
                                         }
                                         putExtra("ROM", nativeRom ?: uri.toString())
-                                        putExtra("LIBRETRO", "$nativeData/cores/${core}_libretro_android.so")
+                                        val coreFile = if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core
+                                        putExtra("LIBRETRO", "$nativeData/cores/${coreFile}_libretro_android.so")
                                         putExtra("DATADIR", nativeData)
                                         putExtra("APK", nativeApp.sourceDir)
                                         putExtra("SDCARD", external)

@@ -38,7 +38,7 @@ class SharedAndroidSaves {
           v['bytes'] < 0 ||
           v['bytes'] >
               (plan.rooted
-                  ? (e.key.contains('/states/') ? 16 * 1024 * 1024 : 262144)
+                  ? _rootProgressLimit(plan, e.key)
                   : progressMaxFileBytes) ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
@@ -335,8 +335,8 @@ class SharedAndroidSaves {
         final before = await progressFileHash(source);
         final zip = await ProgressZip.read(
           source,
-          maxBytes: 64 * 1024 * 1024,
-          maxEntryBytes: 32 * 1024 * 1024,
+          maxBytes: _rootRomLimit(plan) * 2,
+          maxEntryBytes: _rootRomLimit(plan),
         );
         final cartridges = zip.entries
             .where(
@@ -370,9 +370,9 @@ class SharedAndroidSaves {
       final parent = config.substring(0, config.lastIndexOf('/'));
       final path = '$parent/rom-${r['transaction']}/$name';
       final bytes = await source.length();
-      if (bytes < 1 || bytes > 32 * 1024 * 1024)
+      if (bytes < 1 || bytes > _rootRomLimit(plan))
         throw StateError(
-          'The RetroArch game file must be between 1 byte and 32 MiB.',
+          'The RetroArch game file must be between 1 byte and ${_rootRomLimit(plan) ~/ (1024 * 1024)} MiB.',
         );
       final hash = await progressFileHash(source);
       r['romStage'] = path;
@@ -593,7 +593,17 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
         'sms' => {'sms', 'sg'},
         'gamegear' => {'gg'},
         'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'},
+        'n64' => {'z64', 'v64', 'n64'},
         _ => {},
       },
       _ => {},
     };
+
+int _rootRomLimit(AndroidSavePlan plan) =>
+    (plan.launch['platform'] == 'n64' ? 64 : 32) * 1024 * 1024;
+
+int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  final n64 = plan.launch['coreName'] == 'mupen64plus_next';
+  if (path.contains('/states/')) return (n64 ? 32 : 16) * 1024 * 1024;
+  return n64 ? 296960 : 262144;
+}
