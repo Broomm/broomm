@@ -1,0 +1,49 @@
+{
+  "version": "1.63-fae2fea",
+  "captured": "2026-11-07",
+  "upstream": "https://github.com/libretro/snes9x",
+  "source_revision": "fae2fea08f74180759ef540ee94259213f503480",
+  "source_archive": "https://codeload.github.com/libretro/snes9x/tar.gz/fae2fea08f74180759ef540ee94259213f503480",
+  "source_sha256": "0d4b0c4181d66668ec0040eb17f90a559f7b7fa6cbd9198593c3bdbe79acd029",
+  "license": "Snes9x (personal use, noncommercial); upstream third-party notices retained in corresponding source",
+  "build_recipe": "https://github.com/libretro/snes9x/blob/fae2fea08f74180759ef540ee94259213f503480/libretro/jni/Android.mk",
+  "reproduction_limit": "Unmodified upstream Buildbot artifacts; embedded version identifies this source revision. Exact upstream NDK/build environment is not attested as reproducible.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/snes9x_libretro_android.so.zip",
+      "archive_bytes": 890362,
+      "archive_sha256": "a8ca6cfcaf82b2e03448f95bfadcc3b34690544e3de99f4848a5bdbf3ecc668d",
+      "payload_bytes": 3046344,
+      "payload_sha256": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "elf_machine": 183,
+      "elf_class": 2
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/snes9x_libretro_android.so.zip",
+      "archive_bytes": 824667,
+      "archive_sha256": "09de76ea9645be3554158eea82efedb9abe9b623c46d6e6ee8046574e2f3dcda",
+      "payload_bytes": 1803676,
+      "payload_sha256": "9de9b3537a32325fd58514d52a37731aae3ce4002286f909dab8292621c9abc2",
+      "elf_machine": 40,
+      "elf_class": 1
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/snes9x_libretro_android.so.zip",
+      "archive_bytes": 1042345,
+      "archive_sha256": "c52cce3e619b3722647954c37ef9988a22f7ccba577316a9e3828d57e75a4153",
+      "payload_bytes": 3134076,
+      "payload_sha256": "c8c98c6fb67ea59cd4dd8a0d6c5302ed9469325c8d4cb147499feb212c45b5ce",
+      "elf_machine": 3,
+      "elf_class": 1
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/snes9x_libretro_android.so.zip",
+      "archive_bytes": 1007208,
+      "archive_sha256": "047b7834a71db47878b29792506b41cadaec6d2740014b41460844aad94a4706",
+      "payload_bytes": 3275888,
+      "payload_sha256": "312f1345b2494914ed20c9717cf6a80ad06b8451773c4da4e61c262e97276beb",
+      "elf_machine": 62,
+      "elf_class": 2
+    }
+  }
+}
