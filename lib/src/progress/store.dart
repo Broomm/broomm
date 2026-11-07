@@ -317,7 +317,7 @@ class ProgressStore {
                 RegExp(
                   r'^(save|device|card[AB]|ext-[a-f0-9]{8}|dlc-[a-f0-9]{8})$',
                 ).hasMatch(group)) &&
-            !RegExp(r'^states-[a-f0-9]{16}-[a-z]+-[a-z0-9]+$').hasMatch(group))
+            !progressStateArea(group))
           throw const FormatException('Unsupported save area');
       } else {
         final native = area.native(key.substring(group.length + 1));

@@ -6,6 +6,12 @@ const progressMaxBytes = 512 * 1024 * 1024;
 const progressMaxFileBytes = 256 * 1024 * 1024;
 const progressMaxFiles = 4096;
 
+/// Android's APK/ABI/core identity is carried in the hash; desktop groups also
+/// carry a host/architecture suffix. Both forms remain retained across hosts.
+bool progressStateArea(String value) =>
+    RegExp(r'^states-[a-f0-9]{16}-(?:android|[a-z]+-[a-z0-9]+)$')
+        .hasMatch(value);
+
 String progressNonce() => List<int>.generate(
   16,
   (_) => Random.secure().nextInt(256),

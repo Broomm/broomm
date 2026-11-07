@@ -525,49 +525,114 @@ void main() {
     expect(api.contents[record.id], competingBytes);
   });
 
-  test('incompatible save states stay in the managed bundle without being applied to another host', () async {
-    CloudGame host(Device d, String stateId, String path) => CloudGame(
+  for (final hostSuffix in ['linux-x64', 'android']) {
+    test(
+      'incompatible $hostSuffix states stay retained without being applied to another host',
+      () async {
+        CloudGame host(Device d, String stateId, String path) => CloudGame(
+          server: serverId,
+          profile: profileId,
+          user: 3,
+          rom: 42,
+          client: api,
+          layout: ProgressLayout(
+            d.native.path,
+            'azahar-data-v1',
+            '00040000000edf00',
+            [
+              const ProgressArea('save', 'private/game/data'),
+              ProgressArea(stateId, path),
+            ],
+          ),
+        );
+        final ga = host(a, 'states-1111111111111111-macos-arm64', 'stateA');
+        final gb = host(b, 'states-2222222222222222-$hostSuffix', 'stateB');
+        await a.write('first');
+        await a.cloud.idle(() => a.cloud.beforePlay(ga));
+        final stateA = File('${a.native.path}/stateA/game.cst');
+        await stateA.parent.create();
+        await stateA.writeAsString('mac state');
+        await a.cloud.idle(() => a.cloud.afterPlay(ga, 0));
+        await b.cloud.idle(() => b.cloud.beforePlay(gb));
+        expect(await File('${b.native.path}/stateA/game.cst').exists(), false);
+        expect(await b.save.readAsString(), 'first');
+        final stateB = File('${b.native.path}/stateB/game.cst');
+        await stateB.parent.create(recursive: true);
+        await stateB.writeAsString('linux state');
+        await b.write('second');
+        await b.cloud.idle(() => b.cloud.afterPlay(gb, 0));
+        await a.cloud.idle(() => a.cloud.sync(ga));
+        expect(await a.save.readAsString(), 'second');
+        expect(await stateA.readAsString(), 'mac state');
+        expect(await File('${a.native.path}/stateB/game.cst').exists(), false);
+        final state = await a.cloud.store(ga).state();
+        final snapshot = await a.cloud
+            .store(ga)
+            .load(state['snapshot'] as String);
+        expect(
+          snapshot.entries.keys.where((k) => k.startsWith('states-')),
+          hasLength(2),
+        );
+      },
+    );
+  }
+
+  test('Android raw SRAM and states retry without native files and stay incompatible with another build', () async {
+    CloudGame android(Device d, String group) => CloudGame(
       server: serverId,
       profile: profileId,
       user: 3,
       rom: 42,
       client: api,
-      layout: ProgressLayout(
-        d.native.path,
-        'azahar-data-v1',
-        '00040000000edf00',
-        [
-          const ProgressArea('save', 'private/game/data'),
-          ProgressArea(stateId, path),
-        ],
+      layout: ProgressLayout(d.native.path, 'libretro-mgba-v1', '42', [
+        const ProgressArea('save', 'save', prefix: 'Game', exact: 'Game.srm'),
+        ProgressArea(group, group, prefix: 'Game'),
+      ]),
+    );
+    const group = 'states-1111111111111111-android';
+    final first = android(a, group);
+    await a.cloud.idle(() => a.cloud.beforePlay(first));
+    await (await first.layout.target('save/game.srm')).writeAsBytes([1, 2]);
+    await (await first.layout.target('$group/game.state2'))
+        .writeAsBytes([3, 4, 5]);
+    api.offline = true;
+    await a.cloud.idle(() => a.cloud.afterPlay(first, 0));
+    expect((await a.cloud.store(first).state())['pending'], true);
+    await a.native.delete(recursive: true);
+    api.offline = false;
+    await a.cloud.idle(
+      () => a.cloud.retryPending(
+        server: serverId,
+        profile: profileId,
+        user: 3,
+        rom: 42,
+        client: api,
       ),
     );
-    final ga = host(a, 'states-1111111111111111-macos-arm64', 'stateA');
-    final gb = host(b, 'states-2222222222222222-linux-x64', 'stateB');
-    await a.write('first');
-    await a.cloud.idle(() => a.cloud.beforePlay(ga));
-    final stateA = File('${a.native.path}/stateA/game.cst');
-    await stateA.parent.create();
-    await stateA.writeAsString('mac state');
-    await a.cloud.idle(() => a.cloud.afterPlay(ga, 0));
-    await b.cloud.idle(() => b.cloud.beforePlay(gb));
-    expect(await File('${b.native.path}/stateA/game.cst').exists(), false);
-    expect(await b.save.readAsString(), 'first');
-    final stateB = File('${b.native.path}/stateB/game.cst');
-    await stateB.parent.create(recursive: true);
-    await stateB.writeAsString('linux state');
-    await b.write('second');
-    await b.cloud.idle(() => b.cloud.afterPlay(gb, 0));
-    await a.cloud.idle(() => a.cloud.sync(ga));
-    expect(await a.save.readAsString(), 'second');
-    expect(await stateA.readAsString(), 'mac state');
-    expect(await File('${a.native.path}/stateB/game.cst').exists(), false);
-    final state = await a.cloud.store(ga).state();
-    final snapshot = await a.cloud.store(ga).load(state['snapshot'] as String);
+    expect(await a.native.exists(), false);
+    expect(api.stateRecords, hasLength(1));
+    final same = android(b, group);
+    await b.cloud.idle(() => b.cloud.beforePlay(same));
+    expect(await (await same.layout.target('save/game.srm')).readAsBytes(), [
+      1,
+      2,
+    ]);
     expect(
-      snapshot.entries.keys.where((k) => k.startsWith('states-')),
-      hasLength(2),
+      await (await same.layout.target('$group/game.state2')).readAsBytes(),
+      [3, 4, 5],
     );
+    await b.cloud.idle(() => b.cloud.afterPlay(same, 0));
+    const replacement = 'states-2222222222222222-android';
+    final next = android(b, replacement);
+    await b.cloud.idle(() => b.cloud.beforePlay(next));
+    expect(
+      await (await next.layout.target('$replacement/game.state2')).exists(),
+      false,
+    );
+    final st = b.cloud.store(next),
+        checkpoint = await b.cloud.store(next).state();
+    final kept = await st.load(checkpoint['snapshot'] as String);
+    expect(kept.entries, contains('$group/game.state2'));
   });
 
   test('other slots, names and emulator folders remain untouched when BROOMM history is created', () async {

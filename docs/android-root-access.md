@@ -588,7 +588,8 @@ are [versioned with provenance and license](../vendor/android/snes9x/1.63-fae2fe
 at commit `e95826b793c5f1ff07c87adef4fd4fbe2f76880f`, retained by
 `android-snes9x-1.63-fae2fea`. Upstream binaries identify source
 `fae2fea08f74180759ef540ee94259213f503480`; exact source and build-recipe links
-are retained. These are not a claim of a reproduced NDK build.
+are retained. All four ELF builds require only Android libc, libm and libdl; no extra runtime
+C++ library is required. These are not a claim of a reproduced NDK build.
 
 The root file boundary now includes the selected game's SRAM, states and PNG
 thumbnails inside `states/states-<fingerprint>-android`. The fingerprint includes
@@ -623,6 +624,11 @@ Private backups and verification logs for this increment live under the ignored
 session, clear app data or replace cores while recovering progress. Normal
 successful completion restores original managed native bytes and removes its
 staged ROM/configuration; Broomm's per-profile progress remains available.
+
+Cloud regressions also cover raw SRAM plus an Android state companion, pending
+retry after deleting a disposable native fixture, and retention across different
+Android/frontend builds. The shared bundle/retry readers now recognize the
+existing Android state-group form as well as desktop host/architecture groups.
 
 Verification in progress: clean Dart analysis, focused workflow tests, compiled
 Android bridge, and eight native fault groups passed on the Thor, including a
