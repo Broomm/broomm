@@ -215,6 +215,11 @@ jobs:
           mkdir -p build/android-checks
           devbox --config tool/android run check 2>&1 | tee build/android-checks/root-bridge.log
           devbox --config tool/android run build-root-save-test 2>&1 | tee build/android-checks/root-save-device-build.log
+      - name: Compile Android setup and uninstall result regressions
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p build/android-checks
+          devbox --config tool/android run build-activity-result-test 2>&1 | tee build/android-checks/activity-result-device-build.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

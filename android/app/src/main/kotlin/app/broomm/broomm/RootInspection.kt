@@ -69,6 +69,7 @@ class RootInspection(private val activity: Activity) {
     }
 
     companion object {
+    internal fun supports(pkg: String): Boolean = pkg in activities
     @Suppress("DEPRECATION")
     internal fun identity(context: android.content.Context, pkg: String, user: Int = Process.myUid() / 100000): Map<String, Any> {
         val pm = context.packageManager

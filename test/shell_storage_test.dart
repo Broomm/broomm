@@ -23,6 +23,32 @@ void main() {
     expect(restored.copy(reduceMotion: true).linuxUseKeyring, isTrue);
   });
 
+  test('emulator removal clears its defaults across servers and keeps other preferences', () async {
+    final first = (await storage.saveServer(
+      normalizeServer('https://first.example'),
+      '5.4.0',
+    )).servers.single;
+    final second = (await storage.saveServer(
+      normalizeServer('https://second.example'),
+      '5.4.0',
+    )).servers.last;
+    await storage.emulatorDefaults(first.id, {
+      'gba': 'retroarch',
+      'psp': 'ppsspp',
+    });
+    await storage.emulatorDefaults(second.id, {
+      'snes': 'retroarch',
+      'nds': 'melonds',
+    });
+    await storage.removeEmulatorDefaults('retroarch');
+    final restored = await ShellStorage(root).load();
+    expect(restored.emulatorDefaults, {
+      '${first.id}:psp': 'ppsspp',
+      '${second.id}:nds': 'melonds',
+    });
+    expect(restored.servers.length, 2);
+  });
+
   test(
     'servers survive cancelled login and same account IDs remain server scoped',
     () async {

@@ -12,17 +12,15 @@ connection in build 1038 after reopening Broomm, followed by gameplay and save
 upload in builds 1042 and 1043. The owner confirmed loading an older Minish Cap
 save before PR #1 merged. Automatic mGBA setup is the follow-up below.
 
-1. Install RetroArch from Broomm's GBA card and accept Android's installer
-   confirmation. Close RetroArch if it is open.
-2. In Broomm, choose **Emulator Settings → Game Boy Advance → RetroArch →
-   Root saves… → Set up GBA**. Allow Magisk if asked. Broomm installs a
-   compatible mGBA core if it is absent. The
-   existing shared-folder connection remains available to other systems.
-   If Broomm offers **Finish RetroArch setup**, choose **Open RetroArch**.
-   Allow RetroArch's requested Android permission and wait for its main menu,
-   then quit it. The normal launcher extracts the regular APK's resources.
-   Expect a confirmed connection or a visible actionable error. Opening the
-   card does not request root. Denial preserves the previous connection.
+1. Choose **Emulator Settings → Game Boy Advance → RetroArch → Set up**.
+   Setup guides installation if the app is missing. Accept Android's installer
+   confirmation.
+2. Allow Magisk if asked. Broomm reuses or installs mGBA and connects GBA saves.
+   If prompted, choose **Open emulator**, complete RetroArch's first open,
+   wait for its main menu and quit it. Broomm checks closure and resource
+   readiness on return before confirming setup. The existing shared-folder
+   connection remains available to other systems. Root denial leaves a visible
+   retry and **Use shared folder** option.
 3. Install the selected GBA game from your RomM account. With RetroArch closed,
    choose the game on Home and press **Play**. Broomm checks closure and verifies
    package/user/signer/build identity, checks cloud progress and prepares a
@@ -65,13 +63,18 @@ an existing compatible core. **Cancel download** discards Broomm's staging.
 The source is [Libretro's Android core Buildbot](https://docs.libretro.com/guides/download-cores/#installing-cores-manually)
 and the [Libretro mGBA port](https://github.com/libretro/mgba) under MPL 2.0.
 The reviewed archives were fetched on 2026-11-06 from
-`nightly/android/latest/<abi>/mgba_libretro_android.so.zip`. The ARM64, ARMv7,
-x86 and x86-64 archives each contain one ELF shared library. Archive and
-payload hashes are pinned in `lib/src/android/mgba_setup.dart`. The ARM64
-payload matches the previously tested Thor core. Buildbot's `latest` URLs
-can change. If an archive differs from the reviewed bytes, setup stops before
-publication. A durable pinned distribution URL is still needed for a release
-that can download these same bytes after Buildbot rotates them.
+`nightly/android/latest/<abi>/mgba_libretro_android.so.zip`. Their embedded
+version is `0.11-212-7a12d6d`, corresponding to source commit
+`7a12d6d4b9acb14c0ae62c9166b6a2f3d08007f6`. The original unchanged ARM64,
+ARMv7, x86 and x86-64 ZIPs now live in
+[`vendor/android/mgba/0.11-212-7a12d6d`](../vendor/android/mgba/0.11-212-7a12d6d/README.md)
+with the MPL license, exact source link and provenance. The downloader uses
+Broomm Git commit `c6156ac820604feff1f5a51da1081e3dbce66e64` through
+`raw.githubusercontent.com`, giving the recipe an immutable URL for each ABI.
+These vendor files are downloaded during explicit setup and excluded from
+Flutter's bundled assets. Both ZIP and core checksums remain pinned. An
+existing compatible core is reused.
+
 
 Broomm hands the official APK unchanged to Android's installer. The Thor's
 installed 183,956,821-byte arm64 APK matched the official 1.22.2 Buildbot
@@ -85,7 +88,7 @@ triggers extraction under RetroArch's own UID. Direct gameplay with build
 controller fallback worked on the Odin, but the owner reported missing menu
 icons and a pixelated font.
 
-During rooted setup and before direct play, Broomm checks for the default
+During Setup and before direct play, Broomm checks for the default
 Ozone menu fonts and settings icon. If the APK includes them and the stock
 copies are missing, it offers the standard launcher. After first open and
 quit, **Check and play** rechecks closure and the files. This check runs
@@ -348,7 +351,7 @@ its mGBA core. Do not uninstall an emulator or migrate existing saves to test.
    native operation; Dart also bounds an unresponsive channel. Retry is explicit.
    Root managers can retain their own permission prompt/process after the client
    stops; Broomm neither changes their policy nor claims to control their lifetime.
-5. **Save folder…** remains the existing folder route. Inspection never
+5. The shared-folder route remains available inside **Set up**. Inspection never
    changes that connection, the default emulator, working progress or cloud status.
 
 The report is kept only in the open dialog. Operational logs contain request,

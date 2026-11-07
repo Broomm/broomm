@@ -7,6 +7,7 @@ import '../progress/zip.dart';
 import 'apk_download.dart';
 
 const _coreFile = 'mgba_libretro_android.so';
+const _coreRevision = 'c6156ac820604feff1f5a51da1081e3dbce66e64';
 const _maxArchive = 1024 * 1024;
 const _maxCore = 8 * 1024 * 1024;
 
@@ -54,8 +55,8 @@ Future<void> downloadAndroidMgba(
 
   try {
     final url = Uri.https(
-      'buildbot.libretro.com',
-      '/nightly/android/latest/$abi/$_coreFile.zip',
+      'raw.githubusercontent.com',
+      '/Broomm/broomm/$_coreRevision/vendor/android/mgba/0.11-212-7a12d6d/$abi/$_coreFile.zip',
     );
     final reply = await download.response(url), expected = reply.contentLength;
     if (expected > _maxArchive)

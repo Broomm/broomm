@@ -187,6 +187,12 @@ void main() {
       'build': buildHash,
     });
     await manager.load();
+    expect(m.defaultEmulator(platform), isNull);
+    await manager.confirmSharedStorage(
+      mmj,
+      'content://com.android.externalstorage.documents/tree/primary%3Acitra-emu',
+    );
+    m.profile = const SavedProfile(profileId, serverId, 3, 'Test');
     expect(m.defaultEmulator(platform), 'citra-mmj');
     await manager.launch(mmj, manager.app(mmj)!, [
       '/fixture/Test.3ds',
@@ -238,6 +244,12 @@ void main() {
           ps3 = RommPlatform(2, 'PlayStation 3', 'ps3', 1),
           ps4 = RommPlatform(3, 'PlayStation 4', 'ps4', 1),
           snes = RommPlatform(4, 'Super Nintendo', 'snes', 1);
+      expect(m.defaultEmulator(switchPlatform), isNull);
+      await manager.confirmSharedStorage(
+        emulator('eden'),
+        'content://dev.eden.eden_emulator.user/tree/root',
+      );
+      m.profile = const SavedProfile(profileId, serverId, 3, 'Test');
       expect(m.defaultEmulator(switchPlatform), 'eden');
       expect(m.emulatorChoices(ps3), isEmpty);
       expect(m.emulatorChoices(ps4), isEmpty);

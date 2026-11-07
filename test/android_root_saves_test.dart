@@ -9,6 +9,7 @@ import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
+import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/service.dart';
@@ -247,6 +248,7 @@ void main() {
   test(
     'missing stock assets block direct play before any save journal',
     () async {
+      await manager.connectGbaRoot(emulator);
       observation['frontendAssetsPending'] = true;
       observation['config'] = Uint8List(0);
       expect((await manager.connectGbaRoot(emulator))?.package, pkg);
@@ -265,6 +267,38 @@ void main() {
       observation['frontendAssetsPending'] = false;
       await launchRooted(session);
       expect(calls, contains('launch'));
+    },
+  );
+
+  test('one setup operation prepares GBA and waits for the first open before connecting', () async {
+    observation['frontendAssetsPending'] = true;
+    final setup = AndroidEmulatorSetup(manager, emulator, 'gba', profileId);
+    addTearDown(setup.dispose);
+    await setup.verify();
+    expect(setup.problem, isNull);
+    expect(setup.step, AndroidSetupStep.initialize);
+    expect(manager.gbaRoot(emulator), isNull);
+    observation['frontendAssetsPending'] = false;
+    await setup.verify();
+    expect(setup.step, AndroidSetupStep.ready);
+    expect(manager.hasCurrentGbaRoot(emulator), isTrue);
+    expect(calls, isNot(contains('installDownloadedApk')));
+  });
+
+  test(
+    'denied root setup remains retryable without publishing a connection',
+    () async {
+      denied = true;
+      final setup = AndroidEmulatorSetup(manager, emulator, 'gba', profileId);
+      addTearDown(setup.dispose);
+      await setup.verify();
+      expect(setup.problem, contains('Denied'));
+      expect(setup.step, AndroidSetupStep.initialize);
+      expect(manager.gbaRoot(emulator), isNull);
+      denied = false;
+      await setup.verify();
+      expect(setup.problem, isNull);
+      expect(setup.step, AndroidSetupStep.ready);
     },
   );
 

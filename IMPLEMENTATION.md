@@ -1,5 +1,44 @@
 # Implementation plan
 
+## Unified Android setup and versioned mGBA — 2026-11-07
+
+Android retains compact cards with the desktop **Set up / Verify setup**,
+**Remove**, **Open emulator** and **Set as default** actions. Setup guides
+installation and first open, requests root and provisions mGBA for GBA
+RetroArch, or guides the existing shared-folder grant. It resumes from package
+readback and verifies resources before publishing a fresh root connection.
+Only configured platforms participate in default selection. Optional APK
+imports and explicit reinstall remain inside Verify setup.
+
+The four reviewed mGBA archives are mirrored under
+`vendor/android/mgba/0.11-212-7a12d6d` with original hashes, MPL license and
+exact source provenance. Download URLs pin artifact commit `c6156ac`, retained
+by tag `android-mgba-0.11-212-7a12d6d`. These are the previously tested bytes.
+The installer retains ABI, checksum and exclusive publication checks.
+
+The owner selected external-app uninstall and configuration clearing for
+Remove. Android owns uninstall confirmation. A durable removal record blocks
+play while the result is uncertain. Confirmed absence permits cleanup of
+connections, legacy provider registrations and defaults. Cancellation retains
+setup, and interrupted cleanup is idempotently resumable. Broomm's saved
+progress and game content are retained.
+
+Analysis, 54 focused tests and the full 605-test Flutter suite pass, with one
+existing native-host skip. The Android bridge and device regression archive
+compile. The isolated Activity fixture passed on the Thor and verifies intent
+construction, cancellation/readback, late callbacks and the folder-permission
+request-code collision fix. It captures intents in a test Activity. The new
+packaged setup UI and actual Android uninstall confirmation remain device
+acceptance work.
+
+## Emulator first-open guidance — 2026-11-07
+
+The owner confirmed that opening RetroArch separately restored the normal menu.
+The installation and save-folder dialogs now ask players to open each Android
+emulator once, finish its first-run setup and permissions, then close it before
+playing from Broomm. Rooted RetroArch retains its resource-readiness check.
+The owner requested keeping this source change for the next feature build.
+
 ## Standard RetroArch first open on rooted Android — 2026-11-06
 
 The owner confirmed the build 1052 controller fix and reported missing
@@ -14,8 +53,9 @@ journal or synchronizing saves. The user can open RetroArch from that screen
 and retry play after quitting. The package installer and configured custom
 asset directories are preserved. The Kotlin bridge compiled, the disposable
 resource check passed on the Thor, and focused Dart tests verified that
-incomplete setup creates no game journal and can be retried. Visual
-acceptance of the menu is pending. See
+incomplete setup creates no game journal and can be retried. On 2026-11-07,
+the owner confirmed that opening RetroArch separately restored its normal
+appearance. The Broomm prompt still needs packaged-device acceptance. See
 [the first-run walkthrough](docs/android-root-access.md#automatic-mgba-setup).
 
 ## Cold RetroArch controller profiles — 2026-11-06

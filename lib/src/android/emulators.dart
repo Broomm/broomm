@@ -181,6 +181,8 @@ class AndroidEmulators extends ChangeNotifier {
   bool settingsKnown = false;
   String? error;
   Future<void> Function(String server, AndroidEmulator emulator)? onInstalled;
+  Future<void> Function(AndroidEmulator emulator)? onRemoved;
+  String? removalEmulator;
 
   List<AndroidEmulator> choices(RommPlatform platform) {
     final canonical = gamePlatform(
@@ -329,6 +331,7 @@ class AndroidEmulators extends ChangeNotifier {
       final binding = androidGbaRootIdentity(report, selected);
       if (!mapEquals(identity, binding) || report['core'] != verifiedCore)
         throw StateError('RetroArch changed during setup. Refresh and retry.');
+      if (androidRetroArchNeedsSetup(report, selected)) return selected;
       final next = {..._gbaRoots, selected.package: binding};
       await _save(gbaRoots: next);
       _gbaRoots
@@ -336,7 +339,7 @@ class AndroidEmulators extends ChangeNotifier {
         ..addAll(next);
       phase?.call('mGBA and GBA root save access verified.');
       _emit();
-      return androidRetroArchNeedsSetup(report, selected) ? selected : null;
+      return null;
     } finally {
       await lease.release();
     }
@@ -350,6 +353,149 @@ class AndroidEmulators extends ChangeNotifier {
       ..clear()
       ..addAll(next);
     _emit();
+  }
+
+  File get _removal => File('${data.path}/android/removal.json');
+
+  Future<Map<String, dynamic>?> pendingRemoval() async {
+    if (!await progressExists(_removal.path)) return null;
+    final record = await progressJson(
+      await progressFile(data, 'android/removal.json'),
+    );
+    if (record['version'] != 1 ||
+        !androidEmulators.any(
+          (e) =>
+              e.id == record['emulator'] &&
+              e.packages.contains(record['package']),
+        ) ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(record['build'] as String? ?? ''))
+      throw const FormatException(
+        'Invalid emulator removal record. Files were kept.',
+      );
+    return record;
+  }
+
+  Future<void> ensureSetupAllowed() async {
+    if (!settingsKnown)
+      throw StateError('Refresh emulator settings before continuing setup.');
+    for (final name in ['session', 'shared-swap', 'mmj-swap']) {
+      if (await progressExists('${data.path}/android/$name.json'))
+        throw StateError(
+          'Finish the previous Android session before changing emulator setup.',
+        );
+    }
+    await ensureNoWriters(closureConfirmed: true);
+  }
+
+  Future<bool> remove(AndroidEmulator emulator, {AndroidApp? expected}) async {
+    if (_installActionActive || installing != null || busy)
+      throw StateError('Finish the current emulator setup first.');
+    _installActionActive = true;
+    final SessionLease lease;
+    try {
+      lease = await SessionLease.acquire(data);
+    } catch (_) {
+      _installActionActive = false;
+      rethrow;
+    }
+    try {
+      if (!settingsKnown) throw StateError('Refresh emulator settings first.');
+      for (final name in ['session', 'shared-swap', 'mmj-swap']) {
+        if (await progressExists('${data.path}/android/$name.json'))
+          throw StateError(
+            'Finish the previous Android session before removing an emulator.',
+          );
+      }
+      await ensureNoWriters(closureConfirmed: true, allowRemoval: true);
+      var record = await pendingRemoval();
+      if (record != null && record['emulator'] != emulator.id)
+        throw StateError('Finish the pending emulator removal first.');
+      if (expected != null) {
+        if (!emulator.packages.contains(expected.package) ||
+            app(emulator, package: expected.package)?.build != expected.build)
+          throw StateError('The emulator changed. Refresh and retry removal.');
+        record = {
+          'version': 1,
+          'emulator': emulator.id,
+          'package': expected.package,
+          'build': expected.build,
+        };
+        await progressWrite(
+          await progressFile(data, 'android/removal.json', createParents: true),
+          record,
+        );
+      }
+      if (record == null)
+        throw StateError('No emulator installation was selected.');
+      removalEmulator = emulator.id;
+      _emit();
+      final package = record['package'] as String;
+      await load();
+      if (!settingsKnown || error != null)
+        throw StateError(
+          'Emulator status could not be verified. Retry removal.',
+        );
+      final current = app(emulator, package: package);
+      if (current != null) {
+        if (current.build != record['build'])
+          throw StateError(
+            'The emulator changed. Confirm removal of the current installation.',
+          );
+        final removed = await channel.invokeMethod<bool>('uninstall', {
+          'package': package,
+          'build': current.build,
+        });
+        if (removed == null)
+          throw StateError(
+            'Android did not confirm emulator removal. Retry removal.',
+          );
+        if (!removed) {
+          await _removal.delete();
+          removalEmulator = null;
+          return false;
+        }
+        await load();
+        if (!settingsKnown ||
+            error != null ||
+            app(emulator, package: package) != null)
+          throw StateError(
+            'Emulator removal could not be verified. Retry removal.',
+          );
+      }
+      final folders = {..._folders}..remove('${emulator.id}:$package');
+      final roots = {..._gbaRoots}..remove(package);
+      final trees = Map<String, String>.fromEntries(
+        _trees.entries.where((e) => !e.key.endsWith(':${emulator.id}')),
+      );
+      await channel.invokeMethod<void>('clearEmulatorSetup', {
+        'package': package,
+        'emulator': emulator.id,
+      });
+      await _save(trees: trees, folders: folders, gbaRoots: roots);
+      _trees
+        ..clear()
+        ..addAll(trees);
+      _folders
+        ..clear()
+        ..addAll(folders);
+      _gbaRoots
+        ..clear()
+        ..addAll(roots);
+      await onRemoved?.call(emulator);
+      if (await progressExists(_installation.path) &&
+          (await progressJson(_installation))['emulator'] == emulator.id)
+        await _installation.delete();
+      await _removal.delete();
+      removalEmulator = null;
+      phase?.call(
+        '${emulator.name} removed and its Broomm configuration cleared.',
+      );
+      return true;
+    } finally {
+      _installActionActive = false;
+      await lease.release();
+      _emit();
+    }
   }
 
   bool progressSupported(AndroidEmulator emulator) =>
@@ -599,6 +745,7 @@ class AndroidEmulators extends ChangeNotifier {
       installed
         ..clear()
         ..addAll(found);
+      removalEmulator = (await pendingRemoval())?['emulator'] as String?;
       await _finishInstallation(installationConfirmed);
     } catch (e) {
       // A failed query must never turn known applications into "not installed".
@@ -973,7 +1120,14 @@ class AndroidEmulators extends ChangeNotifier {
 
   Future<void> releaseGrants() => channel.invokeMethod<void>('releaseGrants');
 
-  Future<void> ensureNoWriters({bool closureConfirmed = false}) async {
+  Future<void> ensureNoWriters({
+    bool closureConfirmed = false,
+    bool allowRemoval = false,
+  }) async {
+    if (!allowRemoval && await progressExists(_removal.path))
+      throw StateError(
+        'Finish the pending emulator removal before continuing.',
+      );
     // The owner accepts explicit closure confirmation for Android sessions.
     if (closureConfirmed) {
       if (await channel.invokeMethod<bool>('ioBusy') == true)

@@ -69,7 +69,23 @@ not be read as native device or save acceptance.
   Existing desktop WAD/DLC behavior is retained. Android has no pairing or
   injection/overlay stage.
 
+## Unified setup
+
+Compact Android cards use **Set up / Verify setup**, **Remove**,
+**Open emulator** and **Set as default**. Setup guides installation, first open
+and save access, then selects the emulator for the active platform. Rooted
+RetroArch GBA setup provisions mGBA and connects saves without a separate root
+save action. A shared-folder route remains available inside Setup. Legacy
+connections remain readable. An installed APK alone does not make a platform
+ready to play.
+
 ## Install flow
+
+The installation and save-folder dialogs ask the player to open the emulator
+once, finish its first-run setup and permission requests, then close it before
+playing from Broomm. On the Thor, the owner confirmed that RetroArch's normal
+launcher restored the missing menu resources on 2026-11-07. Other emulators'
+individual first-run behavior still needs native acceptance.
 
 **Install** and **Install APK…** first check Android's per-source APK permission.
 On Android 8+, if Broomm cannot request installs, it opens its own **Install
@@ -90,11 +106,11 @@ The platform contract is Android's
 [canRequestPackageInstalls](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls())
 and per-source settings activity; activity return alone is not a grant.
 
-**Emulator Settings → platform → Install** downloads the selected official APK
+**Emulator Settings → platform → Set up → Install** downloads the selected official APK
 with byte progress and cancellation, then hands its private file to Android's
 installer. Permission guidance, progress and cancellation appear in an installation
-dialog above the invoking card. A failure stays visible with **Try again** and
-**Close**, including when the settings page is scrolled. The Dart staging path
+dialog above the invoking card. A failure stays visible with retry and
+**Cancel**, including when the settings page is scrolled. The Dart staging path
 is `files/broomm/android/apks/<nonce>.apk`; the native installer and APK provider
 share the same confined-path validator. Android's framework-provided files root
 may contain a system alias; only that root is canonicalized. The exact logical
@@ -132,7 +148,7 @@ These are explicit installs, not automatic emulator updates.
 **DuckStation** opens its official Play Store listing; its beta page requests
 linking rather than redistribution. **PPSSPP Gold** remains detectable and is
 not replaced or uninstalled; downloading PPSSPP installs the free package.
-**Install APK…** remains available for a user-provided compatible APK, including
+**Verify setup → Install APK…** remains available for a user-provided compatible APK, including
 ARMSX2 nightly. The installer receives a one-file, read-only capability.
 Partial/failed downloads are discarded; redirected download hosts are confined
 to the official delivery services. No runtime plugin or emulator APK is bundled.
@@ -228,8 +244,16 @@ cloud pending data. Completed private recovery directories may be archived or
 removed only after checking that normal restoration completed and all desired
 progress/states are retained/synchronized. Clearing Android app data or
 uninstalling Broomm deletes its private working/recovery copies; export/sync
-first. Removing a game preserves these progress roots. This milestone does not
-uninstall external Android apps or their manually installed packages.
+first. Removing a game preserves these progress roots. **Remove** now requests Android's user-confirmed uninstall of the selected
+external package. This deletes that app's private cores, settings and standalone
+saves. After fresh package readback confirms absence, Broomm clears its
+connections and defaults for that emulator and removes legacy provider
+registrations. Broomm's local progress and game downloads are retained.
+A durable `android/removal.json` blocks play and setup while removal is uncertain.
+Cancellation retains the existing setup. Interrupted cleanup offers
+**Finish removal**, including when the APK is already absent. The
+[Android uninstall intent](https://developer.android.com/reference/android/content/Intent#ACTION_UNINSTALL_PACKAGE)
+uses the declared `REQUEST_DELETE_PACKAGES` permission and Android's confirmation.
 
 ## Verification
 

@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/shell/android_emulator_settings_screen.dart';
-import 'package:broomm/src/shell/android_install_dialog.dart';
+import 'package:broomm/src/shell/android_setup_dialog.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +16,9 @@ class InstallManager extends AndroidEmulators {
   Completer<void>? pending;
   int attempts = 0;
   bool imported = false;
+  @override
+  Future<void> ensureSetupAllowed() async {}
+
   @override
   Future<void> install(AndroidEmulator emulator, {String? server}) async {
     attempts++;
@@ -62,6 +65,7 @@ void main() {
     manager = InstallManager(root);
     model = ShellModel(ShellStorage(root), androidManager: manager)
       ..server = SavedServer('a' * 32, 'https://example.invalid', '5.4.0')
+      ..profile = SavedProfile('b' * 32, 'a' * 32, 3, 'Test')
       ..platforms = [
         for (var i = 0; i < 12; i++)
           RommPlatform(i, 'A filler $i', 'unknown', 0),
@@ -73,6 +77,9 @@ void main() {
     await root.delete(recursive: true);
   });
 
+  Finder inDialog(Finder target) =>
+      find.descendant(of: find.byType(AndroidSetupDialog), matching: target);
+
   Future<void> open(WidgetTester t, {bool imported = false}) async {
     await t.pumpWidget(
       MaterialApp(
@@ -80,17 +87,17 @@ void main() {
       ),
     );
     await t.pumpAndSettle();
-    final button = find.text(imported ? 'Install APK…' : 'Install');
+    final button = find.text('Set up');
     await t.ensureVisible(button);
     await t.pumpAndSettle();
     expect(t.getRect(find.text('Emulator Settings')).bottom, lessThan(0));
     await t.tap(button);
     await t.pump();
     await t.pump(const Duration(milliseconds: 300));
+    await t.tap(inDialog(find.text(imported ? 'Install APK…' : 'Install')));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
   }
-
-  Finder inDialog(Finder target) =>
-      find.descendant(of: find.byType(AndroidInstallDialog), matching: target);
 
   testWidgets(
     'root inspection is one page action and selects the installed app',
@@ -121,7 +128,9 @@ void main() {
         ),
         findsNothing,
       );
-      expect(find.text('Root saves…'), findsOneWidget);
+      expect(find.text('Root saves…'), findsNothing);
+      expect(find.text('Save folder…'), findsNothing);
+      expect(find.text('Open emulator'), findsNWidgets(2));
       await t.tap(inspect);
       // The page keeps animating its busy indicator while the dialog is open.
       await t.pump();
@@ -148,7 +157,7 @@ void main() {
     'scrolled card keeps permission and download progress visible until OS handoff',
     (t) async {
       await open(t);
-      expect(inDialog(find.text('Preparing installation…')), findsOneWidget);
+      expect(inDialog(find.text('Preparing RetroArch…')), findsOneWidget);
       manager.permission();
       await t.pump();
       expect(
@@ -171,11 +180,14 @@ void main() {
       );
       manager.pending!.complete();
       await t.pumpAndSettle();
-      expect(find.byType(AndroidInstallDialog), findsNothing);
       expect(
-        manager.installed,
-        isEmpty,
-      ); // OS handoff is not package confirmation.
+        inDialog(find.textContaining('Finish installing')),
+        findsOneWidget,
+      );
+      expect(manager.installed, isEmpty);
+      await t.tap(inDialog(find.text('Cancel')));
+      await t.pumpAndSettle();
+      expect(find.byType(AndroidSetupDialog), findsNothing);
     },
   );
 
@@ -196,7 +208,7 @@ void main() {
         inDialog(find.textContaining('Invalid downloaded APK')).hitTestable(),
         findsOneWidget,
       );
-      await t.tap(find.text('Try again'));
+      await t.tap(inDialog(find.text('Install')));
       await t.pump();
       expect(manager.attempts, 2);
       expect(find.textContaining('Invalid downloaded APK'), findsNothing);
@@ -220,9 +232,12 @@ void main() {
             .hitTestable(),
         findsOneWidget,
       );
-      await t.tap(find.text('Close'));
+      await t.tap(find.text('Cancel'));
       await t.pumpAndSettle();
-      await t.tap(find.text('Install'));
+      await t.tap(find.text('Set up'));
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 300));
+      await t.tap(inDialog(find.text('Install')));
       await t.pump();
       manager.download();
       await t.pump(const Duration(milliseconds: 300));
@@ -233,9 +248,9 @@ void main() {
         inDialog(find.textContaining('Download cancelled')).hitTestable(),
         findsOneWidget,
       );
-      await t.tap(find.text('Close'));
+      await t.tap(find.text('Cancel'));
       await t.pumpAndSettle();
-      expect(find.byType(AndroidInstallDialog), findsNothing);
+      expect(find.byType(AndroidSetupDialog), findsNothing);
     },
   );
 }

@@ -26,6 +26,7 @@ class AndroidApkDownload {
     'github.com',
     'objects.githubusercontent.com',
     'release-assets.githubusercontent.com',
+    'raw.githubusercontent.com',
     'www.ppsspp.org',
     'buildbot.libretro.com',
     'dl.dolphin-emu.org',
