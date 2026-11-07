@@ -1345,6 +1345,75 @@ void main() {
   );
 
   test(
+    'reviewed Jaguar states remain available with stale frontend metadata',
+    () async {
+      await manager.connectGbaRoot(emulator, platform: 'jaguar');
+      observation['config'] = Uint8List.fromList(
+        utf8.encode(
+          'core_info_savestate_bypass = "false"\n'
+          'rewind_enable = "false"\nrun_ahead_enabled = "false"\n'
+          'video_driver = "gl"\n',
+        ),
+      );
+      for (final (abi, digest) in [
+        (
+          'arm64-v8a',
+          '90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6',
+        ),
+        (
+          'armeabi-v7a',
+          '3a173fbfaf62401c636591ba6a7ca16ef584481094f184c02519cffb093ec6cc',
+        ),
+        (
+          'x86',
+          '2303d1bee859c14c58507c4d4ad4aff7cc39d5e2a7e537b6fce519a99bacd47a',
+        ),
+        (
+          'x86_64',
+          'a72da2e64da709839db26daf0b387373d7a74122d5a53c687bfb4dcda1da7266',
+        ),
+      ]) {
+        observation['abi'] = abi;
+        observation['core'] = digest;
+        final p = await gameboyPlan('jaguar', '/game/Tempest.j64');
+        final cfg = androidIni(p.launch['configText']!);
+        expect(cfg['core_info_savestate_bypass'], 'true');
+        expect(cfg['rewind_enable'], 'false');
+        expect(cfg['run_ahead_enabled'], 'false');
+        expect(cfg['video_driver'], 'gl');
+        expect(
+          utf8.decode(observation['config']),
+          contains('bypass = "false"'),
+        );
+      }
+      expect(calls, isNot(contains('rootReplace')));
+    },
+  );
+
+  test(
+    'unreviewed Jaguar and other cores retain their metadata policy',
+    () async {
+      observation['config'] = Uint8List.fromList(
+        utf8.encode('core_info_savestate_bypass = "false"\n'),
+      );
+      for (final slug in ['jaguar', 'nes']) {
+        await manager.connectGbaRoot(emulator, platform: slug);
+        observation['core'] = slug == 'nes'
+            ? '90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6'
+            : 'c' * 64;
+        final p = await gameboyPlan(
+          slug,
+          '/game/Test.${slug == 'nes' ? 'nes' : 'j64'}',
+        );
+        expect(
+          androidIni(p.launch['configText']!)['core_info_savestate_bypass'],
+          'false',
+        );
+      }
+    },
+  );
+
+  test(
     'Jaguar cartridges stage privately while disc media preserves recovery',
     () async {
       expect(androidRootRetroCore('atari-jaguar-cd'), isNull);

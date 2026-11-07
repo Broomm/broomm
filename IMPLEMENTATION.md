@@ -1,5 +1,27 @@
 # Implementation plan
 
+## Jaguar state-menu correction and independent core CI — 2026-11-07
+
+Build 1079 (`675ab8b`) passed Jaguar Setup and Tempest 2000 launch/input. Normal
+Quit published its native 128-byte EEPROM as primary 239. The real menu check
+found that RetroArch 1.22.2's bundled Virtual Jaguar 2.1 metadata disables states,
+despite the reviewed 3.11 core providing them. The correction uses the frontend's
+documented metadata override in the disposable session configuration only for
+the exact reviewed ABI/payload hashes. Unknown cores retain the inherited policy;
+standalone metadata/preferences are untouched. Packaged state acceptance remains
+pending the corrected preview.
+Clean analysis, all 657 Flutter tests (one existing native-host skip) and all
+50 rooted-session regressions pass. The initial sandboxed test harness could not
+bind its loopback socket; the native rerun passed without changing tests.
+
+All application jobs and five packages passed run `42422129526`. In the separate
+Mesen run `42422129552`, all four native libraries built and uploaded, but x86's
+Nix installer post-job diagnostics request timed out and its old bundled promise
+handler crashed. The workflow now invokes the same pinned installer directly
+with its supported diagnostics opt-out before Devbox. Build/test steps, deadlines
+and failure handling are unchanged; workflow lint passes. Corrected native CI
+remains pending, and the original failed job/log is retained.
+
 ## Rooted Jaguar cartridge source increment — 2026-11-07
 
 Independent Jaguar Setup downloads Virtual Jaguar 3.11.0 directly from its

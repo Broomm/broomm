@@ -212,6 +212,11 @@ const _jaguarRecipes = <String, (String, String)>{
   ),
 };
 
+// RetroArch 1.22.2 ships metadata for Virtual Jaguar 2.1, which disables
+// states. Only the reviewed 3.11 payloads may override that stale metadata.
+bool androidJaguarHasReviewedStates(String abi, String digest) =>
+    _jaguarRecipes[abi]?.$2 == digest;
+
 String androidRetroCoreFile(String core) => core == 'mupen64plus_next'
     ? 'mupen64plus_next_gles3_libretro_android.so'
     : '${core}_libretro_android.so';

@@ -365,6 +365,16 @@ check verified all four real release assets and ELF identities, then removed
 private staging. It writes a receipt under `build/test-results/` and installs
 nothing. Packaged Jaguar gameplay remains pending. Jaguar CD is still deferred.
 
+The first packaged check (`675ab8b`, build 1079) passed Setup, native rendering,
+controller input and a 128-byte EEPROM publication. It exposed stale frontend
+metadata: RetroArch 1.22.2's bundled `.info` describes Virtual Jaguar 2.1 and hides
+states. The reviewed 3.11 release declares deterministic states and implements
+serialization. Its exact four ABI/payload hashes now enable
+`core_info_savestate_bypass` in Broomm's disposable session configuration.
+Unreviewed cores retain their metadata policy; no installed `.info`, global
+preferences or optional rewind/run-ahead preferences are rewritten. Corrected
+preview/state acceptance remains pending.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's

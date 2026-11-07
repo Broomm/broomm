@@ -8,6 +8,7 @@ import '../progress/layout.dart';
 import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
+import 'retroarch_core_setup.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
 
@@ -270,6 +271,9 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
+    if (core == 'virtualjaguar' &&
+        androidJaguarHasReviewedStates(report['abi'], report['core']))
+      'core_info_savestate_bypass': 'true',
     if (bundledProfiles)
       'joypad_autoconfig_dir':
           '$native/files/Broomm/controller-profiles-${app.build}',
