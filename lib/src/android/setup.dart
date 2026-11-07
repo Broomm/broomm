@@ -30,8 +30,8 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   bool get _rooted =>
       !_shared &&
       emulator.id == 'retroarch' &&
-      platform == 'gba' &&
-      (manager.gbaRoot(emulator) != null ||
+      {'gba', 'snes'}.contains(platform) &&
+      (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
   Future<void> _run(Future<void> Function() action) async {
@@ -80,7 +80,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       throw StateError('Enable ${emulator.name} in Android settings first.');
     if (_rooted) {
       step = AndroidSetupStep.initialize;
-      final firstOpen = await manager.connectGbaRoot(emulator);
+      final firstOpen = await manager.connectGbaRoot(
+        emulator,
+        platform: platform,
+      );
       step = firstOpen == null
           ? AndroidSetupStep.ready
           : AndroidSetupStep.initialize;
@@ -136,8 +139,8 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   }
 
   Future<void> useSharedFolder() => _run(() async {
-    if (manager.gbaRoot(emulator) != null)
-      await manager.disconnectGbaRoot(emulator);
+    if (manager.rootConnection(emulator, platform) != null)
+      await manager.disconnectGbaRoot(emulator, platform: platform);
     _shared = true;
     step = AndroidSetupStep.folder;
   });

@@ -116,6 +116,7 @@ void main() {
       'dataDir': '/data/user/0/$pkg',
       'label': label,
       'core': 'c' * 64,
+      'abi': 'arm64-v8a',
       'config': Uint8List.fromList(
         utf8.encode(
           'savefile_directory = "/storage/emulated/0/RetroArch/saves"\nsort_savefiles_enable = "true"\nauto_overrides_enable = "true"\ninput_joypad_driver = "android"\n',
@@ -137,7 +138,7 @@ void main() {
             observation['controllerProfilesReady'] = true;
             return null;
           }
-          if (call.method == 'rootMgbaSetup')
+          if ({'rootMgbaSetup', 'rootCoreSetup'}.contains(call.method))
             return {
               ...observation,
               'abi': 'arm64-v8a',
@@ -454,44 +455,48 @@ void main() {
     await temp.delete(recursive: true);
   });
 
-  test('explicit GBA connection persists identity and redirects only managed ordinary saves', () async {
-    expect(calls, isNot(contains('rootInspect')));
-    await manager.connectGbaRoot(emulator);
-    await manager.load();
-    expect(manager.connected(profileId, emulator, platform: 'gba'), isTrue);
-    expect(manager.connected(profileId, emulator, platform: 'snes'), isFalse);
-    final p = await plan(), second = await plan('d' * 32);
-    expect(p.areas.map((a) => a.id), ['save']);
-    expect(
-      p.localKey('files/Broomm/$profileId/42/saves/Minish Cap.srm'),
-      'save/game.srm',
-    );
-    expect(
-      p.localKey('files/Broomm/$profileId/42/saves/Minish Cap 2.srm'),
-      isNull,
-    );
-    expect(
-      p.remoteAreas.single.remote,
-      isNot(second.remoteAreas.single.remote),
-    );
-    final cfg = androidIni(p.launch['configText']!);
-    expect(
-      cfg['savefile_directory'],
-      '/data/user/0/$pkg/files/Broomm/$profileId/42/saves',
-    );
-    expect(cfg['auto_overrides_enable'], 'false');
-    expect(cfg['input_joypad_driver'], 'android');
-    expect(calls.where((c) => c == 'rootReplace'), isEmpty);
-    denied = true;
-    await expectLater(
-      manager.connectGbaRoot(emulator),
-      throwsA(isA<PlatformException>()),
-    );
-    expect(manager.gbaRoot(emulator)!['build'], 'a' * 64);
-    denied = false;
-    observation['uid'] = '10119';
-    await expectLater(plan(), throwsStateError);
-  });
+  test(
+    'explicit GBA connection isolates managed saves and compatible states',
+    () async {
+      expect(calls, isNot(contains('rootInspect')));
+      await manager.connectGbaRoot(emulator);
+      await manager.load();
+      expect(manager.connected(profileId, emulator, platform: 'gba'), isTrue);
+      expect(manager.connected(profileId, emulator, platform: 'snes'), isFalse);
+      final p = await plan(), second = await plan('d' * 32);
+      expect(p.areas.first.id, 'save');
+      expect(p.areas.last.id, startsWith('states-'));
+      expect(
+        p.localKey('files/Broomm/$profileId/42/saves/Minish Cap.srm'),
+        'save/game.srm',
+      );
+      expect(
+        p.localKey('files/Broomm/$profileId/42/saves/Minish Cap 2.srm'),
+        isNull,
+      );
+      expect(
+        p.remoteAreas.first.remote,
+        isNot(second.remoteAreas.first.remote),
+      );
+      final cfg = androidIni(p.launch['configText']!);
+      expect(
+        cfg['savefile_directory'],
+        '/data/user/0/$pkg/files/Broomm/$profileId/42/saves',
+      );
+      expect(cfg['auto_overrides_enable'], 'false');
+      expect(cfg['input_joypad_driver'], 'android');
+      expect(calls.where((c) => c == 'rootReplace'), isEmpty);
+      denied = true;
+      await expectLater(
+        manager.connectGbaRoot(emulator),
+        throwsA(isA<PlatformException>()),
+      );
+      expect(manager.gbaRoot(emulator)!['build'], 'a' * 64);
+      denied = false;
+      observation['uid'] = '10119';
+      await expectLater(plan(), throwsStateError);
+    },
+  );
 
   test('GBA root and shared RetroArch saves coexist across reloads', () async {
     final tree = 'content://$pkg.documents/tree/%2Fdata%2Fuser%2F0%2F$pkg';
@@ -653,6 +658,165 @@ void main() {
         b.remotePath('save/game.srm'),
         c.remotePath('save/game.srm'),
       }, hasLength(3));
+    },
+  );
+  test('rooted states round trip with thumbnails, preserve standalone bytes and isolate core builds', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+    final group = p.areas.last.id;
+    final key = '$group/game.state2';
+    final path = p.remotePath(key);
+    final original = await put(path, [9, 8]);
+    final standalone = await put('standalone/Minish Cap.state2', [8]);
+    final otherGame = await put(path.replaceFirst('/42/', '/43/'), [7]);
+    final working = await p.target(key);
+    final bytes = List<int>.generate(1024 * 1024 + 37, (i) => i % 251);
+    await working.writeAsBytes(bytes);
+    await (await p.target('$group/game.state2.png')).writeAsBytes([1, 2]);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+    expect(await original.readAsBytes(), bytes);
+    await put(path, [4, 5, 6]);
+    expect(await saves.capture(g, cloud, p), true);
+    expect(await working.readAsBytes(), [4, 5, 6]);
+    expect(await (await p.target('$group/game.state2.png')).readAsBytes(), [
+      1,
+      2,
+    ]);
+    await saves.restoreOriginal(g, p);
+    expect(await original.readAsBytes(), [9, 8]);
+    expect(await standalone.readAsBytes(), [8]);
+    expect(await otherGame.readAsBytes(), [7]);
+    observation['core'] = 'e' * 64;
+    final updated = await plan();
+    expect(updated.areas.last.id, isNot(group));
+    expect(
+      updated.remotePath('${updated.areas.last.id}/game.state2'),
+      isNot(path),
+    );
+    expect(await working.readAsBytes(), [4, 5, 6]);
+    expect(
+      p.localKey(
+        path.replaceFirst('Minish Cap.state2', 'Minish Cap Extra.state2'),
+      ),
+      isNull,
+    );
+  });
+
+  test('core changes during recovery retain original state provenance and restore its physical group', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+    final oldGroup = p.areas.last.id;
+    final path = p.remotePath('$oldGroup/game.state');
+    final original = await put(path, [8]);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+    await put(path, [3, 4]);
+    observation['core'] = 'f' * 64;
+    final current = await plan(), currentGame = game(current);
+    final recovery = await saves.recoveryPlan(currentGame, current);
+    expect(recovery.launch['configPath'], p.launch['configPath']);
+    expect(recovery.areas.last.id, oldGroup);
+    await saves.capture(currentGame, cloud, recovery);
+    expect(await current.files(), isEmpty);
+    final journal = await saves.record(currentGame, recovery);
+    final captured = File(
+      '${saves.directory(journal).path}/${journal['capture']}/$path',
+    );
+    expect(await captured.readAsBytes(), [3, 4]);
+    await saves.restoreOriginal(currentGame, recovery);
+    expect(await original.readAsBytes(), [8]);
+  });
+
+  test('a surviving state cannot hide a missing working SRAM file', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+    await (await p.target('save/game.srm')).writeAsBytes([1]);
+    final key = '${p.areas.last.id}/game.state';
+    await (await p.target(key)).writeAsBytes([2]);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+    await File('${native.path}/${p.remotePath('save/game.srm')}').delete();
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    expect(await saves.pending, true);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), [1]);
+    expect(api.records, isEmpty);
+  });
+
+  test('SNES setup is independent of GBA and stages a Snes9x session with compatible states', () async {
+    await manager.connectGbaRoot(emulator);
+    final setup = AndroidEmulatorSetup(manager, emulator, 'snes', profileId);
+    addTearDown(setup.dispose);
+    await setup.verify();
+    expect(setup.problem, isNull);
+    expect(setup.step, AndroidSetupStep.ready);
+    await manager.load();
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), true);
+    final snes = playablePlatforms.firstWhere((p) => p.slug == 'snes');
+    final rom = await File('${temp.path}/Super Mario World.sfc')
+        .writeAsBytes([5, 6]);
+    final p = await androidProgressLayout(
+      manager,
+      profileId,
+      emulator,
+      snes,
+      rom.path,
+      contentId: '42',
+    ) as AndroidSavePlan;
+    expect(p.rooted, true);
+    expect(p.format, 'snes9x-sram-v1');
+    expect(p.rawSaveKey, 'save/game.srm');
+    final g = game(p), saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    expect(await staged.readAsBytes(), [5, 6]);
+    await put(p.remotePath('save/game.srm'), [1, 2]);
+    await put(p.remotePath('${p.areas.last.id}/game.state'), [3]);
+    await saves.capture(g, cloud, p);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), [1, 2]);
+    expect(
+      await (await p.target('${p.areas.last.id}/game.state')).readAsBytes(),
+      [3],
+    );
+    await saves.restoreOriginal(g, p);
+    expect(await staged.exists(), false);
+    await manager.disconnectGbaRoot(emulator, platform: 'snes');
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), false);
+  });
+  test(
+    'root state inventories enforce transfer limits before native publication',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final p = await plan(),
+          saves = SharedAndroidSaves(manager),
+          group = p.areas.last.id;
+      final path = p.remotePath('$group/game.state');
+      Map<String, Object> entry(int size) => {
+        'bytes': size,
+        'sha256': 'a' * 64,
+        'metadata': attributes,
+      };
+      expect(
+        () => saves.inventory({path: entry(16 * 1024 * 1024 + 1)}, p),
+        throwsFormatException,
+      );
+      expect(
+        () =>
+            saves.inventory({p.remotePath('save/game.srm'): entry(262145)}, p),
+        throwsFormatException,
+      );
+      expect(
+        () => saves.inventory({
+          for (var i = 0; i < 129; i++) '$path$i': entry(1),
+        }, p),
+        throwsFormatException,
+      );
+      expect(
+        () => saves.inventory({
+          for (var i = 0; i < 5; i++) '$path$i': entry(16 * 1024 * 1024),
+        }, p),
+        throwsFormatException,
+      );
+      expect(saves.inventory({path: entry(16 * 1024 * 1024)}, p), hasLength(1));
     },
   );
 }

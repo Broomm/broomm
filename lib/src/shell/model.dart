@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../romm/client.dart';
 import '../romm/models.dart';
+import '../romm/credential.dart';
 import '../romm/transfer.dart';
 import 'library.dart';
 import 'storage.dart';
@@ -784,6 +785,7 @@ class ShellModel extends ChangeNotifier {
   final _artSizes = <String, int>{};
   ShellPreferences get preferences => records.preferences;
   bool get authenticated => client != null && profile != null;
+  bool get offline => client?.authenticationDeferred == true;
   List<SavedProfile> get knownProfiles =>
       records.profiles.where((p) => p.serverId == server?.id).toList();
   void _emit() {
@@ -915,6 +917,7 @@ class ShellModel extends ChangeNotifier {
         (p) => p.serverId == server!.id && p.userId == user.id,
       );
       credentialNotice = null;
+      await storage.updateProfileAccess(selectedServer, saved, rejected: false);
       var remembered = false;
       if (connection.credential != null) {
         try {
@@ -981,38 +984,140 @@ class ShellModel extends ChangeNotifier {
     client?.close();
     client = connection;
     profile = saved;
-    if (remembered) {
-      connection.refreshGuard = (update) =>
-          credentials.locked(saved.id, () async {
-            if (!identical(client, connection) || disposed)
-              throw const RommFailure('This profile connection has closed.');
-            final latest = await credentials.read(selectedServer, saved);
-            if (latest == null)
-              throw const RommFailure(
-                'The saved sign-in was removed. Sign in again.',
-                status: 401,
-              );
-            await update(latest);
-          });
-      connection.onCredentialChanged = (value) async {
-        if (!identical(client, connection) || disposed) return;
-        try {
-          await credentials.write(selectedServer, saved, value);
-        } catch (_) {
-          if (!identical(client, connection) || disposed) return;
-          connection.refreshGuard = null;
-          connection.onCredentialChanged = null;
-          _credentialProblem();
-        }
-      };
+    if (remembered && !connection.authenticationDeferred) {
+      _rememberConnection(connection, selectedServer, saved);
     }
-    log?.write('Authenticated profile activated; catalogue context replaced.');
+    log?.write(
+      connection.authenticationDeferred
+          ? 'Known profile activated offline; remote work awaits account verification.'
+          : 'Authenticated profile activated; catalogue context replaced.',
+    );
     _clearCatalogue();
     screen = ShellScreen.home;
     _emit();
     await loadLibrary();
     await loadDownloads();
-    unawaited(loadStore());
+    if (!offline) unawaited(loadStore());
+  }
+
+  void _rememberConnection(
+    RommClient connection,
+    SavedServer selectedServer,
+    SavedProfile saved,
+  ) {
+    connection.refreshGuard = (update) =>
+        credentials.locked(saved.id, () async {
+          if (!identical(client, connection) || disposed)
+            throw const RommFailure('This profile connection has closed.');
+          final latest = await credentials.read(selectedServer, saved);
+          if (latest == null)
+            throw const RommFailure(
+              'The saved sign-in was removed. Sign in again.',
+              status: 401,
+            );
+          await update(latest);
+        });
+    connection.onCredentialChanged = (value) async {
+      if (!identical(client, connection) || disposed) return;
+      try {
+        await credentials.write(selectedServer, saved, value);
+      } catch (_) {
+        if (!identical(client, connection) || disposed) return;
+        connection.refreshGuard = null;
+        connection.onCredentialChanged = null;
+        _credentialProblem();
+      }
+    };
+  }
+
+  /// Called under this profile's credential lock by initial and deferred restore.
+  Future<bool> _restoreKnownProfile(
+    RommClient connection,
+    SavedServer selectedServer,
+    SavedProfile saved,
+    RommCredential value,
+    int generation,
+  ) async {
+    var remembered = true;
+    // Refresh tokens can rotate before /users/me completes. Persist the new
+    // credential immediately, even if that later identity request loses contact.
+    connection.onCredentialChanged = (next) async {
+      try {
+        await credentials.write(selectedServer, saved, next);
+      } catch (_) {
+        remembered = false;
+        if (generation == _context && !disposed) _credentialProblem();
+      }
+    };
+    await connection.checkServer();
+    final user = await connection.restore(value);
+    if (user.id != saved.userId)
+      throw const RommFailure(
+        'The saved sign-in identifies a different account. Existing profiles have been kept.',
+        status: 403,
+      );
+    if (generation != _context || disposed)
+      throw const RommFailure('The profile selection changed.');
+    records = await storage.saveProfile(selectedServer, user);
+    await storage.updateProfileAccess(selectedServer, saved, rejected: false);
+    return remembered;
+  }
+
+  Future<void> _resumeOffline(
+    RommClient connection,
+    SavedServer selectedServer,
+    SavedProfile saved,
+    int generation,
+  ) async {
+    if (disposed || generation != _context || !identical(client, connection))
+      throw const RommFailure('The profile selection changed.');
+    if (gameActive)
+      throw const RommFailure(
+        'Offline play. Progress stays on this device until reconnection.',
+        connectivity: true,
+      );
+    try {
+      final remembered = await credentials.locked(saved.id, () async {
+        final value = await credentials.read(selectedServer, saved);
+        if (value == null)
+          throw const RommFailure('Sign in again to reconnect.', status: 401);
+        return _restoreKnownProfile(
+          connection,
+          selectedServer,
+          saved,
+          value,
+          generation,
+        );
+      });
+      if (generation != _context || disposed || !identical(client, connection))
+        throw const RommFailure('The profile selection changed.');
+      connection.restoreAuthentication = null;
+      if (remembered) _rememberConnection(connection, selectedServer, saved);
+      await loadLibrary();
+      if (generation != _context || disposed) return;
+      unawaited(loadStore());
+      showNotice('Connected to RomM. Checking pending progress.');
+    } on RommFailure catch (e) {
+      if ([401, 403].contains(e.status)) {
+        await storage.updateProfileAccess(
+          selectedServer,
+          saved,
+          rejected: true,
+        );
+        if (generation == _context && !disposed) {
+          installed = [];
+          libraryError = 'This account needs a valid sign-in before playing. Switch profile and sign in again.';
+          _emit();
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> reconnectProfile() async {
+    if (!offline || busy || gameActive || closing) return;
+    showNotice('Checking the RomM connection…');
+    await retryCloud(reconnect: true);
   }
 
   /// true: restored; false: no reusable/accepted credential; null: uncertain
@@ -1026,20 +1131,22 @@ class ShellModel extends ChangeNotifier {
     _emit();
     final connection = clientFactory(normalizeServer(selectedServer.address));
     var remembered = true;
+    var credentialRead = false;
     try {
       await finishCloud();
       final restored = await credentials.locked(saved.id, () async {
         final value = await credentials.read(selectedServer, saved);
         if (value == null) return false;
-        await connection.checkServer();
-        final user = await connection.restore(value);
-        if (user.id != saved.userId)
-          throw const CredentialFailure(
-            'The saved sign-in identifies a different account. Existing profiles have been kept.',
-          );
-        if (generation != _context || disposed) return false;
-        records = await storage.saveProfile(selectedServer, user);
-        if (connection.credential != null) {
+        credentialRead = true;
+        remembered = await _restoreKnownProfile(
+          connection,
+          selectedServer,
+          saved,
+          value,
+          generation,
+        );
+        // Custom clients also publish through the same verified boundary.
+        if (connection.credential != null)
           try {
             await credentials.write(
               selectedServer,
@@ -1050,7 +1157,6 @@ class ShellModel extends ChangeNotifier {
             remembered = false;
             _credentialProblem();
           }
-        }
         return true;
       });
       if (generation != _context || disposed) return null;
@@ -1064,6 +1170,41 @@ class ShellModel extends ChangeNotifier {
       );
       return true;
     } on RommFailure catch (e) {
+      if (generation == _context && credentialRead && e.connectivity) {
+        try {
+          final access = await storage.profileAccess(selectedServer, saved);
+          if (!access.rejected) {
+            connection.restoreAuthentication = () =>
+                _resumeOffline(connection, selectedServer, saved, generation);
+            await _activate(
+              connection,
+              selectedServer,
+              saved,
+              remembered: false,
+            );
+            showNotice(
+              'Offline. Local games and progress are available; reconnect to sync.',
+            );
+            return true;
+          }
+        } catch (_) {
+          if (generation == _context) error = 'Offline access could not be verified. Existing profiles and progress were kept. Reconnect and retry.';
+          return null;
+        }
+      }
+      if (credentialRead && [401, 403].contains(e.status))
+        try {
+          await storage.updateProfileAccess(
+            selectedServer,
+            saved,
+            rejected: true,
+          );
+        } catch (_) {
+          log?.write(
+            'Rejected sign-in observation could not be saved.',
+            level: 'error',
+          );
+        }
       if (generation == _context) error = e.message;
       if (e.status == 401) return false;
       return null;
@@ -1091,7 +1232,7 @@ class ShellModel extends ChangeNotifier {
     _emit();
     try {
       await finishCloud();
-      if (client?.credential != null)
+      if (offline || client?.credential != null)
         await credentials.locked(saved.id, () => credentials.delete(saved.id));
       busy = false;
       switchAccount();
@@ -1524,27 +1665,62 @@ class ShellModel extends ChangeNotifier {
         generation = _context;
     if (selected == null || connection == null || active == null) return;
     try {
+      final access = await storage.profileAccess(selected, active);
+      if (access.rejected) {
+        installed = [];
+        libraryError = 'This account needs a valid sign-in before playing. Switch profile and sign in again.';
+        _emit();
+        return;
+      }
       final snapshot = await library.load(selected.id);
       final allowed = <InstalledGame>[];
+      final observations = <int, bool>{};
+      var rejected = false;
       String? problem = snapshot.problem;
       for (final entry in snapshot.games) {
         if (generation != _context || disposed) return;
+        if (connection.authenticationDeferred) {
+          if (access.permits(
+            entry.game.id,
+            downloadedByAccount: entry.userId == active.userId,
+          ))
+            allowed.add(entry);
+          continue;
+        }
         try {
           // A shared payload does not grant another account catalogue access.
-          await connection.game(entry.game.id);
+          final observed = await connection.game(entry.game.id);
+          if (observed.id != entry.game.id)
+            throw const RommFailure('RomM returned a different game identity.');
+          observations[entry.game.id] = true;
           allowed.add(entry);
         } catch (e) {
           if (e is RommFailure && [401, 403, 404].contains(e.status)) {
+            observations[entry.game.id] = false;
+            rejected = rejected || e.status == 401;
             problem = 'Some downloaded games are not accessible to this account. Their local files have been kept.';
           } else {
-            if (entry.userId == active.userId) allowed.add(entry);
+            if (access.permits(
+              entry.game.id,
+              downloadedByAccount: entry.userId == active.userId,
+            ))
+              allowed.add(entry);
             problem = 'Some local games could not be checked with RomM. Your downloaded files have been kept.';
           }
         }
       }
       if (generation != _context || disposed) return;
       if (revision != _libraryRevision) return;
-      installed = allowed;
+      if (observations.isNotEmpty)
+        await storage.updateProfileAccess(
+          selected,
+          active,
+          games: observations,
+          rejected: rejected ? true : null,
+        );
+      if (generation != _context || disposed || revision != _libraryRevision)
+        return;
+      installed = rejected ? [] : allowed;
       libraryError = problem;
       await refreshCloudStatus();
       unawaited(retryCloud());
@@ -1553,6 +1729,51 @@ class ShellModel extends ChangeNotifier {
       libraryError = e is RommFailure ? e.message : 'The local game library could not be read. Existing game files have been kept. Check storage access and retry.';
     }
     _emit();
+  }
+
+  Future<void> ensureGameAccess(int id) async {
+    final s = server,
+        p = profile,
+        c = client,
+        entry = installation(id),
+        generation = _context;
+    if (s == null || p == null || c == null || entry == null)
+      throw const RommFailure('Choose an installed game and profile first.');
+    final access = await storage.profileAccess(s, p);
+    if (access.rejected)
+      throw const RommFailure(
+        'Sign in again before playing this profile.',
+        status: 401,
+      );
+    final cached = access.permits(
+      id,
+      downloadedByAccount: entry.userId == p.userId,
+    );
+    if (c.authenticationDeferred) {
+      if (!cached)
+        throw const RommFailure(
+          'This account has no verified offline access to this game.',
+          status: 403,
+        );
+    } else {
+      try {
+        final game = await c.game(id);
+        if (game.id != id)
+          throw const RommFailure('RomM returned a different game identity.');
+        await storage.updateProfileAccess(s, p, games: {id: true});
+      } on RommFailure catch (e) {
+        if ([401, 403, 404].contains(e.status))
+          await storage.updateProfileAccess(
+            s,
+            p,
+            games: {id: false},
+            rejected: e.status == 401 ? true : null,
+          );
+        if (!e.connectivity || !cached) rethrow;
+      }
+    }
+    if (generation != _context || disposed || !identical(client, c))
+      throw const RommFailure('The profile selection changed.');
   }
 
   Future<void> downloadGame(RommGame game) {

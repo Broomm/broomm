@@ -20,7 +20,7 @@ class SharedAndroidSaves {
     '${manager.data.path}/android/shared-session/${record['transaction']}',
   );
   Map<String, dynamic> inventory(Object? value, AndroidSavePlan plan) {
-    if (value is! Map || value.length > progressMaxFiles)
+    if (value is! Map || value.length > (plan.rooted ? 128 : progressMaxFiles))
       throw const FormatException('Invalid Android save inventory');
     final files = value.cast<String, dynamic>();
     var total = 0;
@@ -34,7 +34,10 @@ class SharedAndroidSaves {
       if (v is! Map ||
           v['bytes'] is! int ||
           v['bytes'] < 0 ||
-          v['bytes'] > progressMaxFileBytes ||
+          v['bytes'] >
+              (plan.rooted
+                  ? (e.key.contains('/states/') ? 16 * 1024 * 1024 : 262144)
+                  : progressMaxFileBytes) ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
       if (plan.rooted &&
@@ -46,7 +49,7 @@ class SharedAndroidSaves {
           'Root save ownership metadata is incomplete.',
         );
       total += v['bytes'] as int;
-      if (total > progressMaxBytes)
+      if (total > (plan.rooted ? 64 * 1024 * 1024 : progressMaxBytes))
         throw const FormatException('Android progress exceeds its size limit');
     }
     return files;
@@ -171,6 +174,9 @@ class SharedAndroidSaves {
       'title': plan.game,
       'build': build,
       'selected': selected,
+      if (plan.rooted) 'rootConfigPath': plan.launch['configPath'],
+      if (plan.rooted && plan.launch['stateGroup'] != null)
+        'rootStateGroup': plan.launch['stateGroup'],
       'phase': 'installing',
       'original': await list(plan),
       'working': <String, dynamic>{},
@@ -216,6 +222,60 @@ class SharedAndroidSaves {
     await progressWrite(journal, r);
   }
 
+  /// A pending native session keeps its original physical state group. A newer
+  /// core may capture those bytes for recovery but cannot relabel them as its own.
+  Future<AndroidSavePlan> recoveryPlan(
+    CloudGame game,
+    AndroidSavePlan current,
+  ) async {
+    if (!current.rooted) return current;
+    final r = await progressJson(journal);
+    final group = r['rootStateGroup'];
+    if (group != null &&
+        (group is! String ||
+            !RegExp(r'^states-[a-f0-9]{16}-android$').hasMatch(group)))
+      throw const FormatException('Invalid rooted state recovery group.');
+    final save = current.remoteAreas.singleWhere((a) => a.local.id == 'save');
+    final base = save.remote.substring(0, save.remote.length - '/saves'.length);
+    final config = r['rootConfigPath'] ?? current.launch['configPath'];
+    if (config is! String ||
+        !RegExp('^${RegExp.escape(base)}/config-[a-f0-9]{32}\\.cfg\$')
+            .hasMatch(config))
+      throw const FormatException(
+        'Invalid rooted configuration recovery path.',
+      );
+    final localBase = save.local.path.substring(
+      0,
+      save.local.path.length - '/saves'.length,
+    );
+    final state = group == null
+        ? null
+        : ProgressArea(
+            group as String,
+            '$localBase/$group',
+            prefix: save.local.prefix,
+            pattern:
+                '^${RegExp.escape(save.local.prefix!)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
+          );
+    final plan = AndroidSavePlan(
+      ProgressLayout(current.root, current.format, current.game, [
+        save.local,
+        if (state != null) state,
+      ]),
+      current.emulator,
+      current.binding,
+      [save, if (state != null) AndroidSaveArea(state, '$base/states/$group')],
+      launch: {
+        ...current.launch,
+        'configPath': config,
+        'configNative': '${current.binding['dataDir']}/$config',
+        if (group != null) 'stateGroup': group as String,
+      },
+    );
+    await record(game, plan);
+    return plan;
+  }
+
   Future<void> configure(Map<String, dynamic> r, AndroidSavePlan plan) async {
     for (final name in ['config', 'options']) {
       final path = plan.launch['${name}Path'],
@@ -231,6 +291,7 @@ class SharedAndroidSaves {
       await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
+        if (plan.launch['stateGroup'] case final group?) 'stateGroup': group,
         'before': null,
         'after': after,
         'source': source.path,
@@ -244,16 +305,22 @@ class SharedAndroidSaves {
     final source = File(r['selected'] as String);
     final name = source.uri.pathSegments.last;
     progressRelative(name);
-    if (!name.toLowerCase().endsWith('.gba') ||
+    if (!(plan.binding['access'] == 'root-snes-v1'
+            ? RegExp(r'\.(sfc|smc)$', caseSensitive: false).hasMatch(name)
+            : name.toLowerCase().endsWith('.gba')) ||
         !plan.rooted ||
         r['phase'] != 'installed')
-      throw StateError('Rooted GBA launch requires a single .gba game file.');
+      throw StateError(
+        'Rooted RetroArch requires a single GBA (.gba) or SNES (.sfc/.smc) game file.',
+      );
     final config = plan.launch['configPath']!;
     final parent = config.substring(0, config.lastIndexOf('/'));
     final path = '$parent/rom-${r['transaction']}/$name';
     final bytes = await source.length();
     if (bytes < 1 || bytes > 32 * 1024 * 1024)
-      throw StateError('The GBA game file must be between 1 byte and 32 MiB.');
+      throw StateError(
+        'The RetroArch game file must be between 1 byte and 32 MiB.',
+      );
     final hash = await progressFileHash(source);
     r['romStage'] = path;
     r['romStageSha256'] = hash;
@@ -318,9 +385,10 @@ class SharedAndroidSaves {
       return false;
     }
     final files = await list(plan), capture = 'captures/${progressNonce()}';
-    if (plan.rooted && files.isEmpty && (r['working'] as Map).isNotEmpty)
+    if (plan.rooted &&
+        (r['working'] as Map).keys.any((path) => !files.containsKey(path)))
       throw StateError(
-        'The installed GBA working save is missing. Recovery copies were kept; restore the working file before syncing.',
+        'An installed RetroArch save or state is missing. Recovery copies were kept; restore the working file before syncing.',
       );
     if (files.isEmpty)
       cloud.notice(

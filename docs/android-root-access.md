@@ -2,6 +2,10 @@
 
 ## Rooted GBA route: implementation and validation status
 
+Current source also adds rooted SNES/Snes9x and save states for both systems.
+See the [new implementation and device checks](#offline-profiles-rooted-states-and-snes--2026-11-07).
+The build-specific evidence below remains historical until the new APK is tested.
+
 The owner approved libsu 6.0.0 core/service for the narrow privileged file
 adapter. The first route now connects **GBA/mGBA ordinary saves on Android user
 0**; other rooted emulator/user combinations remain unsupported. Read-only
@@ -11,6 +15,10 @@ primitives pass isolated device tests. The owner confirmed the packaged Binder
 connection in build 1038 after reopening Broomm, followed by gameplay and save
 upload in builds 1042 and 1043. The owner confirmed loading an older Minish Cap
 save before PR #1 merged. Automatic mGBA setup is the follow-up below.
+Build 1054 subsequently passed the [root reliability checks](android-root-reliability.md)
+for offline capture/reconnect, interrupted and revoked-root recovery, a real
+remote conflict, and exact original-save restoration. That record retains the
+remaining account/offline-activation limits separately.
 
 1. Choose **Emulator Settings → Game Boy Advance → RetroArch → Set up**.
    Setup guides installation if the app is missing. Accept Android's installer
@@ -567,3 +575,56 @@ offline progress, conflicts, denied/revoked root permission, interrupted
 publication and standalone restoration with matching UID/GID/mode/label. Keep
 explicit save/close confirmation; directory access does not establish writer
 exit. Matching state support and firmware/add-on installation are separate work.
+
+
+## Offline profiles, rooted states and SNES — 2026-11-07
+
+Implementation extends the existing user-0 libsu connection; no new runtime
+library or root-manager policy is added. GBA and SNES retain separate setup
+bindings alongside the existing shared-folder connection. **Set up** selects
+mGBA for GBA or Snes9x for SNES, verifies the installed ABI, preserves a compatible
+existing core and otherwise installs a pinned reviewed archive. Snes9x artifacts
+are [versioned with provenance and license](../vendor/android/snes9x/1.63-fae2fea/README.md)
+at commit `e95826b793c5f1ff07c87adef4fd4fbe2f76880f`, retained by
+`android-snes9x-1.63-fae2fea`. Upstream binaries identify source
+`fae2fea08f74180759ef540ee94259213f503480`; exact source and build-recipe links
+are retained. These are not a claim of a reproduced NDK build.
+
+The root file boundary now includes the selected game's SRAM, states and PNG
+thumbnails inside `states/states-<fingerprint>-android`. The fingerprint includes
+the APK/ABI identity and exact core SHA-256. State files are bounded at 16 MiB,
+128 selected files and 64 MiB per native inventory. File descriptors carry
+state bytes across Binder, with app-owned regular-file checks, SHA-256/readback
+and durable private capture. Configuration remains bounded at 256 KiB. Native
+publication retains compare-before-write, metadata restoration and the shared
+OS lock. A missing installed working save/state refuses capture and keeps
+recovery instead of publishing deletion. Legacy untracked native states remain
+untouched. Core changes during recovery retain the old group's native capture
+without publishing it as compatible with the new core.
+
+Saved-profile activation can fall back only on a classified transport failure
+after reading a valid bound credential. Per-profile access receipts retain
+online allow/deny decisions and rejected authentication. Reconnection restores
+and checks the same account under the credential lock, immediately persisting
+rotated refresh tokens before the identity response, then resumes pending sync.
+Online rejection, TLS problems and invalid responses do not become offline
+permission. While an offline game is active, reconnection waits for closure.
+
+Walkthrough: choose the saved profile while disconnected, play and quit normally,
+then reconnect from Home's offline notice. For each rooted platform choose
+**Emulator Settings → platform → RetroArch → Set up**, then **Play**. Use
+RetroArch's Quick Menu to save a manual state; quit RetroArch and wait for Broomm's
+confirmed sync. Launch again and load the same slot. Test restoration through
+**Options → Cloud saves** while the emulator is closed. SNES accepts a single
+`.sfc`/`.smc`, GBA a `.gba`; compressed/multi-file root launches are not claimed.
+
+Private backups and verification logs for this increment live under the ignored
+`.tool-cache/android-offline-states-snes/2026-11-07`. Do not remove a pending
+session, clear app data or replace cores while recovering progress. Normal
+successful completion restores original managed native bytes and removes its
+staged ROM/configuration; Broomm's per-profile progress remains available.
+
+Verification in progress: clean Dart analysis, focused workflow tests, compiled
+Android bridge, and eight native fault groups passed on the Thor, including a
+2 MiB descriptor round trip and interrupted state publication. Packaged gameplay,
+state restore and SNES acceptance are still to be recorded below.

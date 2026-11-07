@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../game_launch.dart';
 import '../progress/files.dart';
+import '../progress/digest.dart';
 import '../progress/layout.dart';
 import '../retroarch.dart';
 import 'emulators.dart';
@@ -42,11 +43,11 @@ readAndroidRetroArchState(
   );
 }
 
-/// Persisted identity for the explicitly connected GBA route, never an inferred
+/// Persisted identity for an explicitly connected rooted RetroArch route, never an inferred
 /// grant. The native service rechecks every field before each file operation.
 bool androidRootBinding(Map<String, String> binding) {
   final pkg = binding['package'], uid = int.tryParse(binding['uid'] ?? '');
-  return binding['access'] == 'root-gba-v1' &&
+  return {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']) &&
       {
         'com.retroarch.aarch64',
         'com.retroarch',
@@ -76,36 +77,43 @@ bool androidRootBinding(Map<String, String> binding) {
       binding.length == 8;
 }
 
-Future<Map<String, dynamic>> inspectAndroidGbaRoot(
+Future<Map<String, dynamic>> inspectAndroidRetroArchRoot(
   AndroidEmulators manager,
-  AndroidApp app,
-) async {
+  AndroidApp app, {
+  String platform = 'gba',
+}) async {
   final value = await manager.channel.invokeMapMethod<String, dynamic>(
     'rootInspect',
-    {'package': app.package, 'build': app.build},
+    {
+      'package': app.package,
+      'build': app.build,
+      'coreName': platform == 'snes' ? 'snes9x' : 'mgba',
+    },
   );
   if (value == null ||
+      !{'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'}.contains(value['abi']) ||
       value['config'] is! Uint8List ||
       (value['config'] as Uint8List).length > 262144 ||
       !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['core'] as String? ?? '') ||
       value['package'] != app.package ||
       value['build'] != app.build) {
     throw const FormatException(
-      'Root GBA inspection returned incomplete or mismatched data.',
+      'Root RetroArch inspection returned incomplete or mismatched data.',
     );
   }
-  androidGbaRootIdentity(value, app);
+  androidRetroArchRootIdentity(value, app, platform: platform);
   // Fail on undecodable/conflicting configuration before publishing a binding.
   androidIni(utf8.decode(value['config'] as Uint8List));
   return value;
 }
 
-Map<String, String> androidGbaRootIdentity(
+Map<String, String> androidRetroArchRootIdentity(
   Map<String, dynamic> value,
-  AndroidApp app,
-) {
+  AndroidApp app, {
+  String platform = 'gba',
+}) {
   final binding = <String, String>{
-    'access': 'root-gba-v1',
+    'access': platform == 'snes' ? 'root-snes-v1' : 'root-gba-v1',
     for (final key in [
       'package',
       'user',
@@ -120,7 +128,7 @@ Map<String, String> androidGbaRootIdentity(
   if (!androidRootBinding(binding) ||
       binding['package'] != app.package ||
       binding['build'] != app.build)
-    throw const FormatException('Invalid root GBA identity.');
+    throw const FormatException('Invalid root RetroArch identity.');
   return binding;
 }
 
@@ -135,7 +143,7 @@ bool androidRetroArchNeedsSetup(Map<String, dynamic> report, AndroidApp app) {
       path == '/data/data/${app.package}/assets';
 }
 
-Future<AndroidSavePlan> rootedGbaProgress(
+Future<AndroidSavePlan> rootedRetroArchProgress(
   AndroidEmulators manager,
   String profile,
   AndroidEmulator emulator,
@@ -144,12 +152,17 @@ Future<AndroidSavePlan> rootedGbaProgress(
   String content, {
   String? package,
 }) async {
-  if (platform.slug != 'gba' ||
-      (platform.retroCore != null && platform.retroCore != 'mgba'))
+  final core = platform.slug == 'snes' ? 'snes9x' : 'mgba';
+  if (!{'gba', 'snes'}.contains(platform.slug) ||
+      (platform.retroCore != null && platform.retroCore != core))
     throw UnsupportedError(
-      'Root save access currently supports Game Boy Advance with mGBA only. Configure a shared folder for other platforms.',
+      'Root save access currently supports GBA/mGBA and SNES/Snes9x. Configure a shared folder for other platforms.',
     );
-  final binding = manager.gbaRoot(emulator, package: package)!;
+  final binding = manager.rootConnection(
+    emulator,
+    platform.slug,
+    package: package,
+  )!;
   if (!androidRootBinding(binding))
     throw const FormatException('Invalid root save connection.');
   final app = manager.app(emulator, package: package)!;
@@ -157,7 +170,11 @@ Future<AndroidSavePlan> rootedGbaProgress(
     throw StateError(
       'RetroArch changed. Finish any pending recovery before reconnecting root saves.',
     );
-  final report = await inspectAndroidGbaRoot(manager, app);
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: platform.slug,
+  );
   for (final key in binding.keys.where((k) => k != 'access')) {
     if (report[key] != binding[key])
       throw StateError(
@@ -171,9 +188,23 @@ Future<AndroidSavePlan> rootedGbaProgress(
   progressRelative('$stem.srm');
   final area = ProgressArea(
     'save',
-    'root-gba/$content/saves',
+    'root-${platform.slug}/$content/saves',
     prefix: stem,
     exact: '$stem.srm',
+  );
+  final identity = ProgressDigest.sha256()
+    ..add(
+      utf8.encode(
+        '${await manager.fingerprint(app)}:${report['abi']}:${report['core']}',
+      ),
+    );
+  final group = 'states-${identity.finish().substring(0, 16)}-android';
+  final states = ProgressArea(
+    group,
+    'root-${platform.slug}/$content/$group',
+    prefix: stem,
+    pattern:
+        '^${RegExp.escape(stem)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
   );
   final configPath = '$base/config-${progressNonce()}.cfg';
   final native = binding['dataDir']!;
@@ -190,7 +221,7 @@ Future<AndroidSavePlan> rootedGbaProgress(
           configuredProfiles == '/data/data/${app.package}/autoconfig');
   final config = androidRetroConfig(savedConfig, {
     'savefile_directory': '$native/$base/saves',
-    'savestate_directory': '$native/$base/states',
+    'savestate_directory': '$native/$base/states/$group',
     'sort_savefiles_enable': 'false',
     'sort_savefiles_by_content_enable': 'false',
     'sort_savestates_enable': 'false',
@@ -209,16 +240,20 @@ Future<AndroidSavePlan> rootedGbaProgress(
   return AndroidSavePlan(
     ProgressLayout(
       root.path,
-      'libretro-mgba-v1',
-      content,
-      [area],
-      note: 'Rooted Android mGBA ordinary saves. Save states are not synchronized by this first route.',
+      core == 'snes9x' ? 'snes9x-sram-v1' : 'libretro-mgba-v1',
+      core == 'snes9x' ? 'snes' : content,
+      [area, states],
+      note: 'Rooted RetroArch saves and states. States require the same APK, ABI and core build.',
     ),
     emulator,
     binding,
-    [AndroidSaveArea(area, '$base/saves', rename: '$stem.srm')],
+    [
+      AndroidSaveArea(area, '$base/saves', rename: '$stem.srm'),
+      AndroidSaveArea(states, '$base/states/$group'),
+    ],
     launch: {
       'configPath': configPath,
+      'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
       if (androidRetroArchNeedsSetup(report, app)) 'frontendSetup': 'true',

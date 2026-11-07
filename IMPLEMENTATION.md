@@ -1,5 +1,38 @@
 # Implementation plan
 
+## Offline activation, rooted save states and SNES — 2026-11-07
+
+Current source adds explicit saved-profile activation during transport outages,
+persisted per-account allow/deny receipts, identity-checked reconnection and
+immediate refresh-token rotation persistence. Read-only credential failures and
+online auth/game rejection remain distinct from connectivity. Home exposes
+offline status and retry; game access is checked before launch effects.
+
+Rooted RetroArch now supports GBA/mGBA and SNES/Snes9x with independent setup
+bindings, fixed versioned four-ABI core downloads, SRAM and build-isolated
+states/thumbnails. Descriptor transport avoids Binder payload limits; the Dart
+transaction retains original native metadata and old state provenance during
+core-change recovery. Missing working files retain recovery. Ordinary save
+formats stay compatible with the desktop contracts.
+
+Clean analysis and all 614 Flutter tests pass, with one existing native-host skip. Eight native fault groups ran on the
+Thor, including large descriptor transfers, bounded inventory and interrupted
+state publication. Current macOS package, PR APK and actual Thor
+state/SNES round trips are being verified. See the [walkthrough and limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
+
+## Rooted Android reliability checks — 2026-11-07
+
+The installed build 1054 passed Thor checks for live-writer exclusion, offline
+save capture and reconnect, durable restart recovery, denied/regranted root,
+revoked-root recovery, a real changed-device/changed-cloud conflict and exact
+original-save restoration followed by in-game file-list verification.
+Standalone configuration stayed byte-identical. Two authenticated accounts
+used separate native saves; an inactive account's queued upload stayed paused
+until its owner was selected. Seven current native fault groups also passed in
+disposable Android storage. Known-profile activation after an offline restart
+is an identified product gap, distinct from pending-save durability. See
+[the device record and limits](docs/android-root-reliability.md).
+
 ## Unified Android setup and versioned mGBA — 2026-11-07
 
 Android retains compact cards with the desktop **Set up / Verify setup**,
@@ -27,9 +60,10 @@ Analysis, 54 focused tests and the full 605-test Flutter suite pass, with one
 existing native-host skip. The Android bridge and device regression archive
 compile. The isolated Activity fixture passed on the Thor and verifies intent
 construction, cancellation/readback, late callbacks and the folder-permission
-request-code collision fix. It captures intents in a test Activity. The new
-packaged setup UI and actual Android uninstall confirmation remain device
-acceptance work.
+request-code collision fix. It captures intents in a test Activity. The owner
+subsequently accepted the packaged setup/removal flow on the Thor with build
+1054. Device logs confirmed uninstall, official APK installation, mGBA setup and
+a fresh root connection matching RetroArch's new UID. PR #2 merged as `f4857e0`.
 
 ## Emulator first-open guidance — 2026-11-07
 

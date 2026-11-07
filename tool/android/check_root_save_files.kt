@@ -1,6 +1,9 @@
 package app.broomm.broomm
 
 import android.system.Os
+import android.os.Bundle
+import android.os.Parcel
+import android.os.ParcelFileDescriptor
 import android.system.OsConstants
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -58,6 +61,44 @@ fun main(args: Array<String>) {
         check(files.hash(target) == oldHash)
         println("PASS: interrupted partial stage, interrupted exclusive publication and expired request recovery")
 
+        val statePath = prefix.replace("/saves/", "/states/states-${"d".repeat(16)}-android/") + "Minish Cap.state2"
+        RootSaveFiles.managedPath(statePath, saveOnly = true)
+        val largeState = ByteArray(2 * 1024 * 1024 + 31) { (it % 251).toByte() }
+        val stateHash = RootSaveFiles.digest(largeState)
+        files.replace(statePath, null, stateHash, largeState, null, token)
+        check(files.hash(files.path(statePath), RootSaveFiles.MAX_STATE_BYTES) == stateHash)
+        failure { files.replace(path, oldHash, stateHash, largeState, null, token) }
+        failure { RootSaveFiles.managedPath(statePath.replace("states-" + "d".repeat(16) + "-android/", "")) }
+        val stateDir = statePath.substringBeforeLast('/')
+        val selected = listOf(mapOf("path" to prefix.removeSuffix("/"), "exact" to "Minish Cap.srm"),
+            mapOf("path" to stateDir, "prefix" to "Minish Cap", "pattern" to "bounded-by-native-selector"))
+        val foreign = statePath.replace("Minish Cap.state2", "Minish Cap Extra.state2")
+        files.replace(foreign, null, oldHash, old, null, token)
+        val inventory = files.inventory(selected)
+        check(inventory.keys == setOf(path, statePath) && inventory.getValue(statePath).sha256 == stateHash)
+        val transferSource = File(root, "transfer-source").apply { writeBytes(largeState) }
+        val parcel = Parcel.obtain()
+        val inputFd = ParcelFileDescriptor.open(transferSource, ParcelFileDescriptor.MODE_READ_ONLY)
+        val transferred = try {
+            parcel.writeBundle(Bundle().apply { putParcelable("transfer", inputFd) })
+            check(parcel.dataSize() < 4096) // State bytes never occupy a Binder transaction.
+            parcel.setDataPosition(0)
+            parcel.readBundle(RootSaveFiles::class.java.classLoader)!!.getParcelable<ParcelFileDescriptor>("transfer")!!
+        } finally { inputFd.close(); parcel.recycle() }
+        check(RootSaveTransfer.read(transferred, 0, RootSaveFiles.MAX_STATE_BYTES) {}.contentEquals(largeState))
+        failure { RootSaveTransfer.read(ParcelFileDescriptor.open(transferSource, ParcelFileDescriptor.MODE_READ_ONLY), 0, 262144) {} }
+        val destination = File(root, "transfer-target").apply { check(createNewFile()) }
+        RootSaveTransfer.write(ParcelFileDescriptor.open(destination, ParcelFileDescriptor.MODE_WRITE_ONLY), 0, largeState) {}
+        check(destination.readBytes().contentEquals(largeState))
+        failure { RootSaveTransfer.write(ParcelFileDescriptor.open(destination, ParcelFileDescriptor.MODE_WRITE_ONLY), 0, old) {} }
+        val interruptedState = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Interrupted state publication") })
+        val interruptedPath = statePath.replace(".state2", ".state3")
+        failure { interruptedState.replace(interruptedPath, null, stateHash, largeState, null, token) }
+        files.replace(interruptedPath, null, stateHash, largeState, null, token)
+        check(files.hash(files.path(interruptedPath), RootSaveFiles.MAX_STATE_BYTES) == stateHash)
+        check(Os.lstat(files.path(interruptedPath).path).st_nlink == 1L)
+        println("PASS: large state descriptors, bounded parcels, strict inventory, group isolation and interrupted state publication")
+
         val rom = File(root, "library/42/content/Minish Cap.gba")
         check(rom.parentFile!!.mkdirs())
         rom.writeBytes(next)
@@ -82,16 +123,19 @@ fun main(args: Array<String>) {
         }
         val coreSource = File(root, "reviewed-mgba.so").apply { writeBytes(core) }
         val coreHash = RootSaveFiles.digest(core)
-        failure { files.installMgba(coreSource, 0, coreHash, "armeabi-v7a") {} }
-        failure { files.installMgba(coreSource, 0, oldHash, "arm64-v8a") {} }
-        check(files.mgba() == null)
+        failure { files.installCore(coreSource, 0, coreHash, "armeabi-v7a") {} }
+        failure { files.installCore(coreSource, 0, oldHash, "arm64-v8a") {} }
+        check(files.core() == null)
         val interruptedCore = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Interrupted core publication") })
-        failure { interruptedCore.installMgba(coreSource, 0, coreHash, "arm64-v8a") {} }
-        check(files.mgba("arm64-v8a", recoverPublication = true) == coreHash)
+        failure { interruptedCore.installCore(coreSource, 0, coreHash, "arm64-v8a") {} }
+        check(files.core("arm64-v8a", recoverPublication = true) == coreHash)
         val anotherCore = core.copyOf().apply { this[7] = 1 }
         coreSource.writeBytes(anotherCore)
-        check(files.installMgba(coreSource, 0, RootSaveFiles.digest(anotherCore), "arm64-v8a") {} == coreHash)
-        check(files.mgba("arm64-v8a") == coreHash && files.hash(target) == oldHash)
+        check(files.installCore(coreSource, 0, RootSaveFiles.digest(anotherCore), "arm64-v8a") {} == coreHash)
+        check(files.core("arm64-v8a") == coreHash && files.hash(target) == oldHash)
+        coreSource.writeBytes(core)
+        check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
+        check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
         println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
 
         val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"

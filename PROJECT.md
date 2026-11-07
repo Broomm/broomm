@@ -217,7 +217,7 @@ profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and
 native file ownership, permissions and labels. Keep synchronization decisions,
 transactions and recovery in Dart behind a narrow Android access adapter.
-For the rooted GBA RetroArch route, start from **Play** when a privileged check
+For rooted GBA/mGBA and SNES/Snes9x RetroArch routes, start from **Play** when a privileged check
 verifies RetroArch is closed. On return, sync automatically after matching a
 normal exit to the launched emulator process and verifying its writer is gone.
 A running emulator blocks save changes. Keep manual recovery when the exit is
@@ -232,8 +232,8 @@ recovery if the connection is lost.
 
 Keep Android emulator cards compact with the desktop actions **Set up**,
 **Verify setup**, **Open emulator**, **Set as default** and **Remove**. Setup
-owns installation, first-open guidance and save access. On supported rooted GBA
-RetroArch installations it requests root and provisions mGBA automatically.
+owns installation, first-open guidance and save access. On supported rooted GBA and SNES
+RetroArch installations it requests root and provisions mGBA or Snes9x automatically.
 Other routes request their Android folder grant within Setup. Select a default
 only after setup is complete. Removal asks Android to uninstall the selected
 external app and clears its Broomm connections/defaults after verified absence.
@@ -242,8 +242,8 @@ standalone saves. Keep Broomm's saved progress, recovery data and game downloads
 Interrupted removals remain retryable.
 
 Keep setup instructions in the dialogs. Provide one read-only root inspection action in Emulator Settings
-with an installed-app picker when needed. Keep GBA root and shared RetroArch
-folder connections independently so configuring GBA leaves other systems'
+with an installed-app picker when needed. Keep GBA root, SNES root and shared RetroArch
+folder connections independently so configuring one leaves other systems'
 save access available.
 
 The first device acceptance target is the owner's **Thor running Android**, with
@@ -261,6 +261,18 @@ prerequisite, not the finished setup experience. Keep downloads part of explicit
 setup; this does not authorize unattended core updates.
 
 ## Progress across devices
+
+Saved profiles can be explicitly selected after an offline restart when their
+bound reusable sign-in can be read. Retain the last confirmed per-account game
+access decisions; a known denial or rejected sign-in is never converted into
+offline authorization. Missing, locked or corrupt credentials remain actionable
+failures. Reconnect and verify the same account before resuming its queued sync.
+
+Rooted GBA/mGBA and SNES/Snes9x synchronize ordinary saves and manual save states,
+including state thumbnails. States use separate local, native and cloud groups
+for the frontend APK, Android ABI and exact core bytes. Preserve older or
+unprovenanced states without relabelling them for the current build. Setup uses
+reviewed versioned core sources and retains other installed cores and settings.
 
 Broomm automatically synchronizes in-game saves and supported save states with the active profile's RomM account so play can continue on another device. Pull current progress before starting a connected session, preserve local changes, and upload completed progress when it is safe to do so. Failed transfers remain visible and retryable.
 

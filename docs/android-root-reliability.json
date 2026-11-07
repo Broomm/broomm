@@ -1,0 +1,315 @@
+{
+  "date": "2026-11-07",
+  "status": "device checks completed; offline profile activation remains a product gap",
+  "application_behavior_changes": false,
+  "source_revision": "f4857e01e3a70281218224adb1c8c7527a78a620",
+  "source_files": {
+    "lib/src/android/session.dart": "b5ecae9857a840f3cdaaca4035fd90f00dd855061feac7209aa45b6fbca82c63",
+    "lib/src/android/shared_saves.dart": "cbaf8d386a2f9108886e203d32a3a94d1ba9ba41b8001b4cbce7706816497caa",
+    "lib/src/android/root_saves.dart": "80addc39d91bb039a3f48f69734c04900efb03f449bc6dfa3d74feabf3ff8920",
+    "lib/src/shell/model.dart": "6f967a4dc493c025d905b039f89a87a5cea7b68368c6f619619f8404c8d0581b",
+    "lib/src/progress/service.dart": "6e307a1e0acdf505a2d20f2af0816b5afddab6c42ad9ce1ee7f1a3432fa09e92",
+    "lib/src/progress/store.dart": "cb41c620f0d37c50024d9adafa7fbec1383705f76cd8a76e9579e740f183b6cd",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootSaveFiles.kt": "da977c3ac339614af152f775b18031bb2ebc28e49a2ec6cc8c2474a9325cae5f",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootSaveAccess.kt": "9144a3f4d1e177831422be49e5b264f6c01df0f50097fa9e52c64dbbc4af7374",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootSaveService.kt": "b045af77ffd4935583aed2edce8157206c904e4eb3df7a6c68e771676abfa551",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootRetroArchProcess.kt": "eb1c212bdea0fbbedce1bea6e1a001e2c0fb3a46396ab85cd8e9f3bdf3b81613",
+    "tool/android/check_root_save_files.kt": "3b7c5b922fc21524187896dcd9c38db25a1ceb200c596faf545353e432b554c4"
+  },
+  "device": {
+    "model": "AYN Thor",
+    "serial": "1b8e0a3e",
+    "android": 13,
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "broomm_build": 1054,
+    "apk_sha256": "ad0f21806f15b10083b256c06012348fc60aebb47e638c2b1801b7122c60bb3b",
+    "pr_head": "23123fdea9306efbf489afd6071156ae1a9e65af",
+    "retroarch": "1.22.2_GIT arm64",
+    "mgba": "0.11-212-7a12d6d",
+    "rom": 2338,
+    "romm": "5.4.0"
+  },
+  "backups": {
+    "utc": "2026-11-07T12:55:51.840281+00:00",
+    "build": 1054,
+    "broomm": {
+      "file": "broomm-before.tar",
+      "bytes": 20145664,
+      "entries": 625,
+      "sha256": "3d7c2cdb6d197600dd5894a5182b17c3f8adafeef70ba8eb3efd60bf96b8bdc0"
+    },
+    "retroarch": {
+      "file": "retroarch-before.tar",
+      "bytes": 471040,
+      "entries": 15,
+      "sha256": "fff9f66ab4a94bdb7adf303b62a60dcfa6e77fe88101d73e652dc963cb6cbd26"
+    }
+  },
+  "results": {
+    "live_writer_exclusion": {
+      "result": "passed",
+      "journal_and_native_save_unchanged": true
+    },
+    "offline_capture_restart_reconnect": {
+      "result": "passed",
+      "uploaded_remote": 212,
+      "pending_before": {
+        "baseline": "ae4e7e3db56c3a8ddc5db9c594a828c12bfab51233f8b05baee63b1c79f6a02d",
+        "commit": "5b34aff403c7f0a50d4e35e82c776551",
+        "snapshot": "7b05d74d8e52b50ca8ea729b51b43ca9",
+        "remote": 211,
+        "synced": "2026-11-07T13:05:00.931397Z",
+        "pending": true,
+        "stateKnown": {},
+        "local": "daf8a5c5d1dda5b2aa3ac91f5b36f3b9",
+        "active": false,
+        "stateBefore": {},
+        "unclean": false
+      },
+      "native_in_game_slot": "C"
+    },
+    "root_denial_regrant": {
+      "result": "passed",
+      "no_session_journal_on_denied_start": true,
+      "same_process_retry_after_regrant": true
+    },
+    "interrupted_and_revoked_root_recovery": {
+      "result": "passed",
+      "uncertain_exit_requires_review": true,
+      "denied_recovery_keeps_journals_and_native_save": true,
+      "resolved": {
+        "baseline": "20b13286e0168a4234cf56e501e917fafec852a3699019daabac982d4cfa965e",
+        "commit": "39ceb79c5a954ced5a2545a41db8de9b",
+        "snapshot": "5c75dc7fbbe107f45ee7370ec751420a",
+        "remote": 212,
+        "synced": "2026-11-07T13:14:48.791158Z",
+        "pending": false,
+        "stateKnown": {}
+      }
+    },
+    "real_remote_conflict": {
+      "result": "passed",
+      "pending_device": {
+        "baseline": "20b13286e0168a4234cf56e501e917fafec852a3699019daabac982d4cfa965e",
+        "commit": "39ceb79c5a954ced5a2545a41db8de9b",
+        "snapshot": "5c75dc7fbbe107f45ee7370ec751420a",
+        "remote": 212,
+        "synced": "2026-11-07T13:14:48.791158Z",
+        "pending": true,
+        "stateKnown": {},
+        "local": "f5cda6055523598f580d3a5119337a34",
+        "active": false,
+        "stateBefore": {},
+        "unclean": false
+      },
+      "publication": {
+        "new_save": 213,
+        "sha256": "afcb8e484df0e03324223ec2b5010ad2279e744e039d9e287c3d8be526ec17b3",
+        "original_ids_unchanged": [
+          164,
+          176,
+          178,
+          180,
+          195,
+          197,
+          163,
+          203,
+          206,
+          207,
+          165,
+          177,
+          179,
+          212,
+          199,
+          202,
+          204,
+          205,
+          211
+        ],
+        "readback": "verified"
+      },
+      "conflict": {
+        "baseline": "20b13286e0168a4234cf56e501e917fafec852a3699019daabac982d4cfa965e",
+        "commit": "39ceb79c5a954ced5a2545a41db8de9b",
+        "snapshot": "5c75dc7fbbe107f45ee7370ec751420a",
+        "remote": 212,
+        "synced": "2026-11-07T13:14:48.791158Z",
+        "pending": true,
+        "stateKnown": {},
+        "local": "f5cda6055523598f580d3a5119337a34",
+        "active": false,
+        "stateBefore": {},
+        "unclean": false,
+        "conflict": {
+          "local": "f5cda6055523598f580d3a5119337a34",
+          "remote": "d91c64c0dcedbc8698bd662e1dbce8a2"
+        }
+      },
+      "resolved": {
+        "baseline": "ae4e7e3db56c3a8ddc5db9c594a828c12bfab51233f8b05baee63b1c79f6a02d",
+        "commit": "d737292c5a168473f0d837046cce70de",
+        "snapshot": "8209ec2ea8120cb68479a7c5b560bed6",
+        "remote": 213,
+        "synced": "2026-11-07T13:37:33.532356Z",
+        "pending": false,
+        "stateKnown": {}
+      },
+      "original_in_game_slots_restored": true,
+      "retained_competing_native_sha256": "0887bbcce3f812b79a3fbb43a7220fcd457b0d98e66fad6a0e25461cde5c7bad"
+    },
+    "two_account_isolation": {
+      "result": "passed",
+      "inactive_account": 3,
+      "active_account": 2,
+      "inactive_checkpoint_unchanged": true,
+      "owning_account_resume_upload": {
+        "baseline": "bc7280655540ca5c955074722c8ba23256a16fd2f3a08713ff02c09b915b4ef6",
+        "commit": "812e7088a1bdc94c26fd6019d4d48553",
+        "snapshot": "04c1a9e5918082e603d8c4f5ae1de956",
+        "remote": 214,
+        "synced": "2026-11-07T13:47:45.630942Z",
+        "pending": false,
+        "stateKnown": {}
+      },
+      "new_account_initial_slots": "empty",
+      "account_native_sha256": {
+        "2": "afcb8e484df0e03324223ec2b5010ad2279e744e039d9e287c3d8be526ec17b3",
+        "3": "ad3196037df67b5848a7f76d3659aa3015fda45f5cb6ed6a250e270357f91dac"
+      }
+    },
+    "offline_profile_activation": {
+      "result": "failed",
+      "product_gap": "Known-profile activation requires online server and credential restoration; active-profile offline play and durable pending saves work.",
+      "boundary": "ShellModel.activateProfile",
+      "screenshot": "known-profile-offline-failure.png"
+    }
+  },
+  "native_fixture": {
+    "source_revision": "f4857e01e3a70281218224adb1c8c7527a78a620",
+    "dex_sha256": "ec941996823691ef731e397fb01a75e2f073be93a21624c0d05be63b35a0b685",
+    "stdout": "PASS: atomic save replacement, UID/GID/mode/label restoration, compare-before-write and linked/path refusal\nPASS: interrupted partial stage, interrupted exclusive publication and expired request recovery\nPASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation\nPASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation\nPASS: scoped APK controller profiles, interrupted setup recovery, and reuse\nPASS: stock menu resources, incomplete extraction, and alternate APK layouts\nPASS: held production OS lock excludes a separate Android process and permits it after release\n",
+    "execution": "real Android filesystem, injected interruptions and a separate Android lock contender",
+    "temporary_fixture_removed": true
+  },
+  "final_device": {
+    "utc": "2026-11-07T13:51:28.400078+00:00",
+    "active_user": 2,
+    "accounts": [
+      {
+        "user": 2,
+        "profile": "9d1d493e2a5b412da57d364b659321b0",
+        "remote": 213,
+        "state": {
+          "baseline": "ae4e7e3db56c3a8ddc5db9c594a828c12bfab51233f8b05baee63b1c79f6a02d",
+          "commit": "d737292c5a168473f0d837046cce70de",
+          "snapshot": "e3f9b7e3b217656cd56c37cad171225c",
+          "remote": 213,
+          "synced": "2026-11-07T13:46:12.480685Z",
+          "pending": false,
+          "stateKnown": {}
+        },
+        "snapshot": {
+          "version": 1,
+          "rom": 2338,
+          "user": 2,
+          "identity": "libretro-mgba-v1:2338",
+          "commit": "d737292c5a168473f0d837046cce70de",
+          "nativeRemote": true,
+          "parents": [],
+          "created": "2026-11-07T13:46:12.440729Z",
+          "digest": "ae4e7e3db56c3a8ddc5db9c594a828c12bfab51233f8b05baee63b1c79f6a02d",
+          "files": {
+            "save/game.srm": {
+              "sha256": "afcb8e484df0e03324223ec2b5010ad2279e744e039d9e287c3d8be526ec17b3",
+              "bytes": 8192
+            }
+          }
+        },
+        "native_sha256": "afcb8e484df0e03324223ec2b5010ad2279e744e039d9e287c3d8be526ec17b3"
+      },
+      {
+        "user": 3,
+        "profile": "7d411a3498a8d47bb90c323374ffda0a",
+        "remote": 214,
+        "state": {
+          "baseline": "bc7280655540ca5c955074722c8ba23256a16fd2f3a08713ff02c09b915b4ef6",
+          "commit": "812e7088a1bdc94c26fd6019d4d48553",
+          "snapshot": "04c1a9e5918082e603d8c4f5ae1de956",
+          "remote": 214,
+          "synced": "2026-11-07T13:47:45.630942Z",
+          "pending": false,
+          "stateKnown": {}
+        },
+        "snapshot": {
+          "version": 1,
+          "rom": 2338,
+          "user": 3,
+          "identity": "libretro-mgba-v1:2338",
+          "commit": "812e7088a1bdc94c26fd6019d4d48553",
+          "nativeRemote": true,
+          "parents": [],
+          "created": "2026-11-07T13:47:45.540531Z",
+          "digest": "bc7280655540ca5c955074722c8ba23256a16fd2f3a08713ff02c09b915b4ef6",
+          "files": {
+            "save/game.srm": {
+              "sha256": "ad3196037df67b5848a7f76d3659aa3015fda45f5cb6ed6a250e270357f91dac",
+              "bytes": 8192
+            }
+          }
+        },
+        "native_sha256": "ad3196037df67b5848a7f76d3659aa3015fda45f5cb6ed6a250e270357f91dac"
+      }
+    ],
+    "standalone_configuration_readbacks": [
+      {
+        "file": "data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/2338/config-755fb816b8007a11f373a5064f1579e2.cfg",
+        "sha256": "757de742424f372ee1e0623ad2b60a40048f47ef222d1f626eff29408511b258"
+      },
+      {
+        "file": "data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/2338/config-970dc29dd83b18d27b6bac36efb93ba2.cfg",
+        "sha256": "757de742424f372ee1e0623ad2b60a40048f47ef222d1f626eff29408511b258"
+      },
+      {
+        "file": "data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/2338/config-60065e4af3ba953eb714ab0db36f2060.cfg",
+        "sha256": "9ed377b8aec8a916cffe856392e00a9c3afc2b45ed95d520d7e8605876ffe5c7"
+      },
+      {
+        "file": "storage/emulated/0/Android/data/com.retroarch.aarch64/files/retroarch.cfg",
+        "sha256": "5a5953bcc38d73fb499ad2e445e37523e92f113d3a1f86d4ae9e43f14b7b67b1"
+      },
+      {
+        "file": "storage/emulated/0/RetroArch/config/mGBA/mGBA.opt",
+        "sha256": "de523c42f0f50ffbb99508cd57cbd5e6861238f1fc8f7522821b2aabe7eeb899"
+      }
+    ],
+    "session_journals": "absent",
+    "retroarch": "closed",
+    "emulator_session_saves": "originally empty; restored empty",
+    "network_test_rules": "absent",
+    "magisk_grant": "restored",
+    "competing_offline_snapshots": [
+      "00cf8f1854621e3849100d08df1c3793"
+    ],
+    "temporary_device_helper": "removed"
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-setup-preview.zip",
+    "sha256": "145764eadbc369df81811a632dcd21a43ed49fed25e4a1b16600fb1ccfcadcca",
+    "source_input_hashes_rechecked": 348,
+    "zip_integrity": "passed",
+    "extracted_signature": "passed deep/strict/all-architectures"
+  },
+  "test_infrastructure": {
+    "saved_second_mac_session": "HTTP 401; no token refresh accepted",
+    "thor_helper_transport": "initial failure lost renewed session; owner repaired normal login; corrected framed duplex transport and secure readback passed",
+    "adb_input": "some injected taps required am task focus; distinct from physical-input acceptance"
+  },
+  "local_evidence_directory": ".tool-cache/android-reliability/2026-11-07/",
+  "limits": [
+    "ordinary GBA/mGBA saves on rooted Android user 0 only",
+    "native fixture interruptions do not establish packaged-app process death during publication",
+    "physical input is separate from ADB input",
+    "offline profile activation is not implemented"
+  ]
+}

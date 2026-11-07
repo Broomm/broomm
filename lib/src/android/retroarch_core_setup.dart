@@ -6,7 +6,6 @@ import '../progress/files.dart';
 import '../progress/zip.dart';
 import 'apk_download.dart';
 
-const _coreFile = 'mgba_libretro_android.so';
 const _coreRevision = 'c6156ac820604feff1f5a51da1081e3dbce66e64';
 const _maxArchive = 1024 * 1024;
 const _maxCore = 8 * 1024 * 1024;
@@ -31,36 +30,60 @@ const _recipes = <String, (String, String)>{
   ),
 };
 
-Future<void> downloadAndroidMgba(
+const _snesRevision = 'e95826b793c5f1ff07c87adef4fd4fbe2f76880f';
+const _snesRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    'a8ca6cfcaf82b2e03448f95bfadcc3b34690544e3de99f4848a5bdbf3ecc668d',
+    'dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3',
+  ),
+  'armeabi-v7a': (
+    '09de76ea9645be3554158eea82efedb9abe9b623c46d6e6ee8046574e2f3dcda',
+    '9de9b3537a32325fd58514d52a37731aae3ce4002286f909dab8292621c9abc2',
+  ),
+  'x86': (
+    'c52cce3e619b3722647954c37ef9988a22f7ccba577316a9e3828d57e75a4153',
+    'c8c98c6fb67ea59cd4dd8a0d6c5302ed9469325c8d4cb147499feb212c45b5ce',
+  ),
+  'x86_64': (
+    '047b7834a71db47878b29792506b41cadaec6d2740014b41460844aad94a4706',
+    '312f1345b2494914ed20c9717cf6a80ad06b8451773c4da4e61c262e97276beb',
+  ),
+};
+
+Future<void> downloadAndroidRetroCore(
   Directory data,
+  String core,
   String abi,
   AndroidApkDownload download, {
   required void Function(int, int?) progress,
   required Future<void> Function(String stage, String sha256) publish,
 }) async {
-  final recipe = _recipes[abi];
+  if (!{'mgba', 'snes9x'}.contains(core))
+    throw UnsupportedError('Unsupported Android RetroArch core.');
+  final coreFile = '${core}_libretro_android.so';
+  final recipe = (core == 'mgba' ? _recipes : _snesRecipes)[abi];
   if (recipe == null)
-    throw UnsupportedError('No reviewed mGBA download is available for $abi.');
+    throw UnsupportedError('No reviewed $core download is available for $abi.');
   final stage = progressNonce();
   final archive = await progressFile(
     data,
-    'android/mgba-stage/$stage/core.zip',
+    'android/$core-stage/$stage/core.zip',
     createParents: true,
   );
   final directory = archive.parent;
   final timer = Timer(const Duration(seconds: 90), download.cancel);
   void check() {
-    if (download.cancelled) throw StateError('mGBA setup cancelled.');
+    if (download.cancelled) throw StateError('$core setup cancelled.');
   }
 
   try {
     final url = Uri.https(
       'raw.githubusercontent.com',
-      '/Broomm/broomm/$_coreRevision/vendor/android/mgba/0.11-212-7a12d6d/$abi/$_coreFile.zip',
+      '/Broomm/broomm/${core == 'mgba' ? _coreRevision : _snesRevision}/vendor/android/$core/${core == 'mgba' ? '0.11-212-7a12d6d' : '1.63-fae2fea'}/$abi/$coreFile.zip',
     );
     final reply = await download.response(url), expected = reply.contentLength;
     if (expected > _maxArchive)
-      throw const FormatException('The mGBA download exceeds its size limit.');
+      throw FormatException('The $core download exceeds its size limit.');
     await archive.create(exclusive: true);
     final output = await archive.open(mode: FileMode.writeOnly);
     var size = 0;
@@ -69,9 +92,7 @@ Future<void> downloadAndroidMgba(
         check();
         size += bytes.length;
         if (size > _maxArchive)
-          throw const FormatException(
-            'The mGBA download exceeds its size limit.',
-          );
+          throw FormatException('The $core download exceeds its size limit.');
         await output.writeFrom(bytes);
         progress(size, expected < 0 ? null : expected);
       }
@@ -83,8 +104,8 @@ Future<void> downloadAndroidMgba(
     if (size == 0 ||
         expected >= 0 && size != expected ||
         await progressFileHash(archive) != recipe.$1)
-      throw const FormatException(
-        'The mGBA archive differs from the reviewed download. Try again or install the core in RetroArch.',
+      throw FormatException(
+        'The $core archive differs from the reviewed download. Try again or install the core in RetroArch.',
       );
     final zip = await ProgressZip.read(
       archive,
@@ -92,14 +113,12 @@ Future<void> downloadAndroidMgba(
       maxEntryBytes: _maxCore,
     );
     if (zip.entries.length != 1 ||
-        zip.entries.single.name != _coreFile ||
+        zip.entries.single.name != coreFile ||
         zip.entries.single.bytes == 0)
-      throw const FormatException('Unexpected files in the mGBA archive.');
+      throw FormatException('Unexpected files in the $core archive.');
     final files = await zip.extract(directory, check: check);
-    if (files[_coreFile]?['sha256'] != recipe.$2)
-      throw const FormatException(
-        'The extracted mGBA core failed verification.',
-      );
+    if (files[coreFile]?['sha256'] != recipe.$2)
+      throw FormatException('The extracted $core core failed verification.');
     check();
     timer.cancel();
     await publish(stage, recipe.$2);

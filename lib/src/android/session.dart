@@ -109,7 +109,11 @@ class AndroidGameSession extends ChangeNotifier {
         );
       await manager.ensureNoWriters(closureConfirmed: true);
       final root = rooted
-          ? manager.gbaRoot(emulator, package: app.package)
+          ? manager.rootConnection(
+              emulator,
+              core == 'snes9x' ? 'snes' : 'gba',
+              package: app.package,
+            )
           : null;
       if (rooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
@@ -152,6 +156,7 @@ class AndroidGameSession extends ChangeNotifier {
           'package': app.package,
           'selected': selected,
           if (rooted) 'rooted': true,
+          if (rooted) 'rootPlatform': core == 'snes9x' ? 'snes' : 'gba',
         },
       );
       active = true;
@@ -278,13 +283,19 @@ class AndroidGameSession extends ChangeNotifier {
   Future<Map<String, String>?> _recoveryRoot(Map record) async {
     if (record['emulator'] != 'retroarch') return null;
     if (record['rooted'] != true &&
-        record['access'] != 'root-gba-v1' &&
+        !{'root-gba-v1', 'root-snes-v1'}.contains(record['access']) &&
         !(await _shared.pending &&
-            (await progressJson(_shared.journal))['access'] == 'root-gba-v1'))
+            {
+              'root-gba-v1',
+              'root-snes-v1',
+            }.contains((await progressJson(_shared.journal))['access'])))
       return null;
     final emulator = androidEmulators.singleWhere((e) => e.id == 'retroarch');
-    final root = manager.gbaRoot(
+    final root = manager.rootConnection(
       emulator,
+      record['rootPlatform'] == 'snes' || record['access'] == 'root-snes-v1'
+          ? 'snes'
+          : 'gba',
       package: record['package'] as String?,
     );
     if (root == null)
@@ -372,13 +383,15 @@ class AndroidGameSession extends ChangeNotifier {
         cloud.phase?.call('Verified RetroArch exit. Synchronizing progress.');
       var game = recovery ?? _game;
       final sharedPending = await _shared.pending;
-      final sharedPlan = game?.layout is AndroidSavePlan
+      var sharedPlan = game?.layout is AndroidSavePlan
           ? game!.layout as AndroidSavePlan
           : null;
       if (sharedPending && sharedPlan == null)
         throw StateError(
           'Reconnect the original emulator folder and profile before finishing. Recovery copies were kept.',
         );
+      if (sharedPending && sharedPlan != null)
+        sharedPlan = await _shared.recoveryPlan(game!, sharedPlan);
       final mmjPending = await _mmj.pending;
       if (mmjPending && (record['emulator'] != 'citra-mmj' || game == null))
         throw StateError(

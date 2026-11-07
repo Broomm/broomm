@@ -48,13 +48,13 @@ save access. Finish the emulator's first-run permissions and close it before
 continuing. A configured card offers **Verify setup**, **Open emulator** and
 **Set as default**.
 
-For Game Boy Advance with RetroArch on a rooted device in Android user 0,
-**Set up** requests Magisk access, reuses or installs the reviewed mGBA core and
+For GBA/mGBA or SNES/Snes9x with RetroArch on a rooted device in Android user 0,
+**Set up** requests Magisk access, reuses or installs the reviewed platform core and
 connects saves automatically. Allow root access if prompted. If asked, use
 **Open emulator**, wait for RetroArch's main menu, then quit it. Setup checks
 closure and its bundled resources on return. Other systems use the shared-folder
 instructions inside Setup. If root is unavailable, choose **Use shared folder**
-in the setup dialog. GBA and other RetroArch systems keep independent save
+in the setup dialog. GBA, SNES and shared-folder RetroArch routes keep independent save
 connections.
 
 **Verify setup** also offers **Install APK…** and **Get APK** for explicit
@@ -70,7 +70,7 @@ private `files/Broomm` directory; your ordinary standalone saves remain intact.
 If the first-run resources are still missing when you choose **Play**, use
 **Open RetroArch**, then quit it and choose **Check and play**. The first-run
 check happens before Broomm starts save synchronization.
-The rooted route stages a verified copy of the selected `.gba` in that private
+The rooted route stages a verified copy of the selected `.gba`, `.sfc` or `.smc` in that private
 directory for RetroArch to open by path. Finishing the session removes the
 staged copy.
 Broomm reuses the root connection through play and sync while its Android
@@ -82,8 +82,18 @@ verified normal exit. Switching back while RetroArch is still running leaves
 the session active. If the exit cannot be verified, use **Review and finish
 session** after quitting RetroArch. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
-This first route handles ordinary saves. For a verified-archive mismatch, use a
-compatible mGBA core installed through RetroArch and retry **Set up**.
+Rooted GBA and SNES sync in-game saves and manual states/thumbnails. Create or
+load a state from RetroArch's Quick Menu, then quit normally to sync. States
+require the same RetroArch APK, ABI and core; incompatible states remain kept
+in their original group. Legacy untracked states are not auto-imported. For a
+verified-archive mismatch, install a compatible platform core in RetroArch and
+retry **Set up**.
+
+After an offline restart, choose your saved server/profile normally. Home shows
+**Offline** and previously verified local games remain playable. Progress stays
+pending until that same account reconnects; use **Retry** on the offline notice
+or leave Broomm idle for its bounded retry. A revoked sign-in requires signing
+in again. This does not bypass a previously denied game's access.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install
@@ -318,7 +328,7 @@ devbox run -- flutter --suppress-analytics test --no-pub test/android_apk_downlo
 devbox --config tool/android run check
 ```
 
-The second command uses a pinned, separate Devbox Kotlin/JVM environment and hash-pinned API artifacts in `.tool-cache/research/android`. Its `bridge.jar` output is **not an APK**. The Thor has exercised the root file primitives and Android result-dispatch fixture. Packaged setup/uninstall acceptance remains required. Remove that cache and `tool/android/.devbox` to clean the compile-only tooling. Android game deletion keeps Broomm save roots/recovery. Uninstalling Broomm or clearing its Android app data also removes those private roots: sync/export progress first.
+The second command uses a pinned, separate Devbox Kotlin/JVM environment and hash-pinned API artifacts in `.tool-cache/research/android`. Its `bridge.jar` output is **not an APK**. The owner accepted packaged setup/removal on the Thor with build 1054. See the [rooted GBA walkthrough](docs/android-root-access.md) and [device reliability results and remaining limits](docs/android-root-reliability.md). Remove that cache and `tool/android/.devbox` to clean the compile-only tooling. Android game deletion keeps Broomm save roots/recovery. Uninstalling Broomm or clearing its Android app data also removes those private roots: sync/export progress first.
 
 From this checkout, with Devbox and the already provisioned Xcode host:
 

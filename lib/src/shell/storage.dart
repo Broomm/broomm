@@ -5,6 +5,15 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 
 import '../romm/models.dart';
+import '../progress/files.dart';
+
+class ProfileAccess {
+  const ProfileAccess({this.rejected = false, this.games = const {}});
+  final bool rejected;
+  final Map<int, bool> games;
+  bool permits(int game, {required bool downloadedByAccount}) =>
+      !rejected && (games[game] ?? downloadedByAccount);
+}
 
 class SavedServer {
   const SavedServer(this.id, this.address, this.version);
@@ -254,6 +263,72 @@ class ShellStorage {
   }
 
   Future<ShellRecords> load() => _locked(_read);
+
+  Future<File> _accessFile(SavedServer server, SavedProfile profile) async {
+    if (profile.serverId != server.id ||
+        ![
+          profile.id,
+          server.id,
+        ].every((id) => RegExp(r'^[a-f0-9]{32}$').hasMatch(id)))
+      throw const FormatException('Invalid offline account identity');
+    return progressFile(
+      directory,
+      'profiles/${profile.id}/romm-access.json',
+      createParents: true,
+    );
+  }
+
+  Future<ProfileAccess> _readAccess(
+    SavedServer server,
+    SavedProfile profile,
+  ) async {
+    final file = await _accessFile(server, profile);
+    if (!await progressExists(file.path)) return const ProfileAccess();
+    if (await file.length() > 2 * 1024 * 1024)
+      throw const FormatException('Offline permission record is too large');
+    final value = await progressJson(file);
+    if (value['version'] != 1 ||
+        value['server'] != server.id ||
+        value['profile'] != profile.id ||
+        value['user'] != profile.userId ||
+        value['rejected'] is! bool ||
+        value['games'] is! Map ||
+        (value['games'] as Map).length > 10000)
+      throw const FormatException(
+        'Offline permissions do not match this account',
+      );
+    final games = <int, bool>{};
+    for (final entry in (value['games'] as Map).entries) {
+      final id = int.tryParse('${entry.key}');
+      if (id == null || id < 1 || entry.value is! bool)
+        throw const FormatException('Invalid offline game permission');
+      games[id] = entry.value as bool;
+    }
+    return ProfileAccess(rejected: value['rejected'] as bool, games: games);
+  }
+
+  Future<ProfileAccess> profileAccess(SavedServer s, SavedProfile p) =>
+      _locked(() => _readAccess(s, p));
+
+  Future<void> updateProfileAccess(
+    SavedServer server,
+    SavedProfile profile, {
+    bool? rejected,
+    Map<int, bool> games = const {},
+  }) => _locked(() async {
+    final before = await _readAccess(server, profile);
+    final next = {...before.games, ...games};
+    if (next.length > 10000 || next.keys.any((id) => id < 1))
+      throw const FormatException('Too many offline game permissions');
+    await progressWrite(await _accessFile(server, profile), {
+      'version': 1,
+      'server': server.id,
+      'profile': profile.id,
+      'user': profile.userId,
+      'rejected': rejected ?? before.rejected,
+      'games': {for (final entry in next.entries) '${entry.key}': entry.value},
+    });
+  });
   Future<ShellRecords> _change(ShellRecords Function(ShellRecords) change) =>
       _locked(() async {
         final next = change(await _read());

@@ -9,6 +9,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.Parcel
+import android.os.ParcelFileDescriptor
+import android.system.Os
+import android.system.OsConstants
 import android.os.SystemClock
 import android.util.Log
 import com.topjohnwu.superuser.Shell
@@ -110,7 +113,7 @@ class RootSaveAccess(private val activity: Activity) {
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -120,7 +123,7 @@ class RootSaveAccess(private val activity: Activity) {
                 for ((key, value) in identity) putString(key, value.toString())
                 putLong("deadline", SystemClock.elapsedRealtime() + 30000)
                 putString("operation", call.method.removePrefix("root").lowercase())
-                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage"))
+                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup"))
                     putString(key, call.argument<String>(key))
             }
             if (call.method == "rootLifecycle") {
@@ -137,7 +140,6 @@ class RootSaveAccess(private val activity: Activity) {
                         request.putLong(key, it.getValue(key).toLong())
                 }
             }
-            var listPath: String? = null
             if (call.method == "rootStageRom") {
                 // The app and root mount namespaces can expose different
                 // names for the same framework filesDir.
@@ -146,56 +148,51 @@ class RootSaveAccess(private val activity: Activity) {
             }
             if (call.method == "rootList") {
                 val areas = call.argument<List<Map<String, String>>>("areas")!!
-                require(areas.size == 1 && areas.single().keys == setOf("path", "exact"))
-                listPath = "${areas.single()["path"]}/${areas.single()["exact"]}"
-                request.putString("path", listPath)
+                require(areas.size in 1..2 && areas.all { a -> a.size <= 3 && a.values.all { it.length <= 1024 } })
+                request.putParcelableArrayList("areas", ArrayList(areas.map { area -> Bundle().apply {
+                    for ((key, value) in area) putString(key, value)
+                } }))
             }
-            if (call.method == "rootReplace") {
-                call.argument<String>("source")?.let { source ->
-                    val file = privateFile(source)
-                    val bytes = file.inputStream().use { input ->
-                        val out = java.io.ByteArrayOutputStream()
-                        val block = ByteArray(16384)
-                        while (true) {
-                            val n = input.read(block); if (n < 0) break
-                            require(out.size() + n <= RootSaveService.MAX_BYTES)
-                            out.write(block, 0, n)
-                        }
-                        out.toByteArray()
-                    }
-                    request.putByteArray("payload", bytes)
-                }
-            }
+            if (call.method == "rootRead") request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
                 worker.execute {
                     try {
                         check(!closed && !done.get()) { "Root request already ended. Recovery was kept." }
                         val input = Parcel.obtain(); val output = Parcel.obtain()
+                        var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
+                            val source = if (call.method == "rootReplace") call.argument<String>("source") else null
+                            val target = if (call.method == "rootRead") call.argument<String>("target") else null
+                            if (source != null || target != null) {
+                                val file = privateFile(source ?: target!!)
+                                val flags = if (source != null) OsConstants.O_RDONLY else
+                                    OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL
+                                val fd = Os.open(file.path, flags or OsConstants.O_NOFOLLOW or OsConstants.O_NONBLOCK, 384)
+                                descriptor = try { ParcelFileDescriptor.dup(fd) } finally { Os.close(fd) }
+                                request.putParcelable("transfer", descriptor)
+                            }
                             input.writeInterfaceToken(RootSaveService.DESCRIPTOR); input.writeBundle(request)
                             check(binder.transact(RootSaveService.REQUEST, input, output, 0))
                             output.readException(); output.readBundle(javaClass.classLoader) ?: error("Missing root reply")
-                        } finally { input.recycle(); output.recycle() }
+                        } finally { descriptor?.close(); input.recycle(); output.recycle() }
                         check(!closed && !done.get()) { "Root reply arrived after the request ended. Recovery was kept." }
                         answer.getString("error")?.let { error(it) }
                         require(RootInspection.identity(activity, pkg) == identity) { "Emulator changed during root access. Recovery was kept." }
                         val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                         val value: Any? = when (call.method) {
-                            "rootInspect", "rootMgbaSetup" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootInspect", "rootMgbaSetup", "rootCoreSetup" -> identity.mapValues { it.value.toString() } + mapped
                             "rootLifecycle" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
-                            "rootInstallMgba" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
-                            "rootList" -> if (answer.getBoolean("missing")) emptyMap<String, Any>() else mapOf(listPath!! to mapped)
-                            "rootRead" -> {
-                                require(!answer.getBoolean("missing")) { "A save disappeared during capture." }
-                                val bytes = answer.getByteArray("payload")!!
-                                require(bytes.size.toLong() == (call.argument<Number>("bytes")!!).toLong() && RootSaveFiles.digest(bytes) == call.argument<String>("sha256"))
-                                val target = privateFile(call.argument<String>("target")!!)
-                                require(target.createNewFile()) { "A root recovery target already exists; files were kept." }
-                                FileOutputStream(target).use { it.write(bytes); it.fd.sync() }
-                                null
+                            "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
+                            "rootList" -> {
+                                val entries = answer.getBundle("files") ?: error("Missing root inventory")
+                                entries.keySet().associateWith { key ->
+                                    val entry = entries.getBundle(key)!!
+                                    entry.keySet().associateWith { entry.get(it) }
+                                }
                             }
+                            "rootRead" -> null
                             else -> null
                         }
                         main.post { finish(value) }
