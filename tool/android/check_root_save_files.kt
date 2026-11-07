@@ -145,7 +145,8 @@ fun main(args: Array<String>) {
             "mupen64plus_next" to "Game.z64", "mupen64plus_next" to "Game.v64", "mupen64plus_next" to "Game.n64",
             "mesen" to "Game.nes", "mesen" to "Game.unf", "mesen" to "Game.unif",
             "virtualjaguar" to "Game.j64", "virtualjaguar" to "Game.jag", "virtualjaguar" to "Game.rom",
-            "virtualjaguar" to "Game.abs", "virtualjaguar" to "Game.cof", "virtualjaguar" to "Game.bin", "virtualjaguar" to "Game.prg")) {
+            "virtualjaguar" to "Game.abs", "virtualjaguar" to "Game.cof", "virtualjaguar" to "Game.bin", "virtualjaguar" to "Game.prg",
+            "mednafen_lynx" to "Game.lnx", "mednafen_lynx" to "Game.lyx", "mednafen_lynx" to "Game.bll", "mednafen_lynx" to "Game.o")) {
             launch(core, name, name)
             launch(core, name, "Game.ZIP")
             failure { launch(core, name, "Other.zip") }
@@ -160,6 +161,8 @@ fun main(args: Array<String>) {
         failure { launch("virtualjaguar", "Game.chd", "Game.zip") }
         failure { launch("virtualjaguar", "Game.cue", "Game.zip") }
         failure { launch("mgba", "Game.md", "Game.zip") }
+        failure { launch("mednafen_lynx", "Game.gba", "Game.zip") }
+        failure { launch("mgba", "Game.lnx", "Game.zip") }
         println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
 
         val gameboyBase = "files/Broomm/${"b".repeat(32)}/44/"
@@ -184,7 +187,7 @@ fun main(args: Array<String>) {
         check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
         println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
 
-        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x", "nes", "unf", "unif", "j64", "jag", "rom", "abs", "cof", "prg")) {
+        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x", "nes", "unf", "unif", "j64", "jag", "rom", "abs", "cof", "prg", "lnx", "lyx", "bll", "o")) {
             val cartridgeSource = File(root, "library/44/content/Cartridge.$extension")
             check(cartridgeSource.parentFile!!.exists() || cartridgeSource.parentFile!!.mkdirs())
             cartridgeSource.writeBytes(next)
@@ -196,8 +199,9 @@ fun main(args: Array<String>) {
         }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disk.fds") }
-        println("PASS: Atari/PCE/Sega/NES/Jaguar cartridge staging, source preservation and unsupported disc/FDS refusal")
+        println("PASS: Atari/PCE/Sega/NES/Jaguar/Lynx cartridge staging, source preservation and unsupported disc/FDS refusal")
         checkN64Storage(root, label)
+        checkLynxFirmware(root, label)
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -293,6 +297,59 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+private fun checkLynxFirmware(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected Lynx refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected Lynx refusal") }
+    }
+    val files = RootSaveFiles(root, 2000, label, {}, coreName = "mednafen_lynx")
+    val base = "files/Broomm/${"b".repeat(32)}/46"
+    val nonce = "d".repeat(32)
+    val config = "$base/config-$nonce.cfg"
+    val path = "$base/system-$nonce/lynxboot.img"
+    val token = "c".repeat(32) + "-in"
+    val bytes = ByteArray(512) { (it % 251).toByte() }
+    val hash = RootSaveFiles.digest(bytes)
+    refused { RootSaveFiles.managedPath(path) }
+    refused { RootSaveFiles(root, 2000, label, {}).lynxFirmware(path, config, null, hash, bytes, token, {}) }
+    refused { files.lynxFirmware(path, config.replace("/46/", "/47/"), null, hash, bytes, token, {}) }
+    refused { files.lynxFirmware(path, config.replace(nonce, "e".repeat(32)), null, hash, bytes, token, {}) }
+    refused { files.lynxFirmware(path.replace("lynxboot.img", "other.img"), config, null, hash, bytes, token, {}) }
+    for (size in listOf(511, 513)) {
+        val bad = ByteArray(size)
+        refused { files.lynxFirmware(path, config, null, RootSaveFiles.digest(bad), bad, token, {}) }
+    }
+    val interrupted = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Lost Lynx publication reply") }, "mednafen_lynx")
+    refused { interrupted.lynxFirmware(path, config, null, hash, bytes, token, {}) }
+    files.lynxFirmware(path, config, null, hash, bytes, token, {})
+    check(files.hash(files.path(path), 512) == hash && Os.lstat(files.path(path).path).st_nlink == 1L)
+    check(files.inventory(listOf(mapOf("path" to "$base/saves", "exact" to "Game.srm"))).isEmpty())
+    refused { files.lynxFirmware(path, config, "f".repeat(64), null, null, token.replace("-in", "-out"), {}) }
+    check(files.hash(files.path(path), 512) == hash)
+    files.lynxFirmware(path, config, hash, null, null, token.replace("-in", "-out"), {})
+    files.lynxFirmware(path, config, hash, null, null, token.replace("-in", "-out"), {})
+    check(!files.present(files.path(path).parentFile!!))
+    var observations = 0
+    refused { files.lynxFirmware(path, config, null, hash, bytes, token, {
+        observations++; check(observations < 2) { "Writer arrived before Lynx publication" }
+    }) }
+    check(!files.present(files.path(path)))
+    files.lynxFirmware(path, config, hash, null, null, token.replace("-in", "-out"), {})
+    check(!files.present(files.path(path).parentFile!!))
+    val foreign = bytes.copyOf().also { it[0] = 99 }
+    val raced = RootSaveFiles(root, 2000, label, {}, { if (it == "staged") {
+        val target = files.path(path); target.writeBytes(foreign)
+        Os.chown(target.path, 2000, 2000); Os.chmod(target.path, 384)
+        Os.setxattr(target.path, "security.selinux", label, 0)
+    } }, "mednafen_lynx")
+    refused { raced.lynxFirmware(path, config, null, hash, bytes, token, {}) }
+    check(files.path(path).readBytes().contentEquals(foreign))
+    refused { files.lynxFirmware(path, config, hash, null, null, token.replace("-in", "-out"), {}) }
+    check(files.path(path).readBytes().contentEquals(foreign))
+    println("PASS: exact Lynx BIOS size/core/session boundary, lost reply, writer arrival, exclusive race, foreign-byte preservation and idempotent cleanup")
 }
 
 private fun checkN64Storage(root: File, label: ByteArray) {

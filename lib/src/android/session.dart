@@ -6,6 +6,7 @@ import '../progress/files.dart';
 import '../progress/service.dart';
 import '../progress/layout.dart';
 import '../session_lease.dart';
+import '../romm/transfer.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
 import 'root_saves.dart';
@@ -37,6 +38,16 @@ class AndroidGameSession extends ChangeNotifier {
   CloudGame? _game;
   bool _launched = false;
   Map<String, int>? _retroArchProcess;
+  DownloadCancellation? _preparation;
+  bool get canCancelPreparation =>
+      _preparation != null && !_preparation!.cancelled;
+  void cancelPreparation() {
+    if (!canCancelPreparation) return;
+    _preparation?.cancel();
+    phase = 'Cancelling preparation…';
+    _emit();
+  }
+
   bool busy = false, active = false, disposed = false;
   String phase = '', error = '';
   File get marker => File('${manager.data.path}/android/session.json');
@@ -45,10 +56,12 @@ class AndroidGameSession extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> pending() async {
     final Map<String, dynamic> value;
+    var sharedSwap = false;
     if (await progressExists(marker.path)) {
       value = await progressJson(marker);
     } else {
       if (await _shared.pending) {
+        sharedSwap = true;
         value = await progressJson(_shared.journal);
       } else {
         if (!await _mmj.pending) return null;
@@ -57,7 +70,14 @@ class AndroidGameSession extends ChangeNotifier {
         value = {...await progressJson(_mmj.journal), 'emulator': 'citra-mmj'};
       }
     }
-    if (value['version'] != 1 ||
+    final lynxSwap =
+        sharedSwap &&
+        value['version'] == 2 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'mednafen_lynx' &&
+        value['rootPlatform'] == 'lynx' &&
+        value['access'] == 'root-cartridge-v1';
+    if (value['version'] != 1 && !lynxSwap ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(value['profile'] as String? ?? '') ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(value['server'] as String? ?? '') ||
@@ -67,6 +87,18 @@ class AndroidGameSession extends ChangeNotifier {
       throw const FormatException(
         'Android session recovery record is invalid. Progress was kept.',
       );
+    if (lynxSwap) {
+      final group = value['rootStateGroup'];
+      if (group is! String ||
+          !RegExp(r'^states-[a-f0-9]{16}-android$').hasMatch(group))
+        throw const FormatException(
+          'The Lynx state recovery group is invalid. Progress was kept.',
+        );
+      return {
+        ...value,
+        'stateAreas': [group],
+      };
+    }
     return value;
   }
 
@@ -81,7 +113,8 @@ class AndroidGameSession extends ChangeNotifier {
     String? core,
     CloudGame? game,
     ProgressResolver? resolve,
-    Future<CloudGame?> Function()? prepare,
+    Future<CloudGame?> Function(DownloadCancellation, void Function(String))?
+    prepare,
     bool rooted = false,
     String? rootPlatform,
     bool emulatorClosed = true,
@@ -127,7 +160,7 @@ class AndroidGameSession extends ChangeNotifier {
       // Check first-run readiness before creating a recovery journal or
       // touching cloud progress. The standalone setup has no game session.
       final rootedGame = root != null && prepare != null
-          ? await prepare()
+          ? await _prepareRoot(prepare)
           : game;
       if (root != null) {
         final layout = rootedGame?.layout;
@@ -162,7 +195,9 @@ class AndroidGameSession extends ChangeNotifier {
         },
       );
       active = true;
-      _game = root != null || prepare == null ? rootedGame : await prepare();
+      _game = root != null || prepare == null
+          ? rootedGame
+          : await prepare(DownloadCancellation(), _preparePhase);
       final layout = _game?.layout;
       if (_game != null) {
         if (_game!.server != server ||
@@ -256,6 +291,7 @@ class AndroidGameSession extends ChangeNotifier {
       }
     } catch (e) {
       error = '$e';
+      if (e is DownloadWriterUncertain) _lease?.retainForUncertainWriter();
       if (!active) {
         await _lease?.release();
         _lease = null;
@@ -263,6 +299,31 @@ class AndroidGameSession extends ChangeNotifier {
       rethrow;
     } finally {
       busy = false;
+      _emit();
+    }
+  }
+
+  void _preparePhase(String value) {
+    phase = value;
+    cloud.phase?.call(value);
+    _emit();
+  }
+
+  Future<CloudGame?> _prepareRoot(
+    Future<CloudGame?> Function(DownloadCancellation, void Function(String))
+    prepare,
+  ) async {
+    final cancellation = DownloadCancellation();
+    _preparation = cancellation;
+    if (disposed) cancellation.cancel();
+    _emit();
+    try {
+      cancellation.check();
+      final game = await prepare(cancellation, _preparePhase);
+      cancellation.check();
+      return game;
+    } finally {
+      _preparation = null;
       _emit();
     }
   }
@@ -572,10 +633,14 @@ class AndroidGameSession extends ChangeNotifier {
   @override
   void dispose() {
     disposed = true;
+    final preparing = _preparation != null;
+    _preparation?.cancel();
     // Keep the durable marker. Releasing our coordinator is not evidence that
     // the independently owned Android emulator process has exited.
-    _lease?.release();
-    _lease = null;
+    if (!preparing) {
+      _lease?.release();
+      _lease = null;
+    }
     super.dispose();
   }
 }

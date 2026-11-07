@@ -1,5 +1,38 @@
 # Implementation plan
 
+## Rooted Lynx firmware/state source increment — 2026-11-07
+
+Independent Lynx Setup now pins the retained four-ABI Beetle Lynx artifacts at
+`a62e24f`, also held by `android-lynx-1.24.0-fcdefcf`. Settings version 12 reads
+versions 1–11 and preserves every earlier connection. Raw/safe-ZIP
+`.lnx/.lyx/.bll/.o` cartridges and build-matched states use the existing Dart
+supervisor; no ordinary SRAM is synthesized for this state-only core.
+
+Normal locked Play obtains the uniquely identified, canonical 512-byte
+`lynxboot.img` from the active platform in RomM. Transfer/catalogue MD5 and actual
+canonical bytes are verified; immutable profile-owned cache objects allow
+verified offline reuse. Old/damaged objects are retained during repair, while
+unreadable/conflicting metadata remains an error. Preparation is cancellable;
+its session lease remains held until acknowledgement, and an uncertain writer
+retains both staging and the lease until restart.
+
+The concrete native BIOS descriptor operation requires the exact core,
+profile/game/configuration nonce, size, hash, UID/label and verified closure.
+Version-2 Lynx swap receipts retain resource ownership before publication;
+version-1 transactions remain readable. Recovery works without the cache or
+staged BIOS and after loss of the general marker, preserving the state group.
+Edited resources and lost replies retain captured progress and retry safely.
+Firmware never enters save inventories or cloud bundles. Earlier resource
+limits and native save/config allowlists are unchanged; the common private
+copy now stops immediately if its source exceeds the recorded size.
+
+Clean analysis, all 670 Flutter tests (one existing native-host skip), 75 focused
+checks and fourteen disposable Thor filesystem/launch fault groups pass. The
+bridge and fixture compile. Initial local test-load errors (matcher/import) and
+an Android API-name correction are retained with corrected passing logs; no
+assertion or deadline was relaxed. Packaged Lynx BIOS/game/state acceptance
+remains pending. Four other selected cores remain unimplemented; PR #4 stays draft.
+
 ## Beetle Lynx artifact preparation — 2026-11-07
 
 Four unmodified Android ABI archives identify Beetle Lynx 1.24.0 source

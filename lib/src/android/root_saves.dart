@@ -23,6 +23,7 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'n64' => 'mupen64plus_next',
   'nes' => 'mesen',
   'jaguar' => 'virtualjaguar',
+  'lynx' => 'mednafen_lynx',
   _ => null,
 };
 
@@ -38,7 +39,8 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'sega32' ||
   'n64' ||
   'nes' ||
-  'jaguar' => 'root-cartridge-v1',
+  'jaguar' ||
+  'lynx' => 'root-cartridge-v1',
   _ => null,
 };
 
@@ -244,7 +246,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     pattern:
         '^${RegExp.escape(stem)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
   );
-  final configPath = '$base/config-${progressNonce()}.cfg';
+  final configNonce = progressNonce();
+  final configPath = '$base/config-$configNonce.cfg';
   final native = binding['dataDir']!;
   final savedConfig = utf8.decode(report['config'] as Uint8List);
   final preferences = androidIni(savedConfig);
@@ -271,6 +274,10 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
+    if (core == 'mednafen_lynx') ...{
+      'system_directory': '$native/$base/system-$configNonce',
+      'systemfiles_in_content_dir': 'false',
+    },
     if (core == 'virtualjaguar' &&
         androidJaguarHasReviewedStates(report['abi'], report['core']))
       'core_info_savestate_bypass': 'true',
@@ -303,6 +310,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
+      if (core == 'mednafen_lynx')
+        'lynxFirmwarePath': '$base/system-$configNonce/lynxboot.img',
       if (androidRetroArchNeedsSetup(report, app)) 'frontendSetup': 'true',
       if (bundledProfiles && report['controllerProfilesReady'] != true)
         'prepareControllerProfiles': 'true',

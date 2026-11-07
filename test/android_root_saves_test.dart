@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,19 +7,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/root_saves.dart';
+import 'package:broomm/src/android/lynx_firmware.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
+import 'package:broomm/src/progress/files.dart';
 import 'package:broomm/src/progress/layout.dart';
 import 'package:broomm/src/progress/service.dart';
 import 'package:broomm/src/progress/zip.dart';
+import 'package:broomm/src/romm/transfer.dart';
+import 'package:broomm/src/session_lease.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
 import 'android_apk_download_test.dart' show ApkClient, ApkReply;
 import 'cloud_saves_test.dart' show SaveServer, profileId, serverId;
+
+class _FixtureLynxBoot implements AndroidLynxBootImage {
+  _FixtureLynxBoot(this.file, this.sha256);
+  @override
+  final File file;
+  @override
+  final String sha256;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +52,7 @@ void main() {
   var loseRomStagingReply = false;
   var loseConfigPublicationReply = false;
   var loseConfigCleanupReply = false;
+  var loseFirmwarePublicationReply = false, loseFirmwareCleanupReply = false;
   var processState = 'idle', exitState = 'unknown';
   var reportsBeforeExit = 0;
   const process = {
@@ -103,7 +117,7 @@ void main() {
       core: 'mgba',
       rooted: true,
       emulatorClosed: emulatorClosed,
-      prepare: () async => game(await plan()),
+      prepare: (_, _) async => game(await plan()),
     );
   }
 
@@ -120,6 +134,8 @@ void main() {
     loseRomStagingReply = false;
     loseConfigPublicationReply = false;
     loseConfigCleanupReply = false;
+    loseFirmwarePublicationReply = false;
+    loseFirmwareCleanupReply = false;
     processState = 'idle';
     exitState = 'unknown';
     reportsBeforeExit = 0;
@@ -220,6 +236,25 @@ void main() {
               await target.delete();
             }
             return null;
+          }
+          if (call.method == 'rootLynxFirmware') {
+            final value = await fixture.call(MethodCall('sharedReplace', args));
+            if (args['after'] == null) {
+              metadata.remove(args['path']);
+              if (loseFirmwareCleanupReply) {
+                loseFirmwareCleanupReply = false;
+                throw PlatformException(code: 'lost-firmware-cleanup-reply');
+              }
+            } else {
+              metadata[args['path']] = attributes;
+              if (loseFirmwarePublicationReply) {
+                loseFirmwarePublicationReply = false;
+                throw PlatformException(
+                  code: 'lost-firmware-publication-reply',
+                );
+              }
+            }
+            return value;
           }
           final value = await fixture.call(
             MethodCall(call.method.replaceFirst('root', 'shared'), args),
@@ -436,6 +471,61 @@ void main() {
       expect(calls, contains('launch'));
     },
   );
+
+  for (final dispose in [false, true]) {
+    test(
+      'root preparation ${dispose ? 'disposal' : 'cancellation'} waits for its writer before releasing the lease',
+      () async {
+        await manager.connectGbaRoot(emulator);
+        final p = await plan();
+        final rom = await File('${temp.path}/Minish Cap.gba')
+            .writeAsBytes([5, 6]);
+        final session = AndroidGameSession(manager, cloud);
+        if (!dispose) addTearDown(session.dispose);
+        final ready = Completer<void>(),
+            cancelled = Completer<void>(),
+            stopped = Completer<void>();
+        final result = expectLater(
+          session.start(
+            server: serverId,
+            profile: profileId,
+            rom: 42,
+            emulator: emulator,
+            app: manager.app(emulator)!,
+            files: [rom.path],
+            selected: rom.path,
+            core: 'mgba',
+            rooted: true,
+            prepare: (cancellation, phase) async {
+              ready.complete();
+              await cancellation.whenCancelled;
+              cancelled.complete();
+              await stopped.future;
+              return game(p);
+            },
+          ),
+          throwsA(isA<DownloadCancelled>()),
+        );
+        await ready.future;
+        expect(session.canCancelPreparation, true);
+        await expectLater(SessionLease.acquire(data), throwsStateError);
+        if (dispose)
+          session.dispose();
+        else
+          session.cancelPreparation();
+        await cancelled.future;
+        await expectLater(SessionLease.acquire(data), throwsStateError);
+        expect(await session.pending(), isNull);
+        expect(api.records, isEmpty);
+        expect(calls, isNot(contains('rootReplace')));
+        stopped.complete();
+        await result;
+        expect(session.active, false);
+        final lease = await SessionLease.acquire(data);
+        await lease.release();
+      },
+    );
+  }
 
   test('a live rooted session waits, then a verified normal exit syncs automatically', () async {
     await manager.connectGbaRoot(emulator);
@@ -1344,6 +1434,176 @@ void main() {
     },
   );
 
+  Future<AndroidSavePlan> lynxPlan(String rom, {bool boot = true}) async {
+    final p = await gameboyPlan('lynx', rom);
+    if (!boot) return p;
+    final file = await File('${temp.path}/fixture-boot.img')
+        .writeAsBytes(List.generate(512, (i) => i % 251));
+    return AndroidSavePlan(
+      p,
+      p.emulator,
+      p.binding,
+      p.remoteAreas,
+      launch: p.launch,
+      lynxBootImage: _FixtureLynxBoot(file, await progressFileHash(file)),
+    );
+  }
+
+  test('Lynx setup migrates every version-11 connection and adds only its own route', () async {
+    final previous = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+      'n64',
+      'nes',
+      'jaguar',
+    ];
+    for (final slug in previous)
+      await manager.connectGbaRoot(emulator, platform: slug);
+    final file = File('${data.path}/android/emulators.json');
+    final old = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    old['version'] = 11;
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'lynx'), false);
+    await manager.connectGbaRoot(emulator, platform: 'lynx');
+    await manager.load();
+    for (final slug in [...previous, 'lynx'])
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    await manager.disconnectGbaRoot(emulator, platform: 'lynx');
+    await manager.load();
+    for (final slug in previous)
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    expect(manager.hasCurrentRoot(emulator, 'lynx'), false);
+    (old['retroRoots'] as Map)['lynx:$pkg'] = {
+      ...manager.rootConnection(emulator, 'jaguar')!,
+    };
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, false);
+  });
+
+  test('Lynx Play keeps firmware out of progress, synchronizes a state and restores native originals', () async {
+    await manager.connectGbaRoot(emulator, platform: 'lynx');
+    final rom = await File('${temp.path}/Cartridge.lnx').writeAsBytes([5, 6]);
+    final p = await lynxPlan(rom.path), g = game(p);
+    final config = androidIni(p.launch['configText']!);
+    expect(
+      config['system_directory'],
+      '/data/user/0/$pkg/${p.launch['lynxFirmwarePath']!.replaceFirst('/lynxboot.img', '')}',
+    );
+    expect(config['systemfiles_in_content_dir'], 'false');
+    final original = await put(p.remotePath('save/game.srm'), [8, 9]);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: emulator,
+      app: manager.app(emulator)!,
+      files: [rom.path],
+      selected: rom.path,
+      core: 'mednafen_lynx',
+      rootPlatform: 'lynx',
+      rooted: true,
+      prepare: (_, _) async => g,
+    );
+    expect(await original.exists(), false);
+    final firmware = File('${native.path}/${p.launch['lynxFirmwarePath']}');
+    expect(await firmware.length(), 512);
+    final key = '${p.areas.last.id}/game.state';
+    await put(p.remotePath(key), [1, 2, 3]);
+    processState = 'idle';
+    exitState = 'closed';
+    expect(
+      await session.finishIfRetroArchClosed(),
+      AndroidRetroArchState.closed,
+    );
+    expect(await original.readAsBytes(), [8, 9]);
+    expect(await firmware.exists(), false);
+    expect((await p.files()).keys, [key]);
+    expect(await (await p.target(key)).readAsBytes(), [1, 2, 3]);
+    expect((await cloud.store(g).state())['stateKnown'], {key: isA<String>()});
+    expect(api.records, isNotEmpty);
+    expect(await session.pending(), isNull);
+  });
+
+  test('a lost Lynx BIOS publication reply recovers without cache, staged BIOS or general marker', () async {
+    await manager.connectGbaRoot(emulator, platform: 'lynx');
+    final p = await lynxPlan('/game/Cartridge.lnx'), g = game(p);
+    final key = '${p.areas.last.id}/game.state';
+    await (await p.target(key)).writeAsBytes([7, 8]);
+    final saves = SharedAndroidSaves(manager);
+    loseFirmwarePublicationReply = true;
+    await expectLater(
+      saves.begin(g, p, 'a' * 64, selected: '/game/Cartridge.lnx'),
+      throwsA(isA<PlatformException>()),
+    );
+    final record = await progressJson(saves.journal);
+    await p.lynxBootImage!.file.delete();
+    await (await progressFile(
+      saves.directory(record),
+      'firmware/lynxboot.img',
+    )).delete();
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    final pending = await session.pending();
+    expect(pending!['version'], 2);
+    expect(pending['stateAreas'], [p.areas.last.id]);
+    final recovered = await saves.recoveryPlan(
+      g,
+      await lynxPlan('/game/Cartridge.lnx', boot: false),
+    );
+    expect(await saves.capture(g, cloud, recovered), false);
+    await saves.restoreOriginal(g, recovered);
+    expect(
+      await File('${native.path}/${p.launch['lynxFirmwarePath']}').exists(),
+      false,
+    );
+    expect(await (await p.target(key)).readAsBytes(), [7, 8]);
+    expect(api.records, isEmpty);
+    expect(await session.pending(), isNull);
+  });
+
+  test('edited Lynx BIOS retains captured progress and lost cleanup replies retry without recapture', () async {
+    await manager.connectGbaRoot(emulator, platform: 'lynx');
+    final p = await lynxPlan('/game/Cartridge.lnx'), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Cartridge.lnx');
+    final key = '${p.areas.last.id}/game.state';
+    await put(p.remotePath(key), [2, 4, 6]);
+    await saves.capture(g, cloud, p);
+    final firmware = File('${native.path}/${p.launch['lynxFirmwarePath']}');
+    final original = await firmware.readAsBytes();
+    await firmware.writeAsBytes(List.filled(512, 9));
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await saves.pending, true);
+    expect(await saves.capture(g, cloud, p), false);
+    expect(await (await p.target(key)).readAsBytes(), [2, 4, 6]);
+    await firmware.writeAsBytes(original);
+    loseFirmwareCleanupReply = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await firmware.exists(), false);
+    expect(await saves.pending, true);
+    await saves.restoreOriginal(g, p);
+    expect(await saves.pending, false);
+    expect(await (await p.target(key)).readAsBytes(), [2, 4, 6]);
+  });
+
   test(
     'reviewed Jaguar states remain available with stale frontend metadata',
     () async {
@@ -1494,7 +1754,7 @@ void main() {
           core: core,
           rooted: true,
           rootPlatform: slug,
-          prepare: () async => g,
+          prepare: (_, _) async => g,
         );
         if (sram)
           await put(p.remotePath('save/game.srm'), List.filled(saveSize, 7));
@@ -1581,7 +1841,7 @@ void main() {
       core: 'gambatte',
       rooted: true,
       rootPlatform: 'gbc',
-      prepare: () async => g,
+      prepare: (_, _) async => g,
     );
     expect((await session.pending())!['rootPlatform'], 'gbc');
     final sram = List<int>.filled(32768, 2),

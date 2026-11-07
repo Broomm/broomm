@@ -11,8 +11,9 @@ cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
 cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
-passed the scoped checks below. Beetle Lynx, Opera, FBNeo, Flycast and Beetle
-Saturn remain pending their concrete firmware/media/save integration.
+passed the scoped checks below. Lynx source/workflow checks pass with packaged
+acceptance pending. Opera, FBNeo, Flycast and Beetle Saturn still need their
+concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
 
@@ -402,15 +403,16 @@ jobs and every post-job step, with unchanged build/test deadlines and failure
 handling. The current macOS archive passes source-input, ZIP and source/extracted
 deep strict all-architecture signature checks; it is ad-hoc signed, not notarized.
 
-## Lynx firmware preparation
+## Lynx firmware/state source increment
 
 The [retained four-ABI Beetle Lynx artifacts](../vendor/android/mednafen_lynx/1.24.0-fcdefcf/README.md)
 identify source `fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed`. Original archives,
 ELF identities, source/library hashes, Android recipes and component notices
 are recorded. The exact upstream NDK environment is not claimed reproduced.
-This preparation alone enables no new setup or launch route.
+Runtime downloads pin artifact commit `a62e24ffdc352399a47516dc43cbd4f985f9c027`,
+retained by `android-lynx-1.24.0-fcdefcf`; Setup installs this platform's core only.
 
-The concrete next increment uses `.lnx/.lyx/.bll/.o` cartridges and matched
+The concrete increment uses raw/safe-ZIP `.lnx/.lyx/.bll/.o` cartridges and matched
 states. The core exposes no ordinary Libretro save RAM, so Broomm must not
 synthesize an empty `.srm`. Its required 512-byte `lynxboot.img` must come from
 the active platform's RomM firmware catalogue, with the canonical MD5
@@ -419,15 +421,41 @@ Missing, ambiguous, corrupt and offline observations remain distinct. The
 [upstream core documentation](https://docs.libretro.com/library/beetle_lynx/)
 confirms the BIOS identity and state-only save capability.
 
-Planned implementation keeps firmware lookup/download/cache decisions in Dart
-inside the existing locked Play preparation. A verified profile-owned cache
-supports offline reuse; background save inspection stays read-only. A concrete
-journaled native resource under the session's private system directory supplies
-the BIOS and is cleaned only after verified exit. Recovery must work without
-the cache/network, including loss of the general session marker and lost native
-replies; existing version-1 save transactions remain readable. No public BIOS
-download, shared mutable firmware tree or new runtime dependency is proposed.
-Implementation and device verification remain pending.
+Firmware lookup/download/cache decisions stay in Dart inside the existing locked
+Play preparation. A verified profile-owned cache supports offline reuse;
+background save inspection stays read-only. Missing/ambiguous/wrong BIOS metadata
+and corrupt transfers remain visible. A damaged object is retained during repair;
+unreadable/conflicting index data is an error. Preparation offers Cancel and
+retains the production session lease until its writer acknowledges closure.
+An uncertain download writer keeps its private stage and lease until restart.
+
+A concrete journaled native resource under the session's private system
+directory supplies the BIOS. The descriptor operation requires Lynx, exactly
+512 bytes, the paired configuration nonce, SHA-256, UID/security label and
+verified emulator closure. It cannot write a different firmware or save path.
+Version-2 Lynx receipts precede native effects; existing version-1 transactions
+remain readable. Recovery works without cache/network or the private staged
+BIOS, including lost publication/cleanup replies and loss of the general session
+marker. Edited resources retain captured states. Cleanup checks hashes after
+verified closure; firmware never enters progress inventories/cloud bundles.
+Settings version 12 preserves earlier connections. The earlier save/config
+allowlists and resource bounds remain; private recovery copies now stop as soon
+as their source exceeds its recorded size. No public BIOS download, shared
+mutable firmware tree or new runtime dependency is added.
+
+Use **Atari Lynx → RetroArch → Set up**, then Play a downloaded cartridge.
+If the required BIOS is missing, add one `lynxboot.img` with the canonical size
+and MD5 to that platform in RomM and retry Play. The BIOS stays in Broomm's
+profile cache and the temporary native session system directory; it is not
+included in the app or a save upload. Create a manual state, Quit RetroArch
+normally and wait for sync, then launch again and Load State. Do not expect an
+ordinary battery-save upload from this core. Keep private progress/recovery
+directories; normal completion removes only recorded native session resources.
+
+Clean analysis, all 670 Flutter tests (one existing native-host skip), 75 focused
+checks and fourteen real Thor filesystem/launch fault groups pass. The bridge
+and fixture compile. Packaged BIOS/gameplay/state acceptance remains pending;
+these checks do not establish a real Lynx game or other ABI's gameplay.
 
 ## Remaining boundaries
 
@@ -461,4 +489,5 @@ Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
-source build. Five selected cores still need their concrete integration.
+source build. Four selected cores still need their concrete integration;
+packaged Lynx acceptance remains pending.

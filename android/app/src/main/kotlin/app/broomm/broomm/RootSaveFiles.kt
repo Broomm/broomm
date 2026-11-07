@@ -128,6 +128,42 @@ internal class RootSaveFiles(
         publish(relative, before, after, payload, wantedMetadata, token, progressLimit(relative),
             sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
 
+    /** One concrete immutable Lynx BIOS, separate from save/config allowlists. */
+    fun lynxFirmware(relative: String, config: String, before: String?, after: String?,
+                     payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
+        require(coreName == "mednafen_lynx")
+        managedPath(config)
+        val name = config.substringAfterLast('/')
+        require(Regex("config-[a-f0-9]{32}\\.cfg").matches(name))
+        val nonce = name.removePrefix("config-").removeSuffix(".cfg")
+        require(relative == config.substringBeforeLast('/') + "/system-$nonce/lynxboot.img")
+        require(if (after == null) before != null && payload == null && token.endsWith("-out")
+            else before == null && payload != null && token.endsWith("-in"))
+        require(payload == null || payload.size == 512) { "The Lynx BIOS must contain exactly 512 bytes." }
+        ensureClosed()
+        publish(relative, before, after, payload, null, token, 512, beforeCommit = ensureClosed)
+        if (after == null) {
+            val folder = path(relative).parentFile!!
+            val inStage = File(folder, ".lynxboot.img.broomm-${token.removeSuffix("-out")}-in")
+            if (present(inStage)) {
+                val stat = Os.lstat(inStage.path)
+                require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L &&
+                    stat.st_uid in setOf(0, uid) && before != null && hash(inStage, 512) == before) {
+                    "Interrupted Lynx BIOS staging changed. Recovery was kept."
+                }
+                live(); ensureClosed(); Os.remove(inStage.path); flushDirectory(folder)
+            }
+            if (present(folder)) {
+                val stat = Os.lstat(folder.path)
+                require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                    Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+                if (folder.list()?.isEmpty() == true) {
+                    live(); ensureClosed(); Os.remove(folder.path); flushDirectory(folder.parentFile!!)
+                }
+            }
+        }
+    }
+
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
                         wantedMetadata: String?, token: String, limit: Int,
                         sessionConfiguration: Boolean = false, stateGroup: String? = null, beforeCommit: () -> Unit = {}) {
@@ -155,7 +191,7 @@ internal class RootSaveFiles(
         }
         require(observed == before) { "Emulator save changed before replacement. Recovery was kept." }
         if (after == null) {
-            live(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
+            live(); beforeCommit(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
         }
         parents(relative, token)
         if (sessionConfiguration) {
@@ -424,7 +460,7 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar"))
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx"))
             return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
         fun limit(path: String, core: String = "mgba"): Int = when {
@@ -444,7 +480,7 @@ internal class RootSaveFiles(
 
         fun romPath(path: String): List<String> {
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg))")
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg|lnx|lyx|bll|o))")
                     .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }

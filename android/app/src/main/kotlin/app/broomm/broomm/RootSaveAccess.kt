@@ -123,7 +123,7 @@ class RootSaveAccess(private val activity: Activity) {
                 for ((key, value) in identity) putString(key, value.toString())
                 putLong("deadline", SystemClock.elapsedRealtime() + 30000)
                 putString("operation", call.method.removePrefix("root").lowercase())
-                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup"))
+                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup", "configPath"))
                     putString(key, call.argument<String>(key))
             }
             if (call.method == "rootLifecycle") {
@@ -166,7 +166,7 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method == "rootReplace") call.argument<String>("source") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware")) call.argument<String>("source") else null
                             val target = if (call.method == "rootRead") call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = privateFile(source ?: target!!)

@@ -14,6 +14,7 @@ import '../session.dart';
 import '../switch_content.dart';
 import 'emulators.dart';
 import 'retroarch_core_setup.dart';
+import 'lynx_firmware.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -68,6 +69,7 @@ class AndroidSavePlan extends ProgressLayout {
     this.binding,
     this.remoteAreas, {
     this.launch = const {},
+    this.lynxBootImage,
   }) : super(
          layout.root,
          layout.format,
@@ -80,6 +82,7 @@ class AndroidSavePlan extends ProgressLayout {
   final Map<String, String> binding;
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
+  final AndroidLynxBootImage? lynxBootImage;
   Map<String, String> get arguments => {
     ...binding,
     'emulator': emulator.id,

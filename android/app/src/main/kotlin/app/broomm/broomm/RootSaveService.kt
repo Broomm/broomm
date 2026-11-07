@@ -153,6 +153,15 @@ class RootSaveService : RootService() {
                     RootSaveTransfer.write(request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller, bytes, ::live)
                     Bundle()
                 }
+                "lynxfirmware" -> {
+                    val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
+                        RootSaveTransfer.read(it, caller, 512, ::live)
+                    }
+                    files.lynxFirmware(request.getString("path")!!, request.getString("configPath")!!,
+                        request.getString("before"), request.getString("after"), payload,
+                        request.getString("token")!!, ::ensureClosed)
+                    Bundle()
+                }
                 "replace" -> {
                     val path = request.getString("path")!!
                     RootSaveFiles.managedPath(path)

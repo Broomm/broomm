@@ -217,6 +217,26 @@ const _jaguarRecipes = <String, (String, String)>{
 bool androidJaguarHasReviewedStates(String abi, String digest) =>
     _jaguarRecipes[abi]?.$2 == digest;
 
+const _lynxRevision = 'a62e24ffdc352399a47516dc43cbd4f985f9c027';
+const _lynxRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '69ddfb1e6e94d45ee974f2f43c5bd4b6538f8b2ec49366ef4f6cd4b00268c07f',
+    '26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503',
+  ),
+  'armeabi-v7a': (
+    'fc4522ca48d6dd527acc62d60e4382986e48852602eb6b327ff6e0c4644a5bbf',
+    '2ef2dc14190f4af7f81ca7d80dffc5aedba559a73a8ac04345edbef9a866331d',
+  ),
+  'x86': (
+    '75e4dff355c8374a48c80048e6246a019942737cdbead4ec3be62e4e48b78ad3',
+    'a5a693783f9825eeef67ae328bf9891d63aaa253503d09cd739ee7a701ef29be',
+  ),
+  'x86_64': (
+    'f50f320cf81061b0bc090758b057a9b9f66911d85fc4cdd863e673d35bb5f983',
+    '0d5d0a3a2a19898bf42a7a7a6fbdbfe77354d5c334900daa2e06b917c6edd657',
+  ),
+};
+
 String androidRetroCoreFile(String core) => core == 'mupen64plus_next'
     ? 'mupen64plus_next_gles3_libretro_android.so'
     : '${core}_libretro_android.so';
@@ -244,6 +264,7 @@ Future<void> downloadAndroidRetroCore(
     'mupen64plus_next' => (_n64Revision, '3.0-15bada8', _n64Recipes),
     'mesen' => (_mesenRevision, '0.9.9-0102910', _mesenRecipes),
     'virtualjaguar' => (_jaguarRevision, '3.11.0', _jaguarRecipes),
+    'mednafen_lynx' => (_lynxRevision, '1.24.0-fcdefcf', _lynxRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);

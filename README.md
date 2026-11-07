@@ -385,6 +385,17 @@ the reviewed core despite RetroArch's old bundled metadata. Jaguar CD and Memory
 Track gameplay remain separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment)
 and [device evidence](docs/android-retroarch-jaguar.json).
 
+Current source adds **Atari Lynx → RetroArch → Set up** with pinned Beetle Lynx.
+Play a raw `.lnx/.lyx/.bll/.o` or safe single-cartridge ZIP. First Play obtains
+and verifies the required 512-byte `lynxboot.img` from that platform in RomM;
+subsequent Play can reuse the verified profile cache offline. Add exactly one
+matching BIOS to RomM if Broomm reports it missing. Create a manual state, Quit
+RetroArch normally, wait for sync and verify Load State after relaunch. This
+core does not produce ordinary battery saves. Native BIOS/ROM/configuration
+files are temporary; private profile progress/cache and recovery remain in
+Broomm. Source/workflow/native file checks pass; packaged Lynx acceptance is
+pending. See the [scope and verification](docs/android-retroarch-cores.md#lynx-firmwarestate-source-increment).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

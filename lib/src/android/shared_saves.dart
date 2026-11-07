@@ -76,7 +76,7 @@ class SharedAndroidSaves {
     AndroidSavePlan plan,
   ) async {
     final r = await progressJson(journal);
-    if (r['version'] != 1 ||
+    if (!{1, 2}.contains(r['version']) ||
         r['server'] != game.server ||
         r['profile'] != game.profile ||
         r['rom'] != game.rom ||
@@ -102,14 +102,51 @@ class SharedAndroidSaves {
     inventory(r['original'], plan);
     inventory(r['working'], plan);
     if (r['captured'] != null) inventory(r['captured'], plan);
+    _lynxFirmware(r, plan);
     return r;
+  }
+
+  Map<String, dynamic>? _lynxFirmware(Map r, AndroidSavePlan plan) {
+    if (r['version'] == 1) {
+      if (r['rootFirmware'] != null ||
+          plan.launch['coreName'] == 'mednafen_lynx')
+        throw const FormatException(
+          'Lynx firmware recovery record is incomplete.',
+        );
+      return null;
+    }
+    final f = r['rootFirmware'], config = r['rootConfigPath'];
+    if (!plan.rooted ||
+        plan.launch['coreName'] != 'mednafen_lynx' ||
+        plan.launch['platform'] != 'lynx' ||
+        f is! Map ||
+        f.length != 3 ||
+        f['bytes'] != 512 ||
+        config is! String ||
+        config != plan.launch['configPath'] ||
+        !config.startsWith('files/Broomm/${r['profile']}/${r['rom']}/') ||
+        f['path'] != _lynxFirmwarePath(config) ||
+        f['path'] != plan.launch['lynxFirmwarePath'] ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(f['sha256'] as String? ?? ''))
+      throw const FormatException(
+        'Lynx firmware recovery identity changed. Files were kept.',
+      );
+    return f.cast<String, dynamic>();
   }
 
   Future<void> copy(File from, File to, Map metadata) async {
     await to.create(exclusive: true);
     final out = await to.open(mode: FileMode.writeOnly);
     try {
-      await for (final b in from.openRead()) await out.writeFrom(b);
+      var count = 0;
+      await for (final b in from.openRead()) {
+        count += b.length;
+        if (count > metadata['bytes'])
+          throw StateError(
+            'A private Android recovery source grew during copy.',
+          );
+        await out.writeFrom(b);
+      }
       await out.flush();
     } finally {
       await out.close();
@@ -164,12 +201,18 @@ class SharedAndroidSaves {
       throw const FormatException(
         'Android save root belongs to another profile',
       );
+    final boot = plan.lynxBootImage;
+    final lynx = plan.rooted && plan.launch['coreName'] == 'mednafen_lynx';
+    if (lynx && boot == null || !lynx && boot != null)
+      throw StateError(
+        'Prepare the verified Lynx BIOS before starting this session.',
+      );
     await manager.channel.invokeMethod<void>(
       plan.method('Check'),
       plan.arguments,
     );
     final r = <String, dynamic>{
-      'version': 1,
+      'version': lynx ? 2 : 1,
       'transaction': progressNonce(),
       ...plan.arguments,
       'server': game.server,
@@ -186,8 +229,30 @@ class SharedAndroidSaves {
       'phase': 'installing',
       'original': await list(plan),
       'working': <String, dynamic>{},
+      if (lynx)
+        'rootFirmware': {
+          'path': plan.launch['lynxFirmwarePath'],
+          'bytes': 512,
+          'sha256': boot!.sha256,
+        },
     };
+    _lynxFirmware(r, plan);
     await progressDirectory(directory(r));
+    if (boot != null) {
+      if (await boot.file.length() != 512)
+        throw const FormatException(
+          'The verified Lynx BIOS changed before staging.',
+        );
+      await copy(
+        boot.file,
+        await progressFile(
+          directory(r),
+          'firmware/lynxboot.img',
+          createParents: true,
+        ),
+        {'bytes': 512, 'sha256': boot.sha256},
+      );
+    }
     await read(r, plan, r['original'] as Map<String, dynamic>, 'original');
     final working = r['working'] as Map<String, dynamic>;
     for (final e in (await plan.files()).entries) {
@@ -223,6 +288,21 @@ class SharedAndroidSaves {
       r,
     );
     await apply(r, plan, 'original', 'working', 'working');
+    final firmware = _lynxFirmware(r, plan);
+    if (firmware != null) {
+      await manager.channel.invokeMethod<void>('rootLynxFirmware', {
+        ...plan.arguments,
+        'path': firmware['path'],
+        'configPath': plan.launch['configPath'],
+        'before': null,
+        'after': firmware['sha256'],
+        'source': (await progressFile(
+          directory(r),
+          'firmware/lynxboot.img',
+        )).path,
+        'token': '${r['transaction']}-in',
+      });
+    }
     await configure(r, plan);
     r['phase'] = 'installed';
     await progressWrite(journal, r);
@@ -275,6 +355,8 @@ class SharedAndroidSaves {
         ...current.launch,
         'configPath': config,
         'configNative': '${current.binding['dataDir']}/$config',
+        if (current.launch['coreName'] == 'mednafen_lynx')
+          'lynxFirmwarePath': _lynxFirmwarePath(config),
         if (group != null) 'stateGroup': group as String,
       },
     );
@@ -558,6 +640,17 @@ class SharedAndroidSaves {
         });
       }
     }
+    final firmware = _lynxFirmware(r, plan);
+    if (firmware != null) {
+      await manager.channel.invokeMethod<void>('rootLynxFirmware', {
+        ...plan.arguments,
+        'path': firmware['path'],
+        'configPath': plan.launch['configPath'],
+        'before': firmware['sha256'],
+        'after': null,
+        'token': '${r['transaction']}-out',
+      });
+    }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }
@@ -581,6 +674,15 @@ class SharedAndroidSaves {
   }
 }
 
+String _lynxFirmwarePath(String config) {
+  final match = RegExp(
+    r'^(files/Broomm/[a-f0-9]{32}/[1-9][0-9]*)/config-([a-f0-9]{32})\.cfg$',
+  ).firstMatch(config);
+  if (match == null)
+    throw const FormatException('Invalid Lynx firmware session configuration.');
+  return '${match[1]}/system-${match[2]}/lynxboot.img';
+}
+
 Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
     switch (plan.binding['access']) {
       'root-gba-v1' => {'gba'},
@@ -596,6 +698,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
         'n64' => {'z64', 'v64', 'n64'},
         'nes' => {'nes', 'unf', 'unif'},
         'jaguar' => {'j64', 'jag', 'rom', 'abs', 'cof', 'bin', 'prg'},
+        'lynx' => {'lnx', 'lyx', 'bll', 'o'},
         _ => {},
       },
       _ => {},

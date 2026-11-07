@@ -19,6 +19,7 @@ void main() {
     ('picodrive', '2.05-1890c29'),
     ('mupen64plus_next', '3.0-15bada8'),
     ('mesen', '0.9.9-0102910'),
+    ('mednafen_lynx', '1.24.0-fcdefcf'),
   ]) {
     test(
       'each versioned $core archive verifies and publishes its reviewed core',
