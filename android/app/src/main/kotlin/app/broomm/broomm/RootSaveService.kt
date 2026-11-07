@@ -116,9 +116,14 @@ class RootSaveService : RootService() {
                 "stagerom" -> {
                     val path = request.getString("path")!!
                     val filesDir = File(applicationInfo.dataDir, "files")
-                    val relative = request.getString("libraryRelative") ?: error("Missing GBA library path")
-                    val source = gameLibraryFromRelative(filesDir, relative)
-                    val rom = files.stageRom(path, source, caller, request.getString("sha256")!!)
+                    val prepared = request.getString("preparedRelative")
+                    val source = if (prepared != null) {
+                        require(request.getString("libraryRelative") == null)
+                        val parts = RootSaveFiles.romPath(path)
+                        preparedCartridgeFromRelative(filesDir, prepared, parts[2].removePrefix("rom-"), parts[3])
+                    } else gameLibraryFromRelative(filesDir,
+                        request.getString("libraryRelative") ?: error("Missing cartridge library path"))
+                    val rom = files.stageRom(path, source, caller, request.getString("sha256")!!, prepared = prepared != null)
                     Bundle().apply { putString("rom", rom.path) }
                 }
                 "removerom" -> {

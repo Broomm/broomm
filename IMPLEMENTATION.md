@@ -1,5 +1,97 @@
 # Implementation plan
 
+## Rooted cartridge ZIP preparation — 2026-11-07
+
+Build 1067's first ZIP check exposed the native adapter's library-only source
+guard. The follow-up keeps that guard and separately validates a normalized
+cartridge inside the exact session transaction on both sides of the root mount
+namespace. Foreign transactions, filenames, traversal and links are refused.
+The bridge and native fixture compile; JVM path checks and eleven disposable
+Thor filesystem groups pass. Packaged ZIP acceptance remains pending.
+
+Build 1068 passed that private source handoff, then exposed the launch adapter's
+separate exact-filename check. The follow-up accepts the unchanged archive stem
+with the validated extracted extension and retains core/game/profile/configuration
+checks. The complete production launch validator is included in the disposable
+Android fixture, with raw/ZIP routes and wrong filename, game, core and profile
+cases. Packaged ZIP acceptance remains pending.
+
+The updated bridge and fixture compile; all twelve Thor fixture groups pass,
+including the actual launch validator. The previously passing 638-test Dart
+suite is unchanged by this native-only correction.
+
+Sega catalogue checks found ordinary single-cartridge ZIP downloads, which the
+earlier rooted handoff refused. Current source validates ZIP structure and
+extracts privately in Dart before the existing native cartridge staging. It
+requires exactly one supported cartridge, keeps the archive's save/state stem,
+retains the 32 MiB cartridge limit and bounds archives/expanded content to 64 MiB.
+The downloaded game stays unchanged. Durable staging records cover cleanup after
+a lost native reply. Focused regressions pass for nested names, cleanup retry,
+ambiguous/unsafe entries, oversized payloads and corrupt extraction. Analysis
+and all 638 Flutter tests pass, with one existing native-host skip; the focused
+39-test root suite also passes with a lost native staging reply. Packaged ZIP
+gameplay remains pending.
+
+## Rooted Sega cartridges — 2026-11-07
+
+Current source adds independent Genesis, Master System and Game Gear Setup via
+Genesis Plus GX, plus 32X via PicoDrive. Four-ABI downloads pin retained artifact
+`db5b758`, corresponding source, submodule provenance and notices. Version 8
+settings preserve earlier connections. Uncompressed cartridges use the existing
+raw SRAM/state contracts and journaled profile/game boundary. Genesis Plus GX's
+larger library uses bounded streaming; other core download limits stay unchanged.
+
+Clean analysis and all 635 Flutter tests pass with one existing native-host skip.
+The production bridge compiles and all eleven Thor filesystem groups pass,
+including Sega cartridge staging and the large-core faults below. Packaged Sega
+gameplay is pending; the other eight cores remain research. See the
+[core walkthrough](docs/android-retroarch-cores.md#sega-cartridge-increment).
+
+## Large Android core transport — 2026-11-07
+
+The next remaining-core prerequisite streams native core inspection/staging with
+a 96 MiB bound, a small ELF header and descriptor identity checks. Cancellation,
+writer exclusion, exclusive publication and interrupted-link recovery remain.
+The bridge compiles; all eleven filesystem groups pass on Thor. The separate
+80 MiB fixture also passes directly through ART with an asserted exact 32 MiB
+heap, including cancelled-copy retry, a forced timestamp tie/source replacement
+and a destination appearing before publication. No additional core delivery or
+gameplay support is claimed by this native prerequisite.
+
+## Rooted Atari 2600 and TG16 cartridges — 2026-11-07
+
+Current source adds independent Setup for Stella and Beetle PCE Fast with pinned
+four-ABI archives and exact source notices. Version 7 settings preserve existing
+connections. Uncompressed Atari `.a26`/`.bin` and TG16 `.pce` use the existing
+journaled native boundary, raw PCE SRAM, state-only Stella progress and
+build-matched states. No disc/firmware or compressed-content acceptance is added.
+Clean analysis and 628 Flutter tests pass with one existing native-host skip;
+the bridge compiles and ten real Thor filesystem groups pass in disposable
+storage. Build 1062 passed normal Setup, Adventure state upload/reload and
+Neutopia's in-game File Cabinet SRAM plus manual-state round trip. All five
+installed cores, six platform bindings and prior progress/settings were
+preserved; native temporary files were removed. See [scope and
+provenance](docs/android-retroarch-cores.md#atari-2600-and-tg16-cartridge-increment).
+
+## Remaining rooted RetroArch cores — 2026-11-07
+
+PR #3 merged as `e92c584` after the GBA/SNES and offline-profile checks below.
+The next branch starts with GB/GBC through Gambatte: independent platform setup,
+immutable four-ABI archives, SRAM/RTC and exact-build states. Version 6 settings
+retain GBA/SNES connections; session and swap receipts retain the original
+platform for recovery. Native staging accepts the concrete uncompressed GB/GBC
+extensions and bounded SRAM/clock selectors.
+
+Analysis and all 623 Flutter tests pass, with one existing native-host skip. The compiled
+production bridge and nine native filesystem fault groups pass, including real
+Thor SRAM/RTC selection and GBC staging in disposable storage. All PR build jobs
+passed. Build 1061 passed normal GB/GBC Setup, Crystal SRAM/RTC/state upload and
+reload, and separate Tetris/Crystal state histories for both accounts. All prior
+GBA/SNES progress and standalone settings were preserved; temporary native files
+were removed and the original account remains selected. Other cores are
+researched, not yet implemented. See [scope, device evidence and remaining
+boundaries](docs/android-retroarch-cores.md).
+
 ## Offline activation, rooted save states and SNES — 2026-11-07
 
 Current source adds explicit saved-profile activation during transport outages,

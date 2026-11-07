@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "core": "picodrive",
+  "build_version": "2.05-1890c29",
+  "source_repository": "https://github.com/libretro/picodrive",
+  "source_commit": "1890c2932234c9d30f4cd3851d02228baae8f09e",
+  "source_archive": "https://codeload.github.com/libretro/picodrive/tar.gz/1890c2932234c9d30f4cd3851d02228baae8f09e",
+  "source_sha256": "123871ce468bc31f824df9273415215527ded2bdaadffd0503a97149aa06d523",
+  "captured": "2026-11-07",
+  "license": "Non-commercial upstream license; component notices retained",
+  "entry": "picodrive_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/picodrive/blob/1890c2932234c9d30f4cd3851d02228baae8f09e/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Every ABI embeds the recorded source revision. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/picodrive_libretro_android.so.zip",
+      "archive_bytes": 604891,
+      "archive_sha256": "97feea3a6801be6761ee325d4b56ba34ad49f69e3b46aa3076166df3bece890e",
+      "payload_bytes": 1621480,
+      "payload_sha256": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "liblog.so",
+        "libz.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/picodrive_libretro_android.so.zip",
+      "archive_bytes": 631532,
+      "archive_sha256": "ad5ed45d21027be641da7839145e9319a3fb0e5fe25ff7c1c64ccc97eab6d6ff",
+      "payload_bytes": 1628256,
+      "payload_sha256": "c1cc15edda64c4a98696cd678117f989029db93ed57a53a583791524c6041cf8",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "liblog.so",
+        "libz.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/picodrive_libretro_android.so.zip",
+      "archive_bytes": 579621,
+      "archive_sha256": "fea141befd74f2f4143e7c4ca2bad94fe6d434ac4dca980d737dd72ddcbcc638",
+      "payload_bytes": 1509152,
+      "payload_sha256": "eae3fd61842cfa9d1edede2a2e7b1a05226c66b12b6984f45af9732182afc3fd",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "liblog.so",
+        "libz.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/picodrive_libretro_android.so.zip",
+      "archive_bytes": 620568,
+      "archive_sha256": "53448e5b96e97571a436f7db5e8f2ffa0c3c15c2c94ef32248d3b011e108733a",
+      "payload_bytes": 1646016,
+      "payload_sha256": "204aa87b3644d223986769f826bf9a518d220a2ea9b80b037985ef699daf195c",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "liblog.so",
+        "libz.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/COPYING",
+      "sha256": "a36c54a119673c1b40233f55ff23c39042f35c3e798ce78aafba5d6bd9c19de4"
+    },
+    {
+      "path": "notices/platform/common/tremor/COPYING",
+      "sha256": "d2ab5758336489da61c12cc5bb757da5339c4ae9001f9bb0562b4370249af814"
+    },
+    {
+      "path": "notices/submodules/cpu/cyclone/License-GPLv2.txt",
+      "sha256": "11c4a8b414a534365f02da7dad9dc3e471d35b15ed31df9d4006fb2a144c4443"
+    },
+    {
+      "path": "notices/submodules/cpu/cyclone/License.txt",
+      "sha256": "3b5f43fc73526ba4b2c4d679fd82ba1c36956e1f8ad919c240675a27094acc14"
+    },
+    {
+      "path": "notices/submodules/pico/sound/emu2413/LICENSE",
+      "sha256": "8fb093f26ed0d78c8ca033bbec7063ac5b34c5d2475e6bd121d03ccfaaf2355f"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/lzma-24.05/LICENSE",
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/zlib-1.3.1/LICENSE",
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt",
+      "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/zstd-1.5.6/COPYING",
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/zstd-1.5.6/LICENSE",
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "notices/submodules/pico/cd/libchdr/deps/zstd-1.5.6/build/LICENSE",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "notices/submodules/platform/common/dr_libs/LICENSE",
+      "sha256": "dd1c647e6f767f8ff4b2dfae0fed314726600a01e0cf1ef556afddd5fa96ff15"
+    }
+  ],
+  "submodules": [
+    {
+      "path": "platform/libpicofe",
+      "repository": "https://github.com/irixxxx/libpicofe",
+      "source_revision": "9ed5822606dd7ff20a782a882e8fd611cb53ba88",
+      "source_archive": "https://codeload.github.com/irixxxx/libpicofe/tar.gz/9ed5822606dd7ff20a782a882e8fd611cb53ba88",
+      "source_sha256": "458519aaa70916528e593f1f052aa45f704670fba094b409478a8197e6f076a7",
+      "source_bytes": 92755,
+      "notices": [],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "cpu/cyclone",
+      "repository": "https://github.com/irixxxx/cyclone68000",
+      "source_revision": "3ac7cf1bdeecb60e2414980e8dc72ff092f69769",
+      "source_archive": "https://codeload.github.com/irixxxx/cyclone68000/tar.gz/3ac7cf1bdeecb60e2414980e8dc72ff092f69769",
+      "source_sha256": "e570e121721441c1bf8015a8bce8614b73954e2344b983b3650e591952f74a6c",
+      "source_bytes": 64766,
+      "notices": [
+        {
+          "path": "License-GPLv2.txt",
+          "sha256": "11c4a8b414a534365f02da7dad9dc3e471d35b15ed31df9d4006fb2a144c4443"
+        },
+        {
+          "path": "License.txt",
+          "sha256": "3b5f43fc73526ba4b2c4d679fd82ba1c36956e1f8ad919c240675a27094acc14"
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "pico/sound/emu2413",
+      "repository": "https://github.com/digital-sound-antiques/emu2413",
+      "source_revision": "a2dfc20ff507e4fd075cd325620bcea655e2c1f7",
+      "source_archive": "https://codeload.github.com/digital-sound-antiques/emu2413/tar.gz/a2dfc20ff507e4fd075cd325620bcea655e2c1f7",
+      "source_sha256": "bd816079cfbf13c56a260c095d6b8e260c2f877e5b13f50d4e570b96e8b92830",
+      "source_bytes": 17892,
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "8fb093f26ed0d78c8ca033bbec7063ac5b34c5d2475e6bd121d03ccfaaf2355f"
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "pico/cd/libchdr",
+      "repository": "https://github.com/irixxxx/libchdr",
+      "source_revision": "e62ac5995b1c7ef65ece35293914843b8ee57d49",
+      "source_archive": "https://codeload.github.com/irixxxx/libchdr/tar.gz/e62ac5995b1c7ef65ece35293914843b8ee57d49",
+      "source_sha256": "59b99005d3d6317a0d1e45e1c4abf0e551070dbf32c8fdc66ed5b4ae6d8ea702",
+      "source_bytes": 4221062,
+      "notices": [
+        {
+          "path": "LICENSE.txt",
+          "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+        },
+        {
+          "path": "deps/lzma-24.05/LICENSE",
+          "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+        },
+        {
+          "path": "deps/zlib-1.3.1/LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        },
+        {
+          "path": "deps/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt",
+          "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+        },
+        {
+          "path": "deps/zstd-1.5.6/COPYING",
+          "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+        },
+        {
+          "path": "deps/zstd-1.5.6/LICENSE",
+          "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+        },
+        {
+          "path": "deps/zstd-1.5.6/build/LICENSE",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "platform/common/dr_libs",
+      "repository": "https://github.com/mackron/dr_libs",
+      "source_revision": "dd762b861ecadf5ddd5fb03e9ca1db6707b54fbb",
+      "source_archive": "https://codeload.github.com/mackron/dr_libs/tar.gz/dd762b861ecadf5ddd5fb03e9ca1db6707b54fbb",
+      "source_sha256": "8f0be8a4aa27cd4ddaba41acbb845b1641964f2cc2f5a5f7b4b72f73368c1c12",
+      "source_bytes": 514046,
+      "notices": [
+        {
+          "path": "LICENSE",
+          "sha256": "dd1c647e6f767f8ff4b2dfae0fed314726600a01e0cf1ef556afddd5fa96ff15"
+        }
+      ],
+      "nested_gitmodules": [
+        "[submodule \"tests/external/miniaudio\"]\n\tpath = tests/external/miniaudio\n\turl = https://github.com/dr-soft/miniaudio.git\n"
+      ]
+    }
+  ],
+  "submodule_build_scope": "Android.mk uses FAME/CZ80, emu2413, libchdr and dr_libs. Cyclone is disabled; libpicofe host disassembly is debug-only. dr_libs tests/external/miniaudio is test-only and absent from these core build inputs."
+}

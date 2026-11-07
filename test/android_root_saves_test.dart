@@ -12,7 +12,9 @@ import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
+import 'package:broomm/src/progress/layout.dart';
 import 'package:broomm/src/progress/service.dart';
+import 'package:broomm/src/progress/zip.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
 import 'android_apk_download_test.dart' show ApkClient, ApkReply;
@@ -34,6 +36,7 @@ void main() {
   var denied = false;
   var missingCore = false;
   var refuseRomCleanup = false;
+  var loseRomStagingReply = false;
   var loseConfigPublicationReply = false;
   var loseConfigCleanupReply = false;
   var processState = 'idle', exitState = 'unknown';
@@ -65,6 +68,16 @@ void main() {
     metadata[relative] = attributes;
     return file;
   }
+
+  Future<AndroidSavePlan> gameboyPlan(String slug, String rom) async =>
+      await androidProgressLayout(
+        manager,
+        profileId,
+        emulator,
+        playablePlatforms.firstWhere((p) => p.slug == slug),
+        rom,
+        contentId: '42',
+      ) as AndroidSavePlan;
 
   CloudGame game(AndroidSavePlan p) => CloudGame(
     server: serverId,
@@ -104,6 +117,7 @@ void main() {
     denied = false;
     missingCore = false;
     refuseRomCleanup = false;
+    loseRomStagingReply = false;
     loseConfigPublicationReply = false;
     loseConfigCleanupReply = false;
     processState = 'idle';
@@ -170,10 +184,28 @@ void main() {
           final args = Map<String, dynamic>.from(call.arguments as Map)
             ..['tree'] = 'root-fixture';
           if (call.method == 'rootStageRom') {
+            final source = File(args['source'] as String);
+            expect(
+              source.uri.pathSegments.last,
+              File(args['path'] as String).uri.pathSegments.last,
+            );
+            if (args['preparedCartridge'] == true) {
+              final transaction = (args['path'] as String)
+                  .split('/')[4]
+                  .substring(4);
+              expect(
+                source.parent.parent.path,
+                endsWith('/shared-session/$transaction'),
+              );
+            }
             final target = await put(
               args['path'] as String,
-              await File(args['source'] as String).readAsBytes(),
+              await source.readAsBytes(),
             );
+            if (loseRomStagingReply) {
+              loseRomStagingReply = false;
+              throw PlatformException(code: 'lost-rom-staging-reply');
+            }
             return target.path;
           }
           if (call.method == 'rootRemoveRom') {
@@ -643,6 +675,119 @@ void main() {
     expect(await original.readAsBytes(), [7]);
   });
 
+  test('a nested ZIP cartridge keeps its archive save identity and cleanup can retry', () async {
+    await manager.connectGbaRoot(emulator);
+    final contents = await Directory('${temp.path}/packed').create();
+    await Directory('${contents.path}/regional').create();
+    await File('${contents.path}/regional/Different Name.gba')
+        .writeAsBytes([5, 6]);
+    await File('${contents.path}/readme.txt').writeAsString('Game notes');
+    final rom = File('${temp.path}/Minish Cap.zip');
+    await ProgressZip.write(rom, contents, [
+      'regional/Different Name.gba',
+      'readme.txt',
+    ]);
+    final archiveHash = await progressFileHash(rom);
+    final p = await gameboyPlan('gba', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    loseRomStagingReply = true;
+    await expectLater(
+      saves.stageRootRom(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    final stagedRecord = await saves.record(g, p);
+    final staged = File('${native.path}/${stagedRecord['romStage']}');
+    expect(staged.uri.pathSegments.last, 'Minish Cap.gba');
+    expect(await staged.readAsBytes(), [5, 6]);
+    expect(p.remotePath('save/game.srm'), endsWith('/Minish Cap.srm'));
+    final r = await saves.record(g, p);
+    expect(
+      await saves
+          .directory(r)
+          .list()
+          .any((e) => e.path.contains('/cartridge-')),
+      false,
+    );
+    await put(p.remotePath('save/game.srm'), [3, 4]);
+    await saves.capture(g, cloud, p);
+    refuseRomCleanup = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await saves.pending, true);
+    refuseRomCleanup = false;
+    await saves.restoreOriginal(g, p);
+    expect(await staged.exists(), false);
+    expect(await progressFileHash(rom), archiveHash);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), [3, 4]);
+  });
+
+  test(
+    'ambiguous or unsafe cartridge archives never reach native ROM staging',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final contents = await Directory('${temp.path}/packed').create();
+      await Directory('${contents.path}/ok').create();
+      for (final name in ['ok/game.gba', 'another.gba'])
+        await File('${contents.path}/$name').writeAsBytes([1, 2]);
+      final rom = File('${temp.path}/Minish Cap.zip');
+      await ProgressZip.write(rom, contents, ['ok/game.gba', 'another.gba']);
+      final p = await gameboyPlan('gba', rom.path), g = game(p);
+      final saves = SharedAndroidSaves(manager);
+      await saves.begin(g, p, 'a' * 64, selected: rom.path);
+      await expectLater(saves.stageRootRom(g, p), throwsStateError);
+      await rom.delete();
+      await ProgressZip.write(rom, contents, ['ok/game.gba']);
+      final bytes = await rom.readAsBytes();
+      final needle = utf8.encode('ok/game.gba');
+      for (var i = 0; i <= bytes.length - needle.length; i++) {
+        if (List.generate(needle.length, (n) => bytes[i + n]).join(',') ==
+            needle.join(',')) {
+          bytes[i] = 46;
+          bytes[i + 1] = 46;
+        }
+      }
+      await rom.writeAsBytes(bytes);
+      await expectLater(saves.stageRootRom(g, p), throwsFormatException);
+      expect(calls, isNot(contains('rootStageRom')));
+      expect(await saves.pending, true);
+    },
+  );
+
+  test('oversized and corrupt ZIP payloads keep recovery and remove partial extraction', () async {
+    await manager.connectGbaRoot(emulator);
+    final contents = await Directory('${temp.path}/packed').create();
+    final cartridge = await File('${contents.path}/game.gba').create();
+    final handle = await cartridge.open(mode: FileMode.writeOnly);
+    await handle.truncate(32 * 1024 * 1024 + 1);
+    await handle.close();
+    final rom = File('${temp.path}/Minish Cap.zip');
+    await ProgressZip.write(rom, contents, ['game.gba']);
+    final p = await gameboyPlan('gba', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    await expectLater(saves.stageRootRom(g, p), throwsFormatException);
+    await rom.delete();
+    await cartridge.writeAsBytes(List.generate(1024, (i) => i % 251));
+    await ProgressZip.write(rom, contents, ['game.gba']);
+    final zip = await ProgressZip.read(rom), bytes = await rom.readAsBytes();
+    bytes[zip.entries.single.offset + 8] ^= 0xff;
+    await rom.writeAsBytes(bytes);
+    await expectLater(saves.stageRootRom(g, p), throwsA(isA<Exception>()));
+    expect(calls, isNot(contains('rootStageRom')));
+    final r = await saves.record(g, p);
+    expect(
+      await saves
+          .directory(r)
+          .list()
+          .any((e) => e.path.contains('/cartridge-')),
+      false,
+    );
+    expect(await saves.pending, true);
+  });
+
   test('interrupted configuration publication keeps its ownership receipt before cleanup', () async {
     await manager.connectGbaRoot(emulator);
     final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
@@ -860,6 +1005,281 @@ void main() {
     await manager.disconnectGbaRoot(emulator, platform: 'snes');
     expect(manager.hasCurrentGbaRoot(emulator), true);
     expect(manager.hasCurrentRoot(emulator, 'snes'), false);
+  });
+
+  test('Game Boy setup migrates existing roots and keeps GB and GBC choices independent', () async {
+    await manager.connectGbaRoot(emulator);
+    await manager.connectGbaRoot(emulator, platform: 'snes');
+    final settings = File('${data.path}/android/emulators.json');
+    final legacy =
+        jsonDecode(await settings.readAsString()) as Map<String, dynamic>;
+    legacy['version'] = 5;
+    legacy.remove('retroRoots');
+    await settings.writeAsString(jsonEncode(legacy));
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), false);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), false);
+    final setup = AndroidEmulatorSetup(manager, emulator, 'gb', profileId);
+    addTearDown(setup.dispose);
+    await setup.verify();
+    expect(setup.problem, isNull);
+    expect(setup.step, AndroidSetupStep.ready);
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), true);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), false);
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), true);
+    await manager.connectGbaRoot(emulator, platform: 'gbc');
+    await manager.disconnectGbaRoot(emulator, platform: 'gb');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), false);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), true);
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), true);
+  });
+
+  test('cartridge setup migrates version 6 without losing GB, GBA or SNES bindings', () async {
+    for (final slug in ['gba', 'snes', 'gbc']) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final v6 = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    v6['version'] = 6;
+    await file.writeAsString(jsonEncode(v6));
+    await manager.load();
+    for (final slug in ['atari2600', 'tg16']) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    await manager.load();
+    for (final slug in ['gba', 'snes', 'gbc', 'atari2600', 'tg16']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'tg16');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'tg16'), false);
+    for (final slug in ['gba', 'snes', 'gbc', 'atari2600']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+  });
+
+  test('Sega setup migrates version 7 and keeps shared-core platform choices independent', () async {
+    const previous = ['gba', 'snes', 'gb', 'gbc', 'atari2600', 'tg16'];
+    for (final slug in previous) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final v7 = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    v7['version'] = 7;
+    await file.writeAsString(jsonEncode(v7));
+    await manager.load();
+    const sega = ['genesis', 'sms', 'gamegear', 'sega32'];
+    for (final slug in sega) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    await manager.load();
+    for (final slug in [...previous, ...sega]) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'gamegear');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gamegear'), false);
+    for (final slug in [...previous, 'genesis', 'sms', 'sega32']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+  });
+
+  for (final (slug, core, extension, sram) in [
+    ('atari2600', 'stella', 'a26', false),
+    ('tg16', 'mednafen_pce_fast', 'pce', true),
+    ('genesis', 'genesis_plus_gx', 'md', true),
+    ('sms', 'genesis_plus_gx', 'sms', true),
+    ('gamegear', 'genesis_plus_gx', 'gg', true),
+    ('sega32', 'picodrive', '32x', true),
+  ]) {
+    test(
+      '$slug keeps its native save contract, state round trip and cleanup',
+      () async {
+        await manager.connectGbaRoot(emulator, platform: slug);
+        final rom = await File('${temp.path}/Cartridge.$extension')
+            .writeAsBytes([5, 6]);
+        final p = await gameboyPlan(slug, rom.path), g = game(p);
+        expect(p.format, 'libretro-$core-v1');
+        final unrelated = await put(
+          p
+              .remotePath('save/game.srm')
+              .replaceFirst('Cartridge.srm', 'Another.srm'),
+          [8],
+        );
+        final session = AndroidGameSession(manager, cloud);
+        addTearDown(session.dispose);
+        await session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: emulator,
+          app: manager.app(emulator)!,
+          files: [rom.path],
+          selected: rom.path,
+          core: core,
+          rooted: true,
+          rootPlatform: slug,
+          prepare: () async => g,
+        );
+        if (sram)
+          await put(p.remotePath('save/game.srm'), List.filled(2048, 7));
+        final state = '${p.areas.last.id}/game.state';
+        await put(p.remotePath(state), [1, 4, 9]);
+        processState = 'idle';
+        exitState = 'closed';
+        expect(
+          await session.finishIfRetroArchClosed(),
+          AndroidRetroArchState.closed,
+        );
+        expect(await session.pending(), isNull);
+        expect(await unrelated.readAsBytes(), [8]);
+        expect(
+          await File('${native.path}/${p.remotePath(state)}').exists(),
+          false,
+        );
+        expect(await (await p.target(state)).readAsBytes(), [1, 4, 9]);
+        expect(api.stateRecords, hasLength(sram ? 1 : 0));
+        expect((await cloud.store(g).state())['pending'], false);
+        if (sram) {
+          expect(
+            await (await p.target('save/game.srm')).readAsBytes(),
+            List.filled(2048, 7),
+          );
+          final primary = api.records.values.single;
+          expect(api.contents[primary.id], List.filled(2048, 7));
+          expect(api.readIds, contains(primary.id));
+        } else {
+          expect(await (await p.target('save/game.srm')).exists(), false);
+        }
+        final restored = ProgressLayout(
+          '${temp.path}/other-device/profiles/$profileId/emulators/retroarch',
+          p.format,
+          p.game,
+          p.areas,
+        );
+        final nextGame = CloudGame(
+          server: serverId,
+          profile: profileId,
+          user: api.user,
+          rom: 42,
+          client: api,
+          layout: restored,
+        );
+        final newCloud = CloudSaves(
+          Directory('${temp.path}/other-device'),
+          notice: (_, _) {},
+        );
+        await newCloud.beforePlay(nextGame);
+        expect(await (await restored.target(state)).readAsBytes(), [1, 4, 9]);
+        if (sram)
+          expect(
+            await (await restored.target('save/game.srm')).readAsBytes(),
+            List.filled(2048, 7),
+          );
+      },
+    );
+  }
+
+  test('GBC native sessions upload SRAM and RTC together and restore standalone bytes', () async {
+    await manager.connectGbaRoot(emulator, platform: 'gbc');
+    final rom = await File('${temp.path}/Pokemon Crystal.gbc')
+        .writeAsBytes([5, 6]);
+    final p = await gameboyPlan('gbc', rom.path), g = game(p);
+    final originalSave = await put(p.remotePath('save/game.srm'), [8, 9]);
+    final originalClock = await put(p.remotePath('save/game.rtc'), [7, 8]);
+    final unrelated = await put(
+      p
+          .remotePath('save/game.rtc')
+          .replaceFirst('Pokemon Crystal.rtc', 'Another game.rtc'),
+      [6],
+    );
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: emulator,
+      app: manager.app(emulator)!,
+      files: [rom.path],
+      selected: rom.path,
+      core: 'gambatte',
+      rooted: true,
+      rootPlatform: 'gbc',
+      prepare: () async => g,
+    );
+    expect((await session.pending())!['rootPlatform'], 'gbc');
+    final sram = List<int>.filled(32768, 2),
+        rtc = List<int>.generate(48, (i) => i);
+    await put(p.remotePath('save/game.srm'), sram);
+    await put(p.remotePath('save/game.rtc'), rtc);
+    final group = p.areas.last.id;
+    await put(p.remotePath('$group/game.state'), [4, 5, 6]);
+    processState = 'idle';
+    exitState = 'closed';
+    expect(
+      await session.finishIfRetroArchClosed(),
+      AndroidRetroArchState.closed,
+    );
+    expect(await session.pending(), isNull);
+    expect(await originalSave.readAsBytes(), [8, 9]);
+    expect(await originalClock.readAsBytes(), [7, 8]);
+    expect(await unrelated.readAsBytes(), [6]);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), sram);
+    expect(await (await p.target('save/game.rtc')).readAsBytes(), rtc);
+    final primary = api.records.values.single;
+    expect(primary.name.endsWith('.zip'), true);
+    final archive = await File('${temp.path}/downloaded.zip')
+        .writeAsBytes(api.contents[primary.id]!);
+    final zip = await ProgressZip.read(archive);
+    expect(zip.entries.map((e) => e.name).toSet(), {'game.srm', 'game.rtc'});
+    expect(api.readIds, contains(primary.id));
+    expect(api.stateRecords, hasLength(1));
+    expect((await cloud.store(g).state())['pending'], false);
+  });
+
+  test('a missing working Game Boy clock retains recovery and cannot publish deletion', () async {
+    await manager.connectGbaRoot(emulator, platform: 'gb');
+    final p = await gameboyPlan('gb', '/game/Pokemon.gb'),
+        g = game(p),
+        saves = SharedAndroidSaves(manager);
+    await (await p.target('save/game.srm')).writeAsBytes([1, 2]);
+    await (await p.target('save/game.rtc')).writeAsBytes([3, 4]);
+    await cloud.beforePlay(g);
+    final baselineContents = {
+      for (final e in api.contents.entries) e.key: List<int>.from(e.value),
+    };
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Pokemon.gb');
+    final otherPlatform = AndroidSavePlan(
+      p,
+      emulator,
+      p.binding,
+      p.remoteAreas,
+      launch: {...p.launch, 'platform': 'gbc'},
+    );
+    await expectLater(saves.record(g, otherPlatform), throwsFormatException);
+    final recovered = AndroidGameSession(manager, cloud);
+    addTearDown(recovered.dispose);
+    expect((await recovered.pending())!['rootPlatform'], 'gb');
+    await File('${native.path}/${p.remotePath('save/game.rtc')}').delete();
+    await expectLater(
+      recovered.finish(emulatorClosed: true, recovery: g),
+      throwsStateError,
+    );
+    expect(await saves.pending, true);
+    expect(await (await p.target('save/game.rtc')).readAsBytes(), [3, 4]);
+    expect(api.contents, baselineContents);
+    // Repair from the retained working clock; missing general-marker recovery
+    // then queues the captured progress for explicit review rather than upload.
+    await put(p.remotePath('save/game.rtc'), [3, 4]);
+    await recovered.finish(emulatorClosed: true, recovery: g);
+    expect(await recovered.pending(), isNull);
+    expect((await cloud.store(g).state())['pending'], true);
+    expect(api.contents, baselineContents);
   });
   test(
     'root state inventories enforce transfer limits before native publication',

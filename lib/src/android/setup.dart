@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
 import 'emulators.dart';
+import 'root_saves.dart';
 
 enum AndroidSetupStep { install, waitingInstall, initialize, folder, ready }
 
@@ -30,7 +31,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   bool get _rooted =>
       !_shared &&
       emulator.id == 'retroarch' &&
-      {'gba', 'snes'}.contains(platform) &&
+      androidRootRetroCore(platform) != null &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 

@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
         catch (_: SharedDocumentBusy) { println("busy") }
         return
     }
-    require(args[0] == "run" && !root.exists())
+    require(args[0] in setOf("run", "core-memory") && !root.exists())
     check(root.mkdir()); Os.chown(root.path, 2000, 2000)
     val label = Os.getxattr(root.path, "security.selinux")
     val files = RootSaveFiles(root, 2000, label, {})
@@ -28,6 +28,11 @@ fun main(args: Array<String>) {
     val path = prefix + "Minish Cap.srm"
     fun failure(work: () -> Unit) { try { work(); error("Expected refusal") } catch (e: IllegalArgumentException) { } catch (e: IllegalStateException) { check(e.message != "Expected refusal") } }
     try {
+        if (args[0] == "core-memory") {
+            check(Runtime.getRuntime().maxMemory() == 32L * 1024 * 1024) { "Run core-memory directly through dalvikvm with -Xmx32m -Xms8m." }
+            checkLargeCoreStorage(root, label)
+            return
+        }
         val old = byteArrayOf(1, 2, 3); val next = ByteArray(131072) { 7 }
         val oldHash = RootSaveFiles.digest(old); val nextHash = RootSaveFiles.digest(next)
         files.replace(path, null, oldHash, old, null, token)
@@ -112,10 +117,76 @@ fun main(args: Array<String>) {
         files.removeRom(romPath, nextHash)
         check(!staged.parentFile!!.exists())
         failure { files.stageRom(romPath, rom, 0, oldHash) }
+        val cartridgeTransaction = "e".repeat(32)
+        val preparedRom = File(root, "android/shared-session/$cartridgeTransaction/cartridge-Abc123/Sonic.md")
+        check(preparedRom.parentFile!!.mkdirs()); preparedRom.writeBytes(next)
+        val preparedRomPath = prefix.replace("/saves/", "/rom-$cartridgeTransaction/") + preparedRom.name
+        failure { files.stageRom(preparedRomPath, preparedRom, 0, nextHash) }
+        failure { files.stageRom(preparedRomPath.replace(cartridgeTransaction, "f".repeat(32)), preparedRom, 0, nextHash, prepared = true) }
+        val preparedCopy = files.stageRom(preparedRomPath, preparedRom, 0, nextHash, prepared = true)
+        check(files.hash(preparedCopy) == nextHash && preparedRom.readBytes().contentEquals(next))
+        files.removeRom(preparedRomPath, nextHash)
+        check(!preparedCopy.exists() && preparedRom.exists())
         check(!staged.exists())
         files.removeRom(romPath, oldHash)
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
         println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
+
+        val launchData = "/data/user/0/com.retroarch.aarch64"
+        val launchBase = "$launchData/files/Broomm/${"b".repeat(32)}/42"
+        val launchConfig = "$launchBase/config-${"a".repeat(32)}.cfg"
+        val launchContent = "/data/user/0/app.broomm.broomm/files/broomm/library/${"d".repeat(32)}/42/content"
+        fun launch(core: String, name: String, selected: String, config: String? = launchConfig, content: String = launchContent) =
+            validateRootRetroArchLaunch(core, "com.retroarch.aarch64", launchData,
+                "$launchBase/rom-${"c".repeat(32)}/$name", config, content, "$content/$selected")
+        for ((core, name) in listOf("mgba" to "Game.gba", "snes9x" to "Game.sfc", "gambatte" to "Game.gbc",
+            "stella" to "Game.a26", "mednafen_pce_fast" to "Game.pce", "genesis_plus_gx" to "Game.md",
+            "genesis_plus_gx" to "Game.sms", "genesis_plus_gx" to "Game.gg", "picodrive" to "Game.32x")) {
+            launch(core, name, name)
+            launch(core, name, "Game.ZIP")
+            failure { launch(core, name, "Other.zip") }
+        }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.gen") }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", content = launchContent.replace("/42/", "/43/")) }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = launchConfig.replace("b".repeat(32), "f".repeat(32))) }
+        failure { launch("genesis_plus_gx", "Game.md", "Game.zip", config = null) }
+        failure { launch("mgba", "Game.md", "Game.zip") }
+        println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
+
+        val gameboyBase = "files/Broomm/${"b".repeat(32)}/44/"
+        val gameboySave = gameboyBase + "saves/Pokemon.srm"
+        val gameboyClock = gameboyBase + "saves/Pokemon.rtc"
+        files.replace(gameboySave, null, oldHash, old, null, token)
+        files.replace(gameboyClock, null, nextHash, next, null, token)
+        val unrelatedClock = gameboyBase + "saves/Pokemon Extra.rtc"
+        files.replace(unrelatedClock, null, oldHash, old, null, token)
+        val gameboyInventory = files.inventory(listOf(mapOf(
+            "path" to gameboyBase + "saves", "prefix" to "Pokemon", "pattern" to "bounded-by-native-selector")))
+        check(gameboyInventory.keys == setOf(gameboySave, gameboyClock))
+        check(gameboyInventory.getValue(gameboyClock).sha256 == nextHash)
+        files.replace(gameboyClock, nextHash, oldHash, old, files.metadata(files.path(gameboyClock)), token)
+        check(files.hash(files.path(gameboyClock)) == oldHash && files.hash(files.path(unrelatedClock)) == oldHash)
+        val gameboyRom = File(root, "library/44/content/Pokemon.gbc")
+        check(gameboyRom.parentFile!!.mkdirs()); gameboyRom.writeBytes(next)
+        val gameboyRomPath = gameboyBase + "rom-${"c".repeat(32)}/Pokemon.gbc"
+        val stagedGameboy = files.stageRom(gameboyRomPath, gameboyRom, 0, nextHash)
+        check(files.hash(stagedGameboy) == nextHash)
+        files.removeRom(gameboyRomPath, nextHash)
+        check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
+        println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
+
+        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x")) {
+            val cartridgeSource = File(root, "library/44/content/Cartridge.$extension")
+            check(cartridgeSource.parentFile!!.exists() || cartridgeSource.parentFile!!.mkdirs())
+            cartridgeSource.writeBytes(next)
+            val cartridgePath = "files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Cartridge.$extension"
+            val copy = files.stageRom(cartridgePath, cartridgeSource, 0, nextHash)
+            check(files.hash(copy) == nextHash)
+            files.removeRom(cartridgePath, nextHash)
+            check(!copy.exists() && cartridgeSource.readBytes().contentEquals(next))
+        }
+        failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
+        println("PASS: Atari/PCE/Sega cartridge staging, source preservation and unsupported disc refusal")
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -136,7 +207,14 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive")) {
+            check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
+            check(files.core("arm64-v8a", coreName = name) == coreHash)
+        }
+        failure { RootSaveFiles.corePath("unknown") }
+        println("PASS: reviewed core ABIs and checksums, interrupted install recovery and existing core preservation")
+
+        checkLargeCoreStorage(root, label)
 
         val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"
         val apk = File(root, "frontend.apk")
@@ -204,4 +282,72 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+/** Real descriptors and publications; the 80 MiB payload is never allocated as an array. */
+private fun checkLargeCoreStorage(parent: File, label: ByteArray) {
+    val root = File(parent, "streaming-core").apply { check(mkdir()); Os.chown(path, 2000, 2000) }
+    val files = RootSaveFiles(root, 2000, label, {})
+    fun failure(work: () -> Unit) { try { work(); error("Expected refusal") } catch (e: IllegalArgumentException) { } catch (e: IllegalStateException) { check(e.message != "Expected refusal") } }
+    val source = File(root, "reviewed-large-core.so")
+    val block = ByteArray(65536) { 7 }
+    val header = byteArrayOf(127, 69, 76, 70, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 183.toByte(), 0)
+    val hash = java.security.MessageDigest.getInstance("SHA-256")
+    val chunks = 80 * 1024 * 1024 / block.size
+    source.outputStream().use { out ->
+        repeat(chunks) { index ->
+            if (index == 0) header.copyInto(block) else block.fill(7)
+            out.write(block); hash.update(block)
+        }
+    }
+    val expected = hash.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    val target = files.path(RootSaveFiles.corePath("mgba"))
+    val stage = File(target.parentFile, ".${target.name}.broomm-${expected.take(32)}-in")
+    var readChunks = 0
+    val cancelled = RootSaveFiles(root, 2000, label, {}, {
+        if (it == "core-chunk" && ++readChunks == chunks + 3) error("Cancelled during core copy")
+    })
+    failure { cancelled.installCore(source, 0, expected, "arm64-v8a") {} }
+    check(files.core() == null && stage.isFile && stage.length() < source.length())
+
+    // A retry reclaims only its deterministic stage. A new writer still prevents publication.
+    var closedChecks = 0
+    failure { files.installCore(source, 0, expected, "arm64-v8a") {
+        if (++closedChecks == 2) error("Writer started before publication")
+    } }
+    check(files.core() == null && stage.length() == source.length())
+    check(files.installCore(source, 0, expected, "arm64-v8a") {} == expected)
+    check(files.core("arm64-v8a") == expected && !stage.exists() && source.length() == 80L * 1024 * 1024)
+
+    // Replace the source name during an open read, with a forced mtime tie.
+    Os.remove(target.path)
+    val tiedTime = 1700000000000L
+    check(source.setLastModified(tiedTime))
+    val retained = File(root, "retained-source.so")
+    var swapped = false
+    val changed = RootSaveFiles(root, 2000, label, {}, {
+        if (it == "core-chunk" && !swapped) {
+            swapped = true
+            check(source.renameTo(retained))
+            source.writeBytes(header)
+            check(source.setLastModified(tiedTime))
+        }
+    })
+    failure { changed.installCore(source, 0, expected, "arm64-v8a") {} }
+    check(swapped && files.core() == null && !stage.exists())
+    check(source.delete() && retained.renameTo(source))
+
+    // An independent destination appearing after staging is retained, never replaced.
+    val other = File(root, "small-core.so").apply { writeBytes(header) }
+    val otherHash = RootSaveFiles.digest(header)
+    files.installCore(other, 0, otherHash, "arm64-v8a", coreName = "snes9x") {}
+    val existing = files.path(RootSaveFiles.corePath("snes9x"))
+    closedChecks = 0
+    failure { files.installCore(source, 0, expected, "arm64-v8a") {
+        if (++closedChecks == 2) Os.link(existing.path, target.path)
+    } }
+    check(files.hash(target) == otherHash && files.hash(existing) == otherHash)
+    Os.remove(target.path)
+    check(files.core("arm64-v8a", coreName = "snes9x") == otherHash)
+    println("PASS: 80 MiB streamed core install/inspection, cancelled-copy retry, live-writer refusal, tied-time source swap and exclusive destination preservation")
 }

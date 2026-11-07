@@ -285,7 +285,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-offline-states-snes-preview.zip),
+[current macOS build](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay
@@ -320,6 +320,31 @@ file** to restore a history entry with its matching state. Known profiles can
 open after an offline restart and retain pending progress until that same
 account reconnects. The two-account Thor checks use builds 1057/1058; see the
 [walkthrough, native checks and remaining limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
+
+The next rooted-core increment adds **Game Boy / Game Boy Color → RetroArch →
+Set up** for Gambatte, with separate platform choices, SRAM/RTC and matching
+states. Build 1061 passed Crystal SRAM/RTC/state reload and separate GB/GBC
+histories for both Thor accounts. Exact acceptance and remaining-core work are recorded in
+[the Android core walkthrough](docs/android-retroarch-cores.md).
+
+The next source increment also offers **Atari 2600 / TG16 → RetroArch → Set up**
+for Stella and Beetle PCE Fast. Use uncompressed `.a26`/`.bin` and `.pce`
+cartridges respectively. Stella syncs states; PCE also syncs raw SRAM. Build
+1062 passed Adventure state reload and Neutopia File Cabinet SRAM/state reload
+on the Thor. Quit normally and wait for Broomm's synchronization confirmation;
+the linked walkthrough records exact builds, hashes and remaining limits.
+
+The next source increment adds the same **Set up** flow for Genesis, Master
+System and Game Gear with Genesis Plus GX, and 32X with PicoDrive. Their pinned
+core downloads, raw SRAM and build-specific states are implemented; packaged
+Sega gameplay checks remain pending in the linked walkthrough.
+
+Current source also accepts a ZIP containing exactly one supported rooted
+cartridge. Broomm validates and extracts it privately without changing the
+download, retaining the archive's existing save/state name. Archives and total
+expanded content are bounded to 64 MiB, with a 32 MiB cartridge limit. Ambiguous,
+unsafe, linked, oversized or corrupt archives fail visibly and retain recovery;
+finish that session before retrying. Packaged ZIP acceptance remains pending.
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

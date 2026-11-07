@@ -35,6 +35,7 @@ import '../switch_firmware.dart';
 import '../progress/ryubing.dart';
 import 'cloud_saves_dialog.dart';
 import '../android/emulators.dart';
+import '../android/root_saves.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
 import 'update_screen.dart';
@@ -648,7 +649,7 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final rooted =
-        {'gba', 'snes'}.contains(platform.slug) &&
+        androidRootRetroCore(platform.slug) != null &&
         m.android.hasCurrentRoot(emulator, platform.slug, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
@@ -684,6 +685,7 @@ class _BroommAppState extends State<BroommApp> {
               files: files,
               selected: selected,
               rooted: rooted,
+              rootPlatform: platform.slug,
               emulatorClosed: emulatorClosed,
               core:
                   platform.retroCore ??

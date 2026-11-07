@@ -14,6 +14,13 @@ import '../session.dart';
 import '../switch_content.dart';
 import 'emulators.dart';
 
+const androidRootAccessModes = {
+  'root-gba-v1',
+  'root-snes-v1',
+  'root-gameboy-v1',
+  'root-cartridge-v1',
+};
+
 /// Concrete correspondence between one native save boundary and its private
 /// profile copy. The cloud format/keys retain the desktop ordinary-save contract.
 class AndroidSaveArea {
@@ -73,8 +80,7 @@ class AndroidSavePlan extends ProgressLayout {
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
   Map<String, String> get arguments => {...binding, 'emulator': emulator.id};
-  bool get rooted =>
-      {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']);
+  bool get rooted => androidRootAccessModes.contains(binding['access']);
   String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
       .singleWhere(
