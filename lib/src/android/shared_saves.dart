@@ -288,6 +288,14 @@ class SharedAndroidSaves {
       );
       await source.writeAsString(text, flush: true);
       final after = await progressFileHash(source);
+      if (plan.rooted) {
+        if (path != r['rootConfigPath'])
+          throw const FormatException('Invalid rooted session configuration.');
+        r['configuration'] = {path: after};
+        // Retain the exact owned bytes before publication, including when the
+        // native write succeeds but its reply or the next checkpoint is lost.
+        await progressWrite(journal, r);
+      }
       await manager.channel.invokeMethod<void>(plan.method('Replace'), {
         ...plan.arguments,
         'path': path,
@@ -464,6 +472,28 @@ class SharedAndroidSaves {
         'path': path,
         'sha256': hash,
       });
+    }
+    if (plan.rooted && r['configuration'] != null) {
+      final configuration = r['configuration'];
+      if (configuration is! Map ||
+          configuration.length != 1 ||
+          configuration.entries.any(
+            (e) =>
+                e.key != r['rootConfigPath'] ||
+                e.key != plan.launch['configPath'] ||
+                e.value is! String ||
+                !RegExp(r'^[a-f0-9]{64}$').hasMatch(e.value as String),
+          ))
+        throw const FormatException('Invalid rooted configuration cleanup.');
+      for (final e in configuration.entries) {
+        await manager.channel.invokeMethod<void>(plan.method('Replace'), {
+          ...plan.arguments,
+          'path': e.key,
+          'before': e.value,
+          'after': null,
+          'token': '${r['transaction']}-out',
+        });
+      }
     }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();

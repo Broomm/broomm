@@ -15,10 +15,21 @@ transaction retains original native metadata and old state provenance during
 core-change recovery. Missing working files retain recovery. Ordinary save
 formats stay compatible with the desktop contracts.
 
-Clean analysis and all 614 Flutter tests pass, with one existing native-host skip. Eight native fault groups ran on the
-Thor, including large descriptor transfers, bounded inventory and interrupted
-state publication. Current macOS package, PR APK and actual Thor
-state/SNES round trips are being verified. See the [walkthrough and limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
+Clean analysis and all 619 Flutter tests pass, with one existing native-host skip.
+CI for runtime `7908a10` passed on Windows, Linux and macOS and built all five packages. Eight native
+fault groups passed on the Thor, including large descriptor transfers, bounded
+inventory and interrupted state publication. Build 1057 passed packaged checks
+with both accounts: offline restart/activation, queued GBA state isolation,
+reconnection, older save/state restoration, automatic Snes9x setup, and separate
+SNES SRAM/state upload and in-emulator reload. Existing original SRAM and
+standalone settings were preserved. Final inspection found retained temporary
+session configurations. The follow-up journals their hashes before publication
+and removes only matching owned files, with interrupted publication, edited-file
+and lost-cleanup-reply regressions. Its packaged device check is pending.
+See the [walkthrough and scoped device
+evidence](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
+The [macOS package](build/releases/Broomm-macOS-offline-states-snes-preview.zip)
+is being rebuilt for that final cleanup correction.
 
 ## Rooted Android reliability checks — 2026-11-07
 

@@ -35,7 +35,11 @@ User 3's separate E save has SHA-256
 The Thor was returned to user 2 with both accounts synchronized and no active
 emulator or session journals. The owner-added second profile remains available.
 
-## Remaining product gap
+## Remaining product gap at build 1054
+
+The [build 1057 follow-up](android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07)
+implements and verifies offline profile activation. The observations below
+describe the earlier build rather than the current behavior.
 
 A known profile cannot currently be activated after an offline application
 restart. `ShellModel.activateProfile` requires `checkServer` and credential

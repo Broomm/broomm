@@ -630,7 +630,39 @@ retry after deleting a disposable native fixture, and retention across different
 Android/frontend builds. The shared bundle/retry readers now recognize the
 existing Android state-group form as well as desktop host/architecture groups.
 
-Verification in progress: clean Dart analysis, focused workflow tests, compiled
-Android bridge, and eight native fault groups passed on the Thor, including a
-2 MiB descriptor round trip and interrupted state publication. Packaged gameplay,
-state restore and SNES acceptance are still to be recorded below.
+Clean Dart analysis and all **619 Flutter tests** pass, with one existing native
+host skip. The Android bridge compiles, and eight native fault groups passed on
+the Thor, including a 2 MiB descriptor round trip and interrupted state publication.
+CI for runtime `7908a10` passed Windows, Linux and macOS checks and built all five
+packages. Native behavior on other Android devices remains unverified.
+
+Build **1057**, runtime `7908a10`, passed real ADB-controlled checks on the owner's
+Thor (Android 13, user 0, Magisk 31.1, RetroArch 1.22.2_GIT arm64, RomM 5.4.0):
+
+| Boundary | Observed result |
+| --- | --- |
+| Saved profile after offline restart | A UID-scoped network rejection blocked only Broomm's RomM connection. Restart and explicit saved-profile selection opened the local library and Minish Cap. |
+| Offline GBA state and account switching | A real manual state survived Quit and application restart as pending. Selecting user 3 left user 2's checkpoint byte-identical. Only reselecting user 2 uploaded/read back its version 216. |
+| GBA states and history | Both accounts uploaded different slot-0 states. User 2 replaced its state (217), explicitly imported the older version 216 as 218, then RetroArch loaded the earlier file-selection position. Original SRAM hashes stayed unchanged. |
+| Snes9x setup | Normal Set up installed the pinned arm64 core, SHA-256 `dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3`, retaining mGBA and its separate binding. |
+| Super Mario World | User 2's original Mario A and user 3's empty files remained separate. Both accounts uploaded/read back SRAM and distinct manual states (versions 220 and 221), then loaded their own states in RetroArch. User 2 returned to Yoshi's House; user 3 returned to the new-game introduction. |
+| Preservation | The original two GBA SRAM files and user 2's SNES SRAM stayed byte-identical. All 13 pre-existing native files, including standalone configuration/core options and retained historical configurations, compared unchanged with backup. No active writer, session journal or pending upload remained. The temporary network rule was removed. |
+
+Current RetroArch preferences did not create PNG thumbnails during these sessions;
+their transfer/restore boundary is covered by automated/native fixtures. This
+is single-device account isolation and actual RomM readback, not a second-device
+gameplay claim or coverage of other cores.
+
+The one-time build 1057 reinstall was explicitly approved after the preview
+signing keys differed. A verified backup preserved every local file, both native
+Keystore sign-ins were re-encrypted/read back, and all 160 non-signature APK
+entries matched CI. Its local retained preview signing identity permits future
+Thor upgrades without that migration. No credential or signing key is in the
+repository or evidence record.
+
+Final inspection found eight temporary session configurations left by 1057.
+The correction records each generated configuration's path/hash durably before
+native publication, then uses compare-before-delete after save restoration and
+ROM cleanup. A changed configuration preserves recovery; a lost deletion reply
+can retry idempotently. Unrecorded legacy configurations are retained. The
+packaged correction and current macOS archive are being verified.

@@ -285,7 +285,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-download-speed.zip),
+[current macOS build](build/releases/Broomm-macOS-offline-states-snes-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay
@@ -309,6 +309,17 @@ entitlement. Stable `com.armsx2` and nightly `com.armsx2.nightly` are both
 detected; enabled stable wins when both exist. Successful setup makes the
 emulator the default for that platform. Play opens the external app using its
 Android controls.
+
+On rooted Android, **Game Boy Advance → RetroArch → Set up** provisions mGBA;
+**Super Nintendo → RetroArch → Set up** provisions Snes9x independently. Allow
+Magisk when asked and complete RetroArch's first open if Setup requests it.
+Play and normal Quit need no extra closure confirmation when Broomm can verify
+the emulator's exit. SRAM and manual states sync to the selected RomM account;
+states require the same frontend/core build. Use **Options → Use existing save
+file** to restore a history entry with its matching state. Known profiles can
+open after an offline restart and retain pending progress until that same
+account reconnects. The two-account Thor checks use build 1057; see the
+[walkthrough, native checks and remaining limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

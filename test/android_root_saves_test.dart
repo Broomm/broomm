@@ -34,6 +34,8 @@ void main() {
   var denied = false;
   var missingCore = false;
   var refuseRomCleanup = false;
+  var loseConfigPublicationReply = false;
+  var loseConfigCleanupReply = false;
   var processState = 'idle', exitState = 'unknown';
   var reportsBeforeExit = 0;
   const process = {
@@ -102,6 +104,8 @@ void main() {
     denied = false;
     missingCore = false;
     refuseRomCleanup = false;
+    loseConfigPublicationReply = false;
+    loseConfigCleanupReply = false;
     processState = 'idle';
     exitState = 'unknown';
     reportsBeforeExit = 0;
@@ -194,6 +198,16 @@ void main() {
             } else {
               metadata[args['path']] =
                   args['metadata'] ?? metadata[args['path']] ?? attributes;
+            }
+            if ((args['path'] as String).endsWith('.cfg')) {
+              if (args['after'] != null && loseConfigPublicationReply) {
+                loseConfigPublicationReply = false;
+                throw PlatformException(code: 'lost-config-publication-reply');
+              }
+              if (args['after'] == null && loseConfigCleanupReply) {
+                loseConfigCleanupReply = false;
+                throw PlatformException(code: 'lost-config-cleanup-reply');
+              }
             }
           }
           if (call.method == 'rootList')
@@ -556,6 +570,13 @@ void main() {
     final path = p.remotePath('save/game.srm');
     final original = await put(path, [7, 7]);
     final unrelated = await put('standalone/Minish Cap.srm', [9, 9]);
+    final unrelatedConfig = await put(
+      p.launch['configPath']!.replaceFirst(
+        RegExp(r'config-[a-f0-9]{32}'),
+        'config-${'9' * 32}',
+      ),
+      [8, 9],
+    );
     final working = await p.target('save/game.srm');
     await working.parent.create(recursive: true);
     await working.writeAsBytes([1, 1]);
@@ -582,7 +603,65 @@ void main() {
     expect(await original.readAsBytes(), [7, 7]);
     expect(metadata[path], attributes);
     expect(await unrelated.readAsBytes(), [9, 9]);
+    expect(
+      await File('${native.path}/${p.launch['configPath']}').exists(),
+      false,
+    );
+    expect(await unrelatedConfig.readAsBytes(), [8, 9]);
     expect(await saves.pending, isFalse);
+  });
+
+  test('changed session configuration retains recovery; lost cleanup replies retry safely', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+    final original = await put(p.remotePath('save/game.srm'), [7]);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba');
+    final config = File('${native.path}/${p.launch['configPath']}');
+    final prepared = await config.readAsBytes();
+    await config.writeAsString('user-edited configuration');
+    await put(p.remotePath('save/game.srm'), [2, 3]);
+    await saves.capture(g, cloud, p);
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await saves.pending, true);
+    expect(await original.readAsBytes(), [7]);
+    expect(await config.readAsString(), 'user-edited configuration');
+    expect(await (await p.target('save/game.srm')).readAsBytes(), [2, 3]);
+    // Explicit resolution in the fixture restores the known prepared copy.
+    await config.writeAsBytes(prepared);
+    loseConfigCleanupReply = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await config.exists(), false);
+    expect(await saves.pending, true);
+    await saves.restoreOriginal(g, p);
+    expect(await saves.pending, false);
+    expect(await original.readAsBytes(), [7]);
+  });
+
+  test('interrupted configuration publication keeps its ownership receipt before cleanup', () async {
+    await manager.connectGbaRoot(emulator);
+    final p = await plan(), g = game(p), saves = SharedAndroidSaves(manager);
+    final original = await put(p.remotePath('save/game.srm'), [7]);
+    await (await p.target('save/game.srm')).writeAsBytes([1]);
+    loseConfigPublicationReply = true;
+    await expectLater(
+      saves.begin(g, p, 'a' * 64, selected: '/game/Minish Cap.gba'),
+      throwsA(isA<PlatformException>()),
+    );
+    final config = File('${native.path}/${p.launch['configPath']}');
+    expect(await config.exists(), true);
+    expect(await saves.capture(g, cloud, p), false);
+    final recovery = await saves.recoveryPlan(g, await plan());
+    await saves.restoreOriginal(g, recovery);
+    expect(await config.exists(), false);
+    expect(await original.readAsBytes(), [7]);
+    expect(await saves.pending, false);
+    expect(api.records, isEmpty);
   });
 
   test('interrupted publication and revoked root retain recovery and refuse identity changes', () async {
