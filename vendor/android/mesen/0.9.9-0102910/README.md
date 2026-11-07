@@ -29,5 +29,17 @@ compiler log, ELF dependency/build-ID report, source manifest and tool/output
 hashes. Failed stages remain under `.tool-cache/android/mesen/` for inspection;
 remove only a finished job's private stage/output before rebuilding. This is a
 core build recipe, not native gameplay acceptance or a claim to reproduce
-official nightly bytes. Build success and reviewed output pins are still pending;
-no Mesen runtime download or platform binding is enabled by this commit.
+official nightly bytes.
+
+All four ABIs passed in [CI run 42416669733](https://github.com/Broomm/broomm/actions/runs/42416669733),
+builder `061d853` / PR merge `c84ce431`. Their verified single-entry archives,
+unchanged gzip-compressed build records/logs and ELF reports are retained under
+each ABI directory. All need only Android libc/libm/libdl. Each build reports six
+upstream warnings (PartyTap precedence and stb_vorbis comparison); no source
+patch or warning suppression was applied. Compilation is not gameplay acceptance.
+
+The original records mislabeled the ZIP method as `stored`; direct archive
+inspection confirms method 8 (deflate), matching CRCs, hashes and payloads.
+`provenance.json` records this erratum without rewriting the original evidence;
+the builder now reads the actual ZIP method. No Mesen runtime download or
+platform binding is enabled by this artifact-retention increment.

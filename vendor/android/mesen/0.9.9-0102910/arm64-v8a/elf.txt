@@ -1,0 +1,38 @@
+Dynamic section at offset 0x351758 contains 27 entries:
+  Tag                Type           Name/Value
+  0x0000000000000001 (NEEDED)       Shared library: [libc.so]
+  0x0000000000000001 (NEEDED)       Shared library: [libm.so]
+  0x0000000000000001 (NEEDED)       Shared library: [libdl.so]
+  0x000000000000000e (SONAME)       Library soname: [libretro.so]
+  0x000000000000001e (FLAGS)        BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)      NOW 
+  0x0000000000000007 (RELA)         0x1a58
+  0x0000000000000008 (RELASZ)       609792 (bytes)
+  0x0000000000000009 (RELAENT)      24 (bytes)
+  0x000000006ffffff9 (RELACOUNT)    25406
+  0x0000000000000017 (JMPREL)       0x96858
+  0x0000000000000002 (PLTRELSZ)     2928 (bytes)
+  0x0000000000000003 (PLTGOT)       0x3572c8
+  0x0000000000000014 (PLTREL)       RELA
+  0x0000000000000006 (SYMTAB)       0x2f8
+  0x000000000000000b (SYMENT)       24 (bytes)
+  0x0000000000000005 (STRTAB)       0x1360
+  0x000000000000000a (STRSZ)        1777 (bytes)
+  0x000000006ffffef5 (GNU_HASH)     0x1290
+  0x0000000000000019 (INIT_ARRAY)   0x355700
+  0x000000000000001b (INIT_ARRAYSZ) 88 (bytes)
+  0x000000000000001a (FINI_ARRAY)   0x3556f0
+  0x000000000000001c (FINI_ARRAYSZ) 16 (bytes)
+  0x000000006ffffff0 (VERSYM)       0x10f0
+  0x000000006ffffffe (VERNEED)      0x121c
+  0x000000006fffffff (VERNEEDNUM)   3
+  0x0000000000000000 (NULL)         0x0
+Displaying notes found in: .note.android.ident
+  Owner                Data size 	Description
+  Android              0x00000084	NT_ANDROID_TYPE_IDENT
+   description data: 18 00 00 00 72 32 39 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 34 32 30 36 38 36 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+Displaying notes found in: .note.gnu.build-id
+  Owner                Data size 	Description
+  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
+    Build ID: 52fc120ce13e9e1c30d60486ff707a0873610016

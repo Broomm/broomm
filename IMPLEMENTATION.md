@@ -7,8 +7,12 @@ A separate four-ABI CI job builds that source using the privately staged,
 already licensed NDK 29.0.14206865. It records source/tool/output hashes,
 compiler logs and ELF dependencies before any runtime download pin is accepted.
 Source inspection, three owning regressions, analysis and workflow lint pass
-locally. Native compilation and Mesen gameplay remain pending; no NES binding
-or app behavior is enabled by this build preparation.
+locally. All four ABIs passed native compilation in CI run `42416669733`; their
+checksums, ELF identities, Android-only dependencies, original logs/records and
+component licenses are retained. A ZIP-method metadata label was corrected
+against the actual archive without rewriting historical build records. Mesen
+gameplay remains pending; no NES binding or app behavior is enabled by this
+build preparation.
 
 ## Rooted Nintendo 64 device acceptance — 2026-11-07
 

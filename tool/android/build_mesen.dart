@@ -280,12 +280,13 @@ Future<void> main(List<String> arguments) async {
     await library.copy(payload.path);
     final zip = File('${payload.path}.zip');
     await ProgressZip.write(zip, output, ['mesen_libretro_android.so']);
+    final packaged = await ProgressZip.read(zip);
     recipe['output'] = {
       'payload_bytes': await payload.length(),
       'payload_sha256': await progressFileHash(payload),
       'archive_bytes': await zip.length(),
       'archive_sha256': await progressFileHash(zip),
-      'archive_method': 'stored',
+      'archive_method': packaged.entries.single.method,
       'needed': needed,
     };
     await record();

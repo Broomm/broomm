@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "core": "mesen",
+  "build_version": "0.9.9-0102910",
+  "source_repository": "https://github.com/libretro/Mesen",
+  "source_commit": "0102910c39ad1a62bc3f784466f3f67ca9eae335",
+  "source_archive": "source.tar.gz",
+  "source_sha256": "360f97e907ada9b8e28a95652aa1d07656340e1d84ff868312745a566b250e01",
+  "source_bytes": 886080,
+  "license": "GPL-3.0 with retained component GPL/LGPL and permissive/public-domain notices; see NOTICES.md and complete source.",
+  "entry": "mesen_libretro_android.so",
+  "build_recipe": "tool/android/build_mesen.dart at 061d8538e251c069acce0c77e9cd11e2fce60a86",
+  "ci_url": "https://github.com/Broomm/broomm/actions/runs/42416669733",
+  "ci_head": "061d8538e251c069acce0c77e9cd11e2fce60a86",
+  "ci_merge": "c84ce431c8d06418c3d0651ffc29627e1996dd3e",
+  "captured": "2026-11-07",
+  "source_patches": [],
+  "build_environment": {
+    "ndk": "29.0.14206865",
+    "clang": "Android clang 21.0.0 13989888 / r563880c",
+    "APP_PLATFORM": "android-24",
+    "APP_STL": "c++_static",
+    "GIT_VERSION": "0102910",
+    "workers": 2,
+    "host": "GitHub ubuntu-24.04 x86_64; exact uname and tool hashes in original per-ABI build records"
+  },
+  "metadata_erratum": "Original build.json output.archive_method incorrectly says stored. The retained ZIPs are verified method 8 (deflate), with matching sizes, hashes, CRCs and ELF payloads. Original records/logs are retained unchanged in gzip; provenance records observed method 8 and the builder now reads the actual ZIP method. This correction does not change compiled source or retained payloads.",
+  "reproduction_limit": "Built from the retained exact source and reviewed recipe in Broomm CI; not unmodified official nightly binaries and no bit-for-bit reproduction claim across build paths/toolchain hosts.",
+  "archives": {
+    "arm64-v8a": {
+      "artifact_id": 13591907683,
+      "artifact_sha256": "c51ffdc839955dd378f390e85e1fab4ebb7b707c20ee0d17d441e119f168ebde",
+      "builder_revision": "c84ce431c8d06418c3d0651ffc29627e1996dd3e",
+      "tool_hashes": {
+        "source.properties": "716f3518a923198cfab037abb32dc3f1b1f7e9a9dcdcda6b66be5906215d2658",
+        "ndk-build": "4dab4ba20f79dc510ce760110d897d07a89d7389c2af162c416d14133a7102c7",
+        "build/core/build-local.mk": "eee7052edb0246c3989ff35cf21c78029fb2118947bf52d8bd8d03e205ea1e35",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/clang": "d326ed4fc4f71e5315b9ce388fc23ec792f81652ca7b29e66294de6ed2520844",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf": "5104576a3518575cf1887c2afa9249bbd0dc175cb9dc0f2af0d430fe0cb20bbe"
+      },
+      "build_log_sha256": "c43ebd993f03cda31e47b51918bf3bba574d4e25a4a4d2d7a2069c662f268b96",
+      "elf_sha256": "22a71274aa4ac83e843394bee07a2f9c0871174ecfa9ed7ac813ddb6f343fabc",
+      "archive_method": 8,
+      "elf_class": 2,
+      "elf_machine": 183,
+      "compiler_warnings": 6,
+      "retained_build_json_sha256": "bb2062a0520e8f4f7447e14e60adddd28e3c2dafe9bd226960b1ff3a4a416f68",
+      "payload_bytes": 3545864,
+      "payload_sha256": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "archive_bytes": 1145917,
+      "archive_sha256": "4c78c6bc0a8683493524473c046e164855ae7eeb3df2dc6b7228c47dc00fa3ac",
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "artifact_id": 13591831696,
+      "artifact_sha256": "e3e51119d176668202ae9c82ae3498fad444687e4b4e331efd6da3d569d18659",
+      "builder_revision": "c84ce431c8d06418c3d0651ffc29627e1996dd3e",
+      "tool_hashes": {
+        "source.properties": "716f3518a923198cfab037abb32dc3f1b1f7e9a9dcdcda6b66be5906215d2658",
+        "ndk-build": "4dab4ba20f79dc510ce760110d897d07a89d7389c2af162c416d14133a7102c7",
+        "build/core/build-local.mk": "eee7052edb0246c3989ff35cf21c78029fb2118947bf52d8bd8d03e205ea1e35",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/clang": "d326ed4fc4f71e5315b9ce388fc23ec792f81652ca7b29e66294de6ed2520844",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf": "5104576a3518575cf1887c2afa9249bbd0dc175cb9dc0f2af0d430fe0cb20bbe"
+      },
+      "build_log_sha256": "3fcbfc4f04c6c73982f6fc48ee304ebe4c15e6ac96fd91778b75eb2dcff76155",
+      "elf_sha256": "f2150d3f446a499c3321a86aba32c424752bb324048092c79c29a6d23e2b3c39",
+      "archive_method": 8,
+      "elf_class": 2,
+      "elf_machine": 62,
+      "compiler_warnings": 6,
+      "retained_build_json_sha256": "29e3bdf87883e07a965ae875f4cd822a61d87d444d75e8d7d5fdc83465afbc5f",
+      "payload_bytes": 3804432,
+      "payload_sha256": "2ddf03b51bc4bd55554a2ccf7b26dd86b914cf4876e3597b5a7a8c1bf282babd",
+      "archive_bytes": 1165588,
+      "archive_sha256": "5309f72faf3df8efffa5c211c548e022ff544122e173564f4aaa672aade23e0c",
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "artifact_id": 13591827770,
+      "artifact_sha256": "096084274fbf9d835f324591c4eb8d5fca8388ce03c2972e2785bac71da46ae0",
+      "builder_revision": "c84ce431c8d06418c3d0651ffc29627e1996dd3e",
+      "tool_hashes": {
+        "source.properties": "716f3518a923198cfab037abb32dc3f1b1f7e9a9dcdcda6b66be5906215d2658",
+        "ndk-build": "4dab4ba20f79dc510ce760110d897d07a89d7389c2af162c416d14133a7102c7",
+        "build/core/build-local.mk": "eee7052edb0246c3989ff35cf21c78029fb2118947bf52d8bd8d03e205ea1e35",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/clang": "d326ed4fc4f71e5315b9ce388fc23ec792f81652ca7b29e66294de6ed2520844",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf": "5104576a3518575cf1887c2afa9249bbd0dc175cb9dc0f2af0d430fe0cb20bbe"
+      },
+      "build_log_sha256": "edb5612ac4ac3e26664817f5dc11052f4b9221afb81c7e899784b62c1f9fea02",
+      "elf_sha256": "f99c6101f06729609797800e1534e6911db43d599f0198f812d51e1997fe9725",
+      "archive_method": 8,
+      "elf_class": 1,
+      "elf_machine": 40,
+      "compiler_warnings": 6,
+      "retained_build_json_sha256": "7af40f7dbb15e34a17d1cf7ee54bee108cb6de8e7aba747353492d43d34b3a94",
+      "payload_bytes": 1823148,
+      "payload_sha256": "2437fbac81c0e0c4a60e5a838fb0cbb426b12cc59cdcc08926d2790c364f11f1",
+      "archive_bytes": 725104,
+      "archive_sha256": "a38927484e604eec78832fd72893ddb956a56080bd76cbcc39171453f267ee2d",
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "artifact_id": 13591548302,
+      "artifact_sha256": "c8d6557bfd3e779c353a21be2a76bc140a372d1dcc7e2b8b0501902c6450c6a6",
+      "builder_revision": "c84ce431c8d06418c3d0651ffc29627e1996dd3e",
+      "tool_hashes": {
+        "source.properties": "716f3518a923198cfab037abb32dc3f1b1f7e9a9dcdcda6b66be5906215d2658",
+        "ndk-build": "4dab4ba20f79dc510ce760110d897d07a89d7389c2af162c416d14133a7102c7",
+        "build/core/build-local.mk": "eee7052edb0246c3989ff35cf21c78029fb2118947bf52d8bd8d03e205ea1e35",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/clang": "d326ed4fc4f71e5315b9ce388fc23ec792f81652ca7b29e66294de6ed2520844",
+        "toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf": "5104576a3518575cf1887c2afa9249bbd0dc175cb9dc0f2af0d430fe0cb20bbe"
+      },
+      "build_log_sha256": "57400f337135453ee36bf13fee64b1f044f64b1e8573a5c53d0ebd919cabc92c",
+      "elf_sha256": "7dac011891aa28b93b2699bd0029b2f332ec30eb7c1ddd908ee2291e09236e9f",
+      "archive_method": 8,
+      "elf_class": 1,
+      "elf_machine": 3,
+      "compiler_warnings": 6,
+      "retained_build_json_sha256": "f2d3072c3d3e56fd5da874f9bfb09dd13aa47020521e7709a003a2a8595dccb6",
+      "payload_bytes": 3362760,
+      "payload_sha256": "15ea57850e5033aebeead97db8d69980c72d599099d4fe437093788aca8d1ae4",
+      "archive_bytes": 1159321,
+      "archive_sha256": "c4c7d1291f0a7ec7083af298388a5a2933148785190b15dbec0ac803606a34f5",
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "retained_notice_sha256": {
+    "GPL-2.0.txt": "4b3f9e9d51d6064da376c2de2e237f43a2e21b381bb02bd7e07ebca785759449",
+    "LGPL-2.1.txt": "a2e55648eba0aeb849acf9429fde795a6a07bff54291110604ec47c62a7f331b",
+    "LICENSE": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "Libretro/Makefile.common": "f31af4c50a922133c7f2543d895eb447831607a81198ae2d6bcd60ad8c90c451",
+    "Libretro/jni/Android.mk": "9583af4d33e6e8c898a710f398016d0e242137b17065c5afbb0a2426701a63d9",
+    "Libretro/jni/Application.mk": "e0f50d0d1820a1fb8e13da8185d77119a774592b9baf6c35275fbbe0d49ad413",
+    "Libretro/libretro.cpp": "5a08e1ba0dc7977f5557d0c016d242169be91ca5b1eeeca5aa82b34c2a399105",
+    "Utilities/miniz.cpp": "9364e8514e366ecc7b09562528d280283d73670f87c390394cb8a342320191ce",
+    "Utilities/stb_vorbis.cpp": "d45853b3090e94ab3d2a490479d0807211b3d59cf69e191ba5de5ce89be50d6c"
+  },
+  "additional_standard_license_texts": "GPL-2.0.txt and LGPL-2.1.txt copied unchanged from retained Mupen source license texts; component notices identify the actual applicable terms."
+}
