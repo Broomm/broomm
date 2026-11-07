@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "core": "genesis_plus_gx",
+  "build_version": "1.7.4-f27655b",
+  "source_repository": "https://github.com/libretro/Genesis-Plus-GX",
+  "source_commit": "f27655b592ef43f317272d79883bcaa10d3ac8ad",
+  "source_archive": "https://codeload.github.com/libretro/Genesis-Plus-GX/tar.gz/f27655b592ef43f317272d79883bcaa10d3ac8ad",
+  "source_sha256": "4720dce8f219994951fe5d021e433f3b107ad7c3c64b6295a6a12928f31a73ea",
+  "captured": "2026-11-07",
+  "license": "Non-commercial upstream license; component notices retained",
+  "entry": "genesis_plus_gx_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/Genesis-Plus-GX/blob/f27655b592ef43f317272d79883bcaa10d3ac8ad/libretro/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Every ABI embeds the recorded source revision. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/genesis_plus_gx_libretro_android.so.zip",
+      "archive_bytes": 1133700,
+      "archive_sha256": "83e86c72f4bd45030aef53e4d8649c3f84db67564020ff5ae40a55adaa0b2caa",
+      "payload_bytes": 11073976,
+      "payload_sha256": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/genesis_plus_gx_libretro_android.so.zip",
+      "archive_bytes": 1063713,
+      "archive_sha256": "7f2358ca136080a94302b7c677d53374d82d89885bac038ec5371c25d5dd63c2",
+      "payload_bytes": 6048764,
+      "payload_sha256": "134ec967580bde69d733c61b20ded28865e496dfc1589caab901d82b3cb0c416",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/genesis_plus_gx_libretro_android.so.zip",
+      "archive_bytes": 1052009,
+      "archive_sha256": "7d7ea0ea6dc3349b9351f9cf37f924b82920fa4b3462773c0d0573f4f9d8d8c4",
+      "payload_bytes": 6260904,
+      "payload_sha256": "9e917b6d1f5f28f3ae2c7acef03655342a11a66340f8bb73b437afd981de8942",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/genesis_plus_gx_libretro_android.so.zip",
+      "archive_bytes": 1164813,
+      "archive_sha256": "e4619f37c2c9dc3cc8bc05c5c76e6f67ebac75817a1da84d7aeed5e592f59fb7",
+      "payload_bytes": 11221472,
+      "payload_sha256": "03a8290fe10bad57309febc7da78d86112f5879f9d9731351d194f287fd32376",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/LICENSE.txt",
+      "sha256": "642c163624269243d1f6b29d759d4e3a2d161bdc272c90d82ecbeec82ae26755"
+    },
+    {
+      "path": "notices/core/cd_hw/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/core/cd_hw/libchdr/deps/libFLAC/COPYING.Xiph",
+      "sha256": "fa27cb11f13f97b0c5f3ff363b1e2610c6efe87ed175779cb2a78e44eb19d34c"
+    },
+    {
+      "path": "notices/core/ntsc/license.txt",
+      "sha256": "319daefe38ebeead3df178e5937898a52d67c0c795f54f1c0bb10ac3b9cffb63"
+    },
+    {
+      "path": "notices/core/sound/minimp3/LICENSE.txt",
+      "sha256": "6a1ee543e5282cd9061881edf462e6fdab181f328da71fc2c9a6950a80e94d01"
+    },
+    {
+      "path": "notices/core/sound/tremor/COPYING",
+      "sha256": "d2ab5758336489da61c12cc5bb757da5339c4ae9001f9bb0562b4370249af814"
+    },
+    {
+      "path": "notices/gcw0/opk-data/LICENSE.txt",
+      "sha256": "855bbbaa79389bb92b34aae6bf870a48bc6bc752c4a9a65fc8a074fe813f86e6"
+    },
+    {
+      "path": "notices/gx/utils/wiidrc/LICENSE",
+      "sha256": "f906a51cbcf80751c1d3cba9920e5ff87b95a2721587a509b632a76af09e89ce"
+    },
+    {
+      "path": "notices/libretro/deps/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/libretro/deps/lzma-19.00/LICENSE",
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "notices/libretro/deps/zstd/COPYING",
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "notices/libretro/deps/zstd/LICENSE",
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    }
+  ]
+}
