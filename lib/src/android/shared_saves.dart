@@ -5,6 +5,8 @@ import '../progress/digest.dart';
 import '../progress/layout.dart';
 import '../progress/service.dart';
 import '../progress/store.dart';
+import '../progress/zip.dart';
+import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
 
@@ -314,47 +316,75 @@ class SharedAndroidSaves {
 
   Future<String> stageRootRom(CloudGame game, AndroidSavePlan plan) async {
     final r = await record(game, plan);
-    final source = File(r['selected'] as String);
-    final name = source.uri.pathSegments.last;
+    var source = File(r['selected'] as String);
+    var name = source.uri.pathSegments.last;
     progressRelative(name);
+    final extensions = _rootRomExtensions(plan);
     final extension = name.split('.').last.toLowerCase();
-    final supported = switch (plan.binding['access']) {
-      'root-gba-v1' => extension == 'gba',
-      'root-snes-v1' => {'sfc', 'smc'}.contains(extension),
-      'root-gameboy-v1' => {'gb', 'gbc', 'dmg'}.contains(extension),
-      'root-cartridge-v1' => switch (plan.launch['platform']) {
-        'atari2600' => {'a26', 'bin'}.contains(extension),
-        'tg16' => extension == 'pce',
-        'genesis' => {'md', 'gen', 'smd', 'bin'}.contains(extension),
-        'sms' => {'sms', 'sg'}.contains(extension),
-        'gamegear' => extension == 'gg',
-        'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'}.contains(extension),
-        _ => false,
-      },
-      _ => false,
-    };
-    if (!supported || !plan.rooted || r['phase'] != 'installed')
+    if ((!extensions.contains(extension) && extension != 'zip') ||
+        extensions.isEmpty ||
+        !plan.rooted ||
+        r['phase'] != 'installed')
       throw StateError(
-        'Rooted RetroArch requires one uncompressed game file for the selected core.',
+        'Rooted RetroArch requires one supported cartridge, uncompressed or in a ZIP.',
       );
-    final config = plan.launch['configPath']!;
-    final parent = config.substring(0, config.lastIndexOf('/'));
-    final path = '$parent/rom-${r['transaction']}/$name';
-    final bytes = await source.length();
-    if (bytes < 1 || bytes > 32 * 1024 * 1024)
-      throw StateError(
-        'The RetroArch game file must be between 1 byte and 32 MiB.',
-      );
-    final hash = await progressFileHash(source);
-    r['romStage'] = path;
-    r['romStageSha256'] = hash;
-    await progressWrite(journal, r);
-    return (await manager.channel.invokeMethod<String>('rootStageRom', {
-      ...plan.arguments,
-      'path': path,
-      'source': source.path,
-      'sha256': hash,
-    }))!;
+    Directory? extraction;
+    try {
+      if (extension == 'zip') {
+        phase?.call('Checking and extracting the cartridge…');
+        final before = await progressFileHash(source);
+        final zip = await ProgressZip.read(
+          source,
+          maxBytes: 64 * 1024 * 1024,
+          maxEntryBytes: 32 * 1024 * 1024,
+        );
+        final cartridges = zip.entries
+            .where(
+              (e) => extensions.contains(e.name.split('.').last.toLowerCase()),
+            )
+            .toList();
+        if (cartridges.length != 1)
+          throw StateError(
+            'The ZIP must contain exactly one supported cartridge.',
+          );
+        extraction = await directory(r).createTemp('cartridge-');
+        await zip.extract(extraction);
+        if (await progressFileHash(source) != before)
+          throw StateError(
+            'The game archive changed during extraction. Try again.',
+          );
+        final cartridge = cartridges.single;
+        source = await progressFile(extraction, cartridge.name);
+        final rawExtension = cartridge.name.split('.').last.toLowerCase();
+        // Keep the original archive's save/state stem, independently of its
+        // internal filename. Existing profile and desktop progress still match.
+        name = '${retroStateStem(r['selected'] as String)}.$rawExtension';
+        progressRelative(name);
+        r['romStageExtension'] = rawExtension;
+      }
+      final config = plan.launch['configPath']!;
+      final parent = config.substring(0, config.lastIndexOf('/'));
+      final path = '$parent/rom-${r['transaction']}/$name';
+      final bytes = await source.length();
+      if (bytes < 1 || bytes > 32 * 1024 * 1024)
+        throw StateError(
+          'The RetroArch game file must be between 1 byte and 32 MiB.',
+        );
+      final hash = await progressFileHash(source);
+      r['romStage'] = path;
+      r['romStageSha256'] = hash;
+      await progressWrite(journal, r);
+      return (await manager.channel.invokeMethod<String>('rootStageRom', {
+        ...plan.arguments,
+        'path': path,
+        'source': source.path,
+        'sha256': hash,
+      }))!;
+    } finally {
+      // Native staging has finished (or failed) before its private source goes.
+      // The durable native path/hash already covers a lost staging reply.
+      await extraction?.delete(recursive: true);
+    }
   }
 
   Future<void> apply(
@@ -477,12 +507,24 @@ class SharedAndroidSaves {
     if (r['romStage'] case final String path when plan.rooted) {
       final config = plan.launch['configPath']!;
       final parent = config.substring(0, config.lastIndexOf('/'));
-      final name = File(r['selected'] as String).uri.pathSegments.last;
+      final selected = r['selected'] as String;
+      var name = File(selected).uri.pathSegments.last;
+      if (r['romStageExtension'] case final Object extension) {
+        if (!name.toLowerCase().endsWith('.zip') ||
+            extension is! String ||
+            !_rootRomExtensions(plan).contains(extension))
+          throw const FormatException(
+            'Rooted cartridge staging identity changed.',
+          );
+        name = '${retroStateStem(selected)}.$extension';
+      }
       final hash = r['romStageSha256'];
       if (path != '$parent/rom-${r['transaction']}/$name' ||
           hash is! String ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
-        throw const FormatException('Rooted GBA staging identity changed.');
+        throw const FormatException(
+          'Rooted cartridge staging identity changed.',
+        );
       await manager.channel.invokeMethod<void>('rootRemoveRom', {
         ...plan.arguments,
         'path': path,
@@ -533,3 +575,20 @@ class SharedAndroidSaves {
     await journal.delete();
   }
 }
+
+Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
+    switch (plan.binding['access']) {
+      'root-gba-v1' => {'gba'},
+      'root-snes-v1' => {'sfc', 'smc'},
+      'root-gameboy-v1' => {'gb', 'gbc', 'dmg'},
+      'root-cartridge-v1' => switch (plan.launch['platform']) {
+        'atari2600' => {'a26', 'bin'},
+        'tg16' => {'pce'},
+        'genesis' => {'md', 'gen', 'smd', 'bin'},
+        'sms' => {'sms', 'sg'},
+        'gamegear' => {'gg'},
+        'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'},
+        _ => {},
+      },
+      _ => {},
+    };

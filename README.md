@@ -339,6 +339,13 @@ System and Game Gear with Genesis Plus GX, and 32X with PicoDrive. Their pinned
 core downloads, raw SRAM and build-specific states are implemented; packaged
 Sega gameplay checks remain pending in the linked walkthrough.
 
+Current source also accepts a ZIP containing exactly one supported rooted
+cartridge. Broomm validates and extracts it privately without changing the
+download, retaining the archive's existing save/state name. Archives and total
+expanded content are bounded to 64 MiB, with a 32 MiB cartridge limit. Ambiguous,
+unsafe, linked, oversized or corrupt archives fail visibly and retain recovery;
+finish that session before retrying. Packaged ZIP acceptance remains pending.
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

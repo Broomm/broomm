@@ -36,6 +36,7 @@ void main() {
   var denied = false;
   var missingCore = false;
   var refuseRomCleanup = false;
+  var loseRomStagingReply = false;
   var loseConfigPublicationReply = false;
   var loseConfigCleanupReply = false;
   var processState = 'idle', exitState = 'unknown';
@@ -116,6 +117,7 @@ void main() {
     denied = false;
     missingCore = false;
     refuseRomCleanup = false;
+    loseRomStagingReply = false;
     loseConfigPublicationReply = false;
     loseConfigCleanupReply = false;
     processState = 'idle';
@@ -186,6 +188,10 @@ void main() {
               args['path'] as String,
               await File(args['source'] as String).readAsBytes(),
             );
+            if (loseRomStagingReply) {
+              loseRomStagingReply = false;
+              throw PlatformException(code: 'lost-rom-staging-reply');
+            }
             return target.path;
           }
           if (call.method == 'rootRemoveRom') {
@@ -653,6 +659,119 @@ void main() {
     await saves.restoreOriginal(g, p);
     expect(await saves.pending, false);
     expect(await original.readAsBytes(), [7]);
+  });
+
+  test('a nested ZIP cartridge keeps its archive save identity and cleanup can retry', () async {
+    await manager.connectGbaRoot(emulator);
+    final contents = await Directory('${temp.path}/packed').create();
+    await Directory('${contents.path}/regional').create();
+    await File('${contents.path}/regional/Different Name.gba')
+        .writeAsBytes([5, 6]);
+    await File('${contents.path}/readme.txt').writeAsString('Game notes');
+    final rom = File('${temp.path}/Minish Cap.zip');
+    await ProgressZip.write(rom, contents, [
+      'regional/Different Name.gba',
+      'readme.txt',
+    ]);
+    final archiveHash = await progressFileHash(rom);
+    final p = await gameboyPlan('gba', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    loseRomStagingReply = true;
+    await expectLater(
+      saves.stageRootRom(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    final stagedRecord = await saves.record(g, p);
+    final staged = File('${native.path}/${stagedRecord['romStage']}');
+    expect(staged.uri.pathSegments.last, 'Minish Cap.gba');
+    expect(await staged.readAsBytes(), [5, 6]);
+    expect(p.remotePath('save/game.srm'), endsWith('/Minish Cap.srm'));
+    final r = await saves.record(g, p);
+    expect(
+      await saves
+          .directory(r)
+          .list()
+          .any((e) => e.path.contains('/cartridge-')),
+      false,
+    );
+    await put(p.remotePath('save/game.srm'), [3, 4]);
+    await saves.capture(g, cloud, p);
+    refuseRomCleanup = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await saves.pending, true);
+    refuseRomCleanup = false;
+    await saves.restoreOriginal(g, p);
+    expect(await staged.exists(), false);
+    expect(await progressFileHash(rom), archiveHash);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), [3, 4]);
+  });
+
+  test(
+    'ambiguous or unsafe cartridge archives never reach native ROM staging',
+    () async {
+      await manager.connectGbaRoot(emulator);
+      final contents = await Directory('${temp.path}/packed').create();
+      await Directory('${contents.path}/ok').create();
+      for (final name in ['ok/game.gba', 'another.gba'])
+        await File('${contents.path}/$name').writeAsBytes([1, 2]);
+      final rom = File('${temp.path}/Minish Cap.zip');
+      await ProgressZip.write(rom, contents, ['ok/game.gba', 'another.gba']);
+      final p = await gameboyPlan('gba', rom.path), g = game(p);
+      final saves = SharedAndroidSaves(manager);
+      await saves.begin(g, p, 'a' * 64, selected: rom.path);
+      await expectLater(saves.stageRootRom(g, p), throwsStateError);
+      await rom.delete();
+      await ProgressZip.write(rom, contents, ['ok/game.gba']);
+      final bytes = await rom.readAsBytes();
+      final needle = utf8.encode('ok/game.gba');
+      for (var i = 0; i <= bytes.length - needle.length; i++) {
+        if (List.generate(needle.length, (n) => bytes[i + n]).join(',') ==
+            needle.join(',')) {
+          bytes[i] = 46;
+          bytes[i + 1] = 46;
+        }
+      }
+      await rom.writeAsBytes(bytes);
+      await expectLater(saves.stageRootRom(g, p), throwsFormatException);
+      expect(calls, isNot(contains('rootStageRom')));
+      expect(await saves.pending, true);
+    },
+  );
+
+  test('oversized and corrupt ZIP payloads keep recovery and remove partial extraction', () async {
+    await manager.connectGbaRoot(emulator);
+    final contents = await Directory('${temp.path}/packed').create();
+    final cartridge = await File('${contents.path}/game.gba').create();
+    final handle = await cartridge.open(mode: FileMode.writeOnly);
+    await handle.truncate(32 * 1024 * 1024 + 1);
+    await handle.close();
+    final rom = File('${temp.path}/Minish Cap.zip');
+    await ProgressZip.write(rom, contents, ['game.gba']);
+    final p = await gameboyPlan('gba', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    await expectLater(saves.stageRootRom(g, p), throwsFormatException);
+    await rom.delete();
+    await cartridge.writeAsBytes(List.generate(1024, (i) => i % 251));
+    await ProgressZip.write(rom, contents, ['game.gba']);
+    final zip = await ProgressZip.read(rom), bytes = await rom.readAsBytes();
+    bytes[zip.entries.single.offset + 8] ^= 0xff;
+    await rom.writeAsBytes(bytes);
+    await expectLater(saves.stageRootRom(g, p), throwsA(isA<Exception>()));
+    expect(calls, isNot(contains('rootStageRom')));
+    final r = await saves.record(g, p);
+    expect(
+      await saves
+          .directory(r)
+          .list()
+          .any((e) => e.path.contains('/cartridge-')),
+      false,
+    );
+    expect(await saves.pending, true);
   });
 
   test('interrupted configuration publication keeps its ownership receipt before cleanup', () async {

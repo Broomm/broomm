@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Rooted cartridge ZIP preparation — 2026-11-07
+
+Sega catalogue checks found ordinary single-cartridge ZIP downloads, which the
+earlier rooted handoff refused. Current source validates ZIP structure and
+extracts privately in Dart before the existing native cartridge staging. It
+requires exactly one supported cartridge, keeps the archive's save/state stem,
+retains the 32 MiB cartridge limit and bounds archives/expanded content to 64 MiB.
+The downloaded game stays unchanged. Durable staging records cover cleanup after
+a lost native reply. Focused regressions pass for nested names, cleanup retry,
+ambiguous/unsafe entries, oversized payloads and corrupt extraction. Analysis
+and all 638 Flutter tests pass, with one existing native-host skip; the focused
+39-test root suite also passes with a lost native staging reply. Packaged ZIP
+gameplay remains pending.
+
 ## Rooted Sega cartridges — 2026-11-07
 
 Current source adds independent Genesis, Master System and Game Gear Setup via

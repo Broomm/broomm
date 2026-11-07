@@ -157,6 +157,29 @@ Plus GX alone receives a 16 MiB Dart extraction bound and 2 MiB archive bound;
 previous core bounds are retained. Native core streaming is verified below.
 Packaged Sega gameplay remains pending.
 
+## Cartridge ZIP preparation
+
+The Sega catalogue supplied ZIPs for Genesis, Master System and Game Gear.
+Current source therefore prepares single-cartridge ZIPs for the implemented
+rooted cartridge routes in Dart. The existing ZIP validator checks every entry's
+path, headers, type, collision and resource bounds before extraction into a
+private transaction directory. Exactly one file must have this platform's
+supported cartridge extension. Archives and aggregate expanded content are
+limited to 64 MiB; each entry and the native cartridge retain the 32 MiB limit.
+Split/ZIP64, linked, unsafe, ambiguous and damaged archives are refused.
+
+The native cartridge uses the archive's original save/state stem even when its
+internal filename differs or is nested. Original downloads are unchanged.
+Extraction is removed after native staging or failure; the journal records the
+native path, extension and hash before publication, allowing normal cleanup to
+retry after a lost reply. Existing uncompressed journals remain readable.
+Regression checks cover nested names and progress capture/cleanup retry,
+multiple cartridges, traversal, oversized entries and corrupt payload cleanup.
+Analysis and all 638 Flutter tests pass with one existing native-host skip;
+39 focused root tests also pass with a lost native staging reply.
+Packaged ZIP gameplay remains pending; this does not add disc sets, firmware or
+arcade archive support.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
