@@ -9,8 +9,8 @@ Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
 checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
 cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
-1066/1069 passed the scoped device checks below. N64 has the source/file increment
-below, with packaged acceptance pending. Seven other selected cores remain research.
+1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
+cartridge/save/state checks below. Seven other selected cores remain research.
 
 ## Gambatte source and behavior
 
@@ -239,9 +239,7 @@ Analysis and all 638 Flutter tests pass with one existing native-host skip;
 Packaged ZIP acceptance is scoped to the three Sega games above; this does not add disc sets, firmware or
 arcade archive support.
 
-## Remaining boundaries
-
-### Nintendo 64 source increment
+## Nintendo 64 source increment
 
 Current source adds **Nintendo 64 → RetroArch → Set up** using the retained
 [Mupen64Plus-Next archives](../vendor/android/mupen64plus_next/3.0-15bada8/README.md).
@@ -267,9 +265,29 @@ focused setup/root/download tests pass. The final 42-test root suite also
 passes after the limit helper cleanup. Thirteen real
 Thor filesystem groups pass in disposable storage, including full SRAM,
 interrupted large-state publication/retry, exact 64 MiB cartridge staging and
-oversized refusal without widening earlier limits. Packaged N64 gameplay is
-pending. This does not add 64DD/Transfer Pak media,
-texture-pack installation or an N64 gameplay claim. The [upstream core guide](https://docs.libretro.com/library/mupen64plus/)
+oversized refusal without widening earlier limits.
+
+Build **1073**, runtime `d30e81f`, passed normal N64 Setup with all earlier cores
+and bindings retained. Super Mario 64 (8 MiB `.z64`, RomM 937) rendered, accepted
+analog movement and jump, and saved a manual gameplay state outside the castle.
+Changing its in-game STEREO preference to MONO exercised EEPROM-backed ordinary
+saving. Normal Quit uploaded/read back primary 235 with all 296,960 native save
+bytes and a 1,358,566-byte compressed state. A fresh Play restored both files
+byte-for-byte, File Select showed MONO and Load State returned to the gameplay
+scene. No completed star or in-game slot progression is claimed.
+
+The final session returned audio to STEREO and synchronized primary 236, keeping
+the gameplay state unchanged. All 19 earlier managed native files, 13 original
+standalone/managed files, eight earlier GBA/SNES progress files and 18 earlier
+GB/GBC/Atari/TG16/Sega progress files stayed unchanged. Both accounts' earlier
+histories remain distinct. Eight core hashes, eleven platform bindings and
+native cleanup passed; 81 reviewed operational lines had no warning/error.
+All CI checks and five packages passed. This is one arm64 device/account for
+N64; other byte orders, ZIP, controller-pak/Flash behavior and 64 MiB titles do
+not gain gameplay acceptance from these checks. The [exact evidence](android-retroarch-n64.json)
+retains files, checkpoints, package identities and observation hashes.
+
+This does not add 64DD/Transfer Pak media or texture-pack installation. The [upstream core guide](https://docs.libretro.com/library/mupen64plus/)
 describes broader core capabilities separately from Broomm's accepted scope.
 
 The Windows diagnostic follow-up `cf75b58` passed all CI jobs in
@@ -277,6 +295,8 @@ The Windows diagnostic follow-up `cf75b58` passed all CI jobs in
 Its native updater became ready after 1,770 ms (`Process.start`: 7 ms). This
 successful execution does not identify the earlier timeout's cause; the
 failure-only observation remains enabled without altering the pass deadline.
+
+## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
 arm64 library is about 73 MiB. Native core transport now streams up to 96 MiB

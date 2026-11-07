@@ -357,7 +357,9 @@ wait for Broomm's sync confirmation before switching accounts. Full SRAM and
 controller-pak data stay private to the selected profile/game; states require
 the same APK/ABI/core build. Existing standalone progress and settings are
 restored, and recorded native session files are removed after completion.
-Source/native file checks pass; packaged N64 gameplay remains pending. 64DD and
+Build 1073 verified Super Mario 64 rendering/input, EEPROM-backed audio-preference
+sync and manual gameplay-state reload on Thor, preserving earlier progress and
+settings. See the [scoped N64 evidence](docs/android-retroarch-n64.json). 64DD and
 Transfer Pak media are outside this increment's acceptance.
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
