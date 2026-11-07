@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "core": "mupen64plus_next",
+  "build_version": "3.0-15bada8",
+  "source_repository": "https://github.com/libretro/mupen64plus-libretro-nx",
+  "source_commit": "15bada85906593376e8fd697f1b0b3af3a20f512",
+  "source_archive": "https://codeload.github.com/libretro/mupen64plus-libretro-nx/tar.gz/15bada85906593376e8fd697f1b0b3af3a20f512",
+  "source_sha256": "0b739581f2610fa6967891a657c749557fa4f7555d6a7e2e3475c9b397302b13",
+  "captured": "2026-11-07",
+  "license": "GPL-2.0-or-later and retained component notices",
+  "entry": "mupen64plus_next_gles3_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/mupen64plus-libretro-nx/blob/15bada85906593376e8fd697f1b0b3af3a20f512/libretro/jni/Android.mk",
+  "recipe_inputs": {
+    "APP_ABI": "armeabi-v7a arm64-v8a x86 x86_64",
+    "APP_STL": "c++_static",
+    "APP_PLATFORM": "android-21",
+    "GLES3": 1,
+    "arm": "Android recipe enables LLE/parallel RSP/RDP and threaded Angrylion",
+    "x86": "Android recipe uses GLES3 without those ARM-only flags"
+  },
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. All four embed 15bada8. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mupen64plus_next_gles3_libretro_android.so.zip",
+      "archive_bytes": 2201377,
+      "archive_sha256": "fe89e593448560efaaa46c7ed18000dab68a14dbaac2e433f10b7d1cf741d832",
+      "payload_bytes": 6203328,
+      "payload_sha256": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "liblog.so",
+        "libEGL.so",
+        "libGLESv3.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "version": "3.0-Vulkan 15bada8"
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/mupen64plus_next_gles3_libretro_android.so.zip",
+      "archive_bytes": 2307737,
+      "archive_sha256": "cec8bfd4cb36b0b95472c0f52e513366331bc6a0630fe9f0d7a45d5f4d723fb0",
+      "payload_bytes": 6070572,
+      "payload_sha256": "2fd3523ecc0c36eebb1072b8356637fc7b7618747e992e691f9bf74f39ce67d7",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "liblog.so",
+        "libEGL.so",
+        "libGLESv3.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "version": "3.0-Vulkan 15bada8"
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/mupen64plus_next_gles3_libretro_android.so.zip",
+      "archive_bytes": 1344427,
+      "archive_sha256": "0d5f29d268f59dbfb62dd1c0dff4c5304021a3ef96a1a9c4e8cb22b325cc5576",
+      "payload_bytes": 3662680,
+      "payload_sha256": "a41c1d7b910aa5a3fdf2b026bfce817f149db0ade9bd55eec140cc8659f9b967",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "liblog.so",
+        "libEGL.so",
+        "libGLESv3.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "version": "3.0-GLES3 15bada8"
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/mupen64plus_next_gles3_libretro_android.so.zip",
+      "archive_bytes": 1324689,
+      "archive_sha256": "00a94dd1414f6295b84f46fb79ea09461b4c47fc40863abe0cc43fc37486a4da",
+      "payload_bytes": 3680736,
+      "payload_sha256": "ead53e2302cb8c6e33a91ecce4b03f24753d9d6bfb4eae375f93b34093a4ce9e",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "liblog.so",
+        "libEGL.so",
+        "libGLESv3.so",
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "version": "3.0-GLES3 15bada8"
+    }
+  },
+  "retained_source_files": {
+    "GLideN64/LICENSE": "7cbdf16d66376d39046abb11a26e5f5823fb631bfc48d4309f5c227957e66d45",
+    "GLideN64/licenses/GLSL-FXAA/LICENSE.md": "91515553fda3d86e82454bab0eb876a2cb9a31c0dcb8be640870fed624e53697",
+    "GLideN64/licenses/Glow/LICENSE": "13a3b6d268be629a2a3f7078639e688c9bbc564c7f0c99063db3ad4952512f98",
+    "GLideN64/licenses/gles2n64/LICENSE": "9ccf26cfe845e0eb8bb58053e47366e7ab6b697ae010f7650978d4b71b7d1fc1",
+    "GLideN64/licenses/readerwriterqueue/LICENSE.md": "74aeda891b7216355084e184f4b908fc166862c12a80d20cda72c2d2a34f8ea8",
+    "LICENSE": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643",
+    "Makefile.common": "e79f798a12bb0f8b4384a487388f523c56ba9e7d477700e4a6d8e5885095ffe7",
+    "libretro/jni/Android.mk": "577a242c99aa64895cb7a866c1ab37a7bfebf4f562d5044fcf096f0a708e46d1",
+    "libretro/jni/Application.mk": "e165a75341eda733a0ec04cc11a05c52468ecef8fd196c16aaa1698879e020fd",
+    "libretro/libretro_memory.h": "4d89673af5424d31b391e6afcdaeaaca9fcf73d062637d32c9090906a428582e",
+    "mupen64plus-core/LICENSES": "9965cd2096de0bf94290b9004c27760c7e738202313b32137ba909686e3aa86a",
+    "mupen64plus-core/doc/font-license": "1b79efd3785d8825a2d7dffa3e9e534eab9562c7af99cd798dba31f048049a2e",
+    "mupen64plus-core/doc/gpl-license": "4b3f9e9d51d6064da376c2de2e237f43a2e21b381bb02bd7e07ebca785759449",
+    "mupen64plus-core/doc/lgpl-license": "a2e55648eba0aeb849acf9429fde795a6a07bff54291110604ec47c62a7f331b",
+    "mupen64plus-rsp-cxd4/COPYING": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+    "mupen64plus-rsp-hle/LICENSES": "d159cdbd6f4401463d9ca83490f69a7624f69bb0070570497d2ef5463114ecc3",
+    "mupen64plus-rsp-paraLLEl/LICENSE": "3dcbbf07bd9ebb0b6fd117826d5c3fd35bdbfd4b31bb9ebebb4e74aef6959b32",
+    "mupen64plus-rsp-paraLLEl/LICENSE.LESSER": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c",
+    "mupen64plus-rsp-paraLLEl/LICENSE.MIT": "98295fe4fb291c433b705d40710cd44aaa09e7944943afb8a4ec02e9a4f59289",
+    "mupen64plus-rsp-paraLLEl/lightning/COPYING": "fc82ca8b6fdb18d4e3e85cfd8ab58d1bcd3f1b29abe782895abd91d64763f8e7",
+    "mupen64plus-rsp-paraLLEl/lightning/COPYING.DOC": "5ae033045108dac293940c2292d311ce8b58de976dff2269c22280b8df6cfd27",
+    "mupen64plus-rsp-paraLLEl/lightning/COPYING.LESSER": "a853c2ffec17057872340eee242ae4d96cbf2b520ae27d903e1b2fef1a5f9d1c",
+    "mupen64plus-video-paraLLEl/parallel-rdp/LICENSE": "29e3d9c8af52aa066b05be4ed348b2184052e99b793779c38baca2c6e00240c5"
+  }
+}
