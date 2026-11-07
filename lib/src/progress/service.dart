@@ -625,9 +625,10 @@ class CloudSaves {
         .map((k) => (k as String).split('/').first)
         .toSet();
     if (groups.any(
-      (g) => !RegExp(
-        r'^(save|device|card[AB]|ext-[a-f0-9]{8}|dlc-[a-f0-9]{8}|states-[a-f0-9]{16}-[a-z]+-[a-z0-9]+)$',
-      ).hasMatch(g),
+      (g) =>
+          !progressStateArea(g) &&
+          !RegExp(r'^(save|device|card[AB]|ext-[a-f0-9]{8}|dlc-[a-f0-9]{8})$')
+              .hasMatch(g),
     ))
       throw const FormatException('Unsupported pending save area');
     final ordinary = (manifest['files'] as Map).keys

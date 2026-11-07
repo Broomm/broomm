@@ -77,13 +77,56 @@ internal class RootSaveFiles(
             parent = target
         }
     }
-    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String) =
-        publish(relative, before, after, payload, wantedMetadata, token, MAX_BYTES,
-            sessionConfiguration = relative.endsWith(".cfg"))
+    fun inventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
+        require(areas.size in 1..2)
+        val result = linkedMapOf<String, BundleEntry>()
+        var total = 0L
+        var base: String? = null
+        for (area in areas) {
+            val directory = area.getValue("path")
+            val exact = area["exact"]
+            val prefix = area["prefix"]
+            require((exact != null && area.keys == setOf("path", "exact")) ||
+                (prefix != null && area.keys == setOf("path", "prefix", "pattern")))
+            val probe = "$directory/${exact ?: "$prefix.state"}"
+            managedPath(probe, saveOnly = true)
+            val owner = directory.substringBefore("/saves").substringBefore("/states")
+            require(base == null || base == owner); base = owner
+            require(if (exact != null) directory.endsWith("/saves") && exact.endsWith(".srm")
+                else Regex(".*/states/states-[a-f0-9]{16}-android").matches(directory))
+            val folder = path(directory)
+            if (!present(folder)) continue
+            val stat = Os.lstat(folder.path)
+            require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+            val names = folder.list() ?: error("Cannot inspect the managed save directory.")
+            require(names.size <= 1024) { "Managed save directory exceeds its entry limit." }
+            val selected = names.filter { if (exact != null) it == exact else
+                Regex(Regex.escape(prefix!!) + "\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?").matches(it) }
+            for (name in selected.sorted()) {
+                live()
+                val relative = "$directory/$name"
+                managedPath(relative, saveOnly = true)
+                require(!result.containsKey(relative) && result.size < 128) { "Too many rooted save files." }
+                val file = path(relative)
+                val metadata = metadata(file)
+                val bytes = bytes(file, limit(relative))
+                total += bytes.size
+                require(total <= 64L * 1024 * 1024) { "Rooted progress exceeds 64 MiB." }
+                result[relative] = BundleEntry(bytes.size.toLong(), digest(bytes), metadata)
+            }
+        }
+        return result
+    }
+    data class BundleEntry(val bytes: Long, val sha256: String, val metadata: String)
+
+    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) =
+        publish(relative, before, after, payload, wantedMetadata, token, limit(relative),
+            sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
 
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
                         wantedMetadata: String?, token: String, limit: Int,
-                        sessionConfiguration: Boolean = false, beforeCommit: () -> Unit = {}) {
+                        sessionConfiguration: Boolean = false, stateGroup: String? = null, beforeCommit: () -> Unit = {}) {
         live()
         require(Regex("[a-f0-9]{32}-(in|out)").matches(token))
         require(listOfNotNull(before, after).all { Regex("[a-f0-9]{64}").matches(it) })
@@ -113,7 +156,9 @@ internal class RootSaveFiles(
         parents(relative, token)
         if (sessionConfiguration) {
             parents(relative.substringBeforeLast('/') + "/saves/reserved.srm", token)
-            parents(relative.substringBeforeLast('/') + "/states/reserved.state", token)
+            require(stateGroup == null || Regex("states-[a-f0-9]{16}-android").matches(stateGroup))
+            parents(relative.substringBeforeLast('/') + "/states/" +
+                (stateGroup?.let { "$it/" } ?: "") + "reserved.state", token)
         }
         val mode = wantedMetadata ?: if (present(file)) metadata(file) else "$uid $uid 600 ${String(label).trimEnd('\u0000')}"
         if (present(stage)) {
@@ -143,38 +188,38 @@ internal class RootSaveFiles(
         require(current() == after && metadata(file) == mode)
     }
 
-    fun mgba(abi: String? = null, recoverPublication: Boolean = false): String? {
-        val file = path(MGBA_PATH)
+    fun core(abi: String? = null, recoverPublication: Boolean = false, coreName: String = "mgba"): String? {
+        val file = path(corePath(coreName))
         if (!present(file)) return null
         val stat = Os.lstat(file.path)
         metadata(file, if (recoverPublication && stat.st_nlink == 2L) 2 else 1)
         val payload = bytes(file, 32 * 1024 * 1024)
         if (abi != null) require(retroArchElfAbi(payload) == abi) {
-            "The installed mGBA core does not match this RetroArch build. Repair it in RetroArch before continuing."
+            "The installed RetroArch core does not match this RetroArch build. Repair it in RetroArch before continuing."
         }
         val digest = digest(payload)
         if (stat.st_nlink == 2L) {
             val stage = File(file.parentFile, ".${file.name}.broomm-${digest.take(32)}-in")
             val linked = Os.lstat(stage.path)
             require(linked.st_dev == stat.st_dev && linked.st_ino == stat.st_ino &&
-                metadata(stage, 2) == metadata(file, 2)) { "Unexpected mGBA links. Existing files were kept." }
+                metadata(stage, 2) == metadata(file, 2)) { "Unexpected RetroArch core links. Existing files were kept." }
             live(); Os.remove(stage.path); flushDirectory(file.parentFile!!)
         }
         metadata(file)
         return digest
     }
 
-    fun installMgba(source: File, caller: Int, expected: String, abi: String, ensureClosed: () -> Unit): String {
+    fun installCore(source: File, caller: Int, expected: String, abi: String, coreName: String = "mgba", ensureClosed: () -> Unit): String {
         require(Regex("[a-f0-9]{64}").matches(expected))
         val stat = Os.lstat(source.path)
         require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == caller && stat.st_nlink == 1L)
         val payload = bytes(source, MAX_CORE_BYTES)
         require(digest(payload) == expected && retroArchElfAbi(payload) == abi) {
-            "The staged mGBA core failed ABI or checksum verification."
+            "The staged RetroArch core failed ABI or checksum verification."
         }
         ensureClosed()
-        mgba(abi, recoverPublication = true)?.let { return it }
-        publish(MGBA_PATH, null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
+        core(abi, recoverPublication = true, coreName = coreName)?.let { return it }
+        publish(corePath(coreName), null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
         return expected
     }
 
@@ -229,7 +274,7 @@ internal class RootSaveFiles(
             val stat = Os.fstat(fd)
             val limit = 32L * 1024 * 1024
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == owner &&
-                stat.st_nlink == links && stat.st_size in 1..limit) { "Invalid GBA ROM file" }
+                stat.st_nlink == links && stat.st_size in 1..limit) { "Invalid RetroArch ROM file" }
             val hash = MessageDigest.getInstance("SHA-256")
             val buffer = ByteArray(65536)
             var size = 0L
@@ -238,14 +283,14 @@ internal class RootSaveFiles(
                 val count = input.read(buffer)
                 if (count < 0) break
                 size += count
-                require(size <= stat.st_size) { "GBA ROM grew while reading" }
+                require(size <= stat.st_size) { "RetroArch ROM grew while reading" }
                 out?.write(buffer, 0, count)
                 hash.update(buffer, 0, count)
             }
             val current = Os.lstat(file.path)
             require(size == stat.st_size && current.st_dev == stat.st_dev &&
                 current.st_ino == stat.st_ino && current.st_size == size &&
-                current.st_mtime == stat.st_mtime && current.st_ctime == stat.st_ctime) { "GBA ROM changed while reading" }
+                current.st_mtime == stat.st_mtime && current.st_ctime == stat.st_ctime) { "RetroArch ROM changed while reading" }
             hash.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
         }
     }
@@ -255,17 +300,17 @@ internal class RootSaveFiles(
         require(source.name == parts[3] && source.path.substringBefore("/content/").substringAfterLast('/') == parts[1])
         val target = path(relative)
         val directory = target.parentFile!!
-        require(!present(directory)) { "GBA session ROM directory already exists. Finish recovery first." }
+        require(!present(directory)) { "RetroArch session ROM directory already exists. Finish recovery first." }
         parents(relative, parts[2].removePrefix("rom-") + "-in")
         val stage = File(directory, ".pending")
         val mode = "$uid $uid 400 ${String(label).trimEnd('\u0000')}"
         val fd = Os.open(stage.path, OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_NOFOLLOW, 384)
         FileOutputStream(fd).use { out ->
-            require(transferRom(source, caller, out) == expected) { "GBA ROM changed before staging" }
+            require(transferRom(source, caller, out) == expected) { "RetroArch ROM changed before staging" }
             attributes(stage, mode)
             Os.fsync(fd)
         }
-        require(transferRom(stage, uid) == expected && metadata(stage) == mode) { "Staged GBA ROM failed verification" }
+        require(transferRom(stage, uid) == expected && metadata(stage) == mode) { "Staged RetroArch ROM failed verification" }
         live()
         Os.link(stage.path, target.path)
         Os.remove(stage.path)
@@ -282,8 +327,8 @@ internal class RootSaveFiles(
         val dir = Os.lstat(directory.path)
         require(OsConstants.S_ISDIR(dir.st_mode) && dir.st_uid == uid &&
             Os.getxattr(directory.path, "security.selinux").contentEquals(label))
-        val entries = directory.listFiles() ?: error("Cannot inspect staged GBA ROM")
-        require(entries.all { it.name == ".pending" || it == target }) { "Unexpected files in GBA ROM staging directory" }
+        val entries = directory.listFiles() ?: error("Cannot inspect staged RetroArch ROM")
+        require(entries.all { it.name == ".pending" || it == target }) { "Unexpected files in RetroArch ROM staging directory" }
         for (entry in entries) {
             val stat = Os.lstat(entry.path)
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink in 1L..2L)
@@ -293,7 +338,7 @@ internal class RootSaveFiles(
             }
             if (entry == target || stat.st_uid != 0) metadata(entry, stat.st_nlink)
             if (entry == target) require(transferRom(entry, uid, links = stat.st_nlink) == expected) {
-                "Staged GBA ROM changed. Its files were kept."
+                "Staged RetroArch ROM changed. Its files were kept."
             }
         }
         live()
@@ -306,18 +351,26 @@ internal class RootSaveFiles(
     companion object {
         const val MAX_BYTES = 262144
         private const val MAX_CORE_BYTES = 8 * 1024 * 1024
-        private const val MGBA_PATH = "cores/mgba_libretro_android.so"
+        const val MAX_STATE_BYTES = 16 * 1024 * 1024
+        fun corePath(core: String): String {
+            require(core in setOf("mgba", "snes9x"))
+            return "cores/${core}_libretro_android.so"
+        }
+        fun limit(path: String): Int = if (path.contains("/states/")) MAX_STATE_BYTES else MAX_BYTES
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false) {
-            val suffix = if (saveOnly) "saves/[^/]+\\.srm" else "(?:saves/[^/]+\\.srm|config-[a-f0-9]{32}\\.cfg)"
+            val save = "saves/[^/]+\\.srm"
+            val state = "states/states-[a-f0-9]{16}-android/[^/]+\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?"
+            val suffix = if (saveOnly) "(?:$save|$state)" else "(?:$save|$state|config-[a-f0-9]{32}\\.cfg)"
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[a-zA-Z0-9_-]{1,128}/$suffix").matches(path)) { "Root path is outside the selected managed GBA files." }
+                path.split('/').none { it == "." || it == ".." } &&
+                Regex("files/Broomm/[a-f0-9]{32}/[a-zA-Z0-9_-]{1,128}/$suffix").matches(path)) { "Root path is outside the selected managed RetroArch files." }
         }
 
         fun romPath(path: String): List<String> {
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.gba)")
-                    .matches(path)) { "ROM path is outside the rooted GBA session" }
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc))")
+                    .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }
     }

@@ -73,7 +73,8 @@ class AndroidSavePlan extends ProgressLayout {
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
   Map<String, String> get arguments => {...binding, 'emulator': emulator.id};
-  bool get rooted => binding['access'] == 'root-gba-v1';
+  bool get rooted =>
+      {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']);
   String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
       .singleWhere(

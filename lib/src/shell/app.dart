@@ -332,6 +332,7 @@ class _BroommAppState extends State<BroommApp> {
         throw StateError(
           entry?.problem ?? 'Download this game before playing.',
         );
+      await m.ensureGameAccess(id);
       final platform = m.launchPlatform(entry.game);
       if (platform == null)
         throw StateError(
@@ -647,8 +648,8 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final rooted =
-        platform.slug == 'gba' &&
-        m.android.hasCurrentGbaRoot(emulator, package: app.package);
+        {'gba', 'snes'}.contains(platform.slug) &&
+        m.android.hasCurrentRoot(emulator, platform.slug, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
         m.android.progressSupported(emulator);
@@ -771,7 +772,7 @@ class _BroommAppState extends State<BroommApp> {
     _scheduleArtwork();
     cloudRetry = Timer.periodic(
       const Duration(seconds: 45),
-      (_) => unawaited(m.retryCloud()),
+      (_) => unawaited(m.retryCloud(reconnect: true)),
     );
   }
 

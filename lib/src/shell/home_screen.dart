@@ -159,6 +159,11 @@ class HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (model.offline)
+                    ProblemNotice(
+                      'Offline · Your local games and progress are available.',
+                      retry: model.reconnectProfile,
+                    ),
                   if (model.libraryError != null)
                     ProblemNotice(
                       model.libraryError!,

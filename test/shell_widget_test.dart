@@ -431,15 +431,21 @@ void main() {
         (w) => w is ConsoleButton && w.label == 'Game 1',
       );
       expect(gameTile, findsOneWidget);
-      await t.tap(gameTile);
-      await t.pumpAndSettle();
       await t.runAsync(() async {
-        for (
-          var i = 0;
-          i < 100 && model.emulators.plan == null && model.emulators.supported;
-          i++
-        ) {
-          await Future<void>.delayed(const Duration(milliseconds: 10));
+        final routed = Completer<void>();
+        void listener() {
+          if ((model.screen == ShellScreen.emulators || !model.gameActive) &&
+              !routed.isCompleted)
+            routed.complete();
+        }
+
+        model.addListener(listener);
+        try {
+          await t.tap(gameTile);
+          listener();
+          await routed.future.timeout(const Duration(seconds: 3));
+        } finally {
+          model.removeListener(listener);
         }
       });
       await t.pumpAndSettle();

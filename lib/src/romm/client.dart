@@ -39,6 +39,9 @@ class RommClient with RommSaves {
   bool _closed = false;
   bool _clientToken = false;
   bool readOnlyLogin = false;
+  Future<void> Function()? restoreAuthentication;
+  Future<void>? _restoringAuthentication;
+  bool get authenticationDeferred => restoreAuthentication != null;
   Future<void> Function(Future<void> Function(RommCredential? latest))?
   refreshGuard;
   Future<void> Function(RommCredential)? onCredentialChanged;
@@ -92,7 +95,7 @@ class RommClient with RommSaves {
       readOnlyLogin = true;
     }
     await _tokens(j);
-    return currentUser();
+    return _restoredUser();
   }
 
   Future<RommUser> loginToken(String token) async {
@@ -120,7 +123,7 @@ class RommClient with RommSaves {
     }
     if (_access == null || !RegExp(r'^rmm_[a-fA-F0-9]{64}$').hasMatch(_access!))
       throw const RommFailure('RomM returned no token.');
-    return currentUser();
+    return _restoredUser();
   }
 
   Future<void> _tokens(Map j) async {
@@ -149,8 +152,15 @@ class RommClient with RommSaves {
     if (saved.kind == 'client') return loginToken(saved.secret);
     _refresh = saved.secret;
     await _refreshTokens();
-    return currentUser();
+    return _restoredUser();
   }
+
+  // Only the credential-restoration workflow bypasses its own lazy gate.
+  // Other concurrent requests wait until the owner has verified the account.
+  Future<RommUser> _restoredUser() async => RommUser.fromJson(
+    (await _json('GET', 'api/users/me', restoreAuth: false) as Map)
+        .cast<String, dynamic>(),
+  );
 
   Future<void> _refreshTokens() async {
     Future<void> update(RommCredential? latest) async {
@@ -190,8 +200,19 @@ class RommClient with RommSaves {
     }
   }
 
-  Future<void> _ensureToken() async {
+  Future<void> _ensureToken({bool restoreAuth = true}) async {
     if (_closed) throw const RommFailure('This server connection has closed.');
+    if (restoreAuth && restoreAuthentication != null) {
+      final pending = _restoringAuthentication ??= restoreAuthentication!();
+      try {
+        await pending;
+      } finally {
+        if (identical(_restoringAuthentication, pending))
+          _restoringAuthentication = null;
+      }
+      if (_closed)
+        throw const RommFailure('This server connection has closed.');
+    }
     if (_access == null)
       throw const RommFailure('Sign in to RomM first.', status: 401);
     if (_expires != null &&
@@ -392,6 +413,7 @@ class RommClient with RommSaves {
     String method,
     String path, {
     bool auth = true,
+    bool restoreAuth = true,
     Map<String, String>? form,
     Map<String, dynamic>? body,
     Map<String, String>? query,
@@ -400,6 +422,7 @@ class RommClient with RommSaves {
       method,
       endpoint(path, query),
       auth: auth,
+      restoreAuth: restoreAuth,
       form: form,
       body: body,
       limit: 12 * 1024 * 1024,
@@ -417,6 +440,7 @@ class RommClient with RommSaves {
     String method,
     Uri uri, {
     bool auth = true,
+    bool restoreAuth = true,
     Map<String, String>? form,
     Map<String, dynamic>? body,
     required int limit,
@@ -426,7 +450,7 @@ class RommClient with RommSaves {
     final operation = () async {
       if (_closed)
         throw const RommFailure('This server connection has closed.');
-      if (auth) await _ensureToken();
+      if (auth) await _ensureToken(restoreAuth: restoreAuth);
       request = await _http.openUrl(method, uri);
       if (cancelled || _closed) {
         request!.abort();
@@ -489,6 +513,7 @@ class RommClient with RommSaves {
           request?.abort();
           throw const RommFailure(
             'RomM took too long to respond. Check your connection and try again.',
+            connectivity: true,
           );
         },
       );
@@ -501,6 +526,7 @@ class RommClient with RommSaves {
     } on IOException {
       throw const RommFailure(
         'Could not reach RomM. Check the server address and your connection.',
+        connectivity: true,
       );
     } on FormatException {
       throw const RommFailure('RomM returned an unexpected response.');
@@ -511,6 +537,7 @@ class RommClient with RommSaves {
     _closed = true;
     _access = null;
     _refresh = null;
+    restoreAuthentication = null;
     for (final worker in _downloadWorkers.toList()) worker.cancel();
     for (final worker in _saveWorkers.toList()) worker.cancel();
     for (final worker in _artworkWorkers.toList()) worker.cancel();

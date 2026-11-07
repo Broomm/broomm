@@ -4,6 +4,7 @@ import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcel
+import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.os.SystemClock
 import android.content.Intent
@@ -26,6 +27,7 @@ class RootSaveService : RootService() {
             val request = data.readBundle(javaClass.classLoader) ?: error("Missing root request")
             val result = try { operation(request, caller, Binder.getCallingPid()) }
             catch (e: Exception) { Bundle().apply { putString("error", e.message?.take(300) ?: "Root file operation failed. Recovery was kept.") } }
+            finally { request.getParcelable<ParcelFileDescriptor>("transfer")?.close() }
             reply.writeNoException(); reply.writeBundle(result)
             return true
         }
@@ -50,7 +52,7 @@ class RootSaveService : RootService() {
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
         val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         return SharedDocumentLock.acquire(storage).use {
@@ -58,7 +60,7 @@ class RootSaveService : RootService() {
             val files = RootSaveFiles(root, uid, label, ::live)
             fun ensureClosed() {
                 val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
-                check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up mGBA." }
+                check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up RetroArch." }
             }
             fun abi() = retroArchFrontendAbi(packageManager.getApplicationInfo(pkg, 0).nativeLibraryDir)
             fun installedApk(): File {
@@ -67,16 +69,18 @@ class RootSaveService : RootService() {
                     OsConstants.S_ISREG(Os.lstat(apk.path).st_mode)) { "Invalid installed RetroArch APK path." }
                 return apk
             }
+            val coreName = request.getString("coreName") ?: "mgba"
+            RootSaveFiles.corePath(coreName)
             val result = when (operation) {
                 "inspect" -> {
-                    val hash = files.mgba() ?: error("Set up mGBA in Broomm’s GBA RetroArch settings first.")
+                    val hash = files.core(abi(), coreName = coreName) ?: error("Set up $coreName in Broomm’s RetroArch settings first.")
                     val config = File("/storage/emulated/0/Android/data/$pkg/files/retroarch.cfg")
                     val bytes = if (files.present(config)) {
                         require(config.canonicalPath == config.path && OsConstants.S_ISREG(Os.lstat(config.path).st_mode)) { "RetroArch’s saved configuration is linked or invalid." }
                         files.bytes(config, MAX_BYTES)
                     } else ByteArray(0)
                     Bundle().apply {
-                        putString("core", hash); putByteArray("config", bytes); putString("root", root.path)
+                        putString("abi", abi()); putString("core", hash); putByteArray("config", bytes); putString("root", root.path)
                         putString("label", String(label).trimEnd('\u0000'))
                         putBoolean("frontendAssetsPending", files.needsFrontendAssets(::installedApk))
                         if (files.needsControllerProfiles()) {
@@ -89,22 +93,22 @@ class RootSaveService : RootService() {
                     files.prepareControllerProfiles(installedApk(), before["build"] as String, ::ensureClosed)
                     Bundle()
                 }
-                "mgbasetup" -> {
+                "mgbasetup", "coresetup" -> {
                     ensureClosed()
                     val abi = abi()
-                    val core = files.mgba(abi, recoverPublication = true)
+                    val core = files.core(abi, recoverPublication = true, coreName = coreName)
                     Bundle().apply {
                         putString("abi", abi); putString("core", core)
                         putString("label", String(label).trimEnd('\u0000'))
                     }
                 }
-                "installmgba" -> {
+                "installmgba", "installcore" -> {
                     val stage = request.getString("stage") ?: error("Missing mGBA staging identity")
                     require(Regex("[a-f0-9]{32}").matches(stage))
                     val source = File(File(applicationInfo.dataDir, "files").canonicalFile,
-                        "broomm/android/mgba-stage/$stage/mgba_libretro_android.so")
+                        "broomm/android/${coreName}-stage/$stage/${coreName}_libretro_android.so")
                     require(source.canonicalPath == source.absolutePath) { "mGBA staging contains a linked path." }
-                    val core = files.installMgba(source, caller, request.getString("sha256")!!, abi(), ::ensureClosed)
+                    val core = files.installCore(source, caller, request.getString("sha256")!!, abi(), coreName = coreName, ensureClosed = ::ensureClosed)
                     Bundle().apply { putString("core", core) }
                 }
                 "check" -> Bundle()
@@ -122,29 +126,36 @@ class RootSaveService : RootService() {
                     files.removeRom(request.getString("path")!!, hash)
                     Bundle()
                 }
-                "list", "read" -> {
+                "list" -> {
+                    val areas = request.getParcelableArrayList<Bundle>("areas") ?: error("Missing root save boundaries")
+                    val inventory = files.inventory(areas.map { a -> a.keySet().associateWith { a.getString(it)!! } })
+                    Bundle().apply { putBundle("files", Bundle().apply {
+                        for ((path, entry) in inventory) putBundle(path, Bundle().apply {
+                            putLong("bytes", entry.bytes); putString("sha256", entry.sha256); putString("metadata", entry.metadata)
+                        })
+                    }) }
+                }
+                "read" -> {
                     val path = request.getString("path")!!
                     RootSaveFiles.managedPath(path, saveOnly = true)
                     val file = files.path(path)
-                    if (!files.present(file)) Bundle().apply { putBoolean("missing", true) }
-                    else {
-                        val bytes = files.bytes(file, MAX_BYTES)
-                        val metadata = files.metadata(file)
-                        val hash = RootSaveFiles.digest(bytes)
-                        if (request.getString("operation") == "read")
-                            require(hash == request.getString("sha256")) { "Save changed during capture. Close the emulator and retry." }
-                        Bundle().apply {
-                            putLong("bytes", bytes.size.toLong()); putString("sha256", hash)
-                            putString("metadata", metadata)
-                            if (request.getString("operation") == "read") putByteArray("payload", bytes)
-                        }
+                    val metadata = files.metadata(file)
+                    val bytes = files.bytes(file, RootSaveFiles.limit(path))
+                    require(RootSaveFiles.digest(bytes) == request.getString("sha256") &&
+                        bytes.size.toLong() == request.getLong("bytes") && metadata == request.getString("metadata")) {
+                        "Save changed during capture. Close the emulator and retry."
                     }
+                    RootSaveTransfer.write(request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller, bytes, ::live)
+                    Bundle()
                 }
                 "replace" -> {
                     val path = request.getString("path")!!
                     RootSaveFiles.managedPath(path)
+                    val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
+                        RootSaveTransfer.read(it, caller, RootSaveFiles.limit(path), ::live)
+                    }
                     files.replace(path, request.getString("before"), request.getString("after"),
-                        request.getByteArray("payload"), request.getString("metadata"), request.getString("token")!!)
+                        payload, request.getString("metadata"), request.getString("token")!!, request.getString("stateGroup"))
                     Bundle()
                 }
                 else -> error("Unsupported root file operation")

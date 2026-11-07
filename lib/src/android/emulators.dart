@@ -9,7 +9,7 @@ import '../progress/files.dart';
 import '../romm/models.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
-import 'mgba_setup.dart';
+import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
@@ -169,6 +169,7 @@ class AndroidEmulators extends ChangeNotifier {
   final _trees = <String, String>{};
   final _folders = <String, Map<String, String>>{};
   final _gbaRoots = <String, Map<String, String>>{};
+  final _snesRoots = <String, Map<String, String>>{};
   final _fingerprints = <String, String>{};
   bool busy = false, _disposed = false;
   AndroidApkDownload? _download;
@@ -239,6 +240,28 @@ class AndroidEmulators extends ChangeNotifier {
         : null;
   }
 
+  Map<String, String>? rootConnection(
+    AndroidEmulator emulator,
+    String platform, {
+    String? package,
+  }) {
+    if (platform == 'gba') return gbaRoot(emulator, package: package);
+    final selected = app(emulator, package: package);
+    return platform == 'snes' && emulator.id == 'retroarch' && selected != null
+        ? _snesRoots[selected.package]
+        : null;
+  }
+
+  bool hasCurrentRoot(
+    AndroidEmulator emulator,
+    String platform, {
+    String? package,
+  }) {
+    final binding = rootConnection(emulator, platform, package: package);
+    return binding != null &&
+        binding['build'] == app(emulator, package: package)?.build;
+  }
+
   bool hasCurrentGbaRoot(AndroidEmulator emulator, {String? package}) {
     final binding = gbaRoot(emulator, package: package);
     return binding != null &&
@@ -250,8 +273,10 @@ class AndroidEmulators extends ChangeNotifier {
     AndroidEmulator emulator, {
     String? platform,
   }) =>
-      (platform == null && gbaRoot(emulator) != null) ||
-      (platform == 'gba' && hasCurrentGbaRoot(emulator)) ||
+      (platform == null &&
+          (gbaRoot(emulator) != null ||
+              rootConnection(emulator, 'snes') != null)) ||
+      (platform != null && hasCurrentRoot(emulator, platform)) ||
       tree(profile, emulator) != null;
 
   Future<AndroidApp> _checkGbaRootChange(AndroidEmulator emulator) async {
@@ -270,20 +295,32 @@ class AndroidEmulators extends ChangeNotifier {
   }
 
   /// Returns the package whose standard first run still needs to be opened.
-  Future<AndroidApp?> connectGbaRoot(AndroidEmulator emulator) =>
-      _withInstallPermission(
-        () => _connectGbaRoot(emulator),
-        requiresApkPermission: false,
-      );
+  Future<AndroidApp?> connectGbaRoot(
+    AndroidEmulator emulator, {
+    String platform = 'gba',
+  }) => _withInstallPermission(
+    () => _connectGbaRoot(emulator, platform),
+    requiresApkPermission: false,
+  );
 
-  Future<AndroidApp?> _connectGbaRoot(AndroidEmulator emulator) async {
+  Future<AndroidApp?> _connectGbaRoot(
+    AndroidEmulator emulator,
+    String platform,
+  ) async {
+    if (!{'gba', 'snes'}.contains(platform))
+      throw UnsupportedError('Unsupported rooted RetroArch system.');
+    final core = platform == 'snes' ? 'snes9x' : 'mgba';
     final lease = await SessionLease.acquire(data);
     try {
       final selected = await _checkGbaRootChange(emulator);
-      phase?.call('Checking the installed RetroArch build and mGBA core.');
+      phase?.call('Checking RetroArch and $core.');
       final setup = await channel.invokeMapMethod<String, dynamic>(
-        'rootMgbaSetup',
-        {'package': selected.package, 'build': selected.build},
+        core == 'mgba' ? 'rootMgbaSetup' : 'rootCoreSetup',
+        {
+          'package': selected.package,
+          'build': selected.build,
+          'coreName': core,
+        },
       );
       if (setup == null ||
           setup['abi'] is! String ||
@@ -292,18 +329,23 @@ class AndroidEmulators extends ChangeNotifier {
                   !RegExp(r'^[a-f0-9]{64}$')
                       .hasMatch(setup['core'] as String))))
         throw const FormatException('Invalid mGBA setup report.');
-      final identity = androidGbaRootIdentity(setup, selected);
+      final identity = androidRetroArchRootIdentity(
+        setup,
+        selected,
+        platform: platform,
+      );
       var verifiedCore = setup['core'] as String?;
       if (verifiedCore == null) {
         final download = _download = AndroidApkDownload();
-        installing = 'mgba';
+        installing = core;
         downloadedBytes = 0;
         downloadBytes = null;
         _emit();
-        phase?.call('Downloading the reviewed Android mGBA core.');
+        phase?.call('Downloading the reviewed Android $core core.');
         try {
-          await downloadAndroidMgba(
+          await downloadAndroidRetroCore(
             data,
+            core,
             setup['abi'] as String,
             download,
             progress: (bytes, total) {
@@ -314,10 +356,15 @@ class AndroidEmulators extends ChangeNotifier {
             publish: (stage, sha256) async {
               installing = null;
               _emit();
-              phase?.call('Installing the verified mGBA core in RetroArch.');
+              phase?.call('Installing the verified $core core in RetroArch.');
               verifiedCore = await channel.invokeMethod<String>(
-                'rootInstallMgba',
-                {...identity, 'stage': stage, 'sha256': sha256},
+                core == 'mgba' ? 'rootInstallMgba' : 'rootInstallCore',
+                {
+                  ...identity,
+                  'coreName': core,
+                  'stage': stage,
+                  'sha256': sha256,
+                },
               );
             },
           );
@@ -327,17 +374,29 @@ class AndroidEmulators extends ChangeNotifier {
           _emit();
         }
       }
-      final report = await inspectAndroidGbaRoot(this, selected);
-      final binding = androidGbaRootIdentity(report, selected);
+      final report = await inspectAndroidRetroArchRoot(
+        this,
+        selected,
+        platform: platform,
+      );
+      final binding = androidRetroArchRootIdentity(
+        report,
+        selected,
+        platform: platform,
+      );
       if (!mapEquals(identity, binding) || report['core'] != verifiedCore)
         throw StateError('RetroArch changed during setup. Refresh and retry.');
       if (androidRetroArchNeedsSetup(report, selected)) return selected;
-      final next = {..._gbaRoots, selected.package: binding};
-      await _save(gbaRoots: next);
-      _gbaRoots
+      final roots = platform == 'snes' ? _snesRoots : _gbaRoots;
+      final next = {...roots, selected.package: binding};
+      await _save(
+        gbaRoots: platform == 'gba' ? next : null,
+        snesRoots: platform == 'snes' ? next : null,
+      );
+      roots
         ..clear()
         ..addAll(next);
-      phase?.call('mGBA and GBA root save access verified.');
+      phase?.call('$core saves and states are ready.');
       _emit();
       return null;
     } finally {
@@ -345,11 +404,20 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> disconnectGbaRoot(AndroidEmulator emulator) async {
+  Future<void> disconnectGbaRoot(
+    AndroidEmulator emulator, {
+    String platform = 'gba',
+  }) async {
+    if (!{'gba', 'snes'}.contains(platform))
+      throw UnsupportedError('Unsupported rooted RetroArch system.');
     final selected = await _checkGbaRootChange(emulator);
-    final next = {..._gbaRoots}..remove(selected.package);
-    await _save(gbaRoots: next);
-    _gbaRoots
+    final roots = platform == 'snes' ? _snesRoots : _gbaRoots;
+    final next = {...roots}..remove(selected.package);
+    await _save(
+      gbaRoots: platform == 'gba' ? next : null,
+      snesRoots: platform == 'snes' ? next : null,
+    );
+    roots
       ..clear()
       ..addAll(next);
     _emit();
@@ -464,6 +532,7 @@ class AndroidEmulators extends ChangeNotifier {
       }
       final folders = {..._folders}..remove('${emulator.id}:$package');
       final roots = {..._gbaRoots}..remove(package);
+      final snesRoots = {..._snesRoots}..remove(package);
       final trees = Map<String, String>.fromEntries(
         _trees.entries.where((e) => !e.key.endsWith(':${emulator.id}')),
       );
@@ -471,7 +540,12 @@ class AndroidEmulators extends ChangeNotifier {
         'package': package,
         'emulator': emulator.id,
       });
-      await _save(trees: trees, folders: folders, gbaRoots: roots);
+      await _save(
+        trees: trees,
+        folders: folders,
+        gbaRoots: roots,
+        snesRoots: snesRoots,
+      );
       _trees
         ..clear()
         ..addAll(trees);
@@ -481,6 +555,9 @@ class AndroidEmulators extends ChangeNotifier {
       _gbaRoots
         ..clear()
         ..addAll(roots);
+      _snesRoots
+        ..clear()
+        ..addAll(snesRoots);
       await onRemoved?.call(emulator);
       if (await progressExists(_installation.path) &&
           (await progressJson(_installation))['emulator'] == emulator.id)
@@ -589,14 +666,16 @@ class AndroidEmulators extends ChangeNotifier {
     Map<String, String>? trees,
     Map<String, Map<String, String>>? folders,
     Map<String, Map<String, String>>? gbaRoots,
+    Map<String, Map<String, String>>? snesRoots,
   }) async {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 4,
+        'version': 5,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
+        'snesRoots': snesRoots ?? _snesRoots,
         'fingerprints': _fingerprints,
       },
     );
@@ -651,7 +730,7 @@ class AndroidEmulators extends ChangeNotifier {
         await progressFile(data, 'android/emulators.json');
       if (await progressExists(file.path)) {
         final record = await progressJson(file);
-        if (![1, 2, 3, 4].contains(record['version']) ||
+        if (![1, 2, 3, 4, 5].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
         final trees = (record['trees'] as Map).cast<String, String>();
@@ -674,6 +753,7 @@ class AndroidEmulators extends ChangeNotifier {
               .firstOrNull;
           if (record['version'] == 3 &&
               emulator?.id == 'retroarch' &&
+              binding['access'] == 'root-gba-v1' &&
               androidRootBinding(binding)) {
             roots[binding['package']!] = binding;
             continue;
@@ -687,12 +767,14 @@ class AndroidEmulators extends ChangeNotifier {
         _folders
           ..clear()
           ..addAll(checked);
-        if (record['version'] == 4) {
+        if ([4, 5].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
           for (final entry in savedRoots.entries) {
             final binding = (entry.value as Map).cast<String, String>();
-            if (binding['package'] != entry.key || !androidRootBinding(binding))
+            if (binding['package'] != entry.key ||
+                binding['access'] != 'root-gba-v1' ||
+                !androidRootBinding(binding))
               throw const FormatException('Invalid GBA root connection');
             roots[entry.key] = binding;
           }
@@ -700,6 +782,20 @@ class AndroidEmulators extends ChangeNotifier {
         _gbaRoots
           ..clear()
           ..addAll(roots);
+        final snesRoots = <String, Map<String, String>>{};
+        if (record['version'] == 5) {
+          for (final entry in (record['snesRoots'] as Map).entries) {
+            final binding = (entry.value as Map).cast<String, String>();
+            if (binding['package'] != entry.key ||
+                binding['access'] != 'root-snes-v1' ||
+                !androidRootBinding(binding))
+              throw const FormatException('Invalid SNES root connection');
+            snesRoots[entry.key as String] = binding;
+          }
+        }
+        _snesRoots
+          ..clear()
+          ..addAll(snesRoots);
         final hashes = (record['fingerprints'] as Map? ?? {})
             .cast<String, String>();
         if (hashes.entries.any(
@@ -715,6 +811,7 @@ class AndroidEmulators extends ChangeNotifier {
         _trees.clear();
         _folders.clear();
         _gbaRoots.clear();
+        _snesRoots.clear();
       }
       settingsKnown = true;
       final rows = await channel.invokeListMethod<Object?>('installed', {

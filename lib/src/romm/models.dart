@@ -1,7 +1,10 @@
 class RommFailure implements Exception {
-  const RommFailure(this.message, {this.status});
+  const RommFailure(this.message, {this.status, this.connectivity = false});
   final String message;
   final int? status;
+  // A transport failure, distinct from rejected credentials, TLS failures,
+  // invalid responses and HTTP permission decisions.
+  final bool connectivity;
   @override
   String toString() => message;
 }

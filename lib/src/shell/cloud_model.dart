@@ -196,7 +196,7 @@ extension ShellCloudSaves on ShellModel {
     }
   }
 
-  Future<void> retryCloud() async {
+  Future<void> retryCloud({bool reconnect = false}) async {
     if (!authenticated ||
         closing ||
         busy ||
@@ -207,6 +207,7 @@ extension ShellCloudSaves on ShellModel {
         _cloudWork != null ||
         disposed)
       return;
+    if (offline && !reconnect) return;
     // Reserve the worker before any directory/network await. Repeated UI/timer
     // triggers share this guard, and account/launch changes can cancel it.
     final done = Completer<void>();
@@ -214,11 +215,13 @@ extension ShellCloudSaves on ShellModel {
     _cloudWork = work;
     _cloudCancelled = false;
     try {
+      if (offline) await client!.currentUser();
       await _retryCloud();
     } catch (e) {
       if (disposed || !authenticated) return;
-      final message =
-          'The cloud-save queue could not be read. ${progressFailure(e)}';
+      final message = offline
+          ? progressFailure(e)
+          : 'The cloud-save queue could not be read. ${progressFailure(e)}';
       if (_cloudIssuesShown.add('queue:$message'))
         showNotice(message, problem: true);
     } finally {

@@ -90,7 +90,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   manager.requestingInstallPermission
                       ? 'Enable Allow from this source for Broomm in Android settings, then return here.'
                       : downloading
-                      ? 'Downloading ${manager.installing == 'mgba' ? 'mGBA' : emulator.name} · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB'
+                      ? 'Downloading ${switch (manager.installing) {
+                          'mgba' => 'mGBA',
+                          'snes9x' => 'Snes9x',
+                          _ => emulator.name,
+                        }} · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB'
                       : 'Preparing ${emulator.name}…',
                 ),
               ] else
@@ -156,7 +160,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
               ] else ...[
                 if (setup.problem != null &&
                     emulator.id == 'retroarch' &&
-                    widget.platform == 'gba' &&
+                    {'gba', 'snes'}.contains(widget.platform) &&
                     setup.step != AndroidSetupStep.folder)
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,
