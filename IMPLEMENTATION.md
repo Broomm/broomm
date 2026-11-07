@@ -1,6 +1,6 @@
 # Implementation plan
 
-## Rooted NES/Mesen source increment — 2026-11-07
+## Rooted NES/Mesen device acceptance — 2026-11-07
 
 Current source adds independent NES Setup using the four-ABI Mesen build retained
 at `7a0fb0a`, with exact source `0102910` and original compiler records/notices.
@@ -11,8 +11,18 @@ and HD packs have no new acceptance.
 
 Clean analysis, all 649 Flutter tests (one existing native-host skip), 58 focused
 checks and thirteen disposable Thor filesystem/launch groups pass. The native
-bridge and fixture compile. Packaged NES acceptance remains pending; six other
-selected cores remain research. See the [scope and walkthrough](docs/android-retroarch-cores.md#nesmesen-source-increment).
+bridge and fixture compile. All application CI jobs and five packages passed.
+Build 1077 (`1ecf544`) passed normal NES Setup, Zelda slot-A SRAM restoration,
+gameplay/input and manual-state reload at the cave entrance. Journal-installed
+SRAM/state hashes match the published checkpoint; the running core changed SRAM
+before readback, so live SRAM byte identity is not claimed. Final Quit published
+primary 238 and retained the manual state. All earlier saves/settings, nine core
+hashes, twelve platform bindings and both accounts' distinct earlier histories
+remain intact; 51 reviewed log lines contain no warnings/errors. An apparent
+graphics problem was an inconsistent image preview, disproved by identical PNG
+bytes and pixel checks; no graphics behavior was changed. Six other selected
+cores remain research. See the [device evidence](docs/android-retroarch-nes.json)
+and [scope and walkthrough](docs/android-retroarch-cores.md#nesmesen-source-increment).
 
 ## Pinned Android Mesen build preparation — 2026-11-07
 

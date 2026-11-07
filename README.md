@@ -370,7 +370,9 @@ Quit RetroArch normally and wait for Broomm's sync confirmation. SRAM uses the
 existing desktop-compatible raw save contract; states require the matching
 APK/ABI/core. Native cartridge/progress limits remain 32 MiB / 256 KiB, with
 16 MiB states. FDS disks/firmware and HD packs are outside this increment.
-Packaged NES gameplay remains pending; see the [Mesen build/source record](vendor/android/mesen/0.9.9-0102910/README.md).
+Build 1077 verified Zelda's saved slot, movement and manual-state reload on Thor,
+preserving earlier progress/settings. See the [scoped NES evidence](docs/android-retroarch-nes.json)
+and [Mesen build/source record](vendor/android/mesen/0.9.9-0102910/README.md).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

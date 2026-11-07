@@ -318,8 +318,25 @@ Clean analysis, all 649 Flutter tests (one existing native-host skip) and 58
 focused setup/download/root/build checks pass. The Kotlin bridge and native
 fixture compile; all thirteen disposable Thor filesystem/launch groups pass,
 including Mesen installation, raw/ZIP launch validation and unsupported FDS
-refusal. Packaged NES gameplay remains pending; source/build verification is
-separate from that acceptance.
+refusal. All application CI jobs and five packages passed. Build 1077
+(`1ecf544`) passed normal NES Setup and the downloaded Zelda cartridge on Thor:
+new slot **A** persisted through normal Quit/sync and fresh Play, movement worked,
+and **Load State** resumed the cave-entrance position before entering the cave.
+The installed-file journal matches both published hashes; the running core
+changed SRAM before live readback, while the native state remained byte-identical.
+Final Quit published primary 238 and retained the gameplay state. Sword/dungeon
+progression is not claimed.
+
+All 20 earlier GB/GBC/Atari/TG16/Sega/N64 progress files, eight GBA/SNES progress
+files, 19 original managed native files and 13 earlier standalone/managed files
+remain unchanged. Nine core hashes, twelve independent platform bindings, both
+accounts' distinct earlier histories and journal cleanup pass. All 51 reviewed
+log lines are free of warnings/errors. An apparent rendering issue was traced
+to inconsistent previews of repeated images: purportedly different frames were
+byte-identical, with intact interface pixels. Disposable owned/upstream/driver
+comparisons left installed cores, original ROMs and global settings unchanged;
+their 15 temporary files were removed after normal exit. See the
+[exact scoped device evidence](android-retroarch-nes.json).
 
 ## Remaining boundaries
 
