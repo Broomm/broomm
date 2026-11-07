@@ -1,5 +1,15 @@
 # Implementation plan
 
+## Pinned Android Mesen build preparation — 2026-11-07
+
+The exact Mesen 0.9.9 source archive and recipe/license inputs are retained.
+A separate four-ABI CI job builds that source using the privately staged,
+already licensed NDK 29.0.14206865. It records source/tool/output hashes,
+compiler logs and ELF dependencies before any runtime download pin is accepted.
+Source inspection, three owning regressions, analysis and workflow lint pass
+locally. Native compilation and Mesen gameplay remain pending; no NES binding
+or app behavior is enabled by this build preparation.
+
 ## Rooted Nintendo 64 device acceptance — 2026-11-07
 
 Current source adds independent N64 Setup, pinned four-ABI Mupen64Plus-Next
