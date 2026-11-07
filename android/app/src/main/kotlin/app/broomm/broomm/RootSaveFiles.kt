@@ -356,9 +356,14 @@ internal class RootSaveFiles(
         }
     }
 
-    fun stageRom(relative: String, source: File, caller: Int, expected: String): File {
+    fun stageRom(relative: String, source: File, caller: Int, expected: String, prepared: Boolean = false): File {
         val parts = romPath(relative)
-        require(source.name == parts[3] && source.path.substringBefore("/content/").substringAfterLast('/') == parts[1])
+        require(source.name == parts[3])
+        if (prepared) {
+            require(Regex("cartridge-[a-zA-Z0-9_-]+").matches(source.parentFile!!.name) &&
+                source.parentFile!!.parentFile!!.name == parts[2].removePrefix("rom-") &&
+                source.parentFile!!.parentFile!!.parentFile!!.name == "shared-session")
+        } else require(source.path.substringBefore("/content/").substringAfterLast('/') == parts[1])
         val target = path(relative)
         val directory = target.parentFile!!
         require(!present(directory)) { "RetroArch session ROM directory already exists. Finish recovery first." }

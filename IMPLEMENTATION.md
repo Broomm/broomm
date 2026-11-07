@@ -2,6 +2,13 @@
 
 ## Rooted cartridge ZIP preparation — 2026-11-07
 
+Build 1067's first ZIP check exposed the native adapter's library-only source
+guard. The follow-up keeps that guard and separately validates a normalized
+cartridge inside the exact session transaction on both sides of the root mount
+namespace. Foreign transactions, filenames, traversal and links are refused.
+The bridge and native fixture compile; JVM path checks and eleven disposable
+Thor filesystem groups pass. Packaged ZIP acceptance remains pending.
+
 Sega catalogue checks found ordinary single-cartridge ZIP downloads, which the
 earlier rooted handoff refused. Current source validates ZIP structure and
 extracts privately in Dart before the existing native cartridge staging. It

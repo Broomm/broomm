@@ -117,6 +117,16 @@ fun main(args: Array<String>) {
         files.removeRom(romPath, nextHash)
         check(!staged.parentFile!!.exists())
         failure { files.stageRom(romPath, rom, 0, oldHash) }
+        val cartridgeTransaction = "e".repeat(32)
+        val preparedRom = File(root, "android/shared-session/$cartridgeTransaction/cartridge-Abc123/Sonic.md")
+        check(preparedRom.parentFile!!.mkdirs()); preparedRom.writeBytes(next)
+        val preparedRomPath = prefix.replace("/saves/", "/rom-$cartridgeTransaction/") + preparedRom.name
+        failure { files.stageRom(preparedRomPath, preparedRom, 0, nextHash) }
+        failure { files.stageRom(preparedRomPath.replace(cartridgeTransaction, "f".repeat(32)), preparedRom, 0, nextHash, prepared = true) }
+        val preparedCopy = files.stageRom(preparedRomPath, preparedRom, 0, nextHash, prepared = true)
+        check(files.hash(preparedCopy) == nextHash && preparedRom.readBytes().contentEquals(next))
+        files.removeRom(preparedRomPath, nextHash)
+        check(!preparedCopy.exists() && preparedRom.exists())
         check(!staged.exists())
         files.removeRom(romPath, oldHash)
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)

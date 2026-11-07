@@ -184,9 +184,23 @@ void main() {
           final args = Map<String, dynamic>.from(call.arguments as Map)
             ..['tree'] = 'root-fixture';
           if (call.method == 'rootStageRom') {
+            final source = File(args['source'] as String);
+            expect(
+              source.uri.pathSegments.last,
+              File(args['path'] as String).uri.pathSegments.last,
+            );
+            if (args['preparedCartridge'] == true) {
+              final transaction = (args['path'] as String)
+                  .split('/')[4]
+                  .substring(4);
+              expect(
+                source.parent.parent.path,
+                endsWith('/shared-session/$transaction'),
+              );
+            }
             final target = await put(
               args['path'] as String,
-              await File(args['source'] as String).readAsBytes(),
+              await source.readAsBytes(),
             );
             if (loseRomStagingReply) {
               loseRomStagingReply = false;

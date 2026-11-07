@@ -159,6 +159,16 @@ Packaged Sega gameplay remains pending.
 
 ## Cartridge ZIP preparation
 
+Build 1067 exposed a source-boundary mismatch before launching the ZIP: native
+staging still required the installed library path. The follow-up preserves that
+ordinary resolver and adds a separate, transaction-bound prepared-cartridge
+handoff, revalidated in the app and root-service mount namespaces. It normalizes
+the private source filename to the native cartridge name. JVM checks reject
+foreign transactions/names, traversal, nested and linked sources; the bridge
+compiles and eleven real Thor filesystem groups pass with prepared-source
+staging and wrong-transaction refusal. The failed game session retains recovery;
+this is not packaged ZIP acceptance.
+
 The Sega catalogue supplied ZIPs for Genesis, Master System and Game Gear.
 Current source therefore prepares single-cartridge ZIPs for the implemented
 rooted cartridge routes in Dart. The existing ZIP validator checks every entry's

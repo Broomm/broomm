@@ -348,18 +348,22 @@ class SharedAndroidSaves {
             'The ZIP must contain exactly one supported cartridge.',
           );
         extraction = await directory(r).createTemp('cartridge-');
-        await zip.extract(extraction);
+        final contents = Directory('${extraction.path}/contents');
+        await zip.extract(contents);
         if (await progressFileHash(source) != before)
           throw StateError(
             'The game archive changed during extraction. Try again.',
           );
         final cartridge = cartridges.single;
-        source = await progressFile(extraction, cartridge.name);
+        source = await progressFile(contents, cartridge.name);
         final rawExtension = cartridge.name.split('.').last.toLowerCase();
         // Keep the original archive's save/state stem, independently of its
         // internal filename. Existing profile and desktop progress still match.
         name = '${retroStateStem(r['selected'] as String)}.$rawExtension';
         progressRelative(name);
+        source = await source.rename(
+          (await progressFile(extraction, name)).path,
+        );
         r['romStageExtension'] = rawExtension;
       }
       final config = plan.launch['configPath']!;
@@ -379,6 +383,7 @@ class SharedAndroidSaves {
         'path': path,
         'source': source.path,
         'sha256': hash,
+        if (extension == 'zip') 'preparedCartridge': true,
       }))!;
     } finally {
       // Native staging has finished (or failed) before its private source goes.

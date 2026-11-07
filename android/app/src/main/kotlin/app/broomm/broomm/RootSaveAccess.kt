@@ -143,8 +143,12 @@ class RootSaveAccess(private val activity: Activity) {
             if (call.method == "rootStageRom") {
                 // The app and root mount namespaces can expose different
                 // names for the same framework filesDir.
-                val relative = gameLibraryRelative(activity.filesDir, call.argument<String>("source")!!)
-                request.putString("libraryRelative", relative)
+                val source = call.argument<String>("source")!!
+                if (call.argument<Boolean>("preparedCartridge") == true) {
+                    val parts = RootSaveFiles.romPath(call.argument<String>("path")!!)
+                    request.putString("preparedRelative", preparedCartridgeRelative(
+                        activity.filesDir, source, parts[2].removePrefix("rom-"), parts[3]))
+                } else request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, source))
             }
             if (call.method == "rootList") {
                 val areas = call.argument<List<Map<String, String>>>("areas")!!
