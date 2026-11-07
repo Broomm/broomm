@@ -139,6 +139,19 @@ fun main(args: Array<String>) {
         check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
         println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
 
+        for (extension in listOf("a26", "bin", "pce")) {
+            val cartridgeSource = File(root, "library/44/content/Cartridge.$extension")
+            check(cartridgeSource.parentFile!!.exists() || cartridgeSource.parentFile!!.mkdirs())
+            cartridgeSource.writeBytes(next)
+            val cartridgePath = "files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Cartridge.$extension"
+            val copy = files.stageRom(cartridgePath, cartridgeSource, 0, nextHash)
+            check(files.hash(copy) == nextHash)
+            files.removeRom(cartridgePath, nextHash)
+            check(!copy.exists() && cartridgeSource.readBytes().contentEquals(next))
+        }
+        failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
+        println("PASS: Atari/PCE cartridge staging, source preservation and unsupported disc refusal")
+
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
             this[16] = 3; this[18] = 183.toByte()
@@ -158,7 +171,12 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        println("PASS: mGBA ABI and checksum validation, interrupted install recovery and existing core preservation")
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast")) {
+            check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
+            check(files.core("arm64-v8a", coreName = name) == coreHash)
+        }
+        failure { RootSaveFiles.corePath("unknown") }
+        println("PASS: reviewed core ABIs and checksums, interrupted install recovery and existing core preservation")
 
         val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"
         val apk = File(root, "frontend.apk")

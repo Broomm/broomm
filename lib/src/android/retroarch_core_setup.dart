@@ -70,6 +70,46 @@ const _gambatteRecipes = <String, (String, String)>{
   ),
 };
 
+const _stellaRevision = '48b34a0671b41d9b20853cc823805af1d49f0b75';
+const _stellaRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '0100f75f456ac426ffc7023f0de183123347633d8af82bf86fefd04121f316e4',
+    '144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9',
+  ),
+  'armeabi-v7a': (
+    '73b34ecbacb84dec6e346c8bd8a6c88db51b48df064de9b3fcdf88785cede5f4',
+    '11e17d80e8b42e475e0305de50ec59768523c443f45f8e77c76897f8a13d5517',
+  ),
+  'x86': (
+    '4c04137ed0240cde967d9d8fd4785e1ee503e2edb02916bd1bce7e89f8e9e6e1',
+    'f78764ac2ff3e7d4e2a4cf5042b709002677fd3a4fc406a9ca559e0d57edf96f',
+  ),
+  'x86_64': (
+    '6de2893dff16a79b5bcf2a1e7e75b908ab0bf3aeac626777d8923e5d06e7e78f',
+    '9937d6585e1ab71b480bf08274d55f86d91dccf8c83535c27e2b5adff3e7fd83',
+  ),
+};
+
+const _pceRevision = '48b34a0671b41d9b20853cc823805af1d49f0b75';
+const _pceRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    'b766eaddcb8da5ce5af6aeb8ac4a72e54f07b9ab255461dfc3f525f2ef1e448a',
+    '57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1',
+  ),
+  'armeabi-v7a': (
+    '2fbfffe0356dc671c3c265a2ea41b49b00502a01d61a6b09b21eb8fed7a14b9b',
+    'bdfe0fee9b5698dd80b1e94255970f25a32146807a9a0d8bf582876b84b2f87d',
+  ),
+  'x86': (
+    'fb49098504b90b9e755918637bfd6978a13a110aaed705594c524f40de26ae3d',
+    '602d97f16d9f9ec59571a3bddf0fa9bd2556c09e83fd33983abb62bf40de9950',
+  ),
+  'x86_64': (
+    'f4989731293ae00b6a2bb3fa5d3eb07089592ebe178ac095ed79e93afb84615a',
+    '5774470071d3aee2504b55fbec372663fa1847457548d799d95d40a4900c5103',
+  ),
+};
+
 Future<void> downloadAndroidRetroCore(
   Directory data,
   String core,
@@ -86,9 +126,12 @@ Future<void> downloadAndroidRetroCore(
       '0.5.0-netlink-77f2567',
       _gambatteRecipes,
     ),
+    'stella' => (_stellaRevision, '8.0-pre-20261107', _stellaRecipes),
+    'mednafen_pce_fast' => (_pceRevision, '1.31.0.0-2de1ce1', _pceRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = '${core}_libretro_android.so';
+  final maxArchive = core == 'stella' ? 2 * 1024 * 1024 : _maxArchive;
   final recipe = recipes[abi];
   if (recipe == null)
     throw UnsupportedError('No reviewed $core download is available for $abi.');
@@ -110,7 +153,7 @@ Future<void> downloadAndroidRetroCore(
       '/Broomm/broomm/$revision/vendor/android/$core/$version/$abi/$coreFile.zip',
     );
     final reply = await download.response(url), expected = reply.contentLength;
-    if (expected > _maxArchive)
+    if (expected > maxArchive)
       throw FormatException('The $core download exceeds its size limit.');
     await archive.create(exclusive: true);
     final output = await archive.open(mode: FileMode.writeOnly);
@@ -119,7 +162,7 @@ Future<void> downloadAndroidRetroCore(
       await for (final bytes in reply.timeout(const Duration(seconds: 30))) {
         check();
         size += bytes.length;
-        if (size > _maxArchive)
+        if (size > maxArchive)
           throw FormatException('The $core download exceeds its size limit.');
         await output.writeFrom(bytes);
         progress(size, expected < 0 ? null : expected);

@@ -15,6 +15,16 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'gba' => 'mgba',
   'snes' => 'snes9x',
   'gb' || 'gbc' => 'gambatte',
+  'atari2600' => 'stella',
+  'tg16' => 'mednafen_pce_fast',
+  _ => null,
+};
+
+String? androidRootRetroAccess(String platform) => switch (platform) {
+  'gba' => 'root-gba-v1',
+  'snes' => 'root-snes-v1',
+  'gb' || 'gbc' => 'root-gameboy-v1',
+  'atari2600' || 'tg16' => 'root-cartridge-v1',
   _ => null,
 };
 
@@ -122,12 +132,9 @@ Map<String, String> androidRetroArchRootIdentity(
   String platform = 'gba',
 }) {
   final binding = <String, String>{
-    'access': switch (platform) {
-      'gba' => 'root-gba-v1',
-      'snes' => 'root-snes-v1',
-      'gb' || 'gbc' => 'root-gameboy-v1',
-      _ => throw UnsupportedError('Unsupported rooted RetroArch system.'),
-    },
+    'access':
+        androidRootRetroAccess(platform) ??
+        (throw UnsupportedError('Unsupported rooted RetroArch system.')),
     for (final key in [
       'package',
       'user',

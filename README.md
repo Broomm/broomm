@@ -327,6 +327,11 @@ states. Build 1061 passed Crystal SRAM/RTC/state reload and separate GB/GBC
 histories for both Thor accounts. Exact acceptance and remaining-core work are recorded in
 [the Android core walkthrough](docs/android-retroarch-cores.md).
 
+The next source increment also offers **Atari 2600 / TG16 → RetroArch → Set up**
+for Stella and Beetle PCE Fast. Use uncompressed `.a26`/`.bin` and `.pce`
+cartridges respectively. Stella syncs states; PCE also syncs raw SRAM. Their
+packaged gameplay acceptance remains pending in the linked walkthrough.
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

@@ -12,6 +12,7 @@ import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
+import 'package:broomm/src/progress/layout.dart';
 import 'package:broomm/src/progress/service.dart';
 import 'package:broomm/src/progress/zip.dart';
 
@@ -903,6 +904,122 @@ void main() {
     expect(manager.hasCurrentGbaRoot(emulator), true);
     expect(manager.hasCurrentRoot(emulator, 'snes'), true);
   });
+
+  test('cartridge setup migrates version 6 without losing GB, GBA or SNES bindings', () async {
+    for (final slug in ['gba', 'snes', 'gbc']) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final v6 = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    v6['version'] = 6;
+    await file.writeAsString(jsonEncode(v6));
+    await manager.load();
+    for (final slug in ['atari2600', 'tg16']) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    await manager.load();
+    for (final slug in ['gba', 'snes', 'gbc', 'atari2600', 'tg16']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'tg16');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'tg16'), false);
+    for (final slug in ['gba', 'snes', 'gbc', 'atari2600']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+  });
+
+  for (final (slug, core, extension, sram) in [
+    ('atari2600', 'stella', 'a26', false),
+    ('tg16', 'mednafen_pce_fast', 'pce', true),
+  ]) {
+    test(
+      '$core keeps its native save contract, state round trip and cleanup',
+      () async {
+        await manager.connectGbaRoot(emulator, platform: slug);
+        final rom = await File('${temp.path}/Cartridge.$extension')
+            .writeAsBytes([5, 6]);
+        final p = await gameboyPlan(slug, rom.path), g = game(p);
+        expect(p.format, 'libretro-$core-v1');
+        final unrelated = await put(
+          p
+              .remotePath('save/game.srm')
+              .replaceFirst('Cartridge.srm', 'Another.srm'),
+          [8],
+        );
+        final session = AndroidGameSession(manager, cloud);
+        addTearDown(session.dispose);
+        await session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: emulator,
+          app: manager.app(emulator)!,
+          files: [rom.path],
+          selected: rom.path,
+          core: core,
+          rooted: true,
+          rootPlatform: slug,
+          prepare: () async => g,
+        );
+        if (sram)
+          await put(p.remotePath('save/game.srm'), List.filled(2048, 7));
+        final state = '${p.areas.last.id}/game.state';
+        await put(p.remotePath(state), [1, 4, 9]);
+        processState = 'idle';
+        exitState = 'closed';
+        expect(
+          await session.finishIfRetroArchClosed(),
+          AndroidRetroArchState.closed,
+        );
+        expect(await session.pending(), isNull);
+        expect(await unrelated.readAsBytes(), [8]);
+        expect(
+          await File('${native.path}/${p.remotePath(state)}').exists(),
+          false,
+        );
+        expect(await (await p.target(state)).readAsBytes(), [1, 4, 9]);
+        expect(api.stateRecords, hasLength(sram ? 1 : 0));
+        expect((await cloud.store(g).state())['pending'], false);
+        if (sram) {
+          expect(
+            await (await p.target('save/game.srm')).readAsBytes(),
+            List.filled(2048, 7),
+          );
+          final primary = api.records.values.single;
+          expect(api.contents[primary.id], List.filled(2048, 7));
+          expect(api.readIds, contains(primary.id));
+        } else {
+          expect(await (await p.target('save/game.srm')).exists(), false);
+        }
+        final restored = ProgressLayout(
+          '${temp.path}/other-device/profiles/$profileId/emulators/retroarch',
+          p.format,
+          p.game,
+          p.areas,
+        );
+        final nextGame = CloudGame(
+          server: serverId,
+          profile: profileId,
+          user: api.user,
+          rom: 42,
+          client: api,
+          layout: restored,
+        );
+        final newCloud = CloudSaves(
+          Directory('${temp.path}/other-device'),
+          notice: (_, _) {},
+        );
+        await newCloud.beforePlay(nextGame);
+        expect(await (await restored.target(state)).readAsBytes(), [1, 4, 9]);
+        if (sram)
+          expect(
+            await (await restored.target('save/game.srm')).readAsBytes(),
+            List.filled(2048, 7),
+          );
+      },
+    );
+  }
 
   test('GBC native sessions upload SRAM and RTC together and restore standalone bytes', () async {
     await manager.connectGbaRoot(emulator, platform: 'gbc');

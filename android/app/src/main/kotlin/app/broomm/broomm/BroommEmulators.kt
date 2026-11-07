@@ -209,7 +209,7 @@ class BroommEmulators(private val activity: Activity) {
                                         val external = android.os.Environment.getExternalStorageDirectory().path
                                         val config = call.argument<String>("configuration")
                                         if (nativeRom != null) {
-                                            require(core in setOf("mgba", "snes9x", "gambatte") && config != null &&
+                                            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast") && config != null &&
                                                 pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
                                             val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
                                                 .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
@@ -218,6 +218,8 @@ class BroommEmulators(private val activity: Activity) {
                                             require(when (core) {
                                                 "mgba" -> parts[3].endsWith(".gba", true)
                                                 "snes9x" -> parts[3].endsWith(".sfc", true) || parts[3].endsWith(".smc", true)
+                                                "stella" -> setOf("a26", "bin").contains(parts[3].substringAfterLast('.').lowercase())
+                                                "mednafen_pce_fast" -> parts[3].endsWith(".pce", true)
                                                 else -> setOf("gb", "gbc", "dmg").contains(parts[3].substringAfterLast('.').lowercase())
                                             })
                                             require(parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name &&

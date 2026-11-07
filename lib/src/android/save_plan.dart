@@ -18,6 +18,7 @@ const androidRootAccessModes = {
   'root-gba-v1',
   'root-snes-v1',
   'root-gameboy-v1',
+  'root-cartridge-v1',
 };
 
 /// Concrete correspondence between one native save boundary and its private

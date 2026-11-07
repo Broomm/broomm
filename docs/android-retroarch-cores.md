@@ -6,7 +6,9 @@ OS locks, recovery and RomM contracts remain. No new runtime library is added.
 
 GBA/mGBA and SNES/Snes9x are merged and device-verified. Current source adds
 Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
-checks below. The other twelve selected cores remain research, not implementation.
+checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
+cartridges; their packaged device checks remain pending. The other ten selected
+cores remain research, not implementation.
 
 ## Gambatte source and behavior
 
@@ -75,6 +77,31 @@ Run the compiled fixture through `app_process` with a fresh
 only that disposable root; remove its pushed DEX afterward. Keep real saves,
 snapshots, journals and stable lock files. Local evidence is under
 `.tool-cache/android-retroarch-cores/2026-11-07`.
+
+## Atari 2600 and TG16 cartridge increment
+
+Explicit Setup now provisions Stella for Atari 2600 and Beetle PCE Fast for
+TG16 HuCards. Use uncompressed `.a26`/`.bin` and `.pce` respectively. Disc images,
+firmware and compressed cartridges have no new acceptance. Version 7 settings
+retain versions 1–6, including independent GB/GBC bindings. PCE SRAM retains the
+desktop raw `.srm` contract; states accompany ordinary saves separately. Stella
+exposes no ordinary Libretro save RAM and uses the existing state-only bundle
+contract. No placeholder SRAM is created.
+
+The retained four-ABI archives live under `vendor/android/stella/8.0-pre-20261107`
+and `vendor/android/mednafen_pce_fast/1.31.0.0-2de1ce1`, pinned to artifact commit
+`48b34a0671b41d9b20853cc823805af1d49f0b75`. Source notices, original URLs, ELF
+identities, hashes and Android recipes are retained. Stella identifies 8.0_pre;
+x86 embeds `ba51417`, while the other three embed `5d206d7`. Per-ABI corresponding
+sources are recorded rather than attributing one source revision to all four.
+PCE Fast embeds `2de1ce1` on every ABI. Neither upstream build is claimed reproduced.
+
+Clean analysis and all 628 Flutter tests pass, with one existing native-host
+skip. The updated Kotlin bridge compiles and ten native Thor filesystem fault
+groups pass. Tests exercise version-6 migration, independent setup/removal,
+state-only and raw-SRAM cloud readback/restoration into fresh profile storage,
+cartridge staging and unsupported-disc refusal. Real Stella/PCE gameplay remains
+pending the new APK.
 
 ## Remaining boundaries
 

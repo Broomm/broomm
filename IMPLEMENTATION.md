@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Rooted Atari 2600 and TG16 cartridges — 2026-11-07
+
+Current source adds independent Setup for Stella and Beetle PCE Fast with pinned
+four-ABI archives and exact source notices. Version 7 settings preserve existing
+connections. Uncompressed Atari `.a26`/`.bin` and TG16 `.pce` use the existing
+journaled native boundary, raw PCE SRAM, state-only Stella progress and
+build-matched states. No disc/firmware or compressed-content acceptance is added.
+Clean analysis and 628 Flutter tests pass with one existing native-host skip;
+the bridge compiles and ten real Thor filesystem groups pass in disposable
+storage. Packaged Stella/PCE gameplay is pending. See [scope and
+provenance](docs/android-retroarch-cores.md#atari-2600-and-tg16-cartridge-increment).
+
 ## Remaining rooted RetroArch cores — 2026-11-07
 
 PR #3 merged as `e92c584` after the GBA/SNES and offline-profile checks below.

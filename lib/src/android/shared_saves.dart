@@ -322,6 +322,11 @@ class SharedAndroidSaves {
       'root-gba-v1' => extension == 'gba',
       'root-snes-v1' => {'sfc', 'smc'}.contains(extension),
       'root-gameboy-v1' => {'gb', 'gbc', 'dmg'}.contains(extension),
+      'root-cartridge-v1' => switch (plan.launch['platform']) {
+        'atari2600' => {'a26', 'bin'}.contains(extension),
+        'tg16' => extension == 'pce',
+        _ => false,
+      },
       _ => false,
     };
     if (!supported || !plan.rooted || r['phase'] != 'installed')
