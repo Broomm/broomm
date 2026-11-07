@@ -10,8 +10,9 @@ checks below. Current source also adds Stella and Beetle PCE Fast for uncompress
 cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
-cartridge/save/state checks below. Mesen has the source increment below, with
-packaged acceptance pending. Six other selected cores remain research.
+cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
+passed the scoped checks below. Beetle Lynx, Opera, FBNeo, Flycast and Beetle
+Saturn remain pending their concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
 
@@ -363,7 +364,7 @@ downloads and cancellation/retry. The explicit
 `devbox run -- dart tool/check_android_jaguar_download.dart` network integration
 check verified all four real release assets and ELF identities, then removed
 private staging. It writes a receipt under `build/test-results/` and installs
-nothing. Packaged Jaguar gameplay remains pending. Jaguar CD is still deferred.
+nothing. The subsequent packaged acceptance is recorded below. Jaguar CD is still deferred.
 
 The first packaged check (`675ab8b`, build 1079) passed Setup, native rendering,
 controller input and a 128-byte EEPROM publication. It exposed stale frontend
@@ -372,8 +373,34 @@ states. The reviewed 3.11 release declares deterministic states and implements
 serialization. Its exact four ABI/payload hashes now enable
 `core_info_savestate_bypass` in Broomm's disposable session configuration.
 Unreviewed cores retain their metadata policy; no installed `.info`, global
-preferences or optional rewind/run-ahead preferences are rewritten. Corrected
-preview/state acceptance remains pending.
+preferences or optional rewind/run-ahead preferences are rewritten.
+
+Build **1080** (`855e6a6`) then passed the corrected Save States menu and manual
+state reload. Tempest's FAT/SKINNY VECTORS preference proved the ordinary EEPROM
+round trip: fresh Play restored all 128 bytes and showed the changed preference.
+The 80,783-byte manual state also restored byte-for-byte; Load State left the
+attract screen and resumed the saved level-start scene at score 0 with three
+lives. Movement/fire inputs were exercised; no completed-level/high-score
+progression is claimed. The original display preference was restored before
+final Quit published primary 241, retaining the same state.
+
+All 22 earlier additional-core progress files, eight GBA/SNES progress files,
+19 managed native files and 13 original standalone/managed files stayed unchanged.
+Ten core hashes, thirteen independent bindings, both accounts' distinct earlier
+histories and absence of active recovery journals pass. All 86 scoped operational
+log lines are free of warnings/errors. These are one arm64 Thor/account for Jaguar;
+cross-device gameplay and Memory Track remain separate. The [portable evidence](android-retroarch-jaguar.json)
+records exact builds, hashes, checkpoints and limits.
+
+Analysis and all 657 Flutter tests pass (one existing native-host skip), including
+50 rooted-session cases. All application CI checks and five packages passed run
+`42424365012`. A separate Mesen source job had built/uploaded all four libraries
+but failed in Nix installer post-job diagnostics after a network timeout; the
+original failure/log remains retained. The same pinned installer now uses its
+documented diagnostics opt-out. Corrected run `42424364865` passed all four native
+jobs and every post-job step, with unchanged build/test deadlines and failure
+handling. The current macOS archive passes source-input, ZIP and source/extracted
+deep strict all-architecture signature checks; it is ad-hoc signed, not notarized.
 
 ## Remaining boundaries
 
@@ -405,6 +432,6 @@ frontend SRAM mode; preserve the existing Mednafen save contract explicitly.
 Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
-device acceptance and Memory Track gameplay remain separate. Jaguar CD remains
+device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
 source build. Five selected cores still need their concrete integration.

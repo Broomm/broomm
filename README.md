@@ -379,8 +379,11 @@ Virtual Jaguar 3.11.0 release. Use a cartridge (`.j64/.jag/.rom/.abs/.cof/.bin/.
 or one such cartridge in a ZIP. Save in-game or create a manual state, Quit
 RetroArch normally, then wait for Broomm's synchronization confirmation. Earlier
 settings, progress and cores are retained; states require the matching APK/ABI/core.
-Packaged Jaguar gameplay remains pending; Jaguar CD remains deferred. See the
-[source scope and verification](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment).
+Build 1080 passed Tempest 2000's EEPROM preference and manual-state round trips,
+with earlier progress/settings preserved. Its native Save States menu works with
+the reviewed core despite RetroArch's old bundled metadata. Jaguar CD and Memory
+Track gameplay remain separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment)
+and [device evidence](docs/android-retroarch-jaguar.json).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

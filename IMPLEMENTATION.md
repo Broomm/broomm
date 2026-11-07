@@ -1,6 +1,6 @@
 # Implementation plan
 
-## Jaguar state-menu correction and independent core CI — 2026-11-07
+## Rooted Jaguar device acceptance and independent core CI — 2026-11-07
 
 Build 1079 (`675ab8b`) passed Jaguar Setup and Tempest 2000 launch/input. Normal
 Quit published its native 128-byte EEPROM as primary 239. The real menu check
@@ -8,19 +8,33 @@ found that RetroArch 1.22.2's bundled Virtual Jaguar 2.1 metadata disables state
 despite the reviewed 3.11 core providing them. The correction uses the frontend's
 documented metadata override in the disposable session configuration only for
 the exact reviewed ABI/payload hashes. Unknown cores retain the inherited policy;
-standalone metadata/preferences are untouched. Packaged state acceptance remains
-pending the corrected preview.
+standalone metadata/preferences are untouched.
 Clean analysis, all 657 Flutter tests (one existing native-host skip) and all
 50 rooted-session regressions pass. The initial sandboxed test harness could not
 bind its loopback socket; the native rerun passed without changing tests.
+
+Build 1080 (`855e6a6`) passed the corrected native menu, manual Save/Load State,
+normal Quit/sync and fresh Play. Both the 128-byte EEPROM and 80,783-byte state
+restored byte-for-byte; Load State resumed the saved level-start scene with
+score 0 and three lives. The original display preference was restored before
+final primary 241, retaining the state. All 22 earlier additional-core progress
+files, eight GBA/SNES files, 19 managed native files and 13 original standalone/
+managed files stayed unchanged. Ten cores, thirteen bindings, both accounts'
+distinct earlier histories and journal cleanup pass; 86 scoped log lines have
+no warning/error. No completed level, Memory Track or cross-device gameplay
+claim is made. See the [exact device evidence](docs/android-retroarch-jaguar.json).
 
 All application jobs and five packages passed run `42422129526`. In the separate
 Mesen run `42422129552`, all four native libraries built and uploaded, but x86's
 Nix installer post-job diagnostics request timed out and its old bundled promise
 handler crashed. The workflow now invokes the same pinned installer directly
 with its supported diagnostics opt-out before Devbox. Build/test steps, deadlines
-and failure handling are unchanged; workflow lint passes. Corrected native CI
-remains pending, and the original failed job/log is retained.
+and failure handling are unchanged; workflow lint passes. Corrected run
+`42424364865` passed all four native jobs and every post-job step. Application
+run `42424365012` passed all checks and all five packages. The original failed
+job/log is retained. The current macOS package passes archive, input-fingerprint
+and source/extracted deep strict all-architecture signature checks. Five selected
+cores remain pending; PR #4 stays draft.
 
 ## Rooted Jaguar cartridge source increment — 2026-11-07
 
