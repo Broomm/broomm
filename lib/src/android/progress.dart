@@ -31,7 +31,7 @@ Future<ProgressLayout> androidProgressLayout(
     );
   final app = manager.app(emulator, package: package);
   if (app == null) throw StateError('Install ${emulator.name} first.');
-  if ({'gba', 'snes'}.contains(platform.slug) &&
+  if (androidRootRetroCore(platform.slug) != null &&
       manager.rootConnection(emulator, platform.slug, package: package) != null)
     return rootedRetroArchProgress(
       manager,

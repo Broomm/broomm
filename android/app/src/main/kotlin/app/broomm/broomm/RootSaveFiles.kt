@@ -88,12 +88,13 @@ internal class RootSaveFiles(
             val prefix = area["prefix"]
             require((exact != null && area.keys == setOf("path", "exact")) ||
                 (prefix != null && area.keys == setOf("path", "prefix", "pattern")))
-            val probe = "$directory/${exact ?: "$prefix.state"}"
+            val ordinary = directory.endsWith("/saves")
+            val probe = "$directory/${exact ?: (prefix + if (ordinary) ".srm" else ".state")}"
             managedPath(probe, saveOnly = true)
             val owner = directory.substringBefore("/saves").substringBefore("/states")
             require(base == null || base == owner); base = owner
-            require(if (exact != null) directory.endsWith("/saves") && exact.endsWith(".srm")
-                else Regex(".*/states/states-[a-f0-9]{16}-android").matches(directory))
+            require(if (exact != null) ordinary && exact.endsWith(".srm")
+                else ordinary || Regex(".*/states/states-[a-f0-9]{16}-android").matches(directory))
             val folder = path(directory)
             if (!present(folder)) continue
             val stat = Os.lstat(folder.path)
@@ -102,7 +103,8 @@ internal class RootSaveFiles(
             val names = folder.list() ?: error("Cannot inspect the managed save directory.")
             require(names.size <= 1024) { "Managed save directory exceeds its entry limit." }
             val selected = names.filter { if (exact != null) it == exact else
-                Regex(Regex.escape(prefix!!) + "\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?").matches(it) }
+                Regex(Regex.escape(prefix!!) + if (ordinary) "\\.(?:srm|rtc)" else
+                    "\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?").matches(it) }
             for (name in selected.sorted()) {
                 live()
                 val relative = "$directory/$name"
@@ -353,13 +355,13 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 8 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x"))
+            require(core in setOf("mgba", "snes9x", "gambatte"))
             return "cores/${core}_libretro_android.so"
         }
         fun limit(path: String): Int = if (path.contains("/states/")) MAX_STATE_BYTES else MAX_BYTES
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false) {
-            val save = "saves/[^/]+\\.srm"
+            val save = "saves/[^/]+\\.(?:srm|rtc)"
             val state = "states/states-[a-f0-9]{16}-android/[^/]+\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?"
             val suffix = if (saveOnly) "(?:$save|$state)" else "(?:$save|$state|config-[a-f0-9]{32}\\.cfg)"
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
@@ -369,7 +371,7 @@ internal class RootSaveFiles(
 
         fun romPath(path: String): List<String> {
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc))")
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg))")
                     .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }

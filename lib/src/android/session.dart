@@ -83,6 +83,7 @@ class AndroidGameSession extends ChangeNotifier {
     ProgressResolver? resolve,
     Future<CloudGame?> Function()? prepare,
     bool rooted = false,
+    String? rootPlatform,
     bool emulatorClosed = true,
   }) async {
     if (![
@@ -108,12 +109,13 @@ class AndroidGameSession extends ChangeNotifier {
           'MMJ has an unfinished shared-folder restore. Finish its original game session before starting another game.',
         );
       await manager.ensureNoWriters(closureConfirmed: true);
+      final platform = rootPlatform ?? (core == 'snes9x' ? 'snes' : 'gba');
+      if (rooted && androidRootRetroCore(platform) != core)
+        throw const FormatException(
+          'Rooted RetroArch platform/core identity differs.',
+        );
       final root = rooted
-          ? manager.rootConnection(
-              emulator,
-              core == 'snes9x' ? 'snes' : 'gba',
-              package: app.package,
-            )
+          ? manager.rootConnection(emulator, platform, package: app.package)
           : null;
       if (rooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
@@ -156,7 +158,7 @@ class AndroidGameSession extends ChangeNotifier {
           'package': app.package,
           'selected': selected,
           if (rooted) 'rooted': true,
-          if (rooted) 'rootPlatform': core == 'snes9x' ? 'snes' : 'gba',
+          if (rooted) 'rootPlatform': platform,
         },
       );
       active = true;
@@ -283,19 +285,17 @@ class AndroidGameSession extends ChangeNotifier {
   Future<Map<String, String>?> _recoveryRoot(Map record) async {
     if (record['emulator'] != 'retroarch') return null;
     if (record['rooted'] != true &&
-        !{'root-gba-v1', 'root-snes-v1'}.contains(record['access']) &&
+        !androidRootAccessModes.contains(record['access']) &&
         !(await _shared.pending &&
-            {
-              'root-gba-v1',
-              'root-snes-v1',
-            }.contains((await progressJson(_shared.journal))['access'])))
+            androidRootAccessModes.contains(
+              (await progressJson(_shared.journal))['access'],
+            )))
       return null;
     final emulator = androidEmulators.singleWhere((e) => e.id == 'retroarch');
     final root = manager.rootConnection(
       emulator,
-      record['rootPlatform'] == 'snes' || record['access'] == 'root-snes-v1'
-          ? 'snes'
-          : 'gba',
+      record['rootPlatform'] as String? ??
+          (record['access'] == 'root-snes-v1' ? 'snes' : 'gba'),
       package: record['package'] as String?,
     );
     if (root == null)

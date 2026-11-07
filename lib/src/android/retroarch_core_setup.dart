@@ -50,6 +50,26 @@ const _snesRecipes = <String, (String, String)>{
   ),
 };
 
+const _gambatteRevision = 'd58888fe71f5a1975e931522d91eb2a2f22fcac7';
+const _gambatteRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '5f3e9b5c7e236ca78558cf1f2342680b9ca91a6e8cbf33021ed938e9d7d7cc4d',
+    '940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26',
+  ),
+  'armeabi-v7a': (
+    '3f97b0c76253238cc3ac7c1f794438c17faa918dfe95c797438a85daaaf6c0b5',
+    '8c1babd7a734fa7ff85684928e2d57d20826cc2326aeb5b293382166f1148722',
+  ),
+  'x86': (
+    '6c407b31bddb1f42703c210240dc4a9b712a505560fe8284438a23d75abae434',
+    '3fcfd63fbe880591eab5005b993bd6f013ab13fa09c80b91b8fde3ca1756dda2',
+  ),
+  'x86_64': (
+    'd971cf8d776741e68d41e7e56c39737a91b1233a6f6e9be2d99e94676bdbc059',
+    '265988a3f6394de587221f3568c572a6c8289a26f402250077ff5ac008369341',
+  ),
+};
+
 Future<void> downloadAndroidRetroCore(
   Directory data,
   String core,
@@ -58,10 +78,18 @@ Future<void> downloadAndroidRetroCore(
   required void Function(int, int?) progress,
   required Future<void> Function(String stage, String sha256) publish,
 }) async {
-  if (!{'mgba', 'snes9x'}.contains(core))
-    throw UnsupportedError('Unsupported Android RetroArch core.');
+  final (revision, version, recipes) = switch (core) {
+    'mgba' => (_coreRevision, '0.11-212-7a12d6d', _recipes),
+    'snes9x' => (_snesRevision, '1.63-fae2fea', _snesRecipes),
+    'gambatte' => (
+      _gambatteRevision,
+      '0.5.0-netlink-77f2567',
+      _gambatteRecipes,
+    ),
+    _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
+  };
   final coreFile = '${core}_libretro_android.so';
-  final recipe = (core == 'mgba' ? _recipes : _snesRecipes)[abi];
+  final recipe = recipes[abi];
   if (recipe == null)
     throw UnsupportedError('No reviewed $core download is available for $abi.');
   final stage = progressNonce();
@@ -79,7 +107,7 @@ Future<void> downloadAndroidRetroCore(
   try {
     final url = Uri.https(
       'raw.githubusercontent.com',
-      '/Broomm/broomm/${core == 'mgba' ? _coreRevision : _snesRevision}/vendor/android/$core/${core == 'mgba' ? '0.11-212-7a12d6d' : '1.63-fae2fea'}/$abi/$coreFile.zip',
+      '/Broomm/broomm/$revision/vendor/android/$core/$version/$abi/$coreFile.zip',
     );
     final reply = await download.response(url), expected = reply.contentLength;
     if (expected > _maxArchive)

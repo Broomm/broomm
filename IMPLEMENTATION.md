@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Remaining rooted RetroArch cores — 2026-11-07
+
+PR #3 merged as `e92c584` after the GBA/SNES and offline-profile checks below.
+The next branch starts with GB/GBC through Gambatte: independent platform setup,
+immutable four-ABI archives, SRAM/RTC and exact-build states. Version 6 settings
+retain GBA/SNES connections; session and swap receipts retain the original
+platform for recovery. Native staging accepts the concrete uncompressed GB/GBC
+extensions and bounded SRAM/clock selectors.
+
+Analysis and all 623 Flutter tests pass, with one existing native-host skip. The compiled
+production bridge and nine native filesystem fault groups pass, including real
+Thor SRAM/RTC selection and GBC staging in disposable storage. Packaged gameplay
+checks are pending the PR build. Other cores are researched, not yet
+implemented. See [scope and remaining boundaries](docs/android-retroarch-cores.md).
+
 ## Offline activation, rooted save states and SNES — 2026-11-07
 
 Current source adds explicit saved-profile activation during transport outages,

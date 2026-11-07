@@ -82,6 +82,8 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
+        (r['rootPlatform'] != null &&
+            r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(r['transaction'] as String? ?? '') ||
@@ -175,6 +177,8 @@ class SharedAndroidSaves {
       'build': build,
       'selected': selected,
       if (plan.rooted) 'rootConfigPath': plan.launch['configPath'],
+      if (plan.rooted && plan.launch['platform'] != null)
+        'rootPlatform': plan.launch['platform'],
       if (plan.rooted && plan.launch['stateGroup'] != null)
         'rootStateGroup': plan.launch['stateGroup'],
       'phase': 'installing',
@@ -313,13 +317,16 @@ class SharedAndroidSaves {
     final source = File(r['selected'] as String);
     final name = source.uri.pathSegments.last;
     progressRelative(name);
-    if (!(plan.binding['access'] == 'root-snes-v1'
-            ? RegExp(r'\.(sfc|smc)$', caseSensitive: false).hasMatch(name)
-            : name.toLowerCase().endsWith('.gba')) ||
-        !plan.rooted ||
-        r['phase'] != 'installed')
+    final extension = name.split('.').last.toLowerCase();
+    final supported = switch (plan.binding['access']) {
+      'root-gba-v1' => extension == 'gba',
+      'root-snes-v1' => {'sfc', 'smc'}.contains(extension),
+      'root-gameboy-v1' => {'gb', 'gbc', 'dmg'}.contains(extension),
+      _ => false,
+    };
+    if (!supported || !plan.rooted || r['phase'] != 'installed')
       throw StateError(
-        'Rooted RetroArch requires a single GBA (.gba) or SNES (.sfc/.smc) game file.',
+        'Rooted RetroArch requires one uncompressed game file for the selected core.',
       );
     final config = plan.launch['configPath']!;
     final parent = config.substring(0, config.lastIndexOf('/'));

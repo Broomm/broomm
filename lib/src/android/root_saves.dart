@@ -11,6 +11,13 @@ import 'save_plan.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
 
+String? androidRootRetroCore(String platform) => switch (platform) {
+  'gba' => 'mgba',
+  'snes' => 'snes9x',
+  'gb' || 'gbc' => 'gambatte',
+  _ => null,
+};
+
 Future<({AndroidRetroArchState state, int? elapsed, Map<String, int>? process})>
 readAndroidRetroArchState(
   AndroidEmulators manager,
@@ -47,7 +54,7 @@ readAndroidRetroArchState(
 /// grant. The native service rechecks every field before each file operation.
 bool androidRootBinding(Map<String, String> binding) {
   final pkg = binding['package'], uid = int.tryParse(binding['uid'] ?? '');
-  return {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']) &&
+  return androidRootAccessModes.contains(binding['access']) &&
       {
         'com.retroarch.aarch64',
         'com.retroarch',
@@ -87,7 +94,9 @@ Future<Map<String, dynamic>> inspectAndroidRetroArchRoot(
     {
       'package': app.package,
       'build': app.build,
-      'coreName': platform == 'snes' ? 'snes9x' : 'mgba',
+      'coreName':
+          androidRootRetroCore(platform) ??
+          (throw UnsupportedError('Unsupported rooted RetroArch system.')),
     },
   );
   if (value == null ||
@@ -113,7 +122,12 @@ Map<String, String> androidRetroArchRootIdentity(
   String platform = 'gba',
 }) {
   final binding = <String, String>{
-    'access': platform == 'snes' ? 'root-snes-v1' : 'root-gba-v1',
+    'access': switch (platform) {
+      'gba' => 'root-gba-v1',
+      'snes' => 'root-snes-v1',
+      'gb' || 'gbc' => 'root-gameboy-v1',
+      _ => throw UnsupportedError('Unsupported rooted RetroArch system.'),
+    },
     for (final key in [
       'package',
       'user',
@@ -152,11 +166,11 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   String content, {
   String? package,
 }) async {
-  final core = platform.slug == 'snes' ? 'snes9x' : 'mgba';
-  if (!{'gba', 'snes'}.contains(platform.slug) ||
+  final core = androidRootRetroCore(platform.slug);
+  if (core == null ||
       (platform.retroCore != null && platform.retroCore != core))
     throw UnsupportedError(
-      'Root save access currently supports GBA/mGBA and SNES/Snes9x. Configure a shared folder for other platforms.',
+      'Root saves are not yet implemented for this RetroArch platform. Configure a shared folder.',
     );
   final binding = manager.rootConnection(
     emulator,
@@ -190,7 +204,10 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save',
     'root-${platform.slug}/$content/saves',
     prefix: stem,
-    exact: '$stem.srm',
+    exact: core == 'gambatte' ? null : '$stem.srm',
+    pattern: core == 'gambatte'
+        ? '^${RegExp.escape(stem)}\\.(?:srm|rtc)\$'
+        : null,
   );
   final identity = ProgressDigest.sha256()
     ..add(
@@ -240,7 +257,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   return AndroidSavePlan(
     ProgressLayout(
       root.path,
-      core == 'snes9x' ? 'snes9x-sram-v1' : 'libretro-mgba-v1',
+      core == 'snes9x' ? 'snes9x-sram-v1' : 'libretro-$core-v1',
       core == 'snes9x' ? 'snes' : content,
       [area, states],
       note: 'Rooted RetroArch saves and states. States require the same APK, ABI and core build.',
@@ -248,10 +265,15 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     emulator,
     binding,
     [
-      AndroidSaveArea(area, '$base/saves', rename: '$stem.srm'),
+      AndroidSaveArea(
+        area,
+        '$base/saves',
+        rename: core == 'gambatte' ? null : '$stem.srm',
+      ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
     launch: {
+      'platform': platform.slug,
       'configPath': configPath,
       'stateGroup': group,
       'configNative': '$native/$configPath',

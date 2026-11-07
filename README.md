@@ -321,6 +321,11 @@ open after an offline restart and retain pending progress until that same
 account reconnects. The two-account Thor checks use builds 1057/1058; see the
 [walkthrough, native checks and remaining limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
 
+The next rooted-core increment adds **Game Boy / Game Boy Color → RetroArch →
+Set up** for Gambatte, with separate platform choices, SRAM/RTC and matching
+states. Its current gameplay acceptance and remaining-core work are recorded in
+[the Android core walkthrough](docs/android-retroarch-cores.md).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

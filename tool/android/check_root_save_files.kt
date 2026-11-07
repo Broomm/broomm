@@ -117,6 +117,28 @@ fun main(args: Array<String>) {
         check(!staged.parentFile!!.exists() && files.hash(target) == oldHash)
         println("PASS: verified GBA ROM staging, existing stage refusal, partial cleanup and save preservation")
 
+        val gameboyBase = "files/Broomm/${"b".repeat(32)}/44/"
+        val gameboySave = gameboyBase + "saves/Pokemon.srm"
+        val gameboyClock = gameboyBase + "saves/Pokemon.rtc"
+        files.replace(gameboySave, null, oldHash, old, null, token)
+        files.replace(gameboyClock, null, nextHash, next, null, token)
+        val unrelatedClock = gameboyBase + "saves/Pokemon Extra.rtc"
+        files.replace(unrelatedClock, null, oldHash, old, null, token)
+        val gameboyInventory = files.inventory(listOf(mapOf(
+            "path" to gameboyBase + "saves", "prefix" to "Pokemon", "pattern" to "bounded-by-native-selector")))
+        check(gameboyInventory.keys == setOf(gameboySave, gameboyClock))
+        check(gameboyInventory.getValue(gameboyClock).sha256 == nextHash)
+        files.replace(gameboyClock, nextHash, oldHash, old, files.metadata(files.path(gameboyClock)), token)
+        check(files.hash(files.path(gameboyClock)) == oldHash && files.hash(files.path(unrelatedClock)) == oldHash)
+        val gameboyRom = File(root, "library/44/content/Pokemon.gbc")
+        check(gameboyRom.parentFile!!.mkdirs()); gameboyRom.writeBytes(next)
+        val gameboyRomPath = gameboyBase + "rom-${"c".repeat(32)}/Pokemon.gbc"
+        val stagedGameboy = files.stageRom(gameboyRomPath, gameboyRom, 0, nextHash)
+        check(files.hash(stagedGameboy) == nextHash)
+        files.removeRom(gameboyRomPath, nextHash)
+        check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
+        println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
+
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
             this[16] = 3; this[18] = 183.toByte()

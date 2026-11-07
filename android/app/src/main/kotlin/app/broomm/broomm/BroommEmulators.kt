@@ -209,14 +209,17 @@ class BroommEmulators(private val activity: Activity) {
                                         val external = android.os.Environment.getExternalStorageDirectory().path
                                         val config = call.argument<String>("configuration")
                                         if (nativeRom != null) {
-                                            require(core in setOf("mgba", "snes9x") && config != null &&
+                                            require(core in setOf("mgba", "snes9x", "gambatte") && config != null &&
                                                 pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
                                             val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
                                                 .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
                                                 ?: error("RetroArch ROM is outside RetroArch's private session")
                                             val parts = RootSaveFiles.romPath(nativeRom.removePrefix("$root/"))
-                                            require(if (core == "mgba") parts[3].endsWith(".gba", true) else
-                                                parts[3].endsWith(".sfc", true) || parts[3].endsWith(".smc", true))
+                                            require(when (core) {
+                                                "mgba" -> parts[3].endsWith(".gba", true)
+                                                "snes9x" -> parts[3].endsWith(".sfc", true) || parts[3].endsWith(".smc", true)
+                                                else -> setOf("gb", "gbc", "dmg").contains(parts[3].substringAfterLast('.').lowercase())
+                                            })
                                             require(parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name &&
                                                 config.substringAfter("/files/Broomm/").substringBeforeLast('/') == "${parts[0]}/${parts[1]}")
                                         }

@@ -12,6 +12,7 @@ void main() {
   for (final (core, version) in [
     ('mgba', '0.11-212-7a12d6d'),
     ('snes9x', '1.63-fae2fea'),
+    ('gambatte', '0.5.0-netlink-77f2567'),
   ]) {
     test('each versioned $core archive verifies and publishes its reviewed core', () async {
       final vendor = Directory('vendor/android/$core/$version');

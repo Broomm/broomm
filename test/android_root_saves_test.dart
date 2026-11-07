@@ -13,6 +13,7 @@ import 'package:broomm/src/android/setup.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/service.dart';
+import 'package:broomm/src/progress/zip.dart';
 
 import 'android_folder_sync_test.dart' show AndroidFolderFixture;
 import 'android_apk_download_test.dart' show ApkClient, ApkReply;
@@ -65,6 +66,16 @@ void main() {
     metadata[relative] = attributes;
     return file;
   }
+
+  Future<AndroidSavePlan> gameboyPlan(String slug, String rom) async =>
+      await androidProgressLayout(
+        manager,
+        profileId,
+        emulator,
+        playablePlatforms.firstWhere((p) => p.slug == slug),
+        rom,
+        contentId: '42',
+      ) as AndroidSavePlan;
 
   CloudGame game(AndroidSavePlan p) => CloudGame(
     server: serverId,
@@ -860,6 +871,135 @@ void main() {
     await manager.disconnectGbaRoot(emulator, platform: 'snes');
     expect(manager.hasCurrentGbaRoot(emulator), true);
     expect(manager.hasCurrentRoot(emulator, 'snes'), false);
+  });
+
+  test('Game Boy setup migrates existing roots and keeps GB and GBC choices independent', () async {
+    await manager.connectGbaRoot(emulator);
+    await manager.connectGbaRoot(emulator, platform: 'snes');
+    final settings = File('${data.path}/android/emulators.json');
+    final legacy =
+        jsonDecode(await settings.readAsString()) as Map<String, dynamic>;
+    legacy['version'] = 5;
+    legacy.remove('retroRoots');
+    await settings.writeAsString(jsonEncode(legacy));
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), false);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), false);
+    final setup = AndroidEmulatorSetup(manager, emulator, 'gb', profileId);
+    addTearDown(setup.dispose);
+    await setup.verify();
+    expect(setup.problem, isNull);
+    expect(setup.step, AndroidSetupStep.ready);
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), true);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), false);
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), true);
+    await manager.connectGbaRoot(emulator, platform: 'gbc');
+    await manager.disconnectGbaRoot(emulator, platform: 'gb');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gb'), false);
+    expect(manager.hasCurrentRoot(emulator, 'gbc'), true);
+    expect(manager.hasCurrentGbaRoot(emulator), true);
+    expect(manager.hasCurrentRoot(emulator, 'snes'), true);
+  });
+
+  test('GBC native sessions upload SRAM and RTC together and restore standalone bytes', () async {
+    await manager.connectGbaRoot(emulator, platform: 'gbc');
+    final rom = await File('${temp.path}/Pokemon Crystal.gbc')
+        .writeAsBytes([5, 6]);
+    final p = await gameboyPlan('gbc', rom.path), g = game(p);
+    final originalSave = await put(p.remotePath('save/game.srm'), [8, 9]);
+    final originalClock = await put(p.remotePath('save/game.rtc'), [7, 8]);
+    final unrelated = await put(
+      p
+          .remotePath('save/game.rtc')
+          .replaceFirst('Pokemon Crystal.rtc', 'Another game.rtc'),
+      [6],
+    );
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: emulator,
+      app: manager.app(emulator)!,
+      files: [rom.path],
+      selected: rom.path,
+      core: 'gambatte',
+      rooted: true,
+      rootPlatform: 'gbc',
+      prepare: () async => g,
+    );
+    expect((await session.pending())!['rootPlatform'], 'gbc');
+    final sram = List<int>.filled(32768, 2),
+        rtc = List<int>.generate(48, (i) => i);
+    await put(p.remotePath('save/game.srm'), sram);
+    await put(p.remotePath('save/game.rtc'), rtc);
+    final group = p.areas.last.id;
+    await put(p.remotePath('$group/game.state'), [4, 5, 6]);
+    processState = 'idle';
+    exitState = 'closed';
+    expect(
+      await session.finishIfRetroArchClosed(),
+      AndroidRetroArchState.closed,
+    );
+    expect(await session.pending(), isNull);
+    expect(await originalSave.readAsBytes(), [8, 9]);
+    expect(await originalClock.readAsBytes(), [7, 8]);
+    expect(await unrelated.readAsBytes(), [6]);
+    expect(await (await p.target('save/game.srm')).readAsBytes(), sram);
+    expect(await (await p.target('save/game.rtc')).readAsBytes(), rtc);
+    final primary = api.records.values.single;
+    expect(primary.name.endsWith('.zip'), true);
+    final archive = await File('${temp.path}/downloaded.zip')
+        .writeAsBytes(api.contents[primary.id]!);
+    final zip = await ProgressZip.read(archive);
+    expect(zip.entries.map((e) => e.name).toSet(), {'game.srm', 'game.rtc'});
+    expect(api.readIds, contains(primary.id));
+    expect(api.stateRecords, hasLength(1));
+    expect((await cloud.store(g).state())['pending'], false);
+  });
+
+  test('a missing working Game Boy clock retains recovery and cannot publish deletion', () async {
+    await manager.connectGbaRoot(emulator, platform: 'gb');
+    final p = await gameboyPlan('gb', '/game/Pokemon.gb'),
+        g = game(p),
+        saves = SharedAndroidSaves(manager);
+    await (await p.target('save/game.srm')).writeAsBytes([1, 2]);
+    await (await p.target('save/game.rtc')).writeAsBytes([3, 4]);
+    await cloud.beforePlay(g);
+    final baselineContents = {
+      for (final e in api.contents.entries) e.key: List<int>.from(e.value),
+    };
+    await saves.begin(g, p, 'a' * 64, selected: '/game/Pokemon.gb');
+    final otherPlatform = AndroidSavePlan(
+      p,
+      emulator,
+      p.binding,
+      p.remoteAreas,
+      launch: {...p.launch, 'platform': 'gbc'},
+    );
+    await expectLater(saves.record(g, otherPlatform), throwsFormatException);
+    final recovered = AndroidGameSession(manager, cloud);
+    addTearDown(recovered.dispose);
+    expect((await recovered.pending())!['rootPlatform'], 'gb');
+    await File('${native.path}/${p.remotePath('save/game.rtc')}').delete();
+    await expectLater(
+      recovered.finish(emulatorClosed: true, recovery: g),
+      throwsStateError,
+    );
+    expect(await saves.pending, true);
+    expect(await (await p.target('save/game.rtc')).readAsBytes(), [3, 4]);
+    expect(api.contents, baselineContents);
+    // Repair from the retained working clock; missing general-marker recovery
+    // then queues the captured progress for explicit review rather than upload.
+    await put(p.remotePath('save/game.rtc'), [3, 4]);
+    await recovered.finish(emulatorClosed: true, recovery: g);
+    expect(await recovered.pending(), isNull);
+    expect((await cloud.store(g).state())['pending'], true);
+    expect(api.contents, baselineContents);
   });
   test(
     'root state inventories enforce transfer limits before native publication',
