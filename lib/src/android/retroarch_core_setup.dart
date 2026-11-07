@@ -170,6 +170,26 @@ const _n64Recipes = <String, (String, String)>{
   ),
 };
 
+const _mesenRevision = '7a0fb0ae3ecbd0887f3fa706fcb99099c7cbf81b';
+const _mesenRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '4c78c6bc0a8683493524473c046e164855ae7eeb3df2dc6b7228c47dc00fa3ac',
+    'ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9',
+  ),
+  'armeabi-v7a': (
+    'a38927484e604eec78832fd72893ddb956a56080bd76cbcc39171453f267ee2d',
+    '2437fbac81c0e0c4a60e5a838fb0cbb426b12cc59cdcc08926d2790c364f11f1',
+  ),
+  'x86': (
+    'c4c7d1291f0a7ec7083af298388a5a2933148785190b15dbec0ac803606a34f5',
+    '15ea57850e5033aebeead97db8d69980c72d599099d4fe437093788aca8d1ae4',
+  ),
+  'x86_64': (
+    '5309f72faf3df8efffa5c211c548e022ff544122e173564f4aaa672aade23e0c',
+    '2ddf03b51bc4bd55554a2ccf7b26dd86b914cf4876e3597b5a7a8c1bf282babd',
+  ),
+};
+
 String androidRetroCoreFile(String core) => core == 'mupen64plus_next'
     ? 'mupen64plus_next_gles3_libretro_android.so'
     : '${core}_libretro_android.so';
@@ -195,12 +215,13 @@ Future<void> downloadAndroidRetroCore(
     'genesis_plus_gx' => (_genesisRevision, '1.7.4-f27655b', _genesisRecipes),
     'picodrive' => (_picoRevision, '2.05-1890c29', _picoRecipes),
     'mupen64plus_next' => (_n64Revision, '3.0-15bada8', _n64Recipes),
+    'mesen' => (_mesenRevision, '0.9.9-0102910', _mesenRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);
   final maxArchive = core == 'mupen64plus_next'
       ? 3 * 1024 * 1024
-      : {'stella', 'genesis_plus_gx'}.contains(core)
+      : {'stella', 'genesis_plus_gx', 'mesen'}.contains(core)
       ? 2 * 1024 * 1024
       : _maxArchive;
   final maxCore = core == 'genesis_plus_gx' ? 16 * 1024 * 1024 : _maxCore;

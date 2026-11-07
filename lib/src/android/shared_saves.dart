@@ -594,6 +594,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
         'gamegear' => {'gg'},
         'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'},
         'n64' => {'z64', 'v64', 'n64'},
+        'nes' => {'nes', 'unf', 'unif'},
         _ => {},
       },
       _ => {},

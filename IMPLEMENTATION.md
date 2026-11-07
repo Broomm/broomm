@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Rooted NES/Mesen source increment — 2026-11-07
+
+Current source adds independent NES Setup using the four-ABI Mesen build retained
+at `7a0fb0a`, with exact source `0102910` and original compiler records/notices.
+Version 10 preserves earlier connections. Raw/ZIP `.nes/.unf/.unif` cartridges,
+desktop-compatible SRAM and matched states use the existing profile/game
+supervision and recovery. Earlier resource limits remain unchanged; FDS disks
+and HD packs have no new acceptance.
+
+Clean analysis, all 649 Flutter tests (one existing native-host skip), 58 focused
+checks and thirteen disposable Thor filesystem/launch groups pass. The native
+bridge and fixture compile. Packaged NES acceptance remains pending; six other
+selected cores remain research. See the [scope and walkthrough](docs/android-retroarch-cores.md#nesmesen-source-increment).
+
 ## Pinned Android Mesen build preparation — 2026-11-07
 
 The exact Mesen 0.9.9 source archive and recipe/license inputs are retained.
@@ -11,8 +25,8 @@ locally. All four ABIs passed native compilation in CI run `42416669733`; their
 checksums, ELF identities, Android-only dependencies, original logs/records and
 component licenses are retained. A ZIP-method metadata label was corrected
 against the actual archive without rewriting historical build records. Mesen
-gameplay remains pending; no NES binding or app behavior is enabled by this
-build preparation.
+gameplay remains pending; that build-preparation increment enabled no app
+behavior. The subsequent source increment is recorded above.
 
 ## Rooted Nintendo 64 device acceptance — 2026-11-07
 

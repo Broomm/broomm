@@ -10,7 +10,8 @@ checks below. Current source also adds Stella and Beetle PCE Fast for uncompress
 cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
-cartridge/save/state checks below. Seven other selected cores remain research.
+cartridge/save/state checks below. Mesen has the source increment below, with
+packaged acceptance pending. Six other selected cores remain research.
 
 ## Gambatte source and behavior
 
@@ -296,6 +297,30 @@ Its native updater became ready after 1,770 ms (`Process.start`: 7 ms). This
 successful execution does not identify the earlier timeout's cause; the
 failure-only observation remains enabled without altering the pass deadline.
 
+## NES/Mesen source increment
+
+**Nintendo Entertainment System → RetroArch → Set up** now installs Mesen 0.9.9
+from the [retained four-ABI build](../vendor/android/mesen/0.9.9-0102910/README.md),
+artifact `7a0fb0a`, tag `android-mesen-0.9.9-0102910`. Unlike the nightly library,
+this build has exact corresponding source, compiler inputs/logs and ELF/output
+hashes from Broomm CI. Source `0102910` is unchanged. Native dependencies are
+Android libc/libm/libdl; C++ is linked statically. The ZIP-method metadata
+erratum and original build records remain explicit in provenance.
+
+Raw `.nes/.unf/.unif` cartridges and validated single-cartridge ZIPs use the
+existing journaled profile/game staging. The earlier 32 MiB raw / 64 MiB archive
+limits, 256 KiB ordinary-save limit and 16 MiB state limit remain. SRAM retains
+the desktop `libretro-mesen-v1` raw contract. Version 10 settings read versions
+1–9 without losing earlier bindings; older records cannot assert NES Setup.
+FDS disks/BIOS, HD packs and special peripherals have no new acceptance.
+
+Clean analysis, all 649 Flutter tests (one existing native-host skip) and 58
+focused setup/download/root/build checks pass. The Kotlin bridge and native
+fixture compile; all thirteen disposable Thor filesystem/launch groups pass,
+including Mesen installation, raw/ZIP launch validation and unsupported FDS
+refusal. Packaged NES gameplay remains pending; source/build verification is
+separate from that acceptance.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
@@ -327,5 +352,5 @@ Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 
 Virtual Jaguar has a permanent [3.11.0 Android release](https://github.com/libretro/virtualjaguar-libretro/releases/tag/v3.11.0)
 with a clean source identifier. Current source/metadata advertises Jaguar CD
-and Memory Track; media/device acceptance remains pending. Mesen omits a Git
-revision in its binary, so exact build-source provenance still needs resolution.
+and Memory Track; media/device acceptance remains pending. Mesen's nightly
+provenance gap is resolved by the retained owned source build above.

@@ -20,6 +20,7 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'genesis' || 'sms' || 'gamegear' => 'genesis_plus_gx',
   'sega32' => 'picodrive',
   'n64' => 'mupen64plus_next',
+  'nes' => 'mesen',
   _ => null,
 };
 
@@ -33,7 +34,8 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'sms' ||
   'gamegear' ||
   'sega32' ||
-  'n64' => 'root-cartridge-v1',
+  'n64' ||
+  'nes' => 'root-cartridge-v1',
   _ => null,
 };
 

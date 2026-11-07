@@ -18,6 +18,7 @@ void main() {
     ('genesis_plus_gx', '1.7.4-f27655b'),
     ('picodrive', '2.05-1890c29'),
     ('mupen64plus_next', '3.0-15bada8'),
+    ('mesen', '0.9.9-0102910'),
   ]) {
     test(
       'each versioned $core archive verifies and publishes its reviewed core',

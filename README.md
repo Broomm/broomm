@@ -362,6 +362,16 @@ sync and manual gameplay-state reload on Thor, preserving earlier progress and
 settings. See the [scoped N64 evidence](docs/android-retroarch-n64.json). 64DD and
 Transfer Pak media are outside this increment's acceptance.
 
+Current source adds **Nintendo Entertainment System → RetroArch → Set up**
+with Mesen 0.9.9 built from retained source `0102910` for all four Android ABIs.
+Use `.nes/.unf/.unif` cartridges or one such cartridge in a ZIP. Setup downloads
+only Mesen and retains earlier cores. Save in-game or create a manual state,
+Quit RetroArch normally and wait for Broomm's sync confirmation. SRAM uses the
+existing desktop-compatible raw save contract; states require the matching
+APK/ABI/core. Native cartridge/progress limits remain 32 MiB / 256 KiB, with
+16 MiB states. FDS disks/firmware and HD packs are outside this increment.
+Packaged NES gameplay remains pending; see the [Mesen build/source record](vendor/android/mesen/0.9.9-0102910/README.md).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker
