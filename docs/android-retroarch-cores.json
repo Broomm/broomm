@@ -1,0 +1,227 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "scope": "GB/GBC Gambatte increment of the remaining-core milestone; other twelve cores pending",
+  "runtime_revision": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64",
+    "gambatte": "0.5.0-netlink 77f2567",
+    "romm": "5.4.0",
+    "accounts": [
+      2,
+      3
+    ]
+  },
+  "automation": {
+    "analysis": "passed",
+    "flutter_tests_passed": 623,
+    "existing_native_host_skip": 1,
+    "native_android_fault_groups_passed": 9,
+    "ci": {
+      "url": "https://github.com/Broomm/broomm/actions/runs/42397509459",
+      "head": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+      "conclusion": "success"
+    }
+  },
+  "installed_build": 1061,
+  "apk": {
+    "sha256": "3ac699abce521e6f945a446c8ce069c1c513a7e13888c049e7dedc427769c05c",
+    "bytes": 62094159,
+    "code_sha": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+    "merge_sha": "f386a3e05a145ae9409b8853a8588674eb82683e",
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "sha256": "3ac699abce521e6f945a446c8ce069c1c513a7e13888c049e7dedc427769c05c",
+    "code_sha": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+    "build": "1061",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1061 minSdk=24 targetSdk=36",
+      "versionName=0.1.18",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-retroarch-cores-preview.zip",
+    "sha256": "23a88389b234af0466e3576f4ffb7e9b331446957134adf6bbd0307b3d04829f",
+    "bytes": 24348830,
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.0-dev",
+      "build_number": "1",
+      "sha": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+      "target": "macos-universal",
+      "working_tree": false,
+      "source_tree_sha256": "835ec7d3b3dceaa09697f2648d294e0be10e6b22c69a03f539f2c4f77b271e50",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zip_integrity": "passed",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures"
+  },
+  "checks": {
+    "normal_setup": "GB installed the reviewed Gambatte core; GBC independently reused it. GBA/SNES bindings and core hashes stayed unchanged.",
+    "gb": {
+      "rom": 1781,
+      "file": "Tetris (World) (Rev 1).gb",
+      "bytes": 32768,
+      "account_2": "Created level-selection state, uploaded/read back primary 223, restored the same state after account 3 play, and resumed level 5 gameplay.",
+      "account_3": "Started fresh and created a separate level 0 gameplay state; uploaded/read back primary 225.",
+      "native_ordinary_save": "This Tetris release has no SRAM/RTC; device check covers states."
+    },
+    "gbc": {
+      "rom": 3245,
+      "file": "Pokemon - Crystal Version (USA, Europe) (Rev 1).gbc",
+      "account_2": "Created character A, saved in-game, captured a manual state, uploaded/read back primary 222. Restored SRAM 32768 bytes and RTC 8 bytes exactly, confirmed Continue/character A and advancing clock, and loaded the manual state in Gambatte.",
+      "account_3": "Fresh New Game menu had no Continue; separate SRAM/RTC and title-menu state uploaded/read back as primary 224. Account 2 checkpoint stayed unchanged."
+    },
+    "cleanup_and_progress": {
+      "checked_utc": "2026-11-07T18:06:29.736165+00:00",
+      "build": 1061,
+      "runtime": "4037c0b785b1b3f6a94bb28b17ab265ef12db33e",
+      "accounts": {
+        "2": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "5b5481a4dce0f5aff562bf752d24a95b8e98ec9190516c61c9f9226ed2a7d135",
+              "commit": "30100c4c22e07758edf082d426000b77",
+              "snapshot": "10aba9fb239667c5b07e3409aefd1d86",
+              "remote": 223,
+              "synced": "2026-11-07T18:05:56.518185Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3659,
+                "sha256": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "2b39b5e8906c6bc2adf34983c0476ac9986ffc8be216033f5ba7db23db0a449f",
+              "commit": "eb422a8109fa8f638d78ef3a256a5ced",
+              "snapshot": "cbf09cbf922421107bac82fbf9d347bb",
+              "remote": 222,
+              "synced": "2026-11-07T17:59:48.024331Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "d5b9b4d96b0838f1bf9f9ea4c2ad9b5fbed82863f0ed8ebd3c205efb327db1c9"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "d78889d7e31e1bf5f48b260c30b355c16409b3caf1bdaa673e11f49d4aa0e880"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 10051,
+                "sha256": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            }
+          }
+        },
+        "3": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "f64c776d0705f83d23f991471fe6fdabce450d3cee633528fe0dd358a6b425d6",
+              "commit": "f60e73f9ed015d9eea409f40ecc39516",
+              "snapshot": "2e12e5df2e75bed1dbca6519b3b4812d",
+              "remote": 225,
+              "synced": "2026-11-07T18:04:36.455180Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3741,
+                "sha256": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "9463bc9d39cd255af842754b96b391b8e6dda63936b3bdf9d79d75f7cf4038a6",
+              "commit": "5c864f80a7b2bcb85c6513872d915321",
+              "snapshot": "cb3ec4b27d2525fc7236cc65f92c6dad",
+              "remote": 224,
+              "synced": "2026-11-07T18:03:32.359108Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "faf26b1af17713d998d6a0d01fd23ce2fccbe93edf5a018bb0dda457bf916e81"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "acfc7fc2874dbe538d4b19d0db79a4ff1db3fdea85f75f7147775de6cdc25d37"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 8233,
+                "sha256": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            }
+          }
+        }
+      },
+      "journals_absent": true,
+      "all_existing_managed_native_files_unchanged": 19,
+      "preexisting_standalone_and_managed_files_unchanged": 13,
+      "existing_gba_snes_progress_files_unchanged": 8,
+      "core_hashes": {
+        "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+        "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+        "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26"
+      },
+      "independent_platform_bindings_retained": [
+        "gba",
+        "snes",
+        "gb",
+        "gbc"
+      ]
+    },
+    "sign_ins": "Both existing saved profiles activated after data-preserving upgrade without credential re-entry.",
+    "log_review": {
+      "since": "2026-11-07T18:00:00Z",
+      "lines": 63,
+      "warnings_or_errors": 0,
+      "sha256": "e6f8f2e459043197b3f68931b0a9eba7515dd57742b2c4b3e53a3e350a725a2b"
+    }
+  },
+  "evidence_directory": ".tool-cache/android-retroarch-cores/2026-11-07",
+  "limitations": [
+    "One Android device and arm64 execution; other ABIs verified as archives/ELFs, not gameplay.",
+    "No new cross-device gameplay validation.",
+    "GB SRAM is exercised by workflow fixtures; physical SRAM/RTC round trip used GBC Crystal.",
+    "The other twelve selected cores remain unimplemented and PR #4 stays draft.",
+    "Only uncompressed GB/GBC content is accepted in this increment.",
+    "macOS preview is ad-hoc signed, not notarized."
+  ]
+}

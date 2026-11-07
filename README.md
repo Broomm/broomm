@@ -285,7 +285,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-offline-states-snes-preview.zip),
+[current macOS build](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay
@@ -323,7 +323,8 @@ account reconnects. The two-account Thor checks use builds 1057/1058; see the
 
 The next rooted-core increment adds **Game Boy / Game Boy Color → RetroArch →
 Set up** for Gambatte, with separate platform choices, SRAM/RTC and matching
-states. Its current gameplay acceptance and remaining-core work are recorded in
+states. Build 1061 passed Crystal SRAM/RTC/state reload and separate GB/GBC
+histories for both Thor accounts. Exact acceptance and remaining-core work are recorded in
 [the Android core walkthrough](docs/android-retroarch-cores.md).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,

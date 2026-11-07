@@ -5,8 +5,8 @@ PR #3's merge. The existing Dart supervisor, libsu connection, native ownership,
 OS locks, recovery and RomM contracts remain. No new runtime library is added.
 
 GBA/mGBA and SNES/Snes9x are merged and device-verified. Current source adds
-Game Boy/Game Boy Color through Gambatte; packaged gameplay/RTC checks are
-pending. The other twelve selected cores remain research, not implementation.
+Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
+checks below. The other twelve selected cores remain research, not implementation.
 
 ## Gambatte source and behavior
 
@@ -29,6 +29,25 @@ state companions, original native restoration and missing-clock recovery. Nine
 production filesystem groups passed on Thor in disposable storage, including
 bounded SRAM/RTC selection, exclusion of another title's clock and GBC ROM
 staging. These file/workflow checks do not establish GB/GBC gameplay.
+
+Build **1061**, runtime `4037c0b`, subsequently passed real Thor checks through
+normal Setup/Play/Quit. Pokémon Crystal's new character A, 32,768-byte SRAM,
+8-byte RTC and manual state uploaded/read back as account 2's primary 222.
+The next launch restored both native save files byte-for-byte, showed Continue
+with the character and clock, and loaded the manual state. Account 3 instead
+showed New Game without Continue and published separate primary 224.
+
+GB Tetris published account 2's level-selection state as primary 223 and account
+3's distinct level-0 gameplay state as primary 225. After switching back,
+account 2 loaded its own earlier state and resumed level-5 play. This Tetris
+release has no SRAM/RTC; the physical ordinary-save check used Crystal.
+Both saved sign-ins opened without credential re-entry after the data-preserving
+upgrade. All eight prior GBA/SNES progress files and all 19 existing managed
+native files stayed unchanged, alongside the original standalone configuration.
+New session ROM/config/save/state files were cleaned up, every tested checkpoint
+was synchronized, and the original account was left selected. This is one
+arm64 device, not cross-device or four-ABI gameplay acceptance. Exact hashes,
+builds and scoped results are in the [evidence record](android-retroarch-cores.json).
 
 ## Walkthrough and verification
 

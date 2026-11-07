@@ -11,9 +11,13 @@ extensions and bounded SRAM/clock selectors.
 
 Analysis and all 623 Flutter tests pass, with one existing native-host skip. The compiled
 production bridge and nine native filesystem fault groups pass, including real
-Thor SRAM/RTC selection and GBC staging in disposable storage. Packaged gameplay
-checks are pending the PR build. Other cores are researched, not yet
-implemented. See [scope and remaining boundaries](docs/android-retroarch-cores.md).
+Thor SRAM/RTC selection and GBC staging in disposable storage. All PR build jobs
+passed. Build 1061 passed normal GB/GBC Setup, Crystal SRAM/RTC/state upload and
+reload, and separate Tetris/Crystal state histories for both accounts. All prior
+GBA/SNES progress and standalone settings were preserved; temporary native files
+were removed and the original account remains selected. Other cores are
+researched, not yet implemented. See [scope, device evidence and remaining
+boundaries](docs/android-retroarch-cores.md).
 
 ## Offline activation, rooted save states and SNES — 2026-11-07
 
