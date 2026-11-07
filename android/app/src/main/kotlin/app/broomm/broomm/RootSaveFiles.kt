@@ -190,16 +190,52 @@ internal class RootSaveFiles(
         require(current() == after && metadata(file) == mode)
     }
 
+    private data class CoreRead(val hash: String, val header: ByteArray)
+
+    /** Core libraries can exceed the root service's heap. Never buffer their payloads. */
+    private fun transferCore(file: File, owner: Int, links: Long = 1, out: FileOutputStream? = null): CoreRead {
+        val fd = Os.open(file.path, OsConstants.O_RDONLY or OsConstants.O_NOFOLLOW or OsConstants.O_NONBLOCK, 0)
+        return FileInputStream(fd).use { input ->
+            val stat = Os.fstat(fd)
+            require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == owner &&
+                stat.st_nlink == links && stat.st_size in 20..MAX_CORE_BYTES.toLong()) { "Invalid RetroArch core file." }
+            val digest = MessageDigest.getInstance("SHA-256")
+            val header = ByteArray(20)
+            val buffer = ByteArray(65536)
+            var size = 0L
+            while (true) {
+                live()
+                val count = input.read(buffer)
+                if (count < 0) break
+                require(size + count <= stat.st_size) { "RetroArch core grew while reading." }
+                if (size < header.size) buffer.copyInto(header, size.toInt(), 0, minOf(count, header.size - size.toInt()))
+                out?.write(buffer, 0, count)
+                digest.update(buffer, 0, count)
+                size += count
+                checkpoint("core-chunk")
+            }
+            fun unchanged(current: android.system.StructStat): Boolean =
+                current.st_dev == stat.st_dev && current.st_ino == stat.st_ino &&
+                current.st_uid == owner && current.st_nlink == links &&
+                current.st_mode == stat.st_mode && current.st_size == stat.st_size &&
+                current.st_mtime == stat.st_mtime && current.st_ctime == stat.st_ctime
+            require(size == stat.st_size && unchanged(Os.fstat(fd)) && unchanged(Os.lstat(file.path))) {
+                "RetroArch core changed while reading. Existing files were kept."
+            }
+            CoreRead(digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }, header)
+        }
+    }
+
     fun core(abi: String? = null, recoverPublication: Boolean = false, coreName: String = "mgba"): String? {
         val file = path(corePath(coreName))
         if (!present(file)) return null
         val stat = Os.lstat(file.path)
         metadata(file, if (recoverPublication && stat.st_nlink == 2L) 2 else 1)
-        val payload = bytes(file, 32 * 1024 * 1024)
-        if (abi != null) require(retroArchElfAbi(payload) == abi) {
+        val content = transferCore(file, uid, stat.st_nlink)
+        if (abi != null) require(retroArchElfAbi(content.header) == abi) {
             "The installed RetroArch core does not match this RetroArch build. Repair it in RetroArch before continuing."
         }
-        val digest = digest(payload)
+        val digest = content.hash
         if (stat.st_nlink == 2L) {
             val stage = File(file.parentFile, ".${file.name}.broomm-${digest.take(32)}-in")
             val linked = Os.lstat(stage.path)
@@ -213,15 +249,38 @@ internal class RootSaveFiles(
 
     fun installCore(source: File, caller: Int, expected: String, abi: String, coreName: String = "mgba", ensureClosed: () -> Unit): String {
         require(Regex("[a-f0-9]{64}").matches(expected))
-        val stat = Os.lstat(source.path)
-        require(OsConstants.S_ISREG(stat.st_mode) && stat.st_uid == caller && stat.st_nlink == 1L)
-        val payload = bytes(source, MAX_CORE_BYTES)
-        require(digest(payload) == expected && retroArchElfAbi(payload) == abi) {
+        val content = transferCore(source, caller)
+        require(content.hash == expected && retroArchElfAbi(content.header) == abi) {
             "The staged RetroArch core failed ABI or checksum verification."
         }
         ensureClosed()
         core(abi, recoverPublication = true, coreName = coreName)?.let { return it }
-        publish(corePath(coreName), null, expected, payload, null, expected.take(32) + "-in", MAX_CORE_BYTES, beforeCommit = ensureClosed)
+        val relative = corePath(coreName)
+        val token = expected.take(32) + "-in"
+        parents(relative, token)
+        val file = path(relative)
+        val stage = File(file.parentFile, ".${file.name}.broomm-$token")
+        if (present(stage)) {
+            val old = Os.lstat(stage.path)
+            require(OsConstants.S_ISREG(old.st_mode) && old.st_nlink == 1L && old.st_uid in setOf(0, uid))
+            live(); Os.remove(stage.path)
+        }
+        val mode = "$uid $uid 600 ${String(label).trimEnd('\u0000')}"
+        val fd = Os.open(stage.path, OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_NOFOLLOW, 384)
+        FileOutputStream(fd).use { out ->
+            val copied = transferCore(source, caller, out = out)
+            require(copied.hash == expected && retroArchElfAbi(copied.header) == abi) { "RetroArch core changed before staging." }
+            out.flush(); checkpoint("staged")
+            attributes(stage, mode); Os.fsync(fd)
+        }
+        require(transferCore(stage, uid).hash == expected && metadata(stage) == mode)
+        live(); ensureClosed(); live()
+        require(!present(file)) { "RetroArch core appeared before publication. Existing files were kept." }
+        Os.link(stage.path, file.path)
+        checkpoint("linked")
+        flushDirectory(file.parentFile!!)
+        Os.remove(stage.path); flushDirectory(file.parentFile!!)
+        require(core(abi, coreName = coreName) == expected && metadata(file) == mode)
         return expected
     }
 
@@ -352,7 +411,7 @@ internal class RootSaveFiles(
 
     companion object {
         const val MAX_BYTES = 262144
-        private const val MAX_CORE_BYTES = 8 * 1024 * 1024
+        private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
             require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast"))

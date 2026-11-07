@@ -124,8 +124,23 @@ historical runtime/build fingerprints.
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
-arm64 library is about 73 MiB, exceeding current core limits. Larger files need
-bounded streaming with identity/readback and interruption checks. N64 save RAM
+arm64 library is about 73 MiB. Native core transport now streams up to 96 MiB
+through a 64 KiB buffer and small ELF header, preserving descriptor/path identity,
+expected hashes, cancellation and exclusive publication. The updated bridge and
+all eleven filesystem groups pass. A separate 80 MiB fixture passes with an
+asserted exact 32 MiB ART heap; it exercises cancelled-copy retry, writer arrival,
+source replacement with a forced mtime tie and an independent public destination
+appearing before publication. `app_process` overrides the requested heap with
+device properties, so the low-memory check uses the existing `dalvikvm` directly,
+without changing any property:
+
+```sh
+/apex/com.android.art/bin/dalvikvm -Xmx32m -Xms8m -cp /data/local/tmp/root-save-test-dex.zip app.broomm.broomm.Check_root_save_filesKt core-memory /data/local/tmp/broomm-root-test-<32 hexadecimal digits>
+```
+
+Use a fresh disposable directory and remove the pushed DEX afterward. This is
+native file-mechanism acceptance; larger Dart download recipes and their actual
+core integrations remain pending. N64 save RAM
 and Saturn backup cartridges also exceed the existing small-save boundary.
 
 Disc content needs safe file-set staging and firmware from RomM. Opera and FBNeo

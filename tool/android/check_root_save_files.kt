@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
         catch (_: SharedDocumentBusy) { println("busy") }
         return
     }
-    require(args[0] == "run" && !root.exists())
+    require(args[0] in setOf("run", "core-memory") && !root.exists())
     check(root.mkdir()); Os.chown(root.path, 2000, 2000)
     val label = Os.getxattr(root.path, "security.selinux")
     val files = RootSaveFiles(root, 2000, label, {})
@@ -28,6 +28,11 @@ fun main(args: Array<String>) {
     val path = prefix + "Minish Cap.srm"
     fun failure(work: () -> Unit) { try { work(); error("Expected refusal") } catch (e: IllegalArgumentException) { } catch (e: IllegalStateException) { check(e.message != "Expected refusal") } }
     try {
+        if (args[0] == "core-memory") {
+            check(Runtime.getRuntime().maxMemory() == 32L * 1024 * 1024) { "Run core-memory directly through dalvikvm with -Xmx32m -Xms8m." }
+            checkLargeCoreStorage(root, label)
+            return
+        }
         val old = byteArrayOf(1, 2, 3); val next = ByteArray(131072) { 7 }
         val oldHash = RootSaveFiles.digest(old); val nextHash = RootSaveFiles.digest(next)
         files.replace(path, null, oldHash, old, null, token)
@@ -178,6 +183,8 @@ fun main(args: Array<String>) {
         failure { RootSaveFiles.corePath("unknown") }
         println("PASS: reviewed core ABIs and checksums, interrupted install recovery and existing core preservation")
 
+        checkLargeCoreStorage(root, label)
+
         val profile = "input_device = \"Odin Controller\"\ninput_menu_toggle_btn = \"4\"\n"
         val apk = File(root, "frontend.apk")
         fun profiles(name: String) {
@@ -244,4 +251,72 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+/** Real descriptors and publications; the 80 MiB payload is never allocated as an array. */
+private fun checkLargeCoreStorage(parent: File, label: ByteArray) {
+    val root = File(parent, "streaming-core").apply { check(mkdir()); Os.chown(path, 2000, 2000) }
+    val files = RootSaveFiles(root, 2000, label, {})
+    fun failure(work: () -> Unit) { try { work(); error("Expected refusal") } catch (e: IllegalArgumentException) { } catch (e: IllegalStateException) { check(e.message != "Expected refusal") } }
+    val source = File(root, "reviewed-large-core.so")
+    val block = ByteArray(65536) { 7 }
+    val header = byteArrayOf(127, 69, 76, 70, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 183.toByte(), 0)
+    val hash = java.security.MessageDigest.getInstance("SHA-256")
+    val chunks = 80 * 1024 * 1024 / block.size
+    source.outputStream().use { out ->
+        repeat(chunks) { index ->
+            if (index == 0) header.copyInto(block) else block.fill(7)
+            out.write(block); hash.update(block)
+        }
+    }
+    val expected = hash.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    val target = files.path(RootSaveFiles.corePath("mgba"))
+    val stage = File(target.parentFile, ".${target.name}.broomm-${expected.take(32)}-in")
+    var readChunks = 0
+    val cancelled = RootSaveFiles(root, 2000, label, {}, {
+        if (it == "core-chunk" && ++readChunks == chunks + 3) error("Cancelled during core copy")
+    })
+    failure { cancelled.installCore(source, 0, expected, "arm64-v8a") {} }
+    check(files.core() == null && stage.isFile && stage.length() < source.length())
+
+    // A retry reclaims only its deterministic stage. A new writer still prevents publication.
+    var closedChecks = 0
+    failure { files.installCore(source, 0, expected, "arm64-v8a") {
+        if (++closedChecks == 2) error("Writer started before publication")
+    } }
+    check(files.core() == null && stage.length() == source.length())
+    check(files.installCore(source, 0, expected, "arm64-v8a") {} == expected)
+    check(files.core("arm64-v8a") == expected && !stage.exists() && source.length() == 80L * 1024 * 1024)
+
+    // Replace the source name during an open read, with a forced mtime tie.
+    Os.remove(target.path)
+    val tiedTime = 1700000000000L
+    check(source.setLastModified(tiedTime))
+    val retained = File(root, "retained-source.so")
+    var swapped = false
+    val changed = RootSaveFiles(root, 2000, label, {}, {
+        if (it == "core-chunk" && !swapped) {
+            swapped = true
+            check(source.renameTo(retained))
+            source.writeBytes(header)
+            check(source.setLastModified(tiedTime))
+        }
+    })
+    failure { changed.installCore(source, 0, expected, "arm64-v8a") {} }
+    check(swapped && files.core() == null && !stage.exists())
+    check(source.delete() && retained.renameTo(source))
+
+    // An independent destination appearing after staging is retained, never replaced.
+    val other = File(root, "small-core.so").apply { writeBytes(header) }
+    val otherHash = RootSaveFiles.digest(header)
+    files.installCore(other, 0, otherHash, "arm64-v8a", coreName = "snes9x") {}
+    val existing = files.path(RootSaveFiles.corePath("snes9x"))
+    closedChecks = 0
+    failure { files.installCore(source, 0, expected, "arm64-v8a") {
+        if (++closedChecks == 2) Os.link(existing.path, target.path)
+    } }
+    check(files.hash(target) == otherHash && files.hash(existing) == otherHash)
+    Os.remove(target.path)
+    check(files.core("arm64-v8a", coreName = "snes9x") == otherHash)
+    println("PASS: 80 MiB streamed core install/inspection, cancelled-copy retry, live-writer refusal, tied-time source swap and exclusive destination preservation")
 }

@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Large Android core transport — 2026-11-07
+
+The next remaining-core prerequisite streams native core inspection/staging with
+a 96 MiB bound, a small ELF header and descriptor identity checks. Cancellation,
+writer exclusion, exclusive publication and interrupted-link recovery remain.
+The bridge compiles; all eleven filesystem groups pass on Thor. The separate
+80 MiB fixture also passes directly through ART with an asserted exact 32 MiB
+heap, including cancelled-copy retry, a forced timestamp tie/source replacement
+and a destination appearing before publication. No additional core delivery or
+gameplay support is claimed by this native prerequisite.
+
 ## Rooted Atari 2600 and TG16 cartridges — 2026-11-07
 
 Current source adds independent Setup for Stella and Beetle PCE Fast with pinned
