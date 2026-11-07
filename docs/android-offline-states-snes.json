@@ -1,0 +1,243 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "status": "passed for the scoped Thor GBA/SNES milestone",
+  "runtime_revision": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+  "gameplay_runtime_revision": "7908a107134ebc964b29350ed567a1b13a00923c",
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64",
+    "mgba": "0.11-212-7a12d6d",
+    "snes9x": "1.63-fae2fea",
+    "romm": "5.4.0",
+    "accounts": [
+      2,
+      3
+    ],
+    "games": {
+      "2338": "The Minish Cap (USA)",
+      "966": "Super Mario World (USA)"
+    }
+  },
+  "automation": {
+    "analysis": "passed",
+    "flutter_tests_passed": 619,
+    "existing_native_host_skip": 1,
+    "native_android_fault_groups_passed": 8,
+    "ci": {
+      "url": "https://github.com/Broomm/broomm/actions/runs/42394538153",
+      "head": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+      "conclusion": "success",
+      "packages": [
+        "android-universal",
+        "macos-universal",
+        "linux-x64",
+        "linux-arm64",
+        "windows-x64"
+      ]
+    }
+  },
+  "installed_apk": {
+    "sha256": "e41cac2a168ecde0315c1d414fd58daa3d987a943012fefaab02fd282cf85665",
+    "bytes": 62028623,
+    "code_sha": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+    "merge_sha": "f001b65c2697878a88204c3b1edfa17db82c7f69",
+    "payload_entries_identical": 160
+  },
+  "installed_build": 1058,
+  "upgrade": {
+    "sha256": "e41cac2a168ecde0315c1d414fd58daa3d987a943012fefaab02fd282cf85665",
+    "code_sha": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+    "build": "1058",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1058 minSdk=24 targetSdk=36",
+      "versionName=0.1.17",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "macos": {
+    "path": "build/releases/Broomm-macOS-offline-states-snes-preview.zip",
+    "sha256": "09129651e6ea162379b99b1620373af9f42bfc6929a6926a2b73c27466a4fe41",
+    "bytes": 24349989,
+    "runtime_revision": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+    "runtime_source_tree_sha256": "9c0fcedfc988e9a65774b687248a23ac573fe097d6365e22182cc74c438b5811",
+    "zip_integrity": "passed",
+    "source_signature": "passed deep/strict/all-architectures",
+    "extracted_signature": "passed deep/strict/all-architectures",
+    "architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "notarized": false
+  },
+  "results": {
+    "offline_restart_activation": "Saved account 2 opened Home and played GBA after a cold restart with only its RomM endpoint rejected for the app UID.",
+    "offline_state_restart_isolation": "Account 2 pending checkpoint stayed byte-identical through account 3 play/upload; only selecting account 2 uploaded/read back its queued state.",
+    "gba_history": {
+      "first_state_primary": 216,
+      "changed_state_primary": 217,
+      "older_import_primary": 218,
+      "native_loaded": "original file-selection position AAAAA, rather than later BBBBBB selection",
+      "original_sram_unchanged": true
+    },
+    "snes_setup": {
+      "core_sha256": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "mgba_retained_sha256": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "both_root_bindings_persisted": true
+    },
+    "snes_states": {
+      "2": {
+        "primary": 220,
+        "loaded": "Yoshi’s House map"
+      },
+      "3": {
+        "primary": 221,
+        "loaded": "new-game introduction"
+      }
+    },
+    "progress_after_round_trips": {
+      "2": {
+        "2338": {
+          "checkpoint": {
+            "baseline": "0395647d482873dae6895857615f44daedda97f585945b482df6504af38d5bec",
+            "snapshot": "0cd1cc05af903c6e8745563ecc346e9c",
+            "remote": 218,
+            "pending": false,
+            "stateKnown": {
+              "states-f85def251e74d618-android/game.state": "7441a85fb5deda42480aeb511b76b73e3e4fc99e624d7e46931f683d2354198e"
+            }
+          },
+          "files": {
+            "saves/Legend of Zelda, The - The Minish Cap (USA).srm": {
+              "bytes": 8192,
+              "sha256": "afcb8e484df0e03324223ec2b5010ad2279e744e039d9e287c3d8be526ec17b3"
+            },
+            "states-f85def251e74d618-android/Legend of Zelda, The - The Minish Cap (USA).state": {
+              "bytes": 36474,
+              "sha256": "7441a85fb5deda42480aeb511b76b73e3e4fc99e624d7e46931f683d2354198e"
+            }
+          }
+        },
+        "966": {
+          "checkpoint": {
+            "baseline": "72d188a3dee4264d637a984686020814eda3e9be4959c17384055192b8d2db60",
+            "snapshot": "92a58197f9c2344821f4eb2045d0ef34",
+            "remote": 220,
+            "pending": false,
+            "stateKnown": {
+              "states-e83783742d995614-android/game.state": "bb45650f14ea655500ff159a60bc5830cbb5c163db38ccd281be5322a638421a"
+            }
+          },
+          "files": {
+            "saves/Super Mario World (USA).srm": {
+              "bytes": 2048,
+              "sha256": "abcc0464fd7e15cdeeb4d4f3edad7685b5dd10dee6a2567e5f774e2635db283b"
+            },
+            "states-e83783742d995614-android/Super Mario World (USA).state": {
+              "bytes": 87362,
+              "sha256": "bb45650f14ea655500ff159a60bc5830cbb5c163db38ccd281be5322a638421a"
+            }
+          }
+        }
+      },
+      "3": {
+        "2338": {
+          "checkpoint": {
+            "baseline": "368bcb276d377cb1d366a60f4229755cf0259b8ec6cb7b19fd8dc4c0f4a6eda4",
+            "snapshot": "aa2d062815e317f685aebe02904247b8",
+            "remote": 215,
+            "pending": false,
+            "stateKnown": {
+              "states-f85def251e74d618-android/game.state": "19e28cb22bff7f731e46ba435e98468e7c932fc4d34b6fd3dd5a605cc2302dda"
+            }
+          },
+          "files": {
+            "saves/Legend of Zelda, The - The Minish Cap (USA).srm": {
+              "bytes": 8192,
+              "sha256": "ad3196037df67b5848a7f76d3659aa3015fda45f5cb6ed6a250e270357f91dac"
+            },
+            "states-f85def251e74d618-android/Legend of Zelda, The - The Minish Cap (USA).state": {
+              "bytes": 36220,
+              "sha256": "19e28cb22bff7f731e46ba435e98468e7c932fc4d34b6fd3dd5a605cc2302dda"
+            }
+          }
+        },
+        "966": {
+          "checkpoint": {
+            "baseline": "b3db265b19bebac84d3944ec2bf7ff71cf0b8b517edc974b54ca2ffccdff18b6",
+            "snapshot": "52323cfb0df9df01363815b2b3eca701",
+            "remote": 221,
+            "pending": false,
+            "stateKnown": {
+              "states-e83783742d995614-android/game.state": "c775fdd5d7e4db247524692aa591c56df912a0840fefea09752c2ce43eb05d29"
+            }
+          },
+          "files": {
+            "saves/Super Mario World (USA).srm": {
+              "bytes": 2048,
+              "sha256": "702df9246cd1b92f13bd33e95fce7cfa83e2edb7d2bd5bfe8457e99637528040"
+            },
+            "states-e83783742d995614-android/Super Mario World (USA).state": {
+              "bytes": 88424,
+              "sha256": "c775fdd5d7e4db247524692aa591c56df912a0840fefea09752c2ce43eb05d29"
+            }
+          }
+        }
+      }
+    },
+    "original_native_files_unchanged": 13,
+    "temporary_network_rule_removed": true,
+    "cleanup": {
+      "build": 1058,
+      "runtime": "c614999aa5f13c1aa2bfb78d8a2d884be4844004",
+      "platforms": [
+        "gba",
+        "snes"
+      ],
+      "accounts": [
+        2,
+        3
+      ],
+      "normal_configuration_cleanup": "passed",
+      "all_existing_managed_native_files_unchanged": 19,
+      "session_journals_absent": true,
+      "retroarch_closed": true,
+      "all_four_account_game_hashes_preserved": true
+    },
+    "legacy_unrecorded_configurations_retained": 8,
+    "regressions": [
+      "owned configuration removed while unrelated configuration remains",
+      "changed configuration preserves recovery; lost cleanup reply retries after deletion",
+      "interrupted configuration publication retains its ownership receipt before native effect"
+    ]
+  },
+  "migration": {
+    "owner_explicitly_approved": true,
+    "backup": {
+      "file": "broomm-before.tar",
+      "bytes": 22475776,
+      "entries": 875,
+      "sha256": "c0c6805b14d7c933d787ca97177cf86f5ca1dacc82566f37c3b9775a75bf0e47"
+    },
+    "all_local_file_hashes_unchanged_before_first_launch": true,
+    "accounts_verified_before_and_after": [
+      2,
+      3
+    ],
+    "plaintext_account_tokens_persisted_in_test_artifacts": false
+  },
+  "evidence_directory": ".tool-cache/android-offline-states-snes/2026-11-07",
+  "limitations": [
+    "Single Android device and arm64 emulator execution only.",
+    "No new cross-device gameplay verification.",
+    "Current RetroArch preferences produced no thumbnail; thumbnail boundaries passed automated/native fixtures.",
+    "Other rooted RetroArch cores remain the next milestone.",
+    "Unrecorded legacy temporary configurations are preserved."
+  ]
+}

@@ -16,7 +16,7 @@ core-change recovery. Missing working files retain recovery. Ordinary save
 formats stay compatible with the desktop contracts.
 
 Clean analysis and all 619 Flutter tests pass, with one existing native-host skip.
-CI for runtime `7908a10` passed on Windows, Linux and macOS and built all five packages. Eight native
+CI for runtime `c614999` passed on Windows, Linux and macOS and built all five packages. Eight native
 fault groups passed on the Thor, including large descriptor transfers, bounded
 inventory and interrupted state publication. Build 1057 passed packaged checks
 with both accounts: offline restart/activation, queued GBA state isolation,
@@ -25,11 +25,18 @@ SNES SRAM/state upload and in-emulator reload. Existing original SRAM and
 standalone settings were preserved. Final inspection found retained temporary
 session configurations. The follow-up journals their hashes before publication
 and removes only matching owned files, with interrupted publication, edited-file
-and lost-cleanup-reply regressions. Its packaged device check is pending.
+and lost-cleanup-reply regressions. Build 1058 passed the packaged cleanup check
+with GBA/user 2 and SNES/user 3: both states loaded, generated configurations
+were removed, and all 19 existing managed native files stayed unchanged. Both
+accounts remain synchronized on the Thor, with the original account selected.
 See the [walkthrough and scoped device
 evidence](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
-The [macOS package](build/releases/Broomm-macOS-offline-states-snes-preview.zip)
-is being rebuilt for that final cleanup correction.
+The current [macOS package](build/releases/Broomm-macOS-offline-states-snes-preview.zip)
+is **24,349,989 bytes**, SHA-256
+`09129651e6ea162379b99b1620373af9f42bfc6929a6926a2b73c27466a4fe41`.
+Source/extracted deep strict signatures, ZIP integrity and all seven universal
+Mach-O payloads pass. It is ad-hoc signed, not notarized. Exact revisions,
+artifact fingerprints and results are in the [portable evidence](docs/android-offline-states-snes.json).
 
 ## Rooted Android reliability checks — 2026-11-07
 

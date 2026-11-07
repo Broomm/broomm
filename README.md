@@ -318,7 +318,7 @@ the emulator's exit. SRAM and manual states sync to the selected RomM account;
 states require the same frontend/core build. Use **Options → Use existing save
 file** to restore a history entry with its matching state. Known profiles can
 open after an offline restart and retain pending progress until that same
-account reconnects. The two-account Thor checks use build 1057; see the
+account reconnects. The two-account Thor checks use builds 1057/1058; see the
 [walkthrough, native checks and remaining limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,

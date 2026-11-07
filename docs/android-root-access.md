@@ -633,7 +633,7 @@ existing Android state-group form as well as desktop host/architecture groups.
 Clean Dart analysis and all **619 Flutter tests** pass, with one existing native
 host skip. The Android bridge compiles, and eight native fault groups passed on
 the Thor, including a 2 MiB descriptor round trip and interrupted state publication.
-CI for runtime `7908a10` passed Windows, Linux and macOS checks and built all five
+CI for runtime `c614999` passed Windows, Linux and macOS checks and built all five
 packages. Native behavior on other Android devices remains unverified.
 
 Build **1057**, runtime `7908a10`, passed real ADB-controlled checks on the owner's
@@ -664,5 +664,16 @@ Final inspection found eight temporary session configurations left by 1057.
 The correction records each generated configuration's path/hash durably before
 native publication, then uses compare-before-delete after save restoration and
 ROM cleanup. A changed configuration preserves recovery; a lost deletion reply
-can retry idempotently. Unrecorded legacy configurations are retained. The
-packaged correction and current macOS archive are being verified.
+can retry idempotently. Unrecorded legacy configurations are retained.
+
+Build **1058**, runtime `c614999`, upgraded normally with the retained preview
+key and unchanged app UID. Both saved accounts opened without another sign-in.
+GBA/user 2 and SNES/user 3 loaded their earlier states, quit normally and synced;
+both journal-owned configurations were gone afterward. All 19 existing managed
+native files stayed byte-identical. The Thor returned to the original account
+with no live emulator or session journal. The current universal macOS archive,
+**24,349,989 bytes**, SHA-256
+`09129651e6ea162379b99b1620373af9f42bfc6929a6926a2b73c27466a4fe41`,
+passed ZIP and source/extracted deep strict signature checks. It is ad-hoc
+signed, not notarized. See [the portable evidence](android-offline-states-snes.json)
+for exact artifacts, hashes and the distinction between device and fixture checks.
