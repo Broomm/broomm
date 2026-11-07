@@ -374,6 +374,14 @@ Build 1077 verified Zelda's saved slot, movement and manual-state reload on Thor
 preserving earlier progress/settings. See the [scoped NES evidence](docs/android-retroarch-nes.json)
 and [Mesen build/source record](vendor/android/mesen/0.9.9-0102910/README.md).
 
+Current source adds **Atari Jaguar → RetroArch → Set up** for the official pinned
+Virtual Jaguar 3.11.0 release. Use a cartridge (`.j64/.jag/.rom/.abs/.cof/.bin/.prg`)
+or one such cartridge in a ZIP. Save in-game or create a manual state, Quit
+RetroArch normally, then wait for Broomm's synchronization confirmation. Earlier
+settings, progress and cores are retained; states require the matching APK/ABI/core.
+Packaged Jaguar gameplay remains pending; Jaguar CD remains deferred. See the
+[source scope and verification](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

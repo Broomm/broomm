@@ -70,4 +70,110 @@ void main() {
       },
     );
   }
+
+  test('Jaguar uses exact upstream versioned ABI assets and refuses changed or truncated libraries', () async {
+    final data = await Directory.systemTemp.createTemp('broomm-jaguar-');
+    addTearDown(() => data.delete(recursive: true));
+    for (final abi in ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']) {
+      final client = ApkClient((uri) {
+        expect(
+          uri,
+          Uri.https(
+            'github.com',
+            '/libretro/virtualjaguar-libretro/releases/download/v3.11.0/virtualjaguar_libretro-android-$abi.so',
+          ),
+        );
+        return ApkReply([127, 69, 76, 70]);
+      });
+      await expectLater(
+        downloadAndroidRetroCore(
+          data,
+          'virtualjaguar',
+          abi,
+          AndroidApkDownload(client: client),
+          progress: (_, _) {},
+          publish: (_, _) async => fail('Unverified core was published.'),
+        ),
+        throwsFormatException,
+      );
+      expect(client.closed, true);
+    }
+    expect(
+      await Directory('${data.path}/android/virtualjaguar-stage')
+          .list()
+          .toList(),
+      isEmpty,
+    );
+  });
+
+  test(
+    'Jaguar bounds both declared and streamed raw-library downloads',
+    () async {
+      final data = await Directory.systemTemp.createTemp('broomm-jaguar-');
+      addTearDown(() => data.delete(recursive: true));
+      for (final declared in [true, false]) {
+        final client = ApkClient(
+          (_) => declared
+              ? ApkReply([1], length: 3 * 1024 * 1024 + 1)
+              : ApkReply(List.filled(3 * 1024 * 1024 + 1, 0), length: -1),
+        );
+        await expectLater(
+          downloadAndroidRetroCore(
+            data,
+            'virtualjaguar',
+            'arm64-v8a',
+            AndroidApkDownload(client: client),
+            progress: (_, _) {},
+            publish: (_, _) async => fail('Oversized core was published.'),
+          ),
+          throwsFormatException,
+        );
+        expect(client.closed, true);
+      }
+      expect(
+        await Directory('${data.path}/android/virtualjaguar-stage')
+            .list()
+            .toList(),
+        isEmpty,
+      );
+    },
+  );
+
+  test('cancelled Jaguar transfer removes staging and a fresh attempt verifies independently', () async {
+    final data = await Directory.systemTemp.createTemp('broomm-jaguar-');
+    addTearDown(() => data.delete(recursive: true));
+    final client = ApkClient((_) => ApkReply([127, 69, 76, 70]));
+    final download = AndroidApkDownload(client: client);
+    await expectLater(
+      downloadAndroidRetroCore(
+        data,
+        'virtualjaguar',
+        'arm64-v8a',
+        download,
+        progress: (_, _) => download.cancel(),
+        publish: (_, _) async => fail('Cancelled core was published.'),
+      ),
+      throwsStateError,
+    );
+    expect(client.closed, true);
+    final next = ApkClient((_) => ApkReply([127, 69, 76, 70]));
+    await expectLater(
+      downloadAndroidRetroCore(
+        data,
+        'virtualjaguar',
+        'arm64-v8a',
+        AndroidApkDownload(client: next),
+        progress: (_, _) {},
+        publish: (_, _) async => fail('Changed retry was published.'),
+      ),
+      throwsFormatException,
+    );
+    expect(next.closed, true);
+    expect(
+      await Directory('${data.path}/android/virtualjaguar-stage')
+          .list()
+          .toList(),
+      isEmpty,
+    );
+  });
 }

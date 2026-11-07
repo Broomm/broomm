@@ -595,6 +595,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
         'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'},
         'n64' => {'z64', 'v64', 'n64'},
         'nes' => {'nes', 'unf', 'unif'},
+        'jaguar' => {'j64', 'jag', 'rom', 'abs', 'cof', 'bin', 'prg'},
         _ => {},
       },
       _ => {},

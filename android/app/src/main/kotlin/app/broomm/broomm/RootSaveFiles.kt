@@ -424,7 +424,7 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen"))
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar"))
             return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
         fun limit(path: String, core: String = "mgba"): Int = when {
@@ -444,7 +444,7 @@ internal class RootSaveFiles(
 
         fun romPath(path: String): List<String> {
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif))")
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg))")
                     .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }

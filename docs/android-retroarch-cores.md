@@ -338,6 +338,33 @@ comparisons left installed cores, original ROMs and global settings unchanged;
 their 15 temporary files were removed after normal exit. See the
 [exact scoped device evidence](android-retroarch-nes.json).
 
+## Jaguar cartridge source increment
+
+**Atari Jaguar → RetroArch → Set up** now downloads Virtual Jaguar 3.11.0 from
+its official versioned release. The [source/recipe/notice record](../vendor/android/virtualjaguar/3.11.0/README.md)
+retains all four payload hashes, ELF identities and Android-only dependencies.
+The library downloads directly; Broomm does not mirror the binary or embedded
+boot-ROM arrays, whose independent firmware licensing is not inferred from the
+main source license. No new runtime dependency is added to Broomm itself.
+
+Raw `.j64/.jag/.rom/.abs/.cof/.bin/.prg` cartridges and validated single-cartridge
+ZIPs use the existing private profile/game workflow. Cartridge EEPROM is native
+128-byte big-endian data, consistent with the selected desktop core's source;
+actual cross-device gameplay remains separate. Memory Track has a distinct
+128 KiB native case. The 32 MiB cartridge / 64 MiB archive, 256 KiB ordinary and
+16 MiB state limits remain. States require the same APK, ABI and core. Version 11
+retains earlier settings; versions 1–10 cannot claim a Jaguar connection.
+
+Clean analysis, 655 full Flutter tests (one existing native-host skip), 61
+focused checks and thirteen disposable Thor filesystem/launch groups pass.
+The native bridge and fixture compile. Checks cover migration, 128-byte EEPROM
+cloud restore, raw cartridge formats, unsupported disc recovery, changed/large
+downloads and cancellation/retry. The explicit
+`devbox run -- dart tool/check_android_jaguar_download.dart` network integration
+check verified all four real release assets and ELF identities, then removed
+private staging. It writes a receipt under `build/test-results/` and installs
+nothing. Packaged Jaguar gameplay remains pending. Jaguar CD is still deferred.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
@@ -367,7 +394,7 @@ option prefix differs between builds. New Beetle Saturn builds default to a new
 frontend SRAM mode; preserve the existing Mednafen save contract explicitly.
 Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 
-Virtual Jaguar has a permanent [3.11.0 Android release](https://github.com/libretro/virtualjaguar-libretro/releases/tag/v3.11.0)
-with a clean source identifier. Current source/metadata advertises Jaguar CD
-and Memory Track; media/device acceptance remains pending. Mesen's nightly
-provenance gap is resolved by the retained owned source build above.
+Virtual Jaguar now uses the permanent source-identified release above; cartridge
+device acceptance and Memory Track gameplay remain separate. Jaguar CD remains
+owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
+source build. Five selected cores still need their concrete integration.

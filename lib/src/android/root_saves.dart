@@ -21,6 +21,7 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'sega32' => 'picodrive',
   'n64' => 'mupen64plus_next',
   'nes' => 'mesen',
+  'jaguar' => 'virtualjaguar',
   _ => null,
 };
 
@@ -35,7 +36,8 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'gamegear' ||
   'sega32' ||
   'n64' ||
-  'nes' => 'root-cartridge-v1',
+  'nes' ||
+  'jaguar' => 'root-cartridge-v1',
   _ => null,
 };
 

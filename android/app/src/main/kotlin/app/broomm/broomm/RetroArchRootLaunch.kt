@@ -6,7 +6,7 @@ import java.io.File
  * handoff. A prepared ZIP keeps its outer save/state stem. */
 internal fun validateRootRetroArchLaunch(core: String, pkg: String, nativeData: String,
     nativeRom: String, config: String?, content: String, selected: String) {
-    require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen") && config != null &&
+    require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar") && config != null &&
         pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
     val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
         .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
@@ -19,6 +19,7 @@ internal fun validateRootRetroArchLaunch(core: String, pkg: String, nativeData: 
         "mednafen_pce_fast" -> parts[3].endsWith(".pce", true)
         "genesis_plus_gx" -> setOf("md", "gen", "smd", "bin", "sms", "sg", "gg").contains(parts[3].substringAfterLast('.').lowercase())
         "picodrive" -> setOf("32x", "bin", "gen", "smd", "md").contains(parts[3].substringAfterLast('.').lowercase())
+        "virtualjaguar" -> setOf("j64", "jag", "rom", "abs", "cof", "bin", "prg").contains(parts[3].substringAfterLast('.').lowercase())
         "mesen" -> setOf("nes", "unf", "unif").contains(parts[3].substringAfterLast('.').lowercase())
         "mupen64plus_next" -> setOf("z64", "v64", "n64").contains(parts[3].substringAfterLast('.').lowercase())
         else -> setOf("gb", "gbc", "dmg").contains(parts[3].substringAfterLast('.').lowercase())

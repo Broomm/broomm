@@ -190,6 +190,28 @@ const _mesenRecipes = <String, (String, String)>{
   ),
 };
 
+// Official tagged raw libraries; download and installed payload have the same
+// digest. Do not mirror the release's embedded boot ROMs in Broomm's archives.
+const _jaguarRevision = '34696082dbc0448caf23aa4ecb5ed40817cb8da0';
+const _jaguarRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6',
+    '90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6',
+  ),
+  'armeabi-v7a': (
+    '3a173fbfaf62401c636591ba6a7ca16ef584481094f184c02519cffb093ec6cc',
+    '3a173fbfaf62401c636591ba6a7ca16ef584481094f184c02519cffb093ec6cc',
+  ),
+  'x86': (
+    '2303d1bee859c14c58507c4d4ad4aff7cc39d5e2a7e537b6fce519a99bacd47a',
+    '2303d1bee859c14c58507c4d4ad4aff7cc39d5e2a7e537b6fce519a99bacd47a',
+  ),
+  'x86_64': (
+    'a72da2e64da709839db26daf0b387373d7a74122d5a53c687bfb4dcda1da7266',
+    'a72da2e64da709839db26daf0b387373d7a74122d5a53c687bfb4dcda1da7266',
+  ),
+};
+
 String androidRetroCoreFile(String core) => core == 'mupen64plus_next'
     ? 'mupen64plus_next_gles3_libretro_android.so'
     : '${core}_libretro_android.so';
@@ -216,10 +238,12 @@ Future<void> downloadAndroidRetroCore(
     'picodrive' => (_picoRevision, '2.05-1890c29', _picoRecipes),
     'mupen64plus_next' => (_n64Revision, '3.0-15bada8', _n64Recipes),
     'mesen' => (_mesenRevision, '0.9.9-0102910', _mesenRecipes),
+    'virtualjaguar' => (_jaguarRevision, '3.11.0', _jaguarRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);
-  final maxArchive = core == 'mupen64plus_next'
+  final rawCore = core == 'virtualjaguar';
+  final maxArchive = rawCore || core == 'mupen64plus_next'
       ? 3 * 1024 * 1024
       : {'stella', 'genesis_plus_gx', 'mesen'}.contains(core)
       ? 2 * 1024 * 1024
@@ -231,7 +255,7 @@ Future<void> downloadAndroidRetroCore(
   final stage = progressNonce();
   final archive = await progressFile(
     data,
-    'android/$core-stage/$stage/core.zip',
+    'android/$core-stage/$stage/${rawCore ? coreFile : 'core.zip'}',
     createParents: true,
   );
   final directory = archive.parent;
@@ -241,10 +265,15 @@ Future<void> downloadAndroidRetroCore(
   }
 
   try {
-    final url = Uri.https(
-      'raw.githubusercontent.com',
-      '/Broomm/broomm/$revision/vendor/android/$core/$version/$abi/$coreFile.zip',
-    );
+    final url = rawCore
+        ? Uri.https(
+            'github.com',
+            '/libretro/virtualjaguar-libretro/releases/download/v$version/virtualjaguar_libretro-android-$abi.so',
+          )
+        : Uri.https(
+            'raw.githubusercontent.com',
+            '/Broomm/broomm/$revision/vendor/android/$core/$version/$abi/$coreFile.zip',
+          );
     final reply = await download.response(url), expected = reply.contentLength;
     if (expected > maxArchive)
       throw FormatException('The $core download exceeds its size limit.');
@@ -269,20 +298,22 @@ Future<void> downloadAndroidRetroCore(
         expected >= 0 && size != expected ||
         await progressFileHash(archive) != recipe.$1)
       throw FormatException(
-        'The $core archive differs from the reviewed download. Try again or install the core in RetroArch.',
+        'The $core ${rawCore ? 'library' : 'archive'} differs from the reviewed download. Try again or install the core in RetroArch.',
       );
-    final zip = await ProgressZip.read(
-      archive,
-      maxBytes: maxCore,
-      maxEntryBytes: maxCore,
-    );
-    if (zip.entries.length != 1 ||
-        zip.entries.single.name != coreFile ||
-        zip.entries.single.bytes == 0)
-      throw FormatException('Unexpected files in the $core archive.');
-    final files = await zip.extract(directory, check: check);
-    if (files[coreFile]?['sha256'] != recipe.$2)
-      throw FormatException('The extracted $core core failed verification.');
+    if (!rawCore) {
+      final zip = await ProgressZip.read(
+        archive,
+        maxBytes: maxCore,
+        maxEntryBytes: maxCore,
+      );
+      if (zip.entries.length != 1 ||
+          zip.entries.single.name != coreFile ||
+          zip.entries.single.bytes == 0)
+        throw FormatException('Unexpected files in the $core archive.');
+      final files = await zip.extract(directory, check: check);
+      if (files[coreFile]?['sha256'] != recipe.$2)
+        throw FormatException('The extracted $core core failed verification.');
+    }
     check();
     timer.cancel();
     await publish(stage, recipe.$2);

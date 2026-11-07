@@ -143,7 +143,9 @@ fun main(args: Array<String>) {
             "stella" to "Game.a26", "mednafen_pce_fast" to "Game.pce", "genesis_plus_gx" to "Game.md",
             "genesis_plus_gx" to "Game.sms", "genesis_plus_gx" to "Game.gg", "picodrive" to "Game.32x",
             "mupen64plus_next" to "Game.z64", "mupen64plus_next" to "Game.v64", "mupen64plus_next" to "Game.n64",
-            "mesen" to "Game.nes", "mesen" to "Game.unf", "mesen" to "Game.unif")) {
+            "mesen" to "Game.nes", "mesen" to "Game.unf", "mesen" to "Game.unif",
+            "virtualjaguar" to "Game.j64", "virtualjaguar" to "Game.jag", "virtualjaguar" to "Game.rom",
+            "virtualjaguar" to "Game.abs", "virtualjaguar" to "Game.cof", "virtualjaguar" to "Game.bin", "virtualjaguar" to "Game.prg")) {
             launch(core, name, name)
             launch(core, name, "Game.ZIP")
             failure { launch(core, name, "Other.zip") }
@@ -155,6 +157,8 @@ fun main(args: Array<String>) {
         failure { launch("mupen64plus_next", "Game.gba", "Game.zip") }
         failure { launch("mesen", "Game.fds", "Game.zip") }
         failure { launch("mgba", "Game.nes", "Game.zip") }
+        failure { launch("virtualjaguar", "Game.chd", "Game.zip") }
+        failure { launch("virtualjaguar", "Game.cue", "Game.zip") }
         failure { launch("mgba", "Game.md", "Game.zip") }
         println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
 
@@ -180,7 +184,7 @@ fun main(args: Array<String>) {
         check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
         println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
 
-        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x", "nes", "unf", "unif")) {
+        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x", "nes", "unf", "unif", "j64", "jag", "rom", "abs", "cof", "prg")) {
             val cartridgeSource = File(root, "library/44/content/Cartridge.$extension")
             check(cartridgeSource.parentFile!!.exists() || cartridgeSource.parentFile!!.mkdirs())
             cartridgeSource.writeBytes(next)
@@ -192,7 +196,7 @@ fun main(args: Array<String>) {
         }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disk.fds") }
-        println("PASS: Atari/PCE/Sega/NES cartridge staging, source preservation and unsupported disc/FDS refusal")
+        println("PASS: Atari/PCE/Sega/NES/Jaguar cartridge staging, source preservation and unsupported disc/FDS refusal")
         checkN64Storage(root, label)
 
         val core = ByteArray(20).apply {
@@ -214,7 +218,7 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen")) {
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar")) {
             check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
             check(files.core("arm64-v8a", coreName = name) == coreHash)
         }

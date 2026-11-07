@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "core": "virtualjaguar",
+  "version": "3.11.0",
+  "source_repository": "https://github.com/libretro/virtualjaguar-libretro",
+  "source_revision": "34696082dbc0448caf23aa4ecb5ed40817cb8da0",
+  "source_archive": {
+    "url": "https://codeload.github.com/libretro/virtualjaguar-libretro/tar.gz/34696082dbc0448caf23aa4ecb5ed40817cb8da0",
+    "bytes": 31197277,
+    "sha256": "2a0196dd365d6b50fac448557110446a613ade2572a9402a0794da586148e23f",
+    "retention": "Original source is upstream; not mirrored in this directory."
+  },
+  "release": "https://github.com/libretro/virtualjaguar-libretro/releases/tag/v3.11.0",
+  "delivery": "Direct official tagged raw SO with expected SHA-256; no binary mirrored in Broomm",
+  "native_destination": "cores/virtualjaguar_libretro_android.so",
+  "upstream_recipe": {
+    "workflow": "source-records/.github/workflows/release.yml",
+    "ndk": "r26d",
+    "script": "source-records/scripts/build-ndk-ci.sh",
+    "arm_simd": "neon",
+    "x86_simd": "sse2",
+    "build_logs": "Upstream release provenance; Broomm has not rebuilt or reproduced these official assets."
+  },
+  "licensing": {
+    "main": "GPL-3.0",
+    "libchdr": "BSD-style (retained LICENSE.txt)",
+    "lzma": "Public domain (retained LICENSE)",
+    "miniz": "Source includes public-domain/unlicense and MIT-style component notices (retained SOURCE-NOTICES.txt)",
+    "zstd": "Vendored source declares BSD-style/GPLv2 dual license; see source notices and upstream Zstandard source",
+    "libretro_common": "Source-file notices retained for permissive/GPL components",
+    "embedded_boot_roms": "Pinned source includes actual Series K/Model M/CD ROM arrays. No independent firmware licensing statement established; not attributed to top-level GPL. Direct official asset delivery avoids mirroring these binaries or arrays in Broomm."
+  },
+  "artifacts": {
+    "arm64-v8a": {
+      "filename": "virtualjaguar_libretro-android-arm64-v8a.so",
+      "sha256": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "bytes": 2445480,
+      "embedded_version": [
+        "v3.11.0 3469608"
+      ],
+      "url": "https://github.com/libretro/virtualjaguar-libretro/releases/download/v3.11.0/virtualjaguar_libretro-android-arm64-v8a.so",
+      "elf_class": 2,
+      "elf_type": 3,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "filename": "virtualjaguar_libretro-android-armeabi-v7a.so",
+      "sha256": "3a173fbfaf62401c636591ba6a7ca16ef584481094f184c02519cffb093ec6cc",
+      "bytes": 1839952,
+      "embedded_version": [
+        "v3.11.0 3469608"
+      ],
+      "url": "https://github.com/libretro/virtualjaguar-libretro/releases/download/v3.11.0/virtualjaguar_libretro-android-armeabi-v7a.so",
+      "elf_class": 1,
+      "elf_type": 3,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "filename": "virtualjaguar_libretro-android-x86.so",
+      "sha256": "2303d1bee859c14c58507c4d4ad4aff7cc39d5e2a7e537b6fce519a99bacd47a",
+      "bytes": 2332120,
+      "embedded_version": [
+        "v3.11.0 3469608"
+      ],
+      "url": "https://github.com/libretro/virtualjaguar-libretro/releases/download/v3.11.0/virtualjaguar_libretro-android-x86.so",
+      "elf_class": 1,
+      "elf_type": 3,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "filename": "virtualjaguar_libretro-android-x86_64.so",
+      "sha256": "a72da2e64da709839db26daf0b387373d7a74122d5a53c687bfb4dcda1da7266",
+      "bytes": 2516808,
+      "embedded_version": [
+        "v3.11.0 3469608"
+      ],
+      "url": "https://github.com/libretro/virtualjaguar-libretro/releases/download/v3.11.0/virtualjaguar_libretro-android-x86_64.so",
+      "elf_class": 2,
+      "elf_type": 3,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "source_records": {
+    "SOURCE-NOTICES.txt": "d9dbc343aa8af70558c1ee749240486efc79a630ef4f24a42b4276b6620a443b",
+    "source-records/.github/workflows/release.yml": "ef66dbc7b72949e6a7b67553514028cb87af9696a950b32c6f6755f58e664f28",
+    "source-records/LICENSE": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "source-records/Makefile.common": "6f0dad214fe540015474645294c7e9f523d883e0a21f7aef4d83706cfe473479",
+    "source-records/deps/libchdr/LICENSE.txt": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539",
+    "source-records/deps/libchdr/deps/lzma-25.01/LICENSE": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5",
+    "source-records/jni/Android.mk": "279ceb19d36f74f9dbbea63a23ffe3f729c5c4fc8cc67eefef28f086199c8a25",
+    "source-records/jni/Application.mk": "73c3326f19e67e6357c9734dcedc44deb38ea42c7ff1365728a942b8dbe599b1",
+    "source-records/scripts/build-ndk-ci.sh": "3073f103223f8f34904deec485c57986e84ef1fbe1eec3496824f3fab6f6f864"
+  }
+}

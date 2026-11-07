@@ -1272,6 +1272,51 @@ void main() {
     expect(manager.error, isNotNull);
   });
 
+  test('Jaguar setup reads version 10 without claiming or removing earlier connections', () async {
+    const previous = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+      'n64',
+      'nes',
+    ];
+    for (final slug in previous) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final old = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    old['version'] = 10;
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'jaguar'), false);
+    await manager.connectGbaRoot(emulator, platform: 'jaguar');
+    await manager.load();
+    for (final slug in [...previous, 'jaguar']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'jaguar');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'jaguar'), false);
+    for (final slug in previous) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    // An older record cannot assert a connection introduced by version 11.
+    (old['retroRoots'] as Map)['jaguar:$pkg'] = {
+      ...manager.rootConnection(emulator, 'n64')!,
+    };
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, false);
+    expect(manager.error, isNotNull);
+  });
+
   test(
     'NES raw cartridge formats stage privately while FDS preserves recovery',
     () async {
@@ -1299,6 +1344,45 @@ void main() {
     },
   );
 
+  test(
+    'Jaguar cartridges stage privately while disc media preserves recovery',
+    () async {
+      expect(androidRootRetroCore('atari-jaguar-cd'), isNull);
+      await manager.connectGbaRoot(emulator, platform: 'jaguar');
+      for (final extension in [
+        'j64',
+        'jag',
+        'rom',
+        'abs',
+        'cof',
+        'bin',
+        'prg',
+        'cue',
+        'chd',
+        'cdi',
+      ]) {
+        final rom = await File('${temp.path}/Cartridge.$extension')
+            .writeAsBytes([1, 2, 3]);
+        final p = await gameboyPlan('jaguar', rom.path), g = game(p);
+        final original = await put(p.remotePath('save/game.srm'), [8, 9]);
+        final saves = SharedAndroidSaves(manager);
+        await saves.begin(g, p, 'a' * 64, selected: rom.path);
+        if ({'cue', 'chd', 'cdi'}.contains(extension)) {
+          await expectLater(saves.stageRootRom(g, p), throwsStateError);
+          expect(await saves.pending, true);
+        } else {
+          final staged = await saves.stageRootRom(g, p);
+          expect(await File(staged).readAsBytes(), [1, 2, 3]);
+        }
+        await saves.capture(g, cloud, p);
+        await saves.restoreOriginal(g, p);
+        expect(await original.readAsBytes(), [8, 9]);
+        expect(await rom.readAsBytes(), [1, 2, 3]);
+        expect(await saves.pending, false);
+      }
+    },
+  );
+
   for (final (slug, core, extension, sram) in [
     ('atari2600', 'stella', 'a26', false),
     ('tg16', 'mednafen_pce_fast', 'pce', true),
@@ -1307,10 +1391,16 @@ void main() {
     ('gamegear', 'genesis_plus_gx', 'gg', true),
     ('sega32', 'picodrive', '32x', true),
     ('nes', 'mesen', 'nes', true),
+    ('jaguar', 'virtualjaguar', 'j64', true),
   ]) {
     test(
       '$slug keeps its native save contract, state round trip and cleanup',
       () async {
+        final saveSize = slug == 'nes'
+            ? 8192
+            : slug == 'jaguar'
+            ? 128
+            : 2048;
         await manager.connectGbaRoot(emulator, platform: slug);
         final rom = await File('${temp.path}/Cartridge.$extension')
             .writeAsBytes([5, 6]);
@@ -1338,10 +1428,7 @@ void main() {
           prepare: () async => g,
         );
         if (sram)
-          await put(
-            p.remotePath('save/game.srm'),
-            List.filled(slug == 'nes' ? 8192 : 2048, 7),
-          );
+          await put(p.remotePath('save/game.srm'), List.filled(saveSize, 7));
         final state = '${p.areas.last.id}/game.state';
         await put(p.remotePath(state), [1, 4, 9]);
         processState = 'idle';
@@ -1362,13 +1449,10 @@ void main() {
         if (sram) {
           expect(
             await (await p.target('save/game.srm')).readAsBytes(),
-            List.filled(slug == 'nes' ? 8192 : 2048, 7),
+            List.filled(saveSize, 7),
           );
           final primary = api.records.values.single;
-          expect(
-            api.contents[primary.id],
-            List.filled(slug == 'nes' ? 8192 : 2048, 7),
-          );
+          expect(api.contents[primary.id], List.filled(saveSize, 7));
           expect(api.readIds, contains(primary.id));
         } else {
           expect(await (await p.target('save/game.srm')).exists(), false);
@@ -1396,7 +1480,7 @@ void main() {
         if (sram)
           expect(
             await (await restored.target('save/game.srm')).readAsBytes(),
-            List.filled(slug == 'nes' ? 8192 : 2048, 7),
+            List.filled(saveSize, 7),
           );
       },
     );

@@ -1,5 +1,22 @@
 # Implementation plan
 
+## Rooted Jaguar cartridge source increment — 2026-11-07
+
+Independent Jaguar Setup downloads Virtual Jaguar 3.11.0 directly from its
+official tagged four-ABI release with pinned payload hashes. Exact source,
+upstream build recipes, ELF dependencies and component notices are recorded;
+the firmware-array provenance boundary is explicit and no release binary or
+boot-ROM array is mirrored. Settings version 11 retains versions 1–10 and
+earlier connections. Cartridge/ZIP staging, raw EEPROM and matched states use
+the existing Dart supervisor and journaled native file boundary. Jaguar CD
+remains deferred; earlier size limits are unchanged.
+
+Clean analysis, all 655 Flutter tests (one existing native-host skip), 61 focused
+checks and thirteen disposable Thor filesystem/launch groups pass. The native
+bridge and fixture compile. All four official assets pass a real production
+download/ELF check. Packaged Jaguar gameplay remains pending; five other
+selected cores remain research. See the [scope and walkthrough](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment).
+
 ## Rooted NES/Mesen device acceptance — 2026-11-07
 
 Current source adds independent NES Setup using the four-ABI Mesen build retained
