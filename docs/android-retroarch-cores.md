@@ -402,6 +402,33 @@ jobs and every post-job step, with unchanged build/test deadlines and failure
 handling. The current macOS archive passes source-input, ZIP and source/extracted
 deep strict all-architecture signature checks; it is ad-hoc signed, not notarized.
 
+## Lynx firmware preparation
+
+The [retained four-ABI Beetle Lynx artifacts](../vendor/android/mednafen_lynx/1.24.0-fcdefcf/README.md)
+identify source `fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed`. Original archives,
+ELF identities, source/library hashes, Android recipes and component notices
+are recorded. The exact upstream NDK environment is not claimed reproduced.
+This preparation alone enables no new setup or launch route.
+
+The concrete next increment uses `.lnx/.lyx/.bll/.o` cartridges and matched
+states. The core exposes no ordinary Libretro save RAM, so Broomm must not
+synthesize an empty `.srm`. Its required 512-byte `lynxboot.img` must come from
+the active platform's RomM firmware catalogue, with the canonical MD5
+`fcd403db69f54290b51035d82f835e7b` as well as transfer/catalogue verification.
+Missing, ambiguous, corrupt and offline observations remain distinct. The
+[upstream core documentation](https://docs.libretro.com/library/beetle_lynx/)
+confirms the BIOS identity and state-only save capability.
+
+Planned implementation keeps firmware lookup/download/cache decisions in Dart
+inside the existing locked Play preparation. A verified profile-owned cache
+supports offline reuse; background save inspection stays read-only. A concrete
+journaled native resource under the session's private system directory supplies
+the BIOS and is cleaned only after verified exit. Recovery must work without
+the cache/network, including loss of the general session marker and lost native
+replies; existing version-1 save transactions remain readable. No public BIOS
+download, shared mutable firmware tree or new runtime dependency is proposed.
+Implementation and device verification remain pending.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's

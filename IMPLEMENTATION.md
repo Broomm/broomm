@@ -1,5 +1,15 @@
 # Implementation plan
 
+## Beetle Lynx artifact preparation — 2026-11-07
+
+Four unmodified Android ABI archives identify Beetle Lynx 1.24.0 source
+`fcdefcf`. Source/archive/library hashes, ELF identities, Android-only system
+dependencies, original Android recipes and component notices are retained,
+including Handy, Blip_Buffer and libretro-common terms. Local inspection verifies
+each archive and embedded revision; an upstream NDK rebuild is not claimed.
+No BIOS is bundled. Firmware/session implementation and packaged Lynx acceptance
+remain pending; this artifact preparation enables no new application route.
+
 ## Rooted Jaguar device acceptance and independent core CI — 2026-11-07
 
 Build 1079 (`675ab8b`) passed Jaguar Setup and Tempest 2000 launch/input. Normal

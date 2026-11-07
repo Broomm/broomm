@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "core": "mednafen_lynx",
+  "build_version": "1.24.0-fcdefcf",
+  "source_repository": "https://github.com/libretro/beetle-lynx-libretro",
+  "source_commit": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+  "source_archive": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+  "source_sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37",
+  "captured": "2026-11-07",
+  "license": "GPL-2.0/GPL-2.0-or-later; LGPL-2.1-or-later Blip_Buffer; zlib-style Handy and libretro-common component notices",
+  "entry": "mednafen_lynx_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/beetle-lynx-libretro/blob/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Embedded native version identifies the source revision. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-lynx-libretro",
+        "source_revision": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "source_archive": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "archive_sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mednafen_lynx_libretro_android.so.zip",
+      "archive_bytes": 120803,
+      "archive_sha256": "69ddfb1e6e94d45ee974f2f43c5bd4b6538f8b2ec49366ef4f6cd4b00268c07f",
+      "payload_bytes": 340408,
+      "payload_sha256": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-lynx-libretro",
+        "source_revision": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "source_archive": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "archive_sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/mednafen_lynx_libretro_android.so.zip",
+      "archive_bytes": 100043,
+      "archive_sha256": "fc4522ca48d6dd527acc62d60e4382986e48852602eb6b327ff6e0c4644a5bbf",
+      "payload_bytes": 212660,
+      "payload_sha256": "2ef2dc14190f4af7f81ca7d80dffc5aedba559a73a8ac04345edbef9a866331d",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-lynx-libretro",
+        "source_revision": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "source_archive": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "archive_sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/mednafen_lynx_libretro_android.so.zip",
+      "archive_bytes": 122260,
+      "archive_sha256": "75e4dff355c8374a48c80048e6246a019942737cdbead4ec3be62e4e48b78ad3",
+      "payload_bytes": 309696,
+      "payload_sha256": "a5a693783f9825eeef67ae328bf9891d63aaa253503d09cd739ee7a701ef29be",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-lynx-libretro",
+        "source_revision": "fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "source_archive": "https://codeload.github.com/libretro/beetle-lynx-libretro/tar.gz/fcdefcfb3c11d6d2e71be076a5d3df2e88ab73ed",
+        "archive_sha256": "3dd45a6f6585c444a415cb097996c572467754748e7163eca466d89b31bd8b37"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/mednafen_lynx_libretro_android.so.zip",
+      "archive_bytes": 120978,
+      "archive_sha256": "f50f320cf81061b0bc090758b057a9b9f66911d85fc4cdd863e673d35bb5f983",
+      "payload_bytes": 341008,
+      "payload_sha256": "0d5d0a3a2a19898bf42a7a7a6fbdbfe77354d5c334900daa2e06b917c6edd657",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/COPYING",
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "notices/mednafen/lynx/license.txt",
+      "sha256": "307319deed461baf8ec3b22f1800e53425080571ec197645c2a2b130a0b65a93"
+    },
+    {
+      "path": "notices/LGPL-2.1.txt",
+      "sha256": "a2e55648eba0aeb849acf9429fde795a6a07bff54291110604ec47c62a7f331b",
+      "origin": "Unmodified LGPL-2.1 text already retained with Mesen; Blip_Buffer source headers select 2.1-or-later."
+    },
+    {
+      "path": "SOURCE-NOTICES.txt",
+      "sha256": "99d1cfb82f42ee114d00c344e64d6f2f13a42c54e51f389ba84ad78fdb078a15"
+    }
+  ],
+  "build_records": [
+    {
+      "path": "source-records/Makefile",
+      "sha256": "f80961aa4fe45935f2173b3ee7c92240527f7814fdfbdfc29ec6e099127b04f8"
+    },
+    {
+      "path": "source-records/Makefile.common",
+      "sha256": "5b5770082825f0e1cbdce99b00393c3e287bca367b3b60b2d0644102078e030e"
+    },
+    {
+      "path": "source-records/jni/Android.mk",
+      "sha256": "04786284b5fba0c1d98e89e2f2bf0fa82e7457fa7b5386abd8c3d6433ebf95e6"
+    },
+    {
+      "path": "source-records/jni/Application.mk",
+      "sha256": "a97fe0f691a63e22c747ec18cff985fe84ab10a3108b9201791ab1e3ade0ae38"
+    }
+  ],
+  "runtime_contract": {
+    "ordinary_memory": "Only RETRO_MEMORY_SYSTEM_RAM; no RETRO_MEMORY_SAVE_RAM exposed, so no ordinary .srm is synthesized.",
+    "states": "retro_serialize/retro_unserialize use Mednafen StateMem; states remain frontend/ABI/core-specific.",
+    "firmware": "512-byte lynxboot.img from active RomM platform only, canonical MD5 fcd403db69f54290b51035d82f835e7b. Not bundled here."
+  }
+}
