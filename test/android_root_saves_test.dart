@@ -929,12 +929,42 @@ void main() {
     }
   });
 
+  test('Sega setup migrates version 7 and keeps shared-core platform choices independent', () async {
+    const previous = ['gba', 'snes', 'gb', 'gbc', 'atari2600', 'tg16'];
+    for (final slug in previous) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    final file = File('${data.path}/android/emulators.json');
+    final v7 = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+    v7['version'] = 7;
+    await file.writeAsString(jsonEncode(v7));
+    await manager.load();
+    const sega = ['genesis', 'sms', 'gamegear', 'sega32'];
+    for (final slug in sega) {
+      await manager.connectGbaRoot(emulator, platform: slug);
+    }
+    await manager.load();
+    for (final slug in [...previous, ...sega]) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+    await manager.disconnectGbaRoot(emulator, platform: 'gamegear');
+    await manager.load();
+    expect(manager.hasCurrentRoot(emulator, 'gamegear'), false);
+    for (final slug in [...previous, 'genesis', 'sms', 'sega32']) {
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    }
+  });
+
   for (final (slug, core, extension, sram) in [
     ('atari2600', 'stella', 'a26', false),
     ('tg16', 'mednafen_pce_fast', 'pce', true),
+    ('genesis', 'genesis_plus_gx', 'md', true),
+    ('sms', 'genesis_plus_gx', 'sms', true),
+    ('gamegear', 'genesis_plus_gx', 'gg', true),
+    ('sega32', 'picodrive', '32x', true),
   ]) {
     test(
-      '$core keeps its native save contract, state round trip and cleanup',
+      '$slug keeps its native save contract, state round trip and cleanup',
       () async {
         await manager.connectGbaRoot(emulator, platform: slug);
         final rom = await File('${temp.path}/Cartridge.$extension')

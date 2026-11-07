@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Rooted Sega cartridges — 2026-11-07
+
+Current source adds independent Genesis, Master System and Game Gear Setup via
+Genesis Plus GX, plus 32X via PicoDrive. Four-ABI downloads pin retained artifact
+`db5b758`, corresponding source, submodule provenance and notices. Version 8
+settings preserve earlier connections. Uncompressed cartridges use the existing
+raw SRAM/state contracts and journaled profile/game boundary. Genesis Plus GX's
+larger library uses bounded streaming; other core download limits stay unchanged.
+
+Clean analysis and all 635 Flutter tests pass with one existing native-host skip.
+The production bridge compiles and all eleven Thor filesystem groups pass,
+including Sega cartridge staging and the large-core faults below. Packaged Sega
+gameplay is pending; the other eight cores remain research. See the
+[core walkthrough](docs/android-retroarch-cores.md#sega-cartridge-increment).
+
 ## Large Android core transport — 2026-11-07
 
 The next remaining-core prerequisite streams native core inspection/staging with

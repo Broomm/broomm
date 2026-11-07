@@ -325,6 +325,10 @@ class SharedAndroidSaves {
       'root-cartridge-v1' => switch (plan.launch['platform']) {
         'atari2600' => {'a26', 'bin'}.contains(extension),
         'tg16' => extension == 'pce',
+        'genesis' => {'md', 'gen', 'smd', 'bin'}.contains(extension),
+        'sms' => {'sms', 'sg'}.contains(extension),
+        'gamegear' => extension == 'gg',
+        'sega32' => {'32x', 'bin', 'gen', 'smd', 'md'}.contains(extension),
         _ => false,
       },
       _ => false,

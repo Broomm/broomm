@@ -144,7 +144,7 @@ fun main(args: Array<String>) {
         check(!stagedGameboy.exists() && files.hash(files.path(gameboySave)) == oldHash)
         println("PASS: Game Boy SRAM/RTC selectors, unrelated-clock preservation and GBC ROM staging")
 
-        for (extension in listOf("a26", "bin", "pce")) {
+        for (extension in listOf("a26", "bin", "pce", "md", "gen", "smd", "sms", "sg", "gg", "32x")) {
             val cartridgeSource = File(root, "library/44/content/Cartridge.$extension")
             check(cartridgeSource.parentFile!!.exists() || cartridgeSource.parentFile!!.mkdirs())
             cartridgeSource.writeBytes(next)
@@ -155,7 +155,7 @@ fun main(args: Array<String>) {
             check(!copy.exists() && cartridgeSource.readBytes().contentEquals(next))
         }
         failure { RootSaveFiles.romPath("files/Broomm/${"b".repeat(32)}/44/rom-${"c".repeat(32)}/Disc.chd") }
-        println("PASS: Atari/PCE cartridge staging, source preservation and unsupported disc refusal")
+        println("PASS: Atari/PCE/Sega cartridge staging, source preservation and unsupported disc refusal")
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -176,7 +176,7 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        for (name in listOf("gambatte", "stella", "mednafen_pce_fast")) {
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive")) {
             check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
             check(files.core("arm64-v8a", coreName = name) == coreHash)
         }

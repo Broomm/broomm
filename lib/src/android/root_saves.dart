@@ -17,6 +17,8 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'gb' || 'gbc' => 'gambatte',
   'atari2600' => 'stella',
   'tg16' => 'mednafen_pce_fast',
+  'genesis' || 'sms' || 'gamegear' => 'genesis_plus_gx',
+  'sega32' => 'picodrive',
   _ => null,
 };
 
@@ -24,7 +26,12 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'gba' => 'root-gba-v1',
   'snes' => 'root-snes-v1',
   'gb' || 'gbc' => 'root-gameboy-v1',
-  'atari2600' || 'tg16' => 'root-cartridge-v1',
+  'atari2600' ||
+  'tg16' ||
+  'genesis' ||
+  'sms' ||
+  'gamegear' ||
+  'sega32' => 'root-cartridge-v1',
   _ => null,
 };
 

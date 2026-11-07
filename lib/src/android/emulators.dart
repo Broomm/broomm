@@ -258,7 +258,14 @@ class AndroidEmulators extends ChangeNotifier {
       switch (platform) {
         'gba' => _gbaRoots,
         'snes' => _snesRoots,
-        'gb' || 'gbc' || 'atari2600' || 'tg16' => _retroRoots,
+        'gb' ||
+        'gbc' ||
+        'atari2600' ||
+        'tg16' ||
+        'genesis' ||
+        'sms' ||
+        'gamegear' ||
+        'sega32' => _retroRoots,
         _ => throw UnsupportedError('Unsupported rooted RetroArch system.'),
       };
 
@@ -292,7 +299,11 @@ class AndroidEmulators extends ChangeNotifier {
               rootConnection(emulator, 'gb') != null ||
               rootConnection(emulator, 'gbc') != null ||
               rootConnection(emulator, 'atari2600') != null ||
-              rootConnection(emulator, 'tg16') != null)) ||
+              rootConnection(emulator, 'tg16') != null ||
+              rootConnection(emulator, 'genesis') != null ||
+              rootConnection(emulator, 'sms') != null ||
+              rootConnection(emulator, 'gamegear') != null ||
+              rootConnection(emulator, 'sega32') != null)) ||
       (platform != null && hasCurrentRoot(emulator, platform)) ||
       tree(profile, emulator) != null;
 
@@ -412,7 +423,17 @@ class AndroidEmulators extends ChangeNotifier {
       await _save(
         gbaRoots: platform == 'gba' ? next : null,
         snesRoots: platform == 'snes' ? next : null,
-        retroRoots: {'gb', 'gbc', 'atari2600', 'tg16'}.contains(platform)
+        retroRoots:
+            {
+              'gb',
+              'gbc',
+              'atari2600',
+              'tg16',
+              'genesis',
+              'sms',
+              'gamegear',
+              'sega32',
+            }.contains(platform)
             ? next
             : null,
       );
@@ -440,7 +461,17 @@ class AndroidEmulators extends ChangeNotifier {
     await _save(
       gbaRoots: platform == 'gba' ? next : null,
       snesRoots: platform == 'snes' ? next : null,
-      retroRoots: {'gb', 'gbc', 'atari2600', 'tg16'}.contains(platform)
+      retroRoots:
+          {
+            'gb',
+            'gbc',
+            'atari2600',
+            'tg16',
+            'genesis',
+            'sms',
+            'gamegear',
+            'sega32',
+          }.contains(platform)
           ? next
           : null,
     );
@@ -705,7 +736,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 7,
+        'version': 8,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -765,7 +796,7 @@ class AndroidEmulators extends ChangeNotifier {
         await progressFile(data, 'android/emulators.json');
       if (await progressExists(file.path)) {
         final record = await progressJson(file);
-        if (![1, 2, 3, 4, 5, 6, 7].contains(record['version']) ||
+        if (![1, 2, 3, 4, 5, 6, 7, 8].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
         final trees = (record['trees'] as Map).cast<String, String>();
@@ -802,7 +833,7 @@ class AndroidEmulators extends ChangeNotifier {
         _folders
           ..clear()
           ..addAll(checked);
-        if ([4, 5, 6, 7].contains(record['version'])) {
+        if ([4, 5, 6, 7, 8].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
           for (final entry in savedRoots.entries) {
@@ -818,7 +849,7 @@ class AndroidEmulators extends ChangeNotifier {
           ..clear()
           ..addAll(roots);
         final snesRoots = <String, Map<String, String>>{};
-        if ([5, 6, 7].contains(record['version'])) {
+        if ([5, 6, 7, 8].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
             if (binding['package'] != entry.key ||
@@ -832,13 +863,24 @@ class AndroidEmulators extends ChangeNotifier {
           ..clear()
           ..addAll(snesRoots);
         final retroRoots = <String, Map<String, String>>{};
-        if ([6, 7].contains(record['version'])) {
+        if ([6, 7, 8].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
             final platform = (entry.key as String).split(':').first;
-            if (!{'gb', 'gbc', 'atari2600', 'tg16'}.contains(platform) ||
+            if (!{
+                  'gb',
+                  'gbc',
+                  'atari2600',
+                  'tg16',
+                  'genesis',
+                  'sms',
+                  'gamegear',
+                  'sega32',
+                }.contains(platform) ||
                 entry.key != '$platform:${binding['package']}' ||
                 (record['version'] == 6 && !{'gb', 'gbc'}.contains(platform)) ||
+                (record['version'] == 7 &&
+                    !{'gb', 'gbc', 'atari2600', 'tg16'}.contains(platform)) ||
                 binding['access'] != androidRootRetroAccess(platform) ||
                 !androidRootBinding(binding))
               throw const FormatException('Invalid RetroArch root connection');

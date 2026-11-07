@@ -334,6 +334,11 @@ cartridges respectively. Stella syncs states; PCE also syncs raw SRAM. Build
 on the Thor. Quit normally and wait for Broomm's synchronization confirmation;
 the linked walkthrough records exact builds, hashes and remaining limits.
 
+The next source increment adds the same **Set up** flow for Genesis, Master
+System and Game Gear with Genesis Plus GX, and 32X with PicoDrive. Their pinned
+core downloads, raw SRAM and build-specific states are implemented; packaged
+Sega gameplay checks remain pending in the linked walkthrough.
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

@@ -7,8 +7,9 @@ OS locks, recovery and RomM contracts remain. No new runtime library is added.
 GBA/mGBA and SNES/Snes9x are merged and device-verified. Current source adds
 Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
 checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
-cartridges; build 1062 passed their packaged Thor checks below. The other ten selected
-cores remain research, not implementation.
+cartridges; build 1062 passed their packaged Thor checks below. The next source
+increment adds Genesis Plus GX and PicoDrive for four Sega platforms; packaged
+gameplay remains pending. The other eight selected cores remain research.
 
 ## Gambatte source and behavior
 
@@ -121,6 +122,41 @@ from runtime `32b3ec0` and passed ZIP and source/extracted deep strict signature
 It is ad-hoc signed, not notarized. The earlier GB/GBC evidence retains its own
 historical runtime/build fingerprints.
 
+## Sega cartridge increment
+
+Current source adds **Genesis / Master System / Game Gear → RetroArch → Set up**
+through Genesis Plus GX, and **32X → RetroArch → Set up** through PicoDrive.
+Platform choices remain independent even when sharing a core. Version 8 reads
+versions 1–7 without losing their connections and removes only the selected
+binding on disconnect. Raw `.srm` remains compatible with the existing desktop
+`libretro-genesis_plus_gx-v1` / `libretro-picodrive-v1` contracts. State identity
+still includes the actual APK, ABI and core hash. No placeholder SRAM is created
+for games that do not expose it.
+
+Accepted uncompressed cartridges are Genesis `.md/.gen/.smd/.bin`, SMS `.sms/.sg`,
+Game Gear `.gg`, and 32X `.32x/.bin/.gen/.smd/.md`. Normal Play, in-game Save or
+manual state, and RetroArch Quit use the same capture/upload/readback and native
+restoration workflow described above. Firmware/discs and compressed content have
+no new acceptance. Existing standalone settings and other cores are preserved.
+
+The four-ABI archives pin artifact commit
+`db5b758bdb057bd52c7c93b07bf4dc10a046fc16`, retained by
+`android-sega-cartridge-cores-20261107`. Every Genesis Plus GX ABI embeds
+`f27655b` (1.7.4); every PicoDrive ABI embeds `1890c29` (2.05). The vendor records
+retain original/archive/library/source hashes, build recipes, dependency and
+license notices. PicoDrive's five submodule revisions are recorded; its nested
+dr_libs miniaudio test checkout is outside these Android core inputs. The
+non-commercial upstream terms and component notices remain applicable. Exact
+upstream NDK build environments are not claimed reproduced.
+
+Clean analysis and 635 Flutter tests pass with one existing native-host skip.
+All seven cores' reviewed ABI archives pass verification. The production bridge
+compiles and eleven real Thor filesystem groups pass, including all new cartridge
+extensions, original source preservation and unsupported disc refusal. Genesis
+Plus GX alone receives a 16 MiB Dart extraction bound and 2 MiB archive bound;
+previous core bounds are retained. Native core streaming is verified below.
+Packaged Sega gameplay remains pending.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
@@ -139,8 +175,8 @@ without changing any property:
 ```
 
 Use a fresh disposable directory and remove the pushed DEX afterward. This is
-native file-mechanism acceptance; larger Dart download recipes and their actual
-core integrations remain pending. N64 save RAM
+native file-mechanism acceptance; Genesis Plus GX now uses it, while the other
+larger download recipes and actual core integrations remain pending. N64 save RAM
 and Saturn backup cartridges also exceed the existing small-save boundary.
 
 Disc content needs safe file-set staging and firmware from RomM. Opera and FBNeo

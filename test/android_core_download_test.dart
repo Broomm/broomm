@@ -15,6 +15,8 @@ void main() {
     ('gambatte', '0.5.0-netlink-77f2567'),
     ('stella', '8.0-pre-20261107'),
     ('mednafen_pce_fast', '1.31.0.0-2de1ce1'),
+    ('genesis_plus_gx', '1.7.4-f27655b'),
+    ('picodrive', '2.05-1890c29'),
   ]) {
     test('each versioned $core archive verifies and publishes its reviewed core', () async {
       final vendor = Directory('vendor/android/$core/$version');
