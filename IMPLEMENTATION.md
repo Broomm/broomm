@@ -1,5 +1,23 @@
 # Implementation plan
 
+## Sega cartridge device acceptance — 2026-11-07
+
+Build 1069 (`f00df30`) passed the three downloaded Sega ZIP launches, Sonic 3
+gameplay/manual-state reload, Phantasy Star in-game SRAM/state reload and
+Defenders of Oasis Continue/state reload. Build 1066 verified Chaotix rendering,
+menu and title-state reload, without claiming ordinary SRAM or completed 32X
+gameplay. Native cleanup, seven core hashes, ten platform bindings and all prior
+save/settings preservation checks pass. Both accounts' earlier histories remain
+distinct; Sega used the original account. See the [exact scope and
+receipts](docs/android-retroarch-sega.json).
+
+The preceding ZIP sections record the failures and corrections that led to
+1069; their pending status is historical. All five current packages and
+macOS/Linux/native Android checks passed. The separate Windows updater fixture
+missed its unchanged eight-second readiness deadline with a live helper and no
+output/install log. Its cause remains unresolved; the failure has not been
+retried, skipped or masked. PR #4 stays draft; eight other cores remain research.
+
 ## Rooted cartridge ZIP preparation — 2026-11-07
 
 Build 1067's first ZIP check exposed the native adapter's library-only source

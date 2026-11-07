@@ -254,3 +254,18 @@ Primary references: [Teddy updater](https://github.com/pedrotrschneider/teddy/bl
 [GitHub releases API](https://docs.github.com/en/rest/releases/releases),
 [release asset fields](https://docs.github.com/en/rest/releases/assets), and
 [Android package installation](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls()).
+
+## Windows readiness investigation — 2026-11-07
+
+PR #4 runtime `f00df30` failed the independent Windows cancellation fixture:
+PowerShell stayed alive but did not create `ready` within the existing eight
+seconds. Stdout, stderr and the installer log were empty before cleanup. The
+same run built all five packages and passed the other native/platform checks.
+This does not establish a cause or successful Windows updater behavior.
+
+The fixture now records process-start and acknowledgement timing. After an
+assertion has already failed, it writes `cancel`, observes up to eight seconds
+for late acknowledgement/exit, then retains the original failure with those
+diagnostics. Late readiness cannot pass the test or permit installation. The
+passing deadline and production helper are unchanged. Native Windows execution
+is required for the new diagnostics; this host only compiles that test path.

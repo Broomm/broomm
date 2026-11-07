@@ -334,17 +334,21 @@ cartridges respectively. Stella syncs states; PCE also syncs raw SRAM. Build
 on the Thor. Quit normally and wait for Broomm's synchronization confirmation;
 the linked walkthrough records exact builds, hashes and remaining limits.
 
-The next source increment adds the same **Set up** flow for Genesis, Master
+The next increment adds the same **Set up** flow for Genesis, Master
 System and Game Gear with Genesis Plus GX, and 32X with PicoDrive. Their pinned
-core downloads, raw SRAM and build-specific states are implemented; packaged
-Sega gameplay checks remain pending in the linked walkthrough.
+core downloads, raw SRAM and build-specific states are implemented. Thor build
+1069 passed Genesis gameplay/state reload and Master System/Game Gear in-game
+save and state reload. Build 1066 verified 32X rendering/menu/state reload;
+ordinary 32X SRAM and completed gameplay are not claimed. See the
+[scoped results](docs/android-retroarch-sega.json).
 
 Current source also accepts a ZIP containing exactly one supported rooted
 cartridge. Broomm validates and extracts it privately without changing the
 download, retaining the archive's existing save/state name. Archives and total
 expanded content are bounded to 64 MiB, with a 32 MiB cartridge limit. Ambiguous,
 unsafe, linked, oversized or corrupt archives fail visibly and retain recovery;
-finish that session before retrying. Packaged ZIP acceptance remains pending.
+finish that session before retrying. Build 1069 passed ZIP launch and save/state
+round trips with Sonic 3, Phantasy Star and Defenders of Oasis on the Thor.
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

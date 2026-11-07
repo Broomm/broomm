@@ -8,8 +8,9 @@ GBA/mGBA and SNES/Snes9x are merged and device-verified. Current source adds
 Game Boy/Game Boy Color through Gambatte. Build 1061 passed the packaged Thor
 checks below. Current source also adds Stella and Beetle PCE Fast for uncompressed
 cartridges; build 1062 passed their packaged Thor checks below. The next source
-increment adds Genesis Plus GX and PicoDrive for four Sega platforms; packaged
-gameplay remains pending. The other eight selected cores remain research.
+increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
+1066/1069 passed the scoped device checks below. The other eight selected cores
+remain research.
 
 ## Gambatte source and behavior
 
@@ -115,7 +116,7 @@ progress files stayed unchanged. Five core hashes and six independent bindings
 matched expectations. The reviewed 85 operational log lines had no warning or
 error. This is one arm64 device/account for the two new cores; earlier GB/GBC
 acceptance separately exercised both accounts. The [cartridge evidence](android-retroarch-cartridges.json)
-records exact revisions, files and checks. The current macOS archive was rebuilt
+records exact revisions, files and checks. That increment's macOS archive was rebuilt
 from runtime `32b3ec0` and passed ZIP and source/extracted deep strict signatures:
 24,348,825 bytes, SHA-256
 `800aa2a46b156f5f0453538bcd3daa856487c3aa60830895b90301321a1effdf`.
@@ -136,8 +137,9 @@ for games that do not expose it.
 Accepted uncompressed cartridges are Genesis `.md/.gen/.smd/.bin`, SMS `.sms/.sg`,
 Game Gear `.gg`, and 32X `.32x/.bin/.gen/.smd/.md`. Normal Play, in-game Save or
 manual state, and RetroArch Quit use the same capture/upload/readback and native
-restoration workflow described above. Firmware/discs and compressed content have
-no new acceptance. Existing standalone settings and other cores are preserved.
+restoration workflow described above. The ZIP checks below add compressed
+cartridge acceptance. Firmware/discs have no new acceptance. Existing standalone
+settings and other cores are preserved.
 
 The four-ABI archives pin artifact commit
 `db5b758bdb057bd52c7c93b07bf4dc10a046fc16`, retained by
@@ -155,7 +157,44 @@ compiles and eleven real Thor filesystem groups pass, including all new cartridg
 extensions, original source preservation and unsupported disc refusal. Genesis
 Plus GX alone receives a 16 MiB Dart extraction bound and 2 MiB archive bound;
 previous core bounds are retained. Native core streaming is verified below.
-Packaged Sega gameplay remains pending.
+
+Build **1069**, runtime `f00df30`, passed three real ZIP launches. Sonic 3 rendered
+Angel Island, responded to movement/jump, and uploaded/read back SRAM and a
+manual gameplay state as primary 230. Relaunch restored every byte of its
+604-byte SRAM; the core subsequently expanded it to 65,536 bytes with only
+`0xff` padding. RetroArch loaded the gameplay state. The in-game File List
+reload was not captured, so ordinary save acceptance is limited to file restore.
+
+Phantasy Star created slot 1 named A in-game, published SRAM/state as primary
+231, and loaded it through Continue after relaunch. The manual state loaded
+independently; final hashes were unchanged. Defenders of Oasis published SRAM
+and a manual state, then loaded the state. After a navigation mistake restarted
+only the new disposable game, a further synchronized relaunch explicitly used
+Continue → Game 1 / Level 1 / Chapter 1 and resumed the throne-room scene.
+Its final autosave is primary 234; the manual-state hash stayed unchanged.
+
+Earlier build **1066**, runtime `dd7f36d`, rendered Chaotix with PicoDrive and
+opened Scenario Quest. Its manual title state published as primary 228 and
+loaded on relaunch. No ordinary SRAM was created; completed 32X gameplay is
+not claimed.
+
+Normal final exit removed all new native session files and journals. All 19
+existing managed native files, 13 pre-existing standalone/managed files, eight
+prior GBA/SNES progress files and eleven earlier GB/GBC/Atari/TG16 progress
+files remained unchanged. Seven core hashes and ten independent bindings
+matched; both accounts' prior histories stayed synchronized and distinct.
+The original account remains selected. The reviewed 158 build-1069 operational
+lines had no warnings/errors. Exact receipts are in the [Sega evidence](android-retroarch-sega.json).
+
+This is one arm64 device/account for Sega; earlier GB/GBC acceptance separately
+used both accounts. All five packages and macOS/Linux/native Android checks
+passed for `f00df30`, but the independent Windows updater fixture missed its
+existing eight-second readiness deadline. Its helper remained alive without
+output or an installer log before cleanup. The failure is retained, unmasked
+and unresolved; PR #4 remains draft. The macOS archive for this runtime passed
+ZIP integrity and source/extracted deep strict signatures: 24,348,825 bytes,
+SHA-256 `ef2d4dbae46ae2516612c809fae8321867dd84bd9bc586d6fe63b69424ad21e4`.
+It is ad-hoc signed, not notarized.
 
 ## Cartridge ZIP preparation
 
@@ -176,7 +215,8 @@ extension, preserving raw filename matching and the selected game/profile/config
 correspondence. The complete production launch validator is now exercised by
 the native fixture for raw and ZIP cases across the implemented cores, including
 wrong stems, raw-extension changes, different games/profiles and core mismatch.
-No successful packaged ZIP game launch is claimed yet.
+Build 1069 subsequently passed ZIP launch and the scoped save/state checks
+above for all three downloaded Sega ZIPs.
 
 The Sega catalogue supplied ZIPs for Genesis, Master System and Game Gear.
 Current source therefore prepares single-cartridge ZIPs for the implemented
@@ -196,7 +236,7 @@ Regression checks cover nested names and progress capture/cleanup retry,
 multiple cartridges, traversal, oversized entries and corrupt payload cleanup.
 Analysis and all 638 Flutter tests pass with one existing native-host skip;
 39 focused root tests also pass with a lost native staging reply.
-Packaged ZIP gameplay remains pending; this does not add disc sets, firmware or
+Packaged ZIP acceptance is scoped to the three Sega games above; this does not add disc sets, firmware or
 arcade archive support.
 
 ## Remaining boundaries
