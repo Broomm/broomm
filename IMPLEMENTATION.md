@@ -1,5 +1,32 @@
 # Implementation plan
 
+## Rooted Opera device acceptance — 2026-11-08
+
+Build 1090 (`09ccf43`) passed normal 3DO Setup and Alone in the Dark Play on the
+Thor using the core's embedded boot ROM. Emily's in-game Save Game 1, 32 KiB
+NVRAM and 1,274,682-byte manual state published as primary 245. Fresh Play
+restored both files byte-for-byte; the game's own Load a Saved Game loaded the
+attic save before any state load. Manual Load State independently resumed the
+recorded scene. Account 3 began with an empty working inventory and published
+different initialized NVRAM and an introduction state as primary 246. Returning
+to account 2 restored its original files and scene; final Quit retained 245.
+
+All 37 earlier progress files, 19 managed native files, 13 original standalone/
+managed files, thirteen core hashes and sixteen bindings remain intact. Both
+saved sign-ins opened without passwords, journals/session files were cleaned,
+and all 145 scoped operational log lines have no warnings/errors. Application
+run `42434249241` passed all checks and five packages; independent Mesen run
+`42434249252` passed all four native jobs. The current macOS archive passes ZIP,
+input-fingerprint and source/extracted strict signatures for both architectures.
+
+ADB's virtual keyboard occupied native port 1 on one relaunch. Selecting the
+Thor controller in that unsaved test configuration restored input; subsequent
+hardware-event launches assigned it to port 1 normally. No runtime/input default
+or saved standalone configuration was changed. See the [exact device evidence](docs/android-retroarch-opera.json).
+Selected external BIOS/font use, other ABI gameplay, cross-device gameplay and
+completed-game progression are not claimed. Flycast, Beetle Saturn and multi-file
+disc transport remain pending; PR #4 stays draft.
+
 ## Rooted Opera source increment — 2026-11-07
 
 Independent 3DO Setup pins Opera 1.0.0 `370d9a2` at retained artifact commit

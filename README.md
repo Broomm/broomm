@@ -421,9 +421,12 @@ ROM by default. Selected external BIOS/font images are verified from this
 platform in RomM and cached privately. Native NVRAM modes/versions and matched
 manual states remain private to each profile/game. Quit normally, wait for sync,
 then verify the in-game save and Load State after relaunch. Retain private
-progress/cache/recovery files; owned native session files are temporary. Source
-and native mechanism checks pass; packaged Alone in the Dark acceptance remains
-pending. See the [scope and walkthrough](docs/android-retroarch-cores.md#opera-self-contained-disc-source-increment).
+progress/cache/recovery files; owned native session files are temporary. Build
+1090 passed Alone in the Dark's native save and manual-state reload, two-account
+separation and normal cleanup on the Thor, preserving all earlier progress and
+standalone settings. Selected external BIOS/font use and other ABI gameplay are
+not newly verified. See the [scope and walkthrough](docs/android-retroarch-cores.md#opera-self-contained-disc-source-increment)
+and [device evidence](docs/android-retroarch-opera.json).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

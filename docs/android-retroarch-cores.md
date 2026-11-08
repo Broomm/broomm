@@ -14,8 +14,8 @@ cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
 passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
 input and state restoration below. FBNeo build 1087 passed complete-ROMset
 gameplay, NVRAM/state restoration and two-account separation below. The Opera
-source increment covers self-contained disc images and native NVRAM, with
-packaged acceptance and multi-file CUE transport pending. Flycast and Beetle
+increment covers self-contained disc images and native NVRAM; build 1090 passed
+the packaged checks below. Multi-file CUE transport remains pending. Flycast and Beetle
 Saturn still need concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
@@ -585,7 +585,33 @@ in 3,349 ms under the unchanged 30-second deadline. The original cartridge-disc
 refusal assertion caught and verified the correction of an overbroad path change;
 initial helper/type/import/test-path failure logs remain retained. These source
 checks do not establish packaged Opera gameplay or selected external BIOS use.
-Alone in the Dark is downloaded from RomM for that next check.
+Build **1090**, runtime `09ccf43`, subsequently passed normal 3DO Setup and
+Alone in the Dark (RomM 6021) on the Thor using the embedded boot ROM. Emily's
+Save Game 1, 32,768-byte native NVRAM and 1,274,682-byte manual state published
+as primary 245. Fresh Play restored both files byte-for-byte. Before any state
+load, the native saved-slot list recognized slot 1 and the game's own Load a
+Saved Game resumed the attic save. Manual Load State independently resumed the
+recorded gameplay scene, with movement/action inputs exercised.
+
+Account 3 started with an empty working inventory and published different
+32 KiB initialized NVRAM and a 732,765-byte introduction state as primary 246;
+no account-3 in-game progress is claimed. Returning to account 2 restored its
+original two files and state scene. Final normal Quit retained primary 245.
+All 37 earlier progress files, 19 managed native files, 13 original standalone/
+managed files, thirteen core hashes and sixteen platform bindings stayed intact.
+Both saved accounts opened without passwords, native session files/journals
+were cleaned, and all 145 scoped operational lines have no warnings/errors.
+
+One ADB keyboard event introduced a native Virtual device before the Thor
+controller and occupied port 1. Selecting Ayn Odin in that unsaved session
+configuration restored input; later hardware-event launches assigned it to
+port 1 normally. The saved standalone configuration and runtime defaults were
+unchanged. The [device record](android-retroarch-opera.json) retains that
+diagnostic, exact payloads, upgrade identity and limits. Application CI
+`42434249241` passed all checks/five packages and Mesen run `42434249252` passed
+all four native jobs. This is one arm64 device/self-contained CHD; selected
+external BIOS/font use, other ABI gameplay, cross-device play and completed-game
+progression are not newly established.
 
 ## Remaining boundaries
 
