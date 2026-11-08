@@ -1,5 +1,17 @@
 # Implementation plan
 
+## CI bootstrap correction — 2026-11-08
+
+Repeated clean-runner Devbox binary-download failures blocked current Android
+packaging before compilation. The existing 0.18.4 tool/action pins now have an
+explicit official release-asset API cache seed with archive/binary hashes,
+bounded reads, credential-free storage redirects, exclusive publication and
+foreign-cache preservation. The action still owns Nix/version setup. Three
+bootstrap regression cases and workflow lint pass locally; all four actual
+official archives pass the production verifier without executing foreign-host
+binaries. Hosted execution remains pending. See the
+[commands, provenance and effects](docs/ci-devbox-bootstrap.md).
+
 ## Flycast native VMU naming — 2026-11-08
 
 The direct `c0b7c0a` Thor preview restored primary 251, opened Sonic Adventure's

@@ -1,5 +1,8 @@
 # Broomm
 
+CI's pinned Devbox bootstrap, local regression commands and disposable-runner
+effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
+
 **2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
 recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
