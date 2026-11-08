@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Beetle Saturn artifact preparation — 2026-11-08
+
+Four unmodified Android ABI archives identify **v1.32.1 `30f4c12`**; the older
+core-info display version is stale. Source/archive/library hashes, ELF ABIs,
+Android-only libc/libm/libdl dependencies, original Android recipes, GPL-2.0
+and 168 embedded component-notice blocks are retained under
+`vendor/android/mednafen_saturn/1.32.1-30f4c12`. Exact upstream NDK reproduction
+is not claimed, and no retail BIOS/game is bundled. This artifact increment
+enables no route. Concrete BIOS/disc handling, native backup-memory companions,
+state/recovery and packaged Thor acceptance remain pending.
+
 ## Rooted Opera device acceptance — 2026-11-08
 
 Build 1090 (`09ccf43`) passed normal 3DO Setup and Alone in the Dark Play on the

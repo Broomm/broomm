@@ -1,0 +1,191 @@
+SOURCES_CXX :=
+SOURCES_C   :=
+
+LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+MEDNAFEN_DIR := $(CORE_DIR)/mednafen
+CORE_EMU_DIR := $(MEDNAFEN_DIR)/ss
+CDROM_DIR    := $(MEDNAFEN_DIR)/cdrom
+
+INCFLAGS := -I$(CORE_DIR) -I$(MEDNAFEN_DIR) -I$(MEDNAFEN_DIR)/include -I$(MEDNAFEN_DIR)/intl -I$(MEDNAFEN_DIR)/hw_sound -I$(MEDNAFEN_DIR)/hw_cpu -I$(MEDNAFEN_DIR)/hw_misc -I$(LIBRETRO_COMM_DIR)/include
+
+ifeq ($(NEED_THREADING), 1)
+   FLAGS += -DWANT_THREADING -DHAVE_THREADS
+endif
+
+ifeq ($(NEED_DEINTERLACER), 1)
+   FLAGS += -DNEED_DEINTERLACER
+endif
+
+ifeq ($(NEED_BPP), 32)
+FLAGS += -DWANT_32BPP
+endif
+
+ifeq ($(NO_COMPUTED_GOTO), 1)
+FLAGS += -DNO_COMPUTED_GOTO
+endif
+
+ifeq ($(NEED_CD), 1)
+   FLAGS += -DNEED_CD
+endif
+
+ifeq ($(HAVE_CHD), 1)
+   FLAGS += -DHAVE_CHD -DHAVE_RCHD_DEFLATE -DHAVE_RCHD_LZMA -DHAVE_RCHD_FLAC -DHAVE_RCHD_ZSTD
+endif
+
+ifeq ($(NEED_TREMOR), 1)
+   FLAGS += -DNEED_TREMOR
+endif
+
+SOURCES_C += $(CORE_EMU_DIR)/ss.c \
+             $(CORE_EMU_DIR)/scsp_dsp_jit.c \
+             $(CORE_EMU_DIR)/jitdump.c
+
+# sound.c covers the whole Saturn sound subsystem in a single TU:
+# the SOUND_* public ABI, the SOUND_Update 32.32 fixed-point cycle
+# loop, the SCSP IBuffer ring, the setjmp recovery point, the SS_SCSP
+# / M68K SoundCPU instances, the eight M68K bus callbacks, and
+# scsp.inc.  Previously split as sound.c / sound_glue.c during the
+SOURCES_C += $(CORE_EMU_DIR)/db.c \
+		$(CORE_EMU_DIR)/smpc.c \
+		$(CORE_EMU_DIR)/cdb.c \
+		$(CORE_EMU_DIR)/mpeg.c \
+		$(CORE_EMU_DIR)/vdp2.c \
+		$(CORE_EMU_DIR)/vdp2_render.c \
+		$(CORE_EMU_DIR)/scu_dsp_gen.c \
+		$(CORE_EMU_DIR)/scu_dsp_mvi.c \
+		$(CORE_EMU_DIR)/scu_dsp_jmp.c \
+		$(CORE_EMU_DIR)/scu_dsp_misc.c \
+		$(CORE_EMU_DIR)/scu_dsp_jit.c \
+		$(CORE_EMU_DIR)/a64emit.c \
+		$(CORE_EMU_DIR)/x86emit.c \
+		$(CORE_EMU_DIR)/scsp_dsp_jit_x86.c \
+		$(CORE_EMU_DIR)/scu_dsp_jit_x86.c \
+		$(CORE_EMU_DIR)/sh7095_jit_x86.c \
+		$(CORE_EMU_DIR)/sound.c
+
+SOURCES_C += \
+	$(CORE_EMU_DIR)/vdp1.c \
+	$(CORE_EMU_DIR)/vdp1_line.c \
+	$(CORE_EMU_DIR)/vdp1_sprite.c \
+	$(CORE_EMU_DIR)/vdp1_poly.c
+
+SOURCES_C += $(CORE_EMU_DIR)/ak93c45.c
+
+SOURCES_C += $(CORE_EMU_DIR)/stvio.c
+
+SOURCES_C += \
+	     $(CORE_EMU_DIR)/cart.c \
+	     $(CORE_EMU_DIR)/cart/backup.c \
+	     $(CORE_EMU_DIR)/cart/cs1ram.c \
+	     $(CORE_EMU_DIR)/cart/bootrom.c \
+	     $(CORE_EMU_DIR)/cart/extram.c \
+	     $(CORE_EMU_DIR)/cart/rom.c \
+	     $(CORE_EMU_DIR)/cart/stv.c \
+	     $(CORE_EMU_DIR)/cart/stv_5881.c \
+	     $(CORE_EMU_DIR)/cart/ar4mp.c
+
+# CRC helpers used by the ST-V port (game DB fingerprinting + EEPROM seed).
+SOURCES_C += $(MEDNAFEN_DIR)/hash/crc.c
+
+SOURCES_C += $(CORE_EMU_DIR)/smpc_iodevice.c
+
+SOURCES_C += $(MEDNAFEN_DIR)/hw_cpu/m68k/m68k.c
+
+ifeq ($(M68K_SPLIT_SWITCH), 1)
+   FLAGS += -DM68K_SPLIT_SWITCH
+   SOURCES_C += $(MEDNAFEN_DIR)/hw_cpu/m68k/m68k_instr_split0.c \
+                $(MEDNAFEN_DIR)/hw_cpu/m68k/m68k_instr_split1.c
+endif
+
+ifeq ($(NEED_TREMOR), 1)
+   SOURCES_C += $(wildcard $(MEDNAFEN_DIR)/tremor/*.c)
+endif
+
+SOURCES_C += $(CDROM_DIR)/edc_crc32.c \
+	$(CDROM_DIR)/galois.c \
+	$(CDROM_DIR)/recover-raw.c \
+	$(CDROM_DIR)/l-ec.c \
+	$(CDROM_DIR)/lec.c \
+	$(CDROM_DIR)/CDUtility.c \
+	$(CDROM_DIR)/audioreader.c \
+	$(CDROM_DIR)/CDAccess.c \
+	$(CDROM_DIR)/CDAccess_CCD.c \
+	$(CDROM_DIR)/CDAccess_Image.c \
+	$(CDROM_DIR)/cdromif.c
+
+# ZIP extraction always needs rinflate, including builds without CHD.
+SOURCES_C += $(LIBRETRO_COMM_DIR)/encodings/encoding_deflate.c \
+             $(LIBRETRO_COMM_DIR)/encodings/encoding_crc32.c
+
+ifeq ($(HAVE_CHD), 1)
+SOURCES_C += $(CDROM_DIR)/CDAccess_CHD.c \
+             $(LIBRETRO_COMM_DIR)/formats/chd/rchd.c \
+             $(LIBRETRO_COMM_DIR)/formats/7z/r7z_lzma.c \
+             $(LIBRETRO_COMM_DIR)/formats/flac/rflac.c \
+             $(LIBRETRO_COMM_DIR)/encodings/encoding_huffman.c \
+             $(LIBRETRO_COMM_DIR)/encodings/encoding_rzstd.c \
+             $(LIBRETRO_COMM_DIR)/encodings/encoding_xxh64.c
+endif
+
+SOURCES_C += $(MEDNAFEN_DIR)/state.c
+
+SOURCES_C += $(MEDNAFEN_DIR)/cdstream.c \
+		$(MEDNAFEN_DIR)/save_writer.c \
+		$(MEDNAFEN_DIR)/general.c \
+		$(MEDNAFEN_DIR)/mempatcher.c \
+		$(MEDNAFEN_DIR)/settings.c \
+		$(CORE_DIR)/disc.c \
+		$(CORE_DIR)/input.c \
+		$(CORE_DIR)/libretro.c \
+		$(CORE_DIR)/libretro_settings.c \
+		$(CORE_DIR)/zip_reader.c \
+		$(MEDNAFEN_DIR)/video/Deinterlacer.c \
+		$(MEDNAFEN_DIR)/hash/md5.c \
+		$(MEDNAFEN_DIR)/hash/sha256.c
+
+ifneq ($(STATIC_LINKING), 1)
+SOURCES_C += 	 $(LIBRETRO_COMM_DIR)/formats/mpeg1/rmpeg1_ps.c \
+		 $(LIBRETRO_COMM_DIR)/formats/mpeg1/rmpeg1_video.c \
+		 $(LIBRETRO_COMM_DIR)/formats/mp3/rmp3.c \
+		 $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+		 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
+		 $(LIBRETRO_COMM_DIR)/file/file_path.c \
+		 $(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
+		 $(LIBRETRO_COMM_DIR)/lists/dir_list.c \
+		 $(LIBRETRO_COMM_DIR)/lists/string_list.c \
+		 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+		 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+		 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+		 $(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+		 $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+		 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+		 $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+		 $(LIBRETRO_COMM_DIR)/string/stdstring.c \
+		 $(LIBRETRO_COMM_DIR)/string/rstrtod.c \
+		 $(LIBRETRO_COMM_DIR)/time/rtime.c \
+		 $(LIBRETRO_COMM_DIR)/features/features_cpu.c
+
+endif
+
+ifeq ($(NEED_THREADING), 1)
+SOURCES_C +=	 $(LIBRETRO_COMM_DIR)/rthreads/rthreads.c \
+                 $(LIBRETRO_COMM_DIR)/queues/retro_spsc.c \
+                 $(CORE_DIR)/mednafen/thread_queue.c \
+                 $(CORE_DIR)/mednafen/thread_eventcount.c \
+                 $(CORE_DIR)/mednafen/thread_eventcount_common.c
+endif
+
+# Dynamically loaded builds only: statically linked frontends share one
+# libretro-common with the core (the hybrid is semantically void there),
+# and vfs_hybrid.o's reference to filestream_set_mapped_ptr_cb can pull
+# this tree's file_stream.o into symbol collision with griffin.
+#
+# retro_dirent.c is deliberately NOT repeated here - it is already in the
+# dynamic block above. Listing a source twice is invisible to the GNU
+# Makefile (its link line uses $^, which drops duplicates) but fatal to
+# ndk-build, which keeps LOCAL_OBJECTS in LOCAL_SRC_FILES order with no
+# dedup and hands the same .o to the linker twice.
+ifneq ($(STATIC_LINKING), 1)
+SOURCES_C +=	 $(LIBRETRO_COMM_DIR)/vfs/vfs_hybrid.c \
+		 $(LIBRETRO_COMM_DIR)/file/file_path_io.c
+endif
