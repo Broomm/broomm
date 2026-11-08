@@ -29,9 +29,18 @@ capability. Build 1120 passed real provider fresh boot, native Slot 2 creation,
 normal Close Game and complete grant revocation. Its replay under a new grant
 warned about the expired embedded CD path, so reliable states are not accepted.
 A Dart-owned stable content-set identity now addresses that native reference
-without retaining access between sessions. Host identity/cancellation and native
-boundary regressions pass; corrected Thor replay is pending. Native Slot 1/resume files are retained,
-unassigned; ordinary-save/input/root-session acceptance is still outstanding.
+without retaining access between sessions. Build 1121 passed the corrected native Slot 3 replay after complete permission
+revocation, a Broomm restart and a fresh grant. The regular preview was restored;
+both saved accounts and all earlier PSP/RetroArch inventories passed again.
+Its content hashing took about 4.9 seconds per 380-MB launch and contradicted
+the product's no-launch-ROM-scan rule. The current correction derives the stable
+identity from the installed RomM publication record and metadata instead.
+Forty-two focused tests, all 750 source tests (one existing host skip) and
+analysis pass; the new native replay is pending.
+Native Slots 1–3/resume remain unassigned; ordinary-save/input/root-session
+acceptance is still outstanding. Native logging research also shows why a
+cached process or system-destroyed callback alone cannot prove asynchronous
+state publication has finished.
 
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed
 

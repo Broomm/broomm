@@ -156,7 +156,7 @@ that using the current disc might be unstable. Its header contained the first,
 revoked token. This is a failed state-portability check, despite successful
 fresh boot. It must not be accepted as reliable state replay.
 
-The next correction derives a stable, versioned document-set identity in Dart
+Build 1121 derived a stable, versioned document-set identity in Dart
 from sorted relative resource names, sizes and actual SHA-256 digests. Absolute
 device paths, local server/game/profile IDs and enumeration order are excluded.
 The native reviewed-version adapter requires that identity before creating any
@@ -165,16 +165,61 @@ only a newly authorized matching content set restores the same resource names.
 The read-only worker has cancellation, a five-minute operation deadline,
 file/count/byte bounds, progress feedback and before/after filesystem checks.
 There is no new dependency, persistent URI-access registry or credential read.
-Host regressions cover release/relaunch, different device/library IDs, content
+Host regressions covered release/relaunch, different device/library IDs, content
 replacement with preserved size/modified time, foreign/missing/linked resources
-and cancellation before native handoff. Corrected native state replay remains
-pending; large-file verification time is to be measured on the Thor.
+and cancellation before native handoff. All CI checks and five packages passed
+for `88830f3`. Its isolated ARM64 fixture passed fresh boot and saved previously
+empty Slot 3. Normal Close Game returned to Broomm; production release cleared
+all manifest records and game URI permissions. After a Broomm restart and fresh
+launch, loading Slot 3 replayed the opening sequence without the earlier expired
+media warning. The same stable token appeared in its native state header.
+Slot 3 was 848,090 bytes, SHA-256
+`c1e05fed4dc07e49adc1e3edb70706feb6bdfc8aad0215a767edf0d023816b60`.
+Slots 1 and 2, native settings and BIOS stayed unchanged; native Close Game
+naturally replaced its resume state and updated playtime. All temporary grants
+were cleared again. This accepts the native document/state-reference handoff,
+not Broomm cloud synchronization, ordinary saving, scored gameplay or physical
+input. All three native slots remain unassigned.
+
+The ordinary retained-key build **1121** was restored. Its UID and Broomm
+emulator settings stayed unchanged. Both saved accounts restored normally
+without passwords/credential export, and the Thor returned to its owner profile.
+Repeated PSP/RetroArch audits preserved both private PSP inventories/archives
+and checkpoints, 49 earlier progress files, nineteen managed native files,
+thirteen original files, four retained VMUs, fifteen cores and eighteen bindings.
+
+### Current correction: use the installed publication identity
+
+The digest implementation read the 380,622,493-byte ROM on every launch, taking
+4,875 and 4,871 ms on the Thor. Although the state-reference check passed, this
+violated PROJECT.md's prohibition on launch-time ROM checksums. It is replaced
+with a versioned identity from the existing installed publication record:
+RomM ROM ID, platform, release filename/revision, sorted relative filenames and
+published sizes. Absolute device paths, local server/profile IDs, publication
+time, display titles, optional download-checksum preferences and enumeration
+order are excluded. The receipt must belong to the exact owned game and agree
+with every granted regular file and observed size. Missing, linked, duplicate,
+foreign, changed or incomplete observations refuse before native launch.
+
+Only the bounded receipt is read; payload access is metadata-only. This is the
+identity of Broomm's immutable managed publication, not fresh proof of ROM bytes.
+Download verification remains a separate operation. A same-size out-of-band
+edit of a private managed payload is not detected by this check. No checksum
+cache or new persistent access registry is introduced. Cancellation, a 30-second
+deadline and file/count/byte/path bounds remain. Forty-two focused Flutter cases
+and analysis pass, including a file boundary that rejects all ROM reads,
+release/relaunch and another device's local IDs, changed release identity,
+publication mismatches and cancellation. The initial test command mistyped a
+nonexistent session test path; correcting it to the existing emulator/session
+file passed without changing assertions. Native replay of this publication
+identity is pending. The full source suite passes 750 tests with one existing
+host skip.
 
 Both fixture sessions ended through native Close Game; all temporary game grants
 were cleared and the regular build 1120 was restored. Native settings and BIOS
 hashes and both Slot 1/2 files remain unchanged. Advanced-settings visibility
 was restored after UI research; native settings bytes stayed identical, although
-the app atomically replaced its settings inode. No logging preference was changed.
+the app atomically replaced its settings inode. At that checkpoint no logging preference had changed.
 The Compose advanced screen did not expose the logging controls investigated.
 
 The APK also shows that base settings load once into a retained interface and
@@ -184,10 +229,38 @@ copy PPSSPP's settings-loan design without verifying this app's actual reload
 and shutdown contract. Threads alone cannot establish live gameplay or complete
 writer shutdown here.
 
+
+## Native shutdown research — not a production proof
+
+With its game normally closed and all slot hashes verified, the already closed
+research process was stopped and confirmed absent. A retained owner-only backup
+protected the original INI. Only `Logging/LogToFile` and `LogFileTimestamps` were
+temporarily enabled. A native-picker boot then closed through normal Close Game.
+The diagnostic showed resume-state compression and `Host::OnSystemDestroyed()`,
+followed by surface/activity destruction. It also confirmed the selected
+per-title card name `memcards/Mega Man X4 (USA)_1.mcd`, although no ordinary card
+file had been created. This is a selected path, not accepted ordinary saving.
+
+After normal closure the research process was stopped, the original INI bytes,
+UID/group/mode/label were restored and verified, and only the newly created
+research log was removed from the native app folder. The complete diagnostic
+remains private. Slots 1/2 stayed identical. Subsequent provider tests ran with
+the original logging preferences; no research logging remains enabled.
+
+The [public core implementation](https://github.com/stenzek/duckstation/blob/master/src/core/system.cpp)
+queues asynchronous state writes. Its ordinary destroy path does not alone
+establish that the write queue has joined. Exact correspondence between that
+public revision and the inspected Android beta has not been established.
+The observed system-destroyed callback, cached PID, retained Core/Video/CDROM
+threads or disappearing activity must therefore not authorize save capture or
+settings replacement. Verify the exact native/frontend flush and settings
+reload contract first. No root save-writing adapter is enabled by this evidence.
+
 ## Required before root save sessions
 
-Verify real content-URI boot, a RomM-sourced BIOS/game and normal native
-shutdown/writer evidence on this exact APK. Determine how settings overrides,
+Real document boot and native state-reference replay are established above.
+Finish the publication-identity replay and verify normal native shutdown/writer
+evidence on this exact APK with the retained RomM-sourced BIOS/game. Determine how settings overrides,
 whole cards, per-game preferences, resume/global undo and state filenames are
 actually consumed. Design a concrete Dart-owned private profile/game workflow
 with durable settings loans and original-data restoration; do not infer these
@@ -208,7 +281,7 @@ snapshot; no file cleanup is needed. A cached native process is not closure
 proof for future save operations.
 
 ```sh
-devbox run -- flutter --suppress-analytics test --no-pub test/android_root_inspection_test.dart
+devbox run -- flutter --suppress-analytics test --no-pub test/android_root_inspection_test.dart test/android_duckstation_documents_test.dart test/android_emulators_test.dart
 devbox --config tool/android run check-root-inspection
 devbox --config tool/android run check
 ```

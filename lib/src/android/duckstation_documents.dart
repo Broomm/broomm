@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../progress/digest.dart';
-import '../progress/file_hash.dart';
 import '../romm/transfer.dart';
 
 const androidDuckStationDocumentVersion = '0.1-12693-gcc4a0d678';
 
 /// DuckStation stores its media document in states. Its identity must survive
 /// grant revocation and another device's local library/profile identifiers.
+/// Use the installed publication record, never a launch-time ROM checksum.
+/// This establishes managed installation identity, not fresh payload integrity.
 /// The session supervisor holds SessionLease; these files are immutable library
 /// payloads. No save files, account data or credential storage are read here.
 Future<String> androidDuckStationDocumentToken(
@@ -27,7 +28,7 @@ Future<String> androidDuckStationDocumentToken(
       !selected.startsWith(prefix)) {
     throw const FormatException('Invalid DuckStation game manifest.');
   }
-  final owned = RegExp(r'^[a-f0-9]{32}/[1-9][0-9]*/content/')
+  final owned = RegExp(r'^([a-f0-9]{32})/([1-9][0-9]*)/content/')
       .firstMatch(selected.substring(prefix.length));
   if (owned == null) {
     throw const FormatException('DuckStation game is outside the library.');
@@ -78,7 +79,7 @@ Future<String> androidDuckStationDocumentToken(
     cancellation.check();
     unawaited(cancellation.whenCancelled.then((_) => stop.cancel()));
   }
-  final deadline = Timer(const Duration(minutes: 5), () {
+  final deadline = Timer(const Duration(seconds: 30), () {
     timedOut = true;
     stop.cancel();
   });
@@ -99,29 +100,71 @@ Future<String> androidDuckStationDocumentToken(
       observations[relative] = stat;
     }
     final names = entries.keys.toList()..sort();
-    final manifest = <Object>[];
     final clock = Stopwatch()..start();
-    var completed = 0, last = -1000;
-    for (var index = 0; index < names.length; index++) {
-      stop.check();
-      final name = names[index], file = entries[name]!;
-      phase?.call(
-        'Checking DuckStation game file ${index + 1} of ${names.length}…',
+    phase?.call('Checking DuckStation’s installed game record…');
+    stop.check();
+    final record = File('${Directory(content).parent.path}/receipt.json');
+    const limit = 12 * 1024 * 1024;
+    if (await FileSystemEntity.type(record.path, followLinks: false) !=
+        FileSystemEntityType.file) {
+      throw const FileSystemException(
+        'Game installation record is missing or linked.',
       );
-      final hash = await gameFileHash(
-        file.path,
-        cancellation: stop,
-        progress: (bytes) {
-          if (clock.elapsedMilliseconds - last < 1000) return;
-          last = clock.elapsedMilliseconds;
-          phase?.call(
-            'Checking DuckStation game files: ${completed + bytes} of $total bytes.',
-          );
-        },
-      );
-      completed += observations[name]!.size;
-      manifest.add([name, observations[name]!.size, hash]);
     }
+    final beforeRecord = await record.stat();
+    if (beforeRecord.size < 1 || beforeRecord.size > limit) {
+      throw const FormatException('Invalid game installation record size.');
+    }
+    final text = await record
+        .openRead(0, limit + 1)
+        .transform(utf8.decoder)
+        .join();
+    stop.check();
+    final publication = jsonDecode(text);
+    if (publication is! Map ||
+        publication['version'] != 1 ||
+        publication['serverId'] != owned.group(1) ||
+        publication['game'] is! Map ||
+        publication['game']['id'].toString() != owned.group(2) ||
+        publication['game']['id'] is! int ||
+        publication['game']['platform_slug'] != 'psx' ||
+        publication['game']['fs_name'] is! String ||
+        (publication['game']['fs_name'] as String).isEmpty ||
+        publication['game']['revision'] != null &&
+            publication['game']['revision'] is! String ||
+        publication['files'] is! List ||
+        (publication['files'] as List).length != names.length) {
+      throw const FormatException(
+        'DuckStation game installation record changed. Reload the library.',
+      );
+    }
+    final published = <String, int>{};
+    for (final item in publication['files'] as List) {
+      if (item is! Map ||
+          item['path'] is! String ||
+          item['bytes'] is! int ||
+          published.containsKey(item['path']) ||
+          !entries.containsKey(item['path']) ||
+          observations[item['path']]!.size != item['bytes']) {
+        throw const FormatException(
+          'DuckStation files do not match their installation record.',
+        );
+      }
+      published[item['path'] as String] = item['bytes'] as int;
+    }
+    final afterRecord = await record.stat();
+    if (beforeRecord.size != afterRecord.size ||
+        beforeRecord.modified != afterRecord.modified ||
+        beforeRecord.changed != afterRecord.changed ||
+        await FileSystemEntity.type(record.path, followLinks: false) !=
+            FileSystemEntityType.file) {
+      throw const FileSystemException(
+        'Game installation record changed during inspection.',
+      );
+    }
+    final manifest = [
+      for (final name in names) [name, published[name]],
+    ];
     for (final name in names) {
       stop.check();
       final before = observations[name]!,
@@ -130,23 +173,32 @@ Future<String> androidDuckStationDocumentToken(
           before.modified != after.modified ||
           before.changed != after.changed) {
         throw const FileSystemException(
-          'Game files changed during document verification.',
+          'Game files changed during document inspection.',
         );
       }
     }
     stop.check();
     final digest = ProgressDigest.sha256()
       ..add(
-        utf8.encode(jsonEncode(['broomm-duckstation-documents-v1', manifest])),
+        utf8.encode(
+          jsonEncode([
+            'broomm-duckstation-publication-v2',
+            publication['game']['id'],
+            publication['game']['platform_slug'],
+            publication['game']['fs_name'],
+            publication['game']['revision'],
+            manifest,
+          ]),
+        ),
       );
     phase?.call(
-      'DuckStation game files verified in ${clock.elapsedMilliseconds} ms.',
+      'DuckStation game record checked in ${clock.elapsedMilliseconds} ms.',
     );
     return digest.finish().substring(0, 32);
   } catch (_) {
     if (timedOut) {
       throw StateError(
-        'Checking DuckStation game files timed out. Nothing was launched.',
+        'Checking DuckStation game installation timed out. Nothing was launched.',
       );
     }
     cancellation?.check();

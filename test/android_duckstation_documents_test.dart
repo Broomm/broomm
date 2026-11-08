@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,31 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory data;
   late List<String> files;
+  Future<void> publish({String? revision}) async {
+    final root = Directory('${data.path}/library/${'a' * 32}/6583');
+    await File('${root.path}/receipt.json').writeAsString(
+      jsonEncode({
+        'version': 1,
+        'serverId': 'a' * 32,
+        'userId': 2,
+        'game': {
+          'id': 6583,
+          'platform_slug': 'psx',
+          'fs_name': 'Mega Man X4',
+          'revision': revision,
+        },
+        'files': [
+          for (final path in files)
+            {
+              'path': path.substring('${root.path}/content/'.length),
+              'bytes': await File(path).length(),
+            },
+        ],
+        'completedAt': '2026-11-08T00:00:00Z',
+      }),
+    );
+  }
+
   setUp(() async {
     data = await Directory.systemTemp.createTemp('broomm-duck-documents-');
     final content = '${data.path}/library/${'a' * 32}/6583/content';
@@ -23,6 +49,7 @@ void main() {
       await file.writeAsBytes(entry.value, flush: true);
       files.add(file.path);
     }
+    await publish();
   });
   tearDown(() => data.delete(recursive: true));
 
@@ -77,7 +104,7 @@ void main() {
     }
   });
 
-  test('document identity survives revocation/relaunch and different device library IDs', () async {
+  test('publication identity survives release, another device and publication metadata changes', () async {
     final first = await androidDuckStationDocumentToken(
       data,
       files,
@@ -98,36 +125,78 @@ void main() {
     for (final path in files) {
       final relative = path.substring(oldContent.length + 1);
       final copy = File(
-        '${device.path}/library/${'b' * 32}/23/content/$relative',
+        '${device.path}/library/${'b' * 32}/6583/content/$relative',
       );
       await copy.parent.create(recursive: true);
       await File(path).copy(copy.path);
       copies.add(copy.path);
     }
+    final original = jsonDecode(
+      await File('${data.path}/library/${'a' * 32}/6583/receipt.json')
+          .readAsString(),
+    ) as Map;
+    original['serverId'] = 'b' * 32;
+    original['userId'] = 3;
+    original['completedAt'] = '2026-11-09T00:00:00Z';
+    original['files'] = (original['files'] as List).reversed.toList();
+    // Optional download verification and display metadata do not change media identity.
+    for (final item in original['files']) {
+      item['verification'] = 'crc32';
+      item['crc32'] = '12345678';
+    }
+    original['game']['name'] = 'Localized display title';
+    await File('${device.path}/library/${'b' * 32}/6583/receipt.json')
+        .writeAsString(jsonEncode(original));
     expect(
       await androidDuckStationDocumentToken(device, copies, copies.first),
       first,
     );
   });
 
-  test('same-size content replacement changes identity with the modified time preserved', () async {
-    final first = await androidDuckStationDocumentToken(
-      data,
-      files,
-      files.first,
-    );
-    final file = File(files.first), before = await File(files.first).stat();
-    await file.writeAsBytes([3, 2, 1], flush: true);
-    await file.setLastModified(before.modified);
-    expect(await file.length(), before.size);
-    expect(
-      await androidDuckStationDocumentToken(data, files, files.first),
-      isNot(first),
-    );
-    await file.writeAsBytes([1, 2, 3], flush: true);
-    expect(
-      await androidDuckStationDocumentToken(data, files, files.first),
-      first,
+  test(
+    'launch uses receipt identity and metadata without opening ROM payloads',
+    () async {
+      final known = {for (final path in files) path: File(path)};
+      final record = File('${data.path}/library/${'a' * 32}/6583/receipt.json');
+      final first = await IOOverrides.runZoned(
+        () => androidDuckStationDocumentToken(data, files, files.first),
+        createFile: (path) =>
+            path == record.path ? record : _MetadataFile(known[path]!),
+      );
+      await publish(revision: 'Rev 1');
+      expect(
+        await androidDuckStationDocumentToken(data, files, files.first),
+        isNot(first),
+      );
+      await publish();
+      expect(
+        await androidDuckStationDocumentToken(data, files, files.first),
+        first,
+      );
+    },
+  );
+
+  test('missing, mismatched and duplicate publication entries refuse before native launch', () async {
+    final record = File('${data.path}/library/${'a' * 32}/6583/receipt.json');
+    final text = await record.readAsString();
+    for (final change in <void Function(Map)>[
+      (j) => j['serverId'] = 'b' * 32,
+      (j) => j['game']['id'] = 23,
+      (j) => j['files'][0]['bytes'] = 77,
+      (j) => j['files'][1] = j['files'][0],
+    ]) {
+      final j = jsonDecode(text) as Map;
+      change(j);
+      await record.writeAsString(jsonEncode(j));
+      await expectLater(
+        androidDuckStationDocumentToken(data, files, files.first),
+        throwsA(isA<FormatException>()),
+      );
+    }
+    await record.delete();
+    await expectLater(
+      androidDuckStationDocumentToken(data, files, files.first),
+      throwsA(isA<FileSystemException>()),
     );
   });
 
@@ -180,4 +249,18 @@ void main() {
     expect(await File(files.first).readAsBytes(), [1, 2, 3]);
     expect(await foreign.readAsBytes(), [9]);
   });
+}
+
+/// The owning boundary is metadata-only: any payload I/O fails this regression.
+class _MetadataFile implements File {
+  _MetadataFile(this.inner);
+  final File inner;
+  @override
+  String get path => inner.path;
+  @override
+  Future<FileStat> stat() => inner.stat();
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw StateError(
+    'Launch must not read ROM contents: ${invocation.memberName}',
+  );
 }
