@@ -25,7 +25,9 @@ class RootInspectionCommand(
         // Root UID alone does not expose other apps through Android's isolated
         // app-data mounts. Select the global namespace for this command only;
         // never modify root-manager policy or the application's namespace.
-        val process = try { start(listOf("su", "-M", "-c", SCRIPT)) }
+        val psp = pkg in PpssppStorageInspection.packages && user == 0
+        val script = if (psp) SCRIPT + "\n" + PpssppStorageInspection.SCRIPT else SCRIPT
+        val process = try { start(listOf("su", "-M", "-c", script)) }
         catch (_: IOException) { throw RootInspectionFailure("unavailable", "Root command unavailable. Use connected folders or check your existing root manager.") }
         val stdout = ByteArrayOutputStream()
         val stderr = ByteArrayOutputStream()
@@ -62,12 +64,15 @@ class RootInspectionCommand(
                         62 -> RootInspectionFailure("directory-unavailable", "The emulator directory is unavailable to root inspection. Check that your root manager supports the global mount namespace (-M); granting root alone may leave other apps hidden.")
                         63 -> RootInspectionFailure("directory-unresolved", "The emulator directory could not be resolved. No storage connection was created.")
                         64 -> RootInspectionFailure("metadata-unavailable", "Emulator directory metadata could not be read. No storage connection was created.")
+                        65 -> RootInspectionFailure("storage-unavailable", "PPSSPP's selected memory stick could not be verified. Open PPSSPP, wait for its menu, use Exit, then retry inspection. Nothing was connected or changed.")
                         else -> RootInspectionFailure("failed", "Root command failed (exit $exit). Check Broomm's root grant and root-manager support for the global mount namespace (-M). No storage connection was created.")
                     }
                     // Do not log arbitrary su diagnostics (which can contain secrets
                     // or terminal controls), or mistake partial stdout for success.
                     if (stderr.size() != 0) throw RootInspectionFailure("failed", "Root inspection returned unexpected diagnostics. No storage connection was created.")
-                    return parse(stdout.toString("UTF-8"), roots, uid)
+                    val output = stdout.toString("UTF-8")
+                    return if (psp) PpssppStorageInspection.parse(output, roots, uid, pkg)
+                        else parse(output, roots, uid)
                 }
                 Thread.sleep(10)
             }

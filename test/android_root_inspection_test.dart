@@ -93,6 +93,60 @@ void main() {
     },
   );
 
+  test('PPSSPP discovery retains native app-private metadata without a save connection', () async {
+    final psp = androidEmulators.singleWhere((e) => e.id == 'ppsspp');
+    final selected = AndroidApp(psp.packages.first, '1.20.4', 'c' * 64);
+    final memory = {
+      'kind': 'private',
+      'path': '/storage/emulated/0/Android/data/${selected.package}/files',
+      'gid': 1078,
+      'mode': '2770',
+      'label': 'u:object_r:media_rw_data_file:s0:c123,c256,c512,c768',
+      'device': 65038,
+      'inode': 28074,
+    };
+    Map<String, dynamic> pspReport() => {
+      ...report(),
+      'package': selected.package,
+      'version': selected.version,
+      'build': selected.build,
+      'dataDir': '/data/user/0/${selected.package}',
+      'memoryStick': memory,
+    };
+    handler = (_) async => pspReport();
+    final value = await inspector.inspect(psp, selected);
+    expect(value.values['memoryStick'], memory);
+    expect(calls.map((c) => c.method), ['inspect']);
+    expect(
+      () => (value.values['memoryStick'] as Map)['gid'] = 0,
+      throwsUnsupportedError,
+    );
+    for (final change in [
+      {'path': '/storage/emulated/0/Android/data/foreign/files'},
+      {'mode': '2777'},
+      {'label': report()['label']},
+      {'device': 0},
+      {'inode': '28074'},
+      {'extra': true},
+    ]) {
+      handler = (_) async => {
+        ...pspReport(),
+        'memoryStick': {...memory, ...change},
+      };
+      await expectLater(
+        inspector.inspect(psp, selected),
+        throwsFormatException,
+      );
+    }
+    handler = (_) async => {
+      ...pspReport(),
+      'memoryStick': {'kind': 'other'},
+    };
+    expect((await inspector.inspect(psp, selected)).values['memoryStick'], {
+      'kind': 'other',
+    });
+  });
+
   test(
     'cancel rejects a late success and permits an explicit fresh request',
     () async {

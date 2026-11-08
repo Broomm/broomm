@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/root_saves.dart';
+import 'package:broomm/src/android/psp_root.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/files.dart';
@@ -50,6 +51,18 @@ class ObservedRetroArchSession extends AndroidGameSession {
   @override
   Future<AndroidRetroArchState> finishIfRetroArchClosed() async {
     if (exit == AndroidRetroArchState.closed) active = false;
+    return exit;
+  }
+}
+
+class ObservedPspSession extends AndroidGameSession {
+  ObservedPspSession(super.manager, super.cloud);
+  AndroidPspState exit = AndroidPspState.running;
+  int checks = 0;
+  @override
+  Future<AndroidPspState> finishIfPspClosed() async {
+    checks++;
+    if (exit == AndroidPspState.closed) active = false;
     return exit;
   }
 }
@@ -304,6 +317,7 @@ void main() {
     final args = calls.last.arguments as Map;
     expect(args['selected'], path);
     expect(args['files'], [path]);
+    expect(args.containsKey('rootedPsp'), isFalse);
     final count = calls.length;
     await expectLater(
       manager.launch(emulator('ppsspp'), manager.app(emulator('ppsspp'))!, [
@@ -313,6 +327,27 @@ void main() {
     );
     expect(calls.length, count);
   });
+
+  test(
+    'rooted PSP task handoff requires its emulator and owning profile',
+    () async {
+      final before = calls.length;
+      for (final id in ['ppsspp', 'melonds']) {
+        await expectLater(
+          manager.launch(
+            emulator(id),
+            manager.app(emulator(id))!,
+            ['/fixture/Game.pbp'],
+            '/fixture/Game.pbp',
+            rootedPsp: true,
+            profile: id == 'melonds' ? profileId : null,
+          ),
+          throwsFormatException,
+        );
+      }
+      expect(calls.length, before);
+    },
+  );
 
   test(
     'unrecognized Android profile files are never adopted or overwritten',
@@ -721,6 +756,99 @@ void main() {
     },
   );
 
+  testWidgets(
+    'rooted PSP completes from app lifecycle without an activity result',
+    (t) async {
+      final session = ObservedPspSession(manager, RecordingCloud(data));
+      session.exit = AndroidPspState.closed;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => AndroidSessionScreen(
+                    session: session,
+                    title: 'Lumines II',
+                    emulator: 'PPSSPP',
+                    cloudReady: true,
+                    rooted: true,
+                    start: ({required bool emulatorClosed}) async {
+                      session.active = true;
+                    },
+                    finish: () async =>
+                        fail('Native exit needs no confirmation.'),
+                  ),
+                ),
+              ),
+              child: const Text('Play PSP'),
+            ),
+          ),
+        ),
+      );
+      await t.tap(find.text('Play PSP'));
+      await t.pumpAndSettle();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isFalse);
+      expect(session.checks, 1);
+      expect(find.byType(AndroidSessionScreen), findsNothing);
+      expect(find.text('Play PSP'), findsOneWidget);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.checks, 1);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets(
+    'rooted PSP retains live and uncertain writers on lifecycle return',
+    (t) async {
+      final session = ObservedPspSession(manager, RecordingCloud(data));
+      var resumes = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: AndroidSessionScreen(
+            session: session,
+            title: 'Lumines II',
+            emulator: 'PPSSPP',
+            rooted: true,
+            cloudReady: true,
+            start: ({required bool emulatorClosed}) async =>
+                session.active = true,
+            resume: () async => resumes++,
+            finish: () async => fail('A live writer must not synchronize.'),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      await t.tap(find.text('Check for exit'));
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      expect(session.checks, 2);
+      await t.tap(find.text('Return to emulator'));
+      await t.pumpAndSettle();
+      expect(resumes, 1);
+      session.exit = AndroidPspState.unknown;
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      expect(session.checks, 3);
+      expect(find.byType(AndroidSessionScreen), findsOneWidget);
+      expect(find.text('Finished? Sync progress'), findsNothing);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
   testWidgets('cold RetroArch offers its normal launcher and a play retry', (
     t,
   ) async {
@@ -754,6 +882,83 @@ void main() {
     await t.pumpAndSettle();
     expect(played, isTrue);
     expect(find.text('Open RetroArch'), findsNothing);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
+
+  testWidgets(
+    'unverified PSP preparation offers native open and a guarded retry',
+    (t) async {
+      final session = AndroidGameSession(manager, RecordingCloud(data));
+      var opened = false, attempts = 0, finishes = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: AndroidSessionScreen(
+            session: session,
+            title: 'LocoRoco',
+            emulator: 'PPSSPP',
+            cloudReady: true,
+            rooted: true,
+            start: ({required bool emulatorClosed}) async {
+              expect(emulatorClosed, isFalse);
+              attempts++;
+              if (!opened) throw StateError('PPSSPP shutdown is unverified.');
+              session.active = true;
+            },
+            resume: () async => opened = true,
+            finish: () async => finishes++,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(session.active, isFalse);
+      expect(attempts, 1);
+      await t.tap(find.text('Open PPSSPP'));
+      await t.pumpAndSettle();
+      expect(opened, isTrue);
+      expect(attempts, 1);
+      expect(finishes, 0);
+      await t.tap(find.text('Check and play'));
+      await t.pumpAndSettle();
+      expect(attempts, 2);
+      expect(session.active, isTrue);
+      expect(find.text('Open PPSSPP'), findsNothing);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets('failed native PSP open stays visible without starting sync', (
+    t,
+  ) async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    var attempts = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        home: AndroidSessionScreen(
+          session: session,
+          title: 'LocoRoco',
+          emulator: 'PPSSPP',
+          cloudReady: true,
+          rooted: true,
+          start: ({required bool emulatorClosed}) async {
+            attempts++;
+            throw StateError('PPSSPP shutdown is unverified.');
+          },
+          resume: () async => throw StateError('Native launcher unavailable.'),
+          finish: () async => fail('Opening the menu must not synchronize.'),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Open PPSSPP'));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Native launcher unavailable.'), findsOneWidget);
+    expect(find.text('Open PPSSPP'), findsOneWidget);
+    expect(find.text('Check and play'), findsOneWidget);
+    expect(attempts, 1);
+    expect(session.active, isFalse);
+    expect(await t.runAsync(session.pending), isNull);
     await t.pumpWidget(const SizedBox());
     session.dispose();
   });

@@ -6,11 +6,32 @@ effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.m
 **2026-11-08 checkpoint:** rooted Android RetroArch now implements eighteen
 platform routes with fifteen pinned cores. Native Thor checks cover the roster,
 including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
-The current full Android CI package passes its Thor smoke/preservation check.
+CI build 1104 passed the Thor gameplay smoke; build 1107 also passed a complete
+read-only preservation audit after the standalone-inspector upgrade.
 Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
-[Download the current macOS preview](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip)
-(universal, ad-hoc signed, not notarized; development updates disabled).
+PR #4 is merged. The [standalone Android increment](docs/android-standalone-root.md)
+now includes rooted PPSSPP sessions, ordinary saves, states, account-private
+settings/console identity and recovery. Build **1114** passed real Thor two-account
+ordinary/state round trips, live-writer refusal, Return/normal-Exit task handling,
+offline save/state retention and automatic later sync, plus complete external-app
+removal/reinstall and private-profile restoration. Every restored preference
+matched; the final RetroArch preservation audit passed. The
+[PSP evidence](docs/android-ppsspp-thor-acceptance.json) records the exact APK,
+inputs and limitations. PR #5's final build **1115** passed the packaged launch/Exit smoke and all CI
+checks; no later emulator has begun.
+
+Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
+Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait
+for its menu and use **Exit**, then **Check setup**. If its first Exit reports a
+settings-save failure, repeat a normal open/Exit. Play a downloaded PSP game;
+save in-game and use **Android Back → Exit to menu → Exit** for automatic sync.
+If preparation cannot verify shutdown, choose **Open PPSSPP → Exit**, then
+**Check and play**. **Remove** uninstalls the external app and deletes its
+standalone data; Broomm retains verified backups of its own private profiles for
+same-APK/ABI reinstall. The linked current macOS package passed archive/universal/signature checks.
+If Android discards older native shutdown evidence, the explicit Open/Exit
+recovery above remains necessary; cached Java alone does not prove closure.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
@@ -297,7 +318,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip),
+[current macOS build](build/releases/Broomm-macOS-android-standalone-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay

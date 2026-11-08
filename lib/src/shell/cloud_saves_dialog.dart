@@ -21,7 +21,7 @@ Future<ProgressChoice> resolveCloudConflict(
         content: SizedBox(
           width: 540,
           child: Text(
-            '${conflict.reason}\n\nDevice copy: ${conflict.local.manifest['created']}\n${conflict.remote == null ? 'Cloud copy: unavailable' : 'Cloud copy: ${conflict.remote!.manifest['created']}'}\n\nThe unselected copy stays in local recovery storage. Other RomM save files are not changed.',
+            '${conflict.reason}\n\n${conflict.localLabel} copy: ${conflict.local.manifest['created']}\n${conflict.remoteLabel} copy: ${conflict.remote?.manifest['created'] ?? 'unavailable'}\n\nThe unselected copy stays in local recovery storage. Other RomM save files are not changed.',
           ),
         ),
         actions: [
@@ -33,11 +33,11 @@ Future<ProgressChoice> resolveCloudConflict(
           if (conflict.remote != null)
             ConsoleButton(
               onPressed: () => Navigator.pop(c, ProgressChoice.cloud),
-              child: const Text('Use cloud progress'),
+              child: Text('Use ${conflict.remoteLabel.toLowerCase()} progress'),
             ),
           ConsoleButton(
             onPressed: () => Navigator.pop(c, ProgressChoice.device),
-            child: const Text('Use device progress'),
+            child: Text('Use ${conflict.localLabel.toLowerCase()} progress'),
           ),
         ],
       ),

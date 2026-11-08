@@ -40,7 +40,8 @@ class RootSaveService : RootService() {
         fun live() { check(SystemClock.elapsedRealtime() <= deadline) { "Root operation expired. Recovery was kept." } }
         live()
         val pkg = request.getString("package")!!
-        require(pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        val psp = request.getString("operation")?.startsWith("psp") == true
+        require(if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -52,9 +53,31 @@ class RootSaveService : RootService() {
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
         val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (psp) return SharedDocumentLock.acquire(storage).use {
+            live()
+            val process = RootPpssppProcess(this, pkg, uid, ::live)
+            val files = RootPpssppFiles(this, before, ::live, process::ensureClosed)
+            if (operation != "pspinspect") files.validate(request)
+            val result = when (operation) {
+                "pspinspect" -> files.report()
+                "psplifecycle" -> process.observe(request)
+                "pspprofile" -> files.initialize(request)
+                "pspselection" -> files.selection(request)
+                "pspselect" -> files.select(request)
+                "psplist" -> files.inventory(request)
+                "pspprofilelist" -> files.profileInventory(request)
+                "pspread" -> files.capture(request, request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller)
+                "pspprofileread" -> files.capture(request, request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller, profileData = true)
+                "pspreplace" -> files.replace(request, request.getParcelable<ParcelFileDescriptor>("transfer"), caller)
+                "pspprofilereplace" -> files.replace(request, request.getParcelable<ParcelFileDescriptor>("transfer"), caller, profileData = true)
+                else -> error("Unsupported PPSSPP root operation")
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "PPSSPP changed during root access. Recovery was kept." }
+            live(); result
+        }
         return SharedDocumentLock.acquire(storage).use {
             live()
             val coreName = request.getString("coreName") ?: "mgba"

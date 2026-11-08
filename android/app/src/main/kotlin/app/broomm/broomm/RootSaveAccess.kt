@@ -109,11 +109,13 @@ class RootSaveAccess(private val activity: Activity) {
         interrupted = { finish(error = it) }
         try {
             val pkg = call.argument<String>("package")!!
-            require(pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            val psp = call.method.startsWith("rootPsp")
+            require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
+            require(if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -125,6 +127,25 @@ class RootSaveAccess(private val activity: Activity) {
                 putString("operation", call.method.removePrefix("root").lowercase())
                 for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup", "configPath"))
                     putString(key, call.argument<String>(key))
+            }
+            if (psp) {
+                for (key in listOf("server", "profile", "ownerNonce", "archiveNonce", "discId", "discVersion", "excluded", "selection",
+                    "externalLabel", "externalGid", "externalMode", "externalDevice", "externalInode", "apk", "abi", "mode", "cursor")) {
+                    call.argument<String>(key)?.let { value ->
+                        require(value.length <= if (key == "excluded") 65536 else 1024)
+                        request.putString(key, value)
+                    }
+                }
+                for ((key, limit) in listOf("config" to 262144, "controls" to 65536))
+                    call.argument<ByteArray>(key)?.let { require(it.size <= limit); request.putByteArray(key, it) }
+                call.argument<Map<String, Number>>("process")?.let { process ->
+                    require(process.keys == setOf("pid", "startTicks", "launchElapsed", "launchWall") && process.values.all { it.toLong() > 0 })
+                    require(process.getValue("pid").toLong() <= Int.MAX_VALUE)
+                    request.putInt("pid", process.getValue("pid").toInt())
+                    for (key in listOf("startTicks", "launchElapsed", "launchWall")) request.putLong(key, process.getValue(key).toLong())
+                }
+                if (!request.containsKey("pid")) for (key in listOf("launchElapsed", "launchWall"))
+                    call.argument<Number>(key)?.let { require(it.toLong() > 0); request.putLong(key, it.toLong()) }
             }
             if (call.method == "rootLifecycle") {
                 call.argument<Number>("launchedAfter")?.toLong()?.let {
@@ -157,7 +178,7 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            if (call.method in setOf("rootRead", "rootFlycastRead")) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
+            if (call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead")) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
                 worker.execute {
@@ -166,10 +187,11 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace")) call.argument<String>("source") else null
-                            val target = if (call.method in setOf("rootRead", "rootFlycastRead")) call.argument<String>("target") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace")) call.argument<String>("source") else null
+                            val target = if (call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead")) call.argument<String>("target") else null
                             if (source != null || target != null) {
-                                val file = privateFile(source ?: target!!)
+                                val file = if (call.method in setOf("rootPspProfileReplace", "rootPspProfileRead") && call.argument<String>("archiveNonce") != null)
+                                    privatePspArchiveFile(source ?: target!!, call, target != null) else privateFile(source ?: target!!)
                                 val flags = if (source != null) OsConstants.O_RDONLY else
                                     OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL
                                 val fd = Os.open(file.path, flags or OsConstants.O_NOFOLLOW or OsConstants.O_NONBLOCK, 384)
@@ -185,11 +207,15 @@ class RootSaveAccess(private val activity: Activity) {
                         require(RootInspection.identity(activity, pkg) == identity) { "Emulator changed during root access. Recovery was kept." }
                         val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                         val value: Any? = when (call.method) {
-                            "rootInspect", "rootMgbaSetup", "rootCoreSetup" -> identity.mapValues { it.value.toString() } + mapped
-                            "rootLifecycle" -> mapped
+                            "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
+                            "rootPspList", "rootPspProfileList" -> mapOf("next" to answer.getString("next"), "files" to
+                                answer.getBundle("files")!!.let { all -> all.keySet().associateWith { key ->
+                                    all.getBundle(key)!!.let { item -> mapOf("bytes" to item.getLong("bytes"), "sha256" to item.getString("sha256"), "metadata" to item.getString("metadata")) }
+                                } })
                             "rootList", "rootFlycastList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
@@ -265,6 +291,21 @@ class RootSaveAccess(private val activity: Activity) {
         for (part in relative.split('/')) { checked = File(checked, part); require(checked.canonicalPath == checked.absolutePath) }
         require(checked.parentFile!!.isDirectory && !checked.isDirectory)
         return checked
+    }
+    private fun privatePspArchiveFile(value: String, call: MethodCall, writing: Boolean): File {
+        val profile = call.argument<String>("profile")!!; val archive = call.argument<String>("archiveNonce")!!
+        require(Regex("[a-f0-9]{32}").matches(profile) && Regex("[a-f0-9]{32}").matches(archive))
+        val relative = call.argument<String>("path")!!
+        require(relative.split('/').all { it.isNotEmpty() && it != "." && it != ".." && it.none { c -> c.code < 32 || c == '\\' } })
+        val suffix = "broomm/profiles/$profile/emulators/ppsspp/root-archives/$archive/memory/$relative"
+        val logical = File(activity.filesDir, suffix).absoluteFile
+        val canonical = File(activity.filesDir.canonicalFile, suffix)
+        require(value == logical.path || value == canonical.path)
+        var file = activity.filesDir.canonicalFile
+        for (part in suffix.split('/')) { file = File(file, part); require(file.canonicalPath == file.path) }
+        require(file.parentFile!!.isDirectory)
+        if (writing) require(!file.exists()) else require(file.isFile && Os.lstat(file.path).st_uid == activity.applicationInfo.uid)
+        return file
     }
     fun close() {
         closed = true

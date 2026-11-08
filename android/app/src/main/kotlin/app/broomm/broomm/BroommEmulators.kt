@@ -44,7 +44,8 @@ class BroommEmulators(private val activity: Activity) {
             c.setMethodCallHandler { call, result ->
                 try {
                     when (call.method) {
-                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles" ->
+                        "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
+                        "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)
@@ -154,6 +155,8 @@ class BroommEmulators(private val activity: Activity) {
                             digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
                         }
                         "launch" -> {
+                            val rootedPsp = call.argument<Boolean>("rootedPsp") == true
+                            require(!rootedPsp || call.argument<String>("emulator") == "ppsspp") { "Invalid rooted PSP launch" }
                             val pkg = packageName(call.argument<String>("package"))
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
@@ -235,7 +238,16 @@ class BroommEmulators(private val activity: Activity) {
                                 if (nativeRom == null) {
                                     for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                activity.startActivityForResult(intent, gameRequest)
+                                if (rootedPsp) {
+                                    // Rooted PSP completion uses its native shutdown
+                                    // proof and app lifecycle, not an Activity result.
+                                    // Keep PPSSPP's task separate: its launcher can
+                                    // otherwise clear Broomm above a resumed game.
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    activity.startActivity(intent)
+                                } else {
+                                    activity.startActivityForResult(intent, gameRequest)
+                                }
                             } catch (e: Exception) {
                                 for (other in uris) activity.revokeUriPermission(other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 activity.getSharedPreferences("game-grants", 0).edit().remove(token).commit()

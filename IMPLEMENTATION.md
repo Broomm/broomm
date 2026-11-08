@@ -1,5 +1,83 @@
 # Implementation plan
 
+## Rooted PPSSPP sessions — Thor and packaged acceptance passed
+
+PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP
+1.20.4 universal APK. Dart owns account-private memory sticks, console identity,
+settings loans, game/state synchronization, full private backups and recovery.
+Native adapters provide bounded file effects and positive normal-shutdown proof;
+cached Java processes alone do not establish either a live or closed writer.
+Gold, other APKs and other storage selections retain the shared-folder route.
+No additional runtime dependency was added.
+
+Full CI build **1114** (`eb3d505`) passed the Thor acceptance: content-URI launch,
+LocoRoco player-state replay, separate Lumines II ordinary saves for both saved
+accounts, first-account reload after switching accounts, live-writer refusal,
+separate Android tasks, in-app Return preserving Broomm, automatic normal-Exit
+synchronization and the **Open PPSSPP → Exit → Check and play** recovery flow.
+With Wi-Fi disabled and no default network, ordinary loading and a new manual
+state worked. Normal Exit retained pending progress; restoring Wi-Fi automatically
+published primary 260, and a fresh native session loaded that state.
+
+Normal **Remove** verified both complete private backups, uninstalled PPSSPP,
+cleared setup and retired both profile records. Normal **Set up/Play** restored
+each account into a new nonce/storage generation while preserving its console
+MAC, ordinary files, states, controls and global undo. Both native ordinary saves
+loaded after reinstall; every parsed preference matched its pre-uninstall copy.
+The test separately restored all seventeen original standalone files from a
+verified archive using the new native UID/labels. This test preservation does not
+change Remove's documented deletion of external standalone data. Final journals
+are absent, selection is restored and all checkpoints are acknowledged.
+
+The repeated audit preserves all 49 earlier RetroArch progress files, nineteen
+managed native files, thirteen original files, four retained VMU backups, fifteen
+cores and eighteen platform bindings. No later standalone emulator has begun.
+The [device evidence](docs/android-ppsspp-thor-acceptance.json) separates injected
+ADB input from owner actuation and native profile saves from scored gameplay.
+
+The last fresh install exposed a raw missing-directory xattr error before native
+initialization. The correction gives **Open PPSSPP / App Private Data / Exit**
+guidance only for ENOENT. Three real Android fixture cases pass: missing storage,
+existing label and distinct ENOTDIR failure; bridge compilation also passes.
+All 36 focused Flutter workflow/UI cases passed for the handoff correction;
+its complete Windows/macOS/Linux checks and five CI packages passed. The final
+message correction passes all CI checks/five packages as `62a3643`. Build 1115
+is installed on the Thor and passed saved-sign-in restoration, guarded launch,
+normal Exit, automatic sync and unchanged checkpoints. The current universal
+macOS ZIP passed archive and source/extracted deep-strict signature verification.
+The pinned native app's first run required a second normal open/Exit after its
+own settings-save failure; unknown shutdown still refuses safely.
+
+After Android discarded an older shutdown log, build 1115 safely refused Play.
+**Open PPSSPP → Exit → Check and play** recovered normally. Its explicit native
+menu open changed only original `General/RunCount` (8 → 9); all other original
+preferences and file bytes/ownership remained unchanged. Native `.nomedia` and
+`controls.ini` timestamps refreshed during that menu visit. This conservative recovery remains
+required whenever cached-process closure evidence is unavailable.
+
+See [the walkthrough and boundaries](docs/android-standalone-root.md).
+
+## Standalone Android root discovery — 2026-11-08
+
+PR #4 merged as `eb6fc60` after the current normal CI package passed the Thor
+save/state/account/offline and preservation checks. The next branch begins
+PPSSPP with read-only native memory-stick discovery in the existing root
+inspector. It distinguishes selected app-private external storage from other
+locations, verifies mount correspondence and ownership, and keeps failed
+observations visible. Both direct production-script execution and build 1107's
+in-app diagnostic passed on the Thor, preserving selection/configuration hashes.
+The official PPSSPP 1.20.4 APK booted a verified LocoRoco CSO and replayed an
+unassigned native state; touch/Back and normal Exit worked. All six retained
+state/thumbnail files were unchanged; ordinary SAVEDATA remained empty. No PSP
+Broomm session/cloud publication occurred. Native Exit leaves the Java process
+cached, and global load undo also needs profile isolation before save writes.
+The full suite has 727 passes and one existing host skip; analysis, Kotlin/JVM
+checks and all five CI packages pass. Build 1107 also preserved all accepted
+RetroArch progress, native files, fifteen cores and eighteen connections.
+PPSSPP root save writing, ordinary-save/account round trips and other standalone
+apps remain pending; see
+[implementation, evidence and next constraints](docs/android-standalone-root.md).
+
 ## Flycast Thor acceptance — 2026-11-08
 
 The corrected `3d69684` direct-AOT preview passed the native Dreamcast round trip:

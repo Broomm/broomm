@@ -8,6 +8,7 @@ import '../session.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
 import 'root_saves.dart';
+import 'psp_root.dart';
 
 /// The emulator uses a user-selected Android DocumentsProvider directory whose
 /// bytes remain in this profile's Broomm storage. No external app-private path
@@ -31,6 +32,16 @@ Future<ProgressLayout> androidProgressLayout(
     );
   final app = manager.app(emulator, package: package);
   if (app == null) throw StateError('Install ${emulator.name} first.');
+  if (emulator.id == 'ppsspp' &&
+      platform.slug == 'psp' &&
+      manager.pspRoot(package: package) != null)
+    return rootedAndroidPspProgress(
+      manager,
+      profile,
+      emulator,
+      rom,
+      package: package,
+    );
   if (androidRootRetroCore(platform.slug) != null &&
       manager.rootConnection(emulator, platform.slug, package: package) != null)
     return rootedRetroArchProgress(

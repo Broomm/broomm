@@ -654,7 +654,8 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final rooted =
-        androidRootRetroCore(platform.slug) != null &&
+        (androidRootRetroCore(platform.slug) != null ||
+            emulator.id == 'ppsspp' && platform.slug == 'psp') &&
         m.android.hasCurrentRoot(emulator, platform.slug, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
@@ -873,7 +874,11 @@ class _BroommAppState extends State<BroommApp> {
                   resolveCloudConflict(navigator.currentContext!, conflict),
             );
           },
-          resume: () => m.android.open(emulator, package: app.package),
+          resume: () => m.android.open(
+            emulator,
+            package: app.package,
+            resumeSession: true,
+          ),
           finish: () async => m.androidSession.finish(
             emulatorClosed: true,
             recovery: cloudReady
@@ -897,6 +902,7 @@ class _BroommAppState extends State<BroommApp> {
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           recovering: true,
+          rooted: record['emulator'] == 'ppsspp' && record['rooted'] == true,
           title: entry?.game.name ?? 'Unfinished Android game session',
           emulator: emulator.name,
           resume: m.android.app(emulator) == null
@@ -904,6 +910,7 @@ class _BroommAppState extends State<BroommApp> {
               : () => m.android.open(
                   emulator,
                   package: record['package'] as String?,
+                  resumeSession: true,
                 ),
           finish: () async {
             CloudGame? game;

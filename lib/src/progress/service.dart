@@ -13,10 +13,17 @@ import 'digest.dart';
 enum ProgressChoice { device, cloud, cancel }
 
 class ProgressConflict {
-  const ProgressConflict(this.reason, this.local, this.remote);
+  const ProgressConflict(
+    this.reason,
+    this.local,
+    this.remote, {
+    this.localLabel = 'Device',
+    this.remoteLabel = 'Cloud',
+  });
   final String reason;
   final ProgressSnapshot local;
   final ProgressSnapshot? remote;
+  final String localLabel, remoteLabel;
 }
 
 typedef ProgressResolver = Future<ProgressChoice> Function(ProgressConflict);
