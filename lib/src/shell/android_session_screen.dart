@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../android/root_saves.dart';
 import '../android/session.dart';
+import '../android/psp_root.dart';
 import 'controls.dart';
 import 'navigation.dart';
 
@@ -82,6 +83,18 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   }
 
   Future<void> finishRooted() async {
+    if (widget.emulator == 'PPSSPP') {
+      final state = await widget.session.finishIfPspClosed();
+      if (state == AndroidPspState.closed) complete();
+      // PPSSPP has its own lifecycle proof; an uncertain writer stays in
+      // recovery and manual completion still performs the native guard.
+      _retroArchState =
+          state == AndroidPspState.unknown ||
+              state == AndroidPspState.interrupted
+          ? AndroidRetroArchState.unknown
+          : null;
+      return;
+    }
     _retroArchState = await widget.session.finishIfRetroArchClosed();
     if (_retroArchState == AndroidRetroArchState.closed) complete();
   }
@@ -199,7 +212,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                             : session.phase.isNotEmpty
                             ? session.phase
                             : widget.rooted
-                            ? 'Checking whether RetroArch is closed…'
+                            ? 'Checking whether ${widget.emulator} is closed…'
                             : 'Save and close any open emulator before Broomm restores cloud progress and launches the game.',
                         style: const TextStyle(height: 1.6),
                       ),
@@ -225,14 +238,18 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                           ),
                       ],
                       if (error != null) ProblemNotice(error!),
-                      if (error != null && active)
+                      if (error != null &&
+                          active &&
+                          !(widget.rooted && widget.emulator == 'PPSSPP'))
                         ConsoleButton(
                           onPressed: session.busy
                               ? null
                               : () => run(session.reconnectFolder),
                           child: const Text('Reconnect original save folder'),
                         ),
-                      if (error != null && active)
+                      if (error != null &&
+                          active &&
+                          !(widget.rooted && widget.emulator == 'PPSSPP'))
                         ConsoleButton(
                           onPressed: session.busy
                               ? null

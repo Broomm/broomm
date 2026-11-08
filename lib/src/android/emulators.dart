@@ -11,6 +11,8 @@ import '../session_lease.dart';
 import 'apk_download.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
+import 'psp_root.dart';
+import 'psp_root_store.dart';
 import 'flycast.dart' show clearAndroidFlycastPreferences;
 
 /// Android applications, not desktop bundles. These are concrete, researched
@@ -173,6 +175,7 @@ class AndroidEmulators extends ChangeNotifier {
   final _gbaRoots = <String, Map<String, String>>{};
   final _snesRoots = <String, Map<String, String>>{};
   final _retroRoots = <String, Map<String, String>>{};
+  final _pspRoots = <String, Map<String, String>>{};
   final _fingerprints = <String, String>{};
   bool busy = false, _disposed = false;
   AndroidApkDownload? _download;
@@ -248,12 +251,58 @@ class AndroidEmulators extends ChangeNotifier {
     String platform, {
     String? package,
   }) {
+    if (emulator.id == 'ppsspp' && platform == 'psp')
+      return pspRoot(package: package);
     final selected = app(emulator, package: package);
     if (emulator.id != 'retroarch' ||
         selected == null ||
         androidRootRetroCore(platform) == null)
       return null;
     return _rootBindings(platform)[_rootBindingKey(platform, selected.package)];
+  }
+
+  Map<String, String>? pspRoot({String? package}) {
+    final emulator = androidEmulators.singleWhere((e) => e.id == 'ppsspp');
+    final selected = app(emulator, package: package);
+    return selected == null ? null : _pspRoots[selected.package];
+  }
+
+  Future<AndroidApp?> connectPspRoot(AndroidEmulator emulator) =>
+      _withInstallPermission(() async {
+        final lease = await SessionLease.acquire(data);
+        try {
+          await ensureSetupAllowed();
+          if (emulator.id != 'ppsspp') throw StateError('Select PPSSPP first.');
+          final selected = app(emulator);
+          if (selected == null || !selected.enabled)
+            throw StateError('Install and enable PPSSPP first.');
+          await AndroidPspRootStore(this).restoreSettingsLoan();
+          final report = await inspectAndroidPspRoot(this, selected);
+          final binding = androidPspRootIdentity(report, selected);
+          final next = {..._pspRoots, selected.package: binding};
+          await _save(pspRoots: next);
+          _pspRoots
+            ..clear()
+            ..addAll(next);
+          phase?.call('PPSSPP private save and state access is ready.');
+          _emit();
+          return null;
+        } finally {
+          await lease.release();
+        }
+      }, requiresApkPermission: false);
+
+  Future<void> disconnectPspRoot() async {
+    await ensureSetupAllowed();
+    await AndroidPspRootStore(this).restoreSettingsLoan();
+    final selected = app(androidEmulators.singleWhere((e) => e.id == 'ppsspp'));
+    if (selected == null) throw StateError('Refresh PPSSPP first.');
+    final next = {..._pspRoots}..remove(selected.package);
+    await _save(pspRoots: next);
+    _pspRoots
+      ..clear()
+      ..addAll(next);
+    _emit();
   }
 
   Map<String, Map<String, String>> _rootBindings(String platform) =>
@@ -304,7 +353,8 @@ class AndroidEmulators extends ChangeNotifier {
     String? platform,
   }) =>
       (platform == null &&
-          (gbaRoot(emulator) != null ||
+          (emulator.id == 'ppsspp' && pspRoot() != null ||
+              gbaRoot(emulator) != null ||
               rootConnection(emulator, 'snes') != null ||
               rootConnection(emulator, 'gb') != null ||
               rootConnection(emulator, 'gbc') != null ||
@@ -538,7 +588,7 @@ class AndroidEmulators extends ChangeNotifier {
   Future<void> ensureSetupAllowed() async {
     if (!settingsKnown)
       throw StateError('Refresh emulator settings before continuing setup.');
-    for (final name in ['session', 'shared-swap', 'mmj-swap']) {
+    for (final name in ['session', 'shared-swap', 'mmj-swap', 'psp-swap']) {
       if (await progressExists('${data.path}/android/$name.json'))
         throw StateError(
           'Finish the previous Android session before changing emulator setup.',
@@ -560,7 +610,7 @@ class AndroidEmulators extends ChangeNotifier {
     }
     try {
       if (!settingsKnown) throw StateError('Refresh emulator settings first.');
-      for (final name in ['session', 'shared-swap', 'mmj-swap']) {
+      for (final name in ['session', 'shared-swap', 'mmj-swap', 'psp-swap']) {
         if (await progressExists('${data.path}/android/$name.json'))
           throw StateError(
             'Finish the previous Android session before removing an emulator.',
@@ -601,6 +651,8 @@ class AndroidEmulators extends ChangeNotifier {
           throw StateError(
             'The emulator changed. Confirm removal of the current installation.',
           );
+        if (emulator.id == 'ppsspp')
+          await AndroidPspRootStore(this).backupInstallation(package);
         final removed = await channel.invokeMethod<bool>('uninstall', {
           'package': package,
           'build': current.build,
@@ -627,6 +679,7 @@ class AndroidEmulators extends ChangeNotifier {
       final snesRoots = {..._snesRoots}..remove(package);
       final retroRoots = {..._retroRoots}
         ..removeWhere((key, _) => key.endsWith(':$package'));
+      final pspRoots = {..._pspRoots}..remove(package);
       final trees = Map<String, String>.fromEntries(
         _trees.entries.where((e) => !e.key.endsWith(':${emulator.id}')),
       );
@@ -640,6 +693,7 @@ class AndroidEmulators extends ChangeNotifier {
         gbaRoots: roots,
         snesRoots: snesRoots,
         retroRoots: retroRoots,
+        pspRoots: pspRoots,
       );
       _trees
         ..clear()
@@ -656,6 +710,11 @@ class AndroidEmulators extends ChangeNotifier {
       _retroRoots
         ..clear()
         ..addAll(retroRoots);
+      _pspRoots
+        ..clear()
+        ..addAll(pspRoots);
+      if (emulator.id == 'ppsspp')
+        await AndroidPspRootStore(this).retireInstallation(package);
       if (emulator.id == 'retroarch')
         await clearAndroidFlycastPreferences(data);
       await onRemoved?.call(emulator);
@@ -768,16 +827,18 @@ class AndroidEmulators extends ChangeNotifier {
     Map<String, Map<String, String>>? gbaRoots,
     Map<String, Map<String, String>>? snesRoots,
     Map<String, Map<String, String>>? retroRoots,
+    Map<String, Map<String, String>>? pspRoots,
   }) async {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 16,
+        'version': 17,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
         'snesRoots': snesRoots ?? _snesRoots,
         'retroRoots': retroRoots ?? _retroRoots,
+        'pspRoots': pspRoots ?? _pspRoots,
         'fingerprints': _fingerprints,
       },
     );
@@ -849,6 +910,7 @@ class AndroidEmulators extends ChangeNotifier {
               14,
               15,
               16,
+              17,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -900,6 +962,7 @@ class AndroidEmulators extends ChangeNotifier {
           14,
           15,
           16,
+          17,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -929,6 +992,7 @@ class AndroidEmulators extends ChangeNotifier {
           14,
           15,
           16,
+          17,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -955,6 +1019,7 @@ class AndroidEmulators extends ChangeNotifier {
           14,
           15,
           16,
+          17,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -998,6 +1063,21 @@ class AndroidEmulators extends ChangeNotifier {
         _retroRoots
           ..clear()
           ..addAll(retroRoots);
+        final pspRoots = <String, Map<String, String>>{};
+        if (record['version'] == 17) {
+          if (record['pspRoots'] is! Map)
+            throw const FormatException('Missing PSP root settings.');
+          for (final entry in (record['pspRoots'] as Map).entries) {
+            final binding = (entry.value as Map).cast<String, String>();
+            if (entry.key != binding['package'] ||
+                !androidPspRootBinding(binding))
+              throw const FormatException('Invalid PSP root connection.');
+            pspRoots[entry.key as String] = binding;
+          }
+        }
+        _pspRoots
+          ..clear()
+          ..addAll(pspRoots);
         final hashes = (record['fingerprints'] as Map? ?? {})
             .cast<String, String>();
         if (hashes.entries.any(
@@ -1013,6 +1093,7 @@ class AndroidEmulators extends ChangeNotifier {
         _trees.clear();
         _folders.clear();
         _gbaRoots.clear();
+        _pspRoots.clear();
         _snesRoots.clear();
         _retroRoots.clear();
       }
@@ -1246,13 +1327,27 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> open(AndroidEmulator emulator, {String? package}) async {
+  Future<void> open(
+    AndroidEmulator emulator, {
+    String? package,
+    String? profile,
+    String? server,
+    bool resumeSession = false,
+  }) async {
     final selected = app(emulator, package: package);
     if (selected == null) throw StateError('Install ${emulator.name} first.');
     if (!selected.enabled)
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
       );
+    if (!resumeSession &&
+        emulator.id == 'ppsspp' &&
+        profile != null &&
+        server != null &&
+        pspRoot(package: package) != null) {
+      await AndroidPspRootStore(this).openSettings(server, profile, selected);
+      return;
+    }
     await channel.invokeMethod<void>('open', {'package': selected.package});
   }
 

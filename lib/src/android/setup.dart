@@ -30,8 +30,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   bool get _rooted =>
       !_shared &&
-      emulator.id == 'retroarch' &&
-      androidRootRetroCore(platform) != null &&
+      (emulator.id == 'retroarch' && androidRootRetroCore(platform) != null ||
+          emulator.id == 'ppsspp' &&
+              platform == 'psp' &&
+              manager.app(emulator)?.package == 'org.ppsspp.ppsspp') &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -81,6 +83,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       throw StateError('Enable ${emulator.name} in Android settings first.');
     if (_rooted) {
       step = AndroidSetupStep.initialize;
+      if (emulator.id == 'ppsspp') {
+        await manager.connectPspRoot(emulator);
+        step = AndroidSetupStep.ready;
+        return;
+      }
       final firstOpen = await manager.connectGbaRoot(
         emulator,
         platform: platform,
@@ -141,7 +148,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   Future<void> useSharedFolder() => _run(() async {
     if (manager.rootConnection(emulator, platform) != null)
-      await manager.disconnectGbaRoot(emulator, platform: platform);
+      if (emulator.id == 'ppsspp')
+        await manager.disconnectPspRoot();
+      else
+        await manager.disconnectGbaRoot(emulator, platform: platform);
     _shared = true;
     step = AndroidSetupStep.folder;
   });

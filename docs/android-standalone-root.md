@@ -6,6 +6,91 @@ PR #4 merged as `eb6fc60`. The owner authorized starting the standalone apps
 after that milestone, with the existing two Thor accounts and normal ADB UI
 control. This document separates implemented discovery from proposed save writes.
 
+## Rooted PSP session implementation — acceptance pending
+
+PR #5 stays unmerged until the PSP round trip is complete. The current source
+adds a concrete PPSSPP route through the compact desktop-style **Set up** actions;
+the earlier read-only build-1107 evidence below remains separate. No additional
+runtime dependency is introduced.
+
+The writing route requires Android 11+, Android user 0, the exact reviewed
+regular universal APK below, initialized App Private Data and a verified normal
+Exit. Gold, other APKs and other memory-stick selections keep their shared-folder
+route; they are not silently adopted. Setup failures expose **Use shared folder**.
+Actual native ABI is read from PPSSPP's ELF library. State groups bind the signed
+APK hash, that ABI and the native disc revision, independently of installation
+time. They do not relabel connected-folder or desktop states.
+
+Each server/profile owns a complete native private memory stick in a nonce-bound
+directory beneath PPSSPP's external private files. Dart persists its ownership,
+new console MAC, reviewed preference/control seeds and handoff before selecting
+it through PPSSPP's native `memstick_dir.txt`. Original standalone contents and
+settings are not overwritten. Complete native shutdown is required before
+selection, file effects, capture or restoration. Native **Exit** can leave its
+Java process cached; the adapter requires the pinned finish/shutdown/destroy
+sequence, UID/PID/kernel lifetime, native activity and cached-state checks.
+Backgrounding, bare destruction, incomplete logs and changed identity remain
+unknown. Automatic completion requires fresh evidence from this launch; manual
+review still cannot override an active/unknown writer.
+
+**Open emulator** selects the same private profile and detaches immediately,
+without a game marker, lifetime watcher or Broomm quit restriction. Its durable
+settings loan is reconciled after closure at the next save/setup action. Settings,
+native console identity and auxiliary undo remain private to that account.
+Changes to native game files are sealed before cloud synchronization; a
+two-sided Broomm/native change requires an explicit source choice with both
+copies retained. Missing previously known saves/states are damaged recovery,
+not an empty observation.
+
+Game synchronization keeps the existing native PSP savedata ZIP contract and
+build-specific state/thumbnail/slot-undo areas. Owned static DLC stays excluded
+from game cloud exports and is staged through its reviewed native destinations.
+Global undo/settings and other memory-stick files instead have a full private
+backup in Broomm storage. Normal Remove first backs up every owned PSP profile,
+then uses Android's confirmed uninstall; reinstall restores the last verified
+private backup only for the same APK/ABI and preserves the console MAC. Unknown
+or changed installations, damaged ownership, missing known files and incompatible
+backups retain recovery and fail visibly; resetting an emulator outside Broomm
+does not authorize adopting a different storage generation.
+
+Transfers use caller-owned file descriptors and 64 KiB buffers, never Binder save
+arrays. Inventories are paged below Binder's transaction budget and must merge
+completely without duplicates. Game limits remain 4096 files, 256 MiB/file and
+512 MiB total; private profile backups are separately bounded at 8192 files,
+1 GiB/file and 2 GiB total, also subject to bounded metadata records and operation
+deadlines. Keep two verified full backups; retain failed captures separately
+(at most eight before review). Session working/capture directories and completed
+receipts remain under Broomm's private `android/shared-session`; no automatic
+deletion of uncertain progress is added.
+
+For a device check, install the new PR APK over the retained Broomm preview,
+choose **Emulator Settings → PSP → PPSSPP → Set up**, open PPSSPP once if asked,
+choose **Skip for now / App Private Data**, wait for its menu and use **Exit**.
+On the Thor its initial first open needed a second normal open/Exit to initialize
+settings. Retry **Check setup** and allow Magisk. Download LocoRoco from RomM,
+choose **Play**, make an ordinary save and manual state, then use Android Back
+and PPSSPP's **Exit to menu → Exit**. Expected: automatic sync, a restored
+standalone selection and no cross-account progress. Returning while PPSSPP is
+running must keep the session active. These new in-app observations are pending;
+the native seed/research results below do not establish them.
+
+```sh
+devbox run -- flutter --suppress-analytics test --no-pub test/android_psp_root_test.dart
+devbox --config tool/android run check-root-inspection
+devbox --config tool/android run check
+devbox --config tool/android run -- bash build_root_psp_test.sh
+```
+
+The last command builds a development-only `app_process` fixture, not shipped
+application behavior. Its `inspect` mode is read-only. Its `files <32-hex nonce>`
+mode uses a newly owned, unassigned memory stick with fixed test server/profile
+identities, plus a private `/data/local/tmp/broomm-psp-files-<nonce>` directory.
+It creates only test files, temporarily selects/restores that stick without
+launching an emulator, and records all paths and results for scoped cleanup.
+Do not remove account profiles, the original native memory stick or retained
+failed progress as fixture cleanup. Device execution requires an initialized,
+normally exited pinned PPSSPP and explicit ADB/root test authorization.
+
 ## Implemented: PPSSPP memory-stick inspection
 
 The existing **Emulator Settings → Inspect root access** action now includes

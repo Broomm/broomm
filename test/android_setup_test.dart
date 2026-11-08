@@ -45,7 +45,8 @@ void main() {
       expect(calls, isNot(contains('sharedPick')));
       final continued = Completer<void>();
       setup.addListener(() {
-        if (setup.step == AndroidSetupStep.folder &&
+        if (setup.step == AndroidSetupStep.initialize &&
+            setup.problem != null &&
             !setup.busy &&
             !continued.isCompleted)
           continued.complete();
@@ -53,6 +54,7 @@ void main() {
       installed = true;
       await manager.load();
       await continued.future;
+      await setup.useSharedFolder();
       await setup.selectFolder();
       expect(setup.step, AndroidSetupStep.folder);
       expect(manager.folder(emulator), isNull);

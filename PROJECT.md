@@ -225,6 +225,14 @@ uncertain or interrupted. Root does not extend Android into the desktop
 controller/injection/overlay scope. See the
 [next Android milestone](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
 
+The next standalone route is PPSSPP for PSP. Complete its private save/state,
+settings, recovery and two-account acceptance before moving to another emulator
+or merging its milestone PR. Isolate the entire writable memory stick per
+server/profile, including native undo and console identity, while keeping game
+cloud exports scoped to native savedata and compatible states. Preserve the
+original standalone selection and data; use supported native first-run and Exit
+behavior. Record exact reviewed APK/ABI and native device acceptance separately.
+
 After the first requested root save action, reuse that connection for the
 Broomm activity, including while the player is in the emulator. Release it
 when the activity closes. Keep root requests tied to user actions and preserve

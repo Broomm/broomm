@@ -405,7 +405,13 @@ class _AndroidEmulatorSettingsScreenState
                             !app.enabled ||
                             manager.removalEmulator != null
                         ? null
-                        : () => run(() => manager.open(emulator)),
+                        : () => run(
+                            () => manager.open(
+                              emulator,
+                              profile: model.profile!.id,
+                              server: model.server!.id,
+                            ),
+                          ),
                     child: const Text('Open emulator'),
                   ),
                 if (!isDefault)

@@ -1,5 +1,37 @@
 # Implementation plan
 
+## Rooted PPSSPP sessions — implementation, Thor gameplay acceptance pending
+
+PR #5 remains draft and unmerged while PSP is completed. The new route targets
+the reviewed regular PPSSPP 1.20.4 universal APK, Android 11+/user 0 and its
+verified app-private memory stick. Dart now owns account-private memory-stick
+creation, console identity, settings loans, game journals, cloud savedata/state
+reconciliation and recovery. Native file effects preserve UID/GID/modes/labels,
+stream through descriptors and paginate bounded inventories. Full private
+backups also retain settings and global undo; these are separate from cloud
+exports and protect Broomm-owned profiles during the normal Remove/reinstall flow.
+
+The Thor's native fault fixture passes interrupted streaming/link/pointer
+publication, exact original-selection restoration, writer arrival, traversal,
+foreign-game, extra-link and stale-metadata refusal. Native normal Exit is
+distinguished from a cached/background process using the pinned shutdown
+sequence and fresh package/process observations. Dart workflow regressions cover
+two accounts, native states, detached settings, lost replies, failed captures,
+source conflicts and backup restoration. The first interrupted-stage run exposed
+Android's initial root-owned/unclassified-media label; its narrow prefix-verified
+recovery is corrected. Fixture-only cross-device-link and stale-metadata cleanup
+errors were corrected without weakening production checks.
+
+All 735 Flutter tests pass with one existing host skip; analysis, Kotlin bridge
+compilation and JVM root/lifecycle regressions pass. The current native Thor
+fixture also verifies 602 files across bounded Binder pages and a streamed
+16 MiB state without a Binder byte array.
+
+Current PR APK packaging, real Broomm content-URI Play, ordinary LocoRoco saving,
+two-account/state/offline/cloud replay, preservation audits and the updated
+macOS package remain to be completed. Other standalone emulators have not begun. See the
+[PSP workflow and boundaries](docs/android-standalone-root.md).
+
 ## Standalone Android root discovery — 2026-11-08
 
 PR #4 merged as `eb6fc60` after the current normal CI package passed the Thor

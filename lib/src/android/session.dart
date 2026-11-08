@@ -12,6 +12,8 @@ import 'mmj_shared_saves.dart';
 import 'root_saves.dart';
 import 'save_plan.dart';
 import 'shared_saves.dart';
+import 'psp_root.dart';
+import 'psp_session.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -53,6 +55,11 @@ class AndroidGameSession extends ChangeNotifier {
   File get marker => File('${manager.data.path}/android/session.json');
   late final _mmj = MmjSharedSaves(manager, phase: cloud.phase);
   late final _shared = SharedAndroidSaves(manager, phase: cloud.phase);
+  late final _psp = AndroidPspSession(
+    manager,
+    cloud,
+    check: () => _preparation?.check(),
+  );
 
   Future<Map<String, dynamic>?> pending() async {
     final Map<String, dynamic> value;
@@ -64,10 +71,17 @@ class AndroidGameSession extends ChangeNotifier {
         sharedSwap = true;
         value = await progressJson(_shared.journal);
       } else {
-        if (!await _mmj.pending) return null;
-        // A surviving swap receipt must still expose recovery if the general
-        // session receipt is missing. Never mistake the shared folder for idle.
-        value = {...await progressJson(_mmj.journal), 'emulator': 'citra-mmj'};
+        if (await _psp.pending) {
+          value = await progressJson(_psp.journal);
+        } else {
+          if (!await _mmj.pending) return null;
+          // A surviving swap receipt must still expose recovery if the general
+          // session receipt is missing. Never mistake the shared folder for idle.
+          value = {
+            ...await progressJson(_mmj.journal),
+            'emulator': 'citra-mmj',
+          };
+        }
       }
     }
     final lynxSwap =
@@ -179,14 +193,15 @@ class AndroidGameSession extends ChangeNotifier {
         );
       await manager.ensureNoWriters(closureConfirmed: true);
       final platform = rootPlatform ?? (core == 'snes9x' ? 'snes' : 'gba');
-      if (rooted && androidRootRetroCore(platform) != core)
+      final pspRooted = rooted && emulator.id == 'ppsspp' && platform == 'psp';
+      if (rooted && !pspRooted && androidRootRetroCore(platform) != core)
         throw const FormatException(
           'Rooted RetroArch platform/core identity differs.',
         );
-      final root = rooted
+      final root = rooted && !pspRooted
           ? manager.rootConnection(emulator, platform, package: app.package)
           : null;
-      if (rooted && root == null)
+      if (rooted && !pspRooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
       if (root != null) {
         phase = 'Checking whether RetroArch is closed…';
@@ -195,7 +210,14 @@ class AndroidGameSession extends ChangeNotifier {
       }
       // Check first-run readiness before creating a recovery journal or
       // touching cloud progress. The standalone setup has no game session.
-      final rootedGame = root != null && prepare != null
+      if (pspRooted) {
+        final binding = manager.pspRoot(package: app.package);
+        if (binding == null || binding['build'] != app.build)
+          throw StateError('Verify PPSSPP root setup before playing.');
+        await _psp.roots.restoreSettingsLoan();
+        await _psp.roots.ensureClosed(binding);
+      }
+      final rootedGame = rooted && prepare != null
           ? await _prepareRoot(prepare)
           : game;
       if (root != null) {
@@ -207,6 +229,16 @@ class AndroidGameSession extends ChangeNotifier {
         if (layout.launch['frontendSetup'] == 'true')
           throw const AndroidRetroArchSetupRequired();
       }
+      if (pspRooted &&
+          (rootedGame?.layout is! AndroidPspPlan ||
+              !mapEquals(
+                (rootedGame!.layout as AndroidPspPlan).binding,
+                manager.pspRoot(package: app.package),
+              )))
+        throw StateError(
+          'The PPSSPP root save route changed. Progress was kept.',
+        );
+      if (pspRooted) _preparation = DownloadCancellation();
       _game = game;
       _launched = false;
       _retroArchProcess = null;
@@ -231,7 +263,7 @@ class AndroidGameSession extends ChangeNotifier {
         },
       );
       active = true;
-      _game = root != null || prepare == null
+      _game = rooted || prepare == null
           ? rootedGame
           : await prepare(DownloadCancellation(), _preparePhase);
       final layout = _game?.layout;
@@ -261,7 +293,10 @@ class AndroidGameSession extends ChangeNotifier {
         }
         phase = 'Checking BROOMM cloud saves…';
         _emit();
+        if (layout is AndroidPspPlan)
+          await _psp.prepare(_game!, layout, resolve: resolve);
         await cloud.beforePlay(_game!, resolve: resolve);
+        if (layout is AndroidPspPlan) await _psp.cloudPrepared(_game!, layout);
         if (_game!.layout case final AndroidSavePlan plan) {
           phase = 'Preparing ${emulator.name}’s connected save folder…';
           _emit();
@@ -273,6 +308,10 @@ class AndroidGameSession extends ChangeNotifier {
             _emit();
             nativeRom = await _shared.stageRootRom(_game!, plan);
           }
+        } else if (layout is AndroidPspPlan) {
+          phase = 'Preparing this profile’s private PSP memory stick…';
+          _emit();
+          await _psp.install(_game!, layout);
         } else if (emulator.id == 'citra-mmj') {
           phase = 'Preparing MMJ’s shared save folder…';
           _emit();
@@ -284,6 +323,13 @@ class AndroidGameSession extends ChangeNotifier {
       final launchClock = root == null
           ? null
           : await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
+      final pspPlan = _game?.layout is AndroidPspPlan
+          ? _game!.layout as AndroidPspPlan
+          : null;
+      final pspClock = pspPlan == null
+          ? null
+          : await _psp.launching(_game!, pspPlan);
+      _preparation?.check();
       await manager.launch(
         emulator,
         app,
@@ -297,9 +343,13 @@ class AndroidGameSession extends ChangeNotifier {
             : null,
       );
       _launched = true;
-      phase = root == null
+      phase = pspPlan != null
+          ? 'Save and use PPSSPP’s Exit action, then return to Broomm.'
+          : root == null
           ? 'Game handed to ${emulator.name}. Save and exit the emulator, then finish this session.'
           : 'Save and quit RetroArch, then return to Broomm.';
+      if (pspPlan != null && pspClock != null)
+        await _psp.identify(_game!, pspPlan, pspClock);
       if (root != null && launchClock != null) {
         try {
           for (var attempt = 0; attempt < 6 && !disposed; attempt++) {
@@ -334,6 +384,7 @@ class AndroidGameSession extends ChangeNotifier {
       }
       rethrow;
     } finally {
+      _preparation = null;
       busy = false;
       _emit();
     }
@@ -414,9 +465,33 @@ class AndroidGameSession extends ChangeNotifier {
   Future<AndroidRetroArchState> finishIfRetroArchClosed() =>
       _finish(automatic: true);
 
+  Future<AndroidPspState> finishIfPspClosed() async {
+    final game = _game;
+    if (game == null || game.layout is! AndroidPspPlan)
+      return AndroidPspState.unknown;
+    var exit = AndroidPspState.unknown;
+    for (var attempt = 0; attempt < 5; attempt++) {
+      exit = await _psp.exitState(game, game.layout as AndroidPspPlan);
+      if (exit == AndroidPspState.closed || exit == AndroidPspState.interrupted)
+        break;
+      if (attempt < 4)
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+    if (exit != AndroidPspState.closed) {
+      phase = exit == AndroidPspState.running
+          ? 'PPSSPP is still running. Save and use Exit to sync progress.'
+          : 'PPSSPP’s normal exit could not be verified. Recovery was kept.';
+      _emit();
+      return exit;
+    }
+    await _finish(pspAutomatic: true);
+    return AndroidPspState.closed;
+  }
+
   Future<AndroidRetroArchState> _finish({
     CloudGame? recovery,
     bool automatic = false,
+    bool pspAutomatic = false,
   }) async {
     if (busy) throw StateError('The Android session is still busy.');
     busy = true;
@@ -436,6 +511,39 @@ class AndroidGameSession extends ChangeNotifier {
       }
       _lease ??= await SessionLease.acquire(manager.data);
       await manager.ensureNoWriters(closureConfirmed: true);
+      if (record['emulator'] == 'ppsspp' &&
+          (record['rooted'] == true || await _psp.pending)) {
+        final game = recovery ?? _game;
+        if (game == null || game.layout is! AndroidPspPlan)
+          throw StateError(
+            'Choose the original PSP profile and verify its root setup before finishing. Recovery was kept.',
+          );
+        if (game.server != record['server'] ||
+            game.profile != record['profile'] ||
+            game.rom != record['rom'])
+          throw StateError(
+            'Choose the original PSP game and profile. Recovery was kept.',
+          );
+        if (await _psp.pending)
+          await _psp.finish(
+            game,
+            game.layout as AndroidPspPlan,
+            automatic: pspAutomatic,
+          );
+        else
+          await _psp.roots.ensureClosed(
+            (game.layout as AndroidPspPlan).binding,
+          );
+        await manager.releaseGrants();
+        if (await progressExists(marker.path)) await marker.delete();
+        active = false;
+        _game = null;
+        _launched = false;
+        phase = 'PSP session finished. Private progress and pending cloud transfers were retained.';
+        await _lease?.release();
+        _lease = null;
+        return AndroidRetroArchState.closed;
+      }
       final root = await _recoveryRoot(record);
       var rootExit = AndroidRetroArchState.unknown;
       if (root != null) {
@@ -621,6 +729,10 @@ class AndroidGameSession extends ChangeNotifier {
       await manager.ensureNoWriters(closureConfirmed: emulatorClosed);
       final root = await _recoveryRoot(record);
       if (root != null) await _checkRetroArchIdle(root, emulatorClosed: true);
+      if (record['emulator'] == 'ppsspp' && await _psp.pending)
+        throw StateError(
+          'PSP owns a private memory-stick handoff. Finish its verified recovery before leaving this session. All copies were kept.',
+        );
       // Do not inspect potentially incomplete native/shadow working files here.
       // Existing sealed snapshots remain authoritative until explicit review.
       final stateFile = await progressFile(
