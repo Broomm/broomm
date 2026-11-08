@@ -157,7 +157,7 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            if (call.method == "rootRead") request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
+            if (call.method in setOf("rootRead", "rootFlycastRead")) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
                 worker.execute {
@@ -166,8 +166,8 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware")) call.argument<String>("source") else null
-                            val target = if (call.method == "rootRead") call.argument<String>("target") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace")) call.argument<String>("source") else null
+                            val target = if (call.method in setOf("rootRead", "rootFlycastRead")) call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = privateFile(source ?: target!!)
                                 val flags = if (source != null) OsConstants.O_RDONLY else
@@ -190,7 +190,7 @@ class RootSaveAccess(private val activity: Activity) {
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
-                            "rootList" -> {
+                            "rootList", "rootFlycastList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
                                     val entry = entries.getBundle(key)!!

@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "scope": "Installed native writer guard; no new gameplay or state creation",
+  "runtime_revision": "a01bfd64528184c95fc805e7efa36e39b9a21c01",
+  "installed_build": 1096,
+  "apk": {
+    "sha256": "2984adc7d6f1f11d3c9225d6610dee7336b6d68c124039077eded86778f14eca",
+    "bytes": 62438223,
+    "code_sha": "a01bfd64528184c95fc805e7efa36e39b9a21c01",
+    "merge_sha": "b1a24b99107a8b30ba1af50bdf22be9c4df338f2",
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "apk": "build/releases/Broomm-0.1.18-pr4.42455382622-thor-preview.apk",
+    "sha256": "2984adc7d6f1f11d3c9225d6610dee7336b6d68c124039077eded86778f14eca",
+    "code_sha": "a01bfd64528184c95fc805e7efa36e39b9a21c01",
+    "build": "1096",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1096 minSdk=24 targetSdk=36",
+      "versionName=0.1.18",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64"
+  },
+  "session": {
+    "romm_id": 1781,
+    "core": "Gambatte 0.5.0-netlink 77f2567",
+    "profile_account": 2,
+    "before": {
+      "baseline": "5b5481a4dce0f5aff562bf752d24a95b8e98ec9190516c61c9f9226ed2a7d135",
+      "commit": "30100c4c22e07758edf082d426000b77",
+      "snapshot": "10aba9fb239667c5b07e3409aefd1d86",
+      "remote": 223,
+      "synced": "2026-11-07T18:05:56.518185Z",
+      "pending": false,
+      "stateKnown": {
+        "states-bdf1a3f97e70b745-android/game.state": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+      }
+    },
+    "after": {
+      "baseline": "5b5481a4dce0f5aff562bf752d24a95b8e98ec9190516c61c9f9226ed2a7d135",
+      "commit": "30100c4c22e07758edf082d426000b77",
+      "snapshot": "91e2859e5470f772c1818d415ed60735",
+      "remote": 223,
+      "synced": "2026-11-08T07:07:52.768946Z",
+      "pending": false,
+      "stateKnown": {
+        "states-bdf1a3f97e70b745-android/game.state": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+      }
+    },
+    "native_working_readback": {
+      "files/Broomm/9d1d493e2a5b412da57d364b659321b0/1781/states/states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+        "bytes": 3659,
+        "sha256": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667",
+        "metadata": "10133 10133 600 u:object_r:app_data_file:s0:c133,c256,c512,c768"
+      }
+    },
+    "observed": "Normal Broomm Play reached the Tetris title/attract sequence. Existing matched state restored byte-for-byte; no state was loaded/created and no in-game save was changed. Normal Quit was tracked and automatically captured/restored/synced without closure confirmation."
+  },
+  "preservation": {
+    "checked_utc": "2026-11-08T07:10:20.297045+00:00",
+    "build": 1096,
+    "runtime": "a01bfd64528184c95fc805e7efa36e39b9a21c01",
+    "journals_absent": true,
+    "earlier_additional_core_progress_files_unchanged": 41,
+    "all_existing_managed_native_files_unchanged": 19,
+    "preexisting_standalone_and_managed_files_unchanged": 13,
+    "existing_gba_snes_progress_files_unchanged": 8,
+    "core_hashes": {
+      "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "mesen": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "virtualjaguar": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "mednafen_lynx": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "fbneo": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9",
+      "opera": "43626fab3f21e1c24d979291503f564422c4b9602a8a82a941a0484cfaceac6c",
+      "mednafen_saturn": "dc0c11180b695db1ace32cd3443946ff00eccf9b3c673e263ec3b752915f2282"
+    },
+    "independent_platform_bindings_retained": [
+      "gba",
+      "snes",
+      "gb",
+      "gbc",
+      "atari2600",
+      "tg16",
+      "genesis",
+      "sms",
+      "gamegear",
+      "sega32",
+      "n64",
+      "nes",
+      "jaguar",
+      "lynx",
+      "arcade",
+      "3do",
+      "saturn"
+    ]
+  },
+  "logs": {
+    "since": "2026-11-08T06:56:00Z",
+    "lines": 13,
+    "warnings_or_errors": 0,
+    "sha256": "6efeb0ac53a5d826bb69376829a430568d785db20bac32ea290e565f0c1082f6"
+  },
+  "ci": {
+    "application": 42455382622,
+    "all_checks_and_five_packages": "success",
+    "independent_mesen": 42455382608,
+    "all_four_jobs_and_post_steps": "success"
+  },
+  "limit": "Controlled native fixtures establish held/arriving writer refusal. This packaged check establishes ordinary normal-exit integration; the later interrupted-resource correction and Flycast are not in build 1096."
+}

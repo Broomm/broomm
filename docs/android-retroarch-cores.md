@@ -15,7 +15,9 @@ passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
 input and state restoration below. FBNeo build 1087 passed complete-ROMset
 gameplay, NVRAM/state restoration and two-account separation below. The Opera
 increment covers self-contained disc images and native NVRAM; build 1090 passed
-the packaged checks below. Saturn now has concrete source and packaged device acceptance below. Multi-file CUE transport and Flycast integration remain unfinished.
+the packaged checks below. Saturn now has concrete source and packaged device
+acceptance below. Multi-file media remains unfinished. Flycast now has the
+concrete source increment below; packaged acceptance remains pending.
 
 ## Gambatte source and behavior
 
@@ -770,3 +772,69 @@ ROMs, cleanup refusal and successful closed retries. Packaged application
 acceptance of this additional guard remains pending; Saturn build 1093 predates
 it. Native image transport still completes its exact 1 GiB case within the
 unchanged deadline (2,769 ms). No new library or global device setting is used.
+
+
+## Flycast source increment
+
+The retained four-ABI `7adbf3c` build is pinned to artifact commit `f51373b` and
+`android-flycast-7adbf3c`. ZIP/payload hashes, ELF classes/machines, Android-only
+system dependencies, original CMake inputs, GPL-2.0-or-later and conservative
+component notices are retained in [provenance](../vendor/android/flycast/7adbf3c/README.md).
+All four ELF Android notes identify API 21 / NDK r29; this is inspected build
+metadata, not an independently reproduced NDK recipe. No BIOS/game is bundled.
+Independent Dreamcast Setup retains all previous cores and connections; settings
+version 16 reads versions 1–15 and refuses forged older Dreamcast bindings.
+
+Use **Emulator Settings → Dreamcast → RetroArch → Set up**. Complete the standard
+RetroArch first open if requested. Add canonical `dc_boot.bin` (2,097,152 bytes,
+MD5 `e10c53c2f8b90bab96ead2d368858623`) to Dreamcast firmware in RomM. Play a
+self-contained CHD v5 of at most 2 GiB physical/logical size, without a parent.
+Firmware transfer/cache validation and read-only disc hashing are cancellable;
+core, ABI, configuration and actual option precedence are checked again after
+preparation. CUE/GDI/M3U/CDI and Naomi/Atomiswave remain outside this increment.
+
+All VMU ports use private game/profile storage. Native disc game-ID and legacy
+outer-filename `.[A-D][12].bin` names retain the desktop ordinary-save contract;
+VMUs are exactly 131,072 bytes, with at most eight of each naming generation.
+No arbitrary `.bin` or console flash is a game save. Flycast alone has a 64 MiB
+state cap and 128 MiB total progress cap; earlier limits stay unchanged. States
+retain exact frontend APK, ABI and core fingerprints.
+
+The selected core's mutable console flash is `system/dc/dc_nvmem.bin`, not the
+older initial `dc_flash.bin` dump. Broomm retains it locally across one profile's
+games as immutable historical objects with an atomically published current index.
+It is never uploaded as one game's VMU and never replaces the standalone console
+identity. Missing or damaged known flash blocks sync. Version-5 session resources
+bind every native path to the core, profile/game and configuration nonce. Source
+cache loss, missing general marker, partial install and lost publication/cleanup
+replies retain recovery; readback confirms publication before native cleanup.
+
+A private copy of selected core options supplies All VMUs and disabled linked
+DreamPotato storage. Other options persist per game without rewriting global
+RetroArch files. Normal core teardown in the pinned frontend flushes options
+independently of `config_save_on_exit`; packaged persistence still needs device
+acceptance. Verified Remove clears these private preference files across owned
+profiles, retaining saves/states, console objects, firmware cache and historical
+recovery. Linked or unrecognized storage blocks configuration cleanup.
+
+If VMU mode/linked storage is changed during play, Broomm holds the new ordinary
+saves/states and captures fallback VMUs before reporting the problem. It does
+not guess which card is authoritative or publish incomplete progress. Retain
+`android/shared-session/<transaction>/captures/<capture>/native` and
+`flycast-captures/<capture>` under Broomm's private files root. **Keep emulator
+folder unchanged · Finish** explicitly retains those copies and the native folder
+for manual recovery without upload. Do not delete the directory or uninstall
+RetroArch before recovering the intended VMUs. This exceptional mode change has
+no automatic card-conversion UI; normal supplied settings do not require it.
+
+All 107 focused cases and four actual production downloads pass; native bridge
+and fixture compile. All 26 disposable Thor native groups pass, including an
+exact 64 MiB state and an exact 2 GiB image staged in 4,496 ms under the unchanged
+30-second deadline. The new interrupted-link case first reproduced the own-stage
+metadata failure, then passed after exact inode/hash/UID/label/closure recovery.
+Extra links, changed checksums and writers still refuse cleanup for
+Flycast/Lynx/Opera/Saturn. No assertion or timeout was relaxed; the failed fixture
+and matching AndroidRuntime stack are retained. This is native mechanism and
+Dart workflow verification, not packaged Dreamcast gameplay/firmware/VMU/state
+or two-account acceptance. The final whole suite has 714 passes and one existing host skip, with clean
+analysis and 357 unchanged input fingerprints. See the [source evidence](android-retroarch-flycast-source.json). Multi-file media remains unfinished.

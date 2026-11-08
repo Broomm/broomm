@@ -444,6 +444,18 @@ standalone settings. Other ABI gameplay and selected special modes remain
 separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#beetle-saturn-source-increment)
 and [device evidence](docs/android-retroarch-saturn.json).
 
+Current source adds **Dreamcast → RetroArch → Set up** with pinned Flycast.
+Use one self-contained, parent-free CHD v5 up to 2 GiB. Add canonical 2 MiB
+`dc_boot.bin` to this platform's RomM firmware catalogue before Play. Broomm
+isolates all eight VMU ports per profile/game, retains a separate local console
+identity per profile, and keeps other core-option changes between sessions.
+Quit normally and wait for sync, then verify native game saves and Load State
+independently. Remove clears private Flycast preferences while retaining Broomm
+progress, console identities and recovery. Keep All VMUs / linked storage settings
+as supplied; changing them during play blocks sync and preserves game/fallback
+copies for manual recovery. CUE/GDI/M3U/CDI media and packaged Thor acceptance
+remain pending. See the [scope and walkthrough](docs/android-retroarch-cores.md#flycast-source-increment).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

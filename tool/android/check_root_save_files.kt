@@ -52,6 +52,9 @@ fun main(args: Array<String>) {
         check(files.hash(target) == oldHash)
         println("PASS: atomic save replacement, UID/GID/mode/label restoration, compare-before-write and linked/path refusal")
         checkProgressWriterClosure(root, label)
+        checkFlycastStorage(root, label)
+        checkResourceInterruptedCleanup(root, label)
+        checkFlycastLargeProgress(root, label)
 
         for (point in listOf("staged", "linked")) {
             val relative = prefix + "$point.srm"
@@ -749,4 +752,159 @@ private fun checkSaturnStorage(root: File, label: ByteArray) {
     files.removeRom(relative,hash)
     check(!staged.exists() && source.exists())
     println("PASS: Saturn scoped options, BIOS transaction/core/size guards, interrupted publication, writer/edited-resource refusal, idempotent cleanup and bound CHD staging")
+}
+
+private fun checkFlycastStorage(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected Dreamcast refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected Dreamcast refusal") }
+    }
+    val files = RootSaveFiles(root, 2000, label, {}, coreName = "flycast")
+    val plain = RootSaveFiles(root, 2000, label, {})
+    val base = "files/Broomm/${"6".repeat(32)}/86"
+    val nonce = "5".repeat(32)
+    val token = "$nonce-in"
+    val card = ByteArray(131072) { (it % 251).toByte() }
+    val cardHash = RootSaveFiles.digest(card)
+    val vmus = ('A'..'D').flatMap { p -> (1..2).map { "$p$it" } }
+    for (port in vmus) for (name in listOf("MK-51000", "Legacy Disc"))
+        files.replace("$base/saves/$name.$port.bin", null, cardHash, card, null, token)
+    val foreign = "$base/saves/unrelated.bin"
+    plain.replace(foreign, null, cardHash, card, null, token)
+    val selector = listOf(mapOf("path" to "$base/saves", "flycastVmus" to "true"))
+    check(files.inventory(selector).size == 16 && files.hash(files.path(foreign)) == cardHash)
+    refused { files.replace("$base/saves/Broken.A1.bin", null, "a".repeat(64), byteArrayOf(1), null, token) }
+    refused { RootSaveFiles.managedPath("$base/saves/dc_nvmem.bin", core = "flycast") }
+    refused { RootSaveFiles.managedPath("$base/saves/vmu_save_A1.bin", core = "flycast") }
+    refused { RootSaveFiles(root, 2000, label, {}).inventory(selector) }
+    val state = "$base/states/states-${"4".repeat(16)}-android/Disc.state"
+    val large = ByteArray(17 * 1024 * 1024) { 7 }
+    val stateHash = RootSaveFiles.digest(large)
+    files.replace(state, null, stateHash, large, null, token)
+    check(files.hash(files.path(state), files.progressLimit(state)) == stateHash)
+    check(files.progressLimit(state) == 64 * 1024 * 1024 && plain.progressLimit(state) == 16 * 1024 * 1024)
+    println("PASS: Dreamcast eight native/eight legacy exact VMUs, unrelated-file retention, console/fallback exclusion, large matched state and unchanged earlier limits")
+
+    val config = "$base/config-$nonce.cfg"
+    val bios = "$base/system-$nonce/dc/dc_boot.bin"
+    val flash = "$base/system-$nonce/dc/dc_nvmem.bin"
+    val options = "$base/options-$nonce.opt"
+    val biosBytes = ByteArray(2097152) { 13 }; val biosHash = RootSaveFiles.digest(biosBytes)
+    val optionBytes = "flycast_per_content_vmus = \"All VMUs\"\n".toByteArray(); val optionHash = RootSaveFiles.digest(optionBytes)
+    files.flycastResource(bios, config, null, biosHash, biosBytes, token) {}
+    files.flycastResource(flash, config, null, cardHash, card, token) {}
+    files.flycastResource(options, config, null, optionHash, optionBytes, token) {}
+    check(files.flycastResources(config).keys == setOf(bios, flash, options))
+    refused { files.flycastResource(bios, config.replace(nonce, "3".repeat(32)), null, biosHash, biosBytes, token) {} }
+    refused { files.flycastResource(bios, config, biosHash, null, null, "$nonce-out") { error("Writer active") } }
+    val fallback = "$base/system-$nonce/dc/vmu_save_A1.bin"
+    plain.replace(fallback, null, cardHash, card, null, token)
+    check(files.flycastResources(config).containsKey(fallback))
+    refused { files.flycastResource(fallback, config, cardHash, null, null, "$nonce-out") {} }
+    check(files.hash(files.path(fallback)) == cardHash)
+    // Simulate the core changing its mutable flash/preferences, preserving metadata.
+    files.path(flash).writeBytes(ByteArray(131072) { 14 })
+    val captured = files.flycastResources(config)
+    check(captured.getValue(flash).sha256 != cardHash)
+    for (path in listOf(bios, flash, options)) repeat(2) {
+        files.flycastResource(path, config, captured.getValue(path).sha256, null, null, "$nonce-out") {}
+    }
+    check(files.path(fallback).exists() && !files.path(flash).exists())
+    println("PASS: Dreamcast exact transaction resources, changed console capture, read-only fallback VMUs, writer/path refusal and idempotent cleanup preserving unrecognized data")
+
+    val lostNonce = "2".repeat(32)
+    val lostConfig = "$base/config-$lostNonce.cfg"
+    val lostBios = "$base/system-$lostNonce/dc/dc_boot.bin"
+    val interrupted = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Lost publication reply") }, coreName = "flycast")
+    refused { interrupted.flycastResource(lostBios, lostConfig, null, biosHash, biosBytes, "$lostNonce-in") {} }
+    check(Os.lstat(files.path(lostBios).path).st_nlink == 2L)
+    repeat(2) { files.flycastResource(lostBios, lostConfig, biosHash, null, null, "$lostNonce-out") {} }
+    check(!files.path(lostBios).exists())
+    println("PASS: Dreamcast direct interrupted-link resource cleanup without source/cache or reinstallation")
+}
+
+private fun checkResourceInterruptedCleanup(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected linked-resource refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected linked-resource refusal") }
+    }
+    val nonce = "1".repeat(32)
+    for ((core, name, size) in listOf(Triple("mednafen_lynx","lynxboot.img",512), Triple("opera","panafz10.bin",1048576), Triple("mednafen_saturn","sega_101.bin",524288))) {
+        val base = "files/Broomm/${"1".repeat(32)}/${if (core == "opera") 88 else if (core == "mednafen_lynx") 89 else 90}"
+        val config = "$base/config-$nonce.cfg"
+        val path = "$base/system-$nonce/$name"
+        val bytes = ByteArray(size) { 33 }; val hash = RootSaveFiles.digest(bytes)
+        val interrupted = RootSaveFiles(root,2000,label,{}, { if (it == "linked") error("Lost install reply") },coreName=core)
+        val files = RootSaveFiles(root,2000,label,{},coreName=core)
+        fun effect(f: RootSaveFiles, before: String?, after: String?, payload: ByteArray?, token: String, closed: () -> Unit = {}) {
+            when (core) {
+                "mednafen_lynx" -> f.lynxFirmware(path,config,before,after,payload,token,closed)
+                "opera" -> f.operaFirmware(path,config,before,after,payload,token,closed)
+                else -> f.saturnFirmware(path,config,before,after,payload,token,closed)
+            }
+        }
+        refused { effect(interrupted,null,hash,bytes,"$nonce-in") }
+        val target = files.path(path)
+        check(Os.lstat(target.path).st_nlink == 2L)
+        val foreign = File(root,"foreign-resource-$core")
+        Os.link(target.path,foreign.path)
+        refused { effect(files,hash,null,null,"$nonce-out") }
+        check(Os.lstat(target.path).st_nlink == 3L && foreign.exists())
+        Os.remove(foreign.path)
+        refused { effect(files,hash,null,null,"$nonce-out") { error("Writer arrived") } }
+        check(Os.lstat(target.path).st_nlink == 2L)
+        refused { effect(files,"f".repeat(64),null,null,"$nonce-out") }
+        check(target.exists())
+        repeat(2) { effect(files,hash,null,null,"$nonce-out") }
+        check(!target.exists())
+    }
+    println("PASS: direct interrupted Lynx/Opera/Saturn resource cleanup without source, strict extra-link/checksum/writer refusal and idempotent closed recovery")
+}
+
+private fun checkFlycastLargeProgress(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected Dreamcast size refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected Dreamcast size refusal") }
+    }
+    val files = RootSaveFiles(root,2000,label,{},coreName="flycast")
+    val base = "files/Broomm/${"0".repeat(32)}/87"
+    val token = "0".repeat(32) + "-in"
+    val state = "$base/states/states-${"0".repeat(16)}-android/Disc.state"
+    val payload = ByteArray(64 * 1024 * 1024) { (it % 251).toByte() }
+    val stateHash = RootSaveFiles.digest(payload)
+    files.replace(state,null,stateHash,payload,null,token)
+    val area = listOf(mapOf("path" to state.substringBeforeLast('/'), "prefix" to "Disc", "pattern" to "native-selector"))
+    check(files.inventory(area).getValue(state).sha256 == stateHash)
+    java.io.RandomAccessFile(files.path(state),"rw").use { it.setLength(64L * 1024 * 1024 + 1) }
+    refused { files.inventory(area) }
+    java.io.RandomAccessFile(files.path(state),"rw").use { it.setLength(64L * 1024 * 1024) }
+    check(files.hash(files.path(state),files.progressLimit(state)) == stateHash)
+    val source = File(root,"library/87/content/Disc.chd").apply { check(parentFile!!.mkdirs()) }
+    java.io.RandomAccessFile(source,"rw").use { it.setLength(2L * 1024 * 1024 * 1024) }
+    val digest = java.security.MessageDigest.getInstance("SHA-256")
+    source.inputStream().use { input ->
+        val block = ByteArray(65536)
+        while (true) { val n = input.read(block); if (n < 0) break; digest.update(block,0,n) }
+    }
+    val hash = digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    val rom = "$base/rom-${"0".repeat(32)}/Disc.chd"
+    val started = System.nanoTime()
+    val staged = files.stageRom(rom,source,0,hash)
+    val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-started)
+    check(elapsed < 30000 && staged.length() == source.length())
+    files.removeRom(rom,hash)
+    java.io.RandomAccessFile(source,"rw").use { it.setLength(2L * 1024 * 1024 * 1024 + 1) }
+    refused { files.stageRom(rom,source,0,hash) }
+    files.removeRom(rom,hash)
+    refused { RootSaveFiles.romPath(rom,"mgba") }
+    refused { RootSaveFiles.romPath(rom.replace(".chd",".gdi"),"flycast") }
+    val nativeRoot = "/data/user/0/com.retroarch.aarch64"
+    val content = "/data/user/0/app.broomm.broomm/files/broomm/library/${"0".repeat(32)}/87/content"
+    validateRootRetroArchLaunch("flycast","com.retroarch.aarch64",nativeRoot,"$nativeRoot/$rom",
+        "$nativeRoot/$base/config-${"0".repeat(32)}.cfg",content,"$content/Disc.chd")
+    check(source.exists() && !staged.parentFile!!.exists())
+    println("PASS: exact 64 MiB Dreamcast state inventory and oversized refusal; exact 2 GiB streamed CHD in ${elapsed}ms under unchanged 30s deadline, oversized/descriptor/core refusal and cleanup")
 }

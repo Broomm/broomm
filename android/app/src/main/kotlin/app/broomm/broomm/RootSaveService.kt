@@ -63,7 +63,8 @@ class RootSaveService : RootService() {
                 val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
                 check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up RetroArch." }
             }
-            val progressOperation = operation in setOf("check", "list", "read", "replace", "stagerom", "removerom")
+            val progressOperation = operation in setOf("check", "list", "read", "replace", "stagerom", "removerom",
+                "flycastlist", "flycastread", "flycastreplace")
             val files = RootSaveFiles(root, uid, label, ::live, coreName = coreName,
                 writerClosed = { if (progressOperation) ensureClosed() })
             if (progressOperation) ensureClosed()
@@ -116,7 +117,7 @@ class RootSaveService : RootService() {
                 }
                 "check" -> Bundle()
                 "options" -> {
-                    require(coreName in setOf("opera", "mednafen_saturn"))
+                    require(coreName in setOf("opera", "mednafen_saturn", "flycast"))
                     ensureClosed()
                     val requested = request.getString("path")!!
                     val path = if (requested.startsWith("/data/data/$pkg/"))
@@ -145,21 +146,28 @@ class RootSaveService : RootService() {
                     files.removeRom(request.getString("path")!!, hash)
                     Bundle()
                 }
-                "list" -> {
-                    val areas = request.getParcelableArrayList<Bundle>("areas") ?: error("Missing root save boundaries")
-                    val inventory = files.inventory(areas.map { a -> a.keySet().associateWith { a.getString(it)!! } })
+                "list", "flycastlist" -> {
+                    val inventory = if (operation == "flycastlist") files.flycastResources(request.getString("configPath")!!)
+                        else {
+                            val areas = request.getParcelableArrayList<Bundle>("areas") ?: error("Missing root save boundaries")
+                            files.inventory(areas.map { a -> a.keySet().associateWith { a.getString(it)!! } })
+                        }
                     Bundle().apply { putBundle("files", Bundle().apply {
                         for ((path, entry) in inventory) putBundle(path, Bundle().apply {
                             putLong("bytes", entry.bytes); putString("sha256", entry.sha256); putString("metadata", entry.metadata)
                         })
                     }) }
                 }
-                "read" -> {
+                "read", "flycastread" -> {
                     val path = request.getString("path")!!
-                    RootSaveFiles.managedPath(path, saveOnly = true, core = coreName)
+                    val limit = if (operation == "flycastread") files.flycastResourceLimit(path, request.getString("configPath")!!)
+                        else {
+                            RootSaveFiles.managedPath(path, saveOnly = true, core = coreName)
+                            files.progressLimit(path)
+                        }
                     val file = files.path(path)
                     val metadata = files.metadata(file)
-                    val bytes = files.bytes(file, files.progressLimit(path))
+                    val bytes = files.bytes(file, limit)
                     require(RootSaveFiles.digest(bytes) == request.getString("sha256") &&
                         bytes.size.toLong() == request.getLong("bytes") && metadata == request.getString("metadata")) {
                         "Save changed during capture. Close the emulator and retry."
@@ -190,6 +198,15 @@ class RootSaveService : RootService() {
                         RootSaveTransfer.read(it, caller, 2 * 1024 * 1024, ::live)
                     }
                     files.saturnFirmware(request.getString("path")!!, request.getString("configPath")!!,
+                        request.getString("before"), request.getString("after"), payload,
+                        request.getString("token")!!, ::ensureClosed)
+                    Bundle()
+                }
+                "flycastreplace" -> {
+                    val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
+                        RootSaveTransfer.read(it, caller, 2 * 1024 * 1024, ::live)
+                    }
+                    files.flycastResource(request.getString("path")!!, request.getString("configPath")!!,
                         request.getString("before"), request.getString("after"), payload,
                         request.getString("token")!!, ::ensureClosed)
                     Bundle()

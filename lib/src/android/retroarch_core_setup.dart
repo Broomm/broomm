@@ -301,6 +301,26 @@ const _saturnRecipes = <String, (String, String)>{
   ),
 };
 
+const _flycastRevision = 'f51373bf8b509331b884cc57917bf0c0869d43bc';
+const _flycastRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    'de6e838bfed4abe61ee5ee325eaa9a8f6b61f483d0defa5b35dc7960f7d9a034',
+    '741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701',
+  ),
+  'armeabi-v7a': (
+    'c6505d080565f4a972141b92f8376e99df3edf53ae515019fc27336d08145015',
+    '9c4ba7b3c381d4ff3c0d15810b369548d168c7495d6a41b810ec0d6f810eaa38',
+  ),
+  'x86': (
+    'e3b625dcef9a15ce5e4ffe8885b084187af31c3981794a7c78dc9ab6467d162b',
+    'b5ba47b11b8d89a8731369a4cbb1faa3b377dafa7b8ade2ef524712c1b5f3526',
+  ),
+  'x86_64': (
+    '646aadf89a712e141d66bce5a7c5436c7f7e39c877f9a248fdccc2fb2e90c19f',
+    'a3bd3a25721ef8a4e23b2d27adf1ea4eac8087e43a9b965d154dbc20c8efe257',
+  ),
+};
+
 Future<void> downloadAndroidRetroCore(
   Directory data,
   String core,
@@ -328,18 +348,23 @@ Future<void> downloadAndroidRetroCore(
     'fbneo' => (_fbneoRevision, '1.0.0.03-20261107', _fbneoRecipes),
     'opera' => (_operaRevision, '1.0.0-370d9a2', _operaRecipes),
     'mednafen_saturn' => (_saturnRevision, '1.32.1-30f4c12', _saturnRecipes),
+    'flycast' => (_flycastRevision, '7adbf3c', _flycastRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);
   final rawCore = core == 'virtualjaguar';
-  final maxArchive = core == 'fbneo'
+  final maxArchive = core == 'flycast'
+      ? 6 * 1024 * 1024
+      : core == 'fbneo'
       ? 20 * 1024 * 1024
       : rawCore || {'mupen64plus_next', 'mednafen_saturn'}.contains(core)
       ? 3 * 1024 * 1024
       : {'stella', 'genesis_plus_gx', 'mesen'}.contains(core)
       ? 2 * 1024 * 1024
       : _maxArchive;
-  final maxCore = core == 'fbneo'
+  final maxCore = core == 'flycast'
+      ? 24 * 1024 * 1024
+      : core == 'fbneo'
       ? 96 * 1024 * 1024
       : {'genesis_plus_gx', 'mednafen_saturn'}.contains(core)
       ? 16 * 1024 * 1024

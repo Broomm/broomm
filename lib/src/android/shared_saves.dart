@@ -11,6 +11,7 @@ import 'emulators.dart';
 import 'save_plan.dart';
 import 'opera.dart';
 import 'saturn.dart';
+import 'flycast_session.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -45,6 +46,13 @@ class SharedAndroidSaves {
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
       if (plan.rooted &&
+          plan.launch['coreName'] == 'flycast' &&
+          e.key.contains('/saves/') &&
+          v['bytes'] != 131072)
+        throw const FormatException(
+          'Dreamcast VMU is incomplete. Existing progress was kept.',
+        );
+      if (plan.rooted &&
           plan.launch['coreName'] == 'opera' &&
           e.key.contains('/saves/') &&
           v['bytes'] != 32768)
@@ -67,7 +75,10 @@ class SharedAndroidSaves {
           'Root save ownership metadata is incomplete.',
         );
       total += v['bytes'] as int;
-      if (total > (plan.rooted ? 64 * 1024 * 1024 : progressMaxBytes))
+      if (total >
+          (plan.rooted
+              ? (plan.launch['coreName'] == 'flycast' ? 128 : 64) * 1024 * 1024
+              : progressMaxBytes))
         throw const FormatException('Android progress exceeds its size limit');
     }
     return files;
@@ -92,7 +103,7 @@ class SharedAndroidSaves {
     AndroidSavePlan plan,
   ) async {
     final r = await progressJson(journal);
-    if (!{1, 2, 3, 4}.contains(r['version']) ||
+    if (!{1, 2, 3, 4, 5}.contains(r['version']) ||
         r['server'] != game.server ||
         r['profile'] != game.profile ||
         r['rom'] != game.rom ||
@@ -121,11 +132,39 @@ class SharedAndroidSaves {
     _lynxFirmware(r, plan);
     _operaFirmware(r, plan);
     _saturnFirmware(r, plan);
+    _flycastResources(r, plan);
+    if (r['rootFlycastHeldProgress'] case final Object held) {
+      if (r['version'] != 5 ||
+          held is! Map ||
+          held.length != 2 ||
+          !RegExp(r'^captures/[a-f0-9]{32}/native$')
+              .hasMatch(held['directory'] as String? ?? ''))
+        throw const FormatException('Invalid held Dreamcast progress capture.');
+      inventory(held['files'], plan);
+    }
     return r;
   }
 
+  AndroidFlycastSessionResources? _flycastResources(
+    Map r,
+    AndroidSavePlan plan,
+  ) {
+    if (r['version'] != 5) {
+      if (r.containsKey('rootFlycastResources') ||
+          r.containsKey('rootFlycastConsoleBefore') ||
+          r.containsKey('rootFlycastCapture') ||
+          r.containsKey('rootFlycastHeldProgress') ||
+          plan.launch['coreName'] == 'flycast')
+        throw const FormatException('Dreamcast recovery record is incomplete.');
+      return null;
+    }
+    final resources = AndroidFlycastSessionResources(manager, plan);
+    resources.validate(r);
+    return resources;
+  }
+
   Map<String, dynamic>? _lynxFirmware(Map r, AndroidSavePlan plan) {
-    if ({3, 4}.contains(r['version'])) return null;
+    if ({3, 4, 5}.contains(r['version'])) return null;
     if (r['version'] == 1) {
       if (r['rootFirmware'] != null ||
           plan.launch['coreName'] == 'mednafen_lynx')
@@ -326,6 +365,18 @@ class SharedAndroidSaves {
     final lynx = plan.rooted && plan.launch['coreName'] == 'mednafen_lynx';
     final opera = plan.rooted && plan.launch['coreName'] == 'opera';
     final saturn = plan.rooted && plan.launch['coreName'] == 'mednafen_saturn';
+    final flycast = plan.rooted && plan.launch['coreName'] == 'flycast';
+    if (flycast &&
+            (plan.flycastDisc == null ||
+                plan.flycastDisc!.file.path != selected ||
+                plan.flycastResources == null) ||
+        !flycast &&
+            (plan.flycastDisc != null ||
+                plan.flycastResources != null ||
+                plan.flycastConsole != null))
+      throw StateError(
+        'Prepare the verified Dreamcast disc and resources before Play.',
+      );
     if (lynx && boot == null || !lynx && boot != null)
       throw StateError(
         'Prepare the verified Lynx BIOS before starting this session.',
@@ -358,14 +409,16 @@ class SharedAndroidSaves {
       plan.arguments,
     );
     final r = <String, dynamic>{
-      'version': saturn
+      'version': flycast
+          ? 5
+          : saturn
           ? 4
           : opera
           ? 3
           : lynx
           ? 2
           : 1,
-      'transaction': opera || saturn
+      'transaction': opera || saturn || flycast
           ? plan.launch['transaction']
           : progressNonce(),
       ...plan.arguments,
@@ -414,6 +467,7 @@ class SharedAndroidSaves {
     final operaFirmware = _operaFirmware(r, plan);
     final saturnFirmware = _saturnFirmware(r, plan);
     await progressDirectory(directory(r));
+    if (flycast) await AndroidFlycastSessionResources(manager, plan).stage(r);
     if (boot != null) {
       if (await boot.file.length() != 512)
         throw const FormatException(
@@ -492,6 +546,7 @@ class SharedAndroidSaves {
       r,
     );
     await apply(r, plan, 'original', 'working', 'working');
+    if (flycast) await _flycastResources(r, plan)!.install(r);
     final firmware = _lynxFirmware(r, plan);
     if (firmware != null) {
       await manager.channel.invokeMethod<void>('rootLynxFirmware', {
@@ -595,6 +650,8 @@ class SharedAndroidSaves {
       },
       operaOptions: current.operaOptions,
       saturnOptions: current.saturnOptions,
+      flycastOptions: current.flycastOptions,
+      flycastNativeOptions: current.flycastNativeOptions,
     );
     await record(game, plan);
     return plan;
@@ -649,7 +706,16 @@ class SharedAndroidSaves {
     Directory? extraction;
     String? checkedRomHash;
     try {
-      if (plan.launch['coreName'] == 'mednafen_saturn') {
+      if (plan.launch['coreName'] == 'flycast') {
+        final disc = plan.flycastDisc;
+        if (disc == null ||
+            disc.file.path != source.path ||
+            await source.length() != disc.bytes)
+          throw StateError(
+            'The verified Dreamcast disc changed before staging. Recovery was kept.',
+          );
+        checkedRomHash = disc.sha256;
+      } else if (plan.launch['coreName'] == 'mednafen_saturn') {
         final disc = plan.saturnDisc;
         if (disc == null ||
             disc.file.path != source.path ||
@@ -809,6 +875,21 @@ class SharedAndroidSaves {
         false,
       );
     await read(r, plan, files, '$capture/native');
+    final flycast = _flycastResources(r, plan);
+    if (flycast != null) {
+      // Hold new game progress before inspecting mandatory console/VMU modes.
+      // A failed auxiliary check must not leave the only new copy in RetroArch.
+      r['rootFlycastHeldProgress'] = {
+        'directory': '$capture/native',
+        'files': files,
+      };
+      await progressWrite(journal, r);
+      await flycast.capture(
+        r,
+        journal,
+        (message) => cloud.notice(message, false),
+      );
+    }
     final canonical = Directory('${directory(r).path}/$capture/profile');
     final layout = ProgressLayout(
       canonical.path,
@@ -943,6 +1024,7 @@ class SharedAndroidSaves {
         'token': '${r['transaction']}-out',
       });
     }
+    await _flycastResources(r, plan)?.cleanup(r);
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }
@@ -994,6 +1076,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
       'root-cartridge-v1' => switch (plan.launch['platform']) {
         '3do' => {'chd', 'iso', 'bin'},
         'saturn' => {'chd'},
+        'dc' => {'chd'},
         'atari2600' => {'a26', 'bin'},
         'tg16' => {'pce'},
         'genesis' => {'md', 'gen', 'smd', 'bin'},
@@ -1013,6 +1096,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
 int _rootRomLimit(AndroidSavePlan plan) =>
     (switch (plan.launch['platform']) {
       '3do' || 'saturn' => 1024,
+      'dc' => 2048,
       'arcade' => 128,
       'n64' => 64,
       _ => 32,
@@ -1021,6 +1105,8 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  if (plan.launch['coreName'] == 'flycast')
+    return path.contains('/states/') ? 64 * 1024 * 1024 : 131072;
   if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))
     return path.endsWith('.smpc')
         ? 12

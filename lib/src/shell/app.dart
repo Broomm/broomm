@@ -40,6 +40,7 @@ import '../android/save_plan.dart';
 import '../android/lynx_firmware.dart';
 import '../android/opera.dart';
 import '../android/saturn.dart';
+import '../android/flycast.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
 import 'update_screen.dart';
@@ -713,7 +714,7 @@ class _BroommAppState extends State<BroommApp> {
                 );
                 final plan = game.layout;
                 if (!rooted ||
-                    !{'lynx', '3do', 'saturn'}.contains(platform.slug) ||
+                    !{'lynx', '3do', 'saturn', 'dc'}.contains(platform.slug) ||
                     plan is! AndroidSavePlan ||
                     plan.launch['frontendSetup'] == 'true')
                   return game;
@@ -753,6 +754,56 @@ class _BroommAppState extends State<BroommApp> {
                       operaOptions: plan.operaOptions,
                       operaDisc: disc,
                       operaResources: resources,
+                    ),
+                  );
+                }
+                if (platform.slug == 'dc') {
+                  final disc = await inspectAndroidFlycastDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidFlycastResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  final options = {
+                    ...plan.flycastNativeOptions,
+                    ...await readAndroidFlycastPreferences(
+                      Directory(plan.root),
+                      plan.game,
+                    ),
+                  };
+                  final console = await readAndroidFlycastConsole(
+                    Directory(plan.root),
+                  );
+                  cancellation.check();
+                  await verifyAndroidFlycastPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      flycastOptions: options,
+                      flycastNativeOptions: plan.flycastNativeOptions,
+                      flycastDisc: disc,
+                      flycastResources: resources,
+                      flycastConsole: console,
                     ),
                   );
                 }

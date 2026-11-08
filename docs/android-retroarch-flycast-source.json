@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "scope": "Rooted Dreamcast source/workflow/native-file mechanism verification; packaged game acceptance pending",
+  "artifact_commit": "f51373bf8b509331b884cc57917bf0c0869d43bc",
+  "artifact_tag": "android-flycast-7adbf3c",
+  "upstream_revision": "7adbf3caef251b153e348df3f469a0f35878339d",
+  "elf_android_notes": {
+    "arm64-v8a": {
+      "api": 21,
+      "ndk": "r29",
+      "limit": "Inspected metadata; exact upstream NDK reproduction not claimed"
+    },
+    "armeabi-v7a": {
+      "api": 21,
+      "ndk": "r29",
+      "limit": "Inspected metadata; exact upstream NDK reproduction not claimed"
+    },
+    "x86": {
+      "api": 21,
+      "ndk": "r29",
+      "limit": "Inspected metadata; exact upstream NDK reproduction not claimed"
+    },
+    "x86_64": {
+      "api": 21,
+      "ndk": "r29",
+      "limit": "Inspected metadata; exact upstream NDK reproduction not claimed"
+    }
+  },
+  "source_inputs": {
+    "sha256": "e421ad307e981b6144877c6250d96dc31771b60722301252a4ffd17929711ce4",
+    "files": 357,
+    "unchanged_during_full_suite": true
+  },
+  "verification": {
+    "analysis": "clean",
+    "focused_tests": 107,
+    "full_suite": {
+      "checked_utc": "2026-11-08T07:13:30.310154+00:00",
+      "source_inputs_unchanged": true,
+      "inputs": 357,
+      "visible_tests": 715,
+      "passed": 714,
+      "skipped": 1,
+      "failed": 0,
+      "success": true
+    },
+    "native_android_fault_groups": 26,
+    "bridge_and_fixture": "compiled",
+    "network": {
+      "checked_utc": "2026-11-08T07:04:14.484403Z",
+      "source_commits": {
+        "arm64-v8a": "7adbf3caef251b153e348df3f469a0f35878339d",
+        "armeabi-v7a": "7adbf3caef251b153e348df3f469a0f35878339d",
+        "x86": "7adbf3caef251b153e348df3f469a0f35878339d",
+        "x86_64": "7adbf3caef251b153e348df3f469a0f35878339d"
+      },
+      "artifacts": {
+        "arm64-v8a": {
+          "sha256": "741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701",
+          "bytes": 17198568,
+          "elf_class": 2,
+          "elf_machine": 183,
+          "elapsed_ms": 1525
+        },
+        "armeabi-v7a": {
+          "sha256": "9c4ba7b3c381d4ff3c0d15810b369548d168c7495d6a41b810ec0d6f810eaa38",
+          "bytes": 13078320,
+          "elf_class": 1,
+          "elf_machine": 40,
+          "elapsed_ms": 1221
+        },
+        "x86": {
+          "sha256": "b5ba47b11b8d89a8731369a4cbb1faa3b377dafa7b8ade2ef524712c1b5f3526",
+          "bytes": 13855588,
+          "elf_class": 1,
+          "elf_machine": 3,
+          "elapsed_ms": 1239
+        },
+        "x86_64": {
+          "sha256": "a3bd3a25721ef8a4e23b2d27adf1ea4eac8087e43a9b965d154dbc20c8efe257",
+          "bytes": 17578080,
+          "elf_class": 2,
+          "elf_machine": 62,
+          "elapsed_ms": 1373
+        }
+      },
+      "effects": "Only public downloads into private staging; no installation."
+    },
+    "native_full_log_sha256": "c0edb82fd384fe60caa746ca6abd3f584a846e07025e96d2373e29e0a2c005fa",
+    "disc_boundary": {
+      "bytes": 2147483648,
+      "staging_ms": 4496,
+      "deadline_ms": 30000
+    },
+    "state_boundary_bytes": 67108864,
+    "total_progress_limit_bytes": 134217728
+  },
+  "recovery_regression": {
+    "trigger": "Direct cleanup after interruption between exclusive resource link and unlink rejected the legitimate two-link file as foreign.",
+    "observed_failure": "AndroidRuntime IllegalArgumentException in RootSaveFiles.metadata/publish, app_process exit 137; not an out-of-memory finding.",
+    "correction": "Verify exactly two matching inode/device names, original checksum, UID/mode/SELinux label and closure, then remove only the journal-owned incoming link.",
+    "related_boundaries": [
+      "Extra foreign links retain all names.",
+      "Changed checksum or live writer refuses cleanup.",
+      "Flycast/Lynx/Opera/Saturn direct cleanup works without source/cache and is idempotent."
+    ],
+    "initial_failure_retained": true,
+    "assertions_or_deadlines_relaxed": false
+  },
+  "limits": [
+    "No packaged Flycast BIOS boot, gameplay, actual VMU save/load, state reload, two-account or preference-persistence acceptance yet.",
+    "One arm64 Thor executes native file fixtures; other ABI payloads have static/download verification, not native gameplay.",
+    "Only self-contained CHD v5 up to 2 GiB; CUE/GDI/M3U/CDI/CCD/TOC sets, Naomi and Atomiswave are not newly implemented.",
+    "Changing per-game VMU/linked storage during gameplay requires manual recovery; new game and auxiliary files are retained before the error.",
+    "Earlier local Saturn full-suite Astris capture failure is retained; Astris code was not changed or claimed fixed by this successful new full run."
+  ]
+}

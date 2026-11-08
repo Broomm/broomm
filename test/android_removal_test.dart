@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/flycast.dart';
 import 'package:broomm/src/progress/files.dart';
 import 'package:broomm/src/session_lease.dart';
 import 'package:flutter/services.dart';
@@ -15,11 +16,13 @@ void main() {
       'content://com.android.externalstorage.documents/tree/primary%3APSP';
   late Directory data;
   late AndroidEmulators manager;
+  var installedPackage = package;
   var installed = true, cancel = false, unknown = false, failCleanup = false;
   final calls = <String>[];
   setUp(() async {
     data = await Directory.systemTemp.createTemp('broomm-removal-');
     installed = true;
+    installedPackage = package;
     cancel = unknown = failCleanup = false;
     calls.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -29,7 +32,11 @@ void main() {
             case 'installed':
               return [
                 if (installed)
-                  {'package': package, 'version': '1.20.4', 'build': 'a' * 64},
+                  {
+                    'package': installedPackage,
+                    'version': '1.20.4',
+                    'build': 'a' * 64,
+                  },
               ];
             case 'sharedCheck':
             case 'clearEmulatorSetup':
@@ -37,7 +44,7 @@ void main() {
             case 'ioBusy':
               return false;
             case 'uninstall':
-              expect((call.arguments as Map)['package'], package);
+              expect((call.arguments as Map)['package'], installedPackage);
               expect((call.arguments as Map)['build'], 'a' * 64);
               if (unknown) return null;
               if (!cancel) installed = false;
@@ -80,6 +87,29 @@ void main() {
       expect(manager.folder(emulator), isNull);
     },
   );
+
+  test('RetroArch uninstall clears private Flycast configuration while retaining console identity and game progress', () async {
+    installedPackage = 'com.retroarch.aarch64';
+    await manager.load();
+    final retro = androidEmulators.singleWhere((e) => e.id == 'retroarch');
+    final root = await manager.privateRoot('a' * 32, retro);
+    await writeAndroidFlycastPreferences(root, '42', {
+      'flycast_internal_resolution': '1280x960',
+    });
+    final config = File('${root.path}/root-dc/42/options.json');
+    await config.writeAsString('{broken');
+    final save = File('${root.path}/root-dc/42/saves/ID.A1.bin');
+    await save.parent.create(recursive: true);
+    await save.writeAsBytes([7, 8, 9]);
+    final console = File('${root.path}/flycast-console/retained.bin');
+    await console.parent.create();
+    await console.writeAsBytes([4, 5, 6]);
+    expect(await manager.remove(retro, expected: manager.app(retro)), true);
+    expect(await config.exists(), false);
+    expect(await save.readAsBytes(), [7, 8, 9]);
+    expect(await console.readAsBytes(), [4, 5, 6]);
+    expect(await manager.pendingRemoval(), isNull);
+  });
 
   test('cancelled or unverified uninstall keeps the configuration and pending recovery', () async {
     final settings = File('${data.path}/android/emulators.json');

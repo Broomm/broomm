@@ -10,6 +10,7 @@ import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/lynx_firmware.dart';
 import 'package:broomm/src/android/opera.dart';
 import 'package:broomm/src/android/saturn.dart';
+import 'package:broomm/src/android/flycast.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
@@ -57,6 +58,18 @@ class _FixtureSaturnResource implements AndroidSaturnResource {
   final String sha256;
   @override
   int get bytes => androidSaturnFirmware[name]!.$1;
+}
+
+class _FixtureFlycastResource implements AndroidFlycastResource {
+  _FixtureFlycastResource(this.file, this.sha256);
+  @override
+  final File file;
+  @override
+  final String sha256;
+  @override
+  String get name => 'dc_boot.bin';
+  @override
+  int get bytes => 2097152;
 }
 
 void main() {
@@ -231,6 +244,32 @@ void main() {
           }
           final args = Map<String, dynamic>.from(call.arguments as Map)
             ..['tree'] = 'root-fixture';
+          if (call.method == 'rootFlycastList') {
+            final config = args['configPath'] as String;
+            final base = config.substring(0, config.lastIndexOf('/'));
+            final nonce = config.split('/').last.substring(7, 39);
+            final paths = [
+              '$base/options-$nonce.opt',
+              '$base/system-$nonce/dc/dc_boot.bin',
+              '$base/system-$nonce/dc/dc_nvmem.bin',
+              for (final port in ['A', 'B', 'C', 'D'])
+                for (final slot in [1, 2])
+                  '$base/system-$nonce/dc/vmu_save_$port$slot.bin',
+            ];
+            final result = <String, dynamic>{};
+            for (final path in paths) {
+              final file = File('${native.path}/$path');
+              if (await file.exists())
+                result[path] = {
+                  'bytes': await file.length(),
+                  'sha256': await progressFileHash(file),
+                  'metadata': metadata[path] ?? attributes,
+                };
+            }
+            return result;
+          }
+          if (call.method == 'rootFlycastRead')
+            return fixture.call(MethodCall('sharedRead', args));
           if (call.method == 'rootStageRom') {
             final source = File(args['source'] as String);
             if (await progressFileHash(source) != args['sha256'])
@@ -275,6 +314,7 @@ void main() {
             'rootLynxFirmware',
             'rootOperaFirmware',
             'rootSaturnFirmware',
+            'rootFlycastReplace',
           }.contains(call.method)) {
             final value = await fixture.call(MethodCall('sharedReplace', args));
             if (args['after'] == null) {
@@ -299,6 +339,11 @@ void main() {
               final driver = area.remove('driver');
               final opera = area.remove('operaStem');
               final saturn = area.remove('saturnStem');
+              final flycast = area.remove('flycastVmus');
+              if (flycast != null) {
+                expect(args['coreName'], 'flycast');
+                area['pattern'] = r'^[^/]+\.[A-D][12]\.bin$';
+              }
               if (saturn != null) {
                 expect(args['coreName'], 'mednafen_saturn');
                 area['pattern'] =
@@ -1614,6 +1659,318 @@ void main() {
       saturnResources: prepared ? resources : null,
     );
   }
+
+  Future<AndroidSavePlan> flycastPlan(
+    String rom, {
+    bool prepared = true,
+  }) async {
+    final current = await gameboyPlan('dc', rom);
+    final file = prepared
+        ? await File('${temp.path}/dc-boot-fixture.bin')
+              .writeAsBytes(List.filled(2097152, 19))
+        : null;
+    return AndroidSavePlan(
+      current,
+      current.emulator,
+      current.binding,
+      current.remoteAreas,
+      launch: current.launch,
+      flycastNativeOptions: current.flycastNativeOptions,
+      flycastOptions: {
+        ...current.flycastNativeOptions,
+        if (prepared)
+          ...await readAndroidFlycastPreferences(
+            Directory(current.root),
+            current.game,
+          ),
+      },
+      flycastDisc: prepared
+          ? await inspectAndroidFlycastDisc(
+              File(rom),
+              DownloadCancellation(),
+              (_) {},
+            )
+          : null,
+      flycastResources: file == null
+          ? null
+          : [_FixtureFlycastResource(file, await progressFileHash(file))],
+      flycastConsole: prepared
+          ? await readAndroidFlycastConsole(Directory(current.root))
+          : null,
+    );
+  }
+
+  test('Dreamcast setup migrates version fifteen while retaining every prior root binding and refusing forged older entries', () async {
+    const prior = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+      'n64',
+      'nes',
+      'jaguar',
+      'lynx',
+      'arcade',
+      '3do',
+      'saturn',
+    ];
+    for (final slug in prior)
+      await manager.connectGbaRoot(emulator, platform: slug);
+    final settings = File('${data.path}/android/emulators.json');
+    final old = await progressJson(settings);
+    old['version'] = 15;
+    await progressWrite(settings, old);
+    await manager.load();
+    expect(manager.settingsKnown, true);
+    for (final slug in prior)
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    expect(manager.hasCurrentRoot(emulator, 'dc'), false);
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    await manager.load();
+    expect((await progressJson(settings))['version'], 16);
+    for (final slug in [...prior, 'dc'])
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    (old['retroRoots'] as Map)['dc:$pkg'] = manager.rootConnection(
+      emulator,
+      'dc',
+    );
+    await progressWrite(settings, old);
+    await manager.load();
+    expect(manager.settingsKnown, false);
+    expect(manager.error, isNotNull);
+  });
+
+  test('Dreamcast preparation detects external core, config and option changes before save effects', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(),
+        p = await flycastPlan((await saturnRom()).path);
+    await verifyAndroidFlycastPreparation(manager, p, rom.path);
+    final original = Map<String, dynamic>.from(observation);
+    for (final change in ['core', 'config', 'options']) {
+      if (change == 'core') observation['core'] = 'b' * 64;
+      if (change == 'config')
+        observation['config'] = Uint8List.fromList(
+          utf8.encode('video_vsync = "false"'),
+        );
+      if (change == 'options')
+        operaOptionsText = 'flycast_internal_resolution = "1280x960"';
+      final start = calls.length;
+      await expectLater(
+        verifyAndroidFlycastPreparation(manager, p, rom.path),
+        throwsStateError,
+      );
+      expect(calls.skip(start), isNot(contains('rootReplace')));
+      observation = Map<String, dynamic>.from(original);
+      operaOptionsText = null;
+    }
+  });
+
+  test('Dreamcast missing known native flash retains console identity and cleanup reply loss retries without source firmware', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(),
+        initial = await gameboyPlan('dc', (await saturnRom()).path);
+    final seed = await File('${temp.path}/console-seed.bin')
+        .writeAsBytes(List.filled(131072, 4));
+    final hash = await progressFileHash(seed);
+    await publishAndroidFlycastConsole(
+      Directory(initial.root),
+      null,
+      seed,
+      hash,
+    );
+    final p = await flycastPlan(rom.path),
+        g = game(p),
+        saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final before = await progressJson(saves.journal);
+    final flashPath = (before['rootFlycastResources'] as Map).keys
+        .cast<String>()
+        .singleWhere((p) => p.endsWith('/dc_nvmem.bin'));
+    await File('${native.path}/$flashPath').delete();
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    expect(await saves.pending, true);
+    expect((await readAndroidFlycastConsole(Directory(p.root)))!.sha256, hash);
+    await put(flashPath, List.filled(131072, 4));
+    await saves.capture(g, cloud, p);
+    loseFirmwareCleanupReply = true;
+    await expectLater(
+      saves.restoreOriginal(g, p),
+      throwsA(isA<PlatformException>()),
+    );
+    await p.flycastResources!.single.file.delete();
+    expect(await saves.capture(g, cloud, p), false);
+    await saves.restoreOriginal(g, p);
+    expect(await saves.pending, false);
+    expect((await readAndroidFlycastConsole(Directory(p.root)))!.sha256, hash);
+  });
+
+  test('Dreamcast round trip preserves VMUs, console identity and editable options independently of cloud game progress', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(), saves = SharedAndroidSaves(manager);
+    final p = await flycastPlan(rom.path), g = game(p);
+    final original = await put(
+      p.remotePath('save/MK-51000.A1.bin'),
+      List.filled(131072, 8),
+    );
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    final resources = await progressJson(saves.journal);
+    final resourcePaths = (resources['rootFlycastResources'] as Map).keys
+        .cast<String>();
+    final optionPath = resourcePaths.singleWhere((p) => p.endsWith('.opt'));
+    final system = resourcePaths
+        .singleWhere((p) => p.endsWith('/dc_boot.bin'))
+        .replaceFirst('/dc_boot.bin', '');
+    await put('$system/dc_nvmem.bin', List.filled(131072, 3));
+    await put(
+      optionPath,
+      utf8.encode(
+        androidFlycastOptionsText({'flycast_internal_resolution': '1280x960'}),
+      ),
+    );
+    await put(p.remotePath('save/MK-51000.A1.bin'), List.filled(131072, 7));
+    await put(p.remotePath('${p.areas.last.id}/game.state'), [4, 5, 6]);
+    await saves.capture(g, cloud, p);
+    final console = (await readAndroidFlycastConsole(Directory(p.root)))!;
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect(await original.readAsBytes(), List.filled(131072, 8));
+    expect(await staged.exists(), false);
+    expect((await p.files()).keys.toSet(), {
+      'save/MK-51000.A1.bin',
+      '${p.areas.last.id}/game.state',
+    });
+    expect(await readAndroidFlycastPreferences(Directory(p.root), '42'), {
+      'flycast_internal_resolution': '1280x960',
+    });
+    final next = await flycastPlan(rom.path), nextGame = game(next);
+    await saves.begin(nextGame, next, 'a' * 64, selected: rom.path);
+    final nextRecord = await progressJson(saves.journal),
+        nextPaths = (nextRecord['rootFlycastResources'] as Map).keys
+            .cast<String>();
+    final flash = File(
+      '${native.path}/${nextPaths.singleWhere((p) => p.endsWith('/dc_nvmem.bin'))}',
+    );
+    expect(await progressFileHash(flash), console.sha256);
+    final opts = await File(
+      '${native.path}/${nextPaths.singleWhere((p) => p.endsWith('.opt'))}',
+    ).readAsBytes();
+    expect(
+      parseAndroidFlycastOptions(opts)['flycast_internal_resolution'],
+      '1280x960',
+    );
+    await saves.capture(nextGame, cloud, next);
+    await saves.restoreOriginal(nextGame, next);
+    expect(
+      (await readAndroidFlycastConsole(Directory(p.root)))!.sha256,
+      console.sha256,
+    );
+    expect(await console.file.exists(), true);
+  });
+
+  test('Dreamcast fallback and damaged working VMUs retain private recovery instead of publishing incomplete game progress', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(),
+        p = await flycastPlan((await saturnRom()).path),
+        saves = SharedAndroidSaves(manager);
+    final g = game(p);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final r = await progressJson(saves.journal),
+        paths = (r['rootFlycastResources'] as Map).keys.cast<String>();
+    final system = paths
+        .singleWhere((p) => p.endsWith('/dc_boot.bin'))
+        .replaceFirst('/dc_boot.bin', '');
+    await put('$system/dc_nvmem.bin', List.filled(131072, 3));
+    final fallback = await put(
+      '$system/vmu_save_A1.bin',
+      List.filled(131072, 5),
+    );
+    final heldCardPath = p.remotePath('save/MK-51000.A1.bin');
+    await put(heldCardPath, List.filled(131072, 6));
+    await put(p.remotePath('${p.areas.last.id}/game.state'), [7, 8]);
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    final failed = await progressJson(saves.journal);
+    final captured = failed['rootFlycastCapture'] as Map;
+    final held = failed['rootFlycastHeldProgress'] as Map;
+    expect((held['files'] as Map).length, 2);
+    expect(
+      await File(
+        '${saves.directory(r).path}/${held['directory']}/$heldCardPath',
+      ).length(),
+      131072,
+    );
+    expect(
+      (captured['files'] as Map).containsKey('$system/vmu_save_A1.bin'),
+      true,
+    );
+    expect(
+      await File(
+        '${saves.directory(r).path}/flycast-captures/${captured['directory']}/vmu_save_A1.bin',
+      ).length(),
+      131072,
+    );
+    expect(await saves.pending, true);
+    expect(api.records, isEmpty);
+    await fallback.delete();
+    final card = await put(p.remotePath('save/MK-51000.A1.bin'), [1]);
+    await expectLater(saves.capture(g, cloud, p), throwsFormatException);
+    expect(await card.readAsBytes(), [1]);
+    expect(
+      await File(
+        '${saves.directory(r).path}/${held['directory']}/$heldCardPath',
+      ).readAsBytes(),
+      List.filled(131072, 6),
+    );
+    expect(await saves.pending, true);
+    await card.writeAsBytes(List.filled(131072, 6));
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    expect((await p.files()).keys, contains('save/MK-51000.A1.bin'));
+  });
+
+  test('Dreamcast lost firmware reply recovers without source files and rejects foreign or incomplete version-five records', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(),
+        p = await flycastPlan((await saturnRom()).path),
+        saves = SharedAndroidSaves(manager);
+    final g = game(p);
+    loseFirmwarePublicationReply = true;
+    await expectLater(
+      saves.begin(g, p, 'a' * 64, selected: rom.path),
+      throwsA(isA<PlatformException>()),
+    );
+    final record = await progressJson(saves.journal);
+    await p.flycastResources!.single.file.delete();
+    await (await progressFile(
+      saves.directory(record),
+      'flycast-incoming/options.opt',
+    )).delete();
+    for (final change in [
+      {'transaction': 'f' * 32},
+      {'rootFirmware': <String, Object>{}},
+      {'rootFlycastResources': <String, Object>{}},
+    ]) {
+      await progressWrite(saves.journal, {...record, ...change});
+      await expectLater(saves.record(g, p), throwsFormatException);
+    }
+    await progressWrite(saves.journal, record);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    expect((await session.pending())!['stateAreas'], [p.areas.last.id]);
+    final current = await flycastPlan(rom.path, prepared: false);
+    final recovery = await saves.recoveryPlan(game(current), current);
+    expect(await saves.capture(g, cloud, recovery), false);
+    await saves.restoreOriginal(g, recovery);
+    expect(await session.pending(), isNull);
+    expect(api.records, isEmpty);
+  });
 
   test('Opera migration retains all version-13 bindings, persists its own Setup and refuses an old forged connection', () async {
     final previous = [

@@ -11,6 +11,7 @@ import '../session_lease.dart';
 import 'apk_download.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
+import 'flycast.dart' show clearAndroidFlycastPreferences;
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -52,6 +53,7 @@ const androidEmulators = [
       'sms',
       'genesis',
       'saturn',
+      'dc',
       'snes',
       'tg16',
     },
@@ -272,7 +274,8 @@ class AndroidEmulators extends ChangeNotifier {
         'lynx' ||
         'arcade' ||
         '3do' ||
-        'saturn' => _retroRoots,
+        'saturn' ||
+        'dc' => _retroRoots,
         _ => throw UnsupportedError('Unsupported rooted RetroArch system.'),
       };
 
@@ -317,7 +320,8 @@ class AndroidEmulators extends ChangeNotifier {
               rootConnection(emulator, 'lynx') != null ||
               rootConnection(emulator, 'arcade') != null ||
               rootConnection(emulator, '3do') != null ||
-              rootConnection(emulator, 'saturn') != null)) ||
+              rootConnection(emulator, 'saturn') != null ||
+              rootConnection(emulator, 'dc') != null)) ||
       (platform != null && hasCurrentRoot(emulator, platform)) ||
       tree(profile, emulator) != null;
 
@@ -454,6 +458,7 @@ class AndroidEmulators extends ChangeNotifier {
               'arcade',
               '3do',
               'saturn',
+              'dc',
             }.contains(platform)
             ? next
             : null,
@@ -499,6 +504,7 @@ class AndroidEmulators extends ChangeNotifier {
             'arcade',
             '3do',
             'saturn',
+            'dc',
           }.contains(platform)
           ? next
           : null,
@@ -650,6 +656,8 @@ class AndroidEmulators extends ChangeNotifier {
       _retroRoots
         ..clear()
         ..addAll(retroRoots);
+      if (emulator.id == 'retroarch')
+        await clearAndroidFlycastPreferences(data);
       await onRemoved?.call(emulator);
       if (await progressExists(_installation.path) &&
           (await progressJson(_installation))['emulator'] == emulator.id)
@@ -764,7 +772,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 15,
+        'version': 16,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -840,6 +848,7 @@ class AndroidEmulators extends ChangeNotifier {
               13,
               14,
               15,
+              16,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -890,6 +899,7 @@ class AndroidEmulators extends ChangeNotifier {
           13,
           14,
           15,
+          16,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -918,6 +928,7 @@ class AndroidEmulators extends ChangeNotifier {
           13,
           14,
           15,
+          16,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -932,7 +943,19 @@ class AndroidEmulators extends ChangeNotifier {
           ..clear()
           ..addAll(snesRoots);
         final retroRoots = <String, Map<String, String>>{};
-        if ([6, 7, 8, 9, 10, 11, 12, 13, 14, 15].contains(record['version'])) {
+        if ([
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+        ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
             final platform = (entry.key as String).split(':').first;
@@ -952,6 +975,7 @@ class AndroidEmulators extends ChangeNotifier {
                   'arcade',
                   '3do',
                   'saturn',
+                  'dc',
                 }.contains(platform) ||
                 entry.key != '$platform:${binding['package']}' ||
                 (record['version'] == 6 && !{'gb', 'gbc'}.contains(platform)) ||
@@ -964,6 +988,7 @@ class AndroidEmulators extends ChangeNotifier {
                 (record['version'] <= 12 && platform == 'arcade') ||
                 (record['version'] <= 13 && platform == '3do') ||
                 (record['version'] <= 14 && platform == 'saturn') ||
+                (record['version'] <= 15 && platform == 'dc') ||
                 binding['access'] != androidRootRetroAccess(platform) ||
                 !androidRootBinding(binding))
               throw const FormatException('Invalid RetroArch root connection');

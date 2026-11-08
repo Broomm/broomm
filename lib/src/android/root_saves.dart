@@ -11,12 +11,14 @@ import 'save_plan.dart';
 import 'retroarch_core_setup.dart';
 import 'opera.dart';
 import 'saturn.dart';
+import 'flycast.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
 
 String? androidRootRetroCore(String platform) => switch (platform) {
   '3do' => 'opera',
   'saturn' => 'mednafen_saturn',
+  'dc' => 'flycast',
   'gba' => 'mgba',
   'snes' => 'snes9x',
   'gb' || 'gbc' => 'gambatte',
@@ -39,6 +41,7 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'atari2600' ||
   '3do' ||
   'saturn' ||
+  'dc' ||
   'tg16' ||
   'genesis' ||
   'sms' ||
@@ -234,6 +237,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final driver = core == 'fbneo' ? stem.toLowerCase() : null;
   final opera = core == 'opera';
   final saturn = core == 'mednafen_saturn';
+  final flycast = core == 'flycast';
   final configNonce = progressNonce();
   final savedConfig = utf8.decode(report['config'] as Uint8List);
   final preferences = androidIni(savedConfig);
@@ -248,6 +252,15 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       : <String, String>{};
   final saturnOptions = saturn
       ? await readAndroidSaturnOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  final flycastOptions = flycast
+      ? await readAndroidFlycastOptions(
           manager.channel,
           binding,
           preferences,
@@ -272,11 +285,13 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final area = ProgressArea(
     'save',
     'root-${platform.slug}/$content/saves',
-    prefix: driver == null && !opera && !saturn ? stem : null,
-    exact: core == 'gambatte' || driver != null || opera || saturn
+    prefix: driver == null && !opera && !saturn && !flycast ? stem : null,
+    exact: core == 'gambatte' || driver != null || opera || saturn || flycast
         ? null
         : '$stem.srm',
-    pattern: saturn
+    pattern: flycast
+        ? r'^[^/]+\.[A-D][12]\.bin$'
+        : saturn
         ? '^(?:${RegExp.escape(stem)}|mednafen_saturn_libretro_shared)\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)\$'
         : opera
         ? '^(?:opera/per_game/${RegExp.escape(stem)}\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|${RegExp.escape(stem)}\\.srm|3DO\\.nvram)\$'
@@ -326,9 +341,14 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
-    if (core == 'mednafen_lynx' || opera || saturn) ...{
+    if (core == 'mednafen_lynx' || opera || saturn || flycast) ...{
       'system_directory': '$native/$base/system-$configNonce',
       'systemfiles_in_content_dir': 'false',
+    },
+    if (flycast) ...{
+      'core_options_path': '$native/$base/options-$configNonce.opt',
+      'game_specific_options': 'false',
+      'global_core_options': 'true',
     },
     if (core == 'virtualjaguar' &&
         androidJaguarHasReviewedStates(report['abi'], report['core']))
@@ -352,12 +372,14 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       AndroidSaveArea(
         area,
         '$base/saves',
-        rename: core == 'gambatte' || driver != null || opera || saturn
+        rename:
+            core == 'gambatte' || driver != null || opera || saturn || flycast
             ? null
             : '$stem.srm',
         arcadeDriver: driver,
         operaStem: opera ? stem : null,
         saturnStem: saturn ? stem : null,
+        flycastVmus: flycast,
       ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
@@ -368,8 +390,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
-      if (opera || saturn) 'transaction': configNonce,
-      if (opera || saturn) ...{
+      if (opera || saturn || flycast) 'transaction': configNonce,
+      if (opera || saturn || flycast) ...{
         'sourceCore': report['core'] as String,
         'sourceAbi': report['abi'] as String,
         'sourceConfig':
@@ -384,6 +406,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     },
     operaOptions: operaOptions,
     saturnOptions: saturnOptions,
+    flycastOptions: flycastOptions,
+    flycastNativeOptions: flycastOptions,
   );
 }
 
@@ -466,5 +490,45 @@ Future<void> verifyAndroidSaturnPreparation(
       options.entries.any((e) => plan.saturnOptions[e.key] != e.value))
     throw StateError(
       'Saturn’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
+}
+
+Future<void> verifyAndroidFlycastPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'flycast')
+    throw const FormatException('Invalid Flycast preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: 'dc',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidFlycastOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.flycastNativeOptions.length ||
+      options.entries.any((e) => plan.flycastNativeOptions[e.key] != e.value))
+    throw StateError(
+      'Flycast’s core options changed during preparation. Existing progress was kept. Try Play again.',
     );
 }

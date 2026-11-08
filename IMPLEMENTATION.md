@@ -1,5 +1,65 @@
 # Implementation plan
 
+## Rooted Flycast source increment — 2026-11-08
+
+Dreamcast Setup pins source `7adbf3c` at retained artifact commit `f51373b`.
+Version 16 settings preserve versions 1–15 and all seventeen earlier bindings.
+The initial concrete route accepts self-contained, parent-free CHD v5 images up
+to 2 GiB physical/logical size. Canonical 2 MiB `dc_boot.bin` comes from this
+platform's RomM firmware catalogue, with immutable cache repair retaining old
+objects. CUE/GDI/M3U/CDI transport and Naomi/Atomiswave are not enabled here.
+
+Native game-ID VMUs and legacy filename VMUs retain desktop-compatible names
+and exact 128 KiB lengths in private profile/game folders. Eight native plus
+eight legacy cards are bounded separately from matched states; only Flycast
+gets a 64 MiB state / 128 MiB total progress limit. Session options force All
+VMUs and disable linked DreamPotato storage, while preserving other native and
+per-game preferences. Normal close captures those editable values separately
+from cloud progress. Remove clears only owned configuration after verified
+uninstall, retaining progress, console objects and recovery across profiles.
+
+Mutable `dc_nvmem.bin` is a local profile console identity shared across that
+profile's games, never one game's cloud VMU or immutable BIOS. Version-5 resource
+records retain initial identity, native resources, private captures, publication
+readbacks and recovery without source firmware/cache or the general marker.
+Missing known flash is damaged recovery. New game progress is held privately
+before auxiliary checks. Mid-session VMU-mode/linked-storage changes retain
+ordinary saves/states plus fallback VMUs for manual recovery and block sync;
+no implicit card selection, conversion or deletion resolves that ambiguity.
+
+Native selectors and resource operations bind core, package/user, profile/game,
+configuration nonce, UID/label, closure and exact metadata. A new native test
+reproduced cleanup of an interrupted install rejecting its own retained hard
+link. Recovery now verifies precisely the expected two names/inode/checksum
+before unlinking the incoming stage, with strict extra-link/writer refusal.
+The correction also covers the existing Lynx/Opera/Saturn resource boundaries.
+The original failing log and AndroidRuntime stack remain recorded locally.
+
+All 107 focused cases, four actual ABI downloads and 26 disposable Thor native
+groups pass. The exact 64 MiB state boundary and oversized refusal pass; the
+exact 2 GiB image staged in 4,496 ms under the unchanged 30-second deadline.
+Bridge/fixture compilation and clean analysis pass. The final full suite has
+714 passes and one existing host skip, with 357 source/test input fingerprints
+unchanged throughout the run. Packaged Flycast BIOS,
+gameplay, in-game saves, states, preference retention and two-account acceptance
+remain pending. Multi-file media remains unfinished; PR #4 stays draft.
+
+## Installed native writer guard — 2026-11-08
+
+Build 1096 (`a01bfd6`) upgraded in place with the retained preview key and stable
+UID. The original saved sign-in opened without a password. Tetris Play restored
+its existing state hash, reached the title/attract sequence, and normal Quit
+triggered automatic capture/restore/sync without a closure confirmation. Primary
+223 and its state stayed unchanged. All 49 accepted progress files, 19 managed
+native files, 13 original standalone/managed files, fourteen cores and seventeen
+bindings remain intact; journals were cleared. Its thirteen scoped log lines
+contain no warnings/errors. A copied Saturn line-count threshold was inapplicable
+to this short session; actual launch identification, verified exit and checkpoint
+readback establish completion. Application CI `42455382622` passed all checks
+and five packages; Mesen `42455382608` passed all four jobs/post-job steps.
+This predates the later interrupted-resource correction and Flycast. See the
+[device evidence](docs/android-root-writer-guard.json).
+
 ## Native rooted progress writer guard — 2026-11-08
 
 Review found ordinary root save replacement and ROM cleanup relying on Dart's

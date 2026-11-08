@@ -84,6 +84,7 @@ internal class RootSaveFiles(
         require(areas.size in 1..2)
         if (areas.any { it.containsKey("operaStem") }) return operaInventory(areas)
         if (areas.any { it.containsKey("saturnStem") }) return saturnInventory(areas)
+        if (areas.any { it.containsKey("flycastVmus") }) return flycastInventory(areas)
         val result = linkedMapOf<String, BundleEntry>()
         var total = 0L
         var base: String? = null
@@ -126,13 +127,120 @@ internal class RootSaveFiles(
                 val metadata = metadata(file)
                 val bytes = bytes(file, progressLimit(relative))
                 total += bytes.size
-                require(total <= 64L * 1024 * 1024) { "Rooted progress exceeds 64 MiB." }
+                require(total <= (if (coreName == "flycast") 128L else 64L) * 1024 * 1024) { "Rooted progress exceeds its size limit." }
                 result[relative] = BundleEntry(bytes.size.toLong(), digest(bytes), metadata)
             }
         }
         return result
     }
     data class BundleEntry(val bytes: Long, val sha256: String, val metadata: String)
+
+    private fun flycastInventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
+        require(coreName == "flycast")
+        val ordinary = areas.single { it.containsKey("flycastVmus") }
+        require(ordinary.keys == setOf("path", "flycastVmus") && ordinary["flycastVmus"] == "true")
+        val directory = ordinary.getValue("path")
+        managedPath("$directory/probe.A1.bin", saveOnly = true, core = coreName)
+        val stateAreas = areas.filter { !it.containsKey("flycastVmus") }
+        require(stateAreas.all { it.getValue("path").startsWith(directory.removeSuffix("/saves") + "/states/") })
+        val result = if (stateAreas.isEmpty()) linkedMapOf() else inventory(stateAreas).toMutableMap()
+        var total = result.values.sumOf { it.bytes }
+        val folder = path(directory)
+        if (!present(folder)) return result
+        val stat = Os.lstat(folder.path)
+        require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+            Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+        val names = folder.list() ?: error("Cannot inspect Dreamcast VMUs")
+        require(names.size <= 1024)
+        val selected = names.filter { Regex("[^/]+\\.[A-D][12]\\.bin").matches(it) }
+        require(selected.size <= 16) { "Dreamcast has more than eight native and eight legacy VMUs. Recovery was kept." }
+        for (name in selected.sorted()) {
+            live()
+            val relative = "$directory/$name"
+            managedPath(relative, saveOnly = true, core = coreName)
+            val file = path(relative)
+            val metadata = metadata(file)
+            val data = bytes(file, 131072)
+            require(data.size == 131072) { "Dreamcast VMU is incomplete. Recovery was kept." }
+            total += data.size
+            require(total <= 128L * 1024 * 1024 && result.size < 128 && !result.containsKey(relative))
+            result[relative] = BundleEntry(data.size.toLong(), digest(data), metadata)
+        }
+        return result
+    }
+
+    /** Concrete transaction-bound Dreamcast resources, outside game save selectors. */
+    fun flycastResourceLimit(relative: String, config: String): Int {
+        require(coreName == "flycast")
+        managedPath(config, core = coreName)
+        val name = config.substringAfterLast('/')
+        require(Regex("config-[a-f0-9]{32}\\.cfg").matches(name))
+        val nonce = name.removePrefix("config-").removeSuffix(".cfg")
+        val base = config.substringBeforeLast('/')
+        if (relative == "$base/options-$nonce.opt") return MAX_BYTES
+        require(relative.startsWith("$base/system-$nonce/dc/") && !relative.substringAfter("/dc/").contains('/'))
+        return when (relative.substringAfterLast('/')) {
+            "dc_boot.bin" -> 2097152
+            "dc_nvmem.bin" -> 131072
+            else -> {
+                require(Regex("vmu_save_[A-D][12]\\.bin").matches(relative.substringAfterLast('/')))
+                131072
+            }
+        }
+    }
+
+    fun flycastResources(config: String): Map<String, BundleEntry> {
+        val nonce = config.substringAfterLast('/').removePrefix("config-").removeSuffix(".cfg")
+        val base = config.substringBeforeLast('/')
+        val candidates = listOf("$base/options-$nonce.opt", "$base/system-$nonce/dc/dc_boot.bin",
+            "$base/system-$nonce/dc/dc_nvmem.bin") +
+            ('A'..'D').flatMap { port -> (1..2).map { "$base/system-$nonce/dc/vmu_save_$port$it.bin" } }
+        return candidates.mapNotNull { relative ->
+            val limit = flycastResourceLimit(relative, config)
+            val file = path(relative)
+            if (!present(file)) null else {
+                val metadata = metadata(file)
+                val data = bytes(file, limit)
+                require(relative.endsWith(".opt") || data.size == limit) { "Dreamcast resource is incomplete. Recovery was kept." }
+                relative to BundleEntry(data.size.toLong(), digest(data), metadata)
+            }
+        }.toMap()
+    }
+
+    fun flycastResource(relative: String, config: String, before: String?, after: String?,
+                        payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
+        val limit = flycastResourceLimit(relative, config)
+        require(!relative.substringAfterLast('/').startsWith("vmu_save_")) { "Fallback VMUs are read-only recovery data." }
+        require(if (after == null) before != null && payload == null && token.endsWith("-out")
+            else before == null && payload != null && (relative.endsWith(".opt") || payload.size == limit) && token.endsWith("-in"))
+        ensureClosed()
+        if (after == null) recoverResourceLink(relative, before!!, token, limit, ensureClosed)
+        publish(relative, before, after, payload, null, token, limit, beforeCommit = ensureClosed)
+        if (after == null) {
+            val folder = path(relative).parentFile!!
+            val stage = File(folder, ".${relative.substringAfterLast('/')}.broomm-${token.removeSuffix("-out")}-in")
+            if (present(stage)) {
+                val stat = Os.lstat(stage.path)
+                require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L &&
+                    stat.st_uid in setOf(0, uid) && hash(stage, limit) == before)
+                live(); ensureClosed(); Os.remove(stage.path); flushDirectory(folder)
+            }
+            // Unknown core-created files stay in the owned session directory.
+            // Never infer that an unrecognized file is disposable cache/progress.
+            var directory = folder
+            repeat(if (relative.endsWith(".opt")) 0 else 2) {
+                if (present(directory)) {
+                    val stat = Os.lstat(directory.path)
+                    require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                        Os.getxattr(directory.path, "security.selinux").contentEquals(label))
+                    if (directory.list()?.isEmpty() == true) {
+                        live(); ensureClosed(); Os.remove(directory.path); flushDirectory(directory.parentFile!!)
+                    }
+                }
+                directory = directory.parentFile!!
+            }
+        }
+    }
 
     private fun operaInventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
         require(coreName == "opera")
@@ -212,7 +320,7 @@ internal class RootSaveFiles(
 
     /** Read-only option files from the selected emulator's known storage roots. */
     fun options(absolute: String, roots: List<File>): ByteArray? {
-        require(coreName in setOf("opera", "mednafen_saturn") && absolute.length <= 1024 && absolute.startsWith('/') &&
+        require(coreName in setOf("opera", "mednafen_saturn", "flycast") && absolute.length <= 1024 && absolute.startsWith('/') &&
             absolute.none { it.code < 32 || it == '\\' } &&
             absolute.split('/').drop(1).none { it.isEmpty() || it == "." || it == ".." } &&
             (absolute.endsWith(".opt") || absolute.endsWith(".cfg"))) { "Invalid RetroArch option path." }
@@ -250,6 +358,7 @@ internal class RootSaveFiles(
         require(if (after == null) before != null && payload == null && token.endsWith("-out")
             else before == null && payload != null && payload.size == size && token.endsWith("-in"))
         ensureClosed()
+        if (after == null) recoverResourceLink(relative, before!!, token, size, ensureClosed)
         publish(relative, before, after, payload, null, token, size, beforeCommit = ensureClosed)
         if (after == null) {
             val folder = path(relative).parentFile!!
@@ -291,6 +400,7 @@ internal class RootSaveFiles(
         require(if (after == null) before != null && payload == null && token.endsWith("-out")
             else before == null && payload != null && payload.size == size && token.endsWith("-in"))
         ensureClosed()
+        if (after == null) recoverResourceLink(relative, before!!, token, size, ensureClosed)
         publish(relative, before, after, payload, null, token, size, beforeCommit = ensureClosed)
         if (after == null) {
             val folder = path(relative).parentFile!!
@@ -315,6 +425,7 @@ internal class RootSaveFiles(
     }
 
     fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) {
+        require(coreName != "flycast" || !relative.contains("/saves/") || payload == null || payload.size == 131072) { "Dreamcast VMU is incomplete. Recovery was kept." }
         require(coreName != "mednafen_saturn" || !relative.contains("/saves/") || payload == null || payload.size == progressLimit(relative)) { "Saturn backup memory is incomplete. Recovery was kept." }
         require(coreName != "opera" || !relative.contains("/saves/") || payload == null || payload.size == 32768) {
             "Opera NVRAM must contain exactly 32768 bytes. Recovery was kept."
@@ -336,6 +447,7 @@ internal class RootSaveFiles(
             else before == null && payload != null && token.endsWith("-in"))
         require(payload == null || payload.size == 512) { "The Lynx BIOS must contain exactly 512 bytes." }
         ensureClosed()
+        if (after == null) recoverResourceLink(relative, before!!, token, 512, ensureClosed)
         publish(relative, before, after, payload, null, token, 512, beforeCommit = ensureClosed)
         if (after == null) {
             val folder = path(relative).parentFile!!
@@ -357,6 +469,24 @@ internal class RootSaveFiles(
                 }
             }
         }
+    }
+
+    /** An interrupted exclusive install can leave precisely these two names
+     * linked. Verify the journal's incoming link before an outgoing cleanup;
+     * never relax ordinary file metadata or adopt a foreign extra link. */
+    private fun recoverResourceLink(relative: String, expected: String, token: String, limit: Int, ensureClosed: () -> Unit) {
+        require(Regex("[a-f0-9]{32}-out").matches(token) && Regex("[a-f0-9]{64}").matches(expected))
+        val file = path(relative)
+        val stage = File(file.parentFile, ".${file.name}.broomm-${token.removeSuffix("-out")}-in")
+        if (!present(file) || !present(stage)) return
+        val a = Os.lstat(file.path); val b = Os.lstat(stage.path)
+        if (a.st_ino != b.st_ino || a.st_dev != b.st_dev) return
+        require(a.st_nlink == 2L && b.st_nlink == 2L && metadata(file, 2) == metadata(stage, 2) && hash(file, limit) == expected) {
+            "Interrupted resource publication changed. Recovery was kept."
+        }
+        live(); ensureClosed()
+        require(Os.lstat(stage.path).st_ino == a.st_ino && Os.lstat(file.path).st_nlink == 2L)
+        Os.remove(stage.path); flushDirectory(file.parentFile!!)
     }
 
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
@@ -652,7 +782,8 @@ internal class RootSaveFiles(
     }
 
     private fun romLimit(name: String): Long =
-        (if (coreName == "mednafen_saturn" && name.endsWith(".chd", true)) 1024L
+        (if (coreName == "flycast" && name.endsWith(".chd", true)) 2048L
+            else if (coreName == "mednafen_saturn" && name.endsWith(".chd", true)) 1024L
             else if (coreName == "opera" && name.substringAfterLast('.').lowercase() in setOf("chd", "iso", "bin")) 1024L
             else if (coreName == "fbneo" && name.endsWith(".zip", true)) 128L
             else if (coreName == "mupen64plus_next" && name.substringAfterLast('.').lowercase() in setOf("z64", "v64", "n64")) 64L else 32L) * 1024 * 1024
@@ -662,10 +793,12 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera", "mednafen_saturn"))
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera", "mednafen_saturn", "flycast"))
             return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
         fun limit(path: String, core: String = "mgba"): Int = when {
+            core == "flycast" && path.contains("/saves/") -> 131072
+            core == "flycast" && path.contains("/states/") -> 64 * 1024 * 1024
             core == "mednafen_saturn" && path.contains("/saves/") -> when {
                 path.endsWith(".smpc") -> 12
                 path.endsWith(".4mb.bcr") -> 4 * 1024 * 1024
@@ -679,7 +812,8 @@ internal class RootSaveFiles(
         }
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false, core: String = "mgba") {
-            val save = if (core == "fbneo") "saves/fbneo/(?:[a-z0-9_]{1,64}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)"
+            val save = if (core == "flycast") "saves/[^/]+\\.[A-D][12]\\.bin"
+                else if (core == "fbneo") "saves/fbneo/(?:[a-z0-9_]{1,64}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)"
                 else if (core == "opera") "saves/(?:opera/per_game/[^/]+\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|[^/]+\\.srm|3DO\\.nvram)"
                 else if (core == "mednafen_saturn") "saves/[^/]+\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)"
                 else "saves/[^/]+\\.(?:srm|rtc)"
@@ -691,7 +825,7 @@ internal class RootSaveFiles(
         }
 
         fun romPath(path: String, core: String = "mgba"): List<String> {
-            val extensions = if (core == "mednafen_saturn") "chd" else if (core == "opera") "chd|iso|bin"
+            val extensions = if (core in setOf("mednafen_saturn", "flycast")) "chd" else if (core == "opera") "chd|iso|bin"
                 else "gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg|lnx|lyx|bll|o|zip"
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
                 Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:$extensions))")
