@@ -14,6 +14,16 @@ Thor preserved native settings bytes/metadata. Official beta 12126 initialized
 through native UI and detected Odin Controller; game/BIOS/shutdown and account
 save integration remain pending. See [evidence and next requirements](docs/android-duckstation-root.md).
 
+Build 1118 subsequently passed the complete in-app diagnostic, unchanged native
+settings/BIOS, both saved-account restorations and repeated PSP/RetroArch
+preservation audits. All CI checks/five packages passed for `7fc0e8f`.
+Native PS1 research found a fresh-boot defect hidden by successful state resume:
+the reviewed beta consumes a translated document path, not a raw content URI.
+The next correction adds read-only document aliases and version/signer-bound
+launch translation; JVM refusals and bridge compilation pass. Actual Broomm
+provider acceptance remains pending. Native Slot 1/resume files are retained,
+unassigned; ordinary-save/input/root-session acceptance is still outstanding.
+
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed
 
 PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP

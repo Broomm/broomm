@@ -7,6 +7,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
+import android.provider.DocumentsContract
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -16,16 +17,13 @@ import java.io.FileNotFoundException
 class GameContentProvider : ContentProvider() {
     override fun onCreate() = true
     private fun file(uri: Uri): File {
-        val segments = uri.pathSegments
-        if (segments.size < 3 || segments.size > 35 || segments[0] != "game" ||
-            !Regex("[a-f0-9]{32}").matches(segments[1])) throw FileNotFoundException("Invalid game grant")
-        val record = context!!.getSharedPreferences("game-grants", 0).getString(segments[1], null)
+        val grant = try { gameGrantPath(uri.pathSegments) }
+            catch (_: IllegalArgumentException) { throw FileNotFoundException("Invalid game grant") }
+        val record = context!!.getSharedPreferences("game-grants", 0).getString(grant.token, null)
             ?: throw FileNotFoundException("Game grant expired")
         val value = JSONObject(record)
         val files = value.getJSONArray("files")
-        val relative = segments.drop(2)
-        if (relative.any { it.isEmpty() || it == "." || it == ".." || it.contains('\\') || it.contains('/') || it.contains('\u0000') }) throw FileNotFoundException("Invalid game path")
-        val path = value.getString("base") + "/" + relative.joinToString("/")
+        val path = value.getString("base") + "/" + grant.relative.joinToString("/")
         if (!(0 until files.length()).any { files.getString(it) == path }) throw FileNotFoundException("Unknown game file")
         return try { gameLibraryFile(context!!.filesDir, path) }
         catch (_: Exception) { throw FileNotFoundException("Game file is missing or linked") }
@@ -34,11 +32,16 @@ class GameContentProvider : ContentProvider() {
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?,
                        selectionArgs: Array<out String>?, sortOrder: String?): Cursor {
         val f = file(uri)
+        val document = uri.pathSegments.firstOrNull() == "document"
         val columns = projection ?: arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE)
         val result = MatrixCursor(columns)
         result.addRow(columns.map { when (it) {
             OpenableColumns.DISPLAY_NAME -> f.name
             OpenableColumns.SIZE -> f.length()
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID -> if (document) gameGrantPath(uri.pathSegments).documentId else null
+            DocumentsContract.Document.COLUMN_MIME_TYPE -> if (document) "application/octet-stream" else null
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED -> if (document) f.lastModified() else null
+            DocumentsContract.Document.COLUMN_FLAGS -> if (document) 0 else null // Read-only files, no folder capability.
             else -> null
         } })
         return result

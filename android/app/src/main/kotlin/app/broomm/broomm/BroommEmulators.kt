@@ -160,6 +160,8 @@ class BroommEmulators(private val activity: Activity) {
                             val pkg = packageName(call.argument<String>("package"))
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
+                            val duckDocuments = call.argument<String>("emulator") == "duckstation" &&
+                                duckStationDocuments(pkg, currentApp.getValue("build"))
                             val files = (call.argument<List<String>>("files") ?: error("Missing game manifest"))
                                 .map { gameLibraryFile(activity.filesDir, it).path }
                             val selected = gameLibraryFile(activity.filesDir,
@@ -176,13 +178,21 @@ class BroommEmulators(private val activity: Activity) {
                             val token = UUID.randomUUID().toString().replace("-", "")
                             val activeRoot = call.argument<String>("root")
                             require(activeRoot == null || Regex("[a-f0-9]{32}:(ppsspp|melonds|azahar)").matches(activeRoot))
+                            val documents = if (duckDocuments) files.map {
+                                gameGrantPath(listOf("document", "$token:${it.removePrefix("$content/")}"))
+                            } else emptyList()
                             check(activity.getSharedPreferences("game-grants", 0).edit()
                                 .putString(token, JSONObject().put("files", JSONArray(files)).put("base", content).toString())
                                 .putString("active-root", activeRoot).commit())
-                            val uris = files.map { path -> Uri.Builder().scheme("content").authority("${activity.packageName}.games")
-                                .appendPath("game").appendPath(token).also { builder ->
-                                    for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)
-                                }.build() }
+                            val uris = files.mapIndexed { index, path ->
+                                Uri.Builder().scheme("content").authority("${activity.packageName}.games").also { builder ->
+                                    if (duckDocuments) builder.appendPath("document").appendPath(documents[index].documentId)
+                                    else {
+                                        builder.appendPath("game").appendPath(token)
+                                        for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)
+                                    }
+                                }.build()
+                            }
                             val uri = uris[files.indexOf(selected)]
                             val nativeRom = call.argument<String>("nativeRom")
                             val target = call.argument<String>("activity") ?: error("Missing emulator activity")
@@ -203,7 +213,12 @@ class BroommEmulators(private val activity: Activity) {
                                     "azahar" -> { putExtra("SelectedGame", uri.toString()); putExtra("launchedFromShortcut", true) }
                                     "citra-mmj" -> putExtra("GamePath", uri.toString())
                                     "dolphin" -> putExtra("AutoStartFile", uri.toString())
-                                    "duckstation" -> { putExtra("bootPath", uri.toString()); putExtra("resumeState", false) }
+                                    "duckstation" -> {
+                                        putExtra("bootPath", if (duckDocuments)
+                                            duckStationGamePath("${activity.packageName}.games", documents[files.indexOf(selected)])
+                                            else uri.toString())
+                                        if (!duckDocuments) putExtra("resumeState", false)
+                                    }
                                     "retroarch" -> {
                                         val core = call.argument<String>("core") ?: error("Select a RetroArch core first")
                                         require(Regex("[a-z][a-z0-9_]{0,63}").matches(core))
@@ -262,6 +277,8 @@ class BroommEmulators(private val activity: Activity) {
                                 val root = Uri.parse("content://${activity.packageName}.games/game/$token")
                                 activity.revokeUriPermission(root, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
+                            activity.revokeUriPermission(Uri.parse("content://${activity.packageName}.games/document"),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             check(prefs.edit().clear().commit())
                             result.success(null)
                         }
@@ -282,6 +299,16 @@ class BroommEmulators(private val activity: Activity) {
     private fun packageName(value: String?): String {
         require(value != null && value.length < 160 && Regex("[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+").matches(value))
         return value
+    }
+    @Suppress("DEPRECATION")
+    private fun duckStationDocuments(pkg: String, build: String): Boolean {
+        require(pkg == "com.github.stenzek.duckstation") { "Invalid DuckStation package." }
+        val info = activity.packageManager.getPackageInfo(pkg, 0)
+        val code = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
+        if (code != 12126L) return false
+        val identity = RootInspection.identity(activity, pkg) // Package metadata only; does not request root.
+        require(identity["build"] == build) { "DuckStation changed before launch. Refresh status and retry." }
+        return duckStationDocumentLaunch(code, info.versionName, identity.getValue("signer") as String)
     }
     private fun packages(values: List<String>?): List<String> {
         require(values != null && values.size in 1..32)

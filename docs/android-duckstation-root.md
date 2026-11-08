@@ -37,8 +37,17 @@ Eleven focused Flutter cases pass, including DuckStation response immutability,
 foreign package/user refusal and the visible save-folder boundary. Kotlin/JVM
 subprocess regressions pass for initialized metadata, unavailable/truncated
 observations and ownership/path/mount/file refusal boundaries. Full Android
-bridge compilation and targeted Dart analysis pass. These do not establish
-in-app APK acceptance or save synchronization.
+bridge compilation and targeted Dart analysis pass. Full CI for `7fc0e8f` passed
+all platform checks and five packages. Its retained-key build **1118** passed
+the complete in-app diagnostic on the Thor, including app-files metadata and the
+explicit save-folder limit. Native BIOS/settings bytes and metadata were identical
+before/after inspection. Both saved accounts restored normally without passwords
+or credential export. The repeated audits preserve both PSP private inventories,
+backups and primaries 255/257/260/259, all 49 earlier RetroArch progress files,
+nineteen managed native files, thirteen original files, four retained VMUs,
+fifteen cores and eighteen bindings. The data-preserving upgrade retained Broomm
+UID 10134 and its exact emulator-settings hash. This does not establish
+DuckStation save synchronization.
 
 ## Native build and first-run research
 
@@ -64,9 +73,57 @@ skipped; optional RetroAchievements was left disabled without an account.
 The native Folders page shows default app-private `memcards`/`savestates` paths;
 the initialized INI has no Folders override and Card1Type is PerGameTitle.
 Folder relocation was not used. Its experimental move/copy feature is not a
-proven account-isolation mechanism. No PS1 game, ordinary card or state round
-trip is claimed by this checkpoint. Injected ADB UI observations do not establish
-physical controller actuation or owner visual verification.
+proven account-isolation mechanism.
+
+Native research subsequently copied the existing Mac RomM Mega Man X4 CHD
+(6583, 380,622,493 bytes, SHA-256
+`eed3c1dd60fe4959f61c428870b4ae6cbeb22f16a2e5f7ea902ca0c6334f5ba1`)
+and BIOS into a new disposable Thor Download folder, without copying progress or
+credentials. Broomm also downloaded that game through its normal Store.
+DuckStation's own importer recognized the BIOS as `ps-22a.bin`; SHA-256:
+`71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3`.
+Android's Downloads provider stalled listing the test folder; external storage's
+provider worked. Native document-picker boot rendered the intro/title and
+automatic demo for `SLUS-00561`. Native Slot 1 produced
+`savestates/SLUS-00561_1.sav` (1,339,224 bytes,
+`d5a177e7edfbd629f1b9f75141b6c132bedb2c87d98c02be45bd1a81959e5578`).
+Normal Close Game retained a distinct `_resume.sav` and removed the emulation
+activity while core/video/CDROM threads remained alive. Ordinary saving,
+interactive gameplay and physical input are not yet accepted. All native test
+states remain unassigned; no Broomm PS1 session or cloud publication occurred.
+Injected ADB observations do not establish owner visual verification.
+
+## Fresh-boot handoff correction — native acceptance pending
+
+The exact APK was inspected privately with Android 13's preinstalled `dexdump`;
+no decompiler dependency, APK redistribution or copied upstream implementation
+was introduced. The activity reads `bootPath` and `saveStatePath`. The old
+`resumeState` extra is absent from its reader. Its document picker translates
+URIs into native `/android_content/` or `/android_content_id/` paths.
+
+A valid state reached the title through an external intent, but the missing-state
+control exposed a different failure: fresh ROM access rejected the raw content
+URI. A state can restore its own media path and mask this broken handoff. The
+translated external-storage path boots without a state and avoids that error.
+These are native external-provider observations, not Broomm provider acceptance.
+
+The adapter now selects the translated contract only for the inspected version
+12126/name/signer. It gives the game's existing read-only capability a document
+alias, with the same token, file allowlist and owned-library checks. Exact file
+metadata reports no write/delete/rename/folder capability. Related known files
+receive individual grants; release revokes document aliases and legacy paths.
+Other builds/emulators retain their existing handoff. A mismatched 12126 identity
+refuses before granting access. No save-folder connection is added. Kotlin/JVM
+regressions cover corresponding aliases, Unicode/space names, malformed paths,
+boundary refusals and version/signer selection; bridge compilation passes.
+Actual Broomm provider and repeated-session/state acceptance remain pending.
+
+The APK also shows that base settings load once into a retained interface and
+save when MainActivity pauses. Replacing `settings.ini` beneath a cached process
+cannot be assumed to redirect the next game and risks a later rewrite. Do not
+copy PPSSPP's settings-loan design without verifying this app's actual reload
+and shutdown contract. Threads alone cannot establish live gameplay or complete
+writer shutdown here.
 
 ## Required before root save sessions
 

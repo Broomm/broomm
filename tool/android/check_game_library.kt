@@ -4,10 +4,35 @@ import app.broomm.broomm.gameLibraryRelative
 import app.broomm.broomm.preparedCartridgeFile
 import app.broomm.broomm.preparedCartridgeFromRelative
 import app.broomm.broomm.preparedCartridgeRelative
+import app.broomm.broomm.GameGrantPath
+import app.broomm.broomm.gameGrantPath
+import app.broomm.broomm.duckStationDocumentLaunch
+import app.broomm.broomm.duckStationGamePath
 import java.io.File
 import java.nio.file.Files
 
 fun main() {
+    val token = "a".repeat(32)
+    val parts = listOf("Discs", "Mega Man – X4 #1.chd")
+    val legacy = gameGrantPath(listOf("game", token) + parts)
+    val document = gameGrantPath(listOf("document", "$token:${parts.joinToString("/")}"))
+    check(legacy == document && document == GameGrantPath(token, parts))
+    check(duckStationGamePath("app.broomm.broomm.games", document) ==
+        "/android_content/app.broomm.broomm.games/document@$token/Discs/Mega Man – X4 #1.chd")
+    for (bad in listOf(
+        emptyList(), listOf("document", "$token:"), listOf("document", "foreign:Game.chd"),
+        listOf("document", "$token:../Game.chd"), listOf("document", "$token:dir//Game.chd"),
+        listOf("document", "$token:dir\\Game.chd"), listOf("document", "$token:Game\u0000.chd"),
+        listOf("document", "$token:Game\n.chd"), listOf("document", "$token:${"x".repeat(4097)}"),
+        listOf("document", "$token:Game.chd", "extra"), listOf("document", "$token:dir/./Game.chd"),
+    )) check(runCatching { gameGrantPath(bad) }.isFailure)
+    check(runCatching { duckStationGamePath("foreign/path.games", document) }.isFailure)
+    val signer = "a6357957d296b3b03edeb62da317cb347ecde63b6577977ffcbfe0d9a6975450"
+    check(duckStationDocumentLaunch(12126, "0.1-12693-gcc4a0d678", signer))
+    check(!duckStationDocumentLaunch(5432, "older", "unknown"))
+    check(runCatching { duckStationDocumentLaunch(12126, "changed", signer) }.isFailure)
+    check(runCatching { duckStationDocumentLaunch(12126, "0.1-12693-gcc4a0d678", "f".repeat(64)) }.isFailure)
+    println("PASS: legacy/document capabilities correspond; Unicode/space names preserved; invalid identities, traversal, control characters and oversized aliases refused; reviewed DuckStation contract is signer/version bound")
     val fixture = Files.createTempDirectory("broomm-game-library-").toFile().canonicalFile
     try {
         val real = File(fixture, "files").apply { mkdir() }
