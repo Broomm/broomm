@@ -1,5 +1,17 @@
 # Implementation plan
 
+## FinalBurn Neo artifact preparation — 2026-11-07
+
+Four unmodified Android archives are retained with per-ABI source provenance:
+ARM64/x86 embed `d15071a`; ARMv7/x64 embed `4cdb31f`. The corresponding inspected
+Libretro wrappers are identical, including native NVRAM/memory-card paths;
+driver differences and state-build identities remain distinct. Source/archive/
+library hashes, ELF identities, Android recipes, complete upstream non-commercial
+FBNeo/MAME terms and component notices are retained. All four libraries depend
+only on Android libc/libm/libdl. No NDK reproduction or gameplay is claimed.
+This artifact-only increment enables no new route; concrete archive/nested-save
+handling and packaged acceptance remain pending.
+
 ## Rooted Lynx device acceptance — 2026-11-07
 
 Build 1083 (`03dec28`) passed normal Lynx Setup and Crystal Mines II Play on
