@@ -1,0 +1,571 @@
+{
+  "version": 1,
+  "core": "flycast",
+  "build_version": "7adbf3c",
+  "native_version": "7adbf3c",
+  "entry": "flycast_libretro_android.so",
+  "captured": "2026-11-08",
+  "source": {
+    "repository": "https://github.com/flyinghead/flycast",
+    "source_revision": "7adbf3caef251b153e348df3f469a0f35878339d",
+    "source_archive": "https://codeload.github.com/flyinghead/flycast/tar.gz/7adbf3caef251b153e348df3f469a0f35878339d",
+    "archive_sha256": "84e4d734f839bd68a6ec19353ecbfb2286f93ca7969fd32dc5b9dd7b48f3519e",
+    "archive_bytes": 35800797
+  },
+  "license": "GPL-2.0-or-later and retained component notices.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/flycast_libretro_android.so.zip",
+      "archive_bytes": 4909519,
+      "archive_sha256": "de6e838bfed4abe61ee5ee325eaa9a8f6b61f483d0defa5b35dc7960f7d9a034",
+      "payload_bytes": 17198568,
+      "payload_sha256": "741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libandroid.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "source_commit": "7adbf3caef251b153e348df3f469a0f35878339d"
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/flycast_libretro_android.so.zip",
+      "archive_bytes": 4946190,
+      "archive_sha256": "c6505d080565f4a972141b92f8376e99df3edf53ae515019fc27336d08145015",
+      "payload_bytes": 13078320,
+      "payload_sha256": "9c4ba7b3c381d4ff3c0d15810b369548d168c7495d6a41b810ec0d6f810eaa38",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libandroid.so",
+        "libc.so",
+        "libdl.so",
+        "libm.so"
+      ],
+      "source_commit": "7adbf3caef251b153e348df3f469a0f35878339d"
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/flycast_libretro_android.so.zip",
+      "archive_bytes": 4994596,
+      "archive_sha256": "e3b625dcef9a15ce5e4ffe8885b084187af31c3981794a7c78dc9ab6467d162b",
+      "payload_bytes": 13855588,
+      "payload_sha256": "b5ba47b11b8d89a8731369a4cbb1faa3b377dafa7b8ade2ef524712c1b5f3526",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libandroid.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "source_commit": "7adbf3caef251b153e348df3f469a0f35878339d"
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/flycast_libretro_android.so.zip",
+      "archive_bytes": 5063985,
+      "archive_sha256": "646aadf89a712e141d66bce5a7c5436c7f7e39c877f9a248fdccc2fb2e90c19f",
+      "payload_bytes": 17578080,
+      "payload_sha256": "a3bd3a25721ef8a4e23b2d27adf1ea4eac8087e43a9b965d154dbc20c8efe257",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libandroid.so",
+        "libm.so",
+        "libdl.so",
+        "libc.so"
+      ],
+      "source_commit": "7adbf3caef251b153e348df3f469a0f35878339d"
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/LICENSE",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "notices/core/deps/glm/copying.txt",
+      "sha256": "62d2d642c7d054d4fb4c9b42faad617d6c88fcd91e317f8035aa9f277cc159c3"
+    },
+    {
+      "path": "notices/core/deps/implot/LICENSE",
+      "sha256": "38bd30c2111fe7e3d8fb86d8607491239659eff1df1b1004b9a8349e20a91967"
+    },
+    {
+      "path": "notices/core/deps/libunwind/libunwind/LICENSE.TXT",
+      "sha256": "b5efebcaca80879234098e52d1725e6d9eb8fb96a19fce625d39184b705f7b6d"
+    },
+    {
+      "path": "notices/core/deps/libzip/LICENSE",
+      "sha256": "01c022eca6d566e2e8792fd0f091a28653b2a608319922bcd4de91c49d1438e1"
+    },
+    {
+      "path": "notices/core/deps/miniupnpc/LICENSE",
+      "sha256": "1e881ecf2862d01e6e5bc2b861e46886d2a6fb01499c0c508a209a7271b13cf2"
+    },
+    {
+      "path": "notices/core/deps/nowide/LICENSE",
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+    },
+    {
+      "path": "notices/core/deps/picotcp/COPYING",
+      "sha256": "af5a2bc623f97a8707322a971e78067c8a1fd25c7493328b52a9baafee97e735"
+    },
+    {
+      "path": "notices/core/deps/picotcp/LICENSE.GPLv2",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "notices/core/deps/picotcp/LICENSE.GPLv3",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+    },
+    {
+      "path": "notices/core/deps/xbrz/License.txt",
+      "sha256": "321429c853d59b621414832581e93ff38586c348aa2de43c7e571b33423d670a"
+    },
+    {
+      "path": "notices/core/deps/xxHash/LICENSE",
+      "sha256": "6ffedbc0f7878612d2b23589f1ff2ab15633e1df7963a5d9fc750ec5500c7e7a"
+    },
+    {
+      "path": "notices/core/deps/xxHash/cli/COPYING",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "notices/core/deps/xxHash/tests/bench/LICENSE",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "notices/core/deps/xxHash/tests/collisions/LICENSE",
+      "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+      "path": "notices/shell/apple/emulator-ios/emulator/iCade-iOS/LICENSE",
+      "sha256": "ebd1cb387d2a0dc5cda74796ca1334df4494e81a6b5e01164434453ea96469c1"
+    },
+    {
+      "path": "notices/embedded-component-notices.txt",
+      "sha256": "5f278c92bfa79037cd9cd997f148ce5ed20eadd9c5bb831aa46d43a1a3cc81c6",
+      "distinct_blocks": 337
+    }
+  ],
+  "reproduction_limit": "Unmodified official Libretro builds; exact upstream Android NDK environment and source rebuild are not claimed.",
+  "submodule_gitlinks": [
+    {
+      "path": "core/deps/DreamPicoPort-API",
+      "repository": "https://github.com/OrangeFox86/DreamPicoPort-API",
+      "source_revision": "e06d9f6c59833fc7bb7f2a33c960614489811ef8"
+    },
+    {
+      "path": "core/deps/SDL",
+      "repository": "https://github.com/libsdl-org/SDL",
+      "source_revision": "00d4f1c2c4ad2dc95d26b18743541f57b1dca56d"
+    },
+    {
+      "path": "core/deps/Spout",
+      "repository": "https://github.com/vkedwardli/Spout2",
+      "source_revision": "2110a918e720688f3cb2118302fd153db8745ace"
+    },
+    {
+      "path": "core/deps/Syphon",
+      "repository": "https://github.com/vkedwardli/Syphon-Framework",
+      "source_revision": "53ec412a78b246c84cedcb4a2a5b92852704d61d"
+    },
+    {
+      "path": "core/deps/Vulkan-Headers",
+      "repository": "https://github.com/KhronosGroup/Vulkan-Headers",
+      "source_revision": "b5c8f996196ba4aa6d8f97e52b5d3b6e70f7e4e2"
+    },
+    {
+      "path": "core/deps/VulkanMemoryAllocator",
+      "repository": "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator",
+      "source_revision": "1d8f600fd424278486eade7ed3e877c99f0846b1"
+    },
+    {
+      "path": "core/deps/asio",
+      "repository": "https://github.com/flyinghead/asio",
+      "source_revision": "d3402006e84efb6114ff93e4f2b8508412ed80d5"
+    },
+    {
+      "path": "core/deps/breakpad",
+      "repository": "https://github.com/flyinghead/mingw-breakpad",
+      "source_revision": "1ab24bcc817ebe629bf77daa53529d02361cb1e9"
+    },
+    {
+      "path": "core/deps/discord-rpc",
+      "repository": "https://github.com/harmonytf/discord-rpc",
+      "source_revision": "c62c34d37cd90b75187a1212e13ce4145bafbdd7"
+    },
+    {
+      "path": "core/deps/freetype",
+      "repository": "https://gitlab.freedesktop.org/freetype/freetype",
+      "source_revision": "0a0221a1347e2f1e07c395263540026e9a0aa7c7"
+    },
+    {
+      "path": "core/deps/gamesdk",
+      "repository": "https://github.com/flyinghead/gamesdk",
+      "source_revision": "4ac9952e6a5b3e0846003cb156b4a664178b7549"
+    },
+    {
+      "path": "core/deps/glslang",
+      "repository": "https://github.com/KhronosGroup/glslang",
+      "source_revision": "fc9889c889561c5882e83819dcaffef5ed45529b"
+    },
+    {
+      "path": "core/deps/googletest",
+      "repository": "https://github.com/google/googletest",
+      "source_revision": "e39786088138f2749d64e9e90e0f9902daa77c40"
+    },
+    {
+      "path": "core/deps/libadrenotools",
+      "repository": "https://github.com/bylaws/libadrenotools",
+      "source_revision": "8fae8ce254dfc1344527e05301e43f37dea2df80"
+    },
+    {
+      "path": "core/deps/libchdr",
+      "repository": "https://github.com/flyinghead/libchdr",
+      "source_revision": "5f82799f2c8cad1e9cd26d39a0f8d36369a5534b"
+    },
+    {
+      "path": "core/deps/libjuice",
+      "repository": "https://github.com/paullouisageneau/libjuice",
+      "source_revision": "77daa8befd828046169adbb012d8de928bfdcdd4"
+    },
+    {
+      "path": "core/deps/luabridge",
+      "repository": "https://github.com/vinniefalco/LuaBridge",
+      "source_revision": "5d21e35633a1f87ed08af115b07d3386096f792b"
+    },
+    {
+      "path": "core/deps/oboe",
+      "repository": "https://github.com/google/oboe",
+      "source_revision": "a81bb9f87d4105b84b682685d3bfbb5beca371d1"
+    },
+    {
+      "path": "core/deps/rcheevos",
+      "repository": "https://github.com/RetroAchievements/rcheevos",
+      "source_revision": "3106e6d3d274b63c59976cb07dda94a292ab45ca"
+    },
+    {
+      "path": "core/deps/tinygettext",
+      "repository": "https://github.com/flyinghead/tinygettext",
+      "source_revision": "41572a67f96013691685a38f0032f3c97aa34f79"
+    },
+    {
+      "path": "core/deps/websocketpp",
+      "repository": "https://github.com/zaphoyd/websocketpp",
+      "source_revision": "1b11fd301531e6df35a6107c1e8665b1e77a2d8e"
+    },
+    {
+      "path": "core/deps/xbyak",
+      "repository": "https://github.com/herumi/xbyak",
+      "source_revision": "0d67fd1530016b7c56f3cd74b3fca920f4c3e2b4"
+    }
+  ],
+  "component_source_records": [
+    {
+      "path": "core/deps/Vulkan-Headers",
+      "repository": "https://github.com/KhronosGroup/Vulkan-Headers",
+      "source_revision": "b5c8f996196ba4aa6d8f97e52b5d3b6e70f7e4e2",
+      "source_archive": "https://codeload.github.com/KhronosGroup/Vulkan-Headers/tar.gz/b5c8f996196ba4aa6d8f97e52b5d3b6e70f7e4e2",
+      "archive_sha256": "7937d8ec21785736436d9ff52564db7d55992070b5ac98324472cce6e425a7ba",
+      "archive_bytes": 3059121,
+      "notices": [
+        {
+          "path": "notices/LICENSE.md",
+          "sha256": "ac24e5ea920e4318e4d02c4086ae51f53cfb03feed06c18df1019e7ada1ec7bc"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/VulkanMemoryAllocator",
+      "repository": "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator",
+      "source_revision": "1d8f600fd424278486eade7ed3e877c99f0846b1",
+      "source_archive": "https://codeload.github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/tar.gz/1d8f600fd424278486eade7ed3e877c99f0846b1",
+      "archive_sha256": "04b278f5a185ef75a7ea988e0e76ddd0b2f2186bf56dd90625159972a47dcb3b",
+      "archive_bytes": 962421,
+      "notices": [
+        {
+          "path": "notices/LICENSE.txt",
+          "sha256": "8d70e4cf2a9941f6454da71cd60e38484dd3e34810c824760d550e982af6d97a"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "9ff22ac038f1798a8d173dfe61d8e28dccb4f2c360b751d3e34b15cba623ca04",
+          "distinct_blocks": 1
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/asio",
+      "repository": "https://github.com/flyinghead/asio",
+      "source_revision": "d3402006e84efb6114ff93e4f2b8508412ed80d5",
+      "source_archive": "https://codeload.github.com/flyinghead/asio/tar.gz/d3402006e84efb6114ff93e4f2b8508412ed80d5",
+      "archive_sha256": "0364ea2e2b9c1623e32a9587e0e2da08669f0f8d0f6be9abaa48e57d992ed079",
+      "archive_bytes": 2858075,
+      "notices": [
+        {
+          "path": "notices/asio/COPYING",
+          "sha256": "5cc69ca9afd3417ed8e58bcd9c0bb730375e9e3e92b5aaf6483b93a2837e0cac"
+        },
+        {
+          "path": "notices/asio/LICENSE_1_0.txt",
+          "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/glslang",
+      "repository": "https://github.com/KhronosGroup/glslang",
+      "source_revision": "fc9889c889561c5882e83819dcaffef5ed45529b",
+      "source_archive": "https://codeload.github.com/KhronosGroup/glslang/tar.gz/fc9889c889561c5882e83819dcaffef5ed45529b",
+      "archive_sha256": "d73a9ac1cf94ef36163ee81ad53308abf3abdfe1e2aad4d51b364baa1e68d8a9",
+      "archive_bytes": 4030379,
+      "notices": [
+        {
+          "path": "notices/LICENSE.txt",
+          "sha256": "adb783e734e906d1f46db5df29991dbde84bdb0ceab502ac2febb44fe3c2b5f4"
+        },
+        {
+          "path": "notices/license-checker.cfg",
+          "sha256": "e6ead88c5894007be86546cfd24d6c0b9fafcbf832fc27d8330eb7d46cedc84a"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "5d7b854bd7e07fbb000af77c6ca88a4e5785ba20e7fb7064da897719d34683b2",
+          "distinct_blocks": 11
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/libadrenotools",
+      "repository": "https://github.com/bylaws/libadrenotools",
+      "source_revision": "8fae8ce254dfc1344527e05301e43f37dea2df80",
+      "source_archive": "https://codeload.github.com/bylaws/libadrenotools/tar.gz/8fae8ce254dfc1344527e05301e43f37dea2df80",
+      "archive_sha256": "ceffce971676d4cfdf348a082df06fc92a1dca6d95bea892a480d63f200961cb",
+      "archive_bytes": 88816,
+      "notices": [
+        {
+          "path": "notices/LICENSE",
+          "sha256": "7ea796e199e46093c2f5c391697bce5abeacd02b7216aa0a84e5839afb5584f3"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "f673216f792d3fa6ff6e15e459392fb61c310a514cfe518bd9d2ecd89d3eea41",
+          "distinct_blocks": 8
+        }
+      ],
+      "nested_gitmodules": [
+        {
+          "path": ".gitmodules",
+          "text": "[submodule \"lib/linkernsbypass\"]\n\tpath = lib/linkernsbypass\n\turl = https://github.com/bylaws/liblinkernsbypass/\n\tbranch = master\n"
+        }
+      ]
+    },
+    {
+      "path": "core/deps/libchdr",
+      "repository": "https://github.com/flyinghead/libchdr",
+      "source_revision": "5f82799f2c8cad1e9cd26d39a0f8d36369a5534b",
+      "source_archive": "https://codeload.github.com/flyinghead/libchdr/tar.gz/5f82799f2c8cad1e9cd26d39a0f8d36369a5534b",
+      "archive_sha256": "11b01f5d376128c78100e48ad5db34edd0d33510fd047a5a22c03aa8e35cfd00",
+      "archive_bytes": 4222985,
+      "notices": [
+        {
+          "path": "notices/LICENSE.txt",
+          "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+        },
+        {
+          "path": "notices/deps/lzma-24.05/LICENSE",
+          "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+        },
+        {
+          "path": "notices/deps/zlib-1.3.1/LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        },
+        {
+          "path": "notices/deps/zlib-1.3.1/contrib/dotzlib/LICENSE_1_0.txt",
+          "sha256": "36266a8fd073568394cb81cdb2b124f7fdae2c64c1a7ed09db34b4d22efa2951"
+        },
+        {
+          "path": "notices/deps/zstd-1.5.6/COPYING",
+          "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+        },
+        {
+          "path": "notices/deps/zstd-1.5.6/LICENSE",
+          "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+        },
+        {
+          "path": "notices/deps/zstd-1.5.6/build/LICENSE",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "83614e406c06b32b05680bc99e4275062b2499ed1a103a6a5fba62a8cf45b0d3",
+          "distinct_blocks": 76
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/libjuice",
+      "repository": "https://github.com/paullouisageneau/libjuice",
+      "source_revision": "77daa8befd828046169adbb012d8de928bfdcdd4",
+      "source_archive": "https://codeload.github.com/paullouisageneau/libjuice/tar.gz/77daa8befd828046169adbb012d8de928bfdcdd4",
+      "archive_sha256": "2cf9d6e37974bdf330b92692229b0af72ca9fe2d767893c81a776cafb9369471",
+      "archive_bytes": 101503,
+      "notices": [
+        {
+          "path": "notices/LICENSE",
+          "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "15fccac7226d6aa3ce9689bc97e52ee03828215f55b7219a11593f2c3f957e65",
+          "distinct_blocks": 1
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/rcheevos",
+      "repository": "https://github.com/RetroAchievements/rcheevos",
+      "source_revision": "3106e6d3d274b63c59976cb07dda94a292ab45ca",
+      "source_archive": "https://codeload.github.com/RetroAchievements/rcheevos/tar.gz/3106e6d3d274b63c59976cb07dda94a292ab45ca",
+      "archive_sha256": "97f94c416a24bb7965f2ce80af37b6c8001958bd5680b0535bbcf275d4d6654b",
+      "archive_bytes": 673505,
+      "notices": [
+        {
+          "path": "notices/LICENSE",
+          "sha256": "bf820c034966a3b6be050bb85f94ec841a0b972bd5d477e362337d0574b5c219"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "4b2905609607a4034043ea17a5783f7a3eb495774f4481e4fe6d8208c900f4a7",
+          "distinct_blocks": 4
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/tinygettext",
+      "repository": "https://github.com/flyinghead/tinygettext",
+      "source_revision": "41572a67f96013691685a38f0032f3c97aa34f79",
+      "source_archive": "https://codeload.github.com/flyinghead/tinygettext/tar.gz/41572a67f96013691685a38f0032f3c97aa34f79",
+      "archive_sha256": "1ceb1c0f77caaf500806cdd8a14e122762e43ce3a399a2aa228dfc0174ede709",
+      "archive_bytes": 69459,
+      "notices": [
+        {
+          "path": "notices/LICENSE.md",
+          "sha256": "27cba3bef2da99bdc9c2846449767ad015c5ba539bcb4f10c74be20faf7ada3a"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": [
+        {
+          "path": ".gitmodules",
+          "text": "[submodule \"external/tinycmmc\"]\n\tpath = external/tinycmmc\n\turl = https://github.com/Grumbel/tinycmmc.git\n"
+        }
+      ]
+    },
+    {
+      "path": "core/deps/websocketpp",
+      "repository": "https://github.com/zaphoyd/websocketpp",
+      "source_revision": "1b11fd301531e6df35a6107c1e8665b1e77a2d8e",
+      "source_archive": "https://codeload.github.com/zaphoyd/websocketpp/tar.gz/1b11fd301531e6df35a6107c1e8665b1e77a2d8e",
+      "archive_sha256": "1b88a0d45642bb2f9e4144ddf2e2586b112c669f176d257333a75e8a926683ae",
+      "archive_bytes": 701611,
+      "notices": [
+        {
+          "path": "notices/COPYING",
+          "sha256": "b31e597bc777d884a39663c11d0557a0af40780e1f451de11ea5103924a69667"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "b679145c3728c05d91ad80d52f387307c6a111a79010c3cd0e6331ec748f9677",
+          "distinct_blocks": 12
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/xbyak",
+      "repository": "https://github.com/herumi/xbyak",
+      "source_revision": "0d67fd1530016b7c56f3cd74b3fca920f4c3e2b4",
+      "source_archive": "https://codeload.github.com/herumi/xbyak/tar.gz/0d67fd1530016b7c56f3cd74b3fca920f4c3e2b4",
+      "archive_sha256": "18aa05ac8e4bd5f5cb52c5481b86ba02cac395ad8cdbec6fe5acac94ad546dc8",
+      "archive_bytes": 293437,
+      "notices": [
+        {
+          "path": "notices/COPYRIGHT",
+          "sha256": "7e411d5c5d38501a504843f58afb6824439c828872b35d2ff1e892e73fd1a30d"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/libadrenotools/lib/linkernsbypass",
+      "repository": "https://github.com/bylaws/liblinkernsbypass",
+      "source_revision": "aa3975893d83ef1bc84c321ec60c65fbf1287887",
+      "source_archive": "https://codeload.github.com/bylaws/liblinkernsbypass/tar.gz/aa3975893d83ef1bc84c321ec60c65fbf1287887",
+      "archive_sha256": "da1128c8aa771c4d24766b53a47822d0717baa5c536ca8491220402942b80638",
+      "archive_bytes": 5656,
+      "notices": [
+        {
+          "path": "notices/LICENSE",
+          "sha256": "7ea796e199e46093c2f5c391697bce5abeacd02b7216aa0a84e5839afb5584f3"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": []
+    },
+    {
+      "path": "core/deps/tinygettext/external/tinycmmc",
+      "repository": "https://github.com/Grumbel/tinycmmc",
+      "source_revision": "9a51e13802d930feb7261ba8876940659b258cb7",
+      "source_archive": "https://codeload.github.com/Grumbel/tinycmmc/tar.gz/9a51e13802d930feb7261ba8876940659b258cb7",
+      "archive_sha256": "60ed6cd061401ad76ebcde9e4b8847b85b4dfa0a86cf2bd7d99fa01f9a233a1d",
+      "archive_bytes": 10829,
+      "notices": [
+        {
+          "path": "notices/LICENSE.md",
+          "sha256": "e998149780068b7adc7d3b5559c0415240d8c07760d52b7012aebe5ab7d8a04f"
+        },
+        {
+          "path": "notices/embedded-component-notices.txt",
+          "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "distinct_blocks": 0
+        }
+      ],
+      "nested_gitmodules": []
+    }
+  ],
+  "component_scope": "Conservative notices for eleven potentially relevant components and two nested gitlinks. Retained CMake guards exclude some from Libretro. These records do not assert which optional objects an unmodified upstream archive contains; exact build reproduction is not claimed."
+}

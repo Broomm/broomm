@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Flycast artifact preparation — 2026-11-08
+
+Four unmodified official Libretro ABI archives identify native source `7adbf3c`.
+Source/archive/library hashes, ELF identities, Android-only system dependencies,
+original CMake inputs, GPL-2.0-or-later and component notices are retained under
+`vendor/android/flycast/7adbf3c`. Exact gitlinks and conservative source/notices
+for eleven potential components and two nested sources are recorded. Optional
+linkage and exact upstream Android NDK reproduction are not asserted. No BIOS
+or game is bundled. Archive and payload hashes/ABI identities pass local readback.
+This artifact increment enables no route; concrete VMU, mutable console flash,
+media, state/recovery and packaged Thor acceptance remain separate work.
+
 ## Rooted Beetle Saturn device acceptance — 2026-11-08
 
 Build 1093 (`277113b`) passed normal Saturn Setup and The Legend of Oasis
