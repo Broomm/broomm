@@ -12,11 +12,13 @@ Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
 PR #4 is merged. The [standalone Android increment](docs/android-standalone-root.md)
 now includes rooted PPSSPP session/save/state and private-profile recovery code.
-Native file/pointer interruption checks pass on the Thor; the new PR APK,
-in-app LocoRoco/cloud/two-account acceptance and rebuilt macOS package are
-pending. PR #5 remains draft until PSP is complete; no later emulator has begun.
-The previous [read-only macOS preview](build/releases/Broomm-macOS-android-standalone-preview.zip)
-is from `d0fa313` and does not contain this new session implementation.
+Native file/pointer interruption checks pass on the Thor. Full CI build 1111
+also passes LocoRoco content-URI launch, automatic native-state cloud sync and
+two-account state isolation. Ordinary PSP saving and replay/offline acceptance
+remain pending. If preparation cannot verify PPSSPP's shutdown, use **Open
+PPSSPP → Exit**, then **Check and play**; the new direct recovery action is
+awaiting its device build. PR #5 remains draft until PSP is complete; no later
+emulator has begun. The macOS package is being refreshed for that UI correction.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are

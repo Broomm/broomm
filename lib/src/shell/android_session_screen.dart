@@ -239,6 +239,18 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                       ],
                       if (error != null) ProblemNotice(error!),
                       if (error != null &&
+                          !active &&
+                          !started &&
+                          widget.rooted &&
+                          widget.emulator == 'PPSSPP' &&
+                          widget.resume != null)
+                        ConsoleButton(
+                          onPressed: session.busy
+                              ? null
+                              : () => run(widget.resume!),
+                          child: const Text('Open PPSSPP'),
+                        ),
+                      if (error != null &&
                           active &&
                           !(widget.rooted && widget.emulator == 'PPSSPP'))
                         ConsoleButton(

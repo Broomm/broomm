@@ -759,6 +759,83 @@ void main() {
   });
 
   testWidgets(
+    'unverified PSP preparation offers native open and a guarded retry',
+    (t) async {
+      final session = AndroidGameSession(manager, RecordingCloud(data));
+      var opened = false, attempts = 0, finishes = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: AndroidSessionScreen(
+            session: session,
+            title: 'LocoRoco',
+            emulator: 'PPSSPP',
+            cloudReady: true,
+            rooted: true,
+            start: ({required bool emulatorClosed}) async {
+              expect(emulatorClosed, isFalse);
+              attempts++;
+              if (!opened) throw StateError('PPSSPP shutdown is unverified.');
+              session.active = true;
+            },
+            resume: () async => opened = true,
+            finish: () async => finishes++,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      expect(session.active, isFalse);
+      expect(attempts, 1);
+      await t.tap(find.text('Open PPSSPP'));
+      await t.pumpAndSettle();
+      expect(opened, isTrue);
+      expect(attempts, 1);
+      expect(finishes, 0);
+      await t.tap(find.text('Check and play'));
+      await t.pumpAndSettle();
+      expect(attempts, 2);
+      expect(session.active, isTrue);
+      expect(find.text('Open PPSSPP'), findsNothing);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets('failed native PSP open stays visible without starting sync', (
+    t,
+  ) async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    var attempts = 0;
+    await t.pumpWidget(
+      MaterialApp(
+        home: AndroidSessionScreen(
+          session: session,
+          title: 'LocoRoco',
+          emulator: 'PPSSPP',
+          cloudReady: true,
+          rooted: true,
+          start: ({required bool emulatorClosed}) async {
+            attempts++;
+            throw StateError('PPSSPP shutdown is unverified.');
+          },
+          resume: () async => throw StateError('Native launcher unavailable.'),
+          finish: () async => fail('Opening the menu must not synchronize.'),
+        ),
+      ),
+    );
+    await t.pumpAndSettle();
+    await t.tap(find.text('Open PPSSPP'));
+    await t.pumpAndSettle();
+    expect(find.textContaining('Native launcher unavailable.'), findsOneWidget);
+    expect(find.text('Open PPSSPP'), findsOneWidget);
+    expect(find.text('Check and play'), findsOneWidget);
+    expect(attempts, 1);
+    expect(session.active, isFalse);
+    expect(await t.runAsync(session.pending), isNull);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
+
+  testWidgets(
     'Android game route launches directly and never shows controller pairing',
     (t) async {
       final session = AndroidGameSession(manager, RecordingCloud(data));

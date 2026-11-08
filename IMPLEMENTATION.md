@@ -38,11 +38,17 @@ production Android path validation remains strict. Private archive enumeration
 also normalizes host separators. The new PSP route-disconnection action now
 acquires the same session lock as setup/gameplay before native/settings effects,
 with a held-lock regression. Native fixture cleanup is limited to its verified,
-unassigned test directories. Native Windows re-execution is pending.
+unassigned test directories. Native Windows re-execution and all five CI packages
+now pass for `eac1db0`.
 
-Current PR APK packaging, real Broomm content-URI Play, ordinary LocoRoco saving,
-two-account/state/offline/cloud replay, preservation audits and the updated
-macOS package remain to be completed. Other standalone emulators have not begun. See the
+Full CI build 1111 passes real Broomm content-URI Play and two-account native
+state capture/sync (primaries 255/257), with separate private memory sticks and
+normal-Exit restoration. The repeated RetroArch preservation audit passes. An
+expired native shutdown log refused preparation correctly; the new **Open PPSSPP**
+recovery action has two passing UI regressions (23 emulator/UI tests total) and
+clean targeted analysis, with device packaging pending. Ordinary LocoRoco saving,
+state replay/offline, removal/reinstall and the updated macOS package remain to
+be completed. Other standalone emulators have not begun. See the
 [PSP workflow and boundaries](docs/android-standalone-root.md).
 
 ## Standalone Android root discovery — 2026-11-08

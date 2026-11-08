@@ -32,6 +32,11 @@ sequence, UID/PID/kernel lifetime, native activity and cached-state checks.
 Backgrounding, bare destruction, incomplete logs and changed identity remain
 unknown. Automatic completion requires fresh evidence from this launch; manual
 review still cannot override an active/unknown writer.
+If preparation cannot verify shutdown, **Open PPSSPP** opens the existing native
+selection without starting synchronization. Use its **Exit**, then **Check and
+play**; the retry still runs every closure and ownership guard. Launcher failures
+remain visible. This recovery action has two UI regressions; device verification
+of the new action is pending.
 
 **Open emulator** selects the same private profile and detaches immediately,
 without a game marker, lifetime watcher or Broomm quit restriction. Its durable
@@ -73,6 +78,29 @@ and PPSSPP's **Exit to menu → Exit**. Expected: automatic sync, a restored
 standalone selection and no cross-account progress. Returning while PPSSPP is
 running must keep the session active. These new in-app observations are pending;
 the native seed/research results below do not establish them.
+
+Build 1111 (`eac1db0`, full CI APK) now passes content-URI LocoRoco launch, native
+manual-state capture, automatic normal-Exit synchronization and standalone-pointer
+restoration. Account 2 published two state/thumbnail pairs as primary 255;
+account 3 began with empty native slots and published its own language-screen
+pair as primary 257, with a distinct memory-stick nonce and console MAC. Both
+checkpoints are acknowledged and both private profiles have verified backups.
+These observations establish state isolation, not an ordinary SAVEDATA round trip;
+ordinary LocoRoco saving, replay/offline and removal/reinstall acceptance remain
+pending. Expired native shutdown logs correctly refused preparation without
+selecting a profile; a fresh native menu open/Exit allowed the retry.
+
+All sixteen original PSP files were unchanged after the first Broomm session.
+The subsequent explicit standalone menu open/Exit changed native `ppsspp.ini`
+(upstream increments RunCount on load); its earlier contents were held by hash,
+so an exact field-only delta is not claimed. The other fifteen files remain
+unchanged. An unintended adjacent account-3 TG16 launch was closed by the owner;
+no signal/interruption command ran. The repeated RetroArch preservation audit
+passes all 49 earlier progress files, nineteen managed native files, thirteen
+original files, fifteen cores and eighteen connections. ADB injected gamepad/menu
+events remain inconclusive; owner closure is recorded separately from automated
+PSP touch checks. All native Windows CI checks and five platform packages passed
+for `eac1db0`.
 
 ```sh
 devbox run -- flutter --suppress-analytics test --no-pub test/android_psp_root_test.dart
