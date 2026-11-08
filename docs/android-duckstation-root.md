@@ -211,9 +211,40 @@ and analysis pass, including a file boundary that rejects all ROM reads,
 release/relaunch and another device's local IDs, changed release identity,
 publication mismatches and cancellation. The initial test command mistyped a
 nonexistent session test path; correcting it to the existing emulator/session
-file passed without changing assertions. Native replay of this publication
-identity is pending. The full source suite passes 750 tests with one existing
-host skip.
+file passed without changing assertions. The full source suite passes 750 tests
+with one existing host skip. All CI checks and five packages passed for `fef7564` (run 42528636639). The retained-key
+normal build **1122** and isolated ARM64 fixture preserve all 160 normal app
+payloads and 159 unchanged fixture payloads respectively; the fixture replaces
+only its Dart entry point and never starts a profile/cloud session.
+
+The actual provider booted the installed CHD, created previously empty Slot 4,
+and closed normally. After complete grant-record/URI-permission revocation and
+a Broomm restart, fresh launch and native Slot 4 replay succeeded without the
+expired-media warning. The stable publication token matched its saved header.
+The metadata-only preparation took **4 ms**, then **3 ms** (receipt phase 1 ms
+in each), rather than the earlier whole-ROM scan's roughly 4.9 seconds.
+Slot 4 was 926,103 bytes, SHA-256
+`aae6e442fd44092ea067feed099c0b3025745aef547c70522a534412b646c27e`.
+Slots 1–4 remained byte-identical across replay. The resume state/playtime
+naturally changed during normal native closure. All temporary access was revoked
+again; no PS1 cloud publication occurred.
+
+The separate injected Start/touch-input observation did not conclusively reach
+interactive gameplay. A touch-layout toggle added only
+`TouchscreenController/AnalogControllerLayout=Digital`. That known research
+change was detected by the preservation check, then the normally closed
+research cache was stopped after a fresh exact-build status observation and the
+original INI bytes/ownership/label were restored and verified. All four native
+slots stayed identical. A temporary ADB transfer initially succeeded with empty
+stdout; replacing the incorrect output-string assumption with checksum readback
+completed cleanup. No unrelated preference, save or credential was changed.
+This manual research cleanup is not production settings-loan acceptance.
+The normal build 1122 was restored. Both saved accounts restored through the
+ordinary chooser without passwords or credential export, then the owner account
+was restored. Final audits match the accepted PSP inventories/checkpoints and
+all 49 earlier RetroArch progress files, nineteen managed files, thirteen
+original files, four retained VMUs, fifteen cores and eighteen bindings.
+See [the scoped device acceptance](android-duckstation-thor-handoff.json).
 
 Both fixture sessions ended through native Close Game; all temporary game grants
 were cleared and the regular build 1120 was restored. Native settings and BIOS
@@ -256,11 +287,46 @@ threads or disappearing activity must therefore not authorize save capture or
 settings replacement. Verify the exact native/frontend flush and settings
 reload contract first. No root save-writing adapter is enabled by this evidence.
 
+## Exact-build writer observations — research only
+
+The exact APK registers a native `flushSaveStates()` method. Its Android
+application lifecycle observer saves base settings then calls that operation;
+MainActivity also saves base settings synchronously when pausing. Inspection of
+the ARM64 JNI registration table and implementation identifies two fixed status
+fields: the session-state byte consumed by `isSessionValid`/`isSessionPaused`,
+and the outstanding-state-write counter waited on by `flushSaveStates`.
+The native ARM64 ELF SHA-256 is
+`46435267ea46ae686561dcb4f03e6063d58debe135174056d3dc408896156d73`.
+The exact public core commit named by this beta was unavailable (HTTP 404), so
+public-master behavior remains a separate comparison.
+
+A bounded on-device prototype verified the installed APK hash, exact mapped ELF,
+UID, command name and process start ticks before/after reading only those five
+non-secret bytes. It did not scan a heap, read settings/saves/credentials, inject
+code or write process memory. Actual observations were running=2, paused=3 and
+normally closed=0, with zero outstanding state writes at each observation.
+The closed cached process survived until explicit research cleanup. These
+observations do not test a held nonzero writer, process-replacement races, all
+memory-card writer paths, other ABIs or a production settings-reload workflow.
+No such memory probe is shipped or used to authorize Broomm save changes.
+
+A concrete next design can bind narrow status reads to this exact APK/ELF/ABI,
+while refusing unknown layouts and retaining normal recovery. This avoids
+log-level changes but requires a new reviewed layout for every native build/ABI.
+A logging-only alternative needs verified completion events and changes to
+native logging preferences; the system-destroyed line alone is insufficient.
+An emulator fork/injection would add a different maintenance/licensing burden
+and does not fit the current external-app scope. These are investigated
+tradeoffs, not implemented save writing or acceptance of a new dependency.
+Before cache disposal, prove current preferences have been saved as well as
+all game writers having finished; never replace the retained INI under a live
+cached settings interface.
+
 ## Required before root save sessions
 
 Real document boot and native state-reference replay are established above.
-Finish the publication-identity replay and verify normal native shutdown/writer
-evidence on this exact APK with the retained RomM-sourced BIOS/game. Determine how settings overrides,
+Verify production native shutdown/writer evidence on this exact APK with the
+retained RomM-sourced BIOS/game. Determine how settings overrides,
 whole cards, per-game preferences, resume/global undo and state filenames are
 actually consumed. Design a concrete Dart-owned private profile/game workflow
 with durable settings loans and original-data restoration; do not infer these

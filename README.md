@@ -21,10 +21,16 @@ matched; the final RetroArch preservation audit passed. The
 inputs and limitations. PR #5's final build **1115** passed the packaged launch/Exit smoke and all CI
 checks; PR #5 is merged. The next [DuckStation increment](docs/android-duckstation-root.md)
 adds read-only initialized-storage inspection and reviewed-beta document handoff.
-Build 1121 passed real-provider CHD fresh boot and native state replay after
-revocation/regrant with a stable document identity. The current correction uses
-the installed publication record so Play does not rescan the ROM. Root save
-sessions, ordinary saves and account-private DuckStation progress remain pending.
+Build **1122** passed real-provider CHD boot and native state replay after
+complete revocation, restart and regrant. Its publication identity uses the
+installed record, taking 3–4 ms without rescanning the ROM. The
+[handoff evidence](docs/android-duckstation-thor-handoff.json) keeps this separate
+from root save sessions, ordinary saves and account-private DuckStation progress,
+which remain pending.
+
+Current local macOS preview: [download the universal archive](build/releases/Broomm-macOS-android-duckstation-preview.zip).
+It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
+automatic updates for development builds. Archive and extracted signatures are verified.
 
 Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
 Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait
@@ -54,7 +60,7 @@ The [official macOS package](https://github.com/Broomm/broomm/releases/download/
 is universal and ad-hoc signed, not notarized. The local preview below remains
 available separately with development-build automatic updates disabled.
 
-The latest local preview includes root inspection, APK-install permission handling,
+The earlier setup preview includes root inspection, APK-install permission handling,
 downloaded-APK path/visible-feedback corrections, Magisk root-namespace handling
 and the first GBA root-save connection,
 preserves the owner's emulator fullscreen/window preferences, and retains the

@@ -11,8 +11,8 @@ distinguishes this app-files snapshot from selected save-folder inspection.
 Eleven focused Flutter cases, Kotlin/JVM refusal boundaries, bridge compilation
 and targeted analysis pass. Direct production-script/parser execution on the
 Thor preserved native settings bytes/metadata. Official beta 12126 initialized
-through native UI and detected Odin Controller; game/BIOS/shutdown and account
-save integration remain pending. See [evidence and next requirements](docs/android-duckstation-root.md).
+through native UI and detected Odin Controller; the later game/BIOS/handoff
+evidence is recorded below. Production writer and account-save integration remain pending. See [evidence and next requirements](docs/android-duckstation-root.md).
 
 Build 1118 subsequently passed the complete in-app diagnostic, unchanged native
 settings/BIOS, both saved-account restorations and repeated PSP/RetroArch
@@ -29,15 +29,21 @@ capability. Build 1120 passed real provider fresh boot, native Slot 2 creation,
 normal Close Game and complete grant revocation. Its replay under a new grant
 warned about the expired embedded CD path, so reliable states are not accepted.
 A Dart-owned stable content-set identity now addresses that native reference
-without retaining access between sessions. Build 1121 passed the corrected native Slot 3 replay after complete permission
+without retaining access between sessions. Build 1121 passed the corrected
+native Slot 3 replay after complete permission
 revocation, a Broomm restart and a fresh grant. The regular preview was restored;
 both saved accounts and all earlier PSP/RetroArch inventories passed again.
 Its content hashing took about 4.9 seconds per 380-MB launch and contradicted
 the product's no-launch-ROM-scan rule. The current correction derives the stable
 identity from the installed RomM publication record and metadata instead.
 Forty-two focused tests, all 750 source tests (one existing host skip) and
-analysis pass; the new native replay is pending.
-Native Slots 1–3/resume remain unassigned; ordinary-save/input/root-session
+analysis pass. All CI checks/five packages passed as `fef7564`; build 1122
+replayed a newly saved Slot 4 after complete revocation, Broomm restart and
+regrant without the expired-media warning. Receipt/metadata preparation took
+4 and 3 ms on the Thor. Original settings and all four native slots are verified;
+normal-preview restoration and the repeated preservation audit are recorded in
+[the scoped device evidence](docs/android-duckstation-thor-handoff.json).
+Native Slots 1–4/resume remain unassigned; ordinary-save/input/root-session
 acceptance is still outstanding. Native logging research also shows why a
 cached process or system-destroyed callback alone cannot prove asynchronous
 state publication has finished.
