@@ -1,6 +1,6 @@
 {
   "date": "2026-11-08",
-  "status": "Thor PSP session acceptance passed; final first-run-message package pending",
+  "status": "Thor PSP acceptance and final packaged smoke passed",
   "tested_app": {
     "source": "eb3d50594b7cf06ef27a5c981893264275f6faad",
     "build": 1114,
@@ -158,6 +158,28 @@
     "Normal Remove intentionally deletes external emulator standalone data. The test harness separately restored the owner's original 17 files from a verified pre-test archive. Production Broomm restores only its own private profiles.",
     "The pinned native app required a second normal open/Exit after its first-run settings-save failure.",
     "Touch, menu and Odin input were injected through authorized ADB; physical button actuation is not claimed.",
-    "LocoRoco states contain player progress. Lumines ordinary saves establish native profile/data round trips, not scored game completion."
-  ]
+    "LocoRoco states contain player progress. Lumines ordinary saves establish native profile/data round trips, not scored game completion.",
+    "If Android discards prior native shutdown evidence while Java remains cached, Play safely refuses until Open PPSSPP \u2192 normal Exit refreshes it. Build 1115 passed this recovery; its native original RunCount changed from 8 to 9 while other original preferences and file bytes/ownership remained unchanged; native .nomedia and controls.ini timestamps refreshed."
+  ],
+  "final_package": {
+    "source": "62a36430b75c83205fc5b6e3632e13addbe34a5d",
+    "build": 1115,
+    "ci_run": 42513728561,
+    "source_apk_sha256": "15b07cff5c820e09856a089a8b27d0b09103371f932f6296549d670a4353eec5",
+    "thor_preview_sha256": "7c63138091df9353dbd65fd3d6c61a2eaa9653f9dc5ed4f50a589aa9b556685a",
+    "launch_and_normal_exit": "passed",
+    "all_checkpoints_acknowledged": true,
+    "journals_absent": true,
+    "original_selection_restored": true,
+    "saved_sign_in_restored_normally": true
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-standalone-preview.zip",
+    "bytes": 24345400,
+    "sha256": "79ee3d470f378857380074c59c660101e02b99db39e335f3239e4d237aebb3eb",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "source": "62a36430b75c83205fc5b6e3632e13addbe34a5d"
+  }
 }

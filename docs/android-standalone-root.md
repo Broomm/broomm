@@ -8,7 +8,7 @@ control. This document separates implemented save sessions and native evidence f
 
 ## Rooted PSP session implementation — Thor acceptance passed
 
-PR #5 stays draft while the final first-run-message package completes CI. The current source
+PR #5 completed its Thor acceptance and final package checks. The current source
 adds a concrete PPSSPP route through the compact desktop-style **Set up** actions;
 the earlier read-only build-1107 evidence below remains separate. No additional
 runtime dependency is introduced.
@@ -141,8 +141,18 @@ A final fresh-install check exposed a raw xattr ENOENT before PPSSPP creates its
 private storage. The small correction now presents first-run App Private Data/Exit
 instructions. Real Android fixture cases verify missing-directory guidance,
 unchanged existing labels and preservation of a distinct ENOTDIR failure; bridge
-compilation passes. Final APK CI and the refreshed macOS package are pending.
+compilation passes. All final CI gates and five packages passed for `62a3643`. Build 1115 is
+installed and passed normal saved-account restoration, guarded native launch,
+normal Exit, automatic synchronization and unchanged progress checkpoints.
+The current universal macOS ZIP passed archive integrity and source/extracted
+deep-strict signatures.
 This correction changes error context without weakening native ownership checks.
+On the final packaged smoke Android had discarded older shutdown evidence,
+so preparation correctly refused before any save effect. The explicit Open/Exit
+recovery succeeded; the native menu changed only original `General/RunCount`
+from 8 to 9, with other original settings and file bytes/ownership unchanged. Native
+`.nomedia` and `controls.ini` timestamps refreshed during that menu visit. That recovery is
+still required when a cached process has no verifiable prior shutdown evidence.
 
 Some black/static ADB captures came from the Thor's transient **Burn-in Protection
 Refresher** window, which covered the app and consumed test taps. The CLI test

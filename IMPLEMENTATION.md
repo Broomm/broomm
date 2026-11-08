@@ -1,6 +1,6 @@
 # Implementation plan
 
-## Rooted PPSSPP sessions — Thor acceptance passed, final packaging pending
+## Rooted PPSSPP sessions — Thor and packaged acceptance passed
 
 PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP
 1.20.4 universal APK. Dart owns account-private memory sticks, console identity,
@@ -41,9 +41,19 @@ guidance only for ENOENT. Three real Android fixture cases pass: missing storage
 existing label and distinct ENOTDIR failure; bridge compilation also passes.
 All 36 focused Flutter workflow/UI cases passed for the handoff correction;
 its complete Windows/macOS/Linux checks and five CI packages passed. The final
-message correction's CI/APK and refreshed macOS package remain to be completed.
+message correction passes all CI checks/five packages as `62a3643`. Build 1115
+is installed on the Thor and passed saved-sign-in restoration, guarded launch,
+normal Exit, automatic sync and unchanged checkpoints. The current universal
+macOS ZIP passed archive and source/extracted deep-strict signature verification.
 The pinned native app's first run required a second normal open/Exit after its
 own settings-save failure; unknown shutdown still refuses safely.
+
+After Android discarded an older shutdown log, build 1115 safely refused Play.
+**Open PPSSPP → Exit → Check and play** recovered normally. Its explicit native
+menu open changed only original `General/RunCount` (8 → 9); all other original
+preferences and file bytes/ownership remained unchanged. Native `.nomedia` and
+`controls.ini` timestamps refreshed during that menu visit. This conservative recovery remains
+required whenever cached-process closure evidence is unavailable.
 
 See [the walkthrough and boundaries](docs/android-standalone-root.md).
 

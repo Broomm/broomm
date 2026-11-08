@@ -18,8 +18,8 @@ offline save/state retention and automatic later sync, plus complete external-ap
 removal/reinstall and private-profile restoration. Every restored preference
 matched; the final RetroArch preservation audit passed. The
 [PSP evidence](docs/android-ppsspp-thor-acceptance.json) records the exact APK,
-inputs and limitations. PR #5 stays draft for final first-run-message packaging;
-no later emulator has begun.
+inputs and limitations. PR #5's final build **1115** passed the packaged launch/Exit smoke and all CI
+checks; no later emulator has begun.
 
 Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
 Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait
@@ -29,7 +29,9 @@ save in-game and use **Android Back → Exit to menu → Exit** for automatic sy
 If preparation cannot verify shutdown, choose **Open PPSSPP → Exit**, then
 **Check and play**. **Remove** uninstalls the external app and deletes its
 standalone data; Broomm retains verified backups of its own private profiles for
-same-APK/ABI reinstall. The current macOS package is being refreshed.
+same-APK/ABI reinstall. The linked current macOS package passed archive/universal/signature checks.
+If Android discards older native shutdown evidence, the explicit Open/Exit
+recovery above remains necessary; cached Java alone does not prove closure.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
