@@ -1,5 +1,11 @@
 # Android emulator status
 
+**Current 2026-11-08:** rooted RetroArch's eighteen routes/fifteen cores and
+[regular PPSSPP sessions](android-standalone-root.md) passed Thor acceptance.
+PR #5 is merged. [DuckStation initialized-storage inspection](android-duckstation-root.md)
+is the next read-only increment; its root save sessions remain pending.
+The dated tables below retain the earlier connected-folder checkpoint.
+
 **Next milestone, selected 2026-11-05:** implement an optional root-backed
 storage route on an already rooted Android device. Linux ARM64 investigation is
 deferred. Root access is not implemented or natively accepted by this checkpoint;

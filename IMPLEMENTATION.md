@@ -1,5 +1,19 @@
 # Implementation plan
 
+## DuckStation read-only storage increment — 2026-11-08
+
+PSP PR #5 merged as `d30d5dd` after its final CI and Thor acceptance. The next
+standalone branch adds initialized DuckStation app-files metadata to the global
+root inspector. Exact user-0 paths, mount correspondence, owner/group/label,
+permissions, regular settings-file identity and stable observations are verified
+without reading settings contents or creating a save connection. The dialog
+distinguishes this app-files snapshot from selected save-folder inspection.
+Eleven focused Flutter cases, Kotlin/JVM refusal boundaries, bridge compilation
+and targeted analysis pass. Direct production-script/parser execution on the
+Thor preserved native settings bytes/metadata. Official beta 12126 initialized
+through native UI and detected Odin Controller; game/BIOS/shutdown and account
+save integration remain pending. See [evidence and next requirements](docs/android-duckstation-root.md).
+
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed
 
 PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP
@@ -31,7 +45,8 @@ are absent, selection is restored and all checkpoints are acknowledged.
 
 The repeated audit preserves all 49 earlier RetroArch progress files, nineteen
 managed native files, thirteen original files, four retained VMU backups, fifteen
-cores and eighteen platform bindings. No later standalone emulator has begun.
+cores and eighteen platform bindings. DuckStation begins separately with the
+read-only increment above.
 The [device evidence](docs/android-ppsspp-thor-acceptance.json) separates injected
 ADB input from owner actuation and native profile saves from scored gameplay.
 

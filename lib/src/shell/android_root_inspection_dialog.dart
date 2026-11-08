@@ -95,8 +95,10 @@ class _AndroidRootInspectionDialogState
                 'Build observation: ${value.values['build']}',
                 if (value.values['memoryStick'] case final Map memory)
                   memory['kind'] == 'private'
-                      ? 'PPSSPP app-private memory stick: ${memory['path']}\nStorage identity verified read-only. PPSSPP root save sync is not yet implemented.'
+                      ? 'PPSSPP app-private memory stick: ${memory['path']}\nStorage identity verified read-only. This inspection does not connect saves.'
                       : 'PPSSPP uses another memory-stick location. Its contents were not inspected.',
+                if (value.values['appFiles'] case final Map files)
+                  'DuckStation app-private files: ${files['path']}\nInitialized settings metadata verified (${files['settingsBytes']} bytes). Selected save folders and their contents were not inspected; no save connection was created.',
               ].join('\n'),
             ),
           ],
