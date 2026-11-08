@@ -9,6 +9,7 @@ import '../progress/zip.dart';
 import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
+import 'opera.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -43,6 +44,13 @@ class SharedAndroidSaves {
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
         throw const FormatException('Invalid Android save metadata');
       if (plan.rooted &&
+          plan.launch['coreName'] == 'opera' &&
+          e.key.contains('/saves/') &&
+          v['bytes'] != 32768)
+        throw const FormatException(
+          'Opera NVRAM is incomplete. Existing progress was kept.',
+        );
+      if (plan.rooted &&
           (v['metadata'] is! String ||
               !RegExp(
                 '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
@@ -76,7 +84,7 @@ class SharedAndroidSaves {
     AndroidSavePlan plan,
   ) async {
     final r = await progressJson(journal);
-    if (!{1, 2}.contains(r['version']) ||
+    if (!{1, 2, 3}.contains(r['version']) ||
         r['server'] != game.server ||
         r['profile'] != game.profile ||
         r['rom'] != game.rom ||
@@ -103,10 +111,12 @@ class SharedAndroidSaves {
     inventory(r['working'], plan);
     if (r['captured'] != null) inventory(r['captured'], plan);
     _lynxFirmware(r, plan);
+    _operaFirmware(r, plan);
     return r;
   }
 
   Map<String, dynamic>? _lynxFirmware(Map r, AndroidSavePlan plan) {
+    if (r['version'] == 3) return null;
     if (r['version'] == 1) {
       if (r['rootFirmware'] != null ||
           plan.launch['coreName'] == 'mednafen_lynx')
@@ -132,6 +142,59 @@ class SharedAndroidSaves {
         'Lynx firmware recovery identity changed. Files were kept.',
       );
     return f.cast<String, dynamic>();
+  }
+
+  Map<String, dynamic> _operaFirmware(Map r, AndroidSavePlan plan) {
+    if (r['version'] != 3) {
+      if (r['rootOperaFirmware'] != null || plan.launch['coreName'] == 'opera')
+        throw const FormatException(
+          'Opera firmware recovery record is incomplete.',
+        );
+      return {};
+    }
+    final resources = r['rootOperaFirmware'], config = r['rootConfigPath'];
+    if (!plan.rooted ||
+        plan.launch['coreName'] != 'opera' ||
+        r['coreName'] != 'opera' ||
+        r['rootFirmware'] != null ||
+        plan.launch['platform'] != '3do' ||
+        resources is! Map ||
+        resources.length > 2 ||
+        config is! String ||
+        config != plan.launch['configPath'] ||
+        !config.startsWith('files/Broomm/${r['profile']}/${r['rom']}/'))
+      throw const FormatException(
+        'Opera firmware recovery identity changed. Files were kept.',
+      );
+    final system = _operaSystemDirectory(config);
+    if (r['transaction'] !=
+        config.substring(config.lastIndexOf('/config-') + 8, config.length - 4))
+      throw const FormatException(
+        'Opera disc and firmware transaction identities differ. Recovery was kept.',
+      );
+    var bios = 0, fonts = 0;
+    for (final entry in resources.entries) {
+      final spec = androidOperaFirmware[entry.key], value = entry.value;
+      if (spec == null ||
+          value is! Map ||
+          value.length != 3 ||
+          value['path'] != '$system/${entry.key}' ||
+          value['bytes'] != spec.$1 ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['sha256'] as String? ?? ''))
+        throw const FormatException(
+          'Invalid Opera firmware recovery resource. Files were kept.',
+        );
+      if ((entry.key as String).contains('kanji')) {
+        fonts++;
+      } else {
+        bios++;
+      }
+    }
+    if (bios > 1 || fonts > 1)
+      throw const FormatException(
+        'Ambiguous Opera firmware recovery resources.',
+      );
+    return resources.cast<String, dynamic>();
   }
 
   Future<void> copy(File from, File to, Map metadata) async {
@@ -203,17 +266,33 @@ class SharedAndroidSaves {
       );
     final boot = plan.lynxBootImage;
     final lynx = plan.rooted && plan.launch['coreName'] == 'mednafen_lynx';
+    final opera = plan.rooted && plan.launch['coreName'] == 'opera';
     if (lynx && boot == null || !lynx && boot != null)
       throw StateError(
         'Prepare the verified Lynx BIOS before starting this session.',
+      );
+    final operaResources = plan.operaResources;
+    if (opera &&
+            (operaResources == null ||
+                plan.operaDisc == null ||
+                plan.operaDisc!.file.path != selected ||
+                operaResources.map((f) => f.name).join('\n') !=
+                    androidOperaResourceNames(plan.operaOptions).join('\n')) ||
+        !opera && (operaResources != null || plan.operaDisc != null))
+      throw StateError(
+        'Prepare the verified Opera disc and selected firmware before starting this session.',
       );
     await manager.channel.invokeMethod<void>(
       plan.method('Check'),
       plan.arguments,
     );
     final r = <String, dynamic>{
-      'version': lynx ? 2 : 1,
-      'transaction': progressNonce(),
+      'version': opera
+          ? 3
+          : lynx
+          ? 2
+          : 1,
+      'transaction': opera ? plan.launch['transaction'] : progressNonce(),
       ...plan.arguments,
       'server': game.server,
       'profile': game.profile,
@@ -235,8 +314,19 @@ class SharedAndroidSaves {
           'bytes': 512,
           'sha256': boot!.sha256,
         },
+      if (opera)
+        'rootOperaFirmware': {
+          for (final image in operaResources!)
+            image.name: {
+              'path':
+                  '${_operaSystemDirectory(plan.launch['configPath']!)}/${image.name}',
+              'bytes': image.bytes,
+              'sha256': image.sha256,
+            },
+        },
     };
     _lynxFirmware(r, plan);
+    final operaFirmware = _operaFirmware(r, plan);
     await progressDirectory(directory(r));
     if (boot != null) {
       if (await boot.file.length() != 512)
@@ -251,6 +341,17 @@ class SharedAndroidSaves {
           createParents: true,
         ),
         {'bytes': 512, 'sha256': boot.sha256},
+      );
+    }
+    for (final image in operaResources ?? <AndroidOperaResource>[]) {
+      await copy(
+        image.file,
+        await progressFile(
+          directory(r),
+          'firmware/${image.name}',
+          createParents: true,
+        ),
+        {'bytes': image.bytes, 'sha256': image.sha256},
       );
     }
     await read(r, plan, r['original'] as Map<String, dynamic>, 'original');
@@ -303,6 +404,20 @@ class SharedAndroidSaves {
         'token': '${r['transaction']}-in',
       });
     }
+    for (final entry in operaFirmware.entries) {
+      await manager.channel.invokeMethod<void>('rootOperaFirmware', {
+        ...plan.arguments,
+        'path': entry.value['path'],
+        'configPath': plan.launch['configPath'],
+        'before': null,
+        'after': entry.value['sha256'],
+        'source': (await progressFile(
+          directory(r),
+          'firmware/${entry.key}',
+        )).path,
+        'token': '${r['transaction']}-in',
+      });
+    }
     await configure(r, plan);
     r['phase'] = 'installed';
     await progressWrite(journal, r);
@@ -349,7 +464,7 @@ class SharedAndroidSaves {
       ProgressLayout(current.root, current.format, current.game, [
         save.local,
         if (state != null) state,
-      ]),
+      ], rawSave: current.rawSave),
       current.emulator,
       current.binding,
       [save, if (state != null) AndroidSaveArea(state, '$base/states/$group')],
@@ -361,6 +476,7 @@ class SharedAndroidSaves {
           'lynxFirmwarePath': _lynxFirmwarePath(config),
         if (group != null) 'stateGroup': group as String,
       },
+      operaOptions: current.operaOptions,
     );
     await record(game, plan);
     return plan;
@@ -415,7 +531,16 @@ class SharedAndroidSaves {
     Directory? extraction;
     String? checkedRomHash;
     try {
-      if (plan.launch['coreName'] == 'fbneo') {
+      if (plan.launch['coreName'] == 'opera') {
+        final disc = plan.operaDisc;
+        if (disc == null ||
+            disc.file.path != source.path ||
+            await source.length() != disc.bytes)
+          throw StateError(
+            'The verified 3DO disc changed before staging. Recovery was kept.',
+          );
+        checkedRomHash = disc.sha256;
+      } else if (plan.launch['coreName'] == 'fbneo') {
         // The core consumes the complete multi-chip ROMset. Broomm validates
         // ZIP structure and bounds without extracting or renaming its chips.
         phase?.call('Checking the complete FBNeo ROMset…');
@@ -671,6 +796,16 @@ class SharedAndroidSaves {
         'token': '${r['transaction']}-out',
       });
     }
+    for (final entry in _operaFirmware(r, plan).entries) {
+      await manager.channel.invokeMethod<void>('rootOperaFirmware', {
+        ...plan.arguments,
+        'path': entry.value['path'],
+        'configPath': plan.launch['configPath'],
+        'before': entry.value['sha256'],
+        'after': null,
+        'token': '${r['transaction']}-out',
+      });
+    }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }
@@ -703,12 +838,24 @@ String _lynxFirmwarePath(String config) {
   return '${match[1]}/system-${match[2]}/lynxboot.img';
 }
 
+String _operaSystemDirectory(String config) {
+  final match = RegExp(
+    r'^(files/Broomm/[a-f0-9]{32}/[a-zA-Z0-9_-]{1,128})/config-([a-f0-9]{32})\.cfg$',
+  ).firstMatch(config);
+  if (match == null)
+    throw const FormatException(
+      'Invalid Opera firmware session configuration.',
+    );
+  return '${match[1]}/system-${match[2]}';
+}
+
 Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
     switch (plan.binding['access']) {
       'root-gba-v1' => {'gba'},
       'root-snes-v1' => {'sfc', 'smc'},
       'root-gameboy-v1' => {'gb', 'gbc', 'dmg'},
       'root-cartridge-v1' => switch (plan.launch['platform']) {
+        '3do' => {'chd', 'iso', 'bin'},
         'atari2600' => {'a26', 'bin'},
         'tg16' => {'pce'},
         'genesis' => {'md', 'gen', 'smd', 'bin'},
@@ -727,6 +874,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
 
 int _rootRomLimit(AndroidSavePlan plan) =>
     (switch (plan.launch['platform']) {
+      '3do' => 1024,
       'arcade' => 128,
       'n64' => 64,
       _ => 32,
@@ -735,6 +883,8 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  if (plan.launch['coreName'] == 'opera' && path.contains('/saves/'))
+    return 32768;
   final n64 = plan.launch['coreName'] == 'mupen64plus_next';
   if (path.contains('/states/')) return (n64 ? 32 : 16) * 1024 * 1024;
   return n64 ? 296960 : 262144;

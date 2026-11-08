@@ -1,5 +1,44 @@
 # Implementation plan
 
+## Rooted Opera source increment — 2026-11-07
+
+Independent 3DO Setup pins Opera 1.0.0 `370d9a2` at retained artifact commit
+`7d8f0c9`, also held by `android-opera-1.0.0-370d9a2`. Version 14 settings retain
+versions 1–13 and every earlier connection. Normal locked preparation verifies
+one self-contained CHD v5, ISO or BIN image, with a concrete 1 GiB physical/logical
+limit. CHDs with parents, incomplete headers and BIN/CUE sets are refused visibly;
+multi-file CUE transport remains unfinished. A cancellable read-only worker binds
+the inspected CHD header to the exact hashed bytes. Native handoff keeps that
+digest, streams the image and preserves earlier cores' limits/path restrictions.
+After lengthy preparation, core/configuration/options are checked again before
+cloud inspection or native writes; an external edit requires a fresh Play.
+
+The pinned core uses its built-in open-source boot ROM by default. Selected
+external BIOS/font images require canonical size/MD5 and verified transfer from
+this platform in RomM; immutable profile cache objects survive repair. Native
+resource operations bind core, profile/game, configuration nonce, filename,
+size/hash, ownership, label and verified closure. Version-3 receipts retain these
+resources separately from progress and preserve old version-1/2 recovery. Lost
+replies recover without cache, staged BIOS or general marker; mismatched cores,
+transactions and foreign firmware records retain recovery.
+
+Native 32 KiB NVRAM retains per-game/shared modes, every version 0–9 and the
+desktop ZIP/raw-save contract. Truncated NVRAM is damaged recovery. Read-only
+inspection follows game/folder/core/global option precedence and refuses
+conflicting or included option files. Shared mode remains private to this
+profile/game. Rooted session configuration now resolves empty/relative option
+paths against RetroArch's original configuration, preserving native preferences
+when the session configuration lives elsewhere.
+
+All 688 Flutter tests (one existing native-host skip), 96 focused cases, clean analysis, four real
+ABI download checks and seventeen disposable native groups pass. The exact 1 GiB
+image fixture staged in 3,349 ms under the unchanged 30-second native deadline.
+An existing cartridge-disc rejection caught a path scope regression; the Opera
+scope correction preserves that assertion. Initial fixture reuse/type/import/
+test-path diagnostics are retained. Packaged Opera BIOS/game/NVRAM/state checks
+remain pending. Flycast and Beetle Saturn still need concrete integration, and
+the requested complete milestone remains draft.
+
 ## Opera artifact preparation — 2026-11-07
 
 Four unmodified Android ABI archives identify Opera 1.0.0 source `370d9a2`.

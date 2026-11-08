@@ -209,6 +209,7 @@ fun main(args: Array<String>) {
         checkN64Storage(root, label)
         checkLynxFirmware(root, label)
         checkFbneoStorage(root, label)
+        checkOperaStorage(root, label)
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -304,6 +305,88 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+private fun checkOperaStorage(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected Opera refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected Opera refusal") }
+    }
+    val files = RootSaveFiles(root, 2000, label, {}, coreName = "opera")
+    val base = "files/Broomm/${"b".repeat(32)}/48"
+    val token = "9".repeat(32) + "-in"
+    val nvram = ByteArray(32768) { 17 }
+    val hash = RootSaveFiles.digest(nvram)
+    val selected = listOf("opera/per_game/Disc.0.srm", "opera/per_game/Disc.7.srm", "opera/shared/nvram.4.srm")
+    for (name in selected + "opera/per_game/Foreign.1.srm")
+        files.replace("$base/saves/$name", null, hash, nvram, null, token)
+    val areas = listOf(mapOf("path" to "$base/saves", "operaStem" to "Disc"))
+    check(files.inventory(areas).keys == selected.map { "$base/saves/$it" }.toSet())
+    refused { files.replace("$base/saves/opera/per_game/Disc.1.srm", null,
+        RootSaveFiles.digest(byteArrayOf(1)), byteArrayOf(1), null, token) }
+    val short = files.path("$base/saves/opera/per_game/Disc.0.srm")
+    short.writeBytes(byteArrayOf(1))
+    refused { files.inventory(areas) }
+    short.writeBytes(nvram)
+    refused { RootSaveFiles(root, 2000, label, {}).inventory(areas) }
+    refused { files.inventory(listOf(mapOf("path" to "$base/saves", "operaStem" to "../Disc"))) }
+    refused { RootSaveFiles.managedPath("$base/saves/opera/per_game/Disc.0.srm") }
+    refused { RootSaveFiles.managedPath("$base/saves/opera/per_game/Disc.10.srm", core = "opera") }
+    refused { RootSaveFiles.managedPath("$base/saves/opera/per_game/Disc.0.srm.tmp", core = "opera") }
+    val config = "$base/config-${"8".repeat(32)}.cfg"
+    val firmware = "$base/system-${"8".repeat(32)}/panafz10.bin"
+    val payload = ByteArray(1048576) { 29 }
+    val biosHash = RootSaveFiles.digest(payload)
+    refused { files.operaFirmware(firmware, config, null, biosHash, byteArrayOf(1), token) {} }
+    refused { RootSaveFiles(root, 2000, label, {}).operaFirmware(firmware, config, null, biosHash, payload, token) {} }
+    refused { files.operaFirmware(firmware.replace("system-8", "system-7"), config, null, biosHash, payload, token) {} }
+    val lost = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Lost Opera BIOS reply") }, "opera")
+    refused { lost.operaFirmware(firmware, config, null, biosHash, payload, token) {} }
+    files.operaFirmware(firmware, config, null, biosHash, payload, token) {}
+    check(files.hash(files.path(firmware), 1048576) == biosHash)
+    refused { files.operaFirmware(firmware, config, biosHash, null, null, token.replace("-in", "-out")) { error("Writer alive") } }
+    files.path(firmware).writeBytes(ByteArray(1048576) { 30 })
+    refused { files.operaFirmware(firmware, config, biosHash, null, null, token.replace("-in", "-out")) {} }
+    check(files.path(firmware).exists() && files.inventory(areas).size == 3)
+    files.path(firmware).writeBytes(payload)
+    repeat(2) { files.operaFirmware(firmware, config, biosHash, null, null, token.replace("-in", "-out")) {} }
+    check(!files.path(firmware).exists() && files.inventory(areas).size == 3)
+    val optionRoot = File(root, "options").apply { check(mkdir()); Os.chown(path, 2000, 2000) }
+    val optionFile = File(optionRoot, "Opera.opt").apply { writeText("opera_nvram_version = \"7\"\n"); Os.chown(path,2000,2000);Os.chmod(path,384) }
+    check(String(files.options(optionFile.path,listOf(optionRoot))!!) == optionFile.readText())
+    check(files.options(File(optionRoot,"absent.opt").path,listOf(optionRoot)) == null)
+    refused { files.options(optionFile.path,listOf(File(root,"foreign"))) }
+    val link = File(optionRoot,"linked.opt");Os.symlink(optionFile.path,link.path)
+    refused { files.options(link.path,listOf(optionRoot)) };Os.remove(link.path)
+    java.io.RandomAccessFile(optionFile,"rw").use { it.setLength(262145) }
+    refused { files.options(optionFile.path,listOf(optionRoot)) }
+    println("PASS: Opera native NVRAM versions/modes, truncated-save refusal, scoped options, exact selected BIOS, interrupted publication, writer/edited-resource preservation and idempotent cleanup")
+
+    val source = File(root,"library/48/content/Disc.iso").apply { check(parentFile!!.mkdirs()) }
+    java.io.RandomAccessFile(source,"rw").use { it.setLength(1024L * 1024 * 1024) }
+    fun streamedHash(file:File):String {
+        val d=java.security.MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input -> val buffer=ByteArray(65536);while(true){val n=input.read(buffer);if(n<0)break;d.update(buffer,0,n)} }
+        return d.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    }
+    val discHash=streamedHash(source)
+    val discPath="$base/rom-${"7".repeat(32)}/Disc.iso"
+    var deadline=android.os.SystemClock.elapsedRealtime()+30000
+    val bounded=RootSaveFiles(root,2000,label,{ check(android.os.SystemClock.elapsedRealtime()<=deadline){"Opera operation exceeded the unchanged native deadline"} },coreName="opera")
+    val started=android.os.SystemClock.elapsedRealtime()
+    val copy=bounded.stageRom(discPath,source,0,discHash)
+    val stageMillis=android.os.SystemClock.elapsedRealtime()-started
+    check(copy.length()==1024L*1024*1024)
+    deadline=android.os.SystemClock.elapsedRealtime()+30000
+    bounded.removeRom(discPath,discHash)
+    check(!copy.exists() && source.length()==1024L*1024*1024)
+    java.io.RandomAccessFile(source,"rw").use { it.setLength(1024L*1024*1024+1) }
+    refused { files.stageRom(discPath,source,0,discHash) }
+    files.removeRom(discPath,discHash)
+    refused { RootSaveFiles(root,2000,label,{}).stageRom(discPath,source,0,discHash) }
+    refused { RootSaveFiles(root,2000,label,{}).removeRom(discPath,discHash) }
+    println("PASS: exact 1 GiB streamed Opera disc in ${stageMillis}ms, unchanged 30s deadline, oversized refusal, cleanup and earlier core limits")
 }
 
 private fun checkFbneoStorage(root: File, label: ByteArray) {

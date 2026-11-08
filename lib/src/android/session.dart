@@ -77,7 +77,14 @@ class AndroidGameSession extends ChangeNotifier {
         value['coreName'] == 'mednafen_lynx' &&
         value['rootPlatform'] == 'lynx' &&
         value['access'] == 'root-cartridge-v1';
-    if (value['version'] != 1 && !lynxSwap ||
+    final operaSwap =
+        sharedSwap &&
+        value['version'] == 3 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'opera' &&
+        value['rootPlatform'] == '3do' &&
+        value['access'] == 'root-cartridge-v1';
+    if (value['version'] != 1 && !lynxSwap && !operaSwap ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(value['profile'] as String? ?? '') ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(value['server'] as String? ?? '') ||
@@ -88,6 +95,7 @@ class AndroidGameSession extends ChangeNotifier {
         'Android session recovery record is invalid. Progress was kept.',
       );
     if (lynxSwap ||
+        operaSwap ||
         sharedSwap &&
             androidRootAccessModes.contains(value['access']) &&
             value['rootStateGroup'] != null) {

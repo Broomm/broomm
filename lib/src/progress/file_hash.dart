@@ -13,8 +13,14 @@ Future<String> gameFileHash(
   String path, {
   DownloadCancellation? cancellation,
   void Function(int)? progress,
+  List<int>? expectedPrefix,
 }) async {
   cancellation?.check();
+  if (expectedPrefix != null &&
+      (expectedPrefix.length > 4096 ||
+          expectedPrefix.any((b) => b < 0 || b > 255)))
+    throw const FormatException('Invalid game-header identity check.');
+  final prefix = expectedPrefix == null ? null : List<int>.of(expectedPrefix);
   final messages = ReceivePort();
   final result = Completer<String>();
   SendPort? control;
@@ -65,7 +71,7 @@ Future<String> gameFileHash(
   try {
     worker = await Isolate.spawn(
       _hashFile,
-      [path, messages.sendPort],
+      [path, messages.sendPort, prefix],
       onError: messages.sendPort,
       onExit: messages.sendPort,
       errorsAreFatal: true,
@@ -95,8 +101,9 @@ Future<String> gameFileHash(
   }
 }
 
-Future<void> _hashFile(List<Object> request) async {
+Future<void> _hashFile(List<Object?> request) async {
   final path = request[0] as String, reply = request[1] as SendPort;
+  final prefix = request[2] as List<int>?;
   final control = ReceivePort();
   var cancelled = false;
   control.listen((_) => cancelled = true);
@@ -113,6 +120,15 @@ Future<void> _hashFile(List<Object> request) async {
     reply.send(0);
     await for (final bytes in file.openRead()) {
       if (cancelled) throw const DownloadCancelled();
+      if (prefix != null && read < prefix.length) {
+        final count = (prefix.length - read).clamp(0, bytes.length);
+        for (var i = 0; i < count; i++) {
+          if (bytes[i] != prefix[read + i])
+            throw const FileSystemException(
+              'The game header changed during its identity check. Existing progress was kept.',
+            );
+        }
+      }
       if (native == null) {
         digest!.add(bytes);
       } else {
@@ -125,6 +141,10 @@ Future<void> _hashFile(List<Object> request) async {
       }
     }
     if (cancelled) throw const DownloadCancelled();
+    if (prefix != null && read < prefix.length)
+      throw const FileSystemException(
+        'The game header is incomplete. Existing progress was kept.',
+      );
     final after = await file.stat();
     if (read != before.size ||
         before.size != after.size ||

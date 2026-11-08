@@ -112,6 +112,17 @@ class RootSaveService : RootService() {
                     Bundle().apply { putString("core", core) }
                 }
                 "check" -> Bundle()
+                "options" -> {
+                    require(coreName == "opera")
+                    ensureClosed()
+                    val requested = request.getString("path")!!
+                    val path = if (requested.startsWith("/data/data/$pkg/"))
+                        root.path + "/" + requested.removePrefix("/data/data/$pkg/") else requested
+                    val bytes = files.options(path, listOf(
+                        root, File("/storage/emulated/0/Android/data/$pkg/files"),
+                        File("/storage/emulated/0/RetroArch/config")))
+                    Bundle().apply { putByteArray("bytes", bytes) }
+                }
                 "lifecycle" -> RootRetroArchProcess(this, pkg, uid, ::live).observe(request, callerPid, caller)
                 "stagerom" -> {
                     val path = request.getString("path")!!
@@ -158,6 +169,15 @@ class RootSaveService : RootService() {
                         RootSaveTransfer.read(it, caller, 512, ::live)
                     }
                     files.lynxFirmware(request.getString("path")!!, request.getString("configPath")!!,
+                        request.getString("before"), request.getString("after"), payload,
+                        request.getString("token")!!, ::ensureClosed)
+                    Bundle()
+                }
+                "operafirmware" -> {
+                    val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
+                        RootSaveTransfer.read(it, caller, 1024 * 1024, ::live)
+                    }
+                    files.operaFirmware(request.getString("path")!!, request.getString("configPath")!!,
                         request.getString("before"), request.getString("after"), payload,
                         request.getString("token")!!, ::ensureClosed)
                     Bundle()

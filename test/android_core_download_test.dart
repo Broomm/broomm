@@ -21,6 +21,7 @@ void main() {
     ('mesen', '0.9.9-0102910'),
     ('mednafen_lynx', '1.24.0-fcdefcf'),
     ('fbneo', '1.0.0.03-20261107'),
+    ('opera', '1.0.0-370d9a2'),
   ]) {
     test(
       'each versioned $core archive verifies and publishes its reviewed core',

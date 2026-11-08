@@ -81,6 +81,7 @@ internal class RootSaveFiles(
     }
     fun inventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
         require(areas.size in 1..2)
+        if (areas.any { it.containsKey("operaStem") }) return operaInventory(areas)
         val result = linkedMapOf<String, BundleEntry>()
         var total = 0L
         var base: String? = null
@@ -94,6 +95,7 @@ internal class RootSaveFiles(
                 else driver == null && ((exact != null && area.keys == setOf("path", "exact")) ||
                     (prefix != null && area.keys == setOf("path", "prefix", "pattern"))))
             val ordinary = directory.endsWith("/saves")
+            require(coreName != "opera" || !ordinary) { "Opera needs its concrete native NVRAM selector." }
             val probe = if (arcade) "$directory/fbneo/$driver.fs"
                 else "$directory/${exact ?: (prefix + if (ordinary) ".srm" else ".state")}"
             managedPath(probe, saveOnly = true, core = coreName)
@@ -130,9 +132,116 @@ internal class RootSaveFiles(
     }
     data class BundleEntry(val bytes: Long, val sha256: String, val metadata: String)
 
-    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) =
+    private fun operaInventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
+        require(coreName == "opera")
+        val ordinary = areas.single { it.containsKey("operaStem") }
+        require(ordinary.keys == setOf("path", "operaStem"))
+        val directory = ordinary.getValue("path")
+        val stem = ordinary.getValue("operaStem")
+        require(stem.isNotEmpty() && stem !in setOf(".", "..") && stem.none { it.code < 32 || it in "/\\" })
+        managedPath("$directory/opera/per_game/$stem.0.srm", saveOnly = true, core = coreName)
+        val other = areas.filter { it !== ordinary }
+        require(other.all { it.getValue("path").startsWith(directory.removeSuffix("/saves") + "/states/") })
+        val result = if (other.isEmpty()) linkedMapOf<String, BundleEntry>() else LinkedHashMap(inventory(other))
+        var total = result.values.sumOf { it.bytes }
+        val folders = listOf(
+            directory to Regex("${Regex.escape(stem)}\\.srm|3DO\\.nvram"),
+            "$directory/opera/per_game" to Regex("${Regex.escape(stem)}\\.[0-9]\\.srm"),
+            "$directory/opera/shared" to Regex("nvram\\.[0-9]\\.srm"))
+        for ((relative, pattern) in folders) {
+            val folder = path(relative)
+            if (!present(folder)) continue
+            val stat = Os.lstat(folder.path)
+            require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+            val names = folder.list() ?: error("Cannot inspect Opera NVRAM directory.")
+            require(names.size <= 1024)
+            for (name in names.filter { pattern.matches(it) }.sorted()) {
+                live()
+                val target = "$relative/$name"
+                managedPath(target, saveOnly = true, core = coreName)
+                val file = path(target)
+                val metadata = metadata(file)
+                val bytes = bytes(file, progressLimit(target))
+                require(bytes.size == 32768) { "Opera NVRAM is incomplete. Recovery was kept." }
+                total += bytes.size
+                require(total <= 64L * 1024 * 1024 && result.size < 128)
+                result[target] = BundleEntry(bytes.size.toLong(), digest(bytes), metadata)
+            }
+        }
+        return result
+    }
+
+    /** Read-only option files from the selected emulator's known storage roots. */
+    fun options(absolute: String, roots: List<File>): ByteArray? {
+        require(coreName == "opera" && absolute.length <= 1024 && absolute.startsWith('/') &&
+            absolute.none { it.code < 32 || it == '\\' } &&
+            absolute.split('/').drop(1).none { it.isEmpty() || it == "." || it == ".." } &&
+            (absolute.endsWith(".opt") || absolute.endsWith(".cfg"))) { "Invalid RetroArch option path." }
+        require(roots.any { absolute.startsWith(it.path + "/") }) {
+            "Keep Opera options inside RetroArch's config or application folder before Play."
+        }
+        val file = File(absolute)
+        require(file.canonicalPath == file.absolutePath) { "Linked RetroArch option files are unsupported." }
+        if (!present(file)) return null
+        val stat = Os.lstat(file.path)
+        require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L)
+        if (file.path.startsWith(root.path + "/")) metadata(file)
+        return bytes(file, MAX_BYTES)
+    }
+
+    /** Selected immutable Opera BIOS/font, isolated from mutable NVRAM. */
+    fun operaFirmware(relative: String, config: String, before: String?, after: String?,
+                      payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
+        require(coreName == "opera")
+        managedPath(config)
+        val configName = config.substringAfterLast('/')
+        require(Regex("config-[a-f0-9]{32}\\.cfg").matches(configName))
+        val nonce = configName.removePrefix("config-").removeSuffix(".cfg")
+        val name = relative.substringAfterLast('/')
+        val size = when (name) {
+            "opera-boot.bin" -> 131072
+            "3do_arcade_saot.bin" -> 524288
+            "panafz1-kanji.bin" -> 933636
+            "panafz1.bin", "panafz1j.bin", "panafz1j-norsa.bin", "panafz10.bin",
+            "panafz10-norsa.bin", "panafz10e-anvil.bin", "panafz10e-anvil-norsa.bin",
+            "goldstar.bin", "sanyotry.bin", "panafz1j-kanji.bin", "panafz10ja-anvil-kanji.bin" -> 1048576
+            else -> error("Unsupported Opera firmware filename.")
+        }
+        require(relative == config.substringBeforeLast('/') + "/system-$nonce/$name")
+        require(if (after == null) before != null && payload == null && token.endsWith("-out")
+            else before == null && payload != null && payload.size == size && token.endsWith("-in"))
+        ensureClosed()
+        publish(relative, before, after, payload, null, token, size, beforeCommit = ensureClosed)
+        if (after == null) {
+            val folder = path(relative).parentFile!!
+            val stage = File(folder, ".$name.broomm-${token.removeSuffix("-out")}-in")
+            if (present(stage)) {
+                val stat = Os.lstat(stage.path)
+                require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L &&
+                    stat.st_uid in setOf(0, uid) && before != null && hash(stage, size) == before) {
+                    "Interrupted Opera firmware staging changed. Recovery was kept."
+                }
+                live(); ensureClosed(); Os.remove(stage.path); flushDirectory(folder)
+            }
+            if (present(folder)) {
+                val stat = Os.lstat(folder.path)
+                require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                    Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+                if (folder.list()?.isEmpty() == true) {
+                    live(); ensureClosed(); Os.remove(folder.path); flushDirectory(folder.parentFile!!)
+                }
+            }
+        }
+    }
+
+    fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) {
+        require(coreName != "opera" || !relative.contains("/saves/") || payload == null || payload.size == 32768) {
+            "Opera NVRAM must contain exactly 32768 bytes. Recovery was kept."
+        }
         publish(relative, before, after, payload, wantedMetadata, token, progressLimit(relative),
             sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
+    }
 
     /** One concrete immutable Lynx BIOS, separate from save/config allowlists. */
     fun lynxFirmware(relative: String, config: String, before: String?, after: String?,
@@ -400,7 +509,7 @@ internal class RootSaveFiles(
     }
 
     fun stageRom(relative: String, source: File, caller: Int, expected: String, prepared: Boolean = false): File {
-        val parts = romPath(relative)
+        val parts = romPath(relative, coreName)
         val limit = romLimit(parts[3])
         require(source.name == parts[3])
         if (prepared) {
@@ -430,7 +539,7 @@ internal class RootSaveFiles(
     }
 
     fun removeRom(relative: String, expected: String) {
-        romPath(relative)
+        romPath(relative, coreName)
         val target = path(relative)
         val directory = target.parentFile!!
         if (!present(directory)) return
@@ -459,7 +568,8 @@ internal class RootSaveFiles(
     }
 
     private fun romLimit(name: String): Long =
-        (if (coreName == "fbneo" && name.endsWith(".zip", true)) 128L
+        (if (coreName == "opera" && name.substringAfterLast('.').lowercase() in setOf("chd", "iso", "bin")) 1024L
+            else if (coreName == "fbneo" && name.endsWith(".zip", true)) 128L
             else if (coreName == "mupen64plus_next" && name.substringAfterLast('.').lowercase() in setOf("z64", "v64", "n64")) 64L else 32L) * 1024 * 1024
 
     companion object {
@@ -467,10 +577,11 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo"))
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera"))
             return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
         fun limit(path: String, core: String = "mgba"): Int = when {
+            core == "opera" && path.contains("/saves/") -> 32768
             path.contains("/states/") -> if (core == "mupen64plus_next") 32 * 1024 * 1024 else MAX_STATE_BYTES
             core == "mupen64plus_next" && path.endsWith(".srm") -> 296960
             else -> MAX_BYTES
@@ -478,6 +589,7 @@ internal class RootSaveFiles(
         fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
         fun managedPath(path: String, saveOnly: Boolean = false, core: String = "mgba") {
             val save = if (core == "fbneo") "saves/fbneo/(?:[a-z0-9_]{1,64}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)"
+                else if (core == "opera") "saves/(?:opera/per_game/[^/]+\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|[^/]+\\.srm|3DO\\.nvram)"
                 else "saves/[^/]+\\.(?:srm|rtc)"
             val state = "states/states-[a-f0-9]{16}-android/[^/]+\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?"
             val suffix = if (saveOnly) "(?:$save|$state)" else "(?:$save|$state|config-[a-f0-9]{32}\\.cfg)"
@@ -486,9 +598,11 @@ internal class RootSaveFiles(
                 Regex("files/Broomm/[a-f0-9]{32}/[a-zA-Z0-9_-]{1,128}/$suffix").matches(path)) { "Root path is outside the selected managed RetroArch files." }
         }
 
-        fun romPath(path: String): List<String> {
+        fun romPath(path: String, core: String = "mgba"): List<String> {
+            val extensions = if (core == "opera") "chd|iso|bin"
+                else "gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg|lnx|lyx|bll|o|zip"
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
-                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg|lnx|lyx|bll|o|zip))")
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:$extensions))")
                     .matches(path)) { "ROM path is outside the rooted RetroArch session" }
             return path.split('/').drop(2)
         }

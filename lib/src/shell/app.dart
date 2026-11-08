@@ -38,6 +38,7 @@ import '../android/emulators.dart';
 import '../android/root_saves.dart';
 import '../android/save_plan.dart';
 import '../android/lynx_firmware.dart';
+import '../android/opera.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
 import 'update_screen.dart';
@@ -711,10 +712,49 @@ class _BroommAppState extends State<BroommApp> {
                 );
                 final plan = game.layout;
                 if (!rooted ||
-                    platform.slug != 'lynx' ||
+                    !{'lynx', '3do'}.contains(platform.slug) ||
                     plan is! AndroidSavePlan ||
                     plan.launch['frontendSetup'] == 'true')
                   return game;
+                if (platform.slug == '3do') {
+                  final disc = await inspectAndroidOperaDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidOperaResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    plan.operaOptions,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  cancellation.check();
+                  await verifyAndroidOperaPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      operaOptions: plan.operaOptions,
+                      operaDisc: disc,
+                      operaResources: resources,
+                    ),
+                  );
+                }
                 final boot = await ensureAndroidLynxBoot(
                   Directory(plan.root),
                   entry.game.platformId,

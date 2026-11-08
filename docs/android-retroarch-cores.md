@@ -13,8 +13,10 @@ increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
 passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
 input and state restoration below. FBNeo build 1087 passed complete-ROMset
-gameplay, NVRAM/state restoration and two-account separation below. Opera, Flycast and Beetle Saturn still need
-their concrete firmware/media/save integration.
+gameplay, NVRAM/state restoration and two-account separation below. The Opera
+source increment covers self-contained disc images and native NVRAM, with
+packaged acceptance and multi-file CUE transport pending. Flycast and Beetle
+Saturn still need concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
 
@@ -535,6 +537,56 @@ Mesen run `42430012217` passed all four jobs. See the
 self-contained ROMset does not establish the full driver catalogue, completed
 stages, special peripherals, other ABI gameplay or cross-device play.
 
+## Opera self-contained disc source increment
+
+Use **3DO → RetroArch → Set up**, then Play one self-contained CHD v5, ISO or
+BIN image from RomM. Runtime downloads pin `7d8f0c9accdf3fb80985000276e3a7767756fe17`
+and `android-opera-1.0.0-370d9a2`. Settings version 14 reads versions 1–13 and
+preserves earlier independent connections. The concrete disc boundary is 1 GiB
+for both file and CHD logical size. Parent CHDs, incomplete headers and CUE sets
+are refused; multi-file transport remains unfinished. Inspection is cancellable,
+and its exact header/hash identity remains bound through streamed native staging.
+Earlier cartridge/archive/state limits and disc-path refusals stay unchanged.
+Core/configuration/options are rechecked after lengthy preparation; external
+edits stop Play before cloud inspection or native save effects.
+
+The retained core defaults to its embedded open-source Opera Boot. A selected
+external BIOS or Japanese font is obtained from the active 3DO platform in RomM,
+verified against canonical size/MD5 and transfer/hash checks, and retained in an
+immutable profile cache. Existing cache objects survive failed repair. Native
+copies live only in the configuration's private system directory; firmware never
+enters cloud progress. Add exactly one matching selected resource to RomM if
+requested, or choose the built-in boot ROM in RetroArch. No retail BIOS download
+from a public service is added.
+
+Game/folder/core/global option precedence selects the raw NVRAM key. Conflicting,
+unreadable or included option files fail visibly. The exact native 32 KiB files
+retain `save/opera/per_game/<stem>.<0–9>.srm`,
+`save/opera/shared/nvram.<0–9>.srm` and recognized legacy filenames. A shared-mode
+file is still private to this profile/game. All versions travel together as
+needed; a truncated/missing working file retains recovery. Empty/relative
+configuration and global-option paths now resolve against RetroArch's original
+configuration directory on every rooted route, preserving native options across
+temporary launch configurations. Explicit configured paths remain selected.
+
+Version-3 resource receipts bind exact core/configuration/transaction identity
+and retain version-1/2 compatibility. Recovery does not depend on cache/staged
+firmware or the general marker. Quit normally and wait for sync; native resources,
+ROM and configuration are cleaned only after verified closure, preserving
+standalone settings and earlier progress. Do not remove private progress/cache
+or recovery directories. APK/ABI/core-matched manual states use the existing
+supervisor.
+
+All 688 Flutter tests (one existing native-host skip), 96 focused cases, clean analysis and four
+real production ABI downloads pass. Seventeen native filesystem/launch groups
+pass, including exact NVRAM size, scoped option reads, firmware ownership and
+lost-reply/edited-resource refusal. The exact 1 GiB native image fixture staged
+in 3,349 ms under the unchanged 30-second deadline. The original cartridge-disc
+refusal assertion caught and verified the correction of an overbroad path change;
+initial helper/type/import/test-path failure logs remain retained. These source
+checks do not establish packaged Opera gameplay or selected external BIOS use.
+Alone in the Dark is downloaded from RomM for that next check.
+
 ## Remaining boundaries
 
 Opera's [retained four-ABI build](../vendor/android/opera/1.0.0-370d9a2/README.md)
@@ -545,8 +597,8 @@ records the uncompressed hash and the referenced upstream boot source separately
 an Android NDK or source-to-boot rebuild is not claimed. Complete FreeDO modified
 LGPL/non-commercial terms, GPL-2.0-only boot license and component notices are
 retained. No retail BIOS/game is included. This artifact preparation enables no
-new route; selected external firmware, NVRAM option precedence and disc staging
-remain concrete integration work.
+new route by itself; the concrete Opera source increment above remains separate
+from packaged device acceptance.
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
 arm64 library is about 73 MiB. Native core transport now streams up to 96 MiB
@@ -569,8 +621,9 @@ larger download recipes and actual core integrations remain pending. Saturn
 backup cartridges still exceed the existing small-save boundary; N64's concrete
 limits are implemented in the source increment above.
 
-Disc content needs safe file-set staging and firmware from RomM. Opera and FBNeo
-have nested native saves. Flycast requires private VMUs on every port and its
+Multi-file disc content still needs safe file-set staging. Opera now has
+self-contained image transport and selected firmware preparation; FBNeo's scoped
+nested-save acceptance is recorded above. Flycast requires private VMUs on every port and its
 option prefix differs between builds. New Beetle Saturn builds default to a new
 frontend SRAM mode; preserve the existing Mednafen save contract explicitly.
 Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
@@ -578,5 +631,6 @@ Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
-source build. Three selected cores still need their concrete integration;
-Lynx's scoped packaged acceptance is recorded above.
+source build. Flycast and Beetle Saturn still need their concrete integration;
+Opera's packaged acceptance remains pending. Lynx's scoped packaged acceptance
+is recorded above.

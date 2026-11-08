@@ -15,6 +15,7 @@ import '../switch_content.dart';
 import 'emulators.dart';
 import 'retroarch_core_setup.dart';
 import 'lynx_firmware.dart';
+import 'opera.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -31,6 +32,7 @@ class AndroidSaveArea {
     this.remote, {
     this.rename,
     this.arcadeDriver,
+    this.operaStem,
   });
   final ProgressArea local;
   final String remote;
@@ -38,11 +40,13 @@ class AndroidSaveArea {
 
   /// FBNeo's nested native files retain their driver names in cloud bundles.
   final String? arcadeDriver;
+  final String? operaStem;
   Map<String, String> get selector => {
     'path': remote,
     if (arcadeDriver != null) 'driver': arcadeDriver!,
+    if (operaStem != null) 'operaStem': operaStem!,
     if (rename != null) 'exact': rename!,
-    if (rename == null && arcadeDriver == null) ...{
+    if (rename == null && arcadeDriver == null && operaStem == null) ...{
       if (local.prefix != null) 'prefix': local.prefix!,
       if (local.suffix != null) 'suffix': local.suffix!,
       if (local.exact != null) 'exact': local.exact!,
@@ -79,6 +83,9 @@ class AndroidSavePlan extends ProgressLayout {
     this.remoteAreas, {
     this.launch = const {},
     this.lynxBootImage,
+    this.operaOptions = const {},
+    this.operaDisc,
+    this.operaResources,
   }) : super(
          layout.root,
          layout.format,
@@ -92,6 +99,9 @@ class AndroidSavePlan extends ProgressLayout {
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
   final AndroidLynxBootImage? lynxBootImage;
+  final Map<String, String> operaOptions;
+  final AndroidOperaDisc? operaDisc;
+  final List<AndroidOperaResource>? operaResources;
   Map<String, String> get arguments => {
     ...binding,
     'emulator': emulator.id,

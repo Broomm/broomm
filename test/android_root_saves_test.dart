@@ -8,6 +8,7 @@ import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/lynx_firmware.dart';
+import 'package:broomm/src/android/opera.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
@@ -33,6 +34,18 @@ class _FixtureLynxBoot implements AndroidLynxBootImage {
   final String sha256;
 }
 
+class _FixtureOperaResource implements AndroidOperaResource {
+  _FixtureOperaResource(this.name, this.file, this.sha256);
+  @override
+  final String name;
+  @override
+  final File file;
+  @override
+  final String sha256;
+  @override
+  int get bytes => androidOperaFirmware[name]!.$1;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel('app.broomm/root-save-test');
@@ -47,6 +60,7 @@ void main() {
   late SaveServer api;
   late CloudSaves cloud;
   var denied = false;
+  String? operaOptionsText;
   var missingCore = false;
   var refuseRomCleanup = false;
   var loseRomStagingReply = false;
@@ -129,6 +143,7 @@ void main() {
     api = SaveServer();
     cloud = CloudSaves(data, notice: (_, _) {});
     denied = false;
+    operaOptionsText = null;
     missingCore = false;
     refuseRomCleanup = false;
     loseRomStagingReply = false;
@@ -168,6 +183,10 @@ void main() {
               message: 'Denied',
             );
           if (call.method == 'rootInspect') return observation;
+          if (call.method == 'rootOptions')
+            return operaOptionsText == null
+                ? null
+                : Uint8List.fromList(utf8.encode(operaOptionsText!));
           if (call.method == 'rootControllerProfiles') {
             observation['controllerProfilesReady'] = true;
             return null;
@@ -201,6 +220,8 @@ void main() {
             ..['tree'] = 'root-fixture';
           if (call.method == 'rootStageRom') {
             final source = File(args['source'] as String);
+            if (await progressFileHash(source) != args['sha256'])
+              throw PlatformException(code: 'changed-native-rom-source');
             expect(
               source.uri.pathSegments.last,
               File(args['path'] as String).uri.pathSegments.last,
@@ -237,7 +258,7 @@ void main() {
             }
             return null;
           }
-          if (call.method == 'rootLynxFirmware') {
+          if ({'rootLynxFirmware', 'rootOperaFirmware'}.contains(call.method)) {
             final value = await fixture.call(MethodCall('sharedReplace', args));
             if (args['after'] == null) {
               metadata.remove(args['path']);
@@ -259,6 +280,12 @@ void main() {
           if (call.method == 'rootList') {
             for (final area in (args['areas'] as List).cast<Map>()) {
               final driver = area.remove('driver');
+              final opera = area.remove('operaStem');
+              if (opera != null) {
+                expect(args['coreName'], 'opera');
+                area['pattern'] =
+                    '^(?:opera/per_game/${RegExp.escape(opera as String)}\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|${RegExp.escape(opera)}\\.srm|3DO\\.nvram)\$';
+              }
               if (driver != null) {
                 expect(args['coreName'], 'fbneo');
                 area['pattern'] =
@@ -1487,6 +1514,254 @@ void main() {
       expect(manager.settingsKnown, false);
     },
   );
+
+  Future<AndroidSavePlan> operaPlan(
+    String rom, {
+    bool prepared = true,
+    bool external = false,
+  }) async {
+    final current = await gameboyPlan('3do', rom);
+    final resources = <AndroidOperaResource>[];
+    if (external && prepared) {
+      final file = await File('${temp.path}/fixture-opera-bios')
+          .writeAsBytes(List.filled(1048576, 17));
+      resources.add(
+        _FixtureOperaResource(
+          'panafz10.bin',
+          file,
+          await progressFileHash(file),
+        ),
+      );
+    }
+    return AndroidSavePlan(
+      current,
+      current.emulator,
+      current.binding,
+      current.remoteAreas,
+      launch: current.launch,
+      operaOptions: external
+          ? {'opera_bios': 'panafz10.bin'}
+          : current.operaOptions,
+      operaDisc: prepared
+          ? await inspectAndroidOperaDisc(
+              File(rom),
+              DownloadCancellation(),
+              (_) {},
+            )
+          : null,
+      operaResources: prepared ? resources : null,
+    );
+  }
+
+  test('Opera migration retains all version-13 bindings, persists its own Setup and refuses an old forged connection', () async {
+    final previous = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+      'n64',
+      'nes',
+      'jaguar',
+      'lynx',
+      'arcade',
+    ];
+    for (final slug in previous)
+      await manager.connectGbaRoot(emulator, platform: slug);
+    final file = File('${data.path}/android/emulators.json');
+    final old = await progressJson(file)
+      ..['version'] = 13;
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, true);
+    expect(manager.hasCurrentRoot(emulator, '3do'), false);
+    await manager.connectGbaRoot(emulator, platform: '3do');
+    await manager.load();
+    expect(manager.settingsKnown, true, reason: manager.error);
+    for (final slug in [...previous, '3do'])
+      expect(manager.hasCurrentRoot(emulator, slug), true, reason: slug);
+    await manager.disconnectGbaRoot(emulator, platform: '3do');
+    await manager.load();
+    for (final slug in previous)
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    expect(manager.hasCurrentRoot(emulator, '3do'), false);
+    (old['retroRoots'] as Map)['3do:$pkg'] = manager.rootConnection(
+      emulator,
+      'arcade',
+    );
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, false);
+  });
+
+  test('Opera captures native mode/version NVRAM and states while restoring original and foreign files', () async {
+    await manager.connectGbaRoot(emulator, platform: '3do');
+    final rom = await File('${temp.path}/Disc.iso').writeAsBytes([1, 2, 3]);
+    final p = await operaPlan(rom.path), g = game(p);
+    expect(p.rawSaveKey, 'save/opera/per_game/Disc.0.srm');
+    expect(
+      androidIni(p.launch['configText']!)['core_options_path'],
+      '/storage/emulated/0/Android/data/$pkg/files/retroarch-core-options.cfg',
+    );
+    final original = await put(
+      p.remotePath(p.rawSaveKey!),
+      List.filled(32768, 8),
+    );
+    final foreign = await put(
+      '${p.remoteAreas.first.remote}/opera/per_game/Other.2.srm',
+      [7],
+    );
+    final saves = SharedAndroidSaves(manager);
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    expect(await staged.readAsBytes(), [1, 2, 3]);
+    final keys = [
+      p.rawSaveKey!,
+      'save/opera/per_game/Disc.7.srm',
+      'save/opera/shared/nvram.4.srm',
+      '${p.areas.last.id}/game.state',
+    ];
+    for (var i = 0; i < keys.length; i++)
+      await put(
+        p.remotePath(keys[i]),
+        i == keys.length - 1 ? [i, i + 1] : List.filled(32768, i),
+      );
+    await saves.capture(g, cloud, p);
+    expect((await p.files()).keys.toSet(), keys.toSet());
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect(api.records, isNotEmpty);
+    expect(await original.readAsBytes(), List.filled(32768, 8));
+    expect(await foreign.readAsBytes(), [7]);
+    expect(await staged.exists(), false);
+    expect(await saves.pending, false);
+    final nextPlan = await operaPlan(rom.path), nextGame = game(nextPlan);
+    final swapped = SharedAndroidSaves(manager);
+    await swapped.begin(nextGame, nextPlan, 'a' * 64, selected: rom.path);
+    await File(
+      '${native.path}/${p.remotePath('save/opera/per_game/Disc.7.srm')}',
+    ).delete();
+    await expectLater(
+      swapped.capture(nextGame, cloud, nextPlan),
+      throwsStateError,
+    );
+    expect(await swapped.pending, true);
+    expect(
+      await (await p.target('save/opera/per_game/Disc.7.srm')).readAsBytes(),
+      List.filled(32768, 1),
+    );
+    await put(
+      p.remotePath('save/opera/per_game/Disc.7.srm'),
+      List.filled(32768, 1),
+    );
+    await swapped.capture(nextGame, cloud, nextPlan);
+    await swapped.restoreOriginal(nextGame, nextPlan);
+  });
+
+  test('Opera preparation rechecks core, frontend configuration and native options before save effects', () async {
+    await manager.connectGbaRoot(emulator, platform: '3do');
+    final rom = await File('${temp.path}/Disc.iso').writeAsBytes([1, 2, 3]);
+    final p = await operaPlan(rom.path);
+    await verifyAndroidOperaPreparation(manager, p, rom.path);
+    final core = observation['core'], config = observation['config'];
+    for (final change in ['core', 'config', 'options']) {
+      observation['core'] = core;
+      observation['config'] = config;
+      operaOptionsText = null;
+      if (change == 'core') observation['core'] = 'f' * 64;
+      if (change == 'config')
+        observation['config'] = Uint8List.fromList(
+          utf8.encode('global_core_options = "true"'),
+        );
+      if (change == 'options') operaOptionsText = 'opera_nvram_version = "7"';
+      await expectLater(
+        verifyAndroidOperaPreparation(manager, p, rom.path),
+        throwsStateError,
+      );
+      expect(await SharedAndroidSaves(manager).pending, false);
+      expect(api.records, isEmpty);
+    }
+  });
+
+  test(
+    'Opera staging retains the inspected disc hash when its source changes',
+    () async {
+      await manager.connectGbaRoot(emulator, platform: '3do');
+      final rom = await File('${temp.path}/Disc.iso').writeAsBytes([1, 2, 3]);
+      final p = await operaPlan(rom.path),
+          g = game(p),
+          saves = SharedAndroidSaves(manager);
+      await saves.begin(g, p, 'a' * 64, selected: rom.path);
+      await rom.writeAsBytes([4, 5, 6]);
+      await expectLater(
+        saves.stageRootRom(g, p),
+        throwsA(isA<PlatformException>()),
+      );
+      expect(await saves.pending, true);
+      final record = await progressJson(saves.journal);
+      expect(record['romStageSha256'], p.operaDisc!.sha256);
+      expect(
+        await File('${native.path}/${record['romStage']}').exists(),
+        false,
+      );
+      await saves.capture(g, cloud, p);
+      await saves.restoreOriginal(g, p);
+      expect(await rom.readAsBytes(), [4, 5, 6]);
+    },
+  );
+
+  test('Opera firmware publication loss recovers without cache, staged resource or general marker', () async {
+    await manager.connectGbaRoot(emulator, platform: '3do');
+    final rom = await File('${temp.path}/Disc.iso').writeAsBytes([1, 2, 3]);
+    final p = await operaPlan(rom.path, external: true),
+        g = game(p),
+        saves = SharedAndroidSaves(manager);
+    final key = '${p.areas.last.id}/game.state';
+    await (await p.target(key)).writeAsBytes([7, 8]);
+    loseFirmwarePublicationReply = true;
+    await expectLater(
+      saves.begin(g, p, 'a' * 64, selected: rom.path),
+      throwsA(isA<PlatformException>()),
+    );
+    final record = await progressJson(saves.journal);
+    await p.operaResources!.single.file.delete();
+    await (await progressFile(
+      saves.directory(record),
+      'firmware/panafz10.bin',
+    )).delete();
+    for (final changed in [
+      {'coreName': 'fbneo'},
+      {'rootFirmware': <String, Object>{}},
+      {'transaction': 'f' * 32},
+    ]) {
+      await progressWrite(saves.journal, {...record, ...changed});
+      await expectLater(saves.record(g, p), throwsFormatException);
+      expect(await (await p.target(key)).readAsBytes(), [7, 8]);
+    }
+    await progressWrite(saves.journal, record);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    expect((await session.pending())!['stateAreas'], [p.areas.last.id]);
+    final current = await operaPlan(rom.path, prepared: false);
+    final recovered = await saves.recoveryPlan(game(current), current);
+    expect(await saves.capture(g, cloud, recovered), false);
+    await saves.restoreOriginal(g, recovered);
+    expect(await session.pending(), isNull);
+    expect(api.records, isEmpty);
+    expect(await (await p.target(key)).readAsBytes(), [7, 8]);
+    final resources = record['rootOperaFirmware'] as Map;
+    expect(
+      await File('${native.path}/${(resources.values.single as Map)['path']}')
+          .exists(),
+      false,
+    );
+  });
 
   test('FBNeo stages the intact multi-chip ZIP and publishes native nested saves with matched states', () async {
     await manager.connectGbaRoot(emulator, platform: 'arcade');

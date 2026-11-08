@@ -9,10 +9,12 @@ import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
 import 'retroarch_core_setup.dart';
+import 'opera.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
 
 String? androidRootRetroCore(String platform) => switch (platform) {
+  '3do' => 'opera',
   'gba' => 'mgba',
   'snes' => 'snes9x',
   'gb' || 'gbc' => 'gambatte',
@@ -33,6 +35,7 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'snes' => 'root-snes-v1',
   'gb' || 'gbc' => 'root-gameboy-v1',
   'atari2600' ||
+  '3do' ||
   'tg16' ||
   'genesis' ||
   'sms' ||
@@ -226,6 +229,21 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final stem = retroStateStem(rom), base = 'files/Broomm/$profile/$content';
   progressRelative('$stem.srm');
   final driver = core == 'fbneo' ? stem.toLowerCase() : null;
+  final opera = core == 'opera';
+  final configNonce = progressNonce();
+  final savedConfig = utf8.decode(report['config'] as Uint8List);
+  final preferences = androidIni(savedConfig);
+  final operaOptions = opera
+      ? await readAndroidOperaOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  final rawSave = opera ? androidOperaRawSaveKey(operaOptions, stem) : null;
+  if (opera) androidOperaResourceNames(operaOptions);
   if (driver != null && !rom.toLowerCase().endsWith('.zip'))
     throw UnsupportedError(
       'Rooted FBNeo currently needs a complete ZIP ROMset. Convert 7z sets to ZIP without renaming the set or its chips.',
@@ -237,9 +255,11 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final area = ProgressArea(
     'save',
     'root-${platform.slug}/$content/saves',
-    prefix: driver == null ? stem : null,
-    exact: core == 'gambatte' || driver != null ? null : '$stem.srm',
-    pattern: driver != null
+    prefix: driver == null && !opera ? stem : null,
+    exact: core == 'gambatte' || driver != null || opera ? null : '$stem.srm',
+    pattern: opera
+        ? '^(?:opera/per_game/${RegExp.escape(stem)}\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|${RegExp.escape(stem)}\\.srm|3DO\\.nvram)\$'
+        : driver != null
         ? '^fbneo/(?:${RegExp.escape(driver)}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)\$'
         : core == 'gambatte'
         ? '^${RegExp.escape(stem)}\\.(?:srm|rtc)\$'
@@ -259,11 +279,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     pattern:
         '^${RegExp.escape(stem)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
   );
-  final configNonce = progressNonce();
   final configPath = '$base/config-$configNonce.cfg';
   final native = binding['dataDir']!;
-  final savedConfig = utf8.decode(report['config'] as Uint8List);
-  final preferences = androidIni(savedConfig);
   final configuredProfiles = preferences['joypad_autoconfig_dir'];
   final bundledProfiles =
       report['bundledControllerProfiles'] == true &&
@@ -274,6 +291,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
           configuredProfiles == '/data/user/0/${app.package}/autoconfig' ||
           configuredProfiles == '/data/data/${app.package}/autoconfig');
   final config = androidRetroConfig(savedConfig, {
+    ...androidRetroOptionPaths(preferences, app.package),
     'savefile_directory': '$native/$base/saves',
     'savestate_directory': '$native/$base/states/$group',
     'sort_savefiles_enable': 'false',
@@ -287,7 +305,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
-    if (core == 'mednafen_lynx') ...{
+    if (core == 'mednafen_lynx' || opera) ...{
       'system_directory': '$native/$base/system-$configNonce',
       'systemfiles_in_content_dir': 'false',
     },
@@ -305,6 +323,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       core == 'snes9x' ? 'snes' : content,
       [area, states],
       note: 'Rooted RetroArch saves and states. States require the same APK, ABI and core build.',
+      rawSave: rawSave,
     ),
     emulator,
     binding,
@@ -312,8 +331,11 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       AndroidSaveArea(
         area,
         '$base/saves',
-        rename: core == 'gambatte' || driver != null ? null : '$stem.srm',
+        rename: core == 'gambatte' || driver != null || opera
+            ? null
+            : '$stem.srm',
         arcadeDriver: driver,
+        operaStem: opera ? stem : null,
       ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
@@ -324,11 +346,62 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
+      if (opera) 'transaction': configNonce,
+      if (opera) ...{
+        'sourceCore': report['core'] as String,
+        'sourceAbi': report['abi'] as String,
+        'sourceConfig':
+            (ProgressDigest.sha256()..add(report['config'] as Uint8List))
+                .finish(),
+      },
       if (core == 'mednafen_lynx')
         'lynxFirmwarePath': '$base/system-$configNonce/lynxboot.img',
       if (androidRetroArchNeedsSetup(report, app)) 'frontendSetup': 'true',
       if (bundledProfiles && report['controllerProfilesReady'] != true)
         'prepareControllerProfiles': 'true',
     },
+    operaOptions: operaOptions,
   );
+}
+
+/// Disc hashing/firmware transfer can outlast an external settings/core edit.
+/// Recheck the prepared boundary before cloud inspection or any native write.
+Future<void> verifyAndroidOperaPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'opera')
+    throw const FormatException('Invalid Opera preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: '3do',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidOperaOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.operaOptions.length ||
+      options.entries.any((e) => plan.operaOptions[e.key] != e.value))
+    throw StateError(
+      'Opera’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
 }
