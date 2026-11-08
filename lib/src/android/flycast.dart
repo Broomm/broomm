@@ -83,6 +83,47 @@ const androidFlycastRequiredOptions = {
   'flycast_linked_vmu_storage': 'disabled',
 };
 
+/// The pinned core loads a legacy content-name VMU, then fullSave writes it to
+/// its native game-ID name and removes the old name. Both inventories already
+/// belong to this locked profile/game boundary. Only an unambiguous, new native
+/// name for the same port can account for that disappearance; missing states,
+/// existing game-ID cards and competing destinations remain damaged recovery.
+void validateAndroidFlycastWorkingProgress(
+  String selected,
+  Map<String, dynamic> working,
+  Map<String, dynamic> actual,
+) {
+  final missing = working.keys.where((p) => !actual.containsKey(p)).toList();
+  if (missing.isEmpty) return;
+  Never damaged() => throw StateError(
+    'An installed Flycast save or state is missing or its VMU migration is ambiguous. All recovery copies were kept.',
+  );
+  final stem = retroStateStem(selected);
+  final card = RegExp(r'^(.*)/saves/([^/]+)\.([A-D][12])\.bin$');
+  final destinations = <String>{};
+  for (final path in missing) {
+    final old = card.firstMatch(path);
+    if (old == null || old[2] != stem) damaged();
+    final candidates = actual.keys.where((p) {
+      final next = card.firstMatch(p);
+      return next != null && next[1] == old[1] && next[3] == old[3];
+    }).toList();
+    if (candidates.length != 1 || working.containsKey(candidates.single))
+      damaged();
+    final next = candidates.single;
+    if (working[path]['bytes'] != 131072 || actual[next]['bytes'] != 131072)
+      damaged();
+    destinations.add(card.firstMatch(next)![2]!);
+  }
+  // One disc has one native game ID across every port. Do not select among
+  // historical cards or let an unrelated extra name resolve a missing input.
+  for (final path in actual.keys.where((p) => !working.containsKey(p))) {
+    final next = card.firstMatch(path);
+    if (next != null) destinations.add(next[2]!);
+  }
+  if (destinations.length != 1 || destinations.single == stem) damaged();
+}
+
 String androidFlycastOptionsText(Map<String, String> values) {
   final options = {...values, ...androidFlycastRequiredOptions};
   for (final entry in options.entries) {

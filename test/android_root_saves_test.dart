@@ -1936,6 +1936,157 @@ void main() {
     expect(await console.file.exists(), true);
   });
 
+  test('Flycast native legacy-to-game-ID VMU saves capture changed bytes on every port and restore original native cards', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(), p = await flycastPlan(rom.path, hle: true);
+    final saves = SharedAndroidSaves(manager), g = game(p);
+    final original = await put(
+      p.remotePath('save/ORIGINAL.A2.bin'),
+      List.filled(131072, 8),
+    );
+    for (final slot in ['A1', 'B1', 'C1', 'D1']) {
+      await (await p.target('save/Disc.$slot.bin'))
+          .writeAsBytes(List.filled(131072, 4));
+    }
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final r = await progressJson(saves.journal),
+        resources = r['rootFlycastResources'] as Map;
+    final config = r['rootConfigPath'] as String,
+        base = config.substring(0, config.lastIndexOf('/'));
+    await put(
+      '$base/system-${r['transaction']}/dc/dc_nvmem.bin',
+      List.filled(131072, 3),
+    );
+    for (final slot in ['A1', 'B1', 'C1', 'D1']) {
+      await File('${native.path}/${p.remotePath('save/Disc.$slot.bin')}')
+          .delete();
+      await put(
+        p.remotePath('save/MK-51000.$slot.bin'),
+        List.filled(131072, 7),
+      );
+    }
+    await put(
+      resources.keys.cast<String>().singleWhere((p) => p.endsWith('.opt')),
+      utf8.encode(androidFlycastOptionsText({'reicast_cable_type': 'VGA'})),
+    );
+    await saves.capture(g, cloud, p);
+    final captured = await progressJson(saves.journal);
+    expect((captured['captured'] as Map).length, 4);
+    for (final slot in ['A1', 'B1', 'C1', 'D1']) {
+      expect(
+        await (await p.target('save/MK-51000.$slot.bin')).readAsBytes(),
+        List.filled(131072, 7),
+      );
+      expect(
+        await File(
+          '${saves.directory(r).path}/working/${p.remotePath('save/Disc.$slot.bin')}',
+        ).readAsBytes(),
+        List.filled(131072, 4),
+      );
+    }
+    expect(
+      (await p.files()).keys.any((p) => p.startsWith('save/Disc.')),
+      false,
+    );
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect(await original.readAsBytes(), List.filled(131072, 8));
+    expect(await saves.pending, false);
+    expect(await readAndroidFlycastPreferences(Directory(p.root), '42'), {
+      'reicast_cable_type': 'VGA',
+    });
+    final next = await flycastPlan(rom.path, hle: true), nextGame = game(next);
+    await saves.begin(nextGame, next, 'a' * 64, selected: rom.path);
+    for (final slot in ['A1', 'B1', 'C1', 'D1']) {
+      expect(
+        await File(
+          '${native.path}/${next.remotePath('save/MK-51000.$slot.bin')}',
+        ).readAsBytes(),
+        List.filled(131072, 7),
+      );
+    }
+    await saves.capture(nextGame, cloud, next);
+    await saves.restoreOriginal(nextGame, next);
+    expect(await original.readAsBytes(), List.filled(131072, 8));
+  });
+
+  test('Competing native VMU destinations retain every candidate and legacy input without publishing a guessed migration', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(), p = await flycastPlan(rom.path, hle: true);
+    final saves = SharedAndroidSaves(manager), g = game(p);
+    await (await p.target('save/Disc.A1.bin'))
+        .writeAsBytes(List.filled(131072, 4));
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final r = await progressJson(saves.journal),
+        config = r['rootConfigPath'] as String;
+    final base = config.substring(0, config.lastIndexOf('/'));
+    await put(
+      '$base/system-${r['transaction']}/dc/dc_nvmem.bin',
+      List.filled(131072, 3),
+    );
+    await File('${native.path}/${p.remotePath('save/Disc.A1.bin')}').delete();
+    for (final id in ['FIRST', 'SECOND'])
+      await put(p.remotePath('save/$id.A1.bin'), List.filled(131072, 7));
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    final failed = await progressJson(saves.journal),
+        held = failed['rootFlycastHeldProgress'] as Map;
+    for (final id in ['FIRST', 'SECOND']) {
+      expect(
+        await File(
+          '${saves.directory(r).path}/${held['directory']}/${p.remotePath('save/$id.A1.bin')}',
+        ).length(),
+        131072,
+      );
+    }
+    expect(
+      await File(
+        '${saves.directory(r).path}/working/${p.remotePath('save/Disc.A1.bin')}',
+      ).readAsBytes(),
+      List.filled(131072, 4),
+    );
+    expect(await saves.pending, true);
+    expect(api.records, isEmpty);
+    expect(await readAndroidFlycastConsole(Directory(p.root)), isNull);
+  });
+
+  test('Missing established native-ID cards and missing states cannot be explained by another VMU filename', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(), p = await flycastPlan(rom.path, hle: true);
+    final saves = SharedAndroidSaves(manager),
+        g = game(p),
+        stateKey = '${p.areas.last.id}/game.state';
+    await (await p.target('save/MK-51000.A1.bin'))
+        .writeAsBytes(List.filled(131072, 4));
+    await (await p.target(stateKey)).writeAsBytes([1, 2, 3]);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final r = await progressJson(saves.journal),
+        config = r['rootConfigPath'] as String;
+    final base = config.substring(0, config.lastIndexOf('/'));
+    await put(
+      '$base/system-${r['transaction']}/dc/dc_nvmem.bin',
+      List.filled(131072, 3),
+    );
+    final cardPath = p.remotePath('save/MK-51000.A1.bin');
+    await File('${native.path}/$cardPath').delete();
+    await put(p.remotePath('save/OTHER.A1.bin'), List.filled(131072, 7));
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    await put(cardPath, List.filled(131072, 4));
+    await File('${native.path}/${p.remotePath(stateKey)}').delete();
+    await expectLater(saves.capture(g, cloud, p), throwsStateError);
+    final failed = await progressJson(saves.journal),
+        held = failed['rootFlycastHeldProgress'] as Map;
+    expect((held['files'] as Map).length, 2);
+    expect(
+      await File('${saves.directory(r).path}/working/${p.remotePath(stateKey)}')
+          .readAsBytes(),
+      [1, 2, 3],
+    );
+    expect(await saves.pending, true);
+    expect(api.records, isEmpty);
+    expect(await readAndroidFlycastConsole(Directory(p.root)), isNull);
+  });
+
   test('Dreamcast fallback and damaged working VMUs retain private recovery instead of publishing incomplete game progress', () async {
     await manager.connectGbaRoot(emulator, platform: 'dc');
     final rom = await saturnRom(),

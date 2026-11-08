@@ -454,6 +454,10 @@ for offline Play, just like a verified boot image; a failed or cancelled lookup
 cannot establish that choice. Broomm
 isolates all eight VMU ports per profile/game, retains a separate local console
 identity per profile, and keeps other core-option changes between sessions.
+The pinned core reads legacy content-name cards and replaces their names with
+its native disc ID. Broomm accepts only one new, same-port destination under
+the selected game's private boundary, retaining the legacy input in recovery;
+competing destinations or missing established cards/states still block sync.
 Quit normally and wait for sync, then verify native game saves and Load State
 independently. Remove clears private Flycast preferences while retaining Broomm
 progress, console identities and recovery. Keep All VMUs / linked storage settings

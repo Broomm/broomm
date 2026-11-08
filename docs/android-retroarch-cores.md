@@ -891,3 +891,23 @@ in progress. Primary 251 follows a scoped manual recovery of the failed first
 test, then Broomm's normal recovery and explicit device-progress review; all
 four native originals and private captures were retained. No automatic system
 card conversion is implemented.
+
+The corrected-prefix preview then opened Sonic Adventure's retained File 1
+through the native VMU menus and independently loaded the restored Chaos state.
+Changing Cable Type to VGA wrote the correct `reicast_cable_type` value. Normal
+Quit exposed another concrete behavior: all four legacy content-name cards were
+full-saved under native disc ID `MK-51000`, removing the old names. The old
+generic missing-path guard refused capture; every native card and the state
+remained intact and byte-identical, with no fallback system cards.
+
+Pinned [`getVmuPath`](https://github.com/libretro/flycast/blob/7adbf3caef251b153e348df3f469a0f35878339d/shell/libretro/oslib.cpp#L40-L70)
+and [`maple_sega_vmu::OnSetup`](https://github.com/libretro/flycast/blob/7adbf3caef251b153e348df3f469a0f35878339d/core/hw/maple/maple_devs.cpp#L430-L465)
+establish this read-legacy/write-native behavior. Source now holds game/resource
+copies before checking only that concrete rename: one newly created same-port
+destination per missing legacy input, with one common native ID, inside the
+already checked private game boundary. Established native cards and states do
+not get this exception. Competing names, pre-existing targets, incomplete cards
+and mode changes remain failures retaining recovery. The old legacy inputs stay
+in the transaction's private working copies. Three regressions verify four-port
+changed saves, original native restoration and replay, ambiguous destinations,
+missing native cards and missing states. Installed recovery is still pending.

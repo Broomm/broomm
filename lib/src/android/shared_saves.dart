@@ -864,7 +864,10 @@ class SharedAndroidSaves {
       return false;
     }
     final files = await list(plan), capture = 'captures/${progressNonce()}';
+    // Flycast validates its native legacy-card renames after holding all new
+    // game/resource bytes. Other cores still require every installed path.
     if (plan.rooted &&
+        plan.launch['coreName'] != 'flycast' &&
         (r['working'] as Map).keys.any((path) => !files.containsKey(path)))
       throw StateError(
         'An installed RetroArch save or state is missing. Recovery copies were kept; restore the working file before syncing.',

@@ -1,5 +1,29 @@
 # Implementation plan
 
+## Flycast native VMU naming — 2026-11-08
+
+The direct `c0b7c0a` Thor preview restored primary 251, opened Sonic Adventure's
+existing File 1 through its own VMU menu, and separately loaded the Chaos fight
+state. VGA was changed in the native menu and written to the session options.
+Normal Quit then correctly stopped at missing working paths: the actual core
+had read all four legacy `Sonic Adventure.*.bin` cards, full-saved them as
+`MK-51000.*.bin` and removed the old names. Every card and the state remained
+byte-identical. No new shared system cards were created. This is still not an
+accepted automatic Dreamcast round trip.
+
+The correction holds all new game/resource bytes before validating Flycast
+working data. Only a missing legacy content-name VMU with one new same-port
+destination, one common native game ID and no competing/previously installed
+destination is accepted inside the already verified private profile/game
+boundary. Missing established game-ID cards, missing states and ambiguity still
+retain recovery and refuse publication. Other cores keep their original
+missing-path check. Three workflow regressions cover changed four-port saves,
+original-card restoration, fresh replay and the refusal boundaries. All 97
+focused cases and clean analysis pass. The full suite has 726 passes, one
+existing host skip and no failures, with 358 unchanged source fingerprints.
+Installed recovery acceptance is pending; the failed Thor journal remains
+intact for that check.
+
 ## Flycast offline boot choice — 2026-11-08
 
 Confirmed-empty firmware discovery now retains an explicit HLE choice in the

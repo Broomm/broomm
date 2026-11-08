@@ -320,6 +320,12 @@ class AndroidFlycastSessionResources {
         'Flycast changed its VMU storage options during play. All game and resource copies were kept in private recovery. Finish without changing the emulator folder to retain them for manual recovery.',
       );
     }
+    validateAndroidFlycastWorkingProgress(
+      r['selected'] as String,
+      (r['working'] as Map).cast<String, dynamic>(),
+      ((r['rootFlycastHeldProgress'] as Map)['files'] as Map)
+          .cast<String, dynamic>(),
+    );
     await publishAndroidFlycastConsole(
       Directory(plan.root),
       (r['rootFlycastConsoleBefore'] as Map?)?.cast<String, dynamic>(),
