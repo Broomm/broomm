@@ -7,6 +7,7 @@ import '../game_launch.dart';
 import '../retroarch.dart';
 import '../progress/files.dart';
 import '../romm/models.dart';
+import '../romm/transfer.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
 import 'retroarch_core_setup.dart';
@@ -14,6 +15,7 @@ import 'root_saves.dart';
 import 'psp_root.dart';
 import 'psp_root_store.dart';
 import 'flycast.dart' show clearAndroidFlycastPreferences;
+import 'duckstation_documents.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -1491,6 +1493,8 @@ class AndroidEmulators extends ChangeNotifier {
     String? configuration,
     String? nativeRom,
     bool rootedPsp = false,
+    DownloadCancellation? cancellation,
+    void Function(String)? phase,
   }) async {
     if (!settingsKnown)
       throw StateError(
@@ -1504,6 +1508,18 @@ class AndroidEmulators extends ChangeNotifier {
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
       );
+    final documentToken =
+        emulator.id == 'duckstation' &&
+            app.version == androidDuckStationDocumentVersion
+        ? await androidDuckStationDocumentToken(
+            data,
+            files,
+            selected,
+            cancellation: cancellation,
+            phase: phase,
+          )
+        : null;
+    cancellation?.check();
     return (await channel.invokeMethod<String>('launch', {
       'package': app.package,
       'build': app.build,
@@ -1512,6 +1528,7 @@ class AndroidEmulators extends ChangeNotifier {
       'emulator': emulator.id,
       'files': files,
       'selected': selected,
+      if (documentToken != null) 'documentToken': documentToken,
       if (rootedPsp) 'rootedPsp': true,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,

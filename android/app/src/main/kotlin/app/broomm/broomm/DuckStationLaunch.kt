@@ -15,3 +15,10 @@ internal fun duckStationGamePath(authority: String, path: GameGrantPath): String
     val checked = gameGrantPath(listOf("document", path.documentId))
     return "/android_content/$authority/document@${checked.token}/${checked.relative.joinToString("/")}"
 }
+
+internal fun duckStationDocumentToken(value: String?): String {
+    require(value != null && Regex("[a-f0-9]{32}").matches(value)) {
+        "DuckStation game documents need a verified content identity. Nothing was launched."
+    }
+    return value
+}

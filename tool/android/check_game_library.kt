@@ -9,6 +9,7 @@ import app.broomm.broomm.gameGrantPath
 import app.broomm.broomm.grantedGameFile
 import app.broomm.broomm.duckStationDocumentLaunch
 import app.broomm.broomm.duckStationGamePath
+import app.broomm.broomm.duckStationDocumentToken
 import java.io.File
 import java.nio.file.Files
 
@@ -21,6 +22,9 @@ fun main() {
     check(duckStationGamePath("app.broomm.broomm.games.documents", document) ==
         "/android_content/app.broomm.broomm.games.documents/document@$token/Discs/Mega Man – X4 #1.chd")
     check(runCatching { duckStationGamePath("app.broomm.broomm.games", document) }.isFailure)
+    check(duckStationDocumentToken(token) == token)
+    for (invalid in listOf(null, "", "A".repeat(32), "a".repeat(31), "a".repeat(33), "a".repeat(31) + "/"))
+        check(runCatching { duckStationDocumentToken(invalid) }.isFailure)
     for (bad in listOf(
         emptyList(), listOf("document", "$token:"), listOf("document", "foreign:Game.chd"),
         listOf("document", "$token:../Game.chd"), listOf("document", "$token:dir//Game.chd"),

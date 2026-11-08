@@ -20,8 +20,10 @@ matched; the final RetroArch preservation audit passed. The
 [PSP evidence](docs/android-ppsspp-thor-acceptance.json) records the exact APK,
 inputs and limitations. PR #5's final build **1115** passed the packaged launch/Exit smoke and all CI
 checks; PR #5 is merged. The next [DuckStation increment](docs/android-duckstation-root.md)
-adds read-only initialized-storage inspection. DuckStation root save sessions
-remain pending.
+adds read-only initialized-storage inspection and reviewed-beta document handoff.
+Build 1120 passed a real-provider CHD fresh boot; its state replay exposed an
+expired media reference, now being corrected with stable content identities.
+DuckStation root save sessions and reliable state replay remain pending.
 
 Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
 Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait

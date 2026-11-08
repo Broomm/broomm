@@ -25,7 +25,12 @@ provider test on build 1119 exposed that document-shaped aliases on a generic
 content provider are insufficient. An opaque-ID experiment also misresolved
 the optional SBI sidecar to the ROM. A dedicated read-only DocumentsProvider
 now keeps related-file identity correct, with no browsable roots or write
-capability; native acceptance of this correction is pending. Native Slot 1/resume files are retained,
+capability. Build 1120 passed real provider fresh boot, native Slot 2 creation,
+normal Close Game and complete grant revocation. Its replay under a new grant
+warned about the expired embedded CD path, so reliable states are not accepted.
+A Dart-owned stable content-set identity now addresses that native reference
+without retaining access between sessions. Host identity/cancellation and native
+boundary regressions pass; corrected Thor replay is pending. Native Slot 1/resume files are retained,
 unassigned; ordinary-save/input/root-session acceptance is still outstanding.
 
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed

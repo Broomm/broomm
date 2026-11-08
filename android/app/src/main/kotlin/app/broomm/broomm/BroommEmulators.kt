@@ -175,7 +175,8 @@ class BroommEmulators(private val activity: Activity) {
                             val content = Regex("^" + Regex.escape(base) + "[a-f0-9]{32}/[1-9][0-9]*/content/").find(selected)?.value?.removeSuffix("/")
                                 ?: error("Game has no owned content directory")
                             require(files.all { it.startsWith("$content/") }) { "Game files belong to different installations" }
-                            val token = UUID.randomUUID().toString().replace("-", "")
+                            val token = if (duckDocuments) duckStationDocumentToken(call.argument<String>("documentToken"))
+                                else UUID.randomUUID().toString().replace("-", "")
                             val activeRoot = call.argument<String>("root")
                             require(activeRoot == null || Regex("[a-f0-9]{32}:(ppsspp|melonds|azahar)").matches(activeRoot))
                             val documents = if (duckDocuments) files.map {

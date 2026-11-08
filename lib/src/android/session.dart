@@ -14,6 +14,7 @@ import 'save_plan.dart';
 import 'shared_saves.dart';
 import 'psp_root.dart';
 import 'psp_session.dart';
+import 'duckstation_documents.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -330,6 +331,11 @@ class AndroidGameSession extends ChangeNotifier {
           ? null
           : await _psp.launching(_game!, pspPlan);
       _preparation?.check();
+      if (emulator.id == 'duckstation' &&
+          app.version == androidDuckStationDocumentVersion) {
+        _preparation = DownloadCancellation();
+        if (disposed) _preparation!.cancel();
+      }
       await manager.launch(
         emulator,
         app,
@@ -339,6 +345,8 @@ class AndroidGameSession extends ChangeNotifier {
         profile: profile,
         nativeRom: nativeRom,
         rootedPsp: pspPlan != null,
+        cancellation: _preparation,
+        phase: _preparePhase,
         configuration: _game?.layout is AndroidSavePlan
             ? (_game!.layout as AndroidSavePlan).launch['configNative']
             : null,

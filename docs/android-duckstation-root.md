@@ -142,9 +142,40 @@ instead of substituting the ROM. Existing emulator URIs keep their original
 provider. See the [provider API contract](https://developer.android.com/reference/android/provider/DocumentsProvider).
 JVM regressions cover exact ROM/sidecar correspondence, ungranted and missing
 sidecars, and refusal of the generic authority for this launch contract.
-Corrected real-provider boot and repeated-session/state acceptance remain pending.
-The failed fixture was replaced with the normal build 1119; its temporary read
-grants will be cleared through the production adapter in the corrected test.
+Full CI for `1aa3fe1` subsequently passed all checks/five packages. Retained-key
+build **1120** and its isolated ARM64 fixture preserved UID 10134 and exact
+Broomm emulator-settings bytes. The real provider booted the installed CHD
+without a state and rendered the opening sequence. Exact document metadata
+reported 380,622,493 bytes, octet-stream MIME and flags 0. Native Save State
+created the previously empty Slot 2; Slot 1 stayed identical. Normal Close Game
+returned to Broomm. Production grant release emptied its records and revoked
+all game URI permissions; the next fresh boot received a different token.
+
+Loading Slot 2 then warned that its saved CD-image path could not be opened and
+that using the current disc might be unstable. Its header contained the first,
+revoked token. This is a failed state-portability check, despite successful
+fresh boot. It must not be accepted as reliable state replay.
+
+The next correction derives a stable, versioned document-set identity in Dart
+from sorted relative resource names, sizes and actual SHA-256 digests. Absolute
+device paths, local server/game/profile IDs and enumeration order are excluded.
+The native reviewed-version adapter requires that identity before creating any
+grant. Access is still temporary: release revokes permissions and clears records;
+only a newly authorized matching content set restores the same resource names.
+The read-only worker has cancellation, a five-minute operation deadline,
+file/count/byte bounds, progress feedback and before/after filesystem checks.
+There is no new dependency, persistent URI-access registry or credential read.
+Host regressions cover release/relaunch, different device/library IDs, content
+replacement with preserved size/modified time, foreign/missing/linked resources
+and cancellation before native handoff. Corrected native state replay remains
+pending; large-file verification time is to be measured on the Thor.
+
+Both fixture sessions ended through native Close Game; all temporary game grants
+were cleared and the regular build 1120 was restored. Native settings and BIOS
+hashes and both Slot 1/2 files remain unchanged. Advanced-settings visibility
+was restored after UI research; native settings bytes stayed identical, although
+the app atomically replaced its settings inode. No logging preference was changed.
+The Compose advanced screen did not expose the logging controls investigated.
 
 The APK also shows that base settings load once into a retained interface and
 save when MainActivity pauses. Replacing `settings.ini` beneath a cached process
