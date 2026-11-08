@@ -1,5 +1,25 @@
 # Implementation plan
 
+## Rooted Lynx device acceptance — 2026-11-07
+
+Build 1083 (`03dec28`) passed normal Lynx Setup and Crystal Mines II Play on
+the Thor. RomM supplied the canonical 512-byte BIOS; both native session copies
+matched its MD5/SHA-256, and the second launch reused the same verified cache
+object. Level-one movement/action and manual Save/Load State passed. The
+34,966-byte gameplay state restored byte-for-byte; final normal Quit synchronized
+unchanged primary 242. No ordinary SRAM was synthesized. A disconnected-network
+Lynx session, completed level and other ABI gameplay are not claimed.
+
+All 24 earlier additional-core progress files, eight GBA/SNES files, 19 managed
+native files and 13 original standalone/managed files remained unchanged. Eleven
+core hashes, fourteen bindings, both accounts' distinct earlier histories,
+journal removal and temporary BIOS cleanup pass. All 36 scoped log lines are
+free of warnings/errors. Application run `42427026470` passed every check and all
+five packages. The current macOS archive passes input fingerprints, ZIP integrity
+and source/extracted deep strict all-architecture signatures. See the
+[device evidence](docs/android-retroarch-lynx.json). Four selected cores remain
+pending; PR #4 stays draft.
+
 ## Rooted Lynx firmware/state source increment — 2026-11-07
 
 Independent Lynx Setup now pins the retained four-ABI Beetle Lynx artifacts at

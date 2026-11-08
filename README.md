@@ -393,8 +393,11 @@ matching BIOS to RomM if Broomm reports it missing. Create a manual state, Quit
 RetroArch normally, wait for sync and verify Load State after relaunch. This
 core does not produce ordinary battery saves. Native BIOS/ROM/configuration
 files are temporary; private profile progress/cache and recovery remain in
-Broomm. Source/workflow/native file checks pass; packaged Lynx acceptance is
-pending. See the [scope and verification](docs/android-retroarch-cores.md#lynx-firmwarestate-source-increment).
+Broomm. Build 1083 passed Crystal Mines II gameplay input, BIOS delivery/cache
+reuse, manual state synchronization/reload and native cleanup on the Thor.
+Earlier progress/settings remained unchanged. Disconnected-network Lynx play
+and other ABI gameplay are not newly verified. See the
+[scope and verification](docs/android-retroarch-cores.md#lynx-firmwarestate-source-increment).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

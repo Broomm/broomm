@@ -11,8 +11,8 @@ cartridges; build 1062 passed their packaged Thor checks below. The next source
 increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
 cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
-passed the scoped checks below. Lynx source/workflow checks pass with packaged
-acceptance pending. Opera, FBNeo, Flycast and Beetle Saturn still need their
+passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
+input and state restoration below. Opera, FBNeo, Flycast and Beetle Saturn still need their
 concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
@@ -454,8 +454,18 @@ directories; normal completion removes only recorded native session resources.
 
 Clean analysis, all 670 Flutter tests (one existing native-host skip), 75 focused
 checks and fourteen real Thor filesystem/launch fault groups pass. The bridge
-and fixture compile. Packaged BIOS/gameplay/state acceptance remains pending;
-these checks do not establish a real Lynx game or other ABI's gameplay.
+and fixture compile. Build **1083** (`03dec28`) subsequently passed normal Setup
+and Crystal Mines II Play. RomM's canonical 512-byte BIOS matched both native
+copies; the second launch reused the verified cache object. Level-one movement/
+action and manual Save/Load State passed. The 34,966-byte state restored
+byte-for-byte and resumed the recorded scene. Both normal Quits synchronized
+primary 242, with no synthetic SRAM. Temporary BIOS/session files were removed.
+All 32 earlier progress files across both accounts and every previously checked
+native/settings file remained unchanged, with eleven core hashes and fourteen
+bindings. All 36 scoped log lines have no warnings/errors; all application CI
+checks and five packages passed. This does not establish disconnected-network
+Lynx play, a completed level, other ABI or cross-device gameplay. See the
+[exact device evidence](android-retroarch-lynx.json).
 
 ## Remaining boundaries
 
@@ -490,4 +500,4 @@ Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
 source build. Four selected cores still need their concrete integration;
-packaged Lynx acceptance remains pending.
+Lynx's scoped packaged acceptance is recorded above.
