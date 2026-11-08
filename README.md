@@ -408,8 +408,10 @@ acquisition and special peripherals are not implemented. Native NVRAM/cards
 retain their nested filenames; states require matching APK/ABI/core builds.
 Quit normally, wait for sync, then verify NVRAM and a manual Load State after
 relaunch. Keep private progress/recovery files; temporary native session files
-are cleaned after confirmed exit. Source/workflow/native file checks pass;
-packaged FBNeo gameplay is pending. See the
+are cleaned after confirmed exit. Build 1087 passed Simpsons gameplay input,
+exact NVRAM/manual-state restoration and two-account state separation on the
+Thor, preserving earlier progress and standalone settings. Other ABI gameplay,
+cross-device play and the full driver catalogue are not newly verified. See the
 [scope and verification](docs/android-retroarch-cores.md#finalburn-neo-zipsave-source-increment).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,

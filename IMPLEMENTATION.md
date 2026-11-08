@@ -1,5 +1,28 @@
 # Implementation plan
 
+## Rooted FinalBurn Neo device acceptance — 2026-11-07
+
+Build 1087 (`36c9e8d`) passed normal Arcade Setup and The Simpsons Play on the
+Thor. The complete `simpsons2p.zip` reached FBNeo intact, passed its native ROM
+check and reached stage-one Marge gameplay with movement/action input. Normal
+Quit captured nested 128-byte NVRAM and a 5,654-byte gameplay state as primary
+243; fresh Play restored both byte-for-byte and Load State resumed that scene.
+Account 3 started with an empty working inventory and published a distinct
+3,745-byte character-selection state as primary 244. Returning to account 2
+restored its original files/scene; final Quit retained primary 243. Default
+NVRAM bytes match between accounts; distinct state bytes establish separation.
+
+All 33 earlier progress files, 19 managed native files and 13 original
+standalone/managed files remain unchanged. Twelve core hashes, fifteen bindings,
+both saved sign-ins and journal/session-file cleanup pass. All 85 scoped log
+lines are free of warnings/errors. Application run `42430012291` passed every
+check and all five packages; independent Mesen run `42430012217` passed all four
+native jobs. The current macOS archive passes input fingerprints, ZIP integrity
+and source/extracted deep strict all-architecture signatures. See the
+[device evidence](docs/android-retroarch-fbneo.json). Other ABI gameplay,
+cross-device gameplay, completed stages and special arcade peripherals are not
+claimed. Three selected cores remain pending; PR #4 stays draft.
+
 ## Rooted FinalBurn Neo archive/save source increment — 2026-11-07
 
 Independent Arcade Setup pins the retained four-ABI FBNeo build at `299e4ce`,

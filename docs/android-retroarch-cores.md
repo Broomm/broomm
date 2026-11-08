@@ -12,8 +12,8 @@ increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
 cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
 passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
-input and state restoration below. FBNeo's ZIP/nested-save source checks pass
-with packaged acceptance pending. Opera, Flycast and Beetle Saturn still need
+input and state restoration below. FBNeo build 1087 passed complete-ROMset
+gameplay, NVRAM/state restoration and two-account separation below. Opera, Flycast and Beetle Saturn still need
 their concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
@@ -511,7 +511,29 @@ streamed ROMset staging. All four permanent URLs also pass a real production dow
 check. Inspection retains its exact hash through native handoff; a deterministic
 source-replacement regression preserves recovery. The initial migration and fault-fixture failures and
 their diagnostics are retained; no assertion or deadline was relaxed. These
-checks do not establish packaged FBNeo gameplay, other ABI or cross-device play.
+checks alone do not establish packaged FBNeo gameplay, other ABI or cross-device play.
+
+Build **1087**, runtime `36c9e8d`, subsequently passed normal Arcade Setup and
+The Simpsons (`simpsons2p.zip`, RomM 718) Play on the Thor. The intact ROMset
+passed the native chip check and reached stage-one Marge gameplay with movement
+and action input. Normal Quit published the nested 128-byte NVRAM and a
+5,654-byte manual state as primary 243. Fresh Play restored both byte-for-byte;
+Load State resumed the recorded gameplay scene.
+
+Account 3 began with an empty working inventory and published a distinct
+3,745-byte character-selection state as primary 244. Returning to account 2
+restored its original NVRAM/state hashes and gameplay scene. Final normal Quit
+retained primary 243 without duplicate publication. The default NVRAM contents
+match between accounts; this test establishes separation with distinct states.
+Both saved sign-ins opened without password re-entry. All 33 earlier progress
+files, 19 managed native files, 13 original standalone/managed files, twelve
+cores and fifteen platform bindings remained intact. Journals and owned native
+session files were removed; all 85 scoped log lines have no warnings/errors.
+Application CI `42430012291` passed all checks and five packages; independent
+Mesen run `42430012217` passed all four jobs. See the
+[builds, hashes and scoped evidence](android-retroarch-fbneo.json). This one
+self-contained ROMset does not establish the full driver catalogue, completed
+stages, special peripherals, other ABI gameplay or cross-device play.
 
 ## Remaining boundaries
 
