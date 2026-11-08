@@ -60,6 +60,8 @@ class PspRootFixture {
   String key(Map args) =>
       '${args['server']}/${args['profile']}/${args['ownerNonce']}';
   Directory memory(Map args) => Directory('${root.path}/${key(args)}');
+  String fileIdentity(String path) => path.replaceAll('\\', '/');
+  String mode(File file) => modes[fileIdentity(file.path)] ?? '660';
   Future<File> put(
     Map args,
     String path,
@@ -69,19 +71,19 @@ class PspRootFixture {
     final file = File('${memory(args).path}/$path');
     await file.parent.create(recursive: true);
     await file.writeAsBytes(bytes, flush: true);
-    modes[file.path] = mode;
-    inodes[file.path] = ++inode;
+    modes[fileIdentity(file.path)] = mode;
+    inodes[fileIdentity(file.path)] = ++inode;
     return file;
   }
 
   Future<Map<String, dynamic>> entry(File file) async {
     final n = await file.length(),
-        ino = inodes.putIfAbsent(file.path, () => ++inode);
+        ino = inodes.putIfAbsent(fileIdentity(file.path), () => ++inode);
     return {
       'bytes': n,
       'sha256': await progressFileHash(file),
       'metadata':
-          '10135 1078 ${modes[file.path] ?? '660'} $label 55 $ino $n 123.000000001 124.000000001 1',
+          '10135 1078 ${mode(file)} $label 55 $ino $n 123.000000001 124.000000001 1',
     };
   }
 
@@ -91,7 +93,9 @@ class PspRootFixture {
         .toSet();
     await for (final file in base.list(recursive: true, followLinks: false)) {
       if (file is! File) continue;
-      final p = file.path.substring(base.path.length + 1);
+      // The mocked native boundary always returns Android '/' paths, even
+      // when its backing filesystem is the Windows CI runner.
+      final p = fileIdentity(file.path.substring(base.path.length + 1));
       if (!full &&
           (!p.startsWith('PSP/SAVEDATA/ULUS10340') &&
                   !p.startsWith('PSP/PPSSPP_STATE/ULUS10340_1.02_') ||
@@ -251,7 +255,7 @@ class PspRootFixture {
           a,
           a['path'],
           await source.readAsBytes(),
-          mode: a['mode'] as String? ?? modes[target.path] ?? '660',
+          mode: a['mode'] as String? ?? mode(target),
         );
       }
       if (loseReplace) {
@@ -504,7 +508,7 @@ void main() {
       '${native.memory(restored).path}/PSP/PPSSPP_STATE/load_undo.ppst',
     );
     expect(await undo.readAsBytes(), [6, 5, 4]);
-    expect(native.modes[undo.path], '600');
+    expect(native.mode(undo), '600');
     expect(
       await File('${native.memory(restored).path}/PSP/SYSTEM/ppsspp.ini')
           .readAsString(),
@@ -682,5 +686,21 @@ void main() {
     expect(api.records, hasLength(2));
     expect(api.stateRecords, isNotEmpty);
     expect(native.selected, 'native');
+  });
+
+  test('changing the PSP save-access route obeys the existing session lock before native or settings effects', () async {
+    final lease = await SessionLease.acquire(data),
+        before = native.calls.length;
+    try {
+      await expectLater(manager.disconnectPspRoot(), throwsStateError);
+      expect(native.calls.length, before);
+      expect(manager.pspRoot(), native.binding);
+    } finally {
+      await lease.release();
+    }
+    await manager.disconnectPspRoot();
+    expect(manager.pspRoot(), isNull);
+    await manager.load();
+    expect(manager.pspRoot(), isNull);
   });
 }

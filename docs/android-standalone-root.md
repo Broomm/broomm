@@ -87,6 +87,10 @@ mode uses a newly owned, unassigned memory stick with fixed test server/profile
 identities, plus a private `/data/local/tmp/broomm-psp-files-<nonce>` directory.
 It creates only test files, temporarily selects/restores that stick without
 launching an emulator, and records all paths and results for scoped cleanup.
+Its `cleanup <same nonce>` mode requires the original selection, verified
+test ownership and only recognized fixture paths before removing those test
+directories. It refuses extra/linked/foreign files. Retain the deployment/result
+receipts; this mode is not an emulator or account reset.
 Do not remove account profiles, the original native memory stick or retained
 failed progress as fixture cleanup. Device execution requires an initialized,
 normally exited pinned PPSSPP and explicit ADB/root test authorization.

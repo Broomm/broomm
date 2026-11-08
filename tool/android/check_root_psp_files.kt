@@ -33,7 +33,7 @@ private fun inspect(args: Array<String>) {
         diagnostic = { e -> e.printStackTrace() }, observation = { println("PROCESS $it") })
     val observed = process.observe()
     println(JSONObject().put("state", observed.getString("state")).put("elapsed", observed.getLong("elapsed")))
-    require(args.first() in setOf("inspect", "files") && args.size == if (args.first() == "inspect") 1 else 2)
+    require(args.first() in setOf("inspect", "files", "cleanup") && args.size == if (args.first() == "inspect") 1 else 2)
     var failure: String? = null; var refuseWriter = false
     val files = RootPpssppFiles(context, identity, ::live, {
         check(!refuseWriter) { "Controlled writer arrival" }; process.ensureClosed()
@@ -52,6 +52,33 @@ private fun inspect(args: Array<String>) {
         putString("discId", "UCUS98662"); putString("discVersion", "1.00")
         putByteArray("config", "[SystemParam]\nMacAddress = 02:ba:00:00:00:01\n".toByteArray())
         putByteArray("controls", report.getByteArray("controls"))
+    }
+    if (args.first() == "cleanup") {
+        val memory = File(files.memoryPath(request).replace("/storage/emulated/0", "/data/media/0"))
+        val folder = memory.parentFile!!
+        val dirs = setOf("incoming", "memstick", "memstick/PSP", "memstick/PSP/SYSTEM", "memstick/PSP/SAVEDATA", "memstick/PSP/PPSSPP_STATE", "memstick/PSP/SAVEDATA/UCUS98662BROOMMTEST")
+        val allowed = Regex("(?:owner|memstick/PSP/SYSTEM/(?:ppsspp|controls)\\.ini|memstick/PSP/SAVEDATA/UCUS98662BROOMMTEST/(?:DATA\\.BIN|INVENTORY_[0-9]{4}_x{80})|memstick/PSP/PPSSPP_STATE/UCUS98662_1\\.00_0\\.ppst|incoming/[a-f0-9]{32})")
+        var count = 0
+        folder.walkTopDown().forEach { path ->
+            live(); require(path.canonicalPath == path.absolutePath)
+            val s = Os.lstat(path.path)
+            if (path == folder) return@forEach
+            val relative = path.path.removePrefix(folder.path + "/")
+            if (OsConstants.S_ISDIR(s.st_mode)) require(relative in dirs && s.st_uid == info.uid)
+            else {
+                require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == 1L && allowed.matches(relative) &&
+                    (s.st_uid == info.uid || relative.startsWith("incoming/") && s.st_uid == 0))
+                count++
+            }
+        }
+        val local = File("/data/local/tmp/broomm-psp-files-$nonce")
+        require(local.canonicalPath == local.path && Os.lstat(local.path).st_uid == 0)
+        require(local.listFiles()!!.all { f -> f.name in setOf("source", "captured") && f.canonicalPath == f.path &&
+            Os.lstat(f.path).let { OsConstants.S_ISREG(it.st_mode) && it.st_uid == 0 && it.st_nlink == 1L } })
+        process.ensureClosed(); require(String(files.pointerBytes()) == files.logical)
+        check(folder.deleteRecursively()); check(local.deleteRecursively())
+        println(JSONObject().put("result", "cleaned").put("ownerNonce", nonce).put("nativeTestFiles", count))
+        return
     }
     fun <T> operation(body: () -> T): T { deadline = SystemClock.elapsedRealtime() + 30000; return body() }
     fun hash(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }

@@ -293,16 +293,23 @@ class AndroidEmulators extends ChangeNotifier {
       }, requiresApkPermission: false);
 
   Future<void> disconnectPspRoot() async {
-    await ensureSetupAllowed();
-    await AndroidPspRootStore(this).restoreSettingsLoan();
-    final selected = app(androidEmulators.singleWhere((e) => e.id == 'ppsspp'));
-    if (selected == null) throw StateError('Refresh PPSSPP first.');
-    final next = {..._pspRoots}..remove(selected.package);
-    await _save(pspRoots: next);
-    _pspRoots
-      ..clear()
-      ..addAll(next);
-    _emit();
+    final lease = await SessionLease.acquire(data);
+    try {
+      await ensureSetupAllowed();
+      await AndroidPspRootStore(this).restoreSettingsLoan();
+      final selected = app(
+        androidEmulators.singleWhere((e) => e.id == 'ppsspp'),
+      );
+      if (selected == null) throw StateError('Refresh PPSSPP first.');
+      final next = {..._pspRoots}..remove(selected.package);
+      await _save(pspRoots: next);
+      _pspRoots
+        ..clear()
+        ..addAll(next);
+      _emit();
+    } finally {
+      await lease.release();
+    }
   }
 
   Map<String, Map<String, String>> _rootBindings(String platform) =>

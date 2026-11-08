@@ -32,6 +32,14 @@ failed backup's retry: completion retains the loan and reseals that newer copy,
 including its state provenance, instead of acknowledging the earlier capture.
 All nine focused PSP workflows pass after this correction.
 
+Windows CI exposed host separators in the filesystem-backed Android fixture.
+The fixture now emits Android paths and normalizes its host file identities;
+production Android path validation remains strict. Private archive enumeration
+also normalizes host separators. The new PSP route-disconnection action now
+acquires the same session lock as setup/gameplay before native/settings effects,
+with a held-lock regression. Native fixture cleanup is limited to its verified,
+unassigned test directories. Native Windows re-execution is pending.
+
 Current PR APK packaging, real Broomm content-URI Play, ordinary LocoRoco saving,
 two-account/state/offline/cloud replay, preservation audits and the updated
 macOS package remain to be completed. Other standalone emulators have not begun. See the

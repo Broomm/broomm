@@ -682,7 +682,11 @@ class AndroidPspRootStore {
     )) {
       if (entry is Link ||
           entry is File &&
-              !known.contains(entry.path.substring(directory.path.length + 1)))
+              !known.contains(
+                entry.path
+                    .substring(directory.path.length + 1)
+                    .replaceAll(Platform.pathSeparator, '/'),
+              ))
         throw const FileSystemException(
           'Unrecognized private PSP backup files were kept.',
         );
