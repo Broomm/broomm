@@ -1,5 +1,32 @@
 # Implementation plan
 
+## Flycast Thor acceptance — 2026-11-08
+
+The corrected `3d69684` direct-AOT preview passed the native Dreamcast round trip:
+retained File 1 loaded before a separate Chaos gameplay-state load; VGA survived
+fresh native processes. Missing legacy-name recovery completed through Broomm,
+then primary 252 held native `MK-51000` cards and the original matched state.
+Normal fresh Play/Quit synchronized automatically without duplicate primary.
+Account 3 started with empty working/original files and no inherited VGA,
+created its own distinct VMU/File-2 state and published separate primary 253.
+Account 2's return restored all five exact progress files. Its preparation and
+native boot also passed with Wi-Fi disabled/no default network, followed by
+restored Wi-Fi, independent state load and normal final sync.
+
+The preservation audit verifies all 49 earlier progress files, 19 managed native
+files, 13 original files, fifteen cores and eighteen bindings; both journals are
+absent. All four retained first-failed-test native card backups remain intact.
+The 318-line final scoped log contains one expected offline-connectivity warning.
+All 726 source tests pass with one existing host skip, alongside clean analysis.
+That preview retains manifest 1098 and 157 unchanged non-Dart payloads; it is
+distinct from a full Gradle package. Current CI build 1104 now passes normal
+saved-sign-in restoration, exact five-file/VGA restoration, Chaos state load,
+automatic normal-Quit sync and the repeated preservation audit. Multi-file
+media remains a format follow-up. Account 3 also fresh-restored all five
+published files, loaded its own File-2 state and quit normally without changing
+primary 253. See
+[exact device evidence](docs/android-retroarch-flycast.json).
+
 ## CI bootstrap correction — 2026-11-08
 
 Hosted Devbox preparation now passes on every applicable runner; all platform
@@ -8,8 +35,11 @@ ABIs passed. Android reached its unchanged Gradle wrapper and separately hit
 another GitHub browser-asset HTTP 504. A second concrete seed now verifies the
 same official Gradle 9.3.1 complete ZIP in the private wrapper cache through its
 release API, preserving the wrapper/version/URL. Three additional regressions
-include a separate Java process holding the actual checked-in wrapper's record
-lock. All six bootstrap cases pass; hosted Android acceptance remains pending.
+include a separate Java process holding the actual Flutter-supplied wrapper's record
+lock. All six bootstrap cases pass. Corrected hosted run 42473079266 passes every
+check and all five target packages, and independent Mesen run 42473079283 passes
+all four ABIs. The initial missing-generated-wrapper regression failure is
+retained; tests now resolve the pinned Flutter SDK wrapper after preparation.
 
 Repeated clean-runner Devbox binary-download failures blocked current Android
 packaging before compilation. The existing 0.18.4 tool/action pins now have an
@@ -18,7 +48,7 @@ bounded reads, credential-free storage redirects, exclusive publication and
 foreign-cache preservation. The action still owns Nix/version setup. Three
 bootstrap regression cases and workflow lint pass locally; all four actual
 official archives pass the production verifier without executing foreign-host
-binaries. Hosted execution remains pending. See the
+binaries. Subsequent hosted results are recorded above. See the
 [commands, provenance and effects](docs/ci-devbox-bootstrap.md).
 
 ## Flycast native VMU naming — 2026-11-08

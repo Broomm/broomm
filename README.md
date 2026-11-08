@@ -3,7 +3,16 @@
 CI's pinned Devbox bootstrap, local regression commands and disposable-runner
 effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
 
-**2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
+**2026-11-08 checkpoint:** rooted Android RetroArch now implements eighteen
+platform routes with fifteen pinned cores. Native Thor checks cover the roster,
+including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
+The current full Android CI package passes its Thor smoke/preservation check.
+Multi-file disc transport remains a format follow-up;
+see [scope and device evidence](docs/android-retroarch-cores.md).
+[Download the current macOS preview](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip)
+(universal, ad-hoc signed, not notarized; development updates disabled).
+
+**Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
 recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
 The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).

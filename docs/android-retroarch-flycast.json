@@ -1,0 +1,273 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "scope": "Thor arm64 Dreamcast native VMU/manual-state/preferences/two-account/offline-boot acceptance; normal CI build 1104 smoke and preservation audit passed",
+  "device": {
+    "model": "AYN Thor",
+    "android": "13",
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch_package": "com.retroarch.aarch64",
+    "retroarch_version": "1.22.2_GIT",
+    "retroarch_uid": 10133
+  },
+  "application": {
+    "runtime_source": "3d69684dfc4b67446c222184d91ddc1d5a0c8fce",
+    "manifest_build": 1098,
+    "apk_sha256": "691486d3b92677b7b78ce74c51335941be235f45e2d82d2bc94d42e27348a5c5",
+    "package_kind": "Direct pinned Flutter AOT replacement of three Dart libraries in the preceding verified CI APK; all 157 other payloads byte-identical. This is not current full Gradle/CI packaging.",
+    "stable_key_in_place_upgrade": true,
+    "broomm_uid": 10134,
+    "subsequent_ci_package": {
+      "apk": "build/releases/Broomm-0.1.18-pr4.42473079266-thor-preview.apk",
+      "sha256": "dfd66e5ec9757df511662b277305a45433fa4b970313c644d8b6a39f0d6748d1",
+      "code_sha": "485e2a8decea19f9f8c0c2bc6169465b7da3898e",
+      "build": "1104",
+      "upgrade": "Performing Streamed Install\nSuccess",
+      "uid_unchanged": "10134",
+      "native_smoke": {
+        "saved_primary_account_restored_without_password": true,
+        "exact_five_progress_files": true,
+        "vga_retained": true,
+        "native_state_loaded_chaos_gameplay": true,
+        "normal_quit_automatic_sync": true,
+        "retained_primary": 252,
+        "journals_absent": true
+      }
+    }
+  },
+  "game": {
+    "romm_id": 6981,
+    "platform_id": 27,
+    "title": "Sonic Adventure",
+    "filename": "Sonic Adventure.chd",
+    "chd_version": 5,
+    "bytes": 915557486,
+    "logical_bytes": 1344333888,
+    "parent": false,
+    "sha256": "1c18344aa2c871d98a28b8369c8c7fcc7345eefab03c12852c8aa19fe6d46045"
+  },
+  "core": {
+    "source": "7adbf3caef251b153e348df3f469a0f35878339d",
+    "artifact_commit": "f51373bf8b509331b884cc57917bf0c0869d43bc",
+    "arm64_sha256": "741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701"
+  },
+  "results": {
+    "normal_automatic_quit_capture_sync": true,
+    "native_game_file_1_load_before_manual_state": true,
+    "manual_state_loaded_chaos_gameplay": true,
+    "vga_native_menu_persisted_between_processes": true,
+    "four_all_port_private_vmus": true,
+    "actual_android_options_prefix": "reicast_ (both concrete prefixes preserved)",
+    "account_2": {
+      "primary": 252,
+      "progress": {
+        "saves/MK-51000.A1.bin": {
+          "bytes": 131072,
+          "sha256": "d6877ba5addac3bf8c4eb7727ce63bec8c43a597c1c4ca6be50c9b34974d9be4"
+        },
+        "saves/MK-51000.B1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "saves/MK-51000.C1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "saves/MK-51000.D1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "states-8f7e12b8d695a42b-android/Sonic Adventure.state": {
+          "bytes": 9698587,
+          "sha256": "6a68dcdb6d639a708852f6482ae6075aeb027946426c850e129ecec6623a3f04"
+        },
+        "options.json": {
+          "bytes": 3342,
+          "sha256": "56f3d222601a13e15a463b0667535321a478d5e37b152ca929ca9f274ef79bef"
+        }
+      },
+      "result": "Retained File 1 opened through native VMU menus before separate manual state load. Fresh return restored all five cloud-progress files, retained VGA and loaded Chaos gameplay state."
+    },
+    "account_3": {
+      "primary": 253,
+      "progress": {
+        "saves/MK-51000.A1.bin": {
+          "bytes": 131072,
+          "sha256": "349841bc960d54b214a239131166a9b8de0bc078a5273a8bdf06499057b8424b"
+        },
+        "saves/MK-51000.B1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "saves/MK-51000.C1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "saves/MK-51000.D1.bin": {
+          "bytes": 131072,
+          "sha256": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+        },
+        "states-8f7e12b8d695a42b-android/Sonic Adventure.state": {
+          "bytes": 8871666,
+          "sha256": "7d3b13bb25bfa3bd9f61b4772e307edebddc32a1a5525b41d538a5feac9777d9"
+        },
+        "options.json": {
+          "bytes": 3353,
+          "sha256": "92e0e5441e81e152a5f9f60f058f531a28bd75bdbe0d3ea95608d394f0e4ebc7"
+        }
+      },
+      "result": "Initial working inventory and originals were empty; no account-2 VGA inherited. Created distinct VMU, selected File 2 and saved a distinct manual state at file selection. Normal Quit captured and published separately. Completed story progression is not established.",
+      "fresh_native_restore": {
+        "exact_five_progress_files": true,
+        "native_state_loaded": "File-2 selection, with native Loaded state toast",
+        "normal_quit_retained_primary": 253,
+        "progress_unchanged": true,
+        "journals_absent": true
+      }
+    },
+    "account_return": "Account 2 reselected through its saved sign-in and restored its own exact primary 252, distinct from account 3. No password/token export.",
+    "offline_boot": {
+      "checked_utc": "2026-11-08T10:36:06.374245+00:00",
+      "original_wifi_on": "1",
+      "source": "3d69684-direct-aot-on-1098-native",
+      "disabled_wifi_on": "0",
+      "default_network_observation": [
+        "Active default network: none"
+      ],
+      "offline_preparation_and_native_boot": true,
+      "restored_wifi_on": "1"
+    },
+    "preservation": {
+      "checked_utc": "2026-11-08T10:38:16.594547+00:00",
+      "build": 1098,
+      "runtime": "3d69684dfc4b67446c222184d91ddc1d5a0c8fce-direct-aot-on-1098-native",
+      "journals_absent": true,
+      "earlier_additional_core_progress_files_unchanged": 41,
+      "all_existing_managed_native_files_unchanged": 19,
+      "preexisting_standalone_and_managed_files_unchanged": 13,
+      "existing_gba_snes_progress_files_unchanged": 8,
+      "independent_platform_bindings_retained": [
+        "gba",
+        "snes",
+        "gb",
+        "gbc",
+        "atari2600",
+        "tg16",
+        "genesis",
+        "sms",
+        "gamegear",
+        "sega32",
+        "n64",
+        "nes",
+        "jaguar",
+        "lynx",
+        "arcade",
+        "3do",
+        "saturn",
+        "dc"
+      ],
+      "total_prior_progress_files_unchanged": 49
+    },
+    "retained_first_failed_test_cards": {
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_A1.bin": "d6877ba5addac3bf8c4eb7727ce63bec8c43a597c1c4ca6be50c9b34974d9be4",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+    },
+    "core_hashes": {
+      "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "mesen": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "virtualjaguar": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "mednafen_lynx": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "fbneo": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9",
+      "opera": "43626fab3f21e1c24d979291503f564422c4b9602a8a82a941a0484cfaceac6c",
+      "mednafen_saturn": "dc0c11180b695db1ace32cd3443946ff00eccf9b3c673e263ec3b752915f2282",
+      "flycast": "741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701"
+    },
+    "logs": {
+      "since_utc": "2026-11-08T09:38:00Z",
+      "lines": 318,
+      "warning_error_count": 1,
+      "warnings_errors": [
+        "2026-11-08T10:36:30.842194Z warning romm.dart Cloud saves: Could not reach RomM. Check the server address and your connection. Progress remains on this device; cloud sync is pending."
+      ],
+      "sha256": "d8d68f696d66c016a842e897a0024d08a0b37b56af60f0ed91541cf40792e654",
+      "normal_exit_sync_observed": true
+    },
+    "subsequent_ci_preservation": {
+      "checked_utc": "2026-11-08T11:06:25.924455+00:00",
+      "build": 1104,
+      "runtime": "485e2a8decea19f9f8c0c2bc6169465b7da3898e-full-ci-apk",
+      "journals_absent": true,
+      "earlier_additional_core_progress_files_unchanged": 41,
+      "all_existing_managed_native_files_unchanged": 19,
+      "preexisting_standalone_and_managed_files_unchanged": 13,
+      "existing_gba_snes_progress_files_unchanged": 8,
+      "independent_platform_bindings_retained": [
+        "gba",
+        "snes",
+        "gb",
+        "gbc",
+        "atari2600",
+        "tg16",
+        "genesis",
+        "sms",
+        "gamegear",
+        "sega32",
+        "n64",
+        "nes",
+        "jaguar",
+        "lynx",
+        "arcade",
+        "3do",
+        "saturn",
+        "dc"
+      ],
+      "total_prior_progress_files_unchanged": 49
+    }
+  },
+  "corrected_native_boundaries": [
+    "Confirmed-empty firmware discovery permits native Reios HLE and persists that explicit profile/platform choice; failed discovery and damaged known BIOS remain refusals.",
+    "Official Android Flycast uses reicast_ options. The initial wrong-prefix test was refused and retained all native/private VMUs, state, options and flash. A scoped locked manual test recovery retained originals; ordinary UI recovery and explicit device progress review published legacy primary 251. This is not automatic system-card conversion.",
+    "Flycast reads legacy content-name cards, full-saves native game-ID cards and deletes legacy names. Missing-data recovery first refused this actual transition. Source 3d69684 now holds new progress/resources before allowing only unique new same-port/common-ID replacements. Pending-session recovery then published native primary 252; missing established cards/states and ambiguity still refuse.",
+    "Native writer closure is checked at each mutation, not inferred from returning to Broomm."
+  ],
+  "verification": {
+    "focused": 97,
+    "full_suite": {
+      "checked_utc": "2026-11-08T09:28:50.158487+00:00",
+      "source_inputs_unchanged": true,
+      "inputs": 358,
+      "visible_tests": 727,
+      "passed": 726,
+      "skipped": 1,
+      "failed": 0,
+      "success": true
+    },
+    "analysis": "clean",
+    "native_fault_groups": 26,
+    "actual_abi_downloads": 4,
+    "current_full_android_ci": {
+      "run": 42473079266,
+      "url": "https://github.com/Broomm/broomm/actions/runs/42473079266",
+      "conclusion": "success",
+      "all_checks_and_five_packages": true,
+      "head": "485e2a8decea19f9f8c0c2bc6169465b7da3898e",
+      "merge": "c630614cac50602336ecc244af9ec1d92a9cd7d1"
+    }
+  },
+  "limits": [
+    "One arm64 Android device; other ABI gameplay, cross-device Dreamcast compatibility and physical owner display verification are not claimed.",
+    "Self-contained parent-free CHD v5 only for Dreamcast; CUE/GDI/M3U/CDI file-set transport remains unfinished.",
+    "Sonic slot defaults are visually non-discriminative; empty inventories, exact restoration and distinct VMU/state hashes establish the account boundary. No completed boss/level claim.",
+    "No automatic fallback-system-VMU conversion or selection. Failed mode changes retain bytes for explicit recovery."
+  ]
+}

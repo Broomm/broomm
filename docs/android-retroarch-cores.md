@@ -17,7 +17,11 @@ gameplay, NVRAM/state restoration and two-account separation below. The Opera
 increment covers self-contained disc images and native NVRAM; build 1090 passed
 the packaged checks below. Saturn now has concrete source and packaged device
 acceptance below. Multi-file media remains unfinished. Flycast now has the
-concrete source increment below; packaged acceptance remains pending.
+concrete source increment below. Its corrected direct-AOT Thor preview passed
+native VMU/state/preferences, two-account separation and disconnected-network
+boot checks. Normal CI build 1104 subsequently passed native restoration, state
+load, normal sync and preservation. Exact evidence and
+remaining scope are recorded below.
 
 ## Gambatte source and behavior
 
@@ -775,6 +779,42 @@ unchanged deadline (2,769 ms). No new library or global device setting is used.
 
 
 ## Flycast source increment
+
+### Current Thor result — 2026-11-08
+
+Runtime `3d69684` passed native Dreamcast testing in an in-place, stable-key
+preview. All three Dart AOT libraries were compiled with pinned Flutter; its
+manifest remains build 1098 and 157 other payloads match the preceding verified
+CI APK. This is device acceptance of that preview, not a current Gradle build.
+
+Sonic Adventure's native File 1 opened before an independent manual-state load
+resumed the Chaos encounter. Fresh sessions retained the native VGA preference.
+Normal Quit captured four native game-ID VMUs and the matched state, verified
+RomM primary 252 and cleaned both journals. The second saved account started
+with empty working/original inventories and no inherited VGA, created a distinct
+VMU and File-2 selection state, then automatically published primary 253.
+Returning to the first account restored its five exact files and gameplay state.
+Its preparation/boot also passed with Wi-Fi disabled and **no active default
+network**; Wi-Fi was restored before normal final capture/sync. The expected
+offline RomM warning is retained in the log review.
+
+All 49 earlier progress files, 19 managed native files, 13 original standalone/
+managed files, fifteen core hashes and eighteen connections remain intact.
+The first failed test's four native card backups and private captures remain
+retained. Normal sessions leave no new native ROM/config/save/state resources
+or active recovery journals. Source regressions have 726 passes, one existing
+host skip, no failures and clean analysis. See the
+[device evidence](android-retroarch-flycast.json).
+
+The initial wrong-prefix and legacy-name failures described below are historical
+reproductions that led to the concrete corrections. No fallback-card conversion
+feature is claimed. CHD-only media limits remain; CUE/GDI/M3U/CDI transport,
+other-ABI gameplay and cross-device Dreamcast acceptance are outstanding.
+The second account also fresh-restored all five published files, loaded its
+own File-2 state and quit normally without changing primary 253. Normal CI build
+1104 subsequently restored the original saved sign-in, all five progress files
+and VGA, loaded the Chaos state, then quit/synchronized normally.
+Its repeated preservation audit passes.
 
 The retained four-ABI `7adbf3c` build is pinned to artifact commit `f51373b` and
 `android-flycast-7adbf3c`. ZIP/payload hashes, ELF classes/machines, Android-only

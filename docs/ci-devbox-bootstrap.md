@@ -61,7 +61,7 @@ pass locally. CI runs Devbox cases before bootstrap and Gradle cases after the p
 are bootstrap prerequisites, while application compilation stays in Devbox.
 The Gradle seed entry point is CI-only and receives the job token for that step.
 Temporary test directories clean themselves up; CI cache cleanup is runner
-disposal. Hosted Android compilation after this correction remains pending.
+disposal. Hosted application run [42473079266](https://github.com/Broomm/broomm/actions/runs/42473079266) subsequently passed every check and all five target packages, including Android. Independent Mesen run 42473079283 passed all four ABIs. The earlier failed runs remain recorded.
 The actual Flutter-supplied wrapper also extracted the real verified ZIP and reported
 Gradle 9.3.1 offline on macOS through Devbox's Java, without a download, SDK build
 or license request. Its disposable distribution cache was removed afterward.
