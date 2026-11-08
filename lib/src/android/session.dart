@@ -87,12 +87,20 @@ class AndroidGameSession extends ChangeNotifier {
       throw const FormatException(
         'Android session recovery record is invalid. Progress was kept.',
       );
-    if (lynxSwap) {
+    if (lynxSwap ||
+        sharedSwap &&
+            androidRootAccessModes.contains(value['access']) &&
+            value['rootStateGroup'] != null) {
       final group = value['rootStateGroup'];
-      if (group is! String ||
+      final platform = value['rootPlatform'];
+      if (value['emulator'] != 'retroarch' ||
+          platform is! String ||
+          androidRootRetroCore(platform) != value['coreName'] ||
+          androidRootRetroAccess(platform) != value['access'] ||
+          group is! String ||
           !RegExp(r'^states-[a-f0-9]{16}-android$').hasMatch(group))
         throw const FormatException(
-          'The Lynx state recovery group is invalid. Progress was kept.',
+          'The rooted state recovery identity is invalid. Progress was kept.',
         );
       return {
         ...value,

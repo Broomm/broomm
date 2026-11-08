@@ -1,5 +1,34 @@
 # Implementation plan
 
+## Rooted FinalBurn Neo archive/save source increment — 2026-11-07
+
+Independent Arcade Setup pins the retained four-ABI FBNeo build at `299e4ce`,
+also held by `android-fbneo-1.0.0.03-20261107`. Version 13 settings preserve
+versions 1–12 and every earlier connection. Complete ZIP ROMsets keep their
+original set/chip names and reach the core intact; Broomm checks safe ZIP
+structure and bounds without extracting chips. The concrete route accepts
+128 MiB archives, 512 MiB expanded totals and 128 MiB entries. Earlier cores'
+limits remain unchanged. Rooted 7z, automatic parent/BIOS/CHD acquisition and
+special arcade peripherals remain outside this increment.
+
+Driver-named `.fs/.nv/.hi/.memcard` and the game-private `shared.memcard` retain
+the desktop nested ZIP save contract, with APK/ABI/core-matched states. Native
+selectors reject foreign drivers, temporary/nested paths and another core's
+requests. Recovery retains the original state group even without the general
+marker; it no longer infers a state's filename from an ordinary-save prefix.
+Missing working NVRAM remains damaged recovery. Setup persistence and generic
+connection reporting cover the new route and retain earlier routes.
+
+Clean analysis, all 675 Flutter tests (one existing native-host skip), 80 focused
+checks and fifteen disposable Thor filesystem/launch groups pass. The bridge
+and fixture compile. An initial migration regression caught an omitted persisted
+Arcade binding; corrected checks pass. The first native fixture targeted a
+new-publication checkpoint on an existing replacement; runtime diagnostics
+identified that test error, and the corrected setup passes without relaxing its
+assertions. All original failure logs remain retained. Packaged FBNeo gameplay/
+NVRAM/state acceptance remains pending. Three other selected cores still need
+their concrete integration; PR #4 stays draft.
+
 ## FinalBurn Neo artifact preparation — 2026-11-07
 
 Four unmodified Android archives are retained with per-ABI source provenance:

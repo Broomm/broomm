@@ -26,14 +26,23 @@ const androidRootAccessModes = {
 /// Concrete correspondence between one native save boundary and its private
 /// profile copy. The cloud format/keys retain the desktop ordinary-save contract.
 class AndroidSaveArea {
-  const AndroidSaveArea(this.local, this.remote, {this.rename});
+  const AndroidSaveArea(
+    this.local,
+    this.remote, {
+    this.rename,
+    this.arcadeDriver,
+  });
   final ProgressArea local;
   final String remote;
   final String? rename;
+
+  /// FBNeo's nested native files retain their driver names in cloud bundles.
+  final String? arcadeDriver;
   Map<String, String> get selector => {
     'path': remote,
+    if (arcadeDriver != null) 'driver': arcadeDriver!,
     if (rename != null) 'exact': rename!,
-    if (rename == null) ...{
+    if (rename == null && arcadeDriver == null) ...{
       if (local.prefix != null) 'prefix': local.prefix!,
       if (local.suffix != null) 'suffix': local.suffix!,
       if (local.exact != null) 'exact': local.exact!,

@@ -163,6 +163,12 @@ fun main(args: Array<String>) {
         failure { launch("mgba", "Game.md", "Game.zip") }
         failure { launch("mednafen_lynx", "Game.gba", "Game.zip") }
         failure { launch("mgba", "Game.lnx", "Game.zip") }
+        launch("fbneo", "simpsons2p.zip", "simpsons2p.zip")
+        launch("fbneo", "SIMPSONS2P.ZIP", "SIMPSONS2P.ZIP")
+        failure { launch("fbneo", "simpsons2p.zip", "other.zip") }
+        failure { launch("fbneo", "Game Name.zip", "Game Name.zip") }
+        failure { launch("fbneo", "simpsons2p.7z", "simpsons2p.7z") }
+        failure { launch("mgba", "simpsons2p.zip", "simpsons2p.zip") }
         println("PASS: rooted launch validation accepts prepared ZIP stems and preserves core, original filename, game and configuration identity")
 
         val gameboyBase = "files/Broomm/${"b".repeat(32)}/44/"
@@ -202,6 +208,7 @@ fun main(args: Array<String>) {
         println("PASS: Atari/PCE/Sega/NES/Jaguar/Lynx cartridge staging, source preservation and unsupported disc/FDS refusal")
         checkN64Storage(root, label)
         checkLynxFirmware(root, label)
+        checkFbneoStorage(root, label)
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -297,6 +304,65 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+private fun checkFbneoStorage(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected FBNeo refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected FBNeo refusal") }
+    }
+    val files = RootSaveFiles(root, 2000, label, {}, coreName = "fbneo")
+    val base = "files/Broomm/${"b".repeat(32)}/47"
+    val token = "e".repeat(32) + "-in"
+    val old = byteArrayOf(1, 2, 3)
+    val next = byteArrayOf(4, 5)
+    val a = RootSaveFiles.digest(old); val b = RootSaveFiles.digest(next)
+    val names = listOf("simpsons2p.fs", "simpsons2p.nv", "simpsons2p.hi", "simpsons2p.memcard", "shared.memcard")
+    for (name in names + listOf("another.fs", "simpsons2p.fs.tmp"))
+        files.replace("$base/saves/fbneo/$name", null, a, old, null, token)
+    val selector = listOf(mapOf("path" to "$base/saves", "driver" to "simpsons2p"))
+    val inventory = files.inventory(selector)
+    check(inventory.keys == names.map { "$base/saves/fbneo/$it" }.toSet())
+    check(inventory.values.all { it.sha256 == a })
+    refused { files.inventory(listOf(mapOf("path" to "$base/saves", "driver" to "../another"))) }
+    refused { RootSaveFiles(root, 2000, label, {}).inventory(selector) }
+    refused { RootSaveFiles.managedPath("$base/saves/fbneo/simpsons2p.fs", saveOnly = true) }
+    RootSaveFiles.managedPath("$base/saves/fbneo/simpsons2p.fs", saveOnly = true, core = "fbneo")
+    refused { RootSaveFiles.managedPath("$base/saves/fbneo/other/subdir.fs", core = "fbneo") }
+    refused { RootSaveFiles.managedPath("$base/saves/fbneo/simpsons2p.fs.tmp", core = "fbneo") }
+    val selected = "$base/saves/fbneo/simpsons2p.fs"
+    val metadata = files.metadata(files.path(selected))
+    files.replace(selected, a, null, null, null, token.replace("-in", "-out"))
+    val interrupted = RootSaveFiles(root, 2000, label, {}, { if (it == "linked") error("Lost FBNeo publication reply") }, "fbneo")
+    refused { interrupted.replace(selected, null, b, next, metadata, token) }
+    files.replace(selected, null, b, next, metadata, token)
+    check(files.hash(files.path(selected)) == b)
+    files.replace(selected, b, a, old, metadata, token.replace("-in", "-out"))
+    check(files.metadata(files.path(selected)) == metadata && files.hash(files.path(selected)) == a)
+    check(files.hash(files.path("$base/saves/fbneo/another.fs")) == a)
+
+    val source = File(root, "library/47/content/simpsons2p.zip")
+    check(source.parentFile!!.mkdirs())
+    java.io.RandomAccessFile(source, "rw").use { it.setLength(128L * 1024 * 1024) }
+    fun streamedHash(file: File): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(65536)
+            while (true) { val count = input.read(buffer); if (count < 0) break; digest.update(buffer, 0, count) }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+    }
+    val hash = streamedHash(source)
+    val path = "$base/rom-${"f".repeat(32)}/simpsons2p.zip"
+    val copy = files.stageRom(path, source, 0, hash)
+    check(copy.length() == 128L * 1024 * 1024 && streamedHash(copy) == hash)
+    files.removeRom(path, hash)
+    java.io.RandomAccessFile(source, "rw").use { it.setLength(128L * 1024 * 1024 + 1) }
+    refused { files.stageRom(path, source, 0, hash) }
+    refused { RootSaveFiles(root, 2000, label, {}).stageRom(path.replace("f".repeat(32), "d".repeat(32)), source, 0, hash) }
+    check(source.exists() && !copy.exists())
+    println("PASS: FBNeo nested NVRAM/cards, foreign-file/core refusal, lost-reply restoration and exact 128 MiB opaque ROMset staging")
 }
 
 private fun checkLynxFirmware(root: File, label: ByteArray) {

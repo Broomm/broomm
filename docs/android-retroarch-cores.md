@@ -12,8 +12,9 @@ increment adds Genesis Plus GX and PicoDrive for four Sega platforms; builds
 1066/1069 passed the scoped device checks below. N64 build 1073 passed the scoped
 cartridge/save/state checks below. NES build 1077 and Jaguar builds 1079/1080
 passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
-input and state restoration below. Opera, FBNeo, Flycast and Beetle Saturn still need their
-concrete firmware/media/save integration.
+input and state restoration below. FBNeo's ZIP/nested-save source checks pass
+with packaged acceptance pending. Opera, Flycast and Beetle Saturn still need
+their concrete firmware/media/save integration.
 
 ## Gambatte source and behavior
 
@@ -467,6 +468,49 @@ checks and five packages passed. This does not establish disconnected-network
 Lynx play, a completed level, other ABI or cross-device gameplay. See the
 [exact device evidence](android-retroarch-lynx.json).
 
+## FinalBurn Neo ZIP/save source increment
+
+The [four retained archives](../vendor/android/fbneo/1.0.0.03-20261107/README.md)
+pin each ABI's actual embedded source: ARM64/x86 use `d15071a`, ARMv7/x64 use
+`4cdb31f`. Corresponding source/archive/library hashes, ELF identities, original
+Android recipes, complete non-commercial FBNeo/MAME terms and component notices
+are retained. The inspected Libretro wrappers are identical; driver/build
+differences remain explicit. Runtime downloads pin `299e4ce74bebac3fb7d84a49c8f065e2b3f17c49`,
+also retained by `android-fbneo-1.0.0.03-20261107`. Exact upstream NDK reproduction
+is not claimed. No ROM or BIOS is bundled.
+
+Use **Arcade → RetroArch → Set up**, then Play a complete matching ZIP ROMset
+from RomM. Keep its original driver filename, such as `simpsons2p.zip`, and all
+required chips together. Broomm validates archive paths/links/collisions and size
+bounds, then stages the intact ZIP; it never chooses one chip or extracts the
+set as a cartridge. The concrete bounds are 128 MiB compressed, 512 MiB total
+expanded and 128 MiB per entry. Rooted 7z needs conversion to ZIP with names
+preserved. Parent/BIOS/CHD acquisition and special arcade peripherals have no new
+implementation; incomplete/incompatible ROMsets remain visible native errors.
+The [upstream ROMset guidance](https://docs.libretro.com/library/fbneo/) explains
+the need for matching sets and required BIOS dependencies.
+
+The ordinary cloud ZIP retains `save/fbneo/<driver>.fs/.nv/.hi/.memcard` and the
+game-private `save/fbneo/shared.memcard`. It synthesizes no cartridge `.srm`.
+Native selectors select these names for the requested driver inside the resolved
+profile/game, preserving other drivers and excluding temporary/error files.
+States keep the existing APK/ABI/core compatibility group. Save and Quit
+normally, wait for Broomm's sync, then Play again and verify native NVRAM and a
+manual Load State. Keep the private progress/recovery directories. Normal
+completion restores recorded native originals and removes session ROM/config
+files; other installed cores and standalone settings are retained.
+
+Version 13 reads earlier settings without claiming an old Arcade connection.
+State recovery uses its original recorded group independently of ordinary-save
+filename rules, including a lost general marker. Missing NVRAM cannot publish
+deletion. All 675 Flutter tests (one existing native-host skip), 80 focused
+checks and fifteen disposable Thor filesystem/launch groups pass, with clean
+analysis and compiled bridge/fixture. Native cases include nested files,
+wrong-core/foreign-path refusal, interrupted publication and exact 128 MiB
+streamed ROMset staging. The initial migration and fault-fixture failures and
+their diagnostics are retained; no assertion or deadline was relaxed. These
+checks do not establish packaged FBNeo gameplay, other ABI or cross-device play.
+
 ## Remaining boundaries
 
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
@@ -499,5 +543,5 @@ Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
-source build. Four selected cores still need their concrete integration;
+source build. Three selected cores still need their concrete integration;
 Lynx's scoped packaged acceptance is recorded above.

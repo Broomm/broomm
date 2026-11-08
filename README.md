@@ -399,6 +399,19 @@ Earlier progress/settings remained unchanged. Disconnected-network Lynx play
 and other ABI gameplay are not newly verified. See the
 [scope and verification](docs/android-retroarch-cores.md#lynx-firmwarestate-source-increment).
 
+Current source adds **Arcade → RetroArch → Set up** with a pinned FBNeo build.
+Use a complete matching ZIP ROMset with its original driver filename, such as
+`simpsons2p.zip`. Broomm stages the complete archive without extracting chips.
+The route accepts up to 128 MiB compressed and 512 MiB expanded, with 128 MiB
+entries. Convert 7z sets to ZIP with names preserved; automatic parent/BIOS/CHD
+acquisition and special peripherals are not implemented. Native NVRAM/cards
+retain their nested filenames; states require matching APK/ABI/core builds.
+Quit normally, wait for sync, then verify NVRAM and a manual Load State after
+relaunch. Keep private progress/recovery files; temporary native session files
+are cleaned after confirmed exit. Source/workflow/native file checks pass;
+packaged FBNeo gameplay is pending. See the
+[scope and verification](docs/android-retroarch-cores.md#finalburn-neo-zipsave-source-increment).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

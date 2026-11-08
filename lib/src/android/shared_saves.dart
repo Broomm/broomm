@@ -334,14 +334,16 @@ class SharedAndroidSaves {
       0,
       save.local.path.length - '/saves'.length,
     );
+    final stateTemplate = current.areas.singleWhere(
+      (a) => a.id.startsWith('states-'),
+    );
     final state = group == null
         ? null
         : ProgressArea(
             group as String,
             '$localBase/$group',
-            prefix: save.local.prefix,
-            pattern:
-                '^${RegExp.escape(save.local.prefix!)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
+            prefix: stateTemplate.prefix,
+            pattern: stateTemplate.pattern,
           );
     final plan = AndroidSavePlan(
       ProgressLayout(current.root, current.format, current.game, [
@@ -412,7 +414,18 @@ class SharedAndroidSaves {
       );
     Directory? extraction;
     try {
-      if (extension == 'zip') {
+      if (plan.launch['coreName'] == 'fbneo') {
+        // The core consumes the complete multi-chip ROMset. Broomm validates
+        // ZIP structure and bounds without extracting or renaming its chips.
+        phase?.call('Checking the complete FBNeo ROMset…');
+        final zip = await ProgressZip.read(
+          source,
+          maxBytes: _rootRomLimit(plan) * 4,
+          maxEntryBytes: _rootRomLimit(plan),
+        );
+        if (zip.entries.isEmpty)
+          throw const FormatException('The FBNeo ROMset is empty.');
+      } else if (extension == 'zip') {
         phase?.call('Checking and extracting the cartridge…');
         final before = await progressFileHash(source);
         final zip = await ProgressZip.read(
@@ -465,7 +478,7 @@ class SharedAndroidSaves {
         'path': path,
         'source': source.path,
         'sha256': hash,
-        if (extension == 'zip') 'preparedCartridge': true,
+        if (extraction != null) 'preparedCartridge': true,
       }))!;
     } finally {
       // Native staging has finished (or failed) before its private source goes.
@@ -699,13 +712,20 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
         'nes' => {'nes', 'unf', 'unif'},
         'jaguar' => {'j64', 'jag', 'rom', 'abs', 'cof', 'bin', 'prg'},
         'lynx' => {'lnx', 'lyx', 'bll', 'o'},
+        'arcade' => {'zip'},
         _ => {},
       },
       _ => {},
     };
 
 int _rootRomLimit(AndroidSavePlan plan) =>
-    (plan.launch['platform'] == 'n64' ? 64 : 32) * 1024 * 1024;
+    (switch (plan.launch['platform']) {
+      'arcade' => 128,
+      'n64' => 64,
+      _ => 32,
+    }) *
+    1024 *
+    1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
   final n64 = plan.launch['coreName'] == 'mupen64plus_next';

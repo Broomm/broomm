@@ -241,6 +241,26 @@ String androidRetroCoreFile(String core) => core == 'mupen64plus_next'
     ? 'mupen64plus_next_gles3_libretro_android.so'
     : '${core}_libretro_android.so';
 
+const _fbneoRevision = '299e4ce74bebac3fb7d84a49c8f065e2b3f17c49';
+const _fbneoRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    'a99adee651498b0971bda7bf8533c096e26604eb405385d11f96a574d5a68bb7',
+    '1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9',
+  ),
+  'armeabi-v7a': (
+    '196a9c37657e44f40ff4a622d76a54b5f9fb87fadc123d222c985a6d71c2ac3a',
+    '4eaaa1e4298242f996bff827c22e549185ac036d25b03fc13774ca5d66a42d91',
+  ),
+  'x86': (
+    '0b6769e7ba118aee5d8b5865b24607f69a8fc83ceea5b68b9fcc9265a07e4f13',
+    'a08949f715105aa767a6773c2aab2495acb330ae48551969b9f2ab6f5496a2d0',
+  ),
+  'x86_64': (
+    '87ee4fea74cf6df454e4c3e2ae6232ce47c785648d9fbb7f67f769f24bc6dc2f',
+    '9acd7fa939b0225a5414fcfcf5e8e59d5eefec42ff504f69342d7c05bd87be50',
+  ),
+};
+
 Future<void> downloadAndroidRetroCore(
   Directory data,
   String core,
@@ -265,16 +285,23 @@ Future<void> downloadAndroidRetroCore(
     'mesen' => (_mesenRevision, '0.9.9-0102910', _mesenRecipes),
     'virtualjaguar' => (_jaguarRevision, '3.11.0', _jaguarRecipes),
     'mednafen_lynx' => (_lynxRevision, '1.24.0-fcdefcf', _lynxRecipes),
+    'fbneo' => (_fbneoRevision, '1.0.0.03-20261107', _fbneoRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);
   final rawCore = core == 'virtualjaguar';
-  final maxArchive = rawCore || core == 'mupen64plus_next'
+  final maxArchive = core == 'fbneo'
+      ? 20 * 1024 * 1024
+      : rawCore || core == 'mupen64plus_next'
       ? 3 * 1024 * 1024
       : {'stella', 'genesis_plus_gx', 'mesen'}.contains(core)
       ? 2 * 1024 * 1024
       : _maxArchive;
-  final maxCore = core == 'genesis_plus_gx' ? 16 * 1024 * 1024 : _maxCore;
+  final maxCore = core == 'fbneo'
+      ? 96 * 1024 * 1024
+      : core == 'genesis_plus_gx'
+      ? 16 * 1024 * 1024
+      : _maxCore;
   final recipe = recipes[abi];
   if (recipe == null)
     throw UnsupportedError('No reviewed $core download is available for $abi.');

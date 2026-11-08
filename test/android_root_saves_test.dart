@@ -256,6 +256,16 @@ void main() {
             }
             return value;
           }
+          if (call.method == 'rootList') {
+            for (final area in (args['areas'] as List).cast<Map>()) {
+              final driver = area.remove('driver');
+              if (driver != null) {
+                expect(args['coreName'], 'fbneo');
+                area['pattern'] =
+                    '^fbneo/(?:${RegExp.escape(driver as String)}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)\$';
+              }
+            }
+          }
           final value = await fixture.call(
             MethodCall(call.method.replaceFirst('root', 'shared'), args),
           );
@@ -1433,6 +1443,148 @@ void main() {
       }
     },
   );
+
+  test(
+    'Arcade setup migrates version 12 and preserves every earlier binding',
+    () async {
+      final previous = [
+        'gba',
+        'snes',
+        'gb',
+        'gbc',
+        'atari2600',
+        'tg16',
+        'genesis',
+        'sms',
+        'gamegear',
+        'sega32',
+        'n64',
+        'nes',
+        'jaguar',
+        'lynx',
+      ];
+      for (final slug in previous)
+        await manager.connectGbaRoot(emulator, platform: slug);
+      final file = File('${data.path}/android/emulators.json');
+      final old = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      old['version'] = 12;
+      await file.writeAsString(jsonEncode(old));
+      await manager.load();
+      expect(manager.hasCurrentRoot(emulator, 'arcade'), false);
+      await manager.connectGbaRoot(emulator, platform: 'arcade');
+      await manager.load();
+      expect(manager.settingsKnown, true, reason: manager.error);
+      for (final slug in [...previous, 'arcade'])
+        expect(manager.hasCurrentRoot(emulator, slug), true, reason: slug);
+      await manager.disconnectGbaRoot(emulator, platform: 'arcade');
+      for (final slug in previous)
+        expect(manager.hasCurrentRoot(emulator, slug), true);
+      (old['retroRoots'] as Map)['arcade:$pkg'] = {
+        ...manager.rootConnection(emulator, 'lynx')!,
+      };
+      await file.writeAsString(jsonEncode(old));
+      await manager.load();
+      expect(manager.settingsKnown, false);
+    },
+  );
+
+  test('FBNeo stages the intact multi-chip ZIP and publishes native nested saves with matched states', () async {
+    await manager.connectGbaRoot(emulator, platform: 'arcade');
+    final chips = await Directory('${temp.path}/chips').create();
+    await File('${chips.path}/chip-a.bin').writeAsBytes([1, 2]);
+    await File('${chips.path}/chip-b.bin').writeAsBytes([3, 4]);
+    final rom = File('${temp.path}/simpsons2p.zip');
+    await ProgressZip.write(rom, chips, ['chip-a.bin', 'chip-b.bin']);
+    final p = await gameboyPlan('arcade', rom.path), g = game(p);
+    expect(p.format, 'libretro-fbneo-v1');
+    expect(p.rawSaveKey, isNull);
+    const ordinary = 'save/fbneo/simpsons2p.fs';
+    final original = await put(p.remotePath(ordinary), [8, 9]);
+    final foreign = await put(
+      '${p.remoteAreas.first.remote}/fbneo/another.fs',
+      [7],
+    );
+    final saves = SharedAndroidSaves(manager);
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    expect(await staged.readAsBytes(), await rom.readAsBytes());
+    expect(staged.uri.pathSegments.last, 'simpsons2p.zip');
+    final keys = [
+      ordinary,
+      'save/fbneo/simpsons2p.nv',
+      'save/fbneo/simpsons2p.hi',
+      'save/fbneo/shared.memcard',
+      '${p.areas.last.id}/game.state',
+    ];
+    for (var i = 0; i < keys.length; i++)
+      await put(p.remotePath(keys[i]), [i, i + 1]);
+    await saves.capture(g, cloud, p);
+    expect((await p.files()).keys.toSet(), keys.toSet());
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect(api.records, isNotEmpty);
+    expect(await original.readAsBytes(), [8, 9]);
+    expect(await foreign.readAsBytes(), [7]);
+    expect(await staged.exists(), false);
+    expect(await saves.pending, false);
+  });
+
+  test('FBNeo recovery keeps its original state group after marker loss and refuses missing working NVRAM', () async {
+    await manager.connectGbaRoot(emulator, platform: 'arcade');
+    final p = await gameboyPlan('arcade', '/game/simpsons2p.zip'), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    const key = 'save/fbneo/simpsons2p.fs';
+    await (await p.target(key)).writeAsBytes([1]);
+    final state = '${p.areas.last.id}/game.state';
+    await (await p.target(state)).writeAsBytes([2]);
+    await saves.begin(g, p, 'a' * 64, selected: '/game/simpsons2p.zip');
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    expect((await session.pending())!['stateAreas'], [p.areas.last.id]);
+    observation['core'] = 'f' * 64;
+    final current = await gameboyPlan('arcade', '/game/simpsons2p.zip');
+    final recovered = await saves.recoveryPlan(game(current), current);
+    expect(recovered.areas.last.id, p.areas.last.id);
+    await File('${native.path}/${p.remotePath(key)}').delete();
+    await expectLater(
+      saves.capture(game(current), cloud, recovered),
+      throwsStateError,
+    );
+    expect(await saves.pending, true);
+    expect(await (await p.target(key)).readAsBytes(), [1]);
+    expect(api.records, isEmpty);
+    await put(p.remotePath(key), [3]);
+    await saves.capture(game(current), cloud, recovered);
+    await saves.restoreOriginal(game(current), recovered);
+    expect(await saves.pending, false);
+    expect(await (await p.target(key)).readAsBytes(), [3]);
+    expect(await current.files(), contains(key));
+    expect((await current.files()).containsKey(state), false);
+  });
+
+  test('FBNeo refuses ambiguous names, unsupported 7z and corrupt ZIPs without extracting them', () async {
+    await manager.connectGbaRoot(emulator, platform: 'arcade');
+    await expectLater(
+      gameboyPlan('arcade', '/game/The Simpsons.zip'),
+      throwsFormatException,
+    );
+    await expectLater(
+      gameboyPlan('arcade', '/game/simpsons2p.7z'),
+      throwsUnsupportedError,
+    );
+    final rom = await File('${temp.path}/simpsons2p.zip')
+        .writeAsBytes([1, 2, 3]);
+    final p = await gameboyPlan('arcade', rom.path), g = game(p);
+    final saves = SharedAndroidSaves(manager);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    await expectLater(saves.stageRootRom(g, p), throwsFormatException);
+    expect(calls, isNot(contains('rootStageRom')));
+    expect(await saves.pending, true);
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    expect(await rom.readAsBytes(), [1, 2, 3]);
+  });
 
   Future<AndroidSavePlan> lynxPlan(String rom, {bool boot = true}) async {
     final p = await gameboyPlan('lynx', rom);

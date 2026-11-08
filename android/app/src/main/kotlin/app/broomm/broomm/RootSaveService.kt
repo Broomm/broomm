@@ -142,7 +142,7 @@ class RootSaveService : RootService() {
                 }
                 "read" -> {
                     val path = request.getString("path")!!
-                    RootSaveFiles.managedPath(path, saveOnly = true)
+                    RootSaveFiles.managedPath(path, saveOnly = true, core = coreName)
                     val file = files.path(path)
                     val metadata = files.metadata(file)
                     val bytes = files.bytes(file, files.progressLimit(path))
@@ -164,7 +164,7 @@ class RootSaveService : RootService() {
                 }
                 "replace" -> {
                     val path = request.getString("path")!!
-                    RootSaveFiles.managedPath(path)
+                    RootSaveFiles.managedPath(path, core = coreName)
                     val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
                         RootSaveTransfer.read(it, caller, files.progressLimit(path), ::live)
                     }

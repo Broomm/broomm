@@ -24,6 +24,7 @@ String? androidRootRetroCore(String platform) => switch (platform) {
   'nes' => 'mesen',
   'jaguar' => 'virtualjaguar',
   'lynx' => 'mednafen_lynx',
+  'arcade' => 'fbneo',
   _ => null,
 };
 
@@ -40,7 +41,8 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'n64' ||
   'nes' ||
   'jaguar' ||
-  'lynx' => 'root-cartridge-v1',
+  'lynx' ||
+  'arcade' => 'root-cartridge-v1',
   _ => null,
 };
 
@@ -223,12 +225,23 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final root = await manager.privateRoot(profile, emulator);
   final stem = retroStateStem(rom), base = 'files/Broomm/$profile/$content';
   progressRelative('$stem.srm');
+  final driver = core == 'fbneo' ? stem.toLowerCase() : null;
+  if (driver != null && !rom.toLowerCase().endsWith('.zip'))
+    throw UnsupportedError(
+      'Rooted FBNeo currently needs a complete ZIP ROMset. Convert 7z sets to ZIP without renaming the set or its chips.',
+    );
+  if (driver != null && !RegExp(r'^[a-z0-9_]{1,64}$').hasMatch(driver))
+    throw const FormatException(
+      'FBNeo needs the original ROMset filename, such as simpsons2p.zip. Keep the complete matching ROMset together.',
+    );
   final area = ProgressArea(
     'save',
     'root-${platform.slug}/$content/saves',
-    prefix: stem,
-    exact: core == 'gambatte' ? null : '$stem.srm',
-    pattern: core == 'gambatte'
+    prefix: driver == null ? stem : null,
+    exact: core == 'gambatte' || driver != null ? null : '$stem.srm',
+    pattern: driver != null
+        ? '^fbneo/(?:${RegExp.escape(driver)}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)\$'
+        : core == 'gambatte'
         ? '^${RegExp.escape(stem)}\\.(?:srm|rtc)\$'
         : null,
   );
@@ -299,7 +312,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       AndroidSaveArea(
         area,
         '$base/saves',
-        rename: core == 'gambatte' ? null : '$stem.srm',
+        rename: core == 'gambatte' || driver != null ? null : '$stem.srm',
+        arcadeDriver: driver,
       ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
