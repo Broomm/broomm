@@ -2,6 +2,15 @@
 
 ## CI bootstrap correction — 2026-11-08
 
+Hosted Devbox preparation now passes on every applicable runner; all platform
+checks, macOS native tests, four desktop packages and four independent Mesen
+ABIs passed. Android reached its unchanged Gradle wrapper and separately hit
+another GitHub browser-asset HTTP 504. A second concrete seed now verifies the
+same official Gradle 9.3.1 complete ZIP in the private wrapper cache through its
+release API, preserving the wrapper/version/URL. Three additional regressions
+include a separate Java process holding the actual checked-in wrapper's record
+lock. All six bootstrap cases pass; hosted Android acceptance remains pending.
+
 Repeated clean-runner Devbox binary-download failures blocked current Android
 packaging before compilation. The existing 0.18.4 tool/action pins now have an
 explicit official release-asset API cache seed with archive/binary hashes,

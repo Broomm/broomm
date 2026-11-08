@@ -56,8 +56,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Test Devbox bootstrap boundaries
-        run: python3 -m unittest discover -s tool/ci -p test_seed_devbox.py -v
+      - name: Test pinned tool bootstrap boundaries
+        run: python3 -m unittest discover -s tool/ci -p 'test_seed_*.py' -v
       - name: Verify pinned Devbox cache
         id: devbox-seed
         env:
@@ -192,8 +192,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Test Devbox bootstrap boundaries
-        run: python3 -m unittest discover -s tool/ci -p test_seed_devbox.py -v
+      - name: Test pinned tool bootstrap boundaries
+        run: python3 -m unittest discover -s tool/ci -p 'test_seed_*.py' -v
       - name: Verify pinned Devbox cache
         id: devbox-seed
         env:
@@ -331,6 +331,11 @@ jobs:
       - name: Prepare private Android SDK/cache
         if: matrix.platform == 'android'
         run: bash tool/ci/prepare_android.sh
+      - name: Verify pinned Gradle distribution cache
+        if: matrix.platform == 'android'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash tool/ci/run.sh python3 tool/ci/seed_gradle.py
       - name: Resolve locked packages
         run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
       - name: Test Linux bundle portability checks
