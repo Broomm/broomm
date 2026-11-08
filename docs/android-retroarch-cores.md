@@ -867,3 +867,27 @@ retention, both storage-mode refusal boundaries and malformed options. All 108
 focused cases and 720 complete-suite cases pass, with one existing host skip;
 installed correction acceptance remains pending. System-VMU recovery remains
 manual and must preserve the native/private originals.
+
+Confirmed-empty boot discovery now retains an explicit, profile/platform-scoped
+HLE choice so offline Play can reuse it. Failed/cancelled discovery writes no
+choice; another platform, contradictory known-ROM records and unknown choices
+refuse reuse without altering retained images. Existing version-1 BIOS records
+remain readable. Three cache regressions plus the finalized Flycast boundary
+suite pass; the full suite has 723 passes, one existing host skip and no
+failures, with unchanged source fingerprints and clean analysis. This source
+increment still needs installed offline acceptance.
+
+Current-prefix Android CI packaging failed before compilation: one Gradle HTTP
+504 and two pinned Devbox bootstrap HTTP failures. These are retained separately
+from passing Windows/macOS/Linux checks/packages and the independent four-ABI
+Mesen build. The Thor preview for `c0b7c0a` directly rebuilds all three Dart AOT
+libraries with pinned Flutter. Its manifest retains build 1098 and every one of
+the 157 other APK payloads matches the verified preceding CI package. Alignment,
+signature and in-place stable-key upgrade pass; it is not a successful current
+Gradle/CI package. Its live session restores primary 251's four VMUs and matched
+state and supplies the actual core's required `reicast_` options with no new
+system cards. Native loads, preference retention and two-account checks remain
+in progress. Primary 251 follows a scoped manual recovery of the failed first
+test, then Broomm's normal recovery and explicit device-progress review; all
+four native originals and private captures were retained. No automatic system
+card conversion is implemented.

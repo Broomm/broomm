@@ -1,5 +1,32 @@
 # Implementation plan
 
+## Flycast offline boot choice — 2026-11-08
+
+Confirmed-empty firmware discovery now retains an explicit HLE choice in the
+profile/platform firmware record. Later Play reuses it without requiring RomM
+connectivity. Missing records, failed/cancelled discovery, another platform and
+conflicting known-ROM records cannot become confirmed absence. Existing BIOS
+objects and console/save identity remain unchanged. Focused cache/recovery
+checks pass. The complete suite has 723 passes, one existing host skip and no
+failures, with 358 unchanged source fingerprints and clean analysis. Packaged
+offline acceptance remains pending.
+
+The `c0b7c0a` Android CI package is blocked before compilation: the original
+Gradle distribution request returned HTTP 504, and two bounded reruns failed
+the pinned Devbox bootstrap download (curl 22). Other platform jobs and the
+independent four-ABI Mesen workflow passed. Original failure logs are retained.
+For continued Thor testing, pinned Flutter directly compiled all three current
+Dart AOT libraries. A local preview keeps the verified build-1098 manifest and
+all 157 other APK payloads byte-identical, with verified alignment/signatures
+and an in-place stable-key upgrade. It is not a successful current Gradle/CI
+package. Its live session restored primary 251's four VMUs and matched state,
+and the actual `reicast_` All VMUs/disabled-linked settings with no new system
+VMUs. Game-native load, preference retention and two-account acceptance are
+still being checked. The first failed test's four native cards and private
+capture were retained; a scoped manual recovery followed by Broomm's normal
+recovery and explicit device-progress review published primary 251. This is
+diagnostic recovery, not an automatic card-conversion feature.
+
 ## Flycast Android option-prefix correction — 2026-11-08
 
 Build 1098 boots Sonic Adventure with HLE and reaches real controller-driven

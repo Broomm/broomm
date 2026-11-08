@@ -10,12 +10,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Client extends RommClient {
-  _Client({this.images = const [], this.failure})
+  _Client({this.images = const [], this.failure, this.onDiscovery})
     : super(Uri.parse('https://fixture.invalid'));
   final List<RommFirmware> images;
   final Object? failure;
+  final void Function()? onDiscovery;
+  var discoveries = 0;
   @override
   Future<List<RommFirmware>> firmware(int platformId) async {
+    discoveries++;
+    onDiscovery?.call();
     if (failure != null) throw failure!;
     return images;
   }
@@ -389,4 +393,109 @@ void main() {
       );
     }
   });
+
+  test('Confirmed HLE boot choice survives offline replay without repeated firmware discovery', () async {
+    final online = _Client(),
+        offline = _Client(failure: const RommFailure('Offline'));
+    addTearDown(online.close);
+    addTearDown(offline.close);
+    expect(
+      await ensureAndroidFlycastResources(
+        temp,
+        23,
+        online,
+        DownloadCancellation(),
+        (_) {},
+      ),
+      isEmpty,
+    );
+    expect(online.discoveries, 1);
+    final index = File('${temp.path}/flycast-firmware/index.json');
+    final before = await index.readAsBytes();
+    expect(
+      await ensureAndroidFlycastResources(
+        temp,
+        23,
+        offline,
+        DownloadCancellation(),
+        (_) {},
+      ),
+      isEmpty,
+    );
+    expect(offline.discoveries, 0);
+    expect(await index.readAsBytes(), before);
+  });
+
+  test('Conflicting HLE firmware records and another platform never bypass verification', () async {
+    final cache = await Directory('${temp.path}/flycast-firmware').create();
+    final retained = await File('${cache.path}/${'a' * 32}.img')
+        .writeAsBytes([1, 2, 3]);
+    final index = File('${cache.path}/index.json');
+    final offline = _Client(failure: const RommFailure('Offline'));
+    addTearDown(offline.close);
+    for (final record in [
+      {
+        'version': 1,
+        'platform': 23,
+        'boot': 'hle-fallback',
+        'resources': {
+          'dc_boot.bin': {'object': 'a' * 32, 'sha256': 'b' * 64},
+        },
+      },
+      {'version': 1, 'platform': 24, 'boot': 'hle-fallback', 'resources': {}},
+      {'version': 1, 'platform': 23, 'boot': 'unknown', 'resources': {}},
+      {'version': 1, 'platform': 23, 'boot': 'rom', 'resources': {}},
+    ]) {
+      await index.writeAsString(jsonEncode(record));
+      final before = await index.readAsBytes();
+      await expectLater(
+        ensureAndroidFlycastResources(
+          temp,
+          23,
+          offline,
+          DownloadCancellation(),
+          (_) {},
+        ),
+        throwsFormatException,
+      );
+      expect(await index.readAsBytes(), before);
+      expect(await retained.readAsBytes(), [1, 2, 3]);
+    }
+    expect(offline.discoveries, 0);
+  });
+
+  test(
+    'Cancelled or failed discovery cannot create an offline HLE choice',
+    () async {
+      final cancellation = DownloadCancellation();
+      final cancelled = _Client(onDiscovery: cancellation.cancel);
+      final offline = _Client(failure: const RommFailure('Offline'));
+      addTearDown(cancelled.close);
+      addTearDown(offline.close);
+      await expectLater(
+        ensureAndroidFlycastResources(
+          temp,
+          23,
+          cancelled,
+          cancellation,
+          (_) {},
+        ),
+        throwsA(isA<DownloadCancelled>()),
+      );
+      final index = File('${temp.path}/flycast-firmware/index.json');
+      expect(await index.exists(), isFalse);
+      await expectLater(
+        ensureAndroidFlycastResources(
+          temp,
+          23,
+          offline,
+          DownloadCancellation(),
+          (_) {},
+        ),
+        throwsA(isA<RommFailure>()),
+      );
+      expect(offline.discoveries, 1);
+      expect(await index.exists(), isFalse);
+    },
+  );
 }

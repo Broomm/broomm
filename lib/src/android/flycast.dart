@@ -387,7 +387,7 @@ class AndroidFlycastResource {
   int get bytes => androidFlycastFirmware[name]!.$1;
 }
 
-/// Verify an optional Dreamcast boot ROM; an empty catalogue uses native HLE.
+/// Verify an optional Dreamcast boot ROM; confirmed native HLE is cached too.
 /// Failed discovery or a damaged known image must not become an empty result.
 /// Older immutable cache objects survive repair; retail firmware comes from RomM.
 Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
@@ -415,6 +415,14 @@ Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
         'The cached Flycast firmware record is invalid. Existing files were kept.',
       );
     records = (saved['resources'] as Map).cast<String, dynamic>();
+    final boot = saved['boot'];
+    if (boot != null && boot != 'rom' && boot != 'hle-fallback' ||
+        boot == 'hle-fallback' && records.isNotEmpty ||
+        boot == 'rom' && records.isEmpty) {
+      throw const FormatException(
+        'The cached Flycast boot choice conflicts with its firmware. Existing files were kept.',
+      );
+    }
     for (final entry in records.entries) {
       final value = entry.value;
       if (!androidFlycastFirmware.containsKey(entry.key) ||
@@ -425,6 +433,10 @@ Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
         throw const FormatException(
           'The cached Flycast resource identity is invalid. Existing files were kept.',
         );
+    }
+    if (boot == 'hle-fallback') {
+      cancellation.check();
+      return [];
     }
   }
   final result = <AndroidFlycastResource>[];
@@ -450,6 +462,16 @@ Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
         .toList();
     cancellation.check();
     if (matches.isEmpty && old == null) {
+      // A confirmed choice is reusable offline, like a verified boot image.
+      // Missing/failed discovery never writes this marker. Later firmware
+      // changes remain explicit rather than silently changing the boot mode.
+      cancellation.check();
+      await progressWrite(index, {
+        'version': 1,
+        'platform': platform,
+        'boot': 'hle-fallback',
+        'resources': <String, dynamic>{},
+      });
       phase(
         'No Dreamcast boot ROM configured · Flycast will use its built-in HLE BIOS.',
       );

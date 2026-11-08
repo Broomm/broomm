@@ -449,7 +449,9 @@ Use one self-contained, parent-free CHD v5 up to 2 GiB. Optional canonical 2 MiB
 `dc_boot.bin` can be supplied through this platform's RomM firmware catalogue.
 If none is configured, Flycast uses its built-in HLE BIOS; games needing a real
 BIOS still require that file. Failed discovery and damaged known firmware block
-Play and retain existing files. Broomm
+Play and retain existing files. A successfully confirmed HLE choice is retained
+for offline Play, just like a verified boot image; a failed or cancelled lookup
+cannot establish that choice. Broomm
 isolates all eight VMU ports per profile/game, retains a separate local console
 identity per profile, and keeps other core-option changes between sessions.
 Quit normally and wait for sync, then verify native game saves and Load State
