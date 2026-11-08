@@ -1,5 +1,36 @@
 # Implementation plan
 
+## Rooted Beetle Saturn device acceptance — 2026-11-08
+
+Build 1093 (`277113b`) passed normal Saturn Setup and The Legend of Oasis
+(RomM display title The Story of Thor 2) Play on the Thor. Both regional BIOS
+files matched their canonical MD5 and transfer SHA-256 in the actual native
+session. System 0 and Cartridge 0 saves, 32 KiB SRAM, 512 KiB cartridge,
+12-byte console settings and a 1,848,374-byte manual state published as primary
+247. Fresh Play restored every hash. The game's own Continue loaded System 0
+and, in a separate fresh process, Cartridge 0 before any Load State. Manual
+Load State independently resumed the Aquaria save-circle scene.
+
+An attempted soft-reset entered Save mode instead and saved the test cartridge
+again; that copy was retained as primary 248. It is not counted as a load test.
+The subsequent verified cartridge load and manual-state restore published 249.
+Account 3 began empty, with Continue disabled, and published different initialized
+memory and an opening-dialogue state as primary 250. Returning to account 2
+restored all four primary-249 hashes and its gameplay scene. Final normal Quit
+retained 249. All 41 earlier progress files, 19 managed native files, 13 original
+standalone/managed files, fourteen core hashes and seventeen bindings remain
+intact. Both saved sign-ins opened without passwords; no active journals remained,
+and 163 scoped log lines contained no warnings/errors.
+
+Application run `42449620564` passed all checks and five packages; independent
+Mesen run `42449620562` passed all four native jobs and post-job steps. The
+current universal macOS archive passes input fingerprints, ZIP integrity and
+source/extracted deep strict signatures. The separate local full-suite Astris
+capture failure below remains unresolved. See the [device evidence](docs/android-retroarch-saturn.json).
+Other ABI gameplay, special cartridges, selected Mednafen/shared/4 MiB modes,
+CUE file sets and completed-game progression are not newly established. Flycast
+and multi-file transport remain unfinished; PR #4 stays draft.
+
 ## Rooted Beetle Saturn source increment — 2026-11-08
 
 Independent Saturn Setup pins v1.32.1 `30f4c12` at artifact commit `88b71d1`.

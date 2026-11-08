@@ -15,8 +15,7 @@ passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
 input and state restoration below. FBNeo build 1087 passed complete-ROMset
 gameplay, NVRAM/state restoration and two-account separation below. The Opera
 increment covers self-contained disc images and native NVRAM; build 1090 passed
-the packaged checks below. Saturn now has the concrete source increment below; packaged acceptance remains
-pending. Multi-file CUE transport and Flycast integration remain unfinished.
+the packaged checks below. Saturn now has concrete source and packaged device acceptance below. Multi-file CUE transport and Flycast integration remain unfinished.
 
 ## Gambatte source and behavior
 
@@ -656,8 +655,7 @@ Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
-source build. Flycast still needs concrete integration; Saturn's packaged acceptance remains
-pending. Opera's scoped device acceptance is recorded above. Lynx's scoped packaged acceptance
+source build. Flycast still needs concrete integration; Saturn's scoped packaged acceptance is recorded below. Opera's scoped device acceptance is recorded above. Lynx's scoped packaged acceptance
 is recorded above.
 
 
@@ -709,7 +707,46 @@ retained locally.
 The full macOS run has 697 passes, one existing host skip and an unrelated Astris
 application-capture error. All three Astris cases pass separately; that diagnostic
 does not erase the full-run failure. Packaged BIOS/game/save/state and two-account
-Thor checks are pending. After verification, Quit normally and wait for sync,
+Thor checks are recorded below. After verification, Quit normally and wait for sync,
 verify a native in-game save independently of manual Load State, switch accounts,
 and confirm their different data. Keep Broomm snapshots/cache/recovery and stable
 locks; native session discs/configuration/BIOS are cleaned after verified exit.
+
+
+## Beetle Saturn device acceptance
+
+Thor build **1093**, source `277113b`, passed ordinary Saturn Setup and Play with
+one self-contained USA CHD of The Legend of Oasis (RomM displays The Story of
+Thor 2). Both actual staged regional BIOS files matched canonical MD5 and
+transfer SHA-256. Native movement/jump and Aquaria System 0 / Cartridge 0 saves
+were exercised. Normal Quit published 32 KiB SRAM, a 512 KiB backup cartridge,
+12-byte console settings and a 1,848,374-byte manual state as primary 247.
+
+Fresh Play restored all four hashes before any load. Native Continue displayed
+both saved slots and loaded System 0 into Aquaria. A separate fresh process loaded
+Cartridge 0 before any manual state load. Manual Load State then independently
+resumed the original save-circle scene. One intervening test input intended as
+soft-reset actually entered Save mode and saved Cartridge 0 again; normal Quit
+preserved that copy as primary 248. It is not counted as a cartridge load. The
+subsequent verified cartridge load/state restore published primary 249, retaining
+the original cartridge bytes from the state and native console-clock settings.
+
+Account 3 began with empty working data and disabled Continue. Its New Game
+opening dialogue, initialized SRAM/cartridge and state published different hashes
+as primary 250; no second-account in-game save is claimed. Returning to account 2
+restored all four primary-249 hashes and its gameplay state. Final normal Quit
+retained primary 249 without another publication. Both saved sign-ins opened
+without passwords. All 41 earlier progress files, 19 managed native files,
+13 original standalone/managed files, fourteen core hashes and seventeen platform
+bindings remained intact; journals were cleared and all 163 scoped log lines
+had no warnings/errors.
+
+Application CI `42449620564` passed all checks and five packages; independent
+Mesen CI `42449620562` passed all four native jobs and post-job steps. The current
+universal Mac archive has verified input fingerprints, ZIP integrity and
+source/extracted deep strict signatures. The local full-suite Astris capture
+failure recorded above is still unresolved. See the [exact evidence](android-retroarch-saturn.json).
+This establishes one arm64 device/game, default native backup modes and both
+saved accounts. Other ABI gameplay, cross-device play, completed-game progress,
+special cartridges and selected Mednafen/shared/4 MiB modes remain separate.
+CUE transport and special-cartridge auto-detection are unfinished.

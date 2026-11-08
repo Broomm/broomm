@@ -438,8 +438,11 @@ mismatch asks for correction while retaining every copy. Quit normally, wait for
 sync, then verify both an in-game save and Load State after relaunch. Native disc,
 BIOS and session configuration files are temporary; Broomm progress/cache/recovery
 remain private. CUE file sets and automatic ROM-cartridge detection remain pending.
-Packaged Thor acceptance is pending. See the
-[scope and walkthrough](docs/android-retroarch-cores.md#beetle-saturn-source-increment).
+Build 1093 passed native System/Cartridge save loads, independent manual-state
+reload and two-account separation on the Thor, preserving earlier progress and
+standalone settings. Other ABI gameplay and selected special modes remain
+separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#beetle-saturn-source-increment)
+and [device evidence](docs/android-retroarch-saturn.json).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
