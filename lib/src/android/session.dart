@@ -338,6 +338,7 @@ class AndroidGameSession extends ChangeNotifier {
         core: core,
         profile: profile,
         nativeRom: nativeRom,
+        rootedPsp: pspPlan != null,
         configuration: _game?.layout is AndroidSavePlan
             ? (_game!.layout as AndroidSavePlan).launch['configNative']
             : null,

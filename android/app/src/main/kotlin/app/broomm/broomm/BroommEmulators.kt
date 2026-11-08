@@ -155,6 +155,8 @@ class BroommEmulators(private val activity: Activity) {
                             digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
                         }
                         "launch" -> {
+                            val rootedPsp = call.argument<Boolean>("rootedPsp") == true
+                            require(!rootedPsp || call.argument<String>("emulator") == "ppsspp") { "Invalid rooted PSP launch" }
                             val pkg = packageName(call.argument<String>("package"))
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
@@ -236,7 +238,7 @@ class BroommEmulators(private val activity: Activity) {
                                 if (nativeRom == null) {
                                     for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                if (call.argument<String>("emulator") == "ppsspp" && activeRoot != null) {
+                                if (rootedPsp) {
                                     // Rooted PSP completion uses its native shutdown
                                     // proof and app lifecycle, not an Activity result.
                                     // Keep PPSSPP's task separate: its launcher can

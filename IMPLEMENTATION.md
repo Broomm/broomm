@@ -64,6 +64,17 @@ compilation and targeted analysis; packaging and native re-execution are pending
 The `d990333` macOS ZIP passed archive/universal/signature verification; a fresh
 package for the handoff correction remains required.
 
+The retained Lumines II session recovered through the normal app flow as primary
+258, with four native savedata files, cleared journals and the original selection
+restored. Build 1113 loaded that ordinary Play Data through PPSSPP's native
+browser and restored its saved avatar; injected native Odin D-pad navigation
+also passed. This is distinct from physical button actuation. Device task
+inspection caught the initial task correction's unreachable shared-folder gate.
+The corrected handoff now carries an explicit rooted-PSP flag from the Dart
+session to Android, independently of the document-provider marker. All 36 focused
+workflow/UI cases, targeted analysis and bridge compilation pass. Native task,
+two-account ordinary save, offline and reinstall acceptance remain pending.
+
 ## Standalone Android root discovery — 2026-11-08
 
 PR #4 merged as `eb6fc60` after the current normal CI package passed the Thor

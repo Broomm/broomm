@@ -1490,6 +1490,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? profile,
     String? configuration,
     String? nativeRom,
+    bool rootedPsp = false,
   }) async {
     if (!settingsKnown)
       throw StateError(
@@ -1497,6 +1498,8 @@ class AndroidEmulators extends ChangeNotifier {
       );
     if (!emulator.packages.contains(app.package) || !files.contains(selected))
       throw const FormatException('Android emulator/game selection changed');
+    if (rootedPsp && (emulator.id != 'ppsspp' || profile == null))
+      throw const FormatException('Invalid rooted PSP launch');
     if (!app.enabled)
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
@@ -1509,6 +1512,7 @@ class AndroidEmulators extends ChangeNotifier {
       'emulator': emulator.id,
       'files': files,
       'selected': selected,
+      if (rootedPsp) 'rootedPsp': true,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
       if (nativeRom != null) 'nativeRom': nativeRom,

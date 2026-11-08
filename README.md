@@ -12,17 +12,17 @@ Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
 PR #4 is merged. The [standalone Android increment](docs/android-standalone-root.md)
 now includes rooted PPSSPP session/save/state and private-profile recovery code.
-Native file/pointer interruption checks pass on the Thor. Full CI build 1111
-also passes LocoRoco content-URI launch, automatic native-state cloud sync and
-two-account state isolation. Ordinary PSP saving and replay/offline acceptance
-remain pending. If preparation cannot verify PPSSPP's shutdown, use **Open
-PPSSPP → Exit**, then **Check and play**; the new direct recovery action is
-awaiting its device build. PR #5 remains draft until PSP is complete; no later
-emulator has begun. Build 1112 also passes the account-2 state replay and
-live-writer refusal. Lumines II has created a native ordinary save, with cloud
-reload still pending. The live return test exposed Android clearing Broomm's
-activity; the rooted PSP task correction passes local lifecycle/bridge checks
-and awaits its device build. The macOS package is being refreshed for that fix.
+Native file/pointer interruption checks pass on the Thor, alongside LocoRoco
+content-URI launch, native-state cloud sync, two-account state isolation and
+state replay. Lumines II ordinary-save recovery published primary 258; build
+1113 loaded that native Play Data and its saved avatar. Live-writer refusal
+keeps every journal and makes no capture/upload. The live return test exposed
+Android clearing Broomm's activity; its explicit rooted-PSP launch flag passes
+36 focused workflow/UI cases and awaits its device build. Offline, two-account
+ordinary saves and reinstall acceptance remain pending. If preparation cannot
+verify shutdown, use **Open PPSSPP → Exit**, then **Check and play**. PR #5
+remains draft until PSP is complete; no later emulator has begun. The macOS
+package is being refreshed for the launch correction.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are

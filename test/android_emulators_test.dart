@@ -317,6 +317,7 @@ void main() {
     final args = calls.last.arguments as Map;
     expect(args['selected'], path);
     expect(args['files'], [path]);
+    expect(args.containsKey('rootedPsp'), isFalse);
     final count = calls.length;
     await expectLater(
       manager.launch(emulator('ppsspp'), manager.app(emulator('ppsspp'))!, [
@@ -326,6 +327,27 @@ void main() {
     );
     expect(calls.length, count);
   });
+
+  test(
+    'rooted PSP task handoff requires its emulator and owning profile',
+    () async {
+      final before = calls.length;
+      for (final id in ['ppsspp', 'melonds']) {
+        await expectLater(
+          manager.launch(
+            emulator(id),
+            manager.app(emulator(id))!,
+            ['/fixture/Game.pbp'],
+            '/fixture/Game.pbp',
+            rootedPsp: true,
+            profile: id == 'melonds' ? profileId : null,
+          ),
+          throwsFormatException,
+        );
+      }
+      expect(calls.length, before);
+    },
+  );
 
   test(
     'unrecognized Android profile files are never adopted or overwritten',

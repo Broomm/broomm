@@ -24,6 +24,7 @@ class PspRootFixture {
   final Directory root;
   final emulator = androidEmulators.singleWhere((e) => e.id == 'ppsspp');
   final calls = <String>[];
+  final launches = <Map<dynamic, dynamic>>[];
   final names = <String, String>{};
   final modes = <String, String>{};
   final native = '/storage/emulated/0/Android/data/org.ppsspp.ppsspp/files';
@@ -121,6 +122,7 @@ class PspRootFixture {
     if (call.method == 'fingerprint') return 'c' * 64;
     if (call.method == 'releaseGrants') return null;
     if (call.method == 'open' || call.method == 'launch') {
+      if (call.method == 'launch') launches.add(Map.of(a));
       state = 'running';
       return call.method == 'launch' ? 'token' : null;
     }
@@ -341,6 +343,10 @@ void main() {
 
   test('PSP play isolates accounts, uploads native savedata/state, restores standalone pointer and native preferences', () async {
     final p = await plan(), session = await start();
+    expect(native.launches.single['rootedPsp'], isTrue);
+    // Native root storage has no document-provider root marker. Task handoff
+    // must not depend on having connected the older shared-folder route.
+    expect(native.launches.single.containsKey('root'), isFalse);
     final record = await activeProfile(profileId);
     expect(native.selected, native.key(record));
     expect(await session.finishIfPspClosed(), AndroidPspState.running);

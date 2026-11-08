@@ -123,6 +123,27 @@ Activity result. Two new UI regressions cover normal completion without a result
 and retention of live/unknown writers; all 25 emulator/UI cases, targeted analysis
 and bridge compilation pass. Device re-execution and fresh packaging are pending.
 
+The retained ordinary save subsequently recovered as primary **258**: four files
+under `ULUS10183GAME01`, including an 18,504-byte `DATA.BIN`. All PSP journals
+cleared and the standalone selection was restored. Build **1113** loaded the
+64 KB Play Data through **Continue → native Load → Load completed**, then showed
+the original first avatar. Injected Odin `ABS_HAT0Y` changed the native menu;
+physical button actuation is not claimed. Its full CI run/five packages and
+macOS archive/signature checks pass. Task inspection also showed the first
+handoff change never ran: rooted PSP has no shared-folder provider marker.
+The current correction sends a separate `rootedPsp` launch flag from the Dart
+session; the real workflow regression verifies it without that provider marker.
+Non-root handoff remains unchanged and invalid emulator/profile combinations
+are refused before Android effects. All 36 focused UI/workflow cases, targeted
+analysis and bridge compilation pass; the corrected packaged task behavior,
+two-account ordinary saves, offline and reinstall checks remain pending.
+
+Some black/static ADB captures came from the Thor's transient **Burn-in Protection
+Refresher** window, which covered the app and consumed test taps. The CLI test
+harness now inspects the current input-window list and waits for that overlay
+to clear before actions/capture. Device preferences were not changed. Earlier
+inconclusive injected-input observations do not establish emulator input failures.
+
 ```sh
 devbox run -- flutter --suppress-analytics test --no-pub test/android_psp_root_test.dart
 devbox --config tool/android run check-root-inspection
