@@ -93,6 +93,10 @@ class _AndroidRootInspectionDialogState
                 'Mode: ${value.values['mode']} · Label: ${value.values['label']}',
                 'Signer SHA-256: ${value.values['signer']}',
                 'Build observation: ${value.values['build']}',
+                if (value.values['memoryStick'] case final Map memory)
+                  memory['kind'] == 'private'
+                      ? 'PPSSPP app-private memory stick: ${memory['path']}\nStorage identity verified read-only. PPSSPP root save sync is not yet implemented.'
+                      : 'PPSSPP uses another memory-stick location. Its contents were not inspected.',
               ].join('\n'),
             ),
           ],

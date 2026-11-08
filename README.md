@@ -9,6 +9,9 @@ including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
 The current full Android CI package passes its Thor smoke/preservation check.
 Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
+PR #4 is merged. The next [standalone Android increment](docs/android-standalone-root.md)
+adds read-only PPSSPP memory-stick discovery to **Inspect root access**;
+PPSSPP root save synchronization remains pending.
 [Download the current macOS preview](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip)
 (universal, ad-hoc signed, not notarized; development updates disabled).
 

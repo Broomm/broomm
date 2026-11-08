@@ -1,5 +1,18 @@
 # Implementation plan
 
+## Standalone Android root discovery — 2026-11-08
+
+PR #4 merged as `eb6fc60` after the current normal CI package passed the Thor
+save/state/account/offline and preservation checks. The next branch begins
+PPSSPP with read-only native memory-stick discovery in the existing root
+inspector. It distinguishes selected app-private external storage from other
+locations, verifies mount correspondence and ownership, and keeps failed
+observations visible. Direct production-script execution on the Thor preserved
+selection/configuration hashes. The official APK, first-run behavior and cached
+process after normal Exit were also observed. PPSSPP root save writing,
+gameplay/account round trips and other standalone apps remain pending; see
+[implementation, evidence and next constraints](docs/android-standalone-root.md).
+
 ## Flycast Thor acceptance — 2026-11-08
 
 The corrected `3d69684` direct-AOT preview passed the native Dreamcast round trip:

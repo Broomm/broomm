@@ -54,6 +54,45 @@ class AndroidRootReport {
         'Root inspection returned an incomplete or mismatched identity. No save connection was created.',
       );
     }
+    if (values.containsKey('memoryStick')) {
+      final memory = values['memoryStick'];
+      final privatePath =
+          '/storage/emulated/0/Android/data/${app.package}/files';
+      final mediaLabel = (values['label'] as String).replaceFirst(
+        'u:object_r:app_data_file:',
+        'u:object_r:media_rw_data_file:',
+      );
+      if (!{
+            'org.ppsspp.ppsspp',
+            'org.ppsspp.ppssppgold',
+          }.contains(app.package) ||
+          user != 0 ||
+          memory is! Map ||
+          !(memory['kind'] == 'other' && memory.length == 1 ||
+              memory['kind'] == 'private' &&
+                  memory.length == 7 &&
+                  memory['path'] == privatePath &&
+                  memory['gid'] is int &&
+                  (memory['gid'] as int) >= 0 &&
+                  memory['mode'] is String &&
+                  RegExp(r'^[0-7]{3,4}$').hasMatch(memory['mode']) &&
+                  (int.parse(memory['mode'], radix: 8) & 7) == 0 &&
+                  (values['label'] as String).startsWith(
+                    'u:object_r:app_data_file:s0',
+                  ) &&
+                  memory['label'] == mediaLabel &&
+                  memory['device'] is int &&
+                  (memory['device'] as int) > 0 &&
+                  memory['inode'] is int &&
+                  (memory['inode'] as int) > 0)) {
+        throw const FormatException(
+          'PPSSPP memory-stick inspection was incomplete or mismatched. Nothing was connected.',
+        );
+      }
+      return AndroidRootReport._(
+        Map.unmodifiable({...values, 'memoryStick': Map.unmodifiable(memory)}),
+      );
+    }
     return AndroidRootReport._(Map.unmodifiable(values));
   }
 }
@@ -128,6 +167,7 @@ class AndroidRootInspector {
         'directory-unavailable',
         'directory-unresolved',
         'metadata-unavailable',
+        'storage-unavailable',
         'failed',
         'unavailable',
         'cancelled',
