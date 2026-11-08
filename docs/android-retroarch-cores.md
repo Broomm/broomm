@@ -786,8 +786,13 @@ Independent Dreamcast Setup retains all previous cores and connections; settings
 version 16 reads versions 1–15 and refuses forged older Dreamcast bindings.
 
 Use **Emulator Settings → Dreamcast → RetroArch → Set up**. Complete the standard
-RetroArch first open if requested. Add canonical `dc_boot.bin` (2,097,152 bytes,
-MD5 `e10c53c2f8b90bab96ead2d368858623`) to Dreamcast firmware in RomM. Play a
+RetroArch first open if requested. Optional canonical `dc_boot.bin` (2,097,152
+bytes, MD5 `e10c53c2f8b90bab96ead2d368858623`) can be supplied through Dreamcast
+firmware in RomM. Without a configured image, successful firmware discovery
+permits Flycast's built-in Reios HLE fallback. A failed catalogue request or a
+missing/damaged known image does not permit fallback. Invalid or ambiguous
+candidates require correction. Some games need the retail BIOS; HLE is not a
+claim that every game works. Play a
 self-contained CHD v5 of at most 2 GiB physical/logical size, without a parent.
 Firmware transfer/cache validation and read-only disc hashing are cancellable;
 core, ABI, configuration and actual option precedence are checked again after
@@ -838,3 +843,11 @@ and matching AndroidRuntime stack are retained. This is native mechanism and
 Dart workflow verification, not packaged Dreamcast gameplay/firmware/VMU/state
 or two-account acceptance. The final whole suite has 714 passes and one existing host skip, with clean
 analysis and 357 unchanged input fingerprints. See the [source evidence](android-retroarch-flycast-source.json). Multi-file media remains unfinished.
+
+Build 1097's first Sonic Adventure Play exposed the incorrect mandatory-BIOS
+check. The correction follows the pinned core's native fallback in
+[`Emulator::loadGame`](https://github.com/libretro/flycast/blob/7adbf3caef251b153e348df3f469a0f35878339d/core/emulator.cpp#L623-L630)
+and [`nvmem::loadFiles/loadHle`](https://github.com/libretro/flycast/blob/7adbf3caef251b153e348df3f469a0f35878339d/core/hw/flashrom/nvmem.cpp#L298-L338).
+It records HLE explicitly; older v5 records still require their known boot ROM.
+All 88 focused firmware/root-save cases pass, including a complete HLE resource
+round trip and retained-console reuse. Installed HLE acceptance remains pending.

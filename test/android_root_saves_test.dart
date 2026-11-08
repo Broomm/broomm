@@ -1663,6 +1663,7 @@ void main() {
   Future<AndroidSavePlan> flycastPlan(
     String rom, {
     bool prepared = true,
+    bool hle = false,
   }) async {
     final current = await gameboyPlan('dc', rom);
     final file = prepared
@@ -1691,7 +1692,9 @@ void main() {
               (_) {},
             )
           : null,
-      flycastResources: file == null
+      flycastResources: hle && prepared
+          ? []
+          : file == null
           ? null
           : [_FixtureFlycastResource(file, await progressFileHash(file))],
       flycastConsole: prepared
@@ -1769,6 +1772,64 @@ void main() {
       observation = Map<String, dynamic>.from(original);
       operaOptionsText = null;
     }
+  });
+
+  test('Dreamcast native HLE captures VMUs and console flash, reuses the console on a fresh session and cleans up without a retail BIOS', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(), saves = SharedAndroidSaves(manager);
+    final p = await flycastPlan(rom.path, hle: true), g = game(p);
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    var r = await progressJson(saves.journal);
+    expect(r['rootFlycastBoot'], 'hle-fallback');
+    final resources = r['rootFlycastResources'] as Map;
+    expect(resources.keys.where((p) => p.endsWith('/dc_boot.bin')), isEmpty);
+    final config = r['rootConfigPath'] as String;
+    final base = config.substring(0, config.lastIndexOf('/'));
+    final console = '$base/system-${r['transaction']}/dc/dc_nvmem.bin';
+    await put(console, List.filled(131072, 3));
+    await put(p.remotePath('save/MK-51000.A1.bin'), List.filled(131072, 7));
+    await saves.capture(g, cloud, p);
+    final known = (await readAndroidFlycastConsole(Directory(p.root)))!;
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect(await File('${native.path}/$console').exists(), false);
+    expect((await p.files()).keys, contains('save/MK-51000.A1.bin'));
+    final next = await flycastPlan(rom.path, hle: true), nextGame = game(next);
+    await saves.begin(nextGame, next, 'a' * 64, selected: rom.path);
+    r = await progressJson(saves.journal);
+    final nextConsole = (r['rootFlycastResources'] as Map).keys
+        .cast<String>()
+        .singleWhere((p) => p.endsWith('/dc_nvmem.bin'));
+    expect(
+      await progressFileHash(File('${native.path}/$nextConsole')),
+      known.sha256,
+    );
+    await saves.capture(nextGame, cloud, next);
+    await saves.restoreOriginal(nextGame, next);
+    expect(await saves.pending, false);
+    expect(
+      (await readAndroidFlycastConsole(Directory(p.root)))!.sha256,
+      known.sha256,
+    );
+  });
+
+  test('A legacy Flycast record missing its known BIOS is damaged recovery rather than implicit HLE', () async {
+    await manager.connectGbaRoot(emulator, platform: 'dc');
+    final rom = await saturnRom(),
+        p = await flycastPlan((await saturnRom()).path);
+    final saves = SharedAndroidSaves(manager), g = game(p);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final r = await progressJson(saves.journal);
+    r.remove('rootFlycastBoot');
+    final resources = r['rootFlycastResources'] as Map;
+    resources.removeWhere((key, _) => key.endsWith('/dc_boot.bin'));
+    await progressWrite(saves.journal, r);
+    final start = calls.length;
+    await expectLater(saves.capture(g, cloud, p), throwsFormatException);
+    expect(await saves.pending, true);
+    expect(calls.skip(start), isNot(contains('rootFlycastReplace')));
+    expect(await rom.exists(), true);
   });
 
   test('Dreamcast missing known native flash retains console identity and cleanup reply loss retries without source firmware', () async {

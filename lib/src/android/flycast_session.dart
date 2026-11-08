@@ -81,7 +81,16 @@ class AndroidFlycastSessionResources {
         'Invalid previous Dreamcast console identity.',
       );
     }
-    final keys = {options, bios, if (before != null) console};
+    // Earlier v5 records always supplied a boot ROM. An explicit new marker
+    // distinguishes native HLE from a damaged record missing its known BIOS.
+    final boot = r['rootFlycastBoot'] ?? 'rom';
+    if (boot != 'rom' && boot != 'hle-fallback')
+      throw const FormatException('Invalid Dreamcast boot resource mode.');
+    final keys = {
+      options,
+      if (boot == 'rom') bios,
+      if (before != null) console,
+    };
     if (resources is! Map ||
         resources.length != keys.length ||
         !resources.keys.toSet().containsAll(keys)) {
@@ -177,9 +186,9 @@ class AndroidFlycastSessionResources {
   Future<void> stage(Map<String, dynamic> r) async {
     final images = plan.flycastResources;
     if (images == null ||
-        images.length != 1 ||
-        images.single.name != 'dc_boot.bin') {
-      throw StateError('Prepare the verified Dreamcast BIOS before Play.');
+        images.length > 1 ||
+        images.isNotEmpty && images.single.name != 'dc_boot.bin') {
+      throw StateError('Prepare the Dreamcast boot resources before Play.');
     }
     final prior = plan.flycastConsole;
     final current = await readAndroidFlycastConsole(Directory(plan.root));
@@ -189,6 +198,7 @@ class AndroidFlycastSessionResources {
       );
     }
     r['rootFlycastConsoleBefore'] = prior?.record;
+    r['rootFlycastBoot'] = images.isEmpty ? 'hle-fallback' : 'rom';
     final text = utf8.encode(androidFlycastOptionsText(plan.flycastOptions));
     final optionFile = await progressFile(
       directory(r),
@@ -202,16 +212,18 @@ class AndroidFlycastSessionResources {
         'bytes': text.length,
         'sha256': await progressFileHash(optionFile),
       },
-      bios: {'bytes': images.single.bytes, 'sha256': images.single.sha256},
+      if (images.isNotEmpty)
+        bios: {'bytes': images.single.bytes, 'sha256': images.single.sha256},
       if (prior != null) console: {'bytes': 131072, 'sha256': prior.sha256},
     };
     r['rootFlycastResources'] = records;
     validate(r);
-    await checkedCopy(
-      images.single.file,
-      await progressFile(directory(r), 'flycast-incoming/dc_boot.bin'),
-      records[bios],
-    );
+    if (images.isNotEmpty)
+      await checkedCopy(
+        images.single.file,
+        await progressFile(directory(r), 'flycast-incoming/dc_boot.bin'),
+        records[bios],
+      );
     if (prior != null)
       await checkedCopy(
         prior.file,
@@ -284,7 +296,7 @@ class AndroidFlycastSessionResources {
       throw StateError('Dreamcast resources changed during capture.');
     r['rootFlycastCapture'] = {'directory': capture, 'files': files};
     await progressWrite(journal, r);
-    if (files[bios]?['sha256'] != expected[bios]['sha256'] ||
+    if (files[bios]?['sha256'] != expected[bios]?['sha256'] ||
         !files.containsKey(console) ||
         !files.containsKey(options)) {
       throw StateError(
@@ -336,8 +348,8 @@ class AndroidFlycastSessionResources {
     if (fallbacks.any(expected.containsKey))
       throw StateError('Fallback Dreamcast VMUs still require recovery.');
     if (captured != null) {
-      if (!expected.keys.toSet().containsAll({bios, options, console}) ||
-          expected[bios]['sha256'] != original[bios]['sha256']) {
+      if (!expected.keys.toSet().containsAll({options, console}) ||
+          expected[bios]?['sha256'] != original[bios]?['sha256']) {
         throw StateError(
           'Dreamcast resource capture is incomplete. Recovery was kept.',
         );

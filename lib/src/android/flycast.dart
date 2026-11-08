@@ -382,7 +382,8 @@ class AndroidFlycastResource {
   int get bytes => androidFlycastFirmware[name]!.$1;
 }
 
-/// Verify the Dreamcast boot ROM; mutable console flash is a separate profile resource.
+/// Verify an optional Dreamcast boot ROM; an empty catalogue uses native HLE.
+/// Failed discovery or a damaged known image must not become an empty result.
 /// Older immutable cache objects survive repair; retail firmware comes from RomM.
 Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
   Directory profileRoot,
@@ -443,6 +444,12 @@ Future<List<AndroidFlycastResource>> ensureAndroidFlycastResources(
         .where((f) => f.platformId == platform && f.name.toLowerCase() == name)
         .toList();
     cancellation.check();
+    if (matches.isEmpty && old == null) {
+      phase(
+        'No Dreamcast boot ROM configured · Flycast will use its built-in HLE BIOS.',
+      );
+      continue;
+    }
     if (matches.length != 1 ||
         matches.single.bytes != bytes ||
         matches.single.md5 != md5)

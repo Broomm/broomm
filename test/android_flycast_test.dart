@@ -10,9 +10,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Client extends RommClient {
-  _Client() : super(Uri.parse('https://fixture.invalid'));
+  _Client({this.images = const [], this.failure})
+    : super(Uri.parse('https://fixture.invalid'));
+  final List<RommFirmware> images;
+  final Object? failure;
   @override
-  Future<List<RommFirmware>> firmware(int platformId) async => [];
+  Future<List<RommFirmware>> firmware(int platformId) async {
+    if (failure != null) throw failure!;
+    return images;
+  }
 }
 
 void main() {
@@ -275,15 +281,15 @@ void main() {
   test('Canonical Dreamcast boot firmware is distinct from mutable flash and damaged cache objects survive repair failure', () async {
     final client = _Client();
     addTearDown(client.close);
-    await expectLater(
-      ensureAndroidFlycastResources(
+    expect(
+      await ensureAndroidFlycastResources(
         temp,
         23,
         client,
         DownloadCancellation(),
         (_) {},
       ),
-      throwsA(isA<RommFailure>()),
+      isEmpty,
     );
     final cache = Directory('${temp.path}/flycast-firmware');
     final old = await File('${cache.path}/${'a' * 32}.img')
@@ -310,5 +316,42 @@ void main() {
     expect(await old.readAsBytes(), [1, 2, 3]);
     expect(androidFlycastFirmware.keys, ['dc_boot.bin']);
     expect(await readAndroidFlycastConsole(temp), isNull);
+  });
+
+  test('Only confirmed absent optional firmware uses HLE; failed or invalid discovery cannot silently change boot mode', () async {
+    for (final client in [
+      _Client(failure: const RommFailure('Catalogue unavailable')),
+      _Client(images: const [RommFirmware(1, 23, 'dc_boot.bin', 2097152, '0')]),
+      _Client(
+        images: const [
+          RommFirmware(
+            1,
+            23,
+            'dc_boot.bin',
+            2097152,
+            'e10c53c2f8b90bab96ead2d368858623',
+          ),
+          RommFirmware(
+            2,
+            23,
+            'dc_boot.bin',
+            2097152,
+            'e10c53c2f8b90bab96ead2d368858623',
+          ),
+        ],
+      ),
+    ]) {
+      addTearDown(client.close);
+      await expectLater(
+        ensureAndroidFlycastResources(
+          temp,
+          23,
+          client,
+          DownloadCancellation(),
+          (_) {},
+        ),
+        throwsA(isA<RommFailure>()),
+      );
+    }
   });
 }

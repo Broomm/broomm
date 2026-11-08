@@ -1,5 +1,23 @@
 # Implementation plan
 
+## Optional Flycast boot ROM correction — 2026-11-08
+
+Packaged build 1097 completed normal Dreamcast Setup, verified Flycast's hash,
+and retained fourteen earlier cores and seventeen existing connections. Sonic
+Adventure (RomM 6981/platform 27) downloaded as a 915,557,486-byte CHD. Play then
+incorrectly required a retail boot ROM before any emulator session began.
+
+The pinned Flycast source uses built-in Reios HLE when no boot ROM is present.
+Source now permits that native fallback only after successful, confirmed-empty
+firmware discovery with no known cached image. Invalid/ambiguous candidates,
+catalogue failures and missing/damaged known firmware still block Play. A new
+explicit boot marker separates HLE sessions from incomplete older BIOS records;
+console flash, VMUs, options, capture and cleanup retain their checks. All 88
+focused firmware/root-save cases pass, including HLE round trips and console
+reuse, legacy damaged-record refusal and discovery failure boundaries. Analysis
+is clean; the full suite has 717 passes, one existing host skip and no failures.
+Packaging and installed correction acceptance remain pending.
+
 ## Rooted Flycast source increment — 2026-11-08
 
 Dreamcast Setup pins source `7adbf3c` at retained artifact commit `f51373b`.

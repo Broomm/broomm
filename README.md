@@ -445,8 +445,11 @@ separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#beetle
 and [device evidence](docs/android-retroarch-saturn.json).
 
 Current source adds **Dreamcast → RetroArch → Set up** with pinned Flycast.
-Use one self-contained, parent-free CHD v5 up to 2 GiB. Add canonical 2 MiB
-`dc_boot.bin` to this platform's RomM firmware catalogue before Play. Broomm
+Use one self-contained, parent-free CHD v5 up to 2 GiB. Optional canonical 2 MiB
+`dc_boot.bin` can be supplied through this platform's RomM firmware catalogue.
+If none is configured, Flycast uses its built-in HLE BIOS; games needing a real
+BIOS still require that file. Failed discovery and damaged known firmware block
+Play and retain existing files. Broomm
 isolates all eight VMU ports per profile/game, retains a separate local console
 identity per profile, and keeps other core-option changes between sessions.
 Quit normally and wait for sync, then verify native game saves and Load State
