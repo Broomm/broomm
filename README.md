@@ -6,13 +6,15 @@ effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.m
 **2026-11-08 checkpoint:** rooted Android RetroArch now implements eighteen
 platform routes with fifteen pinned cores. Native Thor checks cover the roster,
 including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
-The current full Android CI package passes its Thor smoke/preservation check.
+CI build 1104 passed the Thor gameplay smoke; build 1107 also passed a complete
+read-only preservation audit after the standalone-inspector upgrade.
 Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
 PR #4 is merged. The next [standalone Android increment](docs/android-standalone-root.md)
-adds read-only PPSSPP memory-stick discovery to **Inspect root access**;
-PPSSPP root save synchronization remains pending.
-[Download the current macOS preview](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip)
+adds read-only PPSSPP memory-stick discovery to **Inspect root access**, verified
+in build 1107 on the Thor. A native LocoRoco state replay also passed; PPSSPP
+root save synchronization and its two-account round trip remain pending.
+[Download the current macOS preview](build/releases/Broomm-macOS-android-standalone-preview.zip)
 (universal, ad-hoc signed, not notarized; development updates disabled).
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
@@ -300,7 +302,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip),
+[current macOS build](build/releases/Broomm-macOS-android-standalone-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay

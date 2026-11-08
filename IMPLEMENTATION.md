@@ -7,10 +7,18 @@ save/state/account/offline and preservation checks. The next branch begins
 PPSSPP with read-only native memory-stick discovery in the existing root
 inspector. It distinguishes selected app-private external storage from other
 locations, verifies mount correspondence and ownership, and keeps failed
-observations visible. Direct production-script execution on the Thor preserved
-selection/configuration hashes. The official APK, first-run behavior and cached
-process after normal Exit were also observed. PPSSPP root save writing,
-gameplay/account round trips and other standalone apps remain pending; see
+observations visible. Both direct production-script execution and build 1107's
+in-app diagnostic passed on the Thor, preserving selection/configuration hashes.
+The official PPSSPP 1.20.4 APK booted a verified LocoRoco CSO and replayed an
+unassigned native state; touch/Back and normal Exit worked. All six retained
+state/thumbnail files were unchanged; ordinary SAVEDATA remained empty. No PSP
+Broomm session/cloud publication occurred. Native Exit leaves the Java process
+cached, and global load undo also needs profile isolation before save writes.
+The full suite has 727 passes and one existing host skip; analysis, Kotlin/JVM
+checks and all five CI packages pass. Build 1107 also preserved all accepted
+RetroArch progress, native files, fifteen cores and eighteen connections.
+PPSSPP root save writing, ordinary-save/account round trips and other standalone
+apps remain pending; see
 [implementation, evidence and next constraints](docs/android-standalone-root.md).
 
 ## Flycast Thor acceptance — 2026-11-08

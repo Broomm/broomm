@@ -1,0 +1,347 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "scope": "Read-only PPSSPP root memory-stick inspection; native unassigned game/state research. PSP rooted save writes and cloud/account round trips are not implemented.",
+  "runtime_revision": "a8a43615d0d66bc33e16ce71652ab5396ecfc10b",
+  "ci_merge_revision": "7a68910bbad12296e8394e897b08122405cdc318",
+  "ci": {
+    "run": 42478373175,
+    "url": "https://github.com/Broomm/broomm/actions/runs/42478373175",
+    "result": "All eleven check/package jobs passed; five target packages; PR publication skipped"
+  },
+  "apk": {
+    "source_sha256": "9dd257322b2629a68a672c298680009602d9f333d4ad9abe83ccf7c38dbdc034",
+    "sha256": "b3a43ee37e8e9122663347e72339a9c1be3e8fff59953324fad90f1241663090",
+    "bytes": 62815055,
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "apk": "build/releases/Broomm-0.1.19-pr5.42478373175-thor-preview.apk",
+    "sha256": "b3a43ee37e8e9122663347e72339a9c1be3e8fff59953324fad90f1241663090",
+    "code_sha": "a8a43615d0d66bc33e16ce71652ab5396ecfc10b",
+    "build": "1107",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "emulator_settings_hash_unchanged": "79c62b55b227c084198b9ecd936385a84983c3baf8e20bb3d065c5edd9822274",
+    "readback": [
+      "versionCode=1107 minSdk=24 targetSdk=36",
+      "versionName=0.1.19",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "abi": "arm64-v8a"
+  },
+  "ppsspp_install": {
+    "checked_utc": "2026-11-08T11:30:02.842605+00:00",
+    "source": "Broomm official PPSSPP 1.20.4 download and Android installation confirmation",
+    "package": "org.ppsspp.ppsspp",
+    "fields": [
+      "userId=10135",
+      "versionCode=120040000 minSdk=21 targetSdk=36",
+      "versionName=v1.20.4",
+      "dataDir=/data/user/0/org.ppsspp.ppsspp"
+    ],
+    "apk_bytes": 45448397,
+    "apk_sha256": "dd702a31270ecd68db37afee311d6efe08b1d4da9601d2750ce1a73bbd316c3f"
+  },
+  "production_script_check": {
+    "checked_utc": "2026-11-08T11:55:10.032708+00:00",
+    "script_sha256": "2c93c814eb1c06c78a7371a245133a932f225807d7e14642fa98770181496689",
+    "output_lines": [
+      "BROOMM_ROOT_V1",
+      "0",
+      "/data/user/0/org.ppsspp.ppsspp",
+      "10135 10135 700 u:object_r:app_data_file:s0:c135,c256,c512,c768",
+      "BROOMM_PSP_STORAGE_V1",
+      "private",
+      "/storage/emulated/0/Android/data/org.ppsspp.ppsspp/files",
+      "10135 1078 2770 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 65038 28074",
+      "10135 10135 600 u:object_r:app_data_file:s0:c135,c256,c512,c768 56 1",
+      "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 18822 1"
+    ],
+    "native_pointer_and_settings_hashes_unchanged": {
+      "/data/media/0/Android/data/org.ppsspp.ppsspp/files/PSP/SYSTEM/ppsspp.ini": "f52c2de4168a40d9b0332d4b8c5c644d7695eda7d17cf6d7dde8744bcdfa1cc3",
+      "/data/user/0/org.ppsspp.ppsspp/files/memstick_dir.txt": "1b8b7e86fdc937ba7ae8acd4f53c985fe5bce5813347c71a95f950659673c90f"
+    }
+  },
+  "in_app_inspection": {
+    "checked_utc": "2026-11-08T12:33:00.663117+00:00",
+    "build": 1107,
+    "code_sha": "a8a43615d0d66bc33e16ce71652ab5396ecfc10b",
+    "native_pointer_and_config_hashes_unchanged": {
+      "/data/user/0/org.ppsspp.ppsspp/files/memstick_dir.txt": "1b8b7e86fdc937ba7ae8acd4f53c985fe5bce5813347c71a95f950659673c90f",
+      "/data/media/0/Android/data/org.ppsspp.ppsspp/files/PSP/SYSTEM/ppsspp.ini": "258287891a3fcf62b0f6510c98f67d876f8ac855d82eacf4c70c8613cb754f23"
+    },
+    "screenshot": "ppsspp-in-app-inspection.png",
+    "visual_review": {
+      "result": "Read-only inspection completed",
+      "private_path_shown": "/storage/emulated/0/Android/data/org.ppsspp.ppsspp/files",
+      "root_sync_limitation_shown": true,
+      "screenshots": [
+        "ppsspp-in-app-inspection.png",
+        "psp-private-path-verified.png"
+      ]
+    }
+  },
+  "retroarch_preservation": {
+    "checked_utc": "2026-11-08T13:56:30.319194+00:00",
+    "build": 1107,
+    "runtime": "a8a43615d0d66bc33e16ce71652ab5396ecfc10b-full-ci-apk",
+    "journals_absent": true,
+    "earlier_additional_core_progress_files_unchanged": 41,
+    "retained_first_test_native_vmu_backups": {
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_A1.bin": "d6877ba5addac3bf8c4eb7727ce63bec8c43a597c1c4ca6be50c9b34974d9be4",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_B1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_C1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20",
+      "/data/user/0/com.retroarch.aarch64/files/Broomm/9d1d493e2a5b412da57d364b659321b0/6981/system-715d38b15b790dc91bdd05990620f131/dc/retained-first-test-715d38b15b790dc91bdd05990620f131/vmu_save_D1.bin": "b4c5a531493665876fc72c3fcdef8ebd05fe0f7d14fb2aa73dd87d3586670b20"
+    },
+    "all_existing_managed_native_files_unchanged": 19,
+    "preexisting_standalone_and_managed_files_unchanged": 13,
+    "existing_gba_snes_progress_files_unchanged": 8,
+    "core_hashes": {
+      "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "mesen": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "virtualjaguar": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "mednafen_lynx": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "fbneo": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9",
+      "opera": "43626fab3f21e1c24d979291503f564422c4b9602a8a82a941a0484cfaceac6c",
+      "mednafen_saturn": "dc0c11180b695db1ace32cd3443946ff00eccf9b3c673e263ec3b752915f2282",
+      "flycast": "741981f5f3c7c109d5477ec85923bbf1dd7ffe9fc9c7b2bd5b72e5834c1fa701"
+    },
+    "independent_platform_bindings_retained": [
+      "gba",
+      "snes",
+      "gb",
+      "gbc",
+      "atari2600",
+      "tg16",
+      "genesis",
+      "sms",
+      "gamegear",
+      "sega32",
+      "n64",
+      "nes",
+      "jaguar",
+      "lynx",
+      "arcade",
+      "3do",
+      "saturn",
+      "dc"
+    ],
+    "total_prior_progress_files_unchanged": 49
+  },
+  "native_seed": {
+    "purpose": "Native unassigned test seed; no Broomm session or PSP cloud publication",
+    "game": {
+      "CATEGORY": "UG",
+      "DISC_ID": "UCUS98662",
+      "DISC_VERSION": "1.00",
+      "PSP_SYSTEM_VER": "2.71",
+      "TITLE": "LocoRoco"
+    },
+    "romm_id": 5938,
+    "rom_bytes": 528029604,
+    "rom_sha256": "801662c4390a584600f59de0f14fdf8c69ed2b0c27b0f917b3e26ece87bb39e7",
+    "test_copy_root": "/data/media/0/Android/data/org.ppsspp.ppsspp/files/Broomm-test-7d353cd22f8c4fe0a0bfe3078006bba5",
+    "files": {
+      "SAVEDATA/.nomedia": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28527 1 1794145470 1794145470"
+      },
+      "PPSSPP_STATE/.nomedia": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28546 1 1794145470 1794145470"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_0.jpg": {
+        "bytes": 77945,
+        "sha256": "7c9f761fd718ac61a1d11d99fb76256f36e748a11baeb138edc2eb5acd94c990",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 77945 65038 29329 1 1794140321 1794140321"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_1.jpg": {
+        "bytes": 52568,
+        "sha256": "9c77c9bf24571c6ee26e88546be89db62ef1113b9770179f76fdcf109e3df827",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 52568 65038 28032 1 1794142046 1794142046"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_0.ppst": {
+        "bytes": 9308175,
+        "sha256": "b27877d29bde0f96b37a89cff0da83382e650b8409dda8da19adf80d51be4ab0",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 9308175 65038 29331 1 1794140321 1794140321"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_2.jpg": {
+        "bytes": 38118,
+        "sha256": "a1aca56c2c2559f23bcbda043e268fc71879d3c38a83379b5e491271caf03057",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 38118 65038 27801 1 1794144520 1794144520"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_1.ppst": {
+        "bytes": 10430986,
+        "sha256": "006131685bd4e06b03aa752e19c4df61f4043c576ef2d61d010007c45a7ba954",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 10430986 65038 28028 1 1794142046 1794142046"
+      },
+      "PPSSPP_STATE/UCUS98662_1.00_2.ppst": {
+        "bytes": 10451645,
+        "sha256": "8a3faebc25e559da30352b261b4112258ca33879e3551abec6c8ae0aaebbac79",
+        "metadata": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 10451645 65038 9579 1 1794144520 1794144520"
+      }
+    },
+    "savedata_directories": []
+  },
+  "native_replay": {
+    "checked_utc": "2026-11-08T13:49:28.966950+00:00",
+    "scope": "Native PPSSPP menu replay, outside a Broomm game session",
+    "state": "PPSSPP_STATE/UCUS98662_1.00_2.ppst",
+    "sha256": "8a3faebc25e559da30352b261b4112258ca33879e3551abec6c8ae0aaebbac79",
+    "observations": [
+      "Native load of slot 3 returned to the retained tutorial location",
+      "Held native touch R moved and tilted the world; HUD showed eight LocoRocos",
+      "Android Back opened the native menu; Exit to menu and Exit completed normally"
+    ],
+    "native_state_and_thumbnail_files_unchanged": 6,
+    "all_file_bytes_unchanged": 8,
+    "native_startup_marker_timestamp_changes": {
+      "SAVEDATA/.nomedia": {
+        "before": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28527 1 1794139714 1794139714",
+        "after": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28527 1 1794145470 1794145470"
+      },
+      "PPSSPP_STATE/.nomedia": {
+        "before": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28546 1 1794139714 1794139714",
+        "after": "10135 1078 660 u:object_r:media_rw_data_file:s0:c135,c256,c512,c768 0 65038 28546 1 1794145470 1794145470"
+      }
+    },
+    "initial_harness_refusal": "The first comparison included .nomedia mtime/ctime. Both zero-byte markers retained their inode/ownership/content and refreshed timestamps matching the native onCreate second; all six states/thumbnails retained complete metadata. The corrected analysis separates native initialization markers from game progress.",
+    "ordinary_savedata_confirmed_absent": true,
+    "after_exit": {
+      "pid": "18482",
+      "start_ticks": 23922467,
+      "lifecycle": [
+        "         1794144871.858 18482 18482 I PpssppActivity: Setting shuttingDown = true and calling Finish",
+        "         1794144871.883 18482 18482 I PpssppActivity: onPause end",
+        "         1794144872.466 18482 18482 I PpssppActivity: in onDestroy, shutting down. Calling NativeApp.shutdown().",
+        "         1794144872.684 18482 18482 I PpssppActivity: onDestroy end",
+        "         1794145470.353 18482 18482 I PpssppActivity: onCreate end",
+        "         1794145470.365 18482 18482 I PpssppActivity: onResume end",
+        "         1794145686.706 18482 18482 I PpssppActivity: Setting shuttingDown = true and calling Finish",
+        "         1794145686.732 18482 18482 I PpssppActivity: onPause end",
+        "         1794145687.320 18482 18482 I PpssppActivity: in onDestroy, shutting down. Calling NativeApp.shutdown().",
+        "         1794145687.931 18482 18482 I PpssppActivity: onDestroy end"
+      ],
+      "uid_state": "18 (CACHED_RECENT)",
+      "threads": [
+        "androidInit",
+        "Signal Catcher",
+        "perfetto_hprof_",
+        "ADB-JDWP Connec",
+        "Jit thread pool",
+        "HeapTaskDaemon",
+        "ReferenceQueueD",
+        "FinalizerDaemon",
+        "FinalizerWatchd",
+        "binder:18482_1",
+        "binder:18482_2",
+        "binder:18482_3",
+        "Profile Saver",
+        "RenderThread",
+        "binder:18482_4",
+        "RecentISOThread",
+        "VsyncReceiver",
+        "binder:18482_5",
+        "hwuiTask0",
+        "hwuiTask1",
+        "binder:18482_2",
+        "queued-work-loo",
+        "binder:18482_6",
+        "binder:18482_7"
+      ]
+    },
+    "screenshots": [
+      "psp-native-replay-menu.png",
+      "psp-native-state-replayed.png",
+      "psp-native-replay-input.png",
+      "psp-native-replay-main-menu.png",
+      "psp-native-replay-normal-exit.png"
+    ],
+    "not_accepted": [
+      "Physical gamepad input",
+      "Ordinary in-game save",
+      "Broomm PSP Play or root sync",
+      "PSP cloud or two-account round trip"
+    ]
+  },
+  "verification": {
+    "finished": {
+      "success": true,
+      "type": "done",
+      "time": 68287
+    },
+    "results": {
+      "success": 727,
+      "skipped": 1
+    },
+    "analysis": "No issues found! (ran in 5.4s)"
+  },
+  "other_checks": [
+    "Android Kotlin bridge and fixture compilation passed",
+    "JVM production inspection subprocess/parser/deadline/output/cancellation groups passed",
+    "Root-inspection Flutter boundary cases passed",
+    "Both complete old RetroArch account histories and native files were re-read without changes"
+  ],
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-standalone-a8a4361-preview.zip",
+    "bytes": 24340853,
+    "sha256": "107ea1c6239268b542f04845e28de4ace0de1594caaccb35be968ad1854b79e2",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "architectures": {
+      "Contents/MacOS/broomm": "x86_64 arm64",
+      "Contents/Resources/native/broomm-astris.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl3.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-installer-guard.dylib": "x86_64 arm64",
+      "Contents/Resources/native/broomm-sdl2.dylib": "x86_64 arm64",
+      "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": "x86_64 arm64",
+      "Contents/Frameworks/App.framework/Versions/A/App": "x86_64 arm64"
+    },
+    "runtime_revision": "a8a43615d0d66bc33e16ce71652ab5396ecfc10b",
+    "note": "Immutable tested-source package; the README current-preview alias may be repackaged after documentation-only commits with the same 356 application inputs."
+  },
+  "limitations": [
+    "PSP root file effects, connection, writer proof and recovery not implemented",
+    "No ordinary PSP save was produced; SAVEDATA was confirmed empty except .nomedia",
+    "No Broomm PSP launch/cloud publication/account assignment occurred",
+    "Physical gamepad input unverified; native touch and Android Back observed",
+    "Gold/shared-selection native inspection and other devices require separate acceptance",
+    "RetroArch gameplay evidence belongs to PR #4/build 1104; build 1107 received preservation verification, not a repeated roster playthrough"
+  ],
+  "owner_decisions_pending": [],
+  "saved_account_restoration": {
+    "checked_utc": "2026-11-08T13:56:26.577531+00:00",
+    "build": 1107,
+    "method": "Normal Broomm profile chooser; screenshots visually reviewed",
+    "saved_accounts_restored_without_password": [
+      3,
+      2
+    ],
+    "final_account": 2,
+    "credentials_exported": false,
+    "credentials_migrated": false,
+    "broomm_psp_session_started": false,
+    "screenshots": [
+      "standalone-second-account-restored.png",
+      "standalone-owner-profile-restored.png"
+    ]
+  }
+}
