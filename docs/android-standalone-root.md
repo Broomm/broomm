@@ -4,11 +4,11 @@
 Thor acceptance recorded in [the core evidence](android-retroarch-cores.md).
 PR #4 merged as `eb6fc60`. The owner authorized starting the standalone apps
 after that milestone, with the existing two Thor accounts and normal ADB UI
-control. This document separates implemented discovery from proposed save writes.
+control. This document separates implemented save sessions and native evidence from the earlier read-only discovery and research.
 
-## Rooted PSP session implementation — acceptance pending
+## Rooted PSP session implementation — Thor acceptance passed
 
-PR #5 stays unmerged until the PSP round trip is complete. The current source
+PR #5 stays draft while the final first-run-message package completes CI. The current source
 adds a concrete PPSSPP route through the compact desktop-style **Set up** actions;
 the earlier read-only build-1107 evidence below remains separate. No additional
 runtime dependency is introduced.
@@ -35,8 +35,8 @@ review still cannot override an active/unknown writer.
 If preparation cannot verify shutdown, **Open PPSSPP** opens the existing native
 selection without starting synchronization. Use its **Exit**, then **Check and
 play**; the retry still runs every closure and ownership guard. Launcher failures
-remain visible. This recovery action has two UI regressions; device verification
-of the new action is pending.
+remain visible. This recovery action has two UI regressions and passed the real build-1114
+preparation-refusal/Open/Exit/retry flow.
 
 **Open emulator** selects the same private profile and detaches immediately,
 without a game marker, lifetime watcher or Broomm quit restriction. Its durable
@@ -79,64 +79,70 @@ standalone selection and no cross-account progress. Returning while PPSSPP is
 running must keep the session active. The observations verified below remain
 separate from the earlier native seed/research results.
 
-Build 1111 (`eac1db0`, full CI APK) now passes content-URI LocoRoco launch, native
-manual-state capture, automatic normal-Exit synchronization and standalone-pointer
-restoration. Account 2 published two state/thumbnail pairs as primary 255;
-account 3 began with empty native slots and published its own language-screen
-pair as primary 257, with a distinct memory-stick nonce and console MAC. Both
-checkpoints are acknowledged and both private profiles have verified backups.
-These observations establish state isolation, not an ordinary SAVEDATA round trip;
-ordinary LocoRoco saving, replay/offline and removal/reinstall acceptance remain
-pending. Expired native shutdown logs correctly refused preparation without
-selecting a profile; a fresh native menu open/Exit allowed the retry.
+Build **1114** (`eb3d505`, [successful CI and five platform packages](https://github.com/Broomm/broomm/actions/runs/42510035844))
+passed the full PSP device sequence. LocoRoco (RomM 5938, `UCUS98662`/1.00)
+created and replayed player-scene native states, with separate account primaries
+255/257. Lumines II (5939, `ULUS10183`/1.00) gave an immediate native ordinary-save
+check: account 2 saved its first avatar, account 3 began with **There is no data**
+and saved a distinct avatar, and account 2 reloaded its original Play Data after
+the switch. The four-file `ULUS10183GAME01` sets have distinct `DATA.BIN` hashes
+and separate cloud histories (final primaries 260/259). These are native profile
+saves, not an assertion of scored puzzle-gameplay completion. LocoRoco ordinary
+saving was replaced by this concrete save test, rather than being claimed passed.
 
-All sixteen original PSP files were unchanged after the first Broomm session.
-The subsequent explicit standalone menu open/Exit changed native `ppsspp.ini`
-(upstream increments RunCount on load); its earlier contents were held by hash,
-so an exact field-only delta is not claimed. The other fifteen files remain
-unchanged. An unintended adjacent account-3 TG16 launch was closed by the owner;
-no signal/interruption command ran. The repeated RetroArch preservation audit
-passes all 49 earlier progress files, nineteen managed native files, thirteen
-original files, fifteen cores and eighteen connections. ADB injected gamepad/menu
-events remain inconclusive; owner closure is recorded separately from automated
-PSP touch checks. All native Windows CI checks and five platform packages passed
-for `eac1db0`.
+The real live-writer check retained every journal and made no capture/publication.
+An earlier Return test exposed Android clearing Broomm's activity. The corrected
+Dart-to-Android `rootedPsp` flag launches PPSSPP in a separate task, independently
+of the shared-folder provider marker. Build 1114 verified distinct tasks, the
+same Broomm ActivityRecord after its in-app **Return to emulator**, native save
+load, then automatic normal-Exit synchronization and complete journal/selection
+restoration. Unrooted handoff keeps its Activity-result behavior. Two lifecycle
+regressions cover result-free completion and live/unknown retention; the concrete
+rooted workflow asserts the native flag without a document-provider marker.
+All 36 focused Flutter cases, targeted analysis and bridge compilation passed.
 
-Build 1112 (`d990333`) also replayed account 2's retained slot 2 after switching
-back from account 3. Normal Exit kept both state pairs byte-identical and primary
-255 unchanged. The complete CI run and five platform packages pass. Its local
-macOS ZIP passed archive integrity, seven universal Mach-O checks and deep/strict
-source/extracted signatures.
+With Wi-Fi disabled and **Active default network: none**, Broomm prepared and
+launched the existing ordinary save. Native Load succeeded and unused slot 3
+saved a new manual menu state. Normal Exit kept local progress pending and
+restored standalone selection. Wi-Fi restoration automatically uploaded primary
+260. The exact slot hash survived fresh native loading and complete reinstall.
 
-For ordinary saves, Broomm downloaded Lumines II from the owner's RomM catalogue
-(5939, native `ULUS10183`, revision 1.00). Its confirmed-empty load dialog led to
-a new game-local profile with the first avatar and native **Save completed**
-(64 KB Play Data). Cloud publication and ordinary reload are not yet established.
-The live-writer check brought the existing Broomm activity above the paused native
-game: Broomm reported PPSSPP still running, retained every journal unchanged and
-made no capture or remote publication. The subsequent **Return to emulator**
-reused PPSSPP's activity but Android removed the Broomm activity above it; normal
-native Exit then returned to the launcher. Its save and session journal remain
-retained for recovery. The correction launches rooted PSP in its own Android
-task, relying on app lifecycle and the native shutdown proof rather than an
-Activity result. Two new UI regressions cover normal completion without a result
-and retention of live/unknown writers; all 25 emulator/UI cases, targeted analysis
-and bridge compilation pass. Device re-execution and fresh packaging are pending.
+The normal **Remove** flow verified all twenty account-2 and sixteen account-3
+private native files against full backups before Android's uninstall confirmation.
+Android removed the package and native storage; Broomm cleared setup and retired
+both profile records while retaining two verified backups each. The pinned APK
+was then installed through the normal **Set up** flow. Its own first-run
+settings-save failure again required a second normal open/Exit. **Play** restored
+each private profile into a new nonce and native storage generation (UID changed
+10135 → 10136), preserving its MAC. All progress/controls/global-undo bytes matched
+before native replay; every parsed preference also matched for both accounts.
+Both ordinary saves loaded, their avatars remained distinct, and the offline-created
+state loaded after reinstall. All four checkpoints are acknowledged and journals
+are absent. [Structured acceptance evidence](android-ppsspp-thor-acceptance.json)
+records sources, hashes, scope and limitations.
 
-The retained ordinary save subsequently recovered as primary **258**: four files
-under `ULUS10183GAME01`, including an 18,504-byte `DATA.BIN`. All PSP journals
-cleared and the standalone selection was restored. Build **1113** loaded the
-64 KB Play Data through **Continue → native Load → Load completed**, then showed
-the original first avatar. Injected Odin `ABS_HAT0Y` changed the native menu;
-physical button actuation is not claimed. Its full CI run/five packages and
-macOS archive/signature checks pass. Task inspection also showed the first
-handoff change never ran: rooted PSP has no shared-folder provider marker.
-The current correction sends a separate `rootedPsp` launch flag from the Dart
-session; the real workflow regression verifies it without that provider marker.
-Non-root handoff remains unchanged and invalid emulator/profile combinations
-are refused before Android effects. All 36 focused UI/workflow cases, targeted
-analysis and bridge compilation pass; the corrected packaged task behavior,
-two-account ordinary saves, offline and reinstall checks remain pending.
+Normal Remove deliberately deletes external standalone data. For this acceptance
+test only, a separately verified 589,489,664-byte archive preserved the owner's
+entire pre-test PPSSPP data. The CLI restored just the seventeen original
+unassigned files byte-identically, with the fresh installation's UID/GID/labels;
+Broomm's own production code independently restored both private profiles. Old
+inode/UID preservation is not claimed across uninstall. Earlier explicit native
+menu opens changed the standalone `ppsspp.ini`; its latest pre-uninstall bytes
+were restored. Earlier hash-only observations did not establish a field-only
+difference. The original unassigned states were not adopted into either account.
+
+The repeated read-only RetroArch audit passes all 49 earlier progress files,
+nineteen managed native files, thirteen original files, four retained failed-test
+VMU files, fifteen core hashes and eighteen platform bindings. The incidental
+account-3 TG16 launch was closed by the owner; no signal/interruption command ran.
+Injected Odin D-pad navigation passed; physical button actuation is not claimed.
+
+A final fresh-install check exposed a raw xattr ENOENT before PPSSPP creates its
+private storage. The small correction now presents first-run App Private Data/Exit
+instructions. Real Android fixture cases verify missing-directory guidance,
+unchanged existing labels and preservation of a distinct ENOTDIR failure; bridge
+compilation passes. Final APK CI and the refreshed macOS package are pending.
+This correction changes error context without weakening native ownership checks.
 
 Some black/static ADB captures came from the Thor's transient **Burn-in Protection
 Refresher** window, which covered the app and consumed test taps. The CLI test

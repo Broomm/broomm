@@ -1,0 +1,163 @@
+{
+  "date": "2026-11-08",
+  "status": "Thor PSP session acceptance passed; final first-run-message package pending",
+  "tested_app": {
+    "source": "eb3d50594b7cf06ef27a5c981893264275f6faad",
+    "build": 1114,
+    "ci_run": 42510035844,
+    "source_apk_sha256": "4580f9bc2b03ba2f8357e5ea7360858f008b2f608e115d95afd7e318c9e03e76",
+    "thor_preview_sha256": "347a1154a46214dec2483fa010c3321dd04fe51e1f23aadefe5f8a3a7e2dd8a5"
+  },
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "magisk": "31.1",
+    "abi": "arm64-v8a"
+  },
+  "emulator": {
+    "package": "org.ppsspp.ppsspp",
+    "version": "1.20.4",
+    "apk_sha256": "dd702a31270ecd68db37afee311d6efe08b1d4da9601d2750ce1a73bbd316c3f"
+  },
+  "games": {
+    "5938": {
+      "title": "LocoRoco",
+      "disc": "UCUS98662",
+      "revision": "1.00",
+      "evidence": "Player-scene manual states and replay; ordinary saving was tested using Lumines II instead."
+    },
+    "5939": {
+      "title": "Lumines II",
+      "disc": "ULUS10183",
+      "revision": "1.00",
+      "evidence": "Native game-local profiles and ordinary 64 KB Play Data; menu state saved offline and replayed. This does not assert scored puzzle-gameplay completion."
+    }
+  },
+  "accounts": {
+    "2": {
+      "native_profile_files": 20,
+      "verified_private_backups": 2,
+      "new_storage_generation": true,
+      "console_mac_preserved": true,
+      "all_restored_preferences_equal": true,
+      "locoroco": {
+        "remote": 255,
+        "state_hashes": {
+          "states-99494a0767d39105-android/game0.jpg": "20d3a0b83fe6e4544cb3601cd64c1007ead0045bd5427682bd0c4c79256dea68",
+          "states-99494a0767d39105-android/game1.jpg": "6be2862f1b79f01cfd7b00d35b251b80c75a1310d743528237cfb8cd6f4a0c5a",
+          "states-99494a0767d39105-android/game0.ppst": "9857810858d121b705e556587caee61b0632017757fdc7fc8d0ad317bf054afe",
+          "states-99494a0767d39105-android/game1.ppst": "80986312af4e2a3a16d4b3de7d7b2afce329e0df1a75473e7c6e386892c1e1a5"
+        }
+      },
+      "lumines_ii": {
+        "remote": 260,
+        "state_hashes": {
+          "states-99494a0767d39105-android/game2.ppst": "0db0520b62f2caf41e3358c06badb6e1ea004ddb4ed731636f7f53138fc3beb8",
+          "states-99494a0767d39105-android/game2.jpg": "cf0f2c295f279319d6d20c8abf6d76f2aafcd6fd1997f7fae19c37ed2420d795"
+        },
+        "ordinary_files": {
+          "ULUS10183GAME01/DATA.BIN": {
+            "bytes": 18504,
+            "sha256": "b46fdfaecafa3f7164f6fa62dde48ec7c8d6269da2652283e9730615d608a05c"
+          },
+          "ULUS10183GAME01/ICON0.PNG": {
+            "bytes": 5104,
+            "sha256": "413ca4f943ae17bb0206904cb5ca8132c8e9d2909feda21ffc101dc0eb15619a"
+          },
+          "ULUS10183GAME01/PIC1.PNG": {
+            "bytes": 37232,
+            "sha256": "bf77696f93dfea04db0947d7faadc2bd103b3bf7b3c80552676dc980fdc53eb8"
+          },
+          "ULUS10183GAME01/PARAM.SFO": {
+            "bytes": 4912,
+            "sha256": "06d250485965245c98d8b8446ed900eded7af05d51fb33fc29b24da6d42df56f"
+          }
+        }
+      }
+    },
+    "3": {
+      "native_profile_files": 16,
+      "verified_private_backups": 2,
+      "new_storage_generation": true,
+      "console_mac_preserved": true,
+      "all_restored_preferences_equal": true,
+      "locoroco": {
+        "remote": 257,
+        "state_hashes": {
+          "states-99494a0767d39105-android/game0.jpg": "5f3e73a2c84edb5abefba910c358847babbe61d9cabf1f869a8f712b5b46abd0",
+          "states-99494a0767d39105-android/game0.ppst": "27713669336863102e2866b21d8971055b3b5ebab43e05e709228eea5abec99b"
+        }
+      },
+      "lumines_ii": {
+        "remote": 259,
+        "state_hashes": {},
+        "ordinary_files": {
+          "ULUS10183GAME01/DATA.BIN": {
+            "bytes": 18504,
+            "sha256": "c0ac188e7e6e3211dc9b382177749952575d2b0fa6dbfdb16dd7d0950c9f2c67"
+          },
+          "ULUS10183GAME01/ICON0.PNG": {
+            "bytes": 5104,
+            "sha256": "413ca4f943ae17bb0206904cb5ca8132c8e9d2909feda21ffc101dc0eb15619a"
+          },
+          "ULUS10183GAME01/PIC1.PNG": {
+            "bytes": 37232,
+            "sha256": "bf77696f93dfea04db0947d7faadc2bd103b3bf7b3c80552676dc980fdc53eb8"
+          },
+          "ULUS10183GAME01/PARAM.SFO": {
+            "bytes": 4912,
+            "sha256": "2634973b10ad34e1fa31bf4b59728c5b3d99fb9c6a4cfc4b7f67c943757a2a03"
+          }
+        }
+      }
+    }
+  },
+  "checks": {
+    "content_uri_launch": true,
+    "two_account_ordinary_and_state_isolation": true,
+    "first_account_ordinary_reload_after_second_account": true,
+    "separate_android_tasks_and_same_broomm_activity_after_return": true,
+    "live_writer_refusal_journals_unchanged_no_capture": true,
+    "normal_exit_automatic_sync_and_original_selection": true,
+    "open_ppsspp_preparation_recovery": true,
+    "offline_boot_and_ordinary_load": true,
+    "offline_manual_state_retained_and_automatically_uploaded_after_network_return": true,
+    "offline_created_state_reloaded_after_reinstall": true,
+    "normal_remove_uninstalled_app_and_retired_both_profiles": true,
+    "production_private_backups_verified_before_uninstall": true,
+    "both_profiles_restored_from_backups_with_new_nonces_same_macs": true,
+    "both_restored_preferences_identical": true,
+    "final_journals_absent": true,
+    "original_standalone_files_restored_byte_identically": 17,
+    "native_uid_changed_from": 10135,
+    "native_uid_changed_to": 10136
+  },
+  "preservation": {
+    "earlier_retroarch_progress_files": 49,
+    "managed_native_files": 19,
+    "standalone_native_files": 13,
+    "retained_failed_test_vmu_files": 4,
+    "pinned_core_hashes": 15,
+    "retroarch_platform_bindings": 18
+  },
+  "regressions": {
+    "focused_flutter_tests": 36,
+    "targeted_analysis": "passed",
+    "android_bridge_compilation": "passed",
+    "native_storage_label_cases": [
+      "missing directory gives first-run guidance",
+      "existing SELinux label returned unchanged",
+      "ENOTDIR remains a distinct failure"
+    ],
+    "native_storage_label_source_sha256": "0a3336f56f2f1e22a608171c07f86322714e27844dde97f37029cf5708ab1dc9",
+    "native_storage_label_fixture_sha256": "126e951bfd13de93ecb37a19fabab43197dcd940dba1186b15dca6fef678652c"
+  },
+  "limits": [
+    "Acceptance is on the rooted Android 13 ARM64 Thor and this exact PPSSPP APK; other ABIs/devices were not played.",
+    "Normal Remove intentionally deletes external emulator standalone data. The test harness separately restored the owner's original 17 files from a verified pre-test archive. Production Broomm restores only its own private profiles.",
+    "The pinned native app required a second normal open/Exit after its first-run settings-save failure.",
+    "Touch, menu and Odin input were injected through authorized ADB; physical button actuation is not claimed.",
+    "LocoRoco states contain player progress. Lumines ordinary saves establish native profile/data round trips, not scored game completion."
+  ]
+}

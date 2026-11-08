@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
+import android.system.ErrnoException
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -24,6 +25,36 @@ private fun inspect(args: Array<String>) {
     val thread = type.getMethod("systemMain").invoke(null)
     val system = type.getMethod("getSystemContext").invoke(thread) as Context
     val context = system.createPackageContext("app.broomm.broomm", Context.CONTEXT_IGNORE_SECURITY)
+    // Exercise the real Android xattr boundary without altering emulator data.
+    val labelProbe = File("/data/local/tmp/broomm-psp-label-${android.os.Process.myPid()}")
+    require(!labelProbe.exists())
+    var labelProbeIdentity: Pair<Long, Long>? = null
+    try {
+        try {
+            ppssppStorageLabel(labelProbe.path)
+            error("Missing PSP storage was accepted")
+        } catch (e: IllegalStateException) {
+            check(e.message?.contains("App Private Data") == true &&
+                (e.cause as? ErrnoException)?.errno == OsConstants.ENOENT)
+        }
+        require(labelProbe.createNewFile())
+        labelProbeIdentity = Os.lstat(labelProbe.path).let { it.st_dev to it.st_ino }
+        check(ppssppStorageLabel(labelProbe.path).contentEquals(Os.getxattr(labelProbe.path, "security.selinux")))
+        try {
+            ppssppStorageLabel(File(labelProbe, "child").path)
+            error("Non-directory PSP storage was accepted")
+        } catch (e: ErrnoException) {
+            check(e.errno == OsConstants.ENOTDIR)
+        }
+        println("PASS PSP storage labels: missing initialization, existing label, distinct filesystem error")
+    } finally {
+        if (labelProbeIdentity != null) {
+            val actual = Os.lstat(labelProbe.path)
+            check(actual.st_dev to actual.st_ino == labelProbeIdentity &&
+                OsConstants.S_ISREG(actual.st_mode) && actual.st_nlink == 1L && actual.st_size == 0L)
+            check(labelProbe.delete())
+        }
+    }
     val pkg = "org.ppsspp.ppsspp"
     val info = context.packageManager.getApplicationInfo(pkg, 0)
     val identity = mapOf<String, Any>("package" to pkg, "user" to 0, "uid" to info.uid, "dataDir" to info.dataDir)

@@ -1,79 +1,51 @@
 # Implementation plan
 
-## Rooted PPSSPP sessions — implementation, Thor gameplay acceptance pending
+## Rooted PPSSPP sessions — Thor acceptance passed, final packaging pending
 
-PR #5 remains draft and unmerged while PSP is completed. The new route targets
-the reviewed regular PPSSPP 1.20.4 universal APK, Android 11+/user 0 and its
-verified app-private memory stick. Dart now owns account-private memory-stick
-creation, console identity, settings loans, game journals, cloud savedata/state
-reconciliation and recovery. Native file effects preserve UID/GID/modes/labels,
-stream through descriptors and paginate bounded inventories. Full private
-backups also retain settings and global undo; these are separate from cloud
-exports and protect Broomm-owned profiles during the normal Remove/reinstall flow.
+PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP
+1.20.4 universal APK. Dart owns account-private memory sticks, console identity,
+settings loans, game/state synchronization, full private backups and recovery.
+Native adapters provide bounded file effects and positive normal-shutdown proof;
+cached Java processes alone do not establish either a live or closed writer.
+Gold, other APKs and other storage selections retain the shared-folder route.
+No additional runtime dependency was added.
 
-The Thor's native fault fixture passes interrupted streaming/link/pointer
-publication, exact original-selection restoration, writer arrival, traversal,
-foreign-game, extra-link and stale-metadata refusal. Native normal Exit is
-distinguished from a cached/background process using the pinned shutdown
-sequence and fresh package/process observations. Dart workflow regressions cover
-two accounts, native states, detached settings, lost replies, failed captures,
-source conflicts and backup restoration. The first interrupted-stage run exposed
-Android's initial root-owned/unclassified-media label; its narrow prefix-verified
-recovery is corrected. Fixture-only cross-device-link and stale-metadata cleanup
-errors were corrected without weakening production checks.
+Full CI build **1114** (`eb3d505`) passed the Thor acceptance: content-URI launch,
+LocoRoco player-state replay, separate Lumines II ordinary saves for both saved
+accounts, first-account reload after switching accounts, live-writer refusal,
+separate Android tasks, in-app Return preserving Broomm, automatic normal-Exit
+synchronization and the **Open PPSSPP → Exit → Check and play** recovery flow.
+With Wi-Fi disabled and no default network, ordinary loading and a new manual
+state worked. Normal Exit retained pending progress; restoring Wi-Fi automatically
+published primary 260, and a fresh native session loaded that state.
 
-All 735 Flutter tests pass with one existing host skip; analysis, Kotlin bridge
-compilation and JVM root/lifecycle regressions pass. The current native Thor
-fixture also verifies 602 files across bounded Binder pages and a streamed
-16 MiB state without a Binder byte array.
+Normal **Remove** verified both complete private backups, uninstalled PPSSPP,
+cleared setup and retired both profile records. Normal **Set up/Play** restored
+each account into a new nonce/storage generation while preserving its console
+MAC, ordinary files, states, controls and global undo. Both native ordinary saves
+loaded after reinstall; every parsed preference matched its pre-uninstall copy.
+The test separately restored all seventeen original standalone files from a
+verified archive using the new native UID/labels. This test preservation does not
+change Remove's documented deletion of external standalone data. Final journals
+are absent, selection is restored and all checkpoints are acknowledged.
 
-A further PSP regression verifies newer native savedata/state produced during a
-failed backup's retry: completion retains the loan and reseals that newer copy,
-including its state provenance, instead of acknowledging the earlier capture.
-All nine focused PSP workflows pass after this correction.
+The repeated audit preserves all 49 earlier RetroArch progress files, nineteen
+managed native files, thirteen original files, four retained VMU backups, fifteen
+cores and eighteen platform bindings. No later standalone emulator has begun.
+The [device evidence](docs/android-ppsspp-thor-acceptance.json) separates injected
+ADB input from owner actuation and native profile saves from scored gameplay.
 
-Windows CI exposed host separators in the filesystem-backed Android fixture.
-The fixture now emits Android paths and normalizes its host file identities;
-production Android path validation remains strict. Private archive enumeration
-also normalizes host separators. The new PSP route-disconnection action now
-acquires the same session lock as setup/gameplay before native/settings effects,
-with a held-lock regression. Native fixture cleanup is limited to its verified,
-unassigned test directories. Native Windows re-execution and all five CI packages
-now pass for `eac1db0`.
+The last fresh install exposed a raw missing-directory xattr error before native
+initialization. The correction gives **Open PPSSPP / App Private Data / Exit**
+guidance only for ENOENT. Three real Android fixture cases pass: missing storage,
+existing label and distinct ENOTDIR failure; bridge compilation also passes.
+All 36 focused Flutter workflow/UI cases passed for the handoff correction;
+its complete Windows/macOS/Linux checks and five CI packages passed. The final
+message correction's CI/APK and refreshed macOS package remain to be completed.
+The pinned native app's first run required a second normal open/Exit after its
+own settings-save failure; unknown shutdown still refuses safely.
 
-Full CI build 1111 passes real Broomm content-URI Play and two-account native
-state capture/sync (primaries 255/257), with separate private memory sticks and
-normal-Exit restoration. The repeated RetroArch preservation audit passes. An
-expired native shutdown log refused preparation correctly; the new **Open PPSSPP**
-recovery action has two passing UI regressions (23 emulator/UI tests total) and
-clean targeted analysis, with device packaging pending. Ordinary LocoRoco saving,
-state replay/offline, removal/reinstall and the updated macOS package remain to
-be completed. Other standalone emulators have not begun. See the
-[PSP workflow and boundaries](docs/android-standalone-root.md).
-
-Build 1112 (`d990333`) passes a real account-2 state replay after account 3,
-unchanged primary 255, the repeated RetroArch preservation audit and live-writer
-refusal with unchanged journals/no capture or publication. Lumines II (RomM
-5939, `ULUS10183`/1.00) created a native ordinary save; its cloud/reload acceptance
-is still pending. Returning to PPSSPP after bringing the original Broomm activity
-above it exposed Android clearing that Broomm activity. The retained session
-journal protects the save. Rooted PSP now launches in its own Android task and
-uses app lifecycle/native shutdown proof without an Activity result. Both new
-lifecycle regressions pass (25 Android emulator/UI cases), as does bridge
-compilation and targeted analysis; packaging and native re-execution are pending.
-The `d990333` macOS ZIP passed archive/universal/signature verification; a fresh
-package for the handoff correction remains required.
-
-The retained Lumines II session recovered through the normal app flow as primary
-258, with four native savedata files, cleared journals and the original selection
-restored. Build 1113 loaded that ordinary Play Data through PPSSPP's native
-browser and restored its saved avatar; injected native Odin D-pad navigation
-also passed. This is distinct from physical button actuation. Device task
-inspection caught the initial task correction's unreachable shared-folder gate.
-The corrected handoff now carries an explicit rooted-PSP flag from the Dart
-session to Android, independently of the document-provider marker. All 36 focused
-workflow/UI cases, targeted analysis and bridge compilation pass. Native task,
-two-account ordinary save, offline and reinstall acceptance remain pending.
+See [the walkthrough and boundaries](docs/android-standalone-root.md).
 
 ## Standalone Android root discovery — 2026-11-08
 

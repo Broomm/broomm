@@ -11,18 +11,25 @@ read-only preservation audit after the standalone-inspector upgrade.
 Multi-file disc transport remains a format follow-up;
 see [scope and device evidence](docs/android-retroarch-cores.md).
 PR #4 is merged. The [standalone Android increment](docs/android-standalone-root.md)
-now includes rooted PPSSPP session/save/state and private-profile recovery code.
-Native file/pointer interruption checks pass on the Thor, alongside LocoRoco
-content-URI launch, native-state cloud sync, two-account state isolation and
-state replay. Lumines II ordinary-save recovery published primary 258; build
-1113 loaded that native Play Data and its saved avatar. Live-writer refusal
-keeps every journal and makes no capture/upload. The live return test exposed
-Android clearing Broomm's activity; its explicit rooted-PSP launch flag passes
-36 focused workflow/UI cases and awaits its device build. Offline, two-account
-ordinary saves and reinstall acceptance remain pending. If preparation cannot
-verify shutdown, use **Open PPSSPP → Exit**, then **Check and play**. PR #5
-remains draft until PSP is complete; no later emulator has begun. The macOS
-package is being refreshed for the launch correction.
+now includes rooted PPSSPP sessions, ordinary saves, states, account-private
+settings/console identity and recovery. Build **1114** passed real Thor two-account
+ordinary/state round trips, live-writer refusal, Return/normal-Exit task handling,
+offline save/state retention and automatic later sync, plus complete external-app
+removal/reinstall and private-profile restoration. Every restored preference
+matched; the final RetroArch preservation audit passed. The
+[PSP evidence](docs/android-ppsspp-thor-acceptance.json) records the exact APK,
+inputs and limitations. PR #5 stays draft for final first-run-message packaging;
+no later emulator has begun.
+
+Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
+Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait
+for its menu and use **Exit**, then **Check setup**. If its first Exit reports a
+settings-save failure, repeat a normal open/Exit. Play a downloaded PSP game;
+save in-game and use **Android Back → Exit to menu → Exit** for automatic sync.
+If preparation cannot verify shutdown, choose **Open PPSSPP → Exit**, then
+**Check and play**. **Remove** uninstalls the external app and deletes its
+standalone data; Broomm retains verified backups of its own private profiles for
+same-APK/ABI reinstall. The current macOS package is being refreshed.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are

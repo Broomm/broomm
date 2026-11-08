@@ -14,6 +14,13 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.security.MessageDigest
 
+internal fun ppssppStorageLabel(path: String): ByteArray = try {
+    Os.getxattr(path, "security.selinux")
+} catch (e: ErrnoException) {
+    if (e.errno != OsConstants.ENOENT) throw e
+    throw IllegalStateException("Open PPSSPP, choose App Private Data, wait for its menu and use Exit before checking setup.", e)
+}
+
 /** Narrow PPSSPP app-private file mechanism. Sessions, ownership decisions and recovery stay in Dart. */
 internal class RootPpssppFiles(
     private val context: Context,
@@ -25,10 +32,10 @@ internal class RootPpssppFiles(
     private val pkg = identity.getValue("package") as String
     private val uid = identity.getValue("uid") as Int
     private val internal = File(identity.getValue("dataDir") as String).canonicalFile
-    private val internalLabel = Os.getxattr(internal.path, "security.selinux")
+    private val internalLabel = ppssppStorageLabel(internal.path)
     val logical = "/storage/emulated/0/Android/data/$pkg/files"
     private val root = File("/data/media/0/Android/data/$pkg/files")
-    private val label = Os.getxattr(root.path, "security.selinux")
+    private val label = ppssppStorageLabel(root.path)
     private val gid = Os.lstat(root.path).st_gid
     private val pointer = File(internal, "files/memstick_dir.txt")
     val abi: String
