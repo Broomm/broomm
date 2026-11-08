@@ -537,6 +537,17 @@ stages, special peripherals, other ABI gameplay or cross-device play.
 
 ## Remaining boundaries
 
+Opera's [retained four-ABI build](../vendor/android/opera/1.0.0-370d9a2/README.md)
+identifies source `370d9a2`. Its pinned source includes and defaults to an
+open-source 128 KiB Opera Boot ROM, unlike the older external-BIOS-only metadata.
+All four libraries contain the exact compressed source-header bytes. Provenance
+records the uncompressed hash and the referenced upstream boot source separately;
+an Android NDK or source-to-boot rebuild is not claimed. Complete FreeDO modified
+LGPL/non-commercial terms, GPL-2.0-only boot license and component notices are
+retained. No retail BIOS/game is included. This artifact preparation enables no
+new route; selected external firmware, NVRAM option precedence and disc staging
+remain concrete integration work.
+
 Artifacts for all four ABIs have source/architecture/dependency research. FBNeo's
 arm64 library is about 73 MiB. Native core transport now streams up to 96 MiB
 through a 64 KiB buffer and small ELF header, preserving descriptor/path identity,

@@ -1,5 +1,21 @@
 # Implementation plan
 
+## Opera artifact preparation — 2026-11-07
+
+Four unmodified Android ABI archives identify Opera 1.0.0 source `370d9a2`.
+Source/archive/library hashes, ELF identities, Android-only dependencies,
+original recipes and 97 embedded component notices are retained. The modified
+LGPL/non-commercial FreeDO terms and embedded Opera Boot GPL-2.0-only license
+remain explicit. All four libraries contain the pinned source's exact compressed
+128 KiB open-source boot ROM; its uncompressed hash and separately referenced
+upstream source archive are recorded. No retail BIOS or game is bundled. Exact
+Android NDK or source-to-boot reproduction is not claimed.
+
+Unlike older core metadata, this pinned source defaults to its embedded boot
+ROM. User-selected external BIOS/font resources still require concrete verified
+preparation. Native NVRAM mode/version, multi-file disc staging and packaged
+acceptance remain unimplemented; this artifact-only increment enables no route.
+
 ## Rooted FinalBurn Neo device acceptance — 2026-11-07
 
 Build 1087 (`36c9e8d`) passed normal Arcade Setup and The Simpsons Play on the
