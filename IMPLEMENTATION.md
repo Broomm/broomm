@@ -1,5 +1,32 @@
 # Implementation plan
 
+## Rooted Beetle Saturn source increment — 2026-11-08
+
+Independent Saturn Setup pins v1.32.1 `30f4c12` at artifact commit `88b71d1`.
+Version 15 settings retain versions 1–14 and earlier platform connections.
+Concrete preparation accepts a self-contained CHD v5 up to 1 GiB, verifies both
+regional BIOS images from RomM and retains immutable profile cache objects.
+Explicitly selected KOF95/Ultraman ROM cartridges have separate canonical
+verification. Multi-file CUE transport and automatic special-cartridge detection
+are not implemented. Core, ABI, configuration and actual native option precedence
+are checked again after preparation, before cloud inspection/native effects.
+
+The default Libretro `.srm` contract matches existing desktop Saturn progress.
+Selected Mednafen `.bkr`, shared names, 12-byte `.smpc`, 512 KiB `.bcr` and 4 MiB
+`.4mb.bcr` remain native filenames. Existing progress whose internal-memory or
+cartridge layout disagrees with the selected mode blocks Play without conversion
+or deletion. Version-4 swap records bind BIOS, disc and configuration transactions;
+resources stay separate from progress. Recovery works without the general marker,
+firmware cache or staged native resources. Earlier version-1/2/3 recovery remains.
+
+Clean analysis, bridge compilation, all 91 focused cases, four actual ABI download
+checks and nineteen disposable native fault groups pass. The full macOS suite
+records 697 passing tests, one existing host skip and one unrelated Astris native
+application-capture failure; that three-case suite subsequently passes in isolation.
+The full run is not claimed green, and no timeout/assertion was relaxed. Packaged
+Saturn gameplay, BIOS/save/state restoration and two-account acceptance remain
+pending. Flycast and multi-file transport remain unfinished; PR #4 stays draft.
+
 ## Beetle Saturn artifact preparation — 2026-11-08
 
 Four unmodified Android ABI archives identify **v1.32.1 `30f4c12`**; the older

@@ -166,7 +166,7 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware")) call.argument<String>("source") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware")) call.argument<String>("source") else null
                             val target = if (call.method == "rootRead") call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = privateFile(source ?: target!!)

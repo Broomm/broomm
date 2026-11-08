@@ -82,6 +82,7 @@ internal class RootSaveFiles(
     fun inventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
         require(areas.size in 1..2)
         if (areas.any { it.containsKey("operaStem") }) return operaInventory(areas)
+        if (areas.any { it.containsKey("saturnStem") }) return saturnInventory(areas)
         val result = linkedMapOf<String, BundleEntry>()
         var total = 0L
         var base: String? = null
@@ -172,14 +173,50 @@ internal class RootSaveFiles(
         return result
     }
 
+    private fun saturnInventory(areas: List<Map<String, String>>): Map<String, BundleEntry> {
+        require(coreName == "mednafen_saturn")
+        val ordinary = areas.single { it.containsKey("saturnStem") }
+        require(ordinary.keys == setOf("path", "saturnStem"))
+        val directory = ordinary.getValue("path")
+        val stem = ordinary.getValue("saturnStem")
+        require(stem.isNotEmpty() && stem.length <= 200 && stem.none { it == '/' || it == '\\' || it.code < 32 })
+        managedPath("$directory/$stem.srm", saveOnly = true, core = coreName)
+        require(directory.endsWith("/saves"))
+        val stateAreas = areas.filter { !it.containsKey("saturnStem") }
+        require(stateAreas.all { it.getValue("path").startsWith(directory.removeSuffix("/saves") + "/states/") })
+        val result = if (stateAreas.isEmpty()) linkedMapOf() else inventory(stateAreas).toMutableMap()
+        var total = result.values.sumOf { it.bytes }
+        val folder = path(directory)
+        if (!present(folder)) return result
+        val stat = Os.lstat(folder.path)
+        require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+            Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+        val names = folder.list() ?: error("Cannot inspect Saturn backup memory")
+        require(names.size <= 1024)
+        val accepted = Regex("(?:${Regex.escape(stem)}|mednafen_saturn_libretro_shared)\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)")
+        for (name in names.filter { accepted.matches(it) }.sorted()) {
+            live()
+            val relative = "$directory/$name"
+            managedPath(relative, saveOnly = true, core = coreName)
+            val file = path(relative)
+            val metadata = metadata(file)
+            val data = bytes(file, progressLimit(relative))
+            require(data.size == progressLimit(relative)) { "Saturn backup memory is incomplete. Recovery was kept." }
+            total += data.size
+            require(total <= 64L * 1024 * 1024 && result.size < 128 && !result.containsKey(relative))
+            result[relative] = BundleEntry(data.size.toLong(), digest(data), metadata)
+        }
+        return result
+    }
+
     /** Read-only option files from the selected emulator's known storage roots. */
     fun options(absolute: String, roots: List<File>): ByteArray? {
-        require(coreName == "opera" && absolute.length <= 1024 && absolute.startsWith('/') &&
+        require(coreName in setOf("opera", "mednafen_saturn") && absolute.length <= 1024 && absolute.startsWith('/') &&
             absolute.none { it.code < 32 || it == '\\' } &&
             absolute.split('/').drop(1).none { it.isEmpty() || it == "." || it == ".." } &&
             (absolute.endsWith(".opt") || absolute.endsWith(".cfg"))) { "Invalid RetroArch option path." }
         require(roots.any { absolute.startsWith(it.path + "/") }) {
-            "Keep Opera options inside RetroArch's config or application folder before Play."
+            "Keep core options inside RetroArch's config or application folder before Play."
         }
         val file = File(absolute)
         require(file.canonicalPath == file.absolutePath) { "Linked RetroArch option files are unsupported." }
@@ -235,7 +272,49 @@ internal class RootSaveFiles(
         }
     }
 
+    /** Selected immutable Saturn BIOS/font, isolated from mutable NVRAM. */
+    fun saturnFirmware(relative: String, config: String, before: String?, after: String?,
+                      payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
+        require(coreName == "mednafen_saturn")
+        managedPath(config)
+        val configName = config.substringAfterLast('/')
+        require(Regex("config-[a-f0-9]{32}\\.cfg").matches(configName))
+        val nonce = configName.removePrefix("config-").removeSuffix(".cfg")
+        val name = relative.substringAfterLast('/')
+        val size = when (name) {
+            "sega_101.bin", "mpr-17933.bin" -> 524288
+            "mpr-18811-mx.ic1", "mpr-19367-mx.ic1" -> 2097152
+            else -> error("Unsupported Saturn firmware filename.")
+        }
+        require(relative == config.substringBeforeLast('/') + "/system-$nonce/$name")
+        require(if (after == null) before != null && payload == null && token.endsWith("-out")
+            else before == null && payload != null && payload.size == size && token.endsWith("-in"))
+        ensureClosed()
+        publish(relative, before, after, payload, null, token, size, beforeCommit = ensureClosed)
+        if (after == null) {
+            val folder = path(relative).parentFile!!
+            val stage = File(folder, ".$name.broomm-${token.removeSuffix("-out")}-in")
+            if (present(stage)) {
+                val stat = Os.lstat(stage.path)
+                require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L &&
+                    stat.st_uid in setOf(0, uid) && before != null && hash(stage, size) == before) {
+                    "Interrupted Saturn firmware staging changed. Recovery was kept."
+                }
+                live(); ensureClosed(); Os.remove(stage.path); flushDirectory(folder)
+            }
+            if (present(folder)) {
+                val stat = Os.lstat(folder.path)
+                require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid &&
+                    Os.getxattr(folder.path, "security.selinux").contentEquals(label))
+                if (folder.list()?.isEmpty() == true) {
+                    live(); ensureClosed(); Os.remove(folder.path); flushDirectory(folder.parentFile!!)
+                }
+            }
+        }
+    }
+
     fun replace(relative: String, before: String?, after: String?, payload: ByteArray?, wantedMetadata: String?, token: String, stateGroup: String? = null) {
+        require(coreName != "mednafen_saturn" || !relative.contains("/saves/") || payload == null || payload.size == progressLimit(relative)) { "Saturn backup memory is incomplete. Recovery was kept." }
         require(coreName != "opera" || !relative.contains("/saves/") || payload == null || payload.size == 32768) {
             "Opera NVRAM must contain exactly 32768 bytes. Recovery was kept."
         }
@@ -568,7 +647,8 @@ internal class RootSaveFiles(
     }
 
     private fun romLimit(name: String): Long =
-        (if (coreName == "opera" && name.substringAfterLast('.').lowercase() in setOf("chd", "iso", "bin")) 1024L
+        (if (coreName == "mednafen_saturn" && name.endsWith(".chd", true)) 1024L
+            else if (coreName == "opera" && name.substringAfterLast('.').lowercase() in setOf("chd", "iso", "bin")) 1024L
             else if (coreName == "fbneo" && name.endsWith(".zip", true)) 128L
             else if (coreName == "mupen64plus_next" && name.substringAfterLast('.').lowercase() in setOf("z64", "v64", "n64")) 64L else 32L) * 1024 * 1024
 
@@ -577,10 +657,16 @@ internal class RootSaveFiles(
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
         fun corePath(core: String): String {
-            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera"))
+            require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera", "mednafen_saturn"))
             return "cores/${if (core == "mupen64plus_next") "mupen64plus_next_gles3" else core}_libretro_android.so"
         }
         fun limit(path: String, core: String = "mgba"): Int = when {
+            core == "mednafen_saturn" && path.contains("/saves/") -> when {
+                path.endsWith(".smpc") -> 12
+                path.endsWith(".4mb.bcr") -> 4 * 1024 * 1024
+                path.endsWith(".bcr") -> 512 * 1024
+                else -> 32768
+            }
             core == "opera" && path.contains("/saves/") -> 32768
             path.contains("/states/") -> if (core == "mupen64plus_next") 32 * 1024 * 1024 else MAX_STATE_BYTES
             core == "mupen64plus_next" && path.endsWith(".srm") -> 296960
@@ -590,6 +676,7 @@ internal class RootSaveFiles(
         fun managedPath(path: String, saveOnly: Boolean = false, core: String = "mgba") {
             val save = if (core == "fbneo") "saves/fbneo/(?:[a-z0-9_]{1,64}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)"
                 else if (core == "opera") "saves/(?:opera/per_game/[^/]+\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|[^/]+\\.srm|3DO\\.nvram)"
+                else if (core == "mednafen_saturn") "saves/[^/]+\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)"
                 else "saves/[^/]+\\.(?:srm|rtc)"
             val state = "states/states-[a-f0-9]{16}-android/[^/]+\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?"
             val suffix = if (saveOnly) "(?:$save|$state)" else "(?:$save|$state|config-[a-f0-9]{32}\\.cfg)"
@@ -599,7 +686,7 @@ internal class RootSaveFiles(
         }
 
         fun romPath(path: String, core: String = "mgba"): List<String> {
-            val extensions = if (core == "opera") "chd|iso|bin"
+            val extensions = if (core == "mednafen_saturn") "chd" else if (core == "opera") "chd|iso|bin"
                 else "gba|sfc|smc|gb|gbc|dmg|a26|bin|pce|md|gen|smd|sms|sg|gg|32x|z64|v64|n64|nes|unf|unif|j64|jag|rom|abs|cof|prg|lnx|lyx|bll|o|zip"
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
                 Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:$extensions))")

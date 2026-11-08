@@ -10,11 +10,13 @@ import 'emulators.dart';
 import 'save_plan.dart';
 import 'retroarch_core_setup.dart';
 import 'opera.dart';
+import 'saturn.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
 
 String? androidRootRetroCore(String platform) => switch (platform) {
   '3do' => 'opera',
+  'saturn' => 'mednafen_saturn',
   'gba' => 'mgba',
   'snes' => 'snes9x',
   'gb' || 'gbc' => 'gambatte',
@@ -36,6 +38,7 @@ String? androidRootRetroAccess(String platform) => switch (platform) {
   'gb' || 'gbc' => 'root-gameboy-v1',
   'atari2600' ||
   '3do' ||
+  'saturn' ||
   'tg16' ||
   'genesis' ||
   'sms' ||
@@ -230,6 +233,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   progressRelative('$stem.srm');
   final driver = core == 'fbneo' ? stem.toLowerCase() : null;
   final opera = core == 'opera';
+  final saturn = core == 'mednafen_saturn';
   final configNonce = progressNonce();
   final savedConfig = utf8.decode(report['config'] as Uint8List);
   final preferences = androidIni(savedConfig);
@@ -242,6 +246,19 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
           'rom-$configNonce',
         )
       : <String, String>{};
+  final saturnOptions = saturn
+      ? await readAndroidSaturnOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  if (saturn) {
+    androidSaturnResourceNames(saturnOptions);
+    androidSaturnInternalName(saturnOptions, stem);
+  }
   final rawSave = opera ? androidOperaRawSaveKey(operaOptions, stem) : null;
   if (opera) androidOperaResourceNames(operaOptions);
   if (driver != null && !rom.toLowerCase().endsWith('.zip'))
@@ -255,9 +272,13 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final area = ProgressArea(
     'save',
     'root-${platform.slug}/$content/saves',
-    prefix: driver == null && !opera ? stem : null,
-    exact: core == 'gambatte' || driver != null || opera ? null : '$stem.srm',
-    pattern: opera
+    prefix: driver == null && !opera && !saturn ? stem : null,
+    exact: core == 'gambatte' || driver != null || opera || saturn
+        ? null
+        : '$stem.srm',
+    pattern: saturn
+        ? '^(?:${RegExp.escape(stem)}|mednafen_saturn_libretro_shared)\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)\$'
+        : opera
         ? '^(?:opera/per_game/${RegExp.escape(stem)}\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|${RegExp.escape(stem)}\\.srm|3DO\\.nvram)\$'
         : driver != null
         ? '^fbneo/(?:${RegExp.escape(driver)}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)\$'
@@ -305,7 +326,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
-    if (core == 'mednafen_lynx' || opera) ...{
+    if (core == 'mednafen_lynx' || opera || saturn) ...{
       'system_directory': '$native/$base/system-$configNonce',
       'systemfiles_in_content_dir': 'false',
     },
@@ -331,11 +352,12 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       AndroidSaveArea(
         area,
         '$base/saves',
-        rename: core == 'gambatte' || driver != null || opera
+        rename: core == 'gambatte' || driver != null || opera || saturn
             ? null
             : '$stem.srm',
         arcadeDriver: driver,
         operaStem: opera ? stem : null,
+        saturnStem: saturn ? stem : null,
       ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
@@ -346,8 +368,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
       'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
-      if (opera) 'transaction': configNonce,
-      if (opera) ...{
+      if (opera || saturn) 'transaction': configNonce,
+      if (opera || saturn) ...{
         'sourceCore': report['core'] as String,
         'sourceAbi': report['abi'] as String,
         'sourceConfig':
@@ -361,6 +383,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
         'prepareControllerProfiles': 'true',
     },
     operaOptions: operaOptions,
+    saturnOptions: saturnOptions,
   );
 }
 
@@ -403,5 +426,45 @@ Future<void> verifyAndroidOperaPreparation(
       options.entries.any((e) => plan.operaOptions[e.key] != e.value))
     throw StateError(
       'Opera’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
+}
+
+Future<void> verifyAndroidSaturnPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'mednafen_saturn')
+    throw const FormatException('Invalid Saturn preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: 'saturn',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidSaturnOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.saturnOptions.length ||
+      options.entries.any((e) => plan.saturnOptions[e.key] != e.value))
+    throw StateError(
+      'Saturn’s core options changed during preparation. Existing progress was kept. Try Play again.',
     );
 }

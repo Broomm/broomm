@@ -39,6 +39,7 @@ import '../android/root_saves.dart';
 import '../android/save_plan.dart';
 import '../android/lynx_firmware.dart';
 import '../android/opera.dart';
+import '../android/saturn.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
 import 'update_screen.dart';
@@ -712,7 +713,7 @@ class _BroommAppState extends State<BroommApp> {
                 );
                 final plan = game.layout;
                 if (!rooted ||
-                    !{'lynx', '3do'}.contains(platform.slug) ||
+                    !{'lynx', '3do', 'saturn'}.contains(platform.slug) ||
                     plan is! AndroidSavePlan ||
                     plan.launch['frontendSetup'] == 'true')
                   return game;
@@ -752,6 +753,45 @@ class _BroommAppState extends State<BroommApp> {
                       operaOptions: plan.operaOptions,
                       operaDisc: disc,
                       operaResources: resources,
+                    ),
+                  );
+                }
+                if (platform.slug == 'saturn') {
+                  final disc = await inspectAndroidSaturnDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidSaturnResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    plan.saturnOptions,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  cancellation.check();
+                  await verifyAndroidSaturnPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      saturnOptions: plan.saturnOptions,
+                      saturnDisc: disc,
+                      saturnResources: resources,
                     ),
                   );
                 }

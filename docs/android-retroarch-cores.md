@@ -15,8 +15,8 @@ passed the scoped checks below. Lynx build 1083 passed BIOS delivery, gameplay
 input and state restoration below. FBNeo build 1087 passed complete-ROMset
 gameplay, NVRAM/state restoration and two-account separation below. The Opera
 increment covers self-contained disc images and native NVRAM; build 1090 passed
-the packaged checks below. Multi-file CUE transport remains pending. Flycast and Beetle
-Saturn still need concrete firmware/media/save integration.
+the packaged checks below. Saturn now has the concrete source increment below; packaged acceptance remains
+pending. Multi-file CUE transport and Flycast integration remain unfinished.
 
 ## Gambatte source and behavior
 
@@ -643,20 +643,73 @@ without changing any property:
 
 Use a fresh disposable directory and remove the pushed DEX afterward. This is
 native file-mechanism acceptance; Genesis Plus GX now uses it, while the other
-larger download recipes and actual core integrations remain pending. Saturn
-backup cartridges still exceed the existing small-save boundary; N64's concrete
-limits are implemented in the source increment above.
+larger download recipes and actual core integrations remain pending. Saturn now has its own exact backup-memory bounds below; N64's concrete limits
+are implemented in the source increment above.
 
 Multi-file disc content still needs safe file-set staging. Opera now has
 self-contained image transport and selected firmware preparation; FBNeo's scoped
 nested-save acceptance is recorded above. Flycast requires private VMUs on every port and its
-option prefix differs between builds. New Beetle Saturn builds default to a new
-frontend SRAM mode; preserve the existing Mednafen save contract explicitly.
+option prefix differs between builds. The pinned Beetle Saturn defaults to Libretro SRAM, matching the desktop `.srm`
+contract; selected Mednafen file modes are retained by the concrete increment below.
 Stella and the inspected Beetle Lynx expose no ordinary Libretro save RAM.
 
 Virtual Jaguar now uses the permanent source-identified release above; cartridge
 device acceptance is recorded above and Memory Track gameplay remains separate. Jaguar CD remains
 owner-deferred. Mesen's nightly provenance gap is resolved by its retained owned
-source build. Flycast and Beetle Saturn still need their concrete integration;
-Opera's packaged acceptance remains pending. Lynx's scoped packaged acceptance
+source build. Flycast still needs concrete integration; Saturn's packaged acceptance remains
+pending. Opera's scoped device acceptance is recorded above. Lynx's scoped packaged acceptance
 is recorded above.
+
+
+## Beetle Saturn source increment
+
+The retained v1.32.1 `30f4c12` four-ABI build is pinned to artifact commit
+`88b71d142171be9a44d45a61779a6fba198391f9`, also held by
+`android-beetle-saturn-1.32.1-30f4c12`. Its core-info display version is stale;
+provenance retains source, ABI, ELF dependencies, original recipes and licenses.
+No retail firmware or game is bundled, and exact upstream NDK reproduction is
+not claimed. Independent Setup adds Saturn without reconfiguring other platforms.
+Version 15 retains all earlier settings versions and connections.
+
+Use **Emulator Settings → Saturn → RetroArch → Set up**, then Play one
+self-contained CHD v5 of at most 1 GiB physical/logical size, without a parent.
+First Play obtains `sega_101.bin` and `mpr-17933.bin` (524,288 bytes each) from this
+platform's RomM firmware catalogue after canonical size/MD5 and transfer checks.
+Explicit KOF95/Ultraman cartridge choices require their canonical 2 MiB ROM image.
+Immutable cache objects are retained on repair. Multi-file CUE delivery and
+special-cartridge auto-detection remain separate work; no descriptor is handed
+to RetroArch without its tracks.
+
+Read-only inspection follows actual game/folder/core/global option precedence.
+It rejects ambiguous/includes/conflicting options rather than guessing. Defaults
+retain the desktop `.srm` contract. User-selected Mednafen `.bkr`, shared filenames,
+12-byte console settings, 512 KiB and 4 MiB backup cartridges keep native names.
+Existing internal/cart data whose filename disagrees with the selected native mode
+blocks launch visibly; no silent conversion or progress deletion is performed.
+Shared options remain isolated to each Broomm profile/game. Core, ABI, configuration
+and options are checked again after long preparation, before external effects.
+
+The version-4 journal binds core/platform/configuration, disc and resource
+transaction identities. Firmware stays outside ordinary saves and state groups.
+Lost replies recover without the original firmware cache, staged resource or
+general session marker; incompatible/foreign records preserve recovery. Native
+operations retain closure, UID/label, path/descriptor, exclusive publication and
+readback checks. Ordinary save lengths are exact; truncated SRAM/cartridges are
+damaged recovery, not empty progress. Previous native/core limits stay scoped.
+
+Clean analysis, bridge compilation, 91 focused tests, four real versioned ABI
+downloads and nineteen native fault groups pass. The native groups include
+4 MiB cart, resource-copy lost replies, writer arrival, source replacement,
+idempotent cleanup, options and CHD handoff. The existing exact-1-GiB transport
+fixture passes in 2,754 ms under its unchanged 30-second deadline. The new
+missing-marker case caught and fixed absent version-4 session discovery; its
+original assertions remain. Initial compiler/fixture and sandbox diagnostics are
+retained locally.
+
+The full macOS run has 697 passes, one existing host skip and an unrelated Astris
+application-capture error. All three Astris cases pass separately; that diagnostic
+does not erase the full-run failure. Packaged BIOS/game/save/state and two-account
+Thor checks are pending. After verification, Quit normally and wait for sync,
+verify a native in-game save independently of manual Load State, switch accounts,
+and confirm their different data. Keep Broomm snapshots/cache/recovery and stable
+locks; native session discs/configuration/BIOS are cleaned after verified exit.

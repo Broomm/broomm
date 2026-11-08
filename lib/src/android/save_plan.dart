@@ -16,6 +16,7 @@ import 'emulators.dart';
 import 'retroarch_core_setup.dart';
 import 'lynx_firmware.dart';
 import 'opera.dart';
+import 'saturn.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -33,6 +34,7 @@ class AndroidSaveArea {
     this.rename,
     this.arcadeDriver,
     this.operaStem,
+    this.saturnStem,
   });
   final ProgressArea local;
   final String remote;
@@ -41,12 +43,17 @@ class AndroidSaveArea {
   /// FBNeo's nested native files retain their driver names in cloud bundles.
   final String? arcadeDriver;
   final String? operaStem;
+  final String? saturnStem;
   Map<String, String> get selector => {
     'path': remote,
     if (arcadeDriver != null) 'driver': arcadeDriver!,
     if (operaStem != null) 'operaStem': operaStem!,
+    if (saturnStem != null) 'saturnStem': saturnStem!,
     if (rename != null) 'exact': rename!,
-    if (rename == null && arcadeDriver == null && operaStem == null) ...{
+    if (rename == null &&
+        arcadeDriver == null &&
+        operaStem == null &&
+        saturnStem == null) ...{
       if (local.prefix != null) 'prefix': local.prefix!,
       if (local.suffix != null) 'suffix': local.suffix!,
       if (local.exact != null) 'exact': local.exact!,
@@ -86,6 +93,9 @@ class AndroidSavePlan extends ProgressLayout {
     this.operaOptions = const {},
     this.operaDisc,
     this.operaResources,
+    this.saturnOptions = const {},
+    this.saturnDisc,
+    this.saturnResources,
   }) : super(
          layout.root,
          layout.format,
@@ -102,6 +112,9 @@ class AndroidSavePlan extends ProgressLayout {
   final Map<String, String> operaOptions;
   final AndroidOperaDisc? operaDisc;
   final List<AndroidOperaResource>? operaResources;
+  final Map<String, String> saturnOptions;
+  final AndroidSaturnDisc? saturnDisc;
+  final List<AndroidSaturnResource>? saturnResources;
   Map<String, String> get arguments => {
     ...binding,
     'emulator': emulator.id,

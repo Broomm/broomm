@@ -6,13 +6,14 @@ import java.io.File
  * handoff. A prepared ZIP keeps its outer save/state stem. */
 internal fun validateRootRetroArchLaunch(core: String, pkg: String, nativeData: String,
     nativeRom: String, config: String?, content: String, selected: String) {
-    require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera") && config != null &&
+    require(core in setOf("mgba", "snes9x", "gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_lynx", "fbneo", "opera", "mednafen_saturn") && config != null &&
         pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
     val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
         .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
         ?: error("RetroArch ROM is outside RetroArch's private session")
     val parts = RootSaveFiles.romPath(nativeRom.removePrefix("$root/"), core)
     require(when (core) {
+        "mednafen_saturn" -> parts[3].endsWith(".chd", true)
         "opera" -> setOf("chd", "iso", "bin").contains(parts[3].substringAfterLast('.').lowercase())
         "mgba" -> parts[3].endsWith(".gba", true)
         "snes9x" -> parts[3].endsWith(".sfc", true) || parts[3].endsWith(".smc", true)

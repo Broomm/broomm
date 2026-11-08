@@ -9,6 +9,7 @@ import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/root_saves.dart';
 import 'package:broomm/src/android/lynx_firmware.dart';
 import 'package:broomm/src/android/opera.dart';
+import 'package:broomm/src/android/saturn.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/shared_saves.dart';
@@ -44,6 +45,18 @@ class _FixtureOperaResource implements AndroidOperaResource {
   final String sha256;
   @override
   int get bytes => androidOperaFirmware[name]!.$1;
+}
+
+class _FixtureSaturnResource implements AndroidSaturnResource {
+  _FixtureSaturnResource(this.name, this.file, this.sha256);
+  @override
+  final String name;
+  @override
+  final File file;
+  @override
+  final String sha256;
+  @override
+  int get bytes => androidSaturnFirmware[name]!.$1;
 }
 
 void main() {
@@ -258,7 +271,11 @@ void main() {
             }
             return null;
           }
-          if ({'rootLynxFirmware', 'rootOperaFirmware'}.contains(call.method)) {
+          if ({
+            'rootLynxFirmware',
+            'rootOperaFirmware',
+            'rootSaturnFirmware',
+          }.contains(call.method)) {
             final value = await fixture.call(MethodCall('sharedReplace', args));
             if (args['after'] == null) {
               metadata.remove(args['path']);
@@ -281,6 +298,12 @@ void main() {
             for (final area in (args['areas'] as List).cast<Map>()) {
               final driver = area.remove('driver');
               final opera = area.remove('operaStem');
+              final saturn = area.remove('saturnStem');
+              if (saturn != null) {
+                expect(args['coreName'], 'mednafen_saturn');
+                area['pattern'] =
+                    '^(?:${RegExp.escape(saturn as String)}|mednafen_saturn_libretro_shared)\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)\$';
+              }
               if (opera != null) {
                 expect(args['coreName'], 'opera');
                 area['pattern'] =
@@ -1553,6 +1576,45 @@ void main() {
     );
   }
 
+  Future<File> saturnRom() async {
+    final bytes = Uint8List(128)..setRange(0, 8, ascii.encode('MComprHD'));
+    ByteData.sublistView(bytes)
+      ..setUint32(8, 124)
+      ..setUint32(12, 5)
+      ..setUint64(32, 4096);
+    return File('${temp.path}/Disc.chd').writeAsBytes(bytes);
+  }
+
+  Future<AndroidSavePlan> saturnPlan(String rom, {bool prepared = true}) async {
+    final current = await gameboyPlan('saturn', rom);
+    final resources = <AndroidSaturnResource>[];
+    if (prepared) {
+      for (final name in androidSaturnResourceNames(current.saturnOptions)) {
+        final file = await File('${temp.path}/fixture-$name')
+            .writeAsBytes(List.filled(androidSaturnFirmware[name]!.$1, 17));
+        resources.add(
+          _FixtureSaturnResource(name, file, await progressFileHash(file)),
+        );
+      }
+    }
+    return AndroidSavePlan(
+      current,
+      current.emulator,
+      current.binding,
+      current.remoteAreas,
+      launch: current.launch,
+      saturnOptions: current.saturnOptions,
+      saturnDisc: prepared
+          ? await inspectAndroidSaturnDisc(
+              File(rom),
+              DownloadCancellation(),
+              (_) {},
+            )
+          : null,
+      saturnResources: prepared ? resources : null,
+    );
+  }
+
   test('Opera migration retains all version-13 bindings, persists its own Setup and refuses an old forged connection', () async {
     final previous = [
       'gba',
@@ -1593,6 +1655,53 @@ void main() {
     (old['retroRoots'] as Map)['3do:$pkg'] = manager.rootConnection(
       emulator,
       'arcade',
+    );
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, false);
+  });
+
+  test('Saturn migration retains all version-14 bindings, persists its own Setup and refuses an old forged connection', () async {
+    final previous = [
+      'gba',
+      'snes',
+      'gb',
+      'gbc',
+      'atari2600',
+      'tg16',
+      'genesis',
+      'sms',
+      'gamegear',
+      'sega32',
+      'n64',
+      'nes',
+      'jaguar',
+      'lynx',
+      'arcade',
+      '3do',
+    ];
+    for (final slug in previous)
+      await manager.connectGbaRoot(emulator, platform: slug);
+    final file = File('${data.path}/android/emulators.json');
+    final old = await progressJson(file)
+      ..['version'] = 14;
+    await file.writeAsString(jsonEncode(old));
+    await manager.load();
+    expect(manager.settingsKnown, true);
+    expect(manager.hasCurrentRoot(emulator, 'saturn'), false);
+    await manager.connectGbaRoot(emulator, platform: 'saturn');
+    await manager.load();
+    expect(manager.settingsKnown, true, reason: manager.error);
+    for (final slug in [...previous, 'saturn'])
+      expect(manager.hasCurrentRoot(emulator, slug), true, reason: slug);
+    await manager.disconnectGbaRoot(emulator, platform: 'saturn');
+    await manager.load();
+    for (final slug in previous)
+      expect(manager.hasCurrentRoot(emulator, slug), true);
+    expect(manager.hasCurrentRoot(emulator, 'saturn'), false);
+    (old['retroRoots'] as Map)['saturn:$pkg'] = manager.rootConnection(
+      emulator,
+      '3do',
     );
     await file.writeAsString(jsonEncode(old));
     await manager.load();
@@ -1689,6 +1798,32 @@ void main() {
     }
   });
 
+  test('Saturn preparation rechecks core, frontend configuration and native options before save effects', () async {
+    await manager.connectGbaRoot(emulator, platform: 'saturn');
+    final rom = await saturnRom();
+    final p = await saturnPlan(rom.path);
+    await verifyAndroidSaturnPreparation(manager, p, rom.path);
+    final core = observation['core'], config = observation['config'];
+    for (final change in ['core', 'config', 'options']) {
+      observation['core'] = core;
+      observation['config'] = config;
+      operaOptionsText = null;
+      if (change == 'core') observation['core'] = 'f' * 64;
+      if (change == 'config')
+        observation['config'] = Uint8List.fromList(
+          utf8.encode('global_core_options = "true"'),
+        );
+      if (change == 'options')
+        operaOptionsText = 'beetle_saturn_save_method = "mednafen"';
+      await expectLater(
+        verifyAndroidSaturnPreparation(manager, p, rom.path),
+        throwsStateError,
+      );
+      expect(await SharedAndroidSaves(manager).pending, false);
+      expect(api.records, isEmpty);
+    }
+  });
+
   test(
     'Opera staging retains the inspected disc hash when its source changes',
     () async {
@@ -1761,6 +1896,130 @@ void main() {
           .exists(),
       false,
     );
+  });
+
+  test('Saturn firmware publication loss recovers without cache, staged resource or general marker', () async {
+    await manager.connectGbaRoot(emulator, platform: 'saturn');
+    final rom = await saturnRom();
+    final p = await saturnPlan(rom.path),
+        g = game(p),
+        saves = SharedAndroidSaves(manager);
+    final key = '${p.areas.last.id}/game.state';
+    await (await p.target(key)).writeAsBytes([7, 8]);
+    loseFirmwarePublicationReply = true;
+    await expectLater(
+      saves.begin(g, p, 'a' * 64, selected: rom.path),
+      throwsA(isA<PlatformException>()),
+    );
+    final record = await progressJson(saves.journal);
+    for (final image in p.saturnResources!) await image.file.delete();
+    await (await progressFile(
+      saves.directory(record),
+      'firmware/sega_101.bin',
+    )).delete();
+    for (final changed in [
+      {'coreName': 'fbneo'},
+      {'rootFirmware': <String, Object>{}},
+      {'transaction': 'f' * 32},
+    ]) {
+      await progressWrite(saves.journal, {...record, ...changed});
+      await expectLater(saves.record(g, p), throwsFormatException);
+      expect(await (await p.target(key)).readAsBytes(), [7, 8]);
+    }
+    await progressWrite(saves.journal, record);
+    final session = AndroidGameSession(manager, cloud);
+    addTearDown(session.dispose);
+    expect((await session.pending())!['stateAreas'], [p.areas.last.id]);
+    final current = await saturnPlan(rom.path, prepared: false);
+    final recovered = await saves.recoveryPlan(game(current), current);
+    expect(await saves.capture(g, cloud, recovered), false);
+    await saves.restoreOriginal(g, recovered);
+    expect(await session.pending(), isNull);
+    expect(api.records, isEmpty);
+    expect(await (await p.target(key)).readAsBytes(), [7, 8]);
+    final resources = record['rootSaturnFirmware'] as Map;
+    expect(
+      await File('${native.path}/${(resources.values.first as Map)['path']}')
+          .exists(),
+      false,
+    );
+  });
+
+  test('Saturn companions and matched states round trip, preserve originals and reject missing or truncated working memory', () async {
+    await manager.connectGbaRoot(emulator, platform: 'saturn');
+    final rom = await saturnRom();
+    final p = await saturnPlan(rom.path);
+    final g = game(p), saves = SharedAndroidSaves(manager);
+    final sizes = {
+      'save/Disc.srm': 32768,
+      'save/Disc.smpc': 12,
+      'save/Disc.bcr': 524288,
+      'save/Disc.4mb.bcr': 4194304,
+      '${p.areas.last.id}/game.state': 2,
+    };
+    final original = await put(
+      p.remotePath('save/Disc.srm'),
+      List.filled(32768, 8),
+    );
+    final foreign = await put('${p.remoteAreas.first.remote}/Other.smpc', [9]);
+    await cloud.beforePlay(g);
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    final staged = File(await saves.stageRootRom(g, p));
+    for (final e in sizes.entries)
+      await put(p.remotePath(e.key), List.filled(e.value, 7));
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    await cloud.afterPlay(g, 0);
+    expect((await p.files()).keys.toSet(), sizes.keys.toSet());
+    expect(await original.readAsBytes(), List.filled(32768, 8));
+    expect(await foreign.readAsBytes(), [9]);
+    expect(await staged.exists(), false);
+    final next = await saturnPlan(rom.path),
+        nextGame = game(next),
+        retry = SharedAndroidSaves(manager);
+    await retry.begin(nextGame, next, 'a' * 64, selected: rom.path);
+    final cart = File('${native.path}/${next.remotePath('save/Disc.4mb.bcr')}');
+    await cart.delete();
+    await expectLater(retry.capture(nextGame, cloud, next), throwsStateError);
+    expect(await retry.pending, true);
+    await put(next.remotePath('save/Disc.4mb.bcr'), [1]);
+    await expectLater(
+      retry.capture(nextGame, cloud, next),
+      throwsFormatException,
+    );
+    await put(next.remotePath('save/Disc.4mb.bcr'), List.filled(4194304, 7));
+    await retry.capture(nextGame, cloud, next);
+    await retry.restoreOriginal(nextGame, next);
+    expect(await (await p.target('save/Disc.4mb.bcr')).length(), 4194304);
+  });
+  test('Saturn native mode mismatch stops before publication and inspected media cannot be replaced during staging', () async {
+    await manager.connectGbaRoot(emulator, platform: 'saturn');
+    final rom = await saturnRom();
+    final p = await saturnPlan(rom.path), saves = SharedAndroidSaves(manager);
+    await (await p.target('save/Disc.bkr')).writeAsBytes(List.filled(32768, 4));
+    final before = calls.length;
+    await expectLater(
+      saves.begin(game(p), p, 'a' * 64, selected: rom.path),
+      throwsFormatException,
+    );
+    expect(calls.skip(before), isNot(contains('rootReplace')));
+    expect(await saves.pending, false);
+    await (await p.target('save/Disc.bkr')).delete();
+    final next = await saturnPlan(rom.path), g = game(next);
+    await saves.begin(g, next, 'a' * 64, selected: rom.path);
+    final bytes = await rom.readAsBytes();
+    bytes[127] = 3;
+    await rom.writeAsBytes(bytes);
+    await expectLater(
+      saves.stageRootRom(g, next),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(
+      (await progressJson(saves.journal))['romStageSha256'],
+      next.saturnDisc!.sha256,
+    );
+    await saves.capture(g, cloud, next);
+    await saves.restoreOriginal(g, next);
   });
 
   test('FBNeo stages the intact multi-chip ZIP and publishes native nested saves with matched states', () async {

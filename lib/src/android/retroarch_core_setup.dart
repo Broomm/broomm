@@ -281,6 +281,26 @@ const _operaRecipes = <String, (String, String)>{
   ),
 };
 
+const _saturnRevision = '88b71d142171be9a44d45a61779a6fba198391f9';
+const _saturnRecipes = <String, (String, String)>{
+  'arm64-v8a': (
+    '50f98896a7b829473beae0c6df2cd8ae2daffbb9e1ea64dfdd09270c4d2d6df8',
+    'dc0c11180b695db1ace32cd3443946ff00eccf9b3c673e263ec3b752915f2282',
+  ),
+  'armeabi-v7a': (
+    '314362993427f36bd6c3604f557161abe07fdcb0849822412ed86d5dc5cb8c39',
+    'eb4874005d37847a98f45c680f9f5475681900e76fe157635de30b7f06a8b20e',
+  ),
+  'x86': (
+    '83a55069a66b122aa184a8c8fe0a4d5a644c3eadb35523815ae4b8da751e49b9',
+    'fc9e1a1c3a54cd8590338015686bd8b662aa50d0aec8983c243e922d536ba666',
+  ),
+  'x86_64': (
+    '284be0225e9676da7ac70aba299ac81826a4fa5c4f8e4618dbb8b8ba960bb932',
+    'a0e8958b2390c063f5e71c914e731ed5503a942a566a1781488710700e765d3c',
+  ),
+};
+
 Future<void> downloadAndroidRetroCore(
   Directory data,
   String core,
@@ -307,20 +327,21 @@ Future<void> downloadAndroidRetroCore(
     'mednafen_lynx' => (_lynxRevision, '1.24.0-fcdefcf', _lynxRecipes),
     'fbneo' => (_fbneoRevision, '1.0.0.03-20261107', _fbneoRecipes),
     'opera' => (_operaRevision, '1.0.0-370d9a2', _operaRecipes),
+    'mednafen_saturn' => (_saturnRevision, '1.32.1-30f4c12', _saturnRecipes),
     _ => throw UnsupportedError('Unsupported Android RetroArch core.'),
   };
   final coreFile = androidRetroCoreFile(core);
   final rawCore = core == 'virtualjaguar';
   final maxArchive = core == 'fbneo'
       ? 20 * 1024 * 1024
-      : rawCore || core == 'mupen64plus_next'
+      : rawCore || {'mupen64plus_next', 'mednafen_saturn'}.contains(core)
       ? 3 * 1024 * 1024
       : {'stella', 'genesis_plus_gx', 'mesen'}.contains(core)
       ? 2 * 1024 * 1024
       : _maxArchive;
   final maxCore = core == 'fbneo'
       ? 96 * 1024 * 1024
-      : core == 'genesis_plus_gx'
+      : {'genesis_plus_gx', 'mednafen_saturn'}.contains(core)
       ? 16 * 1024 * 1024
       : _maxCore;
   final recipe = recipes[abi];

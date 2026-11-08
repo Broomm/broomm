@@ -163,6 +163,9 @@ fun main(args: Array<String>) {
         failure { launch("mgba", "Game.md", "Game.zip") }
         failure { launch("mednafen_lynx", "Game.gba", "Game.zip") }
         failure { launch("mgba", "Game.lnx", "Game.zip") }
+        launch("mednafen_saturn", "Disc.chd", "Disc.chd")
+        failure { launch("mednafen_saturn", "Disc.iso", "Disc.iso") }
+        failure { launch("mednafen_saturn", "Disc.chd", "Other.chd") }
         launch("fbneo", "simpsons2p.zip", "simpsons2p.zip")
         launch("fbneo", "SIMPSONS2P.ZIP", "SIMPSONS2P.ZIP")
         failure { launch("fbneo", "simpsons2p.zip", "other.zip") }
@@ -210,6 +213,7 @@ fun main(args: Array<String>) {
         checkLynxFirmware(root, label)
         checkFbneoStorage(root, label)
         checkOperaStorage(root, label)
+        checkSaturnStorage(root, label)
 
         val core = ByteArray(20).apply {
             byteArrayOf(127, 69, 76, 70, 2, 1, 1).copyInto(this)
@@ -230,7 +234,7 @@ fun main(args: Array<String>) {
         coreSource.writeBytes(core)
         check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = "snes9x") {} == coreHash)
         check(files.core("arm64-v8a", coreName = "snes9x") == coreHash && files.core("arm64-v8a") == coreHash)
-        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar")) {
+        for (name in listOf("gambatte", "stella", "mednafen_pce_fast", "genesis_plus_gx", "picodrive", "mupen64plus_next", "mesen", "virtualjaguar", "mednafen_saturn")) {
             check(files.installCore(coreSource, 0, coreHash, "arm64-v8a", coreName = name) {} == coreHash)
             check(files.core("arm64-v8a", coreName = name) == coreHash)
         }
@@ -618,4 +622,70 @@ private fun checkLargeCoreStorage(parent: File, label: ByteArray) {
     Os.remove(target.path)
     check(files.core("arm64-v8a", coreName = "snes9x") == otherHash)
     println("PASS: 80 MiB streamed core install/inspection, cancelled-copy retry, live-writer refusal, tied-time source swap and exclusive destination preservation")
+}
+
+private fun checkSaturnStorage(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected Saturn refusal") }
+        catch (_: IllegalArgumentException) { }
+        catch (e: IllegalStateException) { check(e.message != "Expected Saturn refusal") }
+    }
+    val files = RootSaveFiles(root, 2000, label, {}, coreName = "mednafen_saturn")
+    val base = "files/Broomm/${"b".repeat(32)}/84"
+    val nonce = "9".repeat(32)
+    val token = nonce + "-in"
+    val sizes = linkedMapOf("Disc.srm" to 32768, "Disc.bkr" to 32768, "Disc.smpc" to 12,
+        "Disc.bcr" to 524288, "Disc.4mb.bcr" to 4194304)
+    for ((name, size) in sizes) {
+        val bytes = ByteArray(size) { 17 }
+        files.replace("$base/saves/$name", null, RootSaveFiles.digest(bytes), bytes, null, token)
+    }
+    val other = ByteArray(12) { 5 }
+    files.replace("$base/saves/Other.smpc", null, RootSaveFiles.digest(other), other, null, token)
+    val areas = listOf(mapOf("path" to "$base/saves", "saturnStem" to "Disc"))
+    val actual = files.inventory(areas)
+    check(actual.keys == sizes.keys.map { "$base/saves/$it" }.toSet())
+    for ((name, size) in sizes) check(actual.getValue("$base/saves/$name").bytes == size.toLong())
+    refused { files.replace("$base/saves/Disc.bkr", actual.getValue("$base/saves/Disc.bkr").sha256,
+        RootSaveFiles.digest(other), other, null, token) }
+    val cart = files.path("$base/saves/Disc.4mb.bcr")
+    val cartHash = actual.getValue("$base/saves/Disc.4mb.bcr").sha256
+    cart.writeBytes(other)
+    refused { files.inventory(areas) }
+    cart.writeBytes(ByteArray(4194304) { 17 })
+    check(files.inventory(areas).getValue("$base/saves/Disc.4mb.bcr").sha256 == cartHash)
+    refused { files.inventory(listOf(mapOf("path" to "$base/saves", "saturnStem" to "../Disc"))) }
+    refused { RootSaveFiles.managedPath("$base/saves/Disc.4mb.bcr") }
+    refused { RootSaveFiles.managedPath("$base/saves/Disc.bcr.tmp", core = "mednafen_saturn") }
+    check(files.hash(files.path("$base/saves/Other.smpc")) == RootSaveFiles.digest(other))
+    println("PASS: Saturn exact internal/cart/settings boundaries, 4 MiB cartridge capture, truncation/path refusal and foreign-file preservation")
+
+    val config = "$base/config-$nonce.cfg"
+    val bios = "$base/system-$nonce/sega_101.bin"
+    val payload = ByteArray(524288) { 23 }; val biosHash = RootSaveFiles.digest(payload)
+    refused { files.saturnFirmware(bios, config, null, biosHash, other, token) {} }
+    refused { RootSaveFiles(root,2000,label,{}).saturnFirmware(bios,config,null,biosHash,payload,token) {} }
+    refused { files.saturnFirmware(bios.replace("system-9","system-8"),config,null,biosHash,payload,token) {} }
+    val lost = RootSaveFiles(root,2000,label,{}, { if(it=="linked") error("Lost Saturn BIOS reply") },"mednafen_saturn")
+    refused { lost.saturnFirmware(bios,config,null,biosHash,payload,token) {} }
+    files.saturnFirmware(bios,config,null,biosHash,payload,token) {}
+    check(files.hash(files.path(bios),524288) == biosHash)
+    refused { files.saturnFirmware(bios,config,biosHash,null,null,token.replace("-in","-out")) { error("Writer alive") } }
+    files.path(bios).writeBytes(ByteArray(524288) { 24 })
+    refused { files.saturnFirmware(bios,config,biosHash,null,null,token.replace("-in","-out")) {} }
+    files.path(bios).writeBytes(payload)
+    repeat(2) { files.saturnFirmware(bios,config,biosHash,null,null,token.replace("-in","-out")) {} }
+    check(!files.path(bios).exists())
+    val optionRoot = File(root,"saturn-options").apply { check(mkdir()) }
+    val options = File(optionRoot,"Beetle Saturn.opt").apply { writeText("beetle_saturn_save_method = \"mednafen\"\n");Os.chown(path,2000,2000);Os.chmod(path,384) }
+    check(files.options(options.path,listOf(optionRoot))!!.contentEquals(options.readBytes()))
+    val source = File(root,"library/84/content/Disc.chd").apply { check(parentFile!!.mkdirs());writeBytes(ByteArray(128){1}) }
+    val hash = RootSaveFiles.digest(source.readBytes());val relative = "$base/rom-$nonce/Disc.chd"
+    val staged = files.stageRom(relative,source,0,hash)
+    check(files.hash(staged) == hash)
+    refused { RootSaveFiles.romPath(relative) }
+    refused { RootSaveFiles.romPath(relative.replace(".chd",".iso"),"mednafen_saturn") }
+    files.removeRom(relative,hash)
+    check(!staged.exists() && source.exists())
+    println("PASS: Saturn scoped options, BIOS transaction/core/size guards, interrupted publication, writer/edited-resource refusal, idempotent cleanup and bound CHD staging")
 }

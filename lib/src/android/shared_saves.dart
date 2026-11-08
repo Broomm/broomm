@@ -10,6 +10,7 @@ import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
 import 'opera.dart';
+import 'saturn.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -51,6 +52,13 @@ class SharedAndroidSaves {
           'Opera NVRAM is incomplete. Existing progress was kept.',
         );
       if (plan.rooted &&
+          plan.launch['coreName'] == 'mednafen_saturn' &&
+          e.key.contains('/saves/') &&
+          v['bytes'] != _rootProgressLimit(plan, e.key))
+        throw const FormatException(
+          'Saturn backup memory is incomplete. Existing progress was kept.',
+        );
+      if (plan.rooted &&
           (v['metadata'] is! String ||
               !RegExp(
                 '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
@@ -84,7 +92,7 @@ class SharedAndroidSaves {
     AndroidSavePlan plan,
   ) async {
     final r = await progressJson(journal);
-    if (!{1, 2, 3}.contains(r['version']) ||
+    if (!{1, 2, 3, 4}.contains(r['version']) ||
         r['server'] != game.server ||
         r['profile'] != game.profile ||
         r['rom'] != game.rom ||
@@ -112,11 +120,12 @@ class SharedAndroidSaves {
     if (r['captured'] != null) inventory(r['captured'], plan);
     _lynxFirmware(r, plan);
     _operaFirmware(r, plan);
+    _saturnFirmware(r, plan);
     return r;
   }
 
   Map<String, dynamic>? _lynxFirmware(Map r, AndroidSavePlan plan) {
-    if (r['version'] == 3) return null;
+    if ({3, 4}.contains(r['version'])) return null;
     if (r['version'] == 1) {
       if (r['rootFirmware'] != null ||
           plan.launch['coreName'] == 'mednafen_lynx')
@@ -197,6 +206,55 @@ class SharedAndroidSaves {
     return resources.cast<String, dynamic>();
   }
 
+  Map<String, dynamic> _saturnFirmware(Map r, AndroidSavePlan plan) {
+    if (r['version'] != 4) {
+      if (r['rootSaturnFirmware'] != null ||
+          plan.launch['coreName'] == 'mednafen_saturn')
+        throw const FormatException(
+          'Saturn firmware recovery record is incomplete.',
+        );
+      return {};
+    }
+    final resources = r['rootSaturnFirmware'], config = r['rootConfigPath'];
+    if (!plan.rooted ||
+        plan.launch['coreName'] != 'mednafen_saturn' ||
+        r['coreName'] != 'mednafen_saturn' ||
+        r['rootFirmware'] != null ||
+        plan.launch['platform'] != 'saturn' ||
+        resources is! Map ||
+        resources.length < 2 ||
+        resources.length > 3 ||
+        config is! String ||
+        config != plan.launch['configPath'] ||
+        !config.startsWith('files/Broomm/${r['profile']}/${r['rom']}/'))
+      throw const FormatException(
+        'Saturn firmware recovery identity changed. Files were kept.',
+      );
+    final system = _operaSystemDirectory(config);
+    if (r['transaction'] !=
+        config.substring(config.lastIndexOf('/config-') + 8, config.length - 4))
+      throw const FormatException(
+        'Saturn disc and firmware transaction identities differ. Recovery was kept.',
+      );
+    if (!resources.keys.toSet().containsAll({'sega_101.bin', 'mpr-17933.bin'}))
+      throw const FormatException(
+        'Saturn regional BIOS recovery resources are incomplete. Files were kept.',
+      );
+    for (final entry in resources.entries) {
+      final spec = androidSaturnFirmware[entry.key], value = entry.value;
+      if (spec == null ||
+          value is! Map ||
+          value.length != 3 ||
+          value['path'] != '$system/${entry.key}' ||
+          value['bytes'] != spec.$1 ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['sha256'] as String? ?? ''))
+        throw const FormatException(
+          'Invalid Saturn firmware recovery resource. Files were kept.',
+        );
+    }
+    return resources.cast<String, dynamic>();
+  }
+
   Future<void> copy(File from, File to, Map metadata) async {
     await to.create(exclusive: true);
     final out = await to.open(mode: FileMode.writeOnly);
@@ -267,6 +325,7 @@ class SharedAndroidSaves {
     final boot = plan.lynxBootImage;
     final lynx = plan.rooted && plan.launch['coreName'] == 'mednafen_lynx';
     final opera = plan.rooted && plan.launch['coreName'] == 'opera';
+    final saturn = plan.rooted && plan.launch['coreName'] == 'mednafen_saturn';
     if (lynx && boot == null || !lynx && boot != null)
       throw StateError(
         'Prepare the verified Lynx BIOS before starting this session.',
@@ -282,17 +341,33 @@ class SharedAndroidSaves {
       throw StateError(
         'Prepare the verified Opera disc and selected firmware before starting this session.',
       );
+    final saturnResources = plan.saturnResources;
+    if (saturn &&
+            (saturnResources == null ||
+                plan.saturnDisc == null ||
+                plan.saturnDisc!.file.path != selected ||
+                saturnResources.map((f) => f.name).join('\n') !=
+                    androidSaturnResourceNames(plan.saturnOptions)
+                        .join('\n')) ||
+        !saturn && (saturnResources != null || plan.saturnDisc != null))
+      throw StateError(
+        'Prepare the verified Saturn disc and firmware before starting this session.',
+      );
     await manager.channel.invokeMethod<void>(
       plan.method('Check'),
       plan.arguments,
     );
     final r = <String, dynamic>{
-      'version': opera
+      'version': saturn
+          ? 4
+          : opera
           ? 3
           : lynx
           ? 2
           : 1,
-      'transaction': opera ? plan.launch['transaction'] : progressNonce(),
+      'transaction': opera || saturn
+          ? plan.launch['transaction']
+          : progressNonce(),
       ...plan.arguments,
       'server': game.server,
       'profile': game.profile,
@@ -324,9 +399,20 @@ class SharedAndroidSaves {
               'sha256': image.sha256,
             },
         },
+      if (saturn)
+        'rootSaturnFirmware': {
+          for (final image in saturnResources!)
+            image.name: {
+              'path':
+                  '${_operaSystemDirectory(plan.launch['configPath']!)}/${image.name}',
+              'bytes': image.bytes,
+              'sha256': image.sha256,
+            },
+        },
     };
     _lynxFirmware(r, plan);
     final operaFirmware = _operaFirmware(r, plan);
+    final saturnFirmware = _saturnFirmware(r, plan);
     await progressDirectory(directory(r));
     if (boot != null) {
       if (await boot.file.length() != 512)
@@ -344,6 +430,17 @@ class SharedAndroidSaves {
       );
     }
     for (final image in operaResources ?? <AndroidOperaResource>[]) {
+      await copy(
+        image.file,
+        await progressFile(
+          directory(r),
+          'firmware/${image.name}',
+          createParents: true,
+        ),
+        {'bytes': image.bytes, 'sha256': image.sha256},
+      );
+    }
+    for (final image in saturnResources ?? <AndroidSaturnResource>[]) {
       await copy(
         image.file,
         await progressFile(
@@ -379,6 +476,12 @@ class SharedAndroidSaves {
         metadata,
       );
     }
+    if (saturn)
+      verifyAndroidSaturnWorking(
+        plan.saturnOptions,
+        retroStateStem(selected),
+        working.keys,
+      );
     inventory(working, plan);
     await progressWrite(
       await progressFile(
@@ -406,6 +509,20 @@ class SharedAndroidSaves {
     }
     for (final entry in operaFirmware.entries) {
       await manager.channel.invokeMethod<void>('rootOperaFirmware', {
+        ...plan.arguments,
+        'path': entry.value['path'],
+        'configPath': plan.launch['configPath'],
+        'before': null,
+        'after': entry.value['sha256'],
+        'source': (await progressFile(
+          directory(r),
+          'firmware/${entry.key}',
+        )).path,
+        'token': '${r['transaction']}-in',
+      });
+    }
+    for (final entry in saturnFirmware.entries) {
+      await manager.channel.invokeMethod<void>('rootSaturnFirmware', {
         ...plan.arguments,
         'path': entry.value['path'],
         'configPath': plan.launch['configPath'],
@@ -477,6 +594,7 @@ class SharedAndroidSaves {
         if (group != null) 'stateGroup': group as String,
       },
       operaOptions: current.operaOptions,
+      saturnOptions: current.saturnOptions,
     );
     await record(game, plan);
     return plan;
@@ -531,7 +649,16 @@ class SharedAndroidSaves {
     Directory? extraction;
     String? checkedRomHash;
     try {
-      if (plan.launch['coreName'] == 'opera') {
+      if (plan.launch['coreName'] == 'mednafen_saturn') {
+        final disc = plan.saturnDisc;
+        if (disc == null ||
+            disc.file.path != source.path ||
+            await source.length() != disc.bytes)
+          throw StateError(
+            'The verified Saturn disc changed before staging. Recovery was kept.',
+          );
+        checkedRomHash = disc.sha256;
+      } else if (plan.launch['coreName'] == 'opera') {
         final disc = plan.operaDisc;
         if (disc == null ||
             disc.file.path != source.path ||
@@ -806,6 +933,16 @@ class SharedAndroidSaves {
         'token': '${r['transaction']}-out',
       });
     }
+    for (final entry in _saturnFirmware(r, plan).entries) {
+      await manager.channel.invokeMethod<void>('rootSaturnFirmware', {
+        ...plan.arguments,
+        'path': entry.value['path'],
+        'configPath': plan.launch['configPath'],
+        'before': entry.value['sha256'],
+        'after': null,
+        'token': '${r['transaction']}-out',
+      });
+    }
     await progressWrite(await progressFile(directory(r), 'completed.json'), r);
     await journal.delete();
   }
@@ -856,6 +993,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
       'root-gameboy-v1' => {'gb', 'gbc', 'dmg'},
       'root-cartridge-v1' => switch (plan.launch['platform']) {
         '3do' => {'chd', 'iso', 'bin'},
+        'saturn' => {'chd'},
         'atari2600' => {'a26', 'bin'},
         'tg16' => {'pce'},
         'genesis' => {'md', 'gen', 'smd', 'bin'},
@@ -874,7 +1012,7 @@ Set<String> _rootRomExtensions(AndroidSavePlan plan) =>
 
 int _rootRomLimit(AndroidSavePlan plan) =>
     (switch (plan.launch['platform']) {
-      '3do' => 1024,
+      '3do' || 'saturn' => 1024,
       'arcade' => 128,
       'n64' => 64,
       _ => 32,
@@ -883,6 +1021,14 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))
+    return path.endsWith('.smpc')
+        ? 12
+        : path.endsWith('.4mb.bcr')
+        ? 4 * 1024 * 1024
+        : path.endsWith('.bcr')
+        ? 512 * 1024
+        : 32768;
   if (plan.launch['coreName'] == 'opera' && path.contains('/saves/'))
     return 32768;
   final n64 = plan.launch['coreName'] == 'mupen64plus_next';

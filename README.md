@@ -428,6 +428,19 @@ standalone settings. Selected external BIOS/font use and other ABI gameplay are
 not newly verified. See the [scope and walkthrough](docs/android-retroarch-cores.md#opera-self-contained-disc-source-increment)
 and [device evidence](docs/android-retroarch-opera.json).
 
+Current source adds **Saturn → RetroArch → Set up** with pinned Beetle Saturn.
+Use one self-contained CHD v5 up to 1 GiB; add the canonical `sega_101.bin` and
+`mpr-17933.bin` to Saturn's firmware catalogue in RomM. First Play verifies and
+caches both privately. Native internal memory, console settings, backup cartridges
+and compatible manual states synchronize together. Keep the matching Save Method,
+Backup Memory Size and sharing options when restoring existing progress; a mode
+mismatch asks for correction while retaining every copy. Quit normally, wait for
+sync, then verify both an in-game save and Load State after relaunch. Native disc,
+BIOS and session configuration files are temporary; Broomm progress/cache/recovery
+remain private. CUE file sets and automatic ROM-cartridge detection remain pending.
+Packaged Thor acceptance is pending. See the
+[scope and walkthrough](docs/android-retroarch-cores.md#beetle-saturn-source-increment).
+
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker

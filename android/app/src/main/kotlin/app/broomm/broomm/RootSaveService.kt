@@ -113,7 +113,7 @@ class RootSaveService : RootService() {
                 }
                 "check" -> Bundle()
                 "options" -> {
-                    require(coreName == "opera")
+                    require(coreName in setOf("opera", "mednafen_saturn"))
                     ensureClosed()
                     val requested = request.getString("path")!!
                     val path = if (requested.startsWith("/data/data/$pkg/"))
@@ -178,6 +178,15 @@ class RootSaveService : RootService() {
                         RootSaveTransfer.read(it, caller, 1024 * 1024, ::live)
                     }
                     files.operaFirmware(request.getString("path")!!, request.getString("configPath")!!,
+                        request.getString("before"), request.getString("after"), payload,
+                        request.getString("token")!!, ::ensureClosed)
+                    Bundle()
+                }
+                "saturnfirmware" -> {
+                    val payload = request.getParcelable<ParcelFileDescriptor>("transfer")?.let {
+                        RootSaveTransfer.read(it, caller, 2 * 1024 * 1024, ::live)
+                    }
+                    files.saturnFirmware(request.getString("path")!!, request.getString("configPath")!!,
                         request.getString("before"), request.getString("after"), payload,
                         request.getString("token")!!, ::ensureClosed)
                     Bundle()

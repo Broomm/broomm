@@ -22,6 +22,7 @@ void main() {
     ('mednafen_lynx', '1.24.0-fcdefcf'),
     ('fbneo', '1.0.0.03-20261107'),
     ('opera', '1.0.0-370d9a2'),
+    ('mednafen_saturn', '1.32.1-30f4c12'),
   ]) {
     test(
       'each versioned $core archive verifies and publishes its reviewed core',

@@ -84,7 +84,14 @@ class AndroidGameSession extends ChangeNotifier {
         value['coreName'] == 'opera' &&
         value['rootPlatform'] == '3do' &&
         value['access'] == 'root-cartridge-v1';
-    if (value['version'] != 1 && !lynxSwap && !operaSwap ||
+    final saturnSwap =
+        sharedSwap &&
+        value['version'] == 4 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'mednafen_saturn' &&
+        value['rootPlatform'] == 'saturn' &&
+        value['access'] == 'root-cartridge-v1';
+    if (value['version'] != 1 && !lynxSwap && !operaSwap && !saturnSwap ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(value['profile'] as String? ?? '') ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(value['server'] as String? ?? '') ||
@@ -96,6 +103,7 @@ class AndroidGameSession extends ChangeNotifier {
       );
     if (lynxSwap ||
         operaSwap ||
+        saturnSwap ||
         sharedSwap &&
             androidRootAccessModes.contains(value['access']) &&
             value['rootStateGroup'] != null) {
