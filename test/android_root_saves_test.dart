@@ -1586,6 +1586,42 @@ void main() {
     expect(await rom.readAsBytes(), [1, 2, 3]);
   });
 
+  test('a ROMset replacement during inspection cannot reach native staging or discard recovery', () async {
+    await manager.connectGbaRoot(emulator, platform: 'arcade');
+    final chips = await Directory('${temp.path}/changing-chips').create();
+    final chip = await File('${chips.path}/chip.bin').writeAsBytes([1, 2, 3]);
+    final rom = File('${temp.path}/simpsons2p.zip');
+    await ProgressZip.write(rom, chips, ['chip.bin']);
+    await chip.writeAsBytes([4, 5, 6]);
+    final replacement = File('${temp.path}/replacement.zip');
+    await ProgressZip.write(replacement, chips, ['chip.bin']);
+    final next = await replacement.readAsBytes();
+    final p = await gameboyPlan('arcade', rom.path), g = game(p);
+    final original = await put(p.remotePath('save/fbneo/simpsons2p.fs'), [
+      8,
+      9,
+    ]);
+    var replaced = false;
+    final saves = SharedAndroidSaves(
+      manager,
+      phase: (phase) {
+        if (phase == 'Verifying the FBNeo ROMset…') {
+          replaced = true;
+          rom.writeAsBytesSync(next, flush: true);
+        }
+      },
+    );
+    await saves.begin(g, p, 'a' * 64, selected: rom.path);
+    await expectLater(saves.stageRootRom(g, p), throwsStateError);
+    expect(replaced, true);
+    expect(calls, isNot(contains('rootStageRom')));
+    expect(await saves.pending, true);
+    await saves.capture(g, cloud, p);
+    await saves.restoreOriginal(g, p);
+    expect(await original.readAsBytes(), [8, 9]);
+    expect(await rom.readAsBytes(), next);
+  });
+
   Future<AndroidSavePlan> lynxPlan(String rom, {bool boot = true}) async {
     final p = await gameboyPlan('lynx', rom);
     if (!boot) return p;

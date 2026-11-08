@@ -413,11 +413,13 @@ class SharedAndroidSaves {
         'Rooted RetroArch requires one supported cartridge, uncompressed or in a ZIP.',
       );
     Directory? extraction;
+    String? checkedRomHash;
     try {
       if (plan.launch['coreName'] == 'fbneo') {
         // The core consumes the complete multi-chip ROMset. Broomm validates
         // ZIP structure and bounds without extracting or renaming its chips.
         phase?.call('Checking the complete FBNeo ROMset…');
+        checkedRomHash = await progressFileHash(source);
         final zip = await ProgressZip.read(
           source,
           maxBytes: _rootRomLimit(plan) * 4,
@@ -425,6 +427,11 @@ class SharedAndroidSaves {
         );
         if (zip.entries.isEmpty)
           throw const FormatException('The FBNeo ROMset is empty.');
+        phase?.call('Verifying the FBNeo ROMset…');
+        if (await progressFileHash(source) != checkedRomHash)
+          throw StateError(
+            'The FBNeo ROMset changed during inspection. Existing progress was kept. Try again.',
+          );
       } else if (extension == 'zip') {
         phase?.call('Checking and extracting the cartridge…');
         final before = await progressFileHash(source);
@@ -469,7 +476,7 @@ class SharedAndroidSaves {
         throw StateError(
           'The RetroArch game file must be between 1 byte and ${_rootRomLimit(plan) ~/ (1024 * 1024)} MiB.',
         );
-      final hash = await progressFileHash(source);
+      final hash = checkedRomHash ?? await progressFileHash(source);
       r['romStage'] = path;
       r['romStageSha256'] = hash;
       await progressWrite(journal, r);

@@ -503,11 +503,13 @@ files; other installed cores and standalone settings are retained.
 Version 13 reads earlier settings without claiming an old Arcade connection.
 State recovery uses its original recorded group independently of ordinary-save
 filename rules, including a lost general marker. Missing NVRAM cannot publish
-deletion. All 675 Flutter tests (one existing native-host skip), 80 focused
+deletion. All 676 Flutter tests (one existing native-host skip), 81 focused
 checks and fifteen disposable Thor filesystem/launch groups pass, with clean
 analysis and compiled bridge/fixture. Native cases include nested files,
 wrong-core/foreign-path refusal, interrupted publication and exact 128 MiB
-streamed ROMset staging. The initial migration and fault-fixture failures and
+streamed ROMset staging. All four permanent URLs also pass a real production download, checksum and ELF
+check. Inspection retains its exact hash through native handoff; a deterministic
+source-replacement regression preserves recovery. The initial migration and fault-fixture failures and
 their diagnostics are retained; no assertion or deadline was relaxed. These
 checks do not establish packaged FBNeo gameplay, other ABI or cross-device play.
 

@@ -16,10 +16,12 @@ the desktop nested ZIP save contract, with APK/ABI/core-matched states. Native
 selectors reject foreign drivers, temporary/nested paths and another core's
 requests. Recovery retains the original state group even without the general
 marker; it no longer infers a state's filename from an ordinary-save prefix.
+The native handoff uses the exact hash validated around ZIP inspection; a
+controlled source replacement retains recovery instead of staging new bytes.
 Missing working NVRAM remains damaged recovery. Setup persistence and generic
 connection reporting cover the new route and retain earlier routes.
 
-Clean analysis, all 675 Flutter tests (one existing native-host skip), 80 focused
+Clean analysis, all 676 Flutter tests (one existing native-host skip), 81 focused
 checks and fifteen disposable Thor filesystem/launch groups pass. The bridge
 and fixture compile. An initial migration regression caught an omitted persisted
 Arcade binding; corrected checks pass. The first native fixture targeted a
