@@ -27,6 +27,11 @@ compilation and JVM root/lifecycle regressions pass. The current native Thor
 fixture also verifies 602 files across bounded Binder pages and a streamed
 16 MiB state without a Binder byte array.
 
+A further PSP regression verifies newer native savedata/state produced during a
+failed backup's retry: completion retains the loan and reseals that newer copy,
+including its state provenance, instead of acknowledging the earlier capture.
+All nine focused PSP workflows pass after this correction.
+
 Current PR APK packaging, real Broomm content-URI Play, ordinary LocoRoco saving,
 two-account/state/offline/cloud replay, preservation audits and the updated
 macOS package remain to be completed. Other standalone emulators have not begun. See the

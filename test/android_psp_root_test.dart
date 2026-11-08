@@ -35,6 +35,7 @@ class PspRootFixture {
       loseReplace = false,
       loseSelect = false,
       loseRead = false;
+  bool loseProfileRead = false;
   int inode = 500, clock = 100;
   int pageLimit = 8192;
   bool corruptPage = false;
@@ -223,8 +224,9 @@ class PspRootFixture {
       if (e['sha256'] != a['sha256'] || e['metadata'] != a['metadata'])
         throw PlatformException(code: 'changed-capture');
       await target.create(exclusive: true);
-      if (loseRead) {
+      if (loseRead || loseProfileRead && call.method == 'rootPspProfileRead') {
         loseRead = false;
+        loseProfileRead = false;
         await target.writeAsBytes([1]);
         throw PlatformException(code: 'lost-read-reply');
       }
@@ -647,5 +649,38 @@ void main() {
       await File('${native.memory(owner).path}/PSP/SYSTEM/ppsspp.ini').exists(),
       true,
     );
+  });
+
+  test('a later native save during backup recovery is retained and synchronized rather than acknowledged as the older capture', () async {
+    final session = await start(),
+        owner = await activeProfile(profileId),
+        p = await plan();
+    await native.put(owner, 'PSP/SAVEDATA/ULUS10340SAVE/DATA.BIN', [1, 2]);
+    native.state = 'idle';
+    native.loseProfileRead = true;
+    await expectLater(
+      session.finishIfPspClosed(),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(
+      (await progressJson(File('${data.path}/android/psp-swap.json')))['phase'],
+      'finishing',
+    );
+    expect(api.records, hasLength(1));
+    await native.put(owner, 'PSP/SAVEDATA/ULUS10340SAVE/DATA.BIN', [3, 4]);
+    await native.put(owner, 'PSP/PPSSPP_STATE/ULUS10340_1.02_0.ppst', [9, 10]);
+    await expectLater(session.finishIfPspClosed(), throwsStateError);
+    expect(
+      (await progressJson(File('${data.path}/android/psp-swap.json')))['phase'],
+      'launched',
+    );
+    expect(await session.finishIfPspClosed(), AndroidPspState.closed);
+    expect(
+      await (await p.target('save/ULUS10340SAVE/DATA.BIN')).readAsBytes(),
+      [3, 4],
+    );
+    expect(api.records, hasLength(2));
+    expect(api.stateRecords, isNotEmpty);
+    expect(native.selected, 'native');
   });
 }

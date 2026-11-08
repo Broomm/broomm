@@ -624,9 +624,15 @@ class AndroidPspSession {
         );
       final capture = await hold(r, plan, files),
           snapshot = await seal(game, plan, r, files, capture);
-      await cloud
-          .store(game)
-          .restore(snapshot, await cloud.store(game).state());
+      final store = cloud.store(game);
+      var state = await store.state();
+      if (state['active'] != true)
+        state = {
+          ...state,
+          'active': true,
+          'stateBefore': await store.stateFiles(),
+        };
+      await store.restore(snapshot, state);
       r.addAll({'phase': 'captured', 'captured': files});
       await progressWrite(journal, r);
     }
@@ -654,6 +660,19 @@ class AndroidPspSession {
     );
     await roots.backup(profile);
     if (r['captured'] != null) {
+      if (!pspInventorySame(
+        r['captured'] as Map,
+        await list(r, plan),
+        metadata: false,
+      )) {
+        // A reopened native app can produce a newer closed copy while an
+        // earlier upload/backup is retried. Keep the loan until it is sealed.
+        r['phase'] = 'launched';
+        await progressWrite(journal, r);
+        throw StateError(
+          'PPSSPP saves changed after capture. The newer copy was kept; retry to synchronize it after Exit.',
+        );
+      }
       final local = await cloud.store(game).capture();
       await progressWrite(await baseline(game, plan), {
         'version': 1,
