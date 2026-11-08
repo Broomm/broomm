@@ -21,7 +21,11 @@ Native PS1 research found a fresh-boot defect hidden by successful state resume:
 the reviewed beta consumes a translated document path, not a raw content URI.
 The next correction adds read-only document aliases and version/signer-bound
 launch translation; JVM refusals and bridge compilation pass. Actual Broomm
-provider acceptance remains pending. Native Slot 1/resume files are retained,
+provider test on build 1119 exposed that document-shaped aliases on a generic
+content provider are insufficient. An opaque-ID experiment also misresolved
+the optional SBI sidecar to the ROM. A dedicated read-only DocumentsProvider
+now keeps related-file identity correct, with no browsable roots or write
+capability; native acceptance of this correction is pending. Native Slot 1/resume files are retained,
 unassigned; ordinary-save/input/root-session acceptance is still outstanding.
 
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed

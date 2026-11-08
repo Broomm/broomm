@@ -1,6 +1,7 @@
 package app.broomm.broomm
 
 import android.content.ContentProvider
+import android.content.Context
 import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
@@ -13,20 +14,22 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileNotFoundException
 
+internal fun gameGrantFile(context: Context, grant: GameGrantPath): File {
+    val record = context.getSharedPreferences("game-grants", 0).getString(grant.token, null)
+        ?: throw FileNotFoundException("Game grant expired")
+    val value = JSONObject(record)
+    val files = value.getJSONArray("files")
+    return grantedGameFile(context.filesDir, grant, value.getString("base"),
+        (0 until files.length()).map { files.getString(it) })
+}
+
 /** Read-only capabilities for a verified library manifest, never all filesDir. */
 class GameContentProvider : ContentProvider() {
     override fun onCreate() = true
     private fun file(uri: Uri): File {
         val grant = try { gameGrantPath(uri.pathSegments) }
             catch (_: IllegalArgumentException) { throw FileNotFoundException("Invalid game grant") }
-        val record = context!!.getSharedPreferences("game-grants", 0).getString(grant.token, null)
-            ?: throw FileNotFoundException("Game grant expired")
-        val value = JSONObject(record)
-        val files = value.getJSONArray("files")
-        val path = value.getString("base") + "/" + grant.relative.joinToString("/")
-        if (!(0 until files.length()).any { files.getString(it) == path }) throw FileNotFoundException("Unknown game file")
-        return try { gameLibraryFile(context!!.filesDir, path) }
-        catch (_: Exception) { throw FileNotFoundException("Game file is missing or linked") }
+        return gameGrantFile(context!!, grant)
     }
     override fun getType(uri: Uri) = "application/octet-stream"
     override fun query(uri: Uri, projection: Array<out String>?, selection: String?,

@@ -11,7 +11,7 @@ internal fun duckStationDocumentLaunch(code: Long, version: String?, signer: Str
 }
 
 internal fun duckStationGamePath(authority: String, path: GameGrantPath): String {
-    require(Regex("[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+\\.games").matches(authority))
+    require(Regex("[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+\\.games\\.documents").matches(authority))
     val checked = gameGrantPath(listOf("document", path.documentId))
     return "/android_content/$authority/document@${checked.token}/${checked.relative.joinToString("/")}"
 }

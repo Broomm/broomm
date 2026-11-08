@@ -6,6 +6,7 @@ import app.broomm.broomm.preparedCartridgeFromRelative
 import app.broomm.broomm.preparedCartridgeRelative
 import app.broomm.broomm.GameGrantPath
 import app.broomm.broomm.gameGrantPath
+import app.broomm.broomm.grantedGameFile
 import app.broomm.broomm.duckStationDocumentLaunch
 import app.broomm.broomm.duckStationGamePath
 import java.io.File
@@ -17,8 +18,9 @@ fun main() {
     val legacy = gameGrantPath(listOf("game", token) + parts)
     val document = gameGrantPath(listOf("document", "$token:${parts.joinToString("/")}"))
     check(legacy == document && document == GameGrantPath(token, parts))
-    check(duckStationGamePath("app.broomm.broomm.games", document) ==
-        "/android_content/app.broomm.broomm.games/document@$token/Discs/Mega Man – X4 #1.chd")
+    check(duckStationGamePath("app.broomm.broomm.games.documents", document) ==
+        "/android_content/app.broomm.broomm.games.documents/document@$token/Discs/Mega Man – X4 #1.chd")
+    check(runCatching { duckStationGamePath("app.broomm.broomm.games", document) }.isFailure)
     for (bad in listOf(
         emptyList(), listOf("document", "$token:"), listOf("document", "foreign:Game.chd"),
         listOf("document", "$token:../Game.chd"), listOf("document", "$token:dir//Game.chd"),
@@ -42,6 +44,17 @@ fun main() {
         val rom = File(real, relative).apply { parentFile.mkdirs(); writeBytes(byteArrayOf(1, 2)) }
         check(gameLibraryFile(alias, File(alias, relative).path) == rom)
         check(gameLibraryFile(alias, rom.path) == rom)
+        val granted = GameGrantPath(token, listOf(rom.name))
+        val content = rom.parentFile.path
+        check(grantedGameFile(alias, granted, content, listOf(rom.path)) == rom)
+        val sidecar = File(rom.parentFile, "Minish Cap.sbi").apply { writeBytes(byteArrayOf(9)) }
+        val sibling = GameGrantPath(token, listOf(sidecar.name))
+        // Missing/ungranted siblings must not resolve to the main image.
+        check(runCatching { grantedGameFile(alias, sibling, content, listOf(rom.path)) }.isFailure)
+        check(grantedGameFile(alias, sibling, content, listOf(rom.path, sidecar.path)).readBytes().contentEquals(byteArrayOf(9)))
+        sidecar.delete()
+        check(runCatching { grantedGameFile(alias, sibling, content, listOf(rom.path, sidecar.path)) }.isFailure)
+        println("PASS: exact ROM and separately granted sidecar resolve independently; ungranted and missing sidecars never substitute the ROM")
         // Separate mount names can both be canonical. The receiving side
         // resolves the validated relative path beneath its own library.
         val serviceFiles = File(fixture, "service-files").apply { mkdir() }

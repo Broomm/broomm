@@ -185,7 +185,8 @@ class BroommEmulators(private val activity: Activity) {
                                 .putString(token, JSONObject().put("files", JSONArray(files)).put("base", content).toString())
                                 .putString("active-root", activeRoot).commit())
                             val uris = files.mapIndexed { index, path ->
-                                Uri.Builder().scheme("content").authority("${activity.packageName}.games").also { builder ->
+                                Uri.Builder().scheme("content").authority(
+                                    "${activity.packageName}.games" + if (duckDocuments) ".documents" else "").also { builder ->
                                     if (duckDocuments) builder.appendPath("document").appendPath(documents[index].documentId)
                                     else {
                                         builder.appendPath("game").appendPath(token)
@@ -215,7 +216,7 @@ class BroommEmulators(private val activity: Activity) {
                                     "dolphin" -> putExtra("AutoStartFile", uri.toString())
                                     "duckstation" -> {
                                         putExtra("bootPath", if (duckDocuments)
-                                            duckStationGamePath("${activity.packageName}.games", documents[files.indexOf(selected)])
+                                            duckStationGamePath("${activity.packageName}.games.documents", documents[files.indexOf(selected)])
                                             else uri.toString())
                                         if (!duckDocuments) putExtra("resumeState", false)
                                     }
@@ -278,6 +279,8 @@ class BroommEmulators(private val activity: Activity) {
                                 activity.revokeUriPermission(root, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             }
                             activity.revokeUriPermission(Uri.parse("content://${activity.packageName}.games/document"),
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            activity.revokeUriPermission(Uri.parse("content://${activity.packageName}.games.documents/document"),
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             check(prefs.edit().clear().commit())
                             result.success(null)

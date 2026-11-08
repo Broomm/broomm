@@ -93,7 +93,7 @@ interactive gameplay and physical input are not yet accepted. All native test
 states remain unassigned; no Broomm PS1 session or cloud publication occurred.
 Injected ADB observations do not establish owner visual verification.
 
-## Fresh-boot handoff correction — native acceptance pending
+## Fresh-boot handoff correction — real-provider failure and correction
 
 The exact APK was inspected privately with Android 13's preinstalled `dexdump`;
 no decompiler dependency, APK redistribution or copied upstream implementation
@@ -116,7 +116,35 @@ Other builds/emulators retain their existing handoff. A mismatched 12126 identit
 refuses before granting access. No save-folder connection is added. Kotlin/JVM
 regressions cover corresponding aliases, Unicode/space names, malformed paths,
 boundary refusals and version/signer selection; bridge compilation passes.
-Actual Broomm provider and repeated-session/state acceptance remain pending.
+Full CI for `457c8e1` passed all checks and five packages. Its retained-key
+build 1119 upgraded with the same app UID and emulator-settings hash. An isolated
+ARM64 development fixture replaced only the Dart entry point, retaining all
+native/manifest payloads from that package. It used the real installed-game
+receipt, session lease, emulator adapter and read-only provider, without reading
+credentials, starting a profile/cloud session or capturing saves.
+
+That real-provider test failed fresh boot. The regular translated path calls
+`DocumentsContract.isDocumentUri`, which requires a registered document provider;
+the generic content provider's document-shaped alias is insufficient. Native
+APK inspection confirmed this branch, consistent with the
+[Android document contract](https://developer.android.com/reference/android/provider/DocumentsContract#isDocumentUri(android.content.Context,%20android.net.Uri)).
+An opaque-ID path opened the CHD but then treated it as the optional `.sbi`
+sidecar: changing only the display-name suffix left the underlying document ID
+unchanged. That route was rejected. Neither failure is accepted gameplay or
+state compatibility.
+
+The correction adds a separate `DocumentsProvider` at `.games.documents`,
+protected by `MANAGE_DOCUMENTS` and exact temporary read grants. It advertises
+no roots, directory access, writing or mutation. Both providers consume the same
+token/manifest and owned-library resolver. Native related-file resolution can
+now change the actual document-relative name; missing or ungranted files fail
+instead of substituting the ROM. Existing emulator URIs keep their original
+provider. See the [provider API contract](https://developer.android.com/reference/android/provider/DocumentsProvider).
+JVM regressions cover exact ROM/sidecar correspondence, ungranted and missing
+sidecars, and refusal of the generic authority for this launch contract.
+Corrected real-provider boot and repeated-session/state acceptance remain pending.
+The failed fixture was replaced with the normal build 1119; its temporary read
+grants will be cleared through the production adapter in the corrected test.
 
 The APK also shows that base settings load once into a retained interface and
 save when MainActivity pauses. Replacing `settings.ini` beneath a cached process
