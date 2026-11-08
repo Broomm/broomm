@@ -183,6 +183,41 @@ void main() {
     );
   });
 
+  test('Options written by the real Android core retain native reicast preferences and enforce every VMU port for both build prefixes', () async {
+    final bytes = await File('test/fixtures/android_flycast_reicast.opt')
+        .readAsBytes();
+    final native = parseAndroidFlycastOptions(bytes);
+    expect(native['reicast_cable_type'], 'VGA');
+    expect(native['reicast_per_content_vmus'], 'disabled');
+    final supplied = parseAndroidFlycastOptions(
+      Uint8List.fromList(utf8.encode(androidFlycastOptionsText(native))),
+    );
+    expect(supplied['reicast_per_content_vmus'], 'All VMUs');
+    expect(supplied['reicast_linked_vmu_storage'], 'disabled');
+    expect(supplied['flycast_per_content_vmus'], 'All VMUs');
+    expect(supplied['flycast_linked_vmu_storage'], 'disabled');
+    await writeAndroidFlycastPreferences(temp, '42', supplied);
+    final next = await readAndroidFlycastPreferences(temp, '42');
+    expect(next['reicast_cable_type'], 'VGA');
+    expect(next['reicast_internal_resolution'], '640x480');
+    expect(next.containsKey('reicast_per_content_vmus'), false);
+    for (final invalid in [
+      'reicast_cable_type = "VGA"\nreicast_cable_type = "TV (Composite)"',
+      'reicast_cable_type = not-quoted',
+    ]) {
+      expect(
+        () => parseAndroidFlycastOptions(
+          Uint8List.fromList(utf8.encode(invalid)),
+        ),
+        throwsFormatException,
+      );
+    }
+    expect(
+      await File('test/fixtures/android_flycast_reicast.opt').readAsBytes(),
+      bytes,
+    );
+  });
+
   test('Flycast follows actual frontend option precedence without changing its source files', () async {
     const channel = MethodChannel('app.broomm/flycast-test');
     const base = '/storage/emulated/0/Android/data/com.retroarch.aarch64/files';

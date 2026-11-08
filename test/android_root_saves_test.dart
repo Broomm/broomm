@@ -1996,6 +1996,51 @@ void main() {
     expect((await p.files()).keys, contains('save/MK-51000.A1.bin'));
   });
 
+  for (final prefix in ['reicast', 'flycast'])
+    test(
+      'Changing the active $prefix VMU mode retains ordinary and state recovery without publishing progress',
+      () async {
+        await manager.connectGbaRoot(emulator, platform: 'dc');
+        final rom = await saturnRom(),
+            p = await flycastPlan((await saturnRom()).path);
+        final saves = SharedAndroidSaves(manager), g = game(p);
+        await saves.begin(g, p, 'a' * 64, selected: rom.path);
+        final r = await progressJson(saves.journal);
+        final paths = (r['rootFlycastResources'] as Map).keys.cast<String>();
+        final bios = paths.singleWhere((p) => p.endsWith('/dc_boot.bin'));
+        await put(
+          bios.replaceFirst('dc_boot.bin', 'dc_nvmem.bin'),
+          List.filled(131072, 3),
+        );
+        final options = paths.singleWhere((p) => p.endsWith('.opt'));
+        await put(
+          options,
+          utf8.encode(
+            androidFlycastOptionsText({}).replaceFirst(
+              '${prefix}_per_content_vmus = "All VMUs"',
+              '${prefix}_per_content_vmus = "disabled"',
+            ),
+          ),
+        );
+        final card = p.remotePath('save/MK-51000.A1.bin');
+        await put(card, List.filled(131072, 6));
+        await put(p.remotePath('${p.areas.last.id}/game.state'), [7, 8]);
+        await expectLater(saves.capture(g, cloud, p), throwsStateError);
+        final failed = await progressJson(saves.journal),
+            held = failed['rootFlycastHeldProgress'] as Map;
+        expect((held['files'] as Map).length, 2);
+        expect(
+          await File('${saves.directory(r).path}/${held['directory']}/$card')
+              .readAsBytes(),
+          List.filled(131072, 6),
+        );
+        expect(api.records, isEmpty);
+        expect(await saves.pending, true);
+        expect(await readAndroidFlycastConsole(Directory(p.root)), isNull);
+        expect(await rom.exists(), true);
+      },
+    );
+
   test('Dreamcast lost firmware reply recovers without source files and rejects foreign or incomplete version-five records', () async {
     await manager.connectGbaRoot(emulator, platform: 'dc');
     final rom = await saturnRom(),

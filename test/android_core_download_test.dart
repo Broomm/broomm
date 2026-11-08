@@ -64,6 +64,13 @@ void main() {
                   hash,
                   (provenance['archives'] as Map)[abi]['payload_sha256'],
                 );
+                if (core == 'flycast') {
+                  // Inspect the actual reviewed libraries, independently of the
+                  // app's option serializer: Android retains the reicast names.
+                  final symbols = latin1.decode(await payload.readAsBytes());
+                  expect(symbols, contains('reicast_per_content_vmus\u0000'));
+                  expect(symbols, contains('reicast_linked_vmu_storage\u0000'));
+                }
               },
             );
             expect(publications, 1);

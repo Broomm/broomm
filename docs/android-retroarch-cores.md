@@ -851,3 +851,19 @@ and [`nvmem::loadFiles/loadHle`](https://github.com/libretro/flycast/blob/7adbf3
 It records HLE explicitly; older v5 records still require their known boot ROM.
 All 88 focused firmware/root-save cases pass, including a complete HLE resource
 round trip and retained-console reuse. Installed HLE acceptance remains pending.
+
+Build 1098 then boots Sonic Adventure through the HLE route, with normal input,
+native VMU selection and a 9,698,587-byte gameplay state. Its first normal Quit
+exposes a second integration defect: the official Android library consumes
+`reicast_` options, while Broomm supplied only `flycast_` settings. All four
+system VMUs, flash, options and the state are retained in private recovery;
+the guard refuses synchronization. This is not a successful save round trip.
+The pinned
+[`libretro_core_option_defines.h`](https://github.com/libretro/flycast/blob/7adbf3caef251b153e348df3f469a0f35878339d/shell/libretro/libretro_core_option_defines.h)
+and every reviewed ABI payload independently identify the historical prefix.
+Source now preserves both concrete namespaces and supplies/checks the required
+storage options in each. A native options fixture covers actual VGA preference
+retention, both storage-mode refusal boundaries and malformed options. All 108
+focused cases and 720 complete-suite cases pass, with one existing host skip;
+installed correction acceptance remains pending. System-VMU recovery remains
+manual and must preserve the native/private originals.

@@ -54,10 +54,10 @@ Map<String, String> parseAndroidFlycastOptions(Uint8List bytes) {
         'Flycast options include another file. Use a self-contained core option file before rooted Play.',
       );
     final match = RegExp(
-      r'^\s*(flycast_[a-z0-9_]+)\s*=\s*"([^"\x00-\x1f]*)"\s*(?:#.*)?$',
+      r'^\s*((?:reicast|flycast)_[a-z0-9_]+)\s*=\s*"([^"\x00-\x1f]*)"\s*(?:#.*)?$',
     ).firstMatch(line);
     if (match == null) {
-      if (RegExp(r'^\s*flycast_').hasMatch(line))
+      if (RegExp(r'^\s*(?:reicast|flycast)_').hasMatch(line))
         throw const FormatException(
           'Flycast has an unreadable core option. Existing progress was kept.',
         );
@@ -74,6 +74,11 @@ Map<String, String> parseAndroidFlycastOptions(Uint8List bytes) {
 }
 
 const androidFlycastRequiredOptions = {
+  // The reviewed official Android binaries use the historical reicast prefix;
+  // other Flycast builds use flycast. Supply both concrete names, preserving
+  // native preferences and checking both on return instead of guessing by label.
+  'reicast_per_content_vmus': 'All VMUs',
+  'reicast_linked_vmu_storage': 'disabled',
   'flycast_per_content_vmus': 'All VMUs',
   'flycast_linked_vmu_storage': 'disabled',
 };
@@ -81,7 +86,7 @@ const androidFlycastRequiredOptions = {
 String androidFlycastOptionsText(Map<String, String> values) {
   final options = {...values, ...androidFlycastRequiredOptions};
   for (final entry in options.entries) {
-    if (!RegExp(r'^flycast_[a-z0-9_]+$').hasMatch(entry.key) ||
+    if (!RegExp(r'^(?:reicast|flycast)_[a-z0-9_]+$').hasMatch(entry.key) ||
         entry.value.length > 1024 ||
         RegExp(r'["\x00-\x1f\x7f]').hasMatch(entry.value)) {
       throw const FormatException('Invalid private Flycast core option.');

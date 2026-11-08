@@ -1,5 +1,25 @@
 # Implementation plan
 
+## Flycast Android option-prefix correction — 2026-11-08
+
+Build 1098 boots Sonic Adventure with HLE and reaches real controller-driven
+gameplay. A manual 9,698,587-byte state was created. The first normal Quit
+correctly refused synchronization and retained that state plus four system VMUs,
+console flash and core options. The cause is Broomm supplying only `flycast_`
+settings while the actual official Android core consumes `reicast_` settings.
+This is not accepted Dreamcast save synchronization.
+
+The correction reads/preserves both concrete option prefixes and supplies the
+required all-port/private VMU settings for both. Return checks still refuse
+system VMUs and changed storage modes. The pinned source's
+`libretro_core_option_defines.h`, all four real library payloads and a retained
+non-sensitive native options fixture independently establish the Android prefix.
+All 108 focused tests pass; the complete suite has 720 passes, one existing host
+skip and no failures, with clean analysis and unchanged source fingerprints.
+Packaged correction, save restoration, preference retention and two-account
+Dreamcast acceptance remain pending. The failed first test remains recoverable;
+there is no automatic fallback-card conversion feature.
+
 ## Optional Flycast boot ROM correction — 2026-11-08
 
 Packaged build 1097 completed normal Dreamcast Setup, verified Flycast's hash,
