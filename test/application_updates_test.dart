@@ -906,6 +906,7 @@ void main() {
       final current = await Directory('${root.path}/current').create();
       final original = await File('${current.path}/broomm.exe')
           .writeAsString('keep');
+      final timing = Stopwatch()..start();
       final helper = await Process.start(
         '${Platform.environment['SystemRoot']}/System32/WindowsPowerShell/v1.0/powershell.exe',
         [
@@ -925,11 +926,21 @@ void main() {
         ],
         workingDirectory: root.path,
       );
+      final launchedAfter = timing.elapsedMilliseconds;
       final output = helperOutput(helper.stdout),
           errors = helperOutput(helper.stderr),
           exit = helper.exitCode;
+      int? observedExit;
+      unawaited(exit.then<void>((code) => observedExit = code));
       try {
         await waitFor(File('${root.path}/ready'), helperExit: exit);
+        // Keep native runner timing visible even when startup succeeds.
+        // This does not extend the fixture's existing readiness deadline.
+        // ignore: avoid_print
+        print(
+          'Windows updater ready after ${timing.elapsedMilliseconds} ms '
+          '(Process.start returned after $launchedAfter ms).',
+        );
         await File('${root.path}/cancel').writeAsString('cancel');
         expect(await exit.timeout(const Duration(seconds: 8)), 0);
         expect(await claim.exists(), isFalse);
@@ -937,6 +948,25 @@ void main() {
         expect(await original.readAsString(), 'keep');
         expect(await Directory('${root.path}/previous').exists(), isFalse);
       } catch (error, stack) {
+        final failedAfter = timing.elapsedMilliseconds;
+        final ready = File('${root.path}/ready');
+        final readyAtFailure = await ready.exists();
+        // The original assertion has already failed. Cancel before observing
+        // a bounded cleanup window, so a late startup can only acknowledge and
+        // exit. Never turn a late acknowledgement into a passing retry.
+        await File('${root.path}/cancel').writeAsString('cancel', flush: true);
+        int? lateReadyAfter;
+        final cleanup = Stopwatch()..start();
+        while (observedExit == null &&
+            cleanup.elapsed < const Duration(seconds: 8)) {
+          if (!readyAtFailure &&
+              lateReadyAfter == null &&
+              await ready.exists()) {
+            lateReadyAfter = timing.elapsedMilliseconds;
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+        final exitBeforeKill = observedExit;
         helper.kill();
         final code = await exit;
         final log = File('${root.path}/install.log');
@@ -944,7 +974,11 @@ void main() {
             ? await helperOutput(log.openRead(0, 16 * 1024))
             : '(no installer log)';
         final diagnostic =
-            '$error\nHelper exit after cleanup: $code\nstdout:\n${await output}\nstderr:\n${await errors}\ninstaller:\n$native';
+            '$error\nProcess.start returned after $launchedAfter ms; '
+            'failure after $failedAfter ms; ready at failure: $readyAtFailure; '
+            'late readiness after: ${lateReadyAfter ?? "not observed"} ms; '
+            'exit before kill: ${exitBeforeKill ?? "still alive"}.\n'
+            'Helper exit after cleanup: $code\nstdout:\n${await output}\nstderr:\n${await errors}\ninstaller:\n$native';
         final destination =
             Platform.environment['BROOMM_NATIVE_UPDATER_DIAGNOSTICS'];
         if (destination != null) {

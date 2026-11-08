@@ -123,7 +123,7 @@ class RootSaveAccess(private val activity: Activity) {
                 for ((key, value) in identity) putString(key, value.toString())
                 putLong("deadline", SystemClock.elapsedRealtime() + 30000)
                 putString("operation", call.method.removePrefix("root").lowercase())
-                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup"))
+                for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup", "configPath"))
                     putString(key, call.argument<String>(key))
             }
             if (call.method == "rootLifecycle") {
@@ -143,8 +143,12 @@ class RootSaveAccess(private val activity: Activity) {
             if (call.method == "rootStageRom") {
                 // The app and root mount namespaces can expose different
                 // names for the same framework filesDir.
-                val relative = gameLibraryRelative(activity.filesDir, call.argument<String>("source")!!)
-                request.putString("libraryRelative", relative)
+                val source = call.argument<String>("source")!!
+                if (call.argument<Boolean>("preparedCartridge") == true) {
+                    val parts = RootSaveFiles.romPath(call.argument<String>("path")!!)
+                    request.putString("preparedRelative", preparedCartridgeRelative(
+                        activity.filesDir, source, parts[2].removePrefix("rom-"), parts[3]))
+                } else request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, source))
             }
             if (call.method == "rootList") {
                 val areas = call.argument<List<Map<String, String>>>("areas")!!
@@ -153,7 +157,7 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            if (call.method == "rootRead") request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
+            if (call.method in setOf("rootRead", "rootFlycastRead")) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
                 worker.execute {
@@ -162,8 +166,8 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method == "rootReplace") call.argument<String>("source") else null
-                            val target = if (call.method == "rootRead") call.argument<String>("target") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace")) call.argument<String>("source") else null
+                            val target = if (call.method in setOf("rootRead", "rootFlycastRead")) call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = privateFile(source ?: target!!)
                                 val flags = if (source != null) OsConstants.O_RDONLY else
@@ -184,8 +188,9 @@ class RootSaveAccess(private val activity: Activity) {
                             "rootInspect", "rootMgbaSetup", "rootCoreSetup" -> identity.mapValues { it.value.toString() } + mapped
                             "rootLifecycle" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
+                            "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
-                            "rootList" -> {
+                            "rootList", "rootFlycastList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
                                     val entry = entries.getBundle(key)!!

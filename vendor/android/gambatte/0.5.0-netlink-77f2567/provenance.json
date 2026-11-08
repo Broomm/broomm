@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "core": "gambatte",
+  "build_version": "0.5.0-netlink-77f2567",
+  "source_repository": "https://github.com/libretro/gambatte-libretro",
+  "source_commit": "77f2567d718b8973d02caa2daa8dce4953faf811",
+  "source_archive": "https://codeload.github.com/libretro/gambatte-libretro/tar.gz/77f2567d718b8973d02caa2daa8dce4953faf811",
+  "source_sha256": "45e63bc79390093b78de025172ea289ded139f4ecf1e8072242f34d7dd540338",
+  "captured": "2026-11-07",
+  "license": "GPL-2.0",
+  "entry": "gambatte_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/gambatte-libretro/blob/77f2567d718b8973d02caa2daa8dce4953faf811/libgambatte/libretro/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Embedded version identifies the source revision; exact upstream NDK/build environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/gambatte_libretro_android.so.zip",
+      "archive_bytes": 434140,
+      "archive_sha256": "5f3e9b5c7e236ca78558cf1f2342680b9ca91a6e8cbf33021ed938e9d7d7cc4d",
+      "payload_bytes": 3341976,
+      "payload_sha256": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/gambatte_libretro_android.so.zip",
+      "archive_bytes": 369295,
+      "archive_sha256": "3f97b0c76253238cc3ac7c1f794438c17faa918dfe95c797438a85daaaf6c0b5",
+      "payload_bytes": 1740332,
+      "payload_sha256": "8c1babd7a734fa7ff85684928e2d57d20826cc2326aeb5b293382166f1148722",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/gambatte_libretro_android.so.zip",
+      "archive_bytes": 425607,
+      "archive_sha256": "6c407b31bddb1f42703c210240dc4a9b712a505560fe8284438a23d75abae434",
+      "payload_bytes": 1951068,
+      "payload_sha256": "3fcfd63fbe880591eab5005b993bd6f013ab13fa09c80b91b8fde3ca1756dda2",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/gambatte_libretro_android.so.zip",
+      "archive_bytes": 435073,
+      "archive_sha256": "d971cf8d776741e68d41e7e56c39737a91b1233a6f6e9be2d99e94676bdbc059",
+      "payload_bytes": 3361680,
+      "payload_sha256": "265988a3f6394de587221f3568c572a6c8289a26f402250077ff5ac008369341",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  }
+}

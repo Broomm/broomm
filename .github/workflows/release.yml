@@ -33,8 +33,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
@@ -50,8 +56,16 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Test Devbox bootstrap boundaries
+        run: python3 -m unittest discover -s tool/ci -p test_seed_devbox.py -v
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           project-path: tool/ci/lint
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
@@ -82,9 +96,16 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        if: runner.os != 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         if: runner.os != 'Windows'
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           project-path: ${{ matrix.devbox }}
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
@@ -171,11 +192,21 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Test Devbox bootstrap boundaries
+        run: python3 -m unittest discover -s tool/ci -p test_seed_devbox.py -v
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'
+      - name: Test Gradle wrapper bootstrap boundaries
+        run: devbox run -- devbox --config tool/android run -- bash -c 'cd ../.. && python3 -m unittest discover -s tool/ci -p test_seed_gradle.py -v'
       - run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
       - name: Compile bridges and host test application
         run: |
@@ -272,9 +303,16 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        if: runner.os != 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         if: runner.os != 'Windows'
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           project-path: ${{ matrix.devbox }}
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
@@ -295,6 +333,14 @@ jobs:
       - name: Prepare private Android SDK/cache
         if: matrix.platform == 'android'
         run: bash tool/ci/prepare_android.sh
+      - name: Test Gradle wrapper bootstrap boundaries
+        if: matrix.platform == 'android'
+        run: bash tool/ci/run.sh python3 -m unittest discover -s tool/ci -p test_seed_gradle.py -v
+      - name: Verify pinned Gradle distribution cache
+        if: matrix.platform == 'android'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash tool/ci/run.sh python3 tool/ci/seed_gradle.py
       - name: Resolve locked packages
         run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
       - name: Test Linux bundle portability checks
@@ -347,8 +393,14 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
       - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
         with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
           devbox-version: '0.18.4'
           refresh-cli: 'true' # Avoid GitHub cache failures before Devbox setup.
           disable-nix-access-token: 'true'

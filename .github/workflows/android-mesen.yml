@@ -1,0 +1,74 @@
+name: Pinned Android Mesen core
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - .github/workflows/android-mesen.yml
+      - tool/android/build_mesen.dart
+      - vendor/android/mesen/**
+      - tool/ci/prepare_android.sh
+      - tool/ci/seed_devbox.py
+      - tool/ci/devbox-0.18.4.json
+      - devbox.json
+      - devbox.lock
+  push:
+    branches: [main, develop]
+    paths:
+      - .github/workflows/android-mesen.yml
+      - tool/android/build_mesen.dart
+      - vendor/android/mesen/**
+      - tool/ci/prepare_android.sh
+      - tool/ci/seed_devbox.py
+      - tool/ci/devbox-0.18.4.json
+      - devbox.json
+      - devbox.lock
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86, x86_64]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      # The same installer previously ran inside Devbox's composite action.
+      # Configure its documented telemetry opt-out directly: a failed post-job
+      # network request must not crash after the actual core artifact is built.
+      - uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+        with:
+          logger: pretty
+          extra-conf: experimental-features = ca-derivations fetch-closure
+          diagnostic-endpoint: ''
+      - name: Verify pinned Devbox cache
+        id: devbox-seed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tool/ci/seed_devbox.py
+      - uses: jetify-com/devbox-install-action@734088efddca47cf44ff8a09289c6d0e51b73218 # v0.12.0
+        with:
+          sha256-checksum: ${{ steps.devbox-seed.outputs.binary_sha256 }}
+          devbox-version: '0.18.4'
+          refresh-cli: 'true'
+          disable-nix-access-token: 'true'
+          skip-nix-installation: 'true'
+      - name: Stage the already licensed runner SDK privately
+        run: bash tool/ci/prepare_android.sh
+      - name: Build fixed source and inspect its output
+        env:
+          BROOMM_MESEN_ABI: ${{ matrix.abi }}
+        run: devbox run -- dart tool/android/build_mesen.dart "$BROOMM_MESEN_ABI"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !cancelled() }}
+        with:
+          name: mesen-0102910-${{ matrix.abi }}
+          path: build/android-mesen/${{ matrix.abi }}/
+          if-no-files-found: warn
+          retention-days: 30

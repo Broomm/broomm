@@ -1,0 +1,38 @@
+Dynamic section at offset 0x32c6a4 contains 27 entries:
+  Tag        Type           Name/Value
+  0x00000001 (NEEDED)       Shared library: [libc.so]
+  0x00000001 (NEEDED)       Shared library: [libm.so]
+  0x00000001 (NEEDED)       Shared library: [libdl.so]
+  0x0000000e (SONAME)       Library soname: [libretro.so]
+  0x0000001e (FLAGS)        BIND_NOW 
+  0x6ffffffb (FLAGS_1)      NOW 
+  0x00000011 (REL)          0x14a8
+  0x00000012 (RELSZ)        203544 (bytes)
+  0x00000013 (RELENT)       8 (bytes)
+  0x6ffffffa (RELCOUNT)     25441
+  0x00000017 (JMPREL)       0x32fc0
+  0x00000002 (PLTRELSZ)     976 (bytes)
+  0x00000003 (PLTGOT)       0x32e458
+  0x00000014 (PLTREL)       REL
+  0x00000006 (SYMTAB)       0x210
+  0x0000000b (SYMENT)       16 (bytes)
+  0x00000005 (STRTAB)       0xdcc
+  0x0000000a (STRSZ)        1756 (bytes)
+  0x6ffffef5 (GNU_HASH)     0xcfc
+  0x00000019 (INIT_ARRAY)   0x32d680
+  0x0000001b (INIT_ARRAYSZ) 36 (bytes)
+  0x0000001a (FINI_ARRAY)   0x32d678
+  0x0000001c (FINI_ARRAYSZ) 8 (bytes)
+  0x6ffffff0 (VERSYM)       0xb60
+  0x6ffffffe (VERNEED)      0xc8c
+  0x6fffffff (VERNEEDNUM)   3
+  0x00000000 (NULL)         0x0
+Displaying notes found in: .note.android.ident
+  Owner                Data size 	Description
+  Android              0x00000084	NT_ANDROID_TYPE_IDENT
+   description data: 18 00 00 00 72 32 39 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 31 34 32 30 36 38 36 35 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+Displaying notes found in: .note.gnu.build-id
+  Owner                Data size 	Description
+  GNU                  0x00000014	NT_GNU_BUILD_ID (unique build ID bitstring)
+    Build ID: d01b97c7e7f7fe688aa1c5b0c3bb3849e9fc3eda

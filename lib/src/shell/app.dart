@@ -35,6 +35,12 @@ import '../switch_firmware.dart';
 import '../progress/ryubing.dart';
 import 'cloud_saves_dialog.dart';
 import '../android/emulators.dart';
+import '../android/root_saves.dart';
+import '../android/save_plan.dart';
+import '../android/lynx_firmware.dart';
+import '../android/opera.dart';
+import '../android/saturn.dart';
+import '../android/flycast.dart';
 import 'android_session_screen.dart';
 import 'library.dart';
 import 'update_screen.dart';
@@ -648,7 +654,7 @@ class _BroommAppState extends State<BroommApp> {
       throw StateError('Install ${emulator.name} in Emulator Settings first.');
     final profile = m.profile!, server = m.server!;
     final rooted =
-        {'gba', 'snes'}.contains(platform.slug) &&
+        androidRootRetroCore(platform.slug) != null &&
         m.android.hasCurrentRoot(emulator, platform.slug, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
@@ -684,11 +690,12 @@ class _BroommAppState extends State<BroommApp> {
               files: files,
               selected: selected,
               rooted: rooted,
+              rootPlatform: platform.slug,
               emulatorClosed: emulatorClosed,
               core:
                   platform.retroCore ??
                   (platform.slug == 'snes' ? 'snes9x' : null),
-              prepare: () async {
+              prepare: (cancellation, phase) async {
                 if (!cloudReady) return null;
                 if (platform.slug == 'psp' &&
                     m.android.folder(emulator) == null) {
@@ -701,7 +708,166 @@ class _BroommAppState extends State<BroommApp> {
                     entry: entry,
                   );
                 }
-                return m.cloudGame(entry.game.id, androidRom: selected);
+                final game = await m.cloudGame(
+                  entry.game.id,
+                  androidRom: selected,
+                );
+                final plan = game.layout;
+                if (!rooted ||
+                    !{'lynx', '3do', 'saturn', 'dc'}.contains(platform.slug) ||
+                    plan is! AndroidSavePlan ||
+                    plan.launch['frontendSetup'] == 'true')
+                  return game;
+                if (platform.slug == '3do') {
+                  final disc = await inspectAndroidOperaDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidOperaResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    plan.operaOptions,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  cancellation.check();
+                  await verifyAndroidOperaPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      operaOptions: plan.operaOptions,
+                      operaDisc: disc,
+                      operaResources: resources,
+                    ),
+                  );
+                }
+                if (platform.slug == 'dc') {
+                  final disc = await inspectAndroidFlycastDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidFlycastResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  final options = {
+                    ...plan.flycastNativeOptions,
+                    ...await readAndroidFlycastPreferences(
+                      Directory(plan.root),
+                      plan.game,
+                    ),
+                  };
+                  final console = await readAndroidFlycastConsole(
+                    Directory(plan.root),
+                  );
+                  cancellation.check();
+                  await verifyAndroidFlycastPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      flycastOptions: options,
+                      flycastNativeOptions: plan.flycastNativeOptions,
+                      flycastDisc: disc,
+                      flycastResources: resources,
+                      flycastConsole: console,
+                    ),
+                  );
+                }
+                if (platform.slug == 'saturn') {
+                  final disc = await inspectAndroidSaturnDisc(
+                    File(selected),
+                    cancellation,
+                    phase,
+                  );
+                  final resources = await ensureAndroidSaturnResources(
+                    Directory(plan.root),
+                    entry.game.platformId,
+                    plan.saturnOptions,
+                    game.client,
+                    cancellation,
+                    phase,
+                  );
+                  cancellation.check();
+                  await verifyAndroidSaturnPreparation(
+                    m.android,
+                    plan,
+                    selected,
+                  );
+                  cancellation.check();
+                  return CloudGame(
+                    server: game.server,
+                    profile: game.profile,
+                    user: game.user,
+                    rom: game.rom,
+                    client: game.client,
+                    layout: AndroidSavePlan(
+                      plan,
+                      plan.emulator,
+                      plan.binding,
+                      plan.remoteAreas,
+                      launch: plan.launch,
+                      saturnOptions: plan.saturnOptions,
+                      saturnDisc: disc,
+                      saturnResources: resources,
+                    ),
+                  );
+                }
+                final boot = await ensureAndroidLynxBoot(
+                  Directory(plan.root),
+                  entry.game.platformId,
+                  game.client,
+                  cancellation,
+                  phase,
+                );
+                return CloudGame(
+                  server: game.server,
+                  profile: game.profile,
+                  user: game.user,
+                  rom: game.rom,
+                  client: game.client,
+                  layout: AndroidSavePlan(
+                    plan,
+                    plan.emulator,
+                    plan.binding,
+                    plan.remoteAreas,
+                    launch: plan.launch,
+                    lynxBootImage: boot,
+                  ),
+                );
               },
               resolve: (conflict) =>
                   resolveCloudConflict(navigator.currentContext!, conflict),

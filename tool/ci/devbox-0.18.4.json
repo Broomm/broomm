@@ -1,0 +1,43 @@
+{
+  "version": "0.18.4",
+  "source_repository": "https://github.com/jetify-com/devbox",
+  "source_commit": "ed729044dcdaaa379c3ac98a64efc2d68ba97c76",
+  "source_license": {
+    "spdx": "Apache-2.0",
+    "url": "https://raw.githubusercontent.com/jetify-com/devbox/ed729044dcdaaa379c3ac98a64efc2d68ba97c76/LICENSE",
+    "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1"
+  },
+  "release_api": "https://api.github.com/repos/jetify-com/devbox/releases/tags/0.18.4",
+  "action_commit": "734088efddca47cf44ff8a09289c6d0e51b73218",
+  "purpose": "Development-only CI bootstrap for the already approved Devbox version. Unmodified official binary-only archives; no tool binary is bundled with Broomm.",
+  "platforms": {
+    "darwin_arm64": {
+      "asset_id": 588943532,
+      "archive_bytes": 7086877,
+      "archive_sha256": "0ec9e2abf1c2591c5bc5d3acc440b75e23437ac2680448002b72e71fed67d86f",
+      "binary_bytes": 17960354,
+      "binary_sha256": "d43a4edba3b315fb7a04fc1f1413c53d216385271357102b2db44146cdc7cf7c"
+    },
+    "darwin_amd64": {
+      "asset_id": 588943534,
+      "archive_bytes": 7640350,
+      "archive_sha256": "f8136f850e16db25efcb2a51be5b4c3ab8191ea2007c3a3b23cc6de71eb6b5c3",
+      "binary_bytes": 19239072,
+      "binary_sha256": "a684a20aef9852b960f3a785fe83e2f245a70adc86543127f0e3329f911dc54f"
+    },
+    "linux_amd64": {
+      "asset_id": 588943531,
+      "archive_bytes": 7516364,
+      "archive_sha256": "4a466a8788186da73f3c692697917c79452b758f40b454b4761e6d1fcd2acad9",
+      "binary_bytes": 18829474,
+      "binary_sha256": "a33132e23b71833baa698f28d17c7872a11233271e0b8a07669c2bdaf37c30e0"
+    },
+    "linux_arm64": {
+      "asset_id": 588943536,
+      "archive_bytes": 6820285,
+      "archive_sha256": "313ecedab221aa674484a5815006e17a065ba3bfd07ab6de8aeab38fa483db27",
+      "binary_bytes": 17498274,
+      "binary_sha256": "d97128580acbbe8f1a9a96d3b01f749159e1f1a2c9d765993dc3a9b480653bf5"
+    }
+  }
+}

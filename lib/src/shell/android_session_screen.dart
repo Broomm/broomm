@@ -187,6 +187,11 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                       ),
                       const SizedBox(height: 24),
                       if (session.busy) const LinearProgressIndicator(),
+                      if (session.canCancelPreparation)
+                        ConsoleButton(
+                          onPressed: session.cancelPreparation,
+                          child: const Text('Cancel preparation'),
+                        ),
                       const SizedBox(height: 12),
                       Text(
                         widget.recovering

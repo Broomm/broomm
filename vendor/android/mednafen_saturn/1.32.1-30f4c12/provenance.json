@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "core": "mednafen_saturn",
+  "build_version": "1.32.1-30f4c12",
+  "native_version": "v1.32.1 30f4c12",
+  "entry": "mednafen_saturn_libretro_android.so",
+  "captured": "2026-11-08",
+  "source": {
+    "repository": "https://github.com/libretro/beetle-saturn-libretro",
+    "source_revision": "30f4c12072d265c9e553dcb29386059114945dea",
+    "source_archive": "https://codeload.github.com/libretro/beetle-saturn-libretro/tar.gz/30f4c12072d265c9e553dcb29386059114945dea",
+    "archive_sha256": "b00984370ccd4ef4d5140c44ab5fcedaca6113445d95722774ceba1021288754",
+    "archive_bytes": 2018737
+  },
+  "license": "GPL-2.0 and retained component notices.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mednafen_saturn_libretro_android.so.zip",
+      "archive_bytes": 1707942,
+      "archive_sha256": "50f98896a7b829473beae0c6df2cd8ae2daffbb9e1ea64dfdd09270c4d2d6df8",
+      "payload_bytes": 9677768,
+      "payload_sha256": "dc0c11180b695db1ace32cd3443946ff00eccf9b3c673e263ec3b752915f2282",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "30f4c12072d265c9e553dcb29386059114945dea"
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/mednafen_saturn_libretro_android.so.zip",
+      "archive_bytes": 1674215,
+      "archive_sha256": "314362993427f36bd6c3604f557161abe07fdcb0849822412ed86d5dc5cb8c39",
+      "payload_bytes": 6993256,
+      "payload_sha256": "eb4874005d37847a98f45c680f9f5475681900e76fe157635de30b7f06a8b20e",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "30f4c12072d265c9e553dcb29386059114945dea"
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/mednafen_saturn_libretro_android.so.zip",
+      "archive_bytes": 2081591,
+      "archive_sha256": "83a55069a66b122aa184a8c8fe0a4d5a644c3eadb35523815ae4b8da751e49b9",
+      "payload_bytes": 11502988,
+      "payload_sha256": "fc9e1a1c3a54cd8590338015686bd8b662aa50d0aec8983c243e922d536ba666",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "30f4c12072d265c9e553dcb29386059114945dea"
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/mednafen_saturn_libretro_android.so.zip",
+      "archive_bytes": 2298785,
+      "archive_sha256": "284be0225e9676da7ac70aba299ac81826a4fa5c4f8e4618dbb8b8ba960bb932",
+      "payload_bytes": 11183744,
+      "payload_sha256": "a0e8958b2390c063f5e71c914e731ed5503a942a566a1781488710700e765d3c",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "30f4c12072d265c9e553dcb29386059114945dea"
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/COPYING",
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "notices/mednafen/tremor/COPYING",
+      "sha256": "d2ab5758336489da61c12cc5bb757da5339c4ae9001f9bb0562b4370249af814"
+    },
+    {
+      "path": "notices/embedded-component-notices.txt",
+      "sha256": "62525b6bd7c7ebafbcfae7e156afad95641c666488b8e84bd1961c0924101c0b",
+      "distinct_blocks": 168
+    }
+  ],
+  "reproduction_limit": "Unmodified official Libretro builds; exact upstream Android NDK environment and source rebuild are not claimed."
+}

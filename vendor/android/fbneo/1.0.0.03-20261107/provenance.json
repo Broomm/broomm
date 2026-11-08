@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "core": "fbneo",
+  "build_version": "1.0.0.03-20261107",
+  "entry": "fbneo_libretro_android.so",
+  "captured": "2026-11-07",
+  "license": "Upstream non-commercial FBNeo/MAME terms with component notices retained. No ROM/BIOS included.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/fbneo_libretro_android.so.zip",
+      "archive_bytes": 16671323,
+      "archive_sha256": "a99adee651498b0971bda7bf8533c096e26604eb405385d11f96a574d5a68bb7",
+      "payload_bytes": 73232336,
+      "payload_sha256": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "d15071abf14191eebb4a5d7c7147398edcf237c8",
+      "source_archive": "https://codeload.github.com/libretro/FBNeo/tar.gz/d15071abf14191eebb4a5d7c7147398edcf237c8",
+      "source_sha256": "7b7213ba4733e9b185116a34bd66a218f9332f6e1f4e26e574338883fac89feb"
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/fbneo_libretro_android.so.zip",
+      "archive_bytes": 15332734,
+      "archive_sha256": "196a9c37657e44f40ff4a622d76a54b5f9fb87fadc123d222c985a6d71c2ac3a",
+      "payload_bytes": 52155884,
+      "payload_sha256": "4eaaa1e4298242f996bff827c22e549185ac036d25b03fc13774ca5d66a42d91",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "4cdb31f1729588fa42d4aa1c3d9ce2cdaed28618",
+      "source_archive": "https://codeload.github.com/libretro/FBNeo/tar.gz/4cdb31f1729588fa42d4aa1c3d9ce2cdaed28618",
+      "source_sha256": "8d9a6f66a403a2d49a90bc8991c030cec902a9b7bcc0572ba65003b070c3ec18"
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/fbneo_libretro_android.so.zip",
+      "archive_bytes": 15070068,
+      "archive_sha256": "0b6769e7ba118aee5d8b5865b24607f69a8fc83ceea5b68b9fcc9265a07e4f13",
+      "payload_bytes": 54774748,
+      "payload_sha256": "a08949f715105aa767a6773c2aab2495acb330ae48551969b9f2ab6f5496a2d0",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "d15071abf14191eebb4a5d7c7147398edcf237c8",
+      "source_archive": "https://codeload.github.com/libretro/FBNeo/tar.gz/d15071abf14191eebb4a5d7c7147398edcf237c8",
+      "source_sha256": "7b7213ba4733e9b185116a34bd66a218f9332f6e1f4e26e574338883fac89feb"
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/fbneo_libretro_android.so.zip",
+      "archive_bytes": 17633856,
+      "archive_sha256": "87ee4fea74cf6df454e4c3e2ae6232ce47c785648d9fbb7f67f769f24bc6dc2f",
+      "payload_bytes": 72030120,
+      "payload_sha256": "9acd7fa939b0225a5414fcfcf5e8e59d5eefec42ff504f69342d7c05bd87be50",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "4cdb31f1729588fa42d4aa1c3d9ce2cdaed28618",
+      "source_archive": "https://codeload.github.com/libretro/FBNeo/tar.gz/4cdb31f1729588fa42d4aa1c3d9ce2cdaed28618",
+      "source_sha256": "8d9a6f66a403a2d49a90bc8991c030cec902a9b7bcc0572ba65003b070c3ec18"
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/fbneo/LICENSE.md",
+      "sha256": "70411cebf1c000ba6fe9e27a62e96691c8b6cc84665dffe6d85edb4a5a07a917"
+    },
+    {
+      "path": "notices/fbneo/projectfiles/xcode/Doc/License.rtf",
+      "sha256": "fed3a9f5f44e80e98bff29a4211ed97ecc5df686b23562fd86298f244ef1dbc6"
+    },
+    {
+      "path": "notices/fbneo/src/burn/drv/gba/license.txt",
+      "sha256": "1f91405749a4baea5d57b812f4c995949c5008d77a6804d956be82c40b5c5e00"
+    },
+    {
+      "path": "notices/fbneo/src/burn/drv/snes/license.txt",
+      "sha256": "2aa6446b00817be79768f63b9460d50ee401cc14d85cb671759cd1124eb4a65b"
+    },
+    {
+      "path": "notices/fbneo/src/burner/libretro/deps/ugui/LICENSE.md",
+      "sha256": "54c4f0ded81fadbad61a822d567845b75646f704a1b0c625487cf9ec48395b26"
+    },
+    {
+      "path": "notices/fbneo/src/dep/libs/dr_libs/LICENSE.txt",
+      "sha256": "dd1c647e6f767f8ff4b2dfae0fed314726600a01e0cf1ef556afddd5fa96ff15"
+    },
+    {
+      "path": "notices/fbneo/src/dep/libs/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/fbneo/src/dep/libs/lzma/LICENSE",
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "notices/fbneo/src/dep/scripts/license2rtf.pl",
+      "sha256": "3d562069ff70c84d0429e08c86b6a2c3f114d62b73b6708f630d9cbb0a0e7150"
+    },
+    {
+      "path": "notices/fbneo/src/license.txt",
+      "sha256": "bb2369f1b75f42242968a78191b47ee90f85682224d3ad1ef63044e244b3e202"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/LICENSE.md",
+      "sha256": "70411cebf1c000ba6fe9e27a62e96691c8b6cc84665dffe6d85edb4a5a07a917"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/projectfiles/xcode/Doc/License.rtf",
+      "sha256": "fed3a9f5f44e80e98bff29a4211ed97ecc5df686b23562fd86298f244ef1dbc6"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/burn/drv/gba/license.txt",
+      "sha256": "1f91405749a4baea5d57b812f4c995949c5008d77a6804d956be82c40b5c5e00"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/burn/drv/snes/license.txt",
+      "sha256": "2aa6446b00817be79768f63b9460d50ee401cc14d85cb671759cd1124eb4a65b"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/burner/libretro/deps/ugui/LICENSE.md",
+      "sha256": "54c4f0ded81fadbad61a822d567845b75646f704a1b0c625487cf9ec48395b26"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/dep/libs/dr_libs/LICENSE.txt",
+      "sha256": "dd1c647e6f767f8ff4b2dfae0fed314726600a01e0cf1ef556afddd5fa96ff15"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/dep/libs/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/dep/libs/lzma/LICENSE",
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/dep/scripts/license2rtf.pl",
+      "sha256": "3d562069ff70c84d0429e08c86b6a2c3f114d62b73b6708f630d9cbb0a0e7150"
+    },
+    {
+      "path": "notices/fbneo-4cdb31f/src/license.txt",
+      "sha256": "bb2369f1b75f42242968a78191b47ee90f85682224d3ad1ef63044e244b3e202"
+    },
+    {
+      "path": "notices/embedded-component-notices.txt",
+      "sha256": "1ab587db97fc07328c4af95285469780fa0722c619849b846bf6cfc1ba4014d4",
+      "distinct_blocks": 400
+    }
+  ],
+  "build_recipe": "src/burner/libretro/jni/Android.mk at each recorded source commit",
+  "reproduction_limit": "Unmodified official Libretro archives. Different ABIs embed different source revisions; every ABI is pinned separately. Exact upstream NDK environment is not attested as reproduced.",
+  "source_contract_check": "The two inspected libretro.cpp files are byte-identical, including fs/NVRAM and memcard paths. Driver differences remain build-specific."
+}

@@ -13,18 +13,52 @@ import '../retroarch.dart';
 import '../session.dart';
 import '../switch_content.dart';
 import 'emulators.dart';
+import 'retroarch_core_setup.dart';
+import 'lynx_firmware.dart';
+import 'opera.dart';
+import 'saturn.dart';
+import 'flycast.dart';
+
+const androidRootAccessModes = {
+  'root-gba-v1',
+  'root-snes-v1',
+  'root-gameboy-v1',
+  'root-cartridge-v1',
+};
 
 /// Concrete correspondence between one native save boundary and its private
 /// profile copy. The cloud format/keys retain the desktop ordinary-save contract.
 class AndroidSaveArea {
-  const AndroidSaveArea(this.local, this.remote, {this.rename});
+  const AndroidSaveArea(
+    this.local,
+    this.remote, {
+    this.rename,
+    this.arcadeDriver,
+    this.operaStem,
+    this.saturnStem,
+    this.flycastVmus = false,
+  });
   final ProgressArea local;
   final String remote;
   final String? rename;
+
+  /// FBNeo's nested native files retain their driver names in cloud bundles.
+  final String? arcadeDriver;
+  final String? operaStem;
+  final String? saturnStem;
+  final bool flycastVmus;
   Map<String, String> get selector => {
     'path': remote,
+    if (arcadeDriver != null) 'driver': arcadeDriver!,
+    if (operaStem != null) 'operaStem': operaStem!,
+    if (saturnStem != null) 'saturnStem': saturnStem!,
+    if (flycastVmus) 'flycastVmus': 'true',
     if (rename != null) 'exact': rename!,
-    if (rename == null) ...{
+    if (rename == null &&
+        arcadeDriver == null &&
+        operaStem == null &&
+        saturnStem == null &&
+        !flycastVmus) ...{
       if (local.prefix != null) 'prefix': local.prefix!,
       if (local.suffix != null) 'suffix': local.suffix!,
       if (local.exact != null) 'exact': local.exact!,
@@ -60,6 +94,18 @@ class AndroidSavePlan extends ProgressLayout {
     this.binding,
     this.remoteAreas, {
     this.launch = const {},
+    this.lynxBootImage,
+    this.operaOptions = const {},
+    this.operaDisc,
+    this.operaResources,
+    this.saturnOptions = const {},
+    this.saturnDisc,
+    this.saturnResources,
+    this.flycastOptions = const {},
+    this.flycastNativeOptions = const {},
+    this.flycastDisc,
+    this.flycastResources,
+    this.flycastConsole,
   }) : super(
          layout.root,
          layout.format,
@@ -72,9 +118,23 @@ class AndroidSavePlan extends ProgressLayout {
   final Map<String, String> binding;
   final List<AndroidSaveArea> remoteAreas;
   final Map<String, String> launch;
-  Map<String, String> get arguments => {...binding, 'emulator': emulator.id};
-  bool get rooted =>
-      {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']);
+  final AndroidLynxBootImage? lynxBootImage;
+  final Map<String, String> operaOptions;
+  final AndroidOperaDisc? operaDisc;
+  final List<AndroidOperaResource>? operaResources;
+  final Map<String, String> saturnOptions;
+  final AndroidSaturnDisc? saturnDisc;
+  final List<AndroidSaturnResource>? saturnResources;
+  final Map<String, String> flycastOptions, flycastNativeOptions;
+  final AndroidFlycastDisc? flycastDisc;
+  final List<AndroidFlycastResource>? flycastResources;
+  final AndroidFlycastConsole? flycastConsole;
+  Map<String, String> get arguments => {
+    ...binding,
+    'emulator': emulator.id,
+    if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
+  };
+  bool get rooted => androidRootAccessModes.contains(binding['access']);
   String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
       .singleWhere(
@@ -411,7 +471,8 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         throw StateError(
           'Select RetroArch’s Core Data/app-data provider root, not its shared saves subfolder.',
         );
-      final corePath = 'cores/${core}_libretro_android.so';
+      final coreFile = androidRetroCoreFile(core);
+      final corePath = 'cores/$coreFile';
       Future<Map<String, dynamic>?> stat() =>
           manager.channel.invokeMapMethod<String, dynamic>('sharedStat', {
             ...reader.arguments,
@@ -437,7 +498,7 @@ Future<AndroidSavePlan> connectedAndroidProgress(
           {
             ...reader.arguments,
             'areas': [
-              {'path': 'cores', 'exact': '${core}_libretro_android.so'},
+              {'path': 'cores', 'exact': coreFile},
             ],
           },
         );

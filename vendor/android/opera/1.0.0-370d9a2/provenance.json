@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "core": "opera",
+  "build_version": "1.0.0-370d9a2",
+  "entry": "opera_libretro_android.so",
+  "captured": "2026-11-07",
+  "source": {
+    "repository": "https://github.com/libretro/opera-libretro",
+    "source_revision": "370d9a25c030bb9de4aade371b31045691c40a95",
+    "source_archive": "https://codeload.github.com/libretro/opera-libretro/tar.gz/370d9a25c030bb9de4aade371b31045691c40a95",
+    "archive_sha256": "cb7176d654861502e7bef1b3d1914393522dfdf94abb9e80a6b61cc8796804ba",
+    "archive_bytes": 2085334
+  },
+  "license": "Modified LGPL / non-commercial FreeDO terms, GPL-2.0-only embedded Opera Boot, and retained component notices.",
+  "archives": {
+    "arm64-v8a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/opera_libretro_android.so.zip",
+      "archive_bytes": 217249,
+      "archive_sha256": "ef8050e8fab1e6594e89590ca87be57924f0d37597282957c31968838a7b177f",
+      "payload_bytes": 472720,
+      "payload_sha256": "43626fab3f21e1c24d979291503f564422c4b9602a8a82a941a0484cfaceac6c",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "370d9a25c030bb9de4aade371b31045691c40a95",
+      "embedded_boot_payload_verified": true
+    },
+    "armeabi-v7a": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/opera_libretro_android.so.zip",
+      "archive_bytes": 161389,
+      "archive_sha256": "03b2ca9fb9153f69e2dc5c0bccfcf3cfdbec54ab191051a1d7afce1961a3d383",
+      "payload_bytes": 283348,
+      "payload_sha256": "817a7cb6530dd3a42546f49bb389f6a31f282df066fc147948fb0a38fa244eae",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "370d9a25c030bb9de4aade371b31045691c40a95",
+      "embedded_boot_payload_verified": true
+    },
+    "x86": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/opera_libretro_android.so.zip",
+      "archive_bytes": 229355,
+      "archive_sha256": "9e2205f82e956edafda6c815f298b8917510cf3a78fb9f56b878e89036121473",
+      "payload_bytes": 502012,
+      "payload_sha256": "f5cf8b43f0ad211dc4d98665a690c8d05bc6e7c14a929de2dfe20f18b3d1b67a",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "370d9a25c030bb9de4aade371b31045691c40a95",
+      "embedded_boot_payload_verified": true
+    },
+    "x86_64": {
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/opera_libretro_android.so.zip",
+      "archive_bytes": 236540,
+      "archive_sha256": "88ec7466b76b9a63bf1f1c57a52a8fb759b7023d3fd807bc6cc7cab69fb58e70",
+      "payload_bytes": 529624,
+      "payload_sha256": "8d108e8cf041047ace7e4f0c2552a0d8b1f983fa0d9e33a6643f8e356df1d486",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "source_commit": "370d9a25c030bb9de4aade371b31045691c40a95",
+      "embedded_boot_payload_verified": true
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/opera/deps/zlib-1.3.1.2/LICENSE",
+      "sha256": "db87e85464166fab6bc644092392fd6cfedf0abd8a16c63f419139ea57c33628"
+    },
+    {
+      "path": "notices/opera-boot/LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    },
+    {
+      "path": "notices/embedded-component-notices.txt",
+      "sha256": "f71cbe694228fe37557505d599aa2feadca17d0ad0cfc3e857c725c8edb2d872",
+      "distinct_blocks": 97
+    }
+  ],
+  "embedded_boot": {
+    "repository": "https://github.com/trapexit/opera-boot",
+    "source_revision": "5ba4e674146b9c8fcb0e2bca92b2605d52c5b6dd",
+    "source_archive": "https://codeload.github.com/trapexit/opera-boot/tar.gz/5ba4e674146b9c8fcb0e2bca92b2605d52c5b6dd",
+    "archive_bytes": 79924,
+    "archive_sha256": "5105f941dbc8834ce6e375cdcf0481ba2ffb373f543eb32a79f3c84545ef24d8",
+    "inspected_files": [
+      {
+        "path": "LICENSE",
+        "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+      },
+      {
+        "path": "Makefile",
+        "sha256": "4808feaa6d88861d93b1024a8182e69ce4f2969a2b19208345f9cc709e854041"
+      },
+      {
+        "path": "README.md",
+        "sha256": "ff9bfed0badfde3642eed1216e7d142b813a5070b30318aafd9490decf835b44"
+      },
+      {
+        "path": "assets/splash.png",
+        "sha256": "07aa245764dd496f6bfc28b105d5f5afa6f8d58dd9d3c9972cad42ad5b9541cb"
+      },
+      {
+        "path": "docs/BOOT_ARCHITECTURE.md",
+        "sha256": "d50c801b6d5a7a43284f6f6c739e0e17454d3e1fba75d6193f42dea952d79614"
+      },
+      {
+        "path": "docs/BOOT_REFERENCE.md",
+        "sha256": "e0b6ad44cfd60807958d65066ac62198c87e3481e5230f9a54805bd4f1cb06d8"
+      }
+    ],
+    "embedded_rom_bytes": 131072,
+    "embedded_rom_sha256": "6cbd0664c36e64c315b699b43dfc27c176597ef8f393279f199986fa5b6ba3bb",
+    "correspondence": "Pinned Opera source embeds this GPL-2.0-only ROM and identifies this upstream project. Rebuilding or exact source-to-ROM correspondence has not been established."
+  },
+  "reproduction_limit": "Unmodified official Libretro builds. The exact embedded compressed boot bytes match all four libraries and the pinned Opera source. The referenced boot source is retained by immutable archive identity; a source-to-boot or Android NDK rebuild is not claimed."
+}

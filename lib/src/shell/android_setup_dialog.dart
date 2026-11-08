@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../android/emulators.dart';
+import '../android/root_saves.dart';
 import '../android/setup.dart';
 import 'controls.dart';
 
@@ -160,7 +161,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
               ] else ...[
                 if (setup.problem != null &&
                     emulator.id == 'retroarch' &&
-                    {'gba', 'snes'}.contains(widget.platform) &&
+                    androidRootRetroCore(widget.platform) != null &&
                     setup.step != AndroidSetupStep.folder)
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,

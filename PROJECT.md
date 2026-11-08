@@ -217,7 +217,7 @@ profile's progress separate. Restrict privileged operations to resolved,
 emulator-specific data boundaries; preserve existing standalone progress and
 native file ownership, permissions and labels. Keep synchronization decisions,
 transactions and recovery in Dart behind a narrow Android access adapter.
-For rooted GBA/mGBA and SNES/Snes9x RetroArch routes, start from **Play** when a privileged check
+For supported rooted RetroArch routes, start from **Play** when a privileged check
 verifies RetroArch is closed. On return, sync automatically after matching a
 normal exit to the launched emulator process and verifying its writer is gone.
 A running emulator blocks save changes. Keep manual recovery when the exit is
@@ -232,8 +232,8 @@ recovery if the connection is lost.
 
 Keep Android emulator cards compact with the desktop actions **Set up**,
 **Verify setup**, **Open emulator**, **Set as default** and **Remove**. Setup
-owns installation, first-open guidance and save access. On supported rooted GBA and SNES
-RetroArch installations it requests root and provisions mGBA or Snes9x automatically.
+owns installation, first-open guidance and save access. On supported rooted
+RetroArch routes it requests root and provisions the selected platform's core automatically.
 Other routes request their Android folder grant within Setup. Select a default
 only after setup is complete. Removal asks Android to uninstall the selected
 external app and clears its Broomm connections/defaults after verified absence.
@@ -242,7 +242,7 @@ standalone saves. Keep Broomm's saved progress, recovery data and game downloads
 Interrupted removals remain retryable.
 
 Keep setup instructions in the dialogs. Provide one read-only root inspection action in Emulator Settings
-with an installed-app picker when needed. Keep GBA root, SNES root and shared RetroArch
+with an installed-app picker when needed. Keep per-platform root and shared RetroArch
 folder connections independently so configuring one leaves other systems'
 save access available.
 
@@ -259,6 +259,14 @@ cores and progress. The owner reaffirmed this requirement during the Thor GBA
 validation. Manually downloading mGBA in RetroArch is a temporary acceptance-test
 prerequisite, not the finished setup experience. Keep downloads part of explicit
 setup; this does not authorize unattended core updates.
+
+After GBA/mGBA and SNES/Snes9x acceptance, expand rooted Android support to every
+selected RetroArch core. Preserve the existing ordinary-save contracts and
+account boundaries; include build-matched states for state-only cores. Add the
+concrete firmware, content and native-file handling each core needs. Another
+core's validation does not establish that core's behavior. The owner authorizes
+Thor checks with both saved accounts and one installed RomM game per platform.
+Record implementation and native acceptance separately.
 
 ## Progress across devices
 

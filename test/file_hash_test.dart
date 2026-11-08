@@ -69,4 +69,20 @@ void main() {
     );
     expect(await file.exists(), false);
   });
+  test('the inspected header is part of the actual hashed bytes; changed or truncated prefixes cannot publish a digest', () async {
+    final file = await File('${root.path}/disc').writeAsBytes([1, 2, 3, 4]);
+    expect(
+      await gameFileHash(file.path, expectedPrefix: [1, 2]),
+      await progressFileHash(file),
+    );
+    await expectLater(
+      gameFileHash(file.path, expectedPrefix: [2, 1]),
+      throwsA(isA<FileSystemException>()),
+    );
+    await expectLater(
+      gameFileHash(file.path, expectedPrefix: [1, 2, 3, 4, 5]),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await file.readAsBytes(), [1, 2, 3, 4]);
+  });
 }

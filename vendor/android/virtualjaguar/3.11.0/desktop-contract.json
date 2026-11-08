@@ -1,0 +1,7 @@
+{
+  "desktop_source": "https://raw.githubusercontent.com/libretro/virtualjaguar-libretro/ffea7893/libretro.c",
+  "desktop_version": "v3.10.0 ffea7893",
+  "desktop_source_file_sha256": "0d5ae3fff31ee43252c3eb6c9588d79bc6844f02688f8800bb929237dbac9adb",
+  "android_source_revision": "34696082dbc0448caf23aa4ecb5ed40817cb8da0",
+  "contract": "Both sources expose 128-byte ordinary cartridge EEPROM as 64 big-endian 16-bit words; not a real cross-host gameplay claim."
+}

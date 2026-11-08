@@ -6,6 +6,7 @@ import '../progress/files.dart';
 import '../progress/service.dart';
 import '../progress/layout.dart';
 import '../session_lease.dart';
+import '../romm/transfer.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
 import 'root_saves.dart';
@@ -37,6 +38,16 @@ class AndroidGameSession extends ChangeNotifier {
   CloudGame? _game;
   bool _launched = false;
   Map<String, int>? _retroArchProcess;
+  DownloadCancellation? _preparation;
+  bool get canCancelPreparation =>
+      _preparation != null && !_preparation!.cancelled;
+  void cancelPreparation() {
+    if (!canCancelPreparation) return;
+    _preparation?.cancel();
+    phase = 'Cancelling preparation…';
+    _emit();
+  }
+
   bool busy = false, active = false, disposed = false;
   String phase = '', error = '';
   File get marker => File('${manager.data.path}/android/session.json');
@@ -45,10 +56,12 @@ class AndroidGameSession extends ChangeNotifier {
 
   Future<Map<String, dynamic>?> pending() async {
     final Map<String, dynamic> value;
+    var sharedSwap = false;
     if (await progressExists(marker.path)) {
       value = await progressJson(marker);
     } else {
       if (await _shared.pending) {
+        sharedSwap = true;
         value = await progressJson(_shared.journal);
       } else {
         if (!await _mmj.pending) return null;
@@ -57,7 +70,39 @@ class AndroidGameSession extends ChangeNotifier {
         value = {...await progressJson(_mmj.journal), 'emulator': 'citra-mmj'};
       }
     }
-    if (value['version'] != 1 ||
+    final lynxSwap =
+        sharedSwap &&
+        value['version'] == 2 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'mednafen_lynx' &&
+        value['rootPlatform'] == 'lynx' &&
+        value['access'] == 'root-cartridge-v1';
+    final operaSwap =
+        sharedSwap &&
+        value['version'] == 3 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'opera' &&
+        value['rootPlatform'] == '3do' &&
+        value['access'] == 'root-cartridge-v1';
+    final saturnSwap =
+        sharedSwap &&
+        value['version'] == 4 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'mednafen_saturn' &&
+        value['rootPlatform'] == 'saturn' &&
+        value['access'] == 'root-cartridge-v1';
+    final flycastSwap =
+        sharedSwap &&
+        value['version'] == 5 &&
+        value['emulator'] == 'retroarch' &&
+        value['coreName'] == 'flycast' &&
+        value['rootPlatform'] == 'dc' &&
+        value['access'] == 'root-cartridge-v1';
+    if (value['version'] != 1 &&
+            !lynxSwap &&
+            !operaSwap &&
+            !saturnSwap &&
+            !flycastSwap ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(value['profile'] as String? ?? '') ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(value['server'] as String? ?? '') ||
@@ -67,6 +112,29 @@ class AndroidGameSession extends ChangeNotifier {
       throw const FormatException(
         'Android session recovery record is invalid. Progress was kept.',
       );
+    if (lynxSwap ||
+        operaSwap ||
+        saturnSwap ||
+        flycastSwap ||
+        sharedSwap &&
+            androidRootAccessModes.contains(value['access']) &&
+            value['rootStateGroup'] != null) {
+      final group = value['rootStateGroup'];
+      final platform = value['rootPlatform'];
+      if (value['emulator'] != 'retroarch' ||
+          platform is! String ||
+          androidRootRetroCore(platform) != value['coreName'] ||
+          androidRootRetroAccess(platform) != value['access'] ||
+          group is! String ||
+          !RegExp(r'^states-[a-f0-9]{16}-android$').hasMatch(group))
+        throw const FormatException(
+          'The rooted state recovery identity is invalid. Progress was kept.',
+        );
+      return {
+        ...value,
+        'stateAreas': [group],
+      };
+    }
     return value;
   }
 
@@ -81,8 +149,10 @@ class AndroidGameSession extends ChangeNotifier {
     String? core,
     CloudGame? game,
     ProgressResolver? resolve,
-    Future<CloudGame?> Function()? prepare,
+    Future<CloudGame?> Function(DownloadCancellation, void Function(String))?
+    prepare,
     bool rooted = false,
+    String? rootPlatform,
     bool emulatorClosed = true,
   }) async {
     if (![
@@ -108,12 +178,13 @@ class AndroidGameSession extends ChangeNotifier {
           'MMJ has an unfinished shared-folder restore. Finish its original game session before starting another game.',
         );
       await manager.ensureNoWriters(closureConfirmed: true);
+      final platform = rootPlatform ?? (core == 'snes9x' ? 'snes' : 'gba');
+      if (rooted && androidRootRetroCore(platform) != core)
+        throw const FormatException(
+          'Rooted RetroArch platform/core identity differs.',
+        );
       final root = rooted
-          ? manager.rootConnection(
-              emulator,
-              core == 'snes9x' ? 'snes' : 'gba',
-              package: app.package,
-            )
+          ? manager.rootConnection(emulator, platform, package: app.package)
           : null;
       if (rooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
@@ -125,7 +196,7 @@ class AndroidGameSession extends ChangeNotifier {
       // Check first-run readiness before creating a recovery journal or
       // touching cloud progress. The standalone setup has no game session.
       final rootedGame = root != null && prepare != null
-          ? await prepare()
+          ? await _prepareRoot(prepare)
           : game;
       if (root != null) {
         final layout = rootedGame?.layout;
@@ -156,11 +227,13 @@ class AndroidGameSession extends ChangeNotifier {
           'package': app.package,
           'selected': selected,
           if (rooted) 'rooted': true,
-          if (rooted) 'rootPlatform': core == 'snes9x' ? 'snes' : 'gba',
+          if (rooted) 'rootPlatform': platform,
         },
       );
       active = true;
-      _game = root != null || prepare == null ? rootedGame : await prepare();
+      _game = root != null || prepare == null
+          ? rootedGame
+          : await prepare(DownloadCancellation(), _preparePhase);
       final layout = _game?.layout;
       if (_game != null) {
         if (_game!.server != server ||
@@ -254,6 +327,7 @@ class AndroidGameSession extends ChangeNotifier {
       }
     } catch (e) {
       error = '$e';
+      if (e is DownloadWriterUncertain) _lease?.retainForUncertainWriter();
       if (!active) {
         await _lease?.release();
         _lease = null;
@@ -261,6 +335,31 @@ class AndroidGameSession extends ChangeNotifier {
       rethrow;
     } finally {
       busy = false;
+      _emit();
+    }
+  }
+
+  void _preparePhase(String value) {
+    phase = value;
+    cloud.phase?.call(value);
+    _emit();
+  }
+
+  Future<CloudGame?> _prepareRoot(
+    Future<CloudGame?> Function(DownloadCancellation, void Function(String))
+    prepare,
+  ) async {
+    final cancellation = DownloadCancellation();
+    _preparation = cancellation;
+    if (disposed) cancellation.cancel();
+    _emit();
+    try {
+      cancellation.check();
+      final game = await prepare(cancellation, _preparePhase);
+      cancellation.check();
+      return game;
+    } finally {
+      _preparation = null;
       _emit();
     }
   }
@@ -283,19 +382,17 @@ class AndroidGameSession extends ChangeNotifier {
   Future<Map<String, String>?> _recoveryRoot(Map record) async {
     if (record['emulator'] != 'retroarch') return null;
     if (record['rooted'] != true &&
-        !{'root-gba-v1', 'root-snes-v1'}.contains(record['access']) &&
+        !androidRootAccessModes.contains(record['access']) &&
         !(await _shared.pending &&
-            {
-              'root-gba-v1',
-              'root-snes-v1',
-            }.contains((await progressJson(_shared.journal))['access'])))
+            androidRootAccessModes.contains(
+              (await progressJson(_shared.journal))['access'],
+            )))
       return null;
     final emulator = androidEmulators.singleWhere((e) => e.id == 'retroarch');
     final root = manager.rootConnection(
       emulator,
-      record['rootPlatform'] == 'snes' || record['access'] == 'root-snes-v1'
-          ? 'snes'
-          : 'gba',
+      record['rootPlatform'] as String? ??
+          (record['access'] == 'root-snes-v1' ? 'snes' : 'gba'),
       package: record['package'] as String?,
     );
     if (root == null)
@@ -572,10 +669,14 @@ class AndroidGameSession extends ChangeNotifier {
   @override
   void dispose() {
     disposed = true;
+    final preparing = _preparation != null;
+    _preparation?.cancel();
     // Keep the durable marker. Releasing our coordinator is not evidence that
     // the independently owned Android emulator process has exited.
-    _lease?.release();
-    _lease = null;
+    if (!preparing) {
+      _lease?.release();
+      _lease = null;
+    }
     super.dispose();
   }
 }

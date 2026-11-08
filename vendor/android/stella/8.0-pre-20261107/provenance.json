@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "core": "stella",
+  "build_version": "8.0-pre-20261107",
+  "source_repository": "https://github.com/libretro/stella",
+  "source_commit": "5d206d713251ad7481ad2322742553105195968e",
+  "source_archive": "https://codeload.github.com/libretro/stella/tar.gz/5d206d713251ad7481ad2322742553105195968e",
+  "source_sha256": "f641c7f8c5788724d61f3d6d0ea57968617d0c1366f4cffa49c3fe4408378a6b",
+  "captured": "2026-11-07",
+  "license": "GPL-2.0",
+  "entry": "stella_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/stella/blob/5d206d713251ad7481ad2322742553105195968e/src/os/libretro/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Embedded native version identifies the source revision. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source": {
+        "repository": "https://github.com/libretro/stella",
+        "source_revision": "5d206d713251ad7481ad2322742553105195968e",
+        "source_archive": "https://codeload.github.com/libretro/stella/tar.gz/5d206d713251ad7481ad2322742553105195968e",
+        "archive_sha256": "f641c7f8c5788724d61f3d6d0ea57968617d0c1366f4cffa49c3fe4408378a6b"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/stella_libretro_android.so.zip",
+      "archive_bytes": 1478877,
+      "archive_sha256": "0100f75f456ac426ffc7023f0de183123347633d8af82bf86fefd04121f316e4",
+      "payload_bytes": 6708840,
+      "payload_sha256": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source": {
+        "repository": "https://github.com/libretro/stella",
+        "source_revision": "5d206d713251ad7481ad2322742553105195968e",
+        "source_archive": "https://codeload.github.com/libretro/stella/tar.gz/5d206d713251ad7481ad2322742553105195968e",
+        "archive_sha256": "f641c7f8c5788724d61f3d6d0ea57968617d0c1366f4cffa49c3fe4408378a6b"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/stella_libretro_android.so.zip",
+      "archive_bytes": 1135321,
+      "archive_sha256": "73b34ecbacb84dec6e346c8bd8a6c88db51b48df064de9b3fcdf88785cede5f4",
+      "payload_bytes": 3241804,
+      "payload_sha256": "11e17d80e8b42e475e0305de50ec59768523c443f45f8e77c76897f8a13d5517",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source": {
+        "repository": "https://github.com/libretro/stella",
+        "source_revision": "ba514174a445b7c224c93dcacb8f030da219fc76",
+        "source_archive": "https://codeload.github.com/libretro/stella/tar.gz/ba514174a445b7c224c93dcacb8f030da219fc76",
+        "archive_sha256": "a0fcdba72ed16be5f4e8bef295f5b7e93ee51b4c24c68955ca46d22247c7a5cd",
+        "archive_bytes": 8470159
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/stella_libretro_android.so.zip",
+      "archive_bytes": 1471617,
+      "archive_sha256": "4c04137ed0240cde967d9d8fd4785e1ee503e2edb02916bd1bce7e89f8e9e6e1",
+      "payload_bytes": 4581140,
+      "payload_sha256": "f78764ac2ff3e7d4e2a4cf5042b709002677fd3a4fc406a9ca559e0d57edf96f",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source": {
+        "repository": "https://github.com/libretro/stella",
+        "source_revision": "5d206d713251ad7481ad2322742553105195968e",
+        "source_archive": "https://codeload.github.com/libretro/stella/tar.gz/5d206d713251ad7481ad2322742553105195968e",
+        "archive_sha256": "f641c7f8c5788724d61f3d6d0ea57968617d0c1366f4cffa49c3fe4408378a6b"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/stella_libretro_android.so.zip",
+      "archive_bytes": 1509270,
+      "archive_sha256": "6de2893dff16a79b5bcf2a1e7e75b908ab0bf3aeac626777d8923e5d06e7e78f",
+      "payload_bytes": 6780080,
+      "payload_sha256": "9937d6585e1ab71b480bf08274d55f86d91dccf8c83535c27e2b5adff3e7fd83",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/License.txt",
+      "sha256": "58530d09b6fcb91ae27071be0081af90e6c2d7fdf991d34a29e234a2a5e75455"
+    },
+    {
+      "path": "notices/src/gui/Terminus-Font-License.txt",
+      "sha256": "c75a6814836f17abcad307cae0eafcbf4c99ac8e38ebc2e16e9d9a988d72ccb7"
+    },
+    {
+      "path": "notices/src/lib/dr_libs/LICENSE",
+      "sha256": "dd1c647e6f767f8ff4b2dfae0fed314726600a01e0cf1ef556afddd5fa96ff15"
+    },
+    {
+      "path": "notices/src/lib/httplib/LICENSE",
+      "sha256": "4b45cbe16d7b71b89ae6127e26e0d90a029198ca5e958ad8e3d0b8bbed364d8b"
+    },
+    {
+      "path": "notices/src/lib/json/LICENSE.MIT",
+      "sha256": "50be9457e5c9faaba5e60d9c73f8eabe9e0737a2d9c3e58357d856661862c18e"
+    },
+    {
+      "path": "notices/src/tools/evdev-joystick/License.txt",
+      "sha256": "58530d09b6fcb91ae27071be0081af90e6c2d7fdf991d34a29e234a2a5e75455"
+    }
+  ],
+  "x86_source_notice_comparison": {
+    "identical_files": 6,
+    "different_notices_retained_under": "notices/x86-ba51417 if any"
+  }
+}

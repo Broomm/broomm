@@ -1,6 +1,18 @@
 # Broomm
 
-**2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
+CI's pinned Devbox bootstrap, local regression commands and disposable-runner
+effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
+
+**2026-11-08 checkpoint:** rooted Android RetroArch now implements eighteen
+platform routes with fifteen pinned cores. Native Thor checks cover the roster,
+including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
+The current full Android CI package passes its Thor smoke/preservation check.
+Multi-file disc transport remains a format follow-up;
+see [scope and device evidence](docs/android-retroarch-cores.md).
+[Download the current macOS preview](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip)
+(universal, ad-hoc signed, not notarized; development updates disabled).
+
+**Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are
 recorded in the [Thor investigation](docs/thor-gameplay-investigation.md).
 The next milestone is [Android with root-backed storage access](docs/android-installation-and-saves.md#next-milestone-root-backed-storage-access).
@@ -285,7 +297,7 @@ See [scope, evidence, test commands and cleanup](docs/linux-retroarch.md).
 The [emulator pause fixes](docs/emulator-pause.md) preserve pauses made inside
 each desktop emulator during gameplay. Broomm still pauses for pairing and resumes
 when explicitly leaving its menu. Install the
-[current macOS build](build/releases/Broomm-macOS-offline-states-snes-preview.zip),
+[current macOS build](build/releases/Broomm-macOS-android-retroarch-cores-preview.zip),
 then check native pause/hotkeys, R3+Select, Resume and controller disconnection.
 Configuration and progress stay in production Application Support storage.
 The linked verification table distinguishes native checks from pending gameplay
@@ -320,6 +332,150 @@ file** to restore a history entry with its matching state. Known profiles can
 open after an offline restart and retain pending progress until that same
 account reconnects. The two-account Thor checks use builds 1057/1058; see the
 [walkthrough, native checks and remaining limits](docs/android-root-access.md#offline-profiles-rooted-states-and-snes--2026-11-07).
+
+The next rooted-core increment adds **Game Boy / Game Boy Color → RetroArch →
+Set up** for Gambatte, with separate platform choices, SRAM/RTC and matching
+states. Build 1061 passed Crystal SRAM/RTC/state reload and separate GB/GBC
+histories for both Thor accounts. Exact acceptance and remaining-core work are recorded in
+[the Android core walkthrough](docs/android-retroarch-cores.md).
+
+The next source increment also offers **Atari 2600 / TG16 → RetroArch → Set up**
+for Stella and Beetle PCE Fast. Use uncompressed `.a26`/`.bin` and `.pce`
+cartridges respectively. Stella syncs states; PCE also syncs raw SRAM. Build
+1062 passed Adventure state reload and Neutopia File Cabinet SRAM/state reload
+on the Thor. Quit normally and wait for Broomm's synchronization confirmation;
+the linked walkthrough records exact builds, hashes and remaining limits.
+
+The next increment adds the same **Set up** flow for Genesis, Master
+System and Game Gear with Genesis Plus GX, and 32X with PicoDrive. Their pinned
+core downloads, raw SRAM and build-specific states are implemented. Thor build
+1069 passed Genesis gameplay/state reload and Master System/Game Gear in-game
+save and state reload. Build 1066 verified 32X rendering/menu/state reload;
+ordinary 32X SRAM and completed gameplay are not claimed. See the
+[scoped results](docs/android-retroarch-sega.json).
+
+Current source also accepts a ZIP containing exactly one supported rooted
+cartridge. Broomm validates and extracts it privately without changing the
+download, retaining the archive's existing save/state name. Archives and total
+expanded content are bounded to 64 MiB, with a 32 MiB cartridge limit. Ambiguous,
+unsafe, linked, oversized or corrupt archives fail visibly and retain recovery;
+finish that session before retrying. Build 1069 passed ZIP launch and save/state
+round trips with Sonic 3, Phantasy Star and Defenders of Oasis on the Thor.
+
+The next source increment adds **Nintendo 64 → RetroArch → Set up** for pinned
+Mupen64Plus-Next. Use `.z64/.v64/.n64` cartridges up to 64 MiB or a ZIP containing
+exactly one. Save in-game or create a manual state, Quit RetroArch normally, and
+wait for Broomm's sync confirmation before switching accounts. Full SRAM and
+controller-pak data stay private to the selected profile/game; states require
+the same APK/ABI/core build. Existing standalone progress and settings are
+restored, and recorded native session files are removed after completion.
+Build 1073 verified Super Mario 64 rendering/input, EEPROM-backed audio-preference
+sync and manual gameplay-state reload on Thor, preserving earlier progress and
+settings. See the [scoped N64 evidence](docs/android-retroarch-n64.json). 64DD and
+Transfer Pak media are outside this increment's acceptance.
+
+Current source adds **Nintendo Entertainment System → RetroArch → Set up**
+with Mesen 0.9.9 built from retained source `0102910` for all four Android ABIs.
+Use `.nes/.unf/.unif` cartridges or one such cartridge in a ZIP. Setup downloads
+only Mesen and retains earlier cores. Save in-game or create a manual state,
+Quit RetroArch normally and wait for Broomm's sync confirmation. SRAM uses the
+existing desktop-compatible raw save contract; states require the matching
+APK/ABI/core. Native cartridge/progress limits remain 32 MiB / 256 KiB, with
+16 MiB states. FDS disks/firmware and HD packs are outside this increment.
+Build 1077 verified Zelda's saved slot, movement and manual-state reload on Thor,
+preserving earlier progress/settings. See the [scoped NES evidence](docs/android-retroarch-nes.json)
+and [Mesen build/source record](vendor/android/mesen/0.9.9-0102910/README.md).
+
+Current source adds **Atari Jaguar → RetroArch → Set up** for the official pinned
+Virtual Jaguar 3.11.0 release. Use a cartridge (`.j64/.jag/.rom/.abs/.cof/.bin/.prg`)
+or one such cartridge in a ZIP. Save in-game or create a manual state, Quit
+RetroArch normally, then wait for Broomm's synchronization confirmation. Earlier
+settings, progress and cores are retained; states require the matching APK/ABI/core.
+Build 1080 passed Tempest 2000's EEPROM preference and manual-state round trips,
+with earlier progress/settings preserved. Its native Save States menu works with
+the reviewed core despite RetroArch's old bundled metadata. Jaguar CD and Memory
+Track gameplay remain separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment)
+and [device evidence](docs/android-retroarch-jaguar.json).
+
+Current source adds **Atari Lynx → RetroArch → Set up** with pinned Beetle Lynx.
+Play a raw `.lnx/.lyx/.bll/.o` or safe single-cartridge ZIP. First Play obtains
+and verifies the required 512-byte `lynxboot.img` from that platform in RomM;
+subsequent Play can reuse the verified profile cache offline. Add exactly one
+matching BIOS to RomM if Broomm reports it missing. Create a manual state, Quit
+RetroArch normally, wait for sync and verify Load State after relaunch. This
+core does not produce ordinary battery saves. Native BIOS/ROM/configuration
+files are temporary; private profile progress/cache and recovery remain in
+Broomm. Build 1083 passed Crystal Mines II gameplay input, BIOS delivery/cache
+reuse, manual state synchronization/reload and native cleanup on the Thor.
+Earlier progress/settings remained unchanged. Disconnected-network Lynx play
+and other ABI gameplay are not newly verified. See the
+[scope and verification](docs/android-retroarch-cores.md#lynx-firmwarestate-source-increment).
+
+Current source adds **Arcade → RetroArch → Set up** with a pinned FBNeo build.
+Use a complete matching ZIP ROMset with its original driver filename, such as
+`simpsons2p.zip`. Broomm stages the complete archive without extracting chips.
+The route accepts up to 128 MiB compressed and 512 MiB expanded, with 128 MiB
+entries. Convert 7z sets to ZIP with names preserved; automatic parent/BIOS/CHD
+acquisition and special peripherals are not implemented. Native NVRAM/cards
+retain their nested filenames; states require matching APK/ABI/core builds.
+Quit normally, wait for sync, then verify NVRAM and a manual Load State after
+relaunch. Keep private progress/recovery files; temporary native session files
+are cleaned after confirmed exit. Build 1087 passed Simpsons gameplay input,
+exact NVRAM/manual-state restoration and two-account state separation on the
+Thor, preserving earlier progress and standalone settings. Other ABI gameplay,
+cross-device play and the full driver catalogue are not newly verified. See the
+[scope and verification](docs/android-retroarch-cores.md#finalburn-neo-zipsave-source-increment).
+
+Current source adds **3DO → RetroArch → Set up** with pinned Opera. Play a
+self-contained CHD v5, ISO or BIN up to 1 GiB; parent CHDs and multi-file CUE
+transport are not connected yet. The core uses its built-in open-source boot
+ROM by default. Selected external BIOS/font images are verified from this
+platform in RomM and cached privately. Native NVRAM modes/versions and matched
+manual states remain private to each profile/game. Quit normally, wait for sync,
+then verify the in-game save and Load State after relaunch. Retain private
+progress/cache/recovery files; owned native session files are temporary. Build
+1090 passed Alone in the Dark's native save and manual-state reload, two-account
+separation and normal cleanup on the Thor, preserving all earlier progress and
+standalone settings. Selected external BIOS/font use and other ABI gameplay are
+not newly verified. See the [scope and walkthrough](docs/android-retroarch-cores.md#opera-self-contained-disc-source-increment)
+and [device evidence](docs/android-retroarch-opera.json).
+
+Current source adds **Saturn → RetroArch → Set up** with pinned Beetle Saturn.
+Use one self-contained CHD v5 up to 1 GiB; add the canonical `sega_101.bin` and
+`mpr-17933.bin` to Saturn's firmware catalogue in RomM. First Play verifies and
+caches both privately. Native internal memory, console settings, backup cartridges
+and compatible manual states synchronize together. Keep the matching Save Method,
+Backup Memory Size and sharing options when restoring existing progress; a mode
+mismatch asks for correction while retaining every copy. Quit normally, wait for
+sync, then verify both an in-game save and Load State after relaunch. Native disc,
+BIOS and session configuration files are temporary; Broomm progress/cache/recovery
+remain private. CUE file sets and automatic ROM-cartridge detection remain pending.
+Build 1093 passed native System/Cartridge save loads, independent manual-state
+reload and two-account separation on the Thor, preserving earlier progress and
+standalone settings. Other ABI gameplay and selected special modes remain
+separate. See the [scope and walkthrough](docs/android-retroarch-cores.md#beetle-saturn-source-increment)
+and [device evidence](docs/android-retroarch-saturn.json).
+
+Current source adds **Dreamcast → RetroArch → Set up** with pinned Flycast.
+Use one self-contained, parent-free CHD v5 up to 2 GiB. Optional canonical 2 MiB
+`dc_boot.bin` can be supplied through this platform's RomM firmware catalogue.
+If none is configured, Flycast uses its built-in HLE BIOS; games needing a real
+BIOS still require that file. Failed discovery and damaged known firmware block
+Play and retain existing files. A successfully confirmed HLE choice is retained
+for offline Play, just like a verified boot image; a failed or cancelled lookup
+cannot establish that choice. Broomm
+isolates all eight VMU ports per profile/game, retains a separate local console
+identity per profile, and keeps other core-option changes between sessions.
+The pinned core reads legacy content-name cards and replaces their names with
+its native disc ID. Broomm accepts only one new, same-port destination under
+the selected game's private boundary, retaining the legacy input in recovery;
+competing destinations or missing established cards/states still block sync.
+Quit normally and wait for sync, then verify native game saves and Load State
+independently. Remove clears private Flycast preferences while retaining Broomm
+progress, console identities and recovery. Keep All VMUs / linked storage settings
+as supplied; changing them during play blocks sync and preserves game/fallback
+copies for manual recovery. CUE/GDI/M3U/CDI media and packaged Thor acceptance
+remain pending. See the [scope and walkthrough](docs/android-retroarch-cores.md#flycast-source-increment).
 
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a

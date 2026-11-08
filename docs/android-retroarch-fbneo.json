@@ -1,0 +1,322 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "checked_utc": "2026-11-08T00:53:28.415922+00:00",
+  "scope": "FBNeo complete ROMset, nested NVRAM and matched-state increment; three selected cores remain pending",
+  "runtime_revision": "36c9e8df3bc28dd2638a202345a3bc55dcffd8e9",
+  "installed_build": 1087,
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64",
+    "core": "FinalBurn Neo v1.0.0.03 261105 GITd15071a",
+    "romm": "5.4.0",
+    "accounts": [
+      2,
+      3
+    ]
+  },
+  "automation": {
+    "analysis": "passed",
+    "flutter_tests_passed": 676,
+    "existing_native_host_skip": 1,
+    "focused_checks": 81,
+    "native_android_fault_groups": 15,
+    "bridge_and_fixture": "compiled",
+    "four_abi_production_downloads": "passed; checksum and ELF verified without installing extra ABIs",
+    "application_ci": {
+      "run": 42430012291,
+      "url": "https://github.com/Broomm/broomm/actions/runs/42430012291",
+      "conclusion": "success",
+      "all_five_packages": "success"
+    },
+    "independent_mesen_ci": {
+      "run": 42430012217,
+      "url": "https://github.com/Broomm/broomm/actions/runs/42430012217",
+      "all_four_native_jobs": "success"
+    }
+  },
+  "apk": {
+    "sha256": "583bea4d41dfa61eda04c923dee977aea8444007bee9b404cb51be779b4cca14",
+    "bytes": 62208847,
+    "code_sha": "36c9e8df3bc28dd2638a202345a3bc55dcffd8e9",
+    "merge_sha": "bd4abefeedfc71599a52a0bd6204414b38c6236b",
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "apk": "build/releases/Broomm-0.1.18-pr4.42430012291-thor-preview.apk",
+    "sha256": "583bea4d41dfa61eda04c923dee977aea8444007bee9b404cb51be779b4cca14",
+    "code_sha": "36c9e8df3bc28dd2638a202345a3bc55dcffd8e9",
+    "build": "1087",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1087 minSdk=24 targetSdk=36",
+      "versionName=0.1.18",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "game": {
+    "romm_id": 718,
+    "title": "The Simpsons",
+    "platform_id": 2,
+    "file": "simpsons2p.zip",
+    "bytes": 2486546,
+    "sha256": "962b7f1a16e9a05874a812d835ef7d3857072950cb49b94dc28e8fd543833b0a",
+    "installation": "Normal Broomm Store download; complete 14-entry ROMset retained intact."
+  },
+  "normal_setup": {
+    "core_hashes": {
+      "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "mesen": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "virtualjaguar": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "mednafen_lynx": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "fbneo": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9"
+    },
+    "platform_bindings": [
+      "gba",
+      "snes",
+      "gb",
+      "gbc",
+      "atari2600",
+      "tg16",
+      "genesis",
+      "sms",
+      "gamegear",
+      "sega32",
+      "n64",
+      "nes",
+      "jaguar",
+      "lynx",
+      "arcade"
+    ],
+    "settings_version": 13
+  },
+  "round_trip": {
+    "first_publication": {
+      "game": 718,
+      "profile": "9d1d493e2a5b412da57d364b659321b0",
+      "build": 1087,
+      "checkpoint": {
+        "baseline": "fe642df50c50c8ec5d430512a0c9e6b77a849da1c07a32d59f4d64c2030be30d",
+        "commit": "33a5882558e27351bad99d9677d13ddf",
+        "snapshot": "1fe11fd1f31a54a6d09f450fa9f0de83",
+        "remote": 243,
+        "synced": "2026-11-08T00:48:13.355901Z",
+        "pending": false,
+        "stateKnown": {
+          "states-d9e824d4b5205c1d-android/game.state": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      },
+      "files": {
+        "saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c"
+        },
+        "states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      }
+    },
+    "fresh_play": {
+      "journalWorking": {
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c",
+          "metadata": "10133 10133 600 u:object_r:app_data_file:s0:c133,c256,c512,c768"
+        },
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/states/states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45",
+          "metadata": "10133 10133 600 u:object_r:app_data_file:s0:c133,c256,c512,c768"
+        }
+      },
+      "nativeFiles": {
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c"
+        },
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/states/states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      }
+    },
+    "account3_fresh_working": {},
+    "account3_publication": {
+      "game": 718,
+      "profile": "7d411a3498a8d47bb90c323374ffda0a",
+      "build": 1087,
+      "checkpoint": {
+        "baseline": "688483c178ab8a6d449babece5d165947cb00f3c318bfca3e0f92770896931e1",
+        "commit": "2f6750754172fee02e02efdf31729433",
+        "snapshot": "8496e24efe130138137f2416e050b64f",
+        "remote": 244,
+        "synced": "2026-11-08T00:52:04.211009Z",
+        "pending": false,
+        "stateKnown": {
+          "states-d9e824d4b5205c1d-android/game.state": "e6593b1f2cfb61bd543a283b6660524e1b0bfa203e05f0da78e74b9f1815064c"
+        }
+      },
+      "files": {
+        "saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c"
+        },
+        "states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 3745,
+          "sha256": "e6593b1f2cfb61bd543a283b6660524e1b0bfa203e05f0da78e74b9f1815064c"
+        }
+      }
+    },
+    "primary_restored_after_account3": {
+      "journalWorking": {
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c",
+          "metadata": "10133 10133 600 u:object_r:app_data_file:s0:c133,c256,c512,c768"
+        },
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/states/states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45",
+          "metadata": "10133 10133 600 u:object_r:app_data_file:s0:c133,c256,c512,c768"
+        }
+      },
+      "nativeFiles": {
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c"
+        },
+        "files/Broomm/9d1d493e2a5b412da57d364b659321b0/718/states/states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      }
+    },
+    "final_publication": {
+      "game": 718,
+      "profile": "9d1d493e2a5b412da57d364b659321b0",
+      "build": 1087,
+      "checkpoint": {
+        "baseline": "fe642df50c50c8ec5d430512a0c9e6b77a849da1c07a32d59f4d64c2030be30d",
+        "commit": "33a5882558e27351bad99d9677d13ddf",
+        "snapshot": "f2907bf2218ffc599acb087745b60e8b",
+        "remote": 243,
+        "synced": "2026-11-08T00:53:14.856595Z",
+        "pending": false,
+        "stateKnown": {
+          "states-d9e824d4b5205c1d-android/game.state": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      },
+      "files": {
+        "saves/fbneo/simpsons2p.nv": {
+          "bytes": 128,
+          "sha256": "ae3cd420dc6ddcf1b56cd715bad2130490dfd9e5d4cf90a3ed9fb46107bcf91c"
+        },
+        "states-d9e824d4b5205c1d-android/simpsons2p.state": {
+          "bytes": 5654,
+          "sha256": "e0d5d70259ea58b6188361a89c9ad0eb40ef0bd70c269443c34976d03ccdbd45"
+        }
+      }
+    },
+    "observations": [
+      "Native RAM/ROM check completed and the game reached stage-one gameplay with Marge; movement and action inputs exercised.",
+      "Saved slot 0 produced a 5,654-byte state and nested 128-byte saves/fbneo/simpsons2p.nv; normal Quit published primary 243.",
+      "Fresh Play restored both files byte-for-byte, and Load State resumed the recorded gameplay scene.",
+      "Account 3 began with an empty working inventory, saved a distinct 3,745-byte character-selection state and published primary 244. Its default NVRAM contents happen to match account 2; no distinct NVRAM payload is claimed.",
+      "Returning to account 2 restored its original two file hashes and Load State resumed its Marge gameplay scene. Final normal Quit retained primary 243 without a duplicate publication."
+    ],
+    "ordinary_cloud_contract": "Nested save/fbneo/<driver>.nv in the desktop-compatible ZIP; no synthetic cartridge SRAM."
+  },
+  "preservation": {
+    "checked_utc": "2026-11-08T00:53:28.415922+00:00",
+    "build": 1087,
+    "runtime": "36c9e8df3bc28dd2638a202345a3bc55dcffd8e9",
+    "journals_absent": true,
+    "earlier_additional_core_progress_files_unchanged": 25,
+    "all_existing_managed_native_files_unchanged": 19,
+    "preexisting_standalone_and_managed_files_unchanged": 13,
+    "existing_gba_snes_progress_files_unchanged": 8,
+    "core_hashes": {
+      "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+      "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+      "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+      "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+      "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+      "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+      "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7",
+      "mesen": "ab8617e00521a68fbf518dc926fe8c077d3874ee0ebeba2013c52b0f7c192de9",
+      "virtualjaguar": "90446691d7f5b80f9ba98e4b311e6dab5bc8afd58431fb319b4e30933f891df6",
+      "mednafen_lynx": "26163656e3ebdad5f634057febf8d6a822a37f2bbead250a4a7a34726a438503",
+      "fbneo": "1513e3c3d79157dc7543b96b78e9aa6473c33e4427529c9320cb2250a50b41e9"
+    },
+    "independent_platform_bindings_retained": [
+      "gba",
+      "snes",
+      "gb",
+      "gbc",
+      "atari2600",
+      "tg16",
+      "genesis",
+      "sms",
+      "gamegear",
+      "sega32",
+      "n64",
+      "nes",
+      "jaguar",
+      "lynx",
+      "arcade"
+    ]
+  },
+  "sign_ins": "Both saved accounts activated without password re-entry after the in-place upgrade. Primary account left active.",
+  "log_review": {
+    "since": "2026-11-08T00:38:00Z",
+    "lines": 85,
+    "warnings_or_errors": 0,
+    "sha256": "1724825ba4251c02ba12ea98e1e60244a565d6247ede9fb20c8b8008ee7df48f"
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-retroarch-cores-preview.zip",
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.0-dev",
+      "build_number": "1",
+      "sha": "36c9e8df3bc28dd2638a202345a3bc55dcffd8e9",
+      "target": "macos-universal",
+      "working_tree": false,
+      "source_tree_sha256": "d378f9e0c6ee1a82eab4e9688132d34a0f358303c82f9632ed64855893e88792",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "bytes": 24343024,
+    "sha256": "fda8c56e4432f1e0dd398a98133054f818a248a0f777718511a8de7a31dd4991",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures",
+    "zip_integrity": "passed",
+    "limit": "Ad hoc signed, not notarized."
+  },
+  "limitations": [
+    "One arm64 Thor and one complete self-contained ROMset. Other ABI gameplay, cross-device gameplay, completed stages and special arcade peripherals are not newly established.",
+    "The real NVRAM file was captured/restored; default NVRAM bytes match between accounts. Different state bytes establish account separation in this game.",
+    "Parent/BIOS/CHD acquisition, 7z rooted loading and the full arcade driver catalogue are not implemented by this increment.",
+    "Opera, Flycast and Beetle Saturn still need their concrete integration. Jaguar CD remains owner-deferred."
+  ]
+}

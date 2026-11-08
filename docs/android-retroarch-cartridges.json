@@ -1,0 +1,306 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "scope": "Stella Atari 2600 and Beetle PCE Fast TG16 cartridge increment; remaining ten selected cores pending",
+  "runtime_revision": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64",
+    "stella": "8.0_pre 5d206d7",
+    "pce_fast": "v1.31.0.0 2de1ce1",
+    "romm": "5.4.0",
+    "account": 2
+  },
+  "automation": {
+    "analysis": "passed",
+    "flutter_tests_passed": 628,
+    "existing_native_host_skip": 1,
+    "native_android_fault_groups_passed": 10,
+    "ci": {
+      "url": "https://github.com/Broomm/broomm/actions/runs/42400556699",
+      "head": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+      "conclusion": "success"
+    }
+  },
+  "installed_build": 1062,
+  "apk": {
+    "sha256": "9b16e8d33170c0db3ab24a48ec30288c96c441a515ad2ed2bd69aa4ab05ac41f",
+    "bytes": 62094159,
+    "code_sha": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+    "merge_sha": "ac5f3e36a5ab40bd30c495004063eb32e3c5aa38",
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "apk": "build/releases/Broomm-0.1.18-pr4.42400556699-thor-preview.apk",
+    "sha256": "9b16e8d33170c0db3ab24a48ec30288c96c441a515ad2ed2bd69aa4ab05ac41f",
+    "code_sha": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+    "build": "1062",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1062 minSdk=24 targetSdk=36",
+      "versionName=0.1.18",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-retroarch-cores-preview.zip",
+    "sha256": "800aa2a46b156f5f0453538bcd3daa856487c3aa60830895b90301321a1effdf",
+    "bytes": 24348825,
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.0-dev",
+      "build_number": "1",
+      "sha": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+      "target": "macos-universal",
+      "working_tree": false,
+      "source_tree_sha256": "4d44b1682bbd6f44a504c717c30bb4e5300aeaba6e890df89b7b85b1c3e7b5a7",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zip_integrity": "passed",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures"
+  },
+  "checks": {
+    "normal_setup": "Independent Atari 2600 and TG16 Setup installed pinned Stella/PCE Fast through Broomm. All five core hashes and all six platform bindings verified. Existing mGBA/Snes9x/Gambatte kept.",
+    "atari2600": {
+      "rom": 6056,
+      "file": "Adventure (USA).a26",
+      "bytes": 4096,
+      "result": "Rendered the game, created a manual slot-0 state, quit normally, uploaded/read back primary 226, relaunched from Home and loaded the synchronized state at the gold castle. Stella exposes no ordinary Libretro SRAM.",
+      "first_checkpoint": {
+        "baseline": "ae23dabfa851a2def9ee9c2e04f921bfa2eed30f6910ec8ea7242e785f947cd5",
+        "commit": "64fefa5814d5cdd4987cb191b7ed0187",
+        "snapshot": "8e8a8a9b80e4380f3d0fdb1bd0534fb7",
+        "remote": 226,
+        "synced": "2026-11-07T18:35:40.728607Z",
+        "pending": false,
+        "stateKnown": {
+          "states-ccc3c6d54db8c844-android/game.state": "f9fa57480c5dc707f3d774fcd208595a812410dc1693642974f67e8016ba6c38"
+        }
+      }
+    },
+    "tg16": {
+      "rom": 1017,
+      "file": "Neutopia (USA).pce",
+      "bytes": 393216,
+      "result": "Collected Book of Revival in-game, created new File Cabinet slot 1, captured manual state and quit normally. Primary 227 and its state companion uploaded and read back. Next launch restored all 2048 SRAM bytes exactly. Continue -> File Cabinet listed only slot 1 and loaded it into the game. Manual slot-0 state loaded successfully. Normal final Quit restored the native boundary.",
+      "first_checkpoint": {
+        "checkpoint": {
+          "baseline": "57a17523685441e049f34f69c9eb246a36f797f09ae0b13c199f43d5f9ddb4d5",
+          "commit": "f3e0b36f2f44bee7b9befb88fdc5bdd9",
+          "snapshot": "1cb271a481460595022ac0cf86a296bf",
+          "remote": 227,
+          "synced": "2026-11-07T19:01:53.494171Z",
+          "pending": false,
+          "stateKnown": {
+            "states-e62150e4a003e3e1-android/game.state": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+          }
+        },
+        "files": {
+          "saves/Neutopia (USA).srm": {
+            "bytes": 2048,
+            "sha256": "761c35e18426ff56993b8904d72f2c0516b8ed8d38d1634b7c9f35ffb4493cdc"
+          },
+          "states-e62150e4a003e3e1-android/Neutopia (USA).state": {
+            "bytes": 25876,
+            "sha256": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+          }
+        }
+      },
+      "restored_native_sram": {
+        "bytes": 2048,
+        "sha256": "761c35e18426ff56993b8904d72f2c0516b8ed8d38d1634b7c9f35ffb4493cdc"
+      }
+    },
+    "cleanup_and_progress": {
+      "checked_utc": "2026-11-07T19:05:28.039842+00:00",
+      "build": 1062,
+      "runtime": "32b3ec09cfc578c6203bad0d00e12a3db57966a3",
+      "accounts": {
+        "2": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "5b5481a4dce0f5aff562bf752d24a95b8e98ec9190516c61c9f9226ed2a7d135",
+              "commit": "30100c4c22e07758edf082d426000b77",
+              "snapshot": "10aba9fb239667c5b07e3409aefd1d86",
+              "remote": 223,
+              "synced": "2026-11-07T18:05:56.518185Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3659,
+                "sha256": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "2b39b5e8906c6bc2adf34983c0476ac9986ffc8be216033f5ba7db23db0a449f",
+              "commit": "eb422a8109fa8f638d78ef3a256a5ced",
+              "snapshot": "cbf09cbf922421107bac82fbf9d347bb",
+              "remote": 222,
+              "synced": "2026-11-07T17:59:48.024331Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "d5b9b4d96b0838f1bf9f9ea4c2ad9b5fbed82863f0ed8ebd3c205efb327db1c9"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "d78889d7e31e1bf5f48b260c30b355c16409b3caf1bdaa673e11f49d4aa0e880"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 10051,
+                "sha256": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            }
+          },
+          "6056": {
+            "checkpoint": {
+              "baseline": "ae23dabfa851a2def9ee9c2e04f921bfa2eed30f6910ec8ea7242e785f947cd5",
+              "commit": "64fefa5814d5cdd4987cb191b7ed0187",
+              "snapshot": "dc051b23064aab2fcdcedc59fa66d446",
+              "remote": 226,
+              "synced": "2026-11-07T18:36:24.575255Z",
+              "pending": false,
+              "stateKnown": {
+                "states-ccc3c6d54db8c844-android/game.state": "f9fa57480c5dc707f3d774fcd208595a812410dc1693642974f67e8016ba6c38"
+              }
+            },
+            "files": {
+              "states-ccc3c6d54db8c844-android/Adventure (USA).state": {
+                "bytes": 520,
+                "sha256": "f9fa57480c5dc707f3d774fcd208595a812410dc1693642974f67e8016ba6c38"
+              }
+            }
+          },
+          "1017": {
+            "checkpoint": {
+              "baseline": "57a17523685441e049f34f69c9eb246a36f797f09ae0b13c199f43d5f9ddb4d5",
+              "commit": "f3e0b36f2f44bee7b9befb88fdc5bdd9",
+              "snapshot": "95cf151abf4d6d7db2c674e3e40c8f55",
+              "remote": 227,
+              "synced": "2026-11-07T19:05:04.902011Z",
+              "pending": false,
+              "stateKnown": {
+                "states-e62150e4a003e3e1-android/game.state": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+              }
+            },
+            "files": {
+              "saves/Neutopia (USA).srm": {
+                "bytes": 2048,
+                "sha256": "761c35e18426ff56993b8904d72f2c0516b8ed8d38d1634b7c9f35ffb4493cdc"
+              },
+              "states-e62150e4a003e3e1-android/Neutopia (USA).state": {
+                "bytes": 25876,
+                "sha256": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+              }
+            }
+          }
+        },
+        "3": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "f64c776d0705f83d23f991471fe6fdabce450d3cee633528fe0dd358a6b425d6",
+              "commit": "f60e73f9ed015d9eea409f40ecc39516",
+              "snapshot": "2e12e5df2e75bed1dbca6519b3b4812d",
+              "remote": 225,
+              "synced": "2026-11-07T18:04:36.455180Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3741,
+                "sha256": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "9463bc9d39cd255af842754b96b391b8e6dda63936b3bdf9d79d75f7cf4038a6",
+              "commit": "5c864f80a7b2bcb85c6513872d915321",
+              "snapshot": "cb3ec4b27d2525fc7236cc65f92c6dad",
+              "remote": 224,
+              "synced": "2026-11-07T18:03:32.359108Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "faf26b1af17713d998d6a0d01fd23ce2fccbe93edf5a018bb0dda457bf916e81"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "acfc7fc2874dbe538d4b19d0db79a4ff1db3fdea85f75f7147775de6cdc25d37"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 8233,
+                "sha256": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            }
+          }
+        }
+      },
+      "journals_absent": true,
+      "all_existing_managed_native_files_unchanged": 19,
+      "preexisting_standalone_and_managed_files_unchanged": 13,
+      "existing_gba_snes_progress_files_unchanged": 8,
+      "core_hashes": {
+        "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+        "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+        "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+        "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+        "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26"
+      },
+      "independent_platform_bindings_retained": [
+        "gba",
+        "snes",
+        "gb",
+        "gbc",
+        "atari2600",
+        "tg16"
+      ]
+    },
+    "log_review": {
+      "since": "2026-11-07T18:20:00Z",
+      "lines": 85,
+      "warnings_or_errors": 0,
+      "sha256": "6959831a1bbeb9145b1feb73b3d99779b4b4783b9159dadc1d41220127d624df"
+    }
+  },
+  "evidence_directory": ".tool-cache/android-retroarch-cores/2026-11-07",
+  "limitations": [
+    "One Android arm64 device/account for Stella/PCE gameplay; other ABIs have archive/ELF verification only.",
+    "Earlier GB/GBC build 1061 separately exercised both accounts; this record does not claim a new two-account Stella/PCE round trip.",
+    "Only uncompressed cartridges; no new disc/firmware or compressed-content acceptance.",
+    "Remaining ten selected cores are researched, not implemented; PR #4 stays draft.",
+    "macOS preview is ad-hoc signed, not notarized."
+  ]
+}

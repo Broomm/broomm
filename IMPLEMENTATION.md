@@ -1,5 +1,741 @@
 # Implementation plan
 
+## Flycast Thor acceptance — 2026-11-08
+
+The corrected `3d69684` direct-AOT preview passed the native Dreamcast round trip:
+retained File 1 loaded before a separate Chaos gameplay-state load; VGA survived
+fresh native processes. Missing legacy-name recovery completed through Broomm,
+then primary 252 held native `MK-51000` cards and the original matched state.
+Normal fresh Play/Quit synchronized automatically without duplicate primary.
+Account 3 started with empty working/original files and no inherited VGA,
+created its own distinct VMU/File-2 state and published separate primary 253.
+Account 2's return restored all five exact progress files. Its preparation and
+native boot also passed with Wi-Fi disabled/no default network, followed by
+restored Wi-Fi, independent state load and normal final sync.
+
+The preservation audit verifies all 49 earlier progress files, 19 managed native
+files, 13 original files, fifteen cores and eighteen bindings; both journals are
+absent. All four retained first-failed-test native card backups remain intact.
+The 318-line final scoped log contains one expected offline-connectivity warning.
+All 726 source tests pass with one existing host skip, alongside clean analysis.
+That preview retains manifest 1098 and 157 unchanged non-Dart payloads; it is
+distinct from a full Gradle package. Current CI build 1104 now passes normal
+saved-sign-in restoration, exact five-file/VGA restoration, Chaos state load,
+automatic normal-Quit sync and the repeated preservation audit. Multi-file
+media remains a format follow-up. Account 3 also fresh-restored all five
+published files, loaded its own File-2 state and quit normally without changing
+primary 253. See
+[exact device evidence](docs/android-retroarch-flycast.json).
+
+## CI bootstrap correction — 2026-11-08
+
+Hosted Devbox preparation now passes on every applicable runner; all platform
+checks, macOS native tests, four desktop packages and four independent Mesen
+ABIs passed. Android reached its unchanged Gradle wrapper and separately hit
+another GitHub browser-asset HTTP 504. A second concrete seed now verifies the
+same official Gradle 9.3.1 complete ZIP in the private wrapper cache through its
+release API, preserving the wrapper/version/URL. Three additional regressions
+include a separate Java process holding the actual Flutter-supplied wrapper's record
+lock. All six bootstrap cases pass. Corrected hosted run 42473079266 passes every
+check and all five target packages, and independent Mesen run 42473079283 passes
+all four ABIs. The initial missing-generated-wrapper regression failure is
+retained; tests now resolve the pinned Flutter SDK wrapper after preparation.
+
+Repeated clean-runner Devbox binary-download failures blocked current Android
+packaging before compilation. The existing 0.18.4 tool/action pins now have an
+explicit official release-asset API cache seed with archive/binary hashes,
+bounded reads, credential-free storage redirects, exclusive publication and
+foreign-cache preservation. The action still owns Nix/version setup. Three
+bootstrap regression cases and workflow lint pass locally; all four actual
+official archives pass the production verifier without executing foreign-host
+binaries. Subsequent hosted results are recorded above. See the
+[commands, provenance and effects](docs/ci-devbox-bootstrap.md).
+
+## Flycast native VMU naming — 2026-11-08
+
+The direct `c0b7c0a` Thor preview restored primary 251, opened Sonic Adventure's
+existing File 1 through its own VMU menu, and separately loaded the Chaos fight
+state. VGA was changed in the native menu and written to the session options.
+Normal Quit then correctly stopped at missing working paths: the actual core
+had read all four legacy `Sonic Adventure.*.bin` cards, full-saved them as
+`MK-51000.*.bin` and removed the old names. Every card and the state remained
+byte-identical. No new shared system cards were created. This is still not an
+accepted automatic Dreamcast round trip.
+
+The correction holds all new game/resource bytes before validating Flycast
+working data. Only a missing legacy content-name VMU with one new same-port
+destination, one common native game ID and no competing/previously installed
+destination is accepted inside the already verified private profile/game
+boundary. Missing established game-ID cards, missing states and ambiguity still
+retain recovery and refuse publication. Other cores keep their original
+missing-path check. Three workflow regressions cover changed four-port saves,
+original-card restoration, fresh replay and the refusal boundaries. All 97
+focused cases and clean analysis pass. The full suite has 726 passes, one
+existing host skip and no failures, with 358 unchanged source fingerprints.
+Installed recovery acceptance is pending; the failed Thor journal remains
+intact for that check.
+
+## Flycast offline boot choice — 2026-11-08
+
+Confirmed-empty firmware discovery now retains an explicit HLE choice in the
+profile/platform firmware record. Later Play reuses it without requiring RomM
+connectivity. Missing records, failed/cancelled discovery, another platform and
+conflicting known-ROM records cannot become confirmed absence. Existing BIOS
+objects and console/save identity remain unchanged. Focused cache/recovery
+checks pass. The complete suite has 723 passes, one existing host skip and no
+failures, with 358 unchanged source fingerprints and clean analysis. Packaged
+offline acceptance remains pending.
+
+The `c0b7c0a` Android CI package is blocked before compilation: the original
+Gradle distribution request returned HTTP 504, and two bounded reruns failed
+the pinned Devbox bootstrap download (curl 22). Other platform jobs and the
+independent four-ABI Mesen workflow passed. Original failure logs are retained.
+For continued Thor testing, pinned Flutter directly compiled all three current
+Dart AOT libraries. A local preview keeps the verified build-1098 manifest and
+all 157 other APK payloads byte-identical, with verified alignment/signatures
+and an in-place stable-key upgrade. It is not a successful current Gradle/CI
+package. Its live session restored primary 251's four VMUs and matched state,
+and the actual `reicast_` All VMUs/disabled-linked settings with no new system
+VMUs. Game-native load, preference retention and two-account acceptance are
+still being checked. The first failed test's four native cards and private
+capture were retained; a scoped manual recovery followed by Broomm's normal
+recovery and explicit device-progress review published primary 251. This is
+diagnostic recovery, not an automatic card-conversion feature.
+
+## Flycast Android option-prefix correction — 2026-11-08
+
+Build 1098 boots Sonic Adventure with HLE and reaches real controller-driven
+gameplay. A manual 9,698,587-byte state was created. The first normal Quit
+correctly refused synchronization and retained that state plus four system VMUs,
+console flash and core options. The cause is Broomm supplying only `flycast_`
+settings while the actual official Android core consumes `reicast_` settings.
+This is not accepted Dreamcast save synchronization.
+
+The correction reads/preserves both concrete option prefixes and supplies the
+required all-port/private VMU settings for both. Return checks still refuse
+system VMUs and changed storage modes. The pinned source's
+`libretro_core_option_defines.h`, all four real library payloads and a retained
+non-sensitive native options fixture independently establish the Android prefix.
+All 108 focused tests pass; the complete suite has 720 passes, one existing host
+skip and no failures, with clean analysis and unchanged source fingerprints.
+Packaged correction, save restoration, preference retention and two-account
+Dreamcast acceptance remain pending. The failed first test remains recoverable;
+there is no automatic fallback-card conversion feature.
+
+## Optional Flycast boot ROM correction — 2026-11-08
+
+Packaged build 1097 completed normal Dreamcast Setup, verified Flycast's hash,
+and retained fourteen earlier cores and seventeen existing connections. Sonic
+Adventure (RomM 6981/platform 27) downloaded as a 915,557,486-byte CHD. Play then
+incorrectly required a retail boot ROM before any emulator session began.
+
+The pinned Flycast source uses built-in Reios HLE when no boot ROM is present.
+Source now permits that native fallback only after successful, confirmed-empty
+firmware discovery with no known cached image. Invalid/ambiguous candidates,
+catalogue failures and missing/damaged known firmware still block Play. A new
+explicit boot marker separates HLE sessions from incomplete older BIOS records;
+console flash, VMUs, options, capture and cleanup retain their checks. All 88
+focused firmware/root-save cases pass, including HLE round trips and console
+reuse, legacy damaged-record refusal and discovery failure boundaries. Analysis
+is clean; the full suite has 717 passes, one existing host skip and no failures.
+Packaging and installed correction acceptance remain pending.
+
+## Rooted Flycast source increment — 2026-11-08
+
+Dreamcast Setup pins source `7adbf3c` at retained artifact commit `f51373b`.
+Version 16 settings preserve versions 1–15 and all seventeen earlier bindings.
+The initial concrete route accepts self-contained, parent-free CHD v5 images up
+to 2 GiB physical/logical size. Canonical 2 MiB `dc_boot.bin` comes from this
+platform's RomM firmware catalogue, with immutable cache repair retaining old
+objects. CUE/GDI/M3U/CDI transport and Naomi/Atomiswave are not enabled here.
+
+Native game-ID VMUs and legacy filename VMUs retain desktop-compatible names
+and exact 128 KiB lengths in private profile/game folders. Eight native plus
+eight legacy cards are bounded separately from matched states; only Flycast
+gets a 64 MiB state / 128 MiB total progress limit. Session options force All
+VMUs and disable linked DreamPotato storage, while preserving other native and
+per-game preferences. Normal close captures those editable values separately
+from cloud progress. Remove clears only owned configuration after verified
+uninstall, retaining progress, console objects and recovery across profiles.
+
+Mutable `dc_nvmem.bin` is a local profile console identity shared across that
+profile's games, never one game's cloud VMU or immutable BIOS. Version-5 resource
+records retain initial identity, native resources, private captures, publication
+readbacks and recovery without source firmware/cache or the general marker.
+Missing known flash is damaged recovery. New game progress is held privately
+before auxiliary checks. Mid-session VMU-mode/linked-storage changes retain
+ordinary saves/states plus fallback VMUs for manual recovery and block sync;
+no implicit card selection, conversion or deletion resolves that ambiguity.
+
+Native selectors and resource operations bind core, package/user, profile/game,
+configuration nonce, UID/label, closure and exact metadata. A new native test
+reproduced cleanup of an interrupted install rejecting its own retained hard
+link. Recovery now verifies precisely the expected two names/inode/checksum
+before unlinking the incoming stage, with strict extra-link/writer refusal.
+The correction also covers the existing Lynx/Opera/Saturn resource boundaries.
+The original failing log and AndroidRuntime stack remain recorded locally.
+
+All 107 focused cases, four actual ABI downloads and 26 disposable Thor native
+groups pass. The exact 64 MiB state boundary and oversized refusal pass; the
+exact 2 GiB image staged in 4,496 ms under the unchanged 30-second deadline.
+Bridge/fixture compilation and clean analysis pass. The final full suite has
+714 passes and one existing host skip, with 357 source/test input fingerprints
+unchanged throughout the run. Packaged Flycast BIOS,
+gameplay, in-game saves, states, preference retention and two-account acceptance
+remain pending. Multi-file media remains unfinished; PR #4 stays draft.
+
+## Installed native writer guard — 2026-11-08
+
+Build 1096 (`a01bfd6`) upgraded in place with the retained preview key and stable
+UID. The original saved sign-in opened without a password. Tetris Play restored
+its existing state hash, reached the title/attract sequence, and normal Quit
+triggered automatic capture/restore/sync without a closure confirmation. Primary
+223 and its state stayed unchanged. All 49 accepted progress files, 19 managed
+native files, 13 original standalone/managed files, fourteen cores and seventeen
+bindings remain intact; journals were cleared. Its thirteen scoped log lines
+contain no warnings/errors. A copied Saturn line-count threshold was inapplicable
+to this short session; actual launch identification, verified exit and checkpoint
+readback establish completion. Application CI `42455382622` passed all checks
+and five packages; Mesen `42455382608` passed all four jobs/post-job steps.
+This predates the later interrupted-resource correction and Flycast. See the
+[device evidence](docs/android-root-writer-guard.json).
+
+## Native rooted progress writer guard — 2026-11-08
+
+Review found ordinary root save replacement and ROM cleanup relying on Dart's
+previous process observation. The service now verifies the selected package is
+idle before and after progress operations, and native publication/removal checks
+again at its mutation boundary. A writer appearing during staging leaves the
+old public save and private retry stage intact. Active/unknown writers also block
+idempotent replay, ROM publication and pending/published ROM cleanup. Inspection
+and lifecycle observation remain read-only and usable while the emulator runs.
+
+Bridge and fixture compilation pass. All 21 disposable Thor native groups pass,
+including two new groups with explicit held/arriving writer gates and closed
+retry. The exact 1 GiB image fixture completed in 2,769 ms under its unchanged
+30-second deadline. This is mechanism verification; an installed APK using the
+new service guard and its operation timings still need packaged acceptance.
+The earlier Saturn build 1093 acceptance predates this correction. No game,
+account or existing native progress was modified by these disposable fixtures.
+
+## Flycast artifact preparation — 2026-11-08
+
+Four unmodified official Libretro ABI archives identify native source `7adbf3c`.
+Source/archive/library hashes, ELF identities, Android-only system dependencies,
+original CMake inputs, GPL-2.0-or-later and component notices are retained under
+`vendor/android/flycast/7adbf3c`. Exact gitlinks and conservative source/notices
+for eleven potential components and two nested sources are recorded. Optional
+linkage and exact upstream Android NDK reproduction are not asserted. No BIOS
+or game is bundled. Archive and payload hashes/ABI identities pass local readback.
+This artifact increment enables no route; concrete VMU, mutable console flash,
+media, state/recovery and packaged Thor acceptance remain separate work.
+
+## Rooted Beetle Saturn device acceptance — 2026-11-08
+
+Build 1093 (`277113b`) passed normal Saturn Setup and The Legend of Oasis
+(RomM display title The Story of Thor 2) Play on the Thor. Both regional BIOS
+files matched their canonical MD5 and transfer SHA-256 in the actual native
+session. System 0 and Cartridge 0 saves, 32 KiB SRAM, 512 KiB cartridge,
+12-byte console settings and a 1,848,374-byte manual state published as primary
+247. Fresh Play restored every hash. The game's own Continue loaded System 0
+and, in a separate fresh process, Cartridge 0 before any Load State. Manual
+Load State independently resumed the Aquaria save-circle scene.
+
+An attempted soft-reset entered Save mode instead and saved the test cartridge
+again; that copy was retained as primary 248. It is not counted as a load test.
+The subsequent verified cartridge load and manual-state restore published 249.
+Account 3 began empty, with Continue disabled, and published different initialized
+memory and an opening-dialogue state as primary 250. Returning to account 2
+restored all four primary-249 hashes and its gameplay scene. Final normal Quit
+retained 249. All 41 earlier progress files, 19 managed native files, 13 original
+standalone/managed files, fourteen core hashes and seventeen bindings remain
+intact. Both saved sign-ins opened without passwords; no active journals remained,
+and 163 scoped log lines contained no warnings/errors.
+
+Application run `42449620564` passed all checks and five packages; independent
+Mesen run `42449620562` passed all four native jobs and post-job steps. The
+current universal macOS archive passes input fingerprints, ZIP integrity and
+source/extracted deep strict signatures. The separate local full-suite Astris
+capture failure below remains unresolved. See the [device evidence](docs/android-retroarch-saturn.json).
+Other ABI gameplay, special cartridges, selected Mednafen/shared/4 MiB modes,
+CUE file sets and completed-game progression are not newly established. Flycast
+and multi-file transport remain unfinished; PR #4 stays draft.
+
+## Rooted Beetle Saturn source increment — 2026-11-08
+
+Independent Saturn Setup pins v1.32.1 `30f4c12` at artifact commit `88b71d1`.
+Version 15 settings retain versions 1–14 and earlier platform connections.
+Concrete preparation accepts a self-contained CHD v5 up to 1 GiB, verifies both
+regional BIOS images from RomM and retains immutable profile cache objects.
+Explicitly selected KOF95/Ultraman ROM cartridges have separate canonical
+verification. Multi-file CUE transport and automatic special-cartridge detection
+are not implemented. Core, ABI, configuration and actual native option precedence
+are checked again after preparation, before cloud inspection/native effects.
+
+The default Libretro `.srm` contract matches existing desktop Saturn progress.
+Selected Mednafen `.bkr`, shared names, 12-byte `.smpc`, 512 KiB `.bcr` and 4 MiB
+`.4mb.bcr` remain native filenames. Existing progress whose internal-memory or
+cartridge layout disagrees with the selected mode blocks Play without conversion
+or deletion. Version-4 swap records bind BIOS, disc and configuration transactions;
+resources stay separate from progress. Recovery works without the general marker,
+firmware cache or staged native resources. Earlier version-1/2/3 recovery remains.
+
+Clean analysis, bridge compilation, all 91 focused cases, four actual ABI download
+checks and nineteen disposable native fault groups pass. The full macOS suite
+records 697 passing tests, one existing host skip and one unrelated Astris native
+application-capture failure; that three-case suite subsequently passes in isolation.
+The full run is not claimed green, and no timeout/assertion was relaxed. Packaged
+Saturn gameplay, BIOS/save/state restoration and two-account acceptance remain
+pending. Flycast and multi-file transport remain unfinished; PR #4 stays draft.
+
+## Beetle Saturn artifact preparation — 2026-11-08
+
+Four unmodified Android ABI archives identify **v1.32.1 `30f4c12`**; the older
+core-info display version is stale. Source/archive/library hashes, ELF ABIs,
+Android-only libc/libm/libdl dependencies, original Android recipes, GPL-2.0
+and 168 embedded component-notice blocks are retained under
+`vendor/android/mednafen_saturn/1.32.1-30f4c12`. Exact upstream NDK reproduction
+is not claimed, and no retail BIOS/game is bundled. This artifact increment
+enables no route. Concrete BIOS/disc handling, native backup-memory companions,
+state/recovery and packaged Thor acceptance remain pending.
+
+## Rooted Opera device acceptance — 2026-11-08
+
+Build 1090 (`09ccf43`) passed normal 3DO Setup and Alone in the Dark Play on the
+Thor using the core's embedded boot ROM. Emily's in-game Save Game 1, 32 KiB
+NVRAM and 1,274,682-byte manual state published as primary 245. Fresh Play
+restored both files byte-for-byte; the game's own Load a Saved Game loaded the
+attic save before any state load. Manual Load State independently resumed the
+recorded scene. Account 3 began with an empty working inventory and published
+different initialized NVRAM and an introduction state as primary 246. Returning
+to account 2 restored its original files and scene; final Quit retained 245.
+
+All 37 earlier progress files, 19 managed native files, 13 original standalone/
+managed files, thirteen core hashes and sixteen bindings remain intact. Both
+saved sign-ins opened without passwords, journals/session files were cleaned,
+and all 145 scoped operational log lines have no warnings/errors. Application
+run `42434249241` passed all checks and five packages; independent Mesen run
+`42434249252` passed all four native jobs. The current macOS archive passes ZIP,
+input-fingerprint and source/extracted strict signatures for both architectures.
+
+ADB's virtual keyboard occupied native port 1 on one relaunch. Selecting the
+Thor controller in that unsaved test configuration restored input; subsequent
+hardware-event launches assigned it to port 1 normally. No runtime/input default
+or saved standalone configuration was changed. See the [exact device evidence](docs/android-retroarch-opera.json).
+Selected external BIOS/font use, other ABI gameplay, cross-device gameplay and
+completed-game progression are not claimed. Flycast, Beetle Saturn and multi-file
+disc transport remain pending; PR #4 stays draft.
+
+## Rooted Opera source increment — 2026-11-07
+
+Independent 3DO Setup pins Opera 1.0.0 `370d9a2` at retained artifact commit
+`7d8f0c9`, also held by `android-opera-1.0.0-370d9a2`. Version 14 settings retain
+versions 1–13 and every earlier connection. Normal locked preparation verifies
+one self-contained CHD v5, ISO or BIN image, with a concrete 1 GiB physical/logical
+limit. CHDs with parents, incomplete headers and BIN/CUE sets are refused visibly;
+multi-file CUE transport remains unfinished. A cancellable read-only worker binds
+the inspected CHD header to the exact hashed bytes. Native handoff keeps that
+digest, streams the image and preserves earlier cores' limits/path restrictions.
+After lengthy preparation, core/configuration/options are checked again before
+cloud inspection or native writes; an external edit requires a fresh Play.
+
+The pinned core uses its built-in open-source boot ROM by default. Selected
+external BIOS/font images require canonical size/MD5 and verified transfer from
+this platform in RomM; immutable profile cache objects survive repair. Native
+resource operations bind core, profile/game, configuration nonce, filename,
+size/hash, ownership, label and verified closure. Version-3 receipts retain these
+resources separately from progress and preserve old version-1/2 recovery. Lost
+replies recover without cache, staged BIOS or general marker; mismatched cores,
+transactions and foreign firmware records retain recovery.
+
+Native 32 KiB NVRAM retains per-game/shared modes, every version 0–9 and the
+desktop ZIP/raw-save contract. Truncated NVRAM is damaged recovery. Read-only
+inspection follows game/folder/core/global option precedence and refuses
+conflicting or included option files. Shared mode remains private to this
+profile/game. Rooted session configuration now resolves empty/relative option
+paths against RetroArch's original configuration, preserving native preferences
+when the session configuration lives elsewhere.
+
+All 688 Flutter tests (one existing native-host skip), 96 focused cases, clean analysis, four real
+ABI download checks and seventeen disposable native groups pass. The exact 1 GiB
+image fixture staged in 3,349 ms under the unchanged 30-second native deadline.
+An existing cartridge-disc rejection caught a path scope regression; the Opera
+scope correction preserves that assertion. Initial fixture reuse/type/import/
+test-path diagnostics are retained. Packaged Opera BIOS/game/NVRAM/state checks
+remain pending. Flycast and Beetle Saturn still need concrete integration, and
+the requested complete milestone remains draft.
+
+## Opera artifact preparation — 2026-11-07
+
+Four unmodified Android ABI archives identify Opera 1.0.0 source `370d9a2`.
+Source/archive/library hashes, ELF identities, Android-only dependencies,
+original recipes and 97 embedded component notices are retained. The modified
+LGPL/non-commercial FreeDO terms and embedded Opera Boot GPL-2.0-only license
+remain explicit. All four libraries contain the pinned source's exact compressed
+128 KiB open-source boot ROM; its uncompressed hash and separately referenced
+upstream source archive are recorded. No retail BIOS or game is bundled. Exact
+Android NDK or source-to-boot reproduction is not claimed.
+
+Unlike older core metadata, this pinned source defaults to its embedded boot
+ROM. User-selected external BIOS/font resources still require concrete verified
+preparation. Native NVRAM mode/version, multi-file disc staging and packaged
+acceptance remain unimplemented; this artifact-only increment enables no route.
+
+## Rooted FinalBurn Neo device acceptance — 2026-11-07
+
+Build 1087 (`36c9e8d`) passed normal Arcade Setup and The Simpsons Play on the
+Thor. The complete `simpsons2p.zip` reached FBNeo intact, passed its native ROM
+check and reached stage-one Marge gameplay with movement/action input. Normal
+Quit captured nested 128-byte NVRAM and a 5,654-byte gameplay state as primary
+243; fresh Play restored both byte-for-byte and Load State resumed that scene.
+Account 3 started with an empty working inventory and published a distinct
+3,745-byte character-selection state as primary 244. Returning to account 2
+restored its original files/scene; final Quit retained primary 243. Default
+NVRAM bytes match between accounts; distinct state bytes establish separation.
+
+All 33 earlier progress files, 19 managed native files and 13 original
+standalone/managed files remain unchanged. Twelve core hashes, fifteen bindings,
+both saved sign-ins and journal/session-file cleanup pass. All 85 scoped log
+lines are free of warnings/errors. Application run `42430012291` passed every
+check and all five packages; independent Mesen run `42430012217` passed all four
+native jobs. The current macOS archive passes input fingerprints, ZIP integrity
+and source/extracted deep strict all-architecture signatures. See the
+[device evidence](docs/android-retroarch-fbneo.json). Other ABI gameplay,
+cross-device gameplay, completed stages and special arcade peripherals are not
+claimed. Three selected cores remain pending; PR #4 stays draft.
+
+## Rooted FinalBurn Neo archive/save source increment — 2026-11-07
+
+Independent Arcade Setup pins the retained four-ABI FBNeo build at `299e4ce`,
+also held by `android-fbneo-1.0.0.03-20261107`. Version 13 settings preserve
+versions 1–12 and every earlier connection. Complete ZIP ROMsets keep their
+original set/chip names and reach the core intact; Broomm checks safe ZIP
+structure and bounds without extracting chips. The concrete route accepts
+128 MiB archives, 512 MiB expanded totals and 128 MiB entries. Earlier cores'
+limits remain unchanged. Rooted 7z, automatic parent/BIOS/CHD acquisition and
+special arcade peripherals remain outside this increment.
+
+Driver-named `.fs/.nv/.hi/.memcard` and the game-private `shared.memcard` retain
+the desktop nested ZIP save contract, with APK/ABI/core-matched states. Native
+selectors reject foreign drivers, temporary/nested paths and another core's
+requests. Recovery retains the original state group even without the general
+marker; it no longer infers a state's filename from an ordinary-save prefix.
+The native handoff uses the exact hash validated around ZIP inspection; a
+controlled source replacement retains recovery instead of staging new bytes.
+Missing working NVRAM remains damaged recovery. Setup persistence and generic
+connection reporting cover the new route and retain earlier routes.
+
+Clean analysis, all 676 Flutter tests (one existing native-host skip), 81 focused
+checks and fifteen disposable Thor filesystem/launch groups pass. The bridge
+and fixture compile. An initial migration regression caught an omitted persisted
+Arcade binding; corrected checks pass. The first native fixture targeted a
+new-publication checkpoint on an existing replacement; runtime diagnostics
+identified that test error, and the corrected setup passes without relaxing its
+assertions. All original failure logs remain retained. Packaged FBNeo gameplay/
+NVRAM/state acceptance remains pending. Three other selected cores still need
+their concrete integration; PR #4 stays draft.
+
+## FinalBurn Neo artifact preparation — 2026-11-07
+
+Four unmodified Android archives are retained with per-ABI source provenance:
+ARM64/x86 embed `d15071a`; ARMv7/x64 embed `4cdb31f`. The corresponding inspected
+Libretro wrappers are identical, including native NVRAM/memory-card paths;
+driver differences and state-build identities remain distinct. Source/archive/
+library hashes, ELF identities, Android recipes, complete upstream non-commercial
+FBNeo/MAME terms and component notices are retained. All four libraries depend
+only on Android libc/libm/libdl. No NDK reproduction or gameplay is claimed.
+This artifact-only increment enables no new route; concrete archive/nested-save
+handling and packaged acceptance remain pending.
+
+## Rooted Lynx device acceptance — 2026-11-07
+
+Build 1083 (`03dec28`) passed normal Lynx Setup and Crystal Mines II Play on
+the Thor. RomM supplied the canonical 512-byte BIOS; both native session copies
+matched its MD5/SHA-256, and the second launch reused the same verified cache
+object. Level-one movement/action and manual Save/Load State passed. The
+34,966-byte gameplay state restored byte-for-byte; final normal Quit synchronized
+unchanged primary 242. No ordinary SRAM was synthesized. A disconnected-network
+Lynx session, completed level and other ABI gameplay are not claimed.
+
+All 24 earlier additional-core progress files, eight GBA/SNES files, 19 managed
+native files and 13 original standalone/managed files remained unchanged. Eleven
+core hashes, fourteen bindings, both accounts' distinct earlier histories,
+journal removal and temporary BIOS cleanup pass. All 36 scoped log lines are
+free of warnings/errors. Application run `42427026470` passed every check and all
+five packages. The current macOS archive passes input fingerprints, ZIP integrity
+and source/extracted deep strict all-architecture signatures. See the
+[device evidence](docs/android-retroarch-lynx.json). Four selected cores remain
+pending; PR #4 stays draft.
+
+## Rooted Lynx firmware/state source increment — 2026-11-07
+
+Independent Lynx Setup now pins the retained four-ABI Beetle Lynx artifacts at
+`a62e24f`, also held by `android-lynx-1.24.0-fcdefcf`. Settings version 12 reads
+versions 1–11 and preserves every earlier connection. Raw/safe-ZIP
+`.lnx/.lyx/.bll/.o` cartridges and build-matched states use the existing Dart
+supervisor; no ordinary SRAM is synthesized for this state-only core.
+
+Normal locked Play obtains the uniquely identified, canonical 512-byte
+`lynxboot.img` from the active platform in RomM. Transfer/catalogue MD5 and actual
+canonical bytes are verified; immutable profile-owned cache objects allow
+verified offline reuse. Old/damaged objects are retained during repair, while
+unreadable/conflicting metadata remains an error. Preparation is cancellable;
+its session lease remains held until acknowledgement, and an uncertain writer
+retains both staging and the lease until restart.
+
+The concrete native BIOS descriptor operation requires the exact core,
+profile/game/configuration nonce, size, hash, UID/label and verified closure.
+Version-2 Lynx swap receipts retain resource ownership before publication;
+version-1 transactions remain readable. Recovery works without the cache or
+staged BIOS and after loss of the general marker, preserving the state group.
+Edited resources and lost replies retain captured progress and retry safely.
+Firmware never enters save inventories or cloud bundles. Earlier resource
+limits and native save/config allowlists are unchanged; the common private
+copy now stops immediately if its source exceeds the recorded size.
+
+Clean analysis, all 670 Flutter tests (one existing native-host skip), 75 focused
+checks and fourteen disposable Thor filesystem/launch fault groups pass. The
+bridge and fixture compile. Initial local test-load errors (matcher/import) and
+an Android API-name correction are retained with corrected passing logs; no
+assertion or deadline was relaxed. Packaged Lynx BIOS/game/state acceptance
+remains pending. Four other selected cores remain unimplemented; PR #4 stays draft.
+
+## Beetle Lynx artifact preparation — 2026-11-07
+
+Four unmodified Android ABI archives identify Beetle Lynx 1.24.0 source
+`fcdefcf`. Source/archive/library hashes, ELF identities, Android-only system
+dependencies, original Android recipes and component notices are retained,
+including Handy, Blip_Buffer and libretro-common terms. Local inspection verifies
+each archive and embedded revision; an upstream NDK rebuild is not claimed.
+No BIOS is bundled. Firmware/session implementation and packaged Lynx acceptance
+remain pending; this artifact preparation enables no new application route.
+
+## Rooted Jaguar device acceptance and independent core CI — 2026-11-07
+
+Build 1079 (`675ab8b`) passed Jaguar Setup and Tempest 2000 launch/input. Normal
+Quit published its native 128-byte EEPROM as primary 239. The real menu check
+found that RetroArch 1.22.2's bundled Virtual Jaguar 2.1 metadata disables states,
+despite the reviewed 3.11 core providing them. The correction uses the frontend's
+documented metadata override in the disposable session configuration only for
+the exact reviewed ABI/payload hashes. Unknown cores retain the inherited policy;
+standalone metadata/preferences are untouched.
+Clean analysis, all 657 Flutter tests (one existing native-host skip) and all
+50 rooted-session regressions pass. The initial sandboxed test harness could not
+bind its loopback socket; the native rerun passed without changing tests.
+
+Build 1080 (`855e6a6`) passed the corrected native menu, manual Save/Load State,
+normal Quit/sync and fresh Play. Both the 128-byte EEPROM and 80,783-byte state
+restored byte-for-byte; Load State resumed the saved level-start scene with
+score 0 and three lives. The original display preference was restored before
+final primary 241, retaining the state. All 22 earlier additional-core progress
+files, eight GBA/SNES files, 19 managed native files and 13 original standalone/
+managed files stayed unchanged. Ten cores, thirteen bindings, both accounts'
+distinct earlier histories and journal cleanup pass; 86 scoped log lines have
+no warning/error. No completed level, Memory Track or cross-device gameplay
+claim is made. See the [exact device evidence](docs/android-retroarch-jaguar.json).
+
+All application jobs and five packages passed run `42422129526`. In the separate
+Mesen run `42422129552`, all four native libraries built and uploaded, but x86's
+Nix installer post-job diagnostics request timed out and its old bundled promise
+handler crashed. The workflow now invokes the same pinned installer directly
+with its supported diagnostics opt-out before Devbox. Build/test steps, deadlines
+and failure handling are unchanged; workflow lint passes. Corrected run
+`42424364865` passed all four native jobs and every post-job step. Application
+run `42424365012` passed all checks and all five packages. The original failed
+job/log is retained. The current macOS package passes archive, input-fingerprint
+and source/extracted deep strict all-architecture signature checks. Five selected
+cores remain pending; PR #4 stays draft.
+
+## Rooted Jaguar cartridge source increment — 2026-11-07
+
+Independent Jaguar Setup downloads Virtual Jaguar 3.11.0 directly from its
+official tagged four-ABI release with pinned payload hashes. Exact source,
+upstream build recipes, ELF dependencies and component notices are recorded;
+the firmware-array provenance boundary is explicit and no release binary or
+boot-ROM array is mirrored. Settings version 11 retains versions 1–10 and
+earlier connections. Cartridge/ZIP staging, raw EEPROM and matched states use
+the existing Dart supervisor and journaled native file boundary. Jaguar CD
+remains deferred; earlier size limits are unchanged.
+
+Clean analysis, all 655 Flutter tests (one existing native-host skip), 61 focused
+checks and thirteen disposable Thor filesystem/launch groups pass. The native
+bridge and fixture compile. All four official assets pass a real production
+download/ELF check. Packaged Jaguar gameplay remains pending; five other
+selected cores remain research. See the [scope and walkthrough](docs/android-retroarch-cores.md#jaguar-cartridge-source-increment).
+
+## Rooted NES/Mesen device acceptance — 2026-11-07
+
+Current source adds independent NES Setup using the four-ABI Mesen build retained
+at `7a0fb0a`, with exact source `0102910` and original compiler records/notices.
+Version 10 preserves earlier connections. Raw/ZIP `.nes/.unf/.unif` cartridges,
+desktop-compatible SRAM and matched states use the existing profile/game
+supervision and recovery. Earlier resource limits remain unchanged; FDS disks
+and HD packs have no new acceptance.
+
+Clean analysis, all 649 Flutter tests (one existing native-host skip), 58 focused
+checks and thirteen disposable Thor filesystem/launch groups pass. The native
+bridge and fixture compile. All application CI jobs and five packages passed.
+Build 1077 (`1ecf544`) passed normal NES Setup, Zelda slot-A SRAM restoration,
+gameplay/input and manual-state reload at the cave entrance. Journal-installed
+SRAM/state hashes match the published checkpoint; the running core changed SRAM
+before readback, so live SRAM byte identity is not claimed. Final Quit published
+primary 238 and retained the manual state. All earlier saves/settings, nine core
+hashes, twelve platform bindings and both accounts' distinct earlier histories
+remain intact; 51 reviewed log lines contain no warnings/errors. An apparent
+graphics problem was an inconsistent image preview, disproved by identical PNG
+bytes and pixel checks; no graphics behavior was changed. Six other selected
+cores remain research. See the [device evidence](docs/android-retroarch-nes.json)
+and [scope and walkthrough](docs/android-retroarch-cores.md#nesmesen-source-increment).
+
+## Pinned Android Mesen build preparation — 2026-11-07
+
+The exact Mesen 0.9.9 source archive and recipe/license inputs are retained.
+A separate four-ABI CI job builds that source using the privately staged,
+already licensed NDK 29.0.14206865. It records source/tool/output hashes,
+compiler logs and ELF dependencies before any runtime download pin is accepted.
+Source inspection, three owning regressions, analysis and workflow lint pass
+locally. All four ABIs passed native compilation in CI run `42416669733`; their
+checksums, ELF identities, Android-only dependencies, original logs/records and
+component licenses are retained. A ZIP-method metadata label was corrected
+against the actual archive without rewriting historical build records. Mesen
+gameplay remains pending; that build-preparation increment enabled no app
+behavior. The subsequent source increment is recorded above.
+
+## Rooted Nintendo 64 device acceptance — 2026-11-07
+
+Current source adds independent N64 Setup, pinned four-ABI Mupen64Plus-Next
+delivery with its actual Android GLES3 filename, raw/ZIP cartridge staging up
+to 64 MiB, the full 296,960-byte native save and 32 MiB states. Earlier cores'
+limits remain unchanged. Version 9 settings retain earlier bindings; core-aware
+file mechanics and original platform records retain recovery behavior.
+
+Clean analysis, all 642 Flutter tests (one existing native-host skip), 51 focused
+Dart checks and thirteen native Thor filesystem groups pass. The final 42-test
+root suite also passes after the limit helper cleanup. Native checks include
+exact 64 MiB staging, oversized refusal, full SRAM and interrupted large-state
+recovery. Build 1073 (`d30e81f`) passed normal N64 Setup, Super Mario 64 rendering,
+analog movement/jump, EEPROM-backed audio-preference synchronization and manual
+gameplay-state reload. The complete native save/state restored byte-for-byte;
+final Quit restored STEREO and synchronized without changing the gameplay state.
+All earlier saves/settings, eight cores, eleven bindings and both accounts'
+distinct earlier histories remain intact. The reviewed 81 log lines have no
+warning/error; all CI jobs passed. No completed-star or controller-pak gameplay
+claim is made. See the [device evidence](docs/android-retroarch-n64.json) and
+[concrete scope](docs/android-retroarch-cores.md#nintendo-64-source-increment).
+Seven other cores remain research.
+The separate Windows diagnostic revision `cf75b58` passed all CI jobs; native
+readiness was 1,770 ms. The earlier failure's cause remains unknown.
+
+## Sega cartridge device acceptance — 2026-11-07
+
+Build 1069 (`f00df30`) passed the three downloaded Sega ZIP launches, Sonic 3
+gameplay/manual-state reload, Phantasy Star in-game SRAM/state reload and
+Defenders of Oasis Continue/state reload. Build 1066 verified Chaotix rendering,
+menu and title-state reload, without claiming ordinary SRAM or completed 32X
+gameplay. Native cleanup, seven core hashes, ten platform bindings and all prior
+save/settings preservation checks pass. Both accounts' earlier histories remain
+distinct; Sega used the original account. See the [exact scope and
+receipts](docs/android-retroarch-sega.json).
+
+The preceding ZIP sections record the failures and corrections that led to
+1069; their pending status is historical. All five current packages and
+macOS/Linux/native Android checks passed. The separate Windows updater fixture
+missed its unchanged eight-second readiness deadline with a live helper and no
+output/install log. Its cause remains unresolved; the failure has not been
+retried, skipped or masked. PR #4 stays draft; eight other cores remain research.
+
+## Rooted cartridge ZIP preparation — 2026-11-07
+
+Build 1067's first ZIP check exposed the native adapter's library-only source
+guard. The follow-up keeps that guard and separately validates a normalized
+cartridge inside the exact session transaction on both sides of the root mount
+namespace. Foreign transactions, filenames, traversal and links are refused.
+The bridge and native fixture compile; JVM path checks and eleven disposable
+Thor filesystem groups pass. Packaged ZIP acceptance remains pending.
+
+Build 1068 passed that private source handoff, then exposed the launch adapter's
+separate exact-filename check. The follow-up accepts the unchanged archive stem
+with the validated extracted extension and retains core/game/profile/configuration
+checks. The complete production launch validator is included in the disposable
+Android fixture, with raw/ZIP routes and wrong filename, game, core and profile
+cases. Packaged ZIP acceptance remains pending.
+
+The updated bridge and fixture compile; all twelve Thor fixture groups pass,
+including the actual launch validator. The previously passing 638-test Dart
+suite is unchanged by this native-only correction.
+
+Sega catalogue checks found ordinary single-cartridge ZIP downloads, which the
+earlier rooted handoff refused. Current source validates ZIP structure and
+extracts privately in Dart before the existing native cartridge staging. It
+requires exactly one supported cartridge, keeps the archive's save/state stem,
+retains the 32 MiB cartridge limit and bounds archives/expanded content to 64 MiB.
+The downloaded game stays unchanged. Durable staging records cover cleanup after
+a lost native reply. Focused regressions pass for nested names, cleanup retry,
+ambiguous/unsafe entries, oversized payloads and corrupt extraction. Analysis
+and all 638 Flutter tests pass, with one existing native-host skip; the focused
+39-test root suite also passes with a lost native staging reply. Packaged ZIP
+gameplay remains pending.
+
+## Rooted Sega cartridges — 2026-11-07
+
+Current source adds independent Genesis, Master System and Game Gear Setup via
+Genesis Plus GX, plus 32X via PicoDrive. Four-ABI downloads pin retained artifact
+`db5b758`, corresponding source, submodule provenance and notices. Version 8
+settings preserve earlier connections. Uncompressed cartridges use the existing
+raw SRAM/state contracts and journaled profile/game boundary. Genesis Plus GX's
+larger library uses bounded streaming; other core download limits stay unchanged.
+
+Clean analysis and all 635 Flutter tests pass with one existing native-host skip.
+The production bridge compiles and all eleven Thor filesystem groups pass,
+including Sega cartridge staging and the large-core faults below. Packaged Sega
+gameplay is pending; the other eight cores remain research. See the
+[core walkthrough](docs/android-retroarch-cores.md#sega-cartridge-increment).
+
+## Large Android core transport — 2026-11-07
+
+The next remaining-core prerequisite streams native core inspection/staging with
+a 96 MiB bound, a small ELF header and descriptor identity checks. Cancellation,
+writer exclusion, exclusive publication and interrupted-link recovery remain.
+The bridge compiles; all eleven filesystem groups pass on Thor. The separate
+80 MiB fixture also passes directly through ART with an asserted exact 32 MiB
+heap, including cancelled-copy retry, a forced timestamp tie/source replacement
+and a destination appearing before publication. No additional core delivery or
+gameplay support is claimed by this native prerequisite.
+
+## Rooted Atari 2600 and TG16 cartridges — 2026-11-07
+
+Current source adds independent Setup for Stella and Beetle PCE Fast with pinned
+four-ABI archives and exact source notices. Version 7 settings preserve existing
+connections. Uncompressed Atari `.a26`/`.bin` and TG16 `.pce` use the existing
+journaled native boundary, raw PCE SRAM, state-only Stella progress and
+build-matched states. No disc/firmware or compressed-content acceptance is added.
+Clean analysis and 628 Flutter tests pass with one existing native-host skip;
+the bridge compiles and ten real Thor filesystem groups pass in disposable
+storage. Build 1062 passed normal Setup, Adventure state upload/reload and
+Neutopia's in-game File Cabinet SRAM plus manual-state round trip. All five
+installed cores, six platform bindings and prior progress/settings were
+preserved; native temporary files were removed. See [scope and
+provenance](docs/android-retroarch-cores.md#atari-2600-and-tg16-cartridge-increment).
+
+## Remaining rooted RetroArch cores — 2026-11-07
+
+PR #3 merged as `e92c584` after the GBA/SNES and offline-profile checks below.
+The next branch starts with GB/GBC through Gambatte: independent platform setup,
+immutable four-ABI archives, SRAM/RTC and exact-build states. Version 6 settings
+retain GBA/SNES connections; session and swap receipts retain the original
+platform for recovery. Native staging accepts the concrete uncompressed GB/GBC
+extensions and bounded SRAM/clock selectors.
+
+Analysis and all 623 Flutter tests pass, with one existing native-host skip. The compiled
+production bridge and nine native filesystem fault groups pass, including real
+Thor SRAM/RTC selection and GBC staging in disposable storage. All PR build jobs
+passed. Build 1061 passed normal GB/GBC Setup, Crystal SRAM/RTC/state upload and
+reload, and separate Tetris/Crystal state histories for both accounts. All prior
+GBA/SNES progress and standalone settings were preserved; temporary native files
+were removed and the original account remains selected. Other cores are
+researched, not yet implemented. See [scope, device evidence and remaining
+boundaries](docs/android-retroarch-cores.md).
+
 ## Offline activation, rooted save states and SNES — 2026-11-07
 
 Current source adds explicit saved-profile activation during transport outages,

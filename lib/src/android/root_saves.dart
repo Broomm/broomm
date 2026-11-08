@@ -8,8 +8,52 @@ import '../progress/layout.dart';
 import '../retroarch.dart';
 import 'emulators.dart';
 import 'save_plan.dart';
+import 'retroarch_core_setup.dart';
+import 'opera.dart';
+import 'saturn.dart';
+import 'flycast.dart';
 
 enum AndroidRetroArchState { idle, running, closed, interrupted, unknown }
+
+String? androidRootRetroCore(String platform) => switch (platform) {
+  '3do' => 'opera',
+  'saturn' => 'mednafen_saturn',
+  'dc' => 'flycast',
+  'gba' => 'mgba',
+  'snes' => 'snes9x',
+  'gb' || 'gbc' => 'gambatte',
+  'atari2600' => 'stella',
+  'tg16' => 'mednafen_pce_fast',
+  'genesis' || 'sms' || 'gamegear' => 'genesis_plus_gx',
+  'sega32' => 'picodrive',
+  'n64' => 'mupen64plus_next',
+  'nes' => 'mesen',
+  'jaguar' => 'virtualjaguar',
+  'lynx' => 'mednafen_lynx',
+  'arcade' => 'fbneo',
+  _ => null,
+};
+
+String? androidRootRetroAccess(String platform) => switch (platform) {
+  'gba' => 'root-gba-v1',
+  'snes' => 'root-snes-v1',
+  'gb' || 'gbc' => 'root-gameboy-v1',
+  'atari2600' ||
+  '3do' ||
+  'saturn' ||
+  'dc' ||
+  'tg16' ||
+  'genesis' ||
+  'sms' ||
+  'gamegear' ||
+  'sega32' ||
+  'n64' ||
+  'nes' ||
+  'jaguar' ||
+  'lynx' ||
+  'arcade' => 'root-cartridge-v1',
+  _ => null,
+};
 
 Future<({AndroidRetroArchState state, int? elapsed, Map<String, int>? process})>
 readAndroidRetroArchState(
@@ -47,7 +91,7 @@ readAndroidRetroArchState(
 /// grant. The native service rechecks every field before each file operation.
 bool androidRootBinding(Map<String, String> binding) {
   final pkg = binding['package'], uid = int.tryParse(binding['uid'] ?? '');
-  return {'root-gba-v1', 'root-snes-v1'}.contains(binding['access']) &&
+  return androidRootAccessModes.contains(binding['access']) &&
       {
         'com.retroarch.aarch64',
         'com.retroarch',
@@ -87,7 +131,9 @@ Future<Map<String, dynamic>> inspectAndroidRetroArchRoot(
     {
       'package': app.package,
       'build': app.build,
-      'coreName': platform == 'snes' ? 'snes9x' : 'mgba',
+      'coreName':
+          androidRootRetroCore(platform) ??
+          (throw UnsupportedError('Unsupported rooted RetroArch system.')),
     },
   );
   if (value == null ||
@@ -113,7 +159,9 @@ Map<String, String> androidRetroArchRootIdentity(
   String platform = 'gba',
 }) {
   final binding = <String, String>{
-    'access': platform == 'snes' ? 'root-snes-v1' : 'root-gba-v1',
+    'access':
+        androidRootRetroAccess(platform) ??
+        (throw UnsupportedError('Unsupported rooted RetroArch system.')),
     for (final key in [
       'package',
       'user',
@@ -152,11 +200,11 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   String content, {
   String? package,
 }) async {
-  final core = platform.slug == 'snes' ? 'snes9x' : 'mgba';
-  if (!{'gba', 'snes'}.contains(platform.slug) ||
+  final core = androidRootRetroCore(platform.slug);
+  if (core == null ||
       (platform.retroCore != null && platform.retroCore != core))
     throw UnsupportedError(
-      'Root save access currently supports GBA/mGBA and SNES/Snes9x. Configure a shared folder for other platforms.',
+      'Root saves are not yet implemented for this RetroArch platform. Configure a shared folder.',
     );
   final binding = manager.rootConnection(
     emulator,
@@ -186,11 +234,72 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   final root = await manager.privateRoot(profile, emulator);
   final stem = retroStateStem(rom), base = 'files/Broomm/$profile/$content';
   progressRelative('$stem.srm');
+  final driver = core == 'fbneo' ? stem.toLowerCase() : null;
+  final opera = core == 'opera';
+  final saturn = core == 'mednafen_saturn';
+  final flycast = core == 'flycast';
+  final configNonce = progressNonce();
+  final savedConfig = utf8.decode(report['config'] as Uint8List);
+  final preferences = androidIni(savedConfig);
+  final operaOptions = opera
+      ? await readAndroidOperaOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  final saturnOptions = saturn
+      ? await readAndroidSaturnOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  final flycastOptions = flycast
+      ? await readAndroidFlycastOptions(
+          manager.channel,
+          binding,
+          preferences,
+          rom,
+          'rom-$configNonce',
+        )
+      : <String, String>{};
+  if (saturn) {
+    androidSaturnResourceNames(saturnOptions);
+    androidSaturnInternalName(saturnOptions, stem);
+  }
+  final rawSave = opera ? androidOperaRawSaveKey(operaOptions, stem) : null;
+  if (opera) androidOperaResourceNames(operaOptions);
+  if (driver != null && !rom.toLowerCase().endsWith('.zip'))
+    throw UnsupportedError(
+      'Rooted FBNeo currently needs a complete ZIP ROMset. Convert 7z sets to ZIP without renaming the set or its chips.',
+    );
+  if (driver != null && !RegExp(r'^[a-z0-9_]{1,64}$').hasMatch(driver))
+    throw const FormatException(
+      'FBNeo needs the original ROMset filename, such as simpsons2p.zip. Keep the complete matching ROMset together.',
+    );
   final area = ProgressArea(
     'save',
     'root-${platform.slug}/$content/saves',
-    prefix: stem,
-    exact: '$stem.srm',
+    prefix: driver == null && !opera && !saturn && !flycast ? stem : null,
+    exact: core == 'gambatte' || driver != null || opera || saturn || flycast
+        ? null
+        : '$stem.srm',
+    pattern: flycast
+        ? r'^[^/]+\.[A-D][12]\.bin$'
+        : saturn
+        ? '^(?:${RegExp.escape(stem)}|mednafen_saturn_libretro_shared)\\.(?:srm|bkr|smpc|bcr|4mb\\.bcr)\$'
+        : opera
+        ? '^(?:opera/per_game/${RegExp.escape(stem)}\\.[0-9]\\.srm|opera/shared/nvram\\.[0-9]\\.srm|${RegExp.escape(stem)}\\.srm|3DO\\.nvram)\$'
+        : driver != null
+        ? '^fbneo/(?:${RegExp.escape(driver)}\\.(?:fs|nv|hi|memcard)|shared\\.memcard)\$'
+        : core == 'gambatte'
+        ? '^${RegExp.escape(stem)}\\.(?:srm|rtc)\$'
+        : null,
   );
   final identity = ProgressDigest.sha256()
     ..add(
@@ -206,10 +315,8 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     pattern:
         '^${RegExp.escape(stem)}\\.state(?:[0-9]{1,10}|\\.auto)?(?:\\.png)?\$',
   );
-  final configPath = '$base/config-${progressNonce()}.cfg';
+  final configPath = '$base/config-$configNonce.cfg';
   final native = binding['dataDir']!;
-  final savedConfig = utf8.decode(report['config'] as Uint8List);
-  final preferences = androidIni(savedConfig);
   final configuredProfiles = preferences['joypad_autoconfig_dir'];
   final bundledProfiles =
       report['bundledControllerProfiles'] == true &&
@@ -220,6 +327,7 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
           configuredProfiles == '/data/user/0/${app.package}/autoconfig' ||
           configuredProfiles == '/data/data/${app.package}/autoconfig');
   final config = androidRetroConfig(savedConfig, {
+    ...androidRetroOptionPaths(preferences, app.package),
     'savefile_directory': '$native/$base/saves',
     'savestate_directory': '$native/$base/states/$group',
     'sort_savefiles_enable': 'false',
@@ -233,6 +341,18 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
     'save_file_compression': 'false',
     'savestate_auto_load': 'false',
     'savestate_auto_save': 'false',
+    if (core == 'mednafen_lynx' || opera || saturn || flycast) ...{
+      'system_directory': '$native/$base/system-$configNonce',
+      'systemfiles_in_content_dir': 'false',
+    },
+    if (flycast) ...{
+      'core_options_path': '$native/$base/options-$configNonce.opt',
+      'game_specific_options': 'false',
+      'global_core_options': 'true',
+    },
+    if (core == 'virtualjaguar' &&
+        androidJaguarHasReviewedStates(report['abi'], report['core']))
+      'core_info_savestate_bypass': 'true',
     if (bundledProfiles)
       'joypad_autoconfig_dir':
           '$native/files/Broomm/controller-profiles-${app.build}',
@@ -240,25 +360,175 @@ Future<AndroidSavePlan> rootedRetroArchProgress(
   return AndroidSavePlan(
     ProgressLayout(
       root.path,
-      core == 'snes9x' ? 'snes9x-sram-v1' : 'libretro-mgba-v1',
+      core == 'snes9x' ? 'snes9x-sram-v1' : 'libretro-$core-v1',
       core == 'snes9x' ? 'snes' : content,
       [area, states],
       note: 'Rooted RetroArch saves and states. States require the same APK, ABI and core build.',
+      rawSave: rawSave,
     ),
     emulator,
     binding,
     [
-      AndroidSaveArea(area, '$base/saves', rename: '$stem.srm'),
+      AndroidSaveArea(
+        area,
+        '$base/saves',
+        rename:
+            core == 'gambatte' || driver != null || opera || saturn || flycast
+            ? null
+            : '$stem.srm',
+        arcadeDriver: driver,
+        operaStem: opera ? stem : null,
+        saturnStem: saturn ? stem : null,
+        flycastVmus: flycast,
+      ),
       AndroidSaveArea(states, '$base/states/$group'),
     ],
     launch: {
+      'platform': platform.slug,
+      'coreName': core,
       'configPath': configPath,
       'stateGroup': group,
       'configNative': '$native/$configPath',
       'configText': config,
+      if (opera || saturn || flycast) 'transaction': configNonce,
+      if (opera || saturn || flycast) ...{
+        'sourceCore': report['core'] as String,
+        'sourceAbi': report['abi'] as String,
+        'sourceConfig':
+            (ProgressDigest.sha256()..add(report['config'] as Uint8List))
+                .finish(),
+      },
+      if (core == 'mednafen_lynx')
+        'lynxFirmwarePath': '$base/system-$configNonce/lynxboot.img',
       if (androidRetroArchNeedsSetup(report, app)) 'frontendSetup': 'true',
       if (bundledProfiles && report['controllerProfilesReady'] != true)
         'prepareControllerProfiles': 'true',
     },
+    operaOptions: operaOptions,
+    saturnOptions: saturnOptions,
+    flycastOptions: flycastOptions,
+    flycastNativeOptions: flycastOptions,
   );
+}
+
+/// Disc hashing/firmware transfer can outlast an external settings/core edit.
+/// Recheck the prepared boundary before cloud inspection or any native write.
+Future<void> verifyAndroidOperaPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'opera')
+    throw const FormatException('Invalid Opera preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: '3do',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidOperaOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.operaOptions.length ||
+      options.entries.any((e) => plan.operaOptions[e.key] != e.value))
+    throw StateError(
+      'Opera’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
+}
+
+Future<void> verifyAndroidSaturnPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'mednafen_saturn')
+    throw const FormatException('Invalid Saturn preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: 'saturn',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidSaturnOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.saturnOptions.length ||
+      options.entries.any((e) => plan.saturnOptions[e.key] != e.value))
+    throw StateError(
+      'Saturn’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
+}
+
+Future<void> verifyAndroidFlycastPreparation(
+  AndroidEmulators manager,
+  AndroidSavePlan plan,
+  String selected,
+) async {
+  if (!plan.rooted || plan.launch['coreName'] != 'flycast')
+    throw const FormatException('Invalid Flycast preparation boundary.');
+  final app = manager.app(plan.emulator, package: plan.binding['package']);
+  if (app == null)
+    throw StateError('RetroArch changed during preparation. Try Play again.');
+  final report = await inspectAndroidRetroArchRoot(
+    manager,
+    app,
+    platform: 'dc',
+  );
+  final config = report['config'] as Uint8List;
+  if (plan.binding.entries.any(
+        (e) => e.key != 'access' && report[e.key] != e.value,
+      ) ||
+      report['core'] != plan.launch['sourceCore'] ||
+      report['abi'] != plan.launch['sourceAbi'] ||
+      (ProgressDigest.sha256()..add(config)).finish() !=
+          plan.launch['sourceConfig'])
+    throw StateError(
+      'RetroArch’s core or configuration changed during preparation. Existing progress was kept. Try Play again.',
+    );
+  final options = await readAndroidFlycastOptions(
+    manager.channel,
+    plan.binding,
+    androidIni(utf8.decode(config)),
+    selected,
+    'rom-${plan.launch['transaction']}',
+  );
+  if (options.length != plan.flycastNativeOptions.length ||
+      options.entries.any((e) => plan.flycastNativeOptions[e.key] != e.value))
+    throw StateError(
+      'Flycast’s core options changed during preparation. Existing progress was kept. Try Play again.',
+    );
 }

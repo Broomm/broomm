@@ -1,0 +1,489 @@
+{
+  "schema": 1,
+  "date": "2026-11-07",
+  "scope": "Nintendo 64 Mupen64Plus-Next cartridge increment; seven other selected cores pending",
+  "runtime_revision": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "user": 0,
+    "root_manager": "Magisk 31.1",
+    "retroarch": "1.22.2_GIT arm64",
+    "core": "Mupen64Plus-Next 3.0-Vulkan 15bada8",
+    "romm": "5.4.0",
+    "account": 2
+  },
+  "automation": {
+    "analysis": "passed",
+    "flutter_tests_passed": 642,
+    "existing_native_host_skip": 1,
+    "native_android_fault_groups_passed": 13,
+    "ci": {
+      "id": 42413902601,
+      "html_url": "https://github.com/Broomm/broomm/actions/runs/42413902601",
+      "head_sha": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+      "conclusion": "success"
+    }
+  },
+  "installed_build": 1073,
+  "apk": {
+    "sha256": "bffd91e7effddce1162ea3e1f6757172e8e4eb8af0d640e819c30b5663cc86d7",
+    "bytes": 62110543,
+    "code_sha": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+    "merge_sha": "d9e273495616af9c26dae9a6e57b676ed48250a9",
+    "payload_entries_identical": 160
+  },
+  "upgrade": {
+    "apk": "build/releases/Broomm-0.1.18-pr4.42413902601-thor-preview.apk",
+    "sha256": "bffd91e7effddce1162ea3e1f6757172e8e4eb8af0d640e819c30b5663cc86d7",
+    "code_sha": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+    "build": "1073",
+    "upgrade": "Performing Streamed Install\nSuccess",
+    "uid_unchanged": "10134",
+    "readback": [
+      "versionCode=1073 minSdk=24 targetSdk=36",
+      "versionName=0.1.18",
+      "User 0: ceDataInode=23524 installed=true hidden=false suspended=false distractionFlags=0 stopped=true notLaunched=false enabled=0 instant=false virtual=false",
+      "User 0:"
+    ]
+  },
+  "macos": {
+    "archive": "build/releases/Broomm-macOS-android-retroarch-cores-preview.zip",
+    "sha256": "4cfa0c67d4003296187e59936c3f20113d87cadb44fcf9b7b48f2c7867137898",
+    "bytes": 24348826,
+    "source": {
+      "product": "Broomm",
+      "version": "0.1.0-dev",
+      "build_number": "1",
+      "sha": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+      "target": "macos-universal",
+      "working_tree": false,
+      "source_tree_sha256": "cc11eb1f5c18c8dda6164c86c84ee871c6dee46ce3b65d2a6cf304edb13ca77d",
+      "entries": [
+        "AppIcon.icns",
+        "Assets.car",
+        "Base.lproj",
+        "NATIVE-SOURCES.md",
+        "broomm-release.json",
+        "native"
+      ]
+    },
+    "zip_integrity": "passed",
+    "signature_source": "passed deep/strict/all-architectures",
+    "signature_extracted": "passed deep/strict/all-architectures"
+  },
+  "checks": {
+    "normal_setup": {
+      "build": 1073,
+      "version": 9,
+      "bindings": [
+        "gba",
+        "snes",
+        "atari2600",
+        "gamegear",
+        "gb",
+        "gbc",
+        "genesis",
+        "n64",
+        "sega32",
+        "sms",
+        "tg16"
+      ],
+      "cores": {
+        "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+        "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+        "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+        "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+        "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+        "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+        "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+        "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7"
+      }
+    },
+    "game": {
+      "rom": 937,
+      "file": "Super Mario 64 (USA).z64",
+      "bytes": 8388608,
+      "initial_progress": "Confirmed empty cloud and native progress; a new Mario A opening was used. No preexisting N64 save was replaced.",
+      "ordinary_save": "Changed the in-game sound preference from STEREO to MONO. Normal Quit published primary 235 with the complete 296960-byte native save and manual state. A fresh Play restored both files byte-for-byte and File Select showed MONO. This verifies an EEPROM-backed preference; no completed star or game save-slot progression is claimed.",
+      "state": "Analog movement and jump worked outside the castle. Saved slot 0, quit and synchronized, then a fresh launch loaded slot 0 back into that gameplay scene. The compressed state is 1358566 bytes.",
+      "final": "Returned the in-game preference to STEREO, quit normally and synchronized primary 236. The earlier gameplay state remains byte-identical.",
+      "first_checkpoint": {
+        "game": 937,
+        "profile": "9d1d493e2a5b412da57d364b659321b0",
+        "build": 1073,
+        "checkpoint": {
+          "baseline": "bfad81e92ef842af7cb55fe31941db1af1bb33d8b27608d5647210af44e820b0",
+          "commit": "31543b7548573bab190bdb44e73c6e4f",
+          "snapshot": "02e61ecd83c61f12dbd11990ae0f060a",
+          "remote": 235,
+          "synced": "2026-11-07T21:25:19.349820Z",
+          "pending": false,
+          "stateKnown": {
+            "states-72e1721fa9cf93b2-android/game.state": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+          }
+        },
+        "files": {
+          "saves/Super Mario 64 (USA).srm": {
+            "bytes": 296960,
+            "sha256": "d30fd839ee6471188fa1ae2e44958cd9da6eb7efb588f177a329bae0bed20e8a"
+          },
+          "states-72e1721fa9cf93b2-android/Super Mario 64 (USA).state": {
+            "bytes": 1358566,
+            "sha256": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+          }
+        }
+      },
+      "native_restored": {
+        "saves/Super Mario 64 (USA).srm": {
+          "bytes": 296960,
+          "sha256": "d30fd839ee6471188fa1ae2e44958cd9da6eb7efb588f177a329bae0bed20e8a"
+        },
+        "states/states-72e1721fa9cf93b2-android/Super Mario 64 (USA).state": {
+          "bytes": 1358566,
+          "sha256": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+        }
+      },
+      "final_checkpoint": {
+        "checkpoint": {
+          "baseline": "f51368927789fc2e44134e15c2a9f01f5b809515873e8c5097dc7920511837bc",
+          "commit": "a2125438cc0e901317f6d0ac7d173378",
+          "snapshot": "420abe26a58138754efa355e4c3bf3d5",
+          "remote": 236,
+          "synced": "2026-11-07T21:29:45.985611Z",
+          "pending": false,
+          "stateKnown": {
+            "states-72e1721fa9cf93b2-android/game.state": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+          }
+        },
+        "files": {
+          "saves/Super Mario 64 (USA).srm": {
+            "bytes": 296960,
+            "sha256": "0f278e4216e32a4b4d213d0f90ddcbc699c702883ac47cce7111341276131f1c"
+          },
+          "states-72e1721fa9cf93b2-android/Super Mario 64 (USA).state": {
+            "bytes": 1358566,
+            "sha256": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+          }
+        }
+      }
+    },
+    "preservation": {
+      "checked_utc": "2026-11-07T21:29:51.232360+00:00",
+      "build": 1073,
+      "runtime": "d30e81f340c7a2298cbf18365e70c31966b4537c",
+      "accounts": {
+        "2": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "5b5481a4dce0f5aff562bf752d24a95b8e98ec9190516c61c9f9226ed2a7d135",
+              "commit": "30100c4c22e07758edf082d426000b77",
+              "snapshot": "10aba9fb239667c5b07e3409aefd1d86",
+              "remote": 223,
+              "synced": "2026-11-07T18:05:56.518185Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3659,
+                "sha256": "c501d36c0acb03f02401e16f2724edc8c9bbbb432bc430d3ca16c947c0061667"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "2b39b5e8906c6bc2adf34983c0476ac9986ffc8be216033f5ba7db23db0a449f",
+              "commit": "eb422a8109fa8f638d78ef3a256a5ced",
+              "snapshot": "cbf09cbf922421107bac82fbf9d347bb",
+              "remote": 222,
+              "synced": "2026-11-07T17:59:48.024331Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "d5b9b4d96b0838f1bf9f9ea4c2ad9b5fbed82863f0ed8ebd3c205efb327db1c9"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "d78889d7e31e1bf5f48b260c30b355c16409b3caf1bdaa673e11f49d4aa0e880"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 10051,
+                "sha256": "324ff6cf3970c45edd7292d440338271bf2d529842b7a1dc106c060cedcbffe7"
+              }
+            }
+          },
+          "6056": {
+            "checkpoint": {
+              "baseline": "ae23dabfa851a2def9ee9c2e04f921bfa2eed30f6910ec8ea7242e785f947cd5",
+              "commit": "64fefa5814d5cdd4987cb191b7ed0187",
+              "snapshot": "7ef5a8943d483d7a1acfda6319ce4a74",
+              "remote": 226,
+              "synced": "2026-11-07T21:15:19.537332Z",
+              "pending": false,
+              "stateKnown": {
+                "states-ccc3c6d54db8c844-android/game.state": "f9fa57480c5dc707f3d774fcd208595a812410dc1693642974f67e8016ba6c38"
+              }
+            },
+            "files": {
+              "states-ccc3c6d54db8c844-android/Adventure (USA).state": {
+                "bytes": 520,
+                "sha256": "f9fa57480c5dc707f3d774fcd208595a812410dc1693642974f67e8016ba6c38"
+              }
+            }
+          },
+          "1017": {
+            "checkpoint": {
+              "baseline": "57a17523685441e049f34f69c9eb246a36f797f09ae0b13c199f43d5f9ddb4d5",
+              "commit": "f3e0b36f2f44bee7b9befb88fdc5bdd9",
+              "snapshot": "95cf151abf4d6d7db2c674e3e40c8f55",
+              "remote": 227,
+              "synced": "2026-11-07T19:05:04.902011Z",
+              "pending": false,
+              "stateKnown": {
+                "states-e62150e4a003e3e1-android/game.state": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+              }
+            },
+            "files": {
+              "saves/Neutopia (USA).srm": {
+                "bytes": 2048,
+                "sha256": "761c35e18426ff56993b8904d72f2c0516b8ed8d38d1634b7c9f35ffb4493cdc"
+              },
+              "states-e62150e4a003e3e1-android/Neutopia (USA).state": {
+                "bytes": 25876,
+                "sha256": "9facc179b8f8482dfa9b8ef957502247d2c04272570b74d3b969471fa6062feb"
+              }
+            }
+          },
+          "6401": {
+            "checkpoint": {
+              "baseline": "fd4439ac3aa10cd45a480bed425c4245e16a6170508a3a95718c2173f75093f9",
+              "commit": "d7c1fdd3f6cdacc0ed8fad5259572ca4",
+              "snapshot": "ce1a3fe8ce49000fa4a387ca790dad00",
+              "remote": 230,
+              "synced": "2026-11-07T20:24:44.009643Z",
+              "pending": false,
+              "stateKnown": {
+                "states-205f3fe07d17e5bb-android/game.state": "be82f306cc9c361bc3588a599b9543817cbd25e929b312917a37ec668a947a98"
+              }
+            },
+            "files": {
+              "saves/Sonic The Hedgehog 3.srm": {
+                "bytes": 604,
+                "sha256": "beab804e9362741766bebf69b4752e9ba3d4740f2c7da5f1e2311459ea7615bd"
+              },
+              "states-205f3fe07d17e5bb-android/Sonic The Hedgehog 3.state": {
+                "bytes": 58096,
+                "sha256": "be82f306cc9c361bc3588a599b9543817cbd25e929b312917a37ec668a947a98"
+              }
+            }
+          },
+          "6850": {
+            "checkpoint": {
+              "baseline": "b2ff19ec2a6ef65084ff65c36770485ecd893175d791573fb6d90b903a2a10b9",
+              "commit": "cbe2362232c7021bcb5156b4aad6e463",
+              "snapshot": "276a55a4ff024487854a14b60e6e99e2",
+              "remote": 231,
+              "synced": "2026-11-07T20:37:18.432756Z",
+              "pending": false,
+              "stateKnown": {
+                "states-205f3fe07d17e5bb-android/game.state": "6ba6794b06a5ed71010898f1569f6bd9722a362514b6b1b260cf59888b6fccce"
+              }
+            },
+            "files": {
+              "saves/Phantasy Star.srm": {
+                "bytes": 8188,
+                "sha256": "6e15eaf576ecce0db61306594367ee75b2f989e6b49e14412d05bc332568df53"
+              },
+              "states-205f3fe07d17e5bb-android/Phantasy Star.state": {
+                "bytes": 13027,
+                "sha256": "6ba6794b06a5ed71010898f1569f6bd9722a362514b6b1b260cf59888b6fccce"
+              }
+            }
+          },
+          "6243": {
+            "checkpoint": {
+              "baseline": "9aaad580328c58cc2943d3fbd5860e667f58278ad4b15e3366fda6e275fe7ea1",
+              "commit": "f53dacba0cf56717fc9fa8c41874c8b3",
+              "snapshot": "101969dc9dc34540ef842e962c420e7d",
+              "remote": 234,
+              "synced": "2026-11-07T20:46:14.150688Z",
+              "pending": false,
+              "stateKnown": {
+                "states-205f3fe07d17e5bb-android/game.state": "65294e90b1dd328fe16b1c3d0ce87e1864e5aea97f369679860f3a10575b4d41"
+              }
+            },
+            "files": {
+              "saves/Defenders of Oasis.srm": {
+                "bytes": 3840,
+                "sha256": "76d93ea94983934d11f22ce7c7c95fd1c300c383051a9b5ae1e939b3f530e0b8"
+              },
+              "states-205f3fe07d17e5bb-android/Defenders of Oasis.state": {
+                "bytes": 11555,
+                "sha256": "65294e90b1dd328fe16b1c3d0ce87e1864e5aea97f369679860f3a10575b4d41"
+              }
+            }
+          },
+          "6775": {
+            "checkpoint": {
+              "baseline": "2a1f93964bfa5f5c88945547557a6238eefe815724a223296ba3ca2bc20ddd7a",
+              "commit": "17e7f3574cda24aae3a33644e1faadbb",
+              "snapshot": "d1fff6757b31ba367c2e308bd5017846",
+              "remote": 228,
+              "synced": "2026-11-07T19:50:52.738278Z",
+              "pending": false,
+              "stateKnown": {
+                "states-f8ba3b933067b8c8-android/game.state": "f1b3a11fece6f9e79a68895b68efea3d7da4fe5b08a511bfb794e69a47ef6c81"
+              }
+            },
+            "files": {
+              "states-f8ba3b933067b8c8-android/Chaotix ~ Knuckles' Chaotix (Japan, USA).state": {
+                "bytes": 172152,
+                "sha256": "f1b3a11fece6f9e79a68895b68efea3d7da4fe5b08a511bfb794e69a47ef6c81"
+              }
+            }
+          },
+          "937": {
+            "checkpoint": {
+              "baseline": "f51368927789fc2e44134e15c2a9f01f5b809515873e8c5097dc7920511837bc",
+              "commit": "a2125438cc0e901317f6d0ac7d173378",
+              "snapshot": "420abe26a58138754efa355e4c3bf3d5",
+              "remote": 236,
+              "synced": "2026-11-07T21:29:45.985611Z",
+              "pending": false,
+              "stateKnown": {
+                "states-72e1721fa9cf93b2-android/game.state": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+              }
+            },
+            "files": {
+              "saves/Super Mario 64 (USA).srm": {
+                "bytes": 296960,
+                "sha256": "0f278e4216e32a4b4d213d0f90ddcbc699c702883ac47cce7111341276131f1c"
+              },
+              "states-72e1721fa9cf93b2-android/Super Mario 64 (USA).state": {
+                "bytes": 1358566,
+                "sha256": "7b259a79a3d32d54b167404e3f0eda707ed4646dc7d6eeedea6cf1f3ffb0d6a5"
+              }
+            }
+          }
+        },
+        "3": {
+          "1781": {
+            "checkpoint": {
+              "baseline": "f64c776d0705f83d23f991471fe6fdabce450d3cee633528fe0dd358a6b425d6",
+              "commit": "f60e73f9ed015d9eea409f40ecc39516",
+              "snapshot": "2e12e5df2e75bed1dbca6519b3b4812d",
+              "remote": 225,
+              "synced": "2026-11-07T18:04:36.455180Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            },
+            "files": {
+              "states-bdf1a3f97e70b745-android/Tetris (World) (Rev 1).state": {
+                "bytes": 3741,
+                "sha256": "b017dc770620a539140b41942f7e9d294d077f9c53b4d12833a6b8765b5ecfb3"
+              }
+            }
+          },
+          "3245": {
+            "checkpoint": {
+              "baseline": "9463bc9d39cd255af842754b96b391b8e6dda63936b3bdf9d79d75f7cf4038a6",
+              "commit": "5c864f80a7b2bcb85c6513872d915321",
+              "snapshot": "cb3ec4b27d2525fc7236cc65f92c6dad",
+              "remote": 224,
+              "synced": "2026-11-07T18:03:32.359108Z",
+              "pending": false,
+              "stateKnown": {
+                "states-bdf1a3f97e70b745-android/game.state": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            },
+            "files": {
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).rtc": {
+                "bytes": 8,
+                "sha256": "faf26b1af17713d998d6a0d01fd23ce2fccbe93edf5a018bb0dda457bf916e81"
+              },
+              "saves/Pokemon - Crystal Version (USA, Europe) (Rev 1).srm": {
+                "bytes": 32768,
+                "sha256": "acfc7fc2874dbe538d4b19d0db79a4ff1db3fdea85f75f7147775de6cdc25d37"
+              },
+              "states-bdf1a3f97e70b745-android/Pokemon - Crystal Version (USA, Europe) (Rev 1).state": {
+                "bytes": 8233,
+                "sha256": "b466f90251e28f8f92963a56e96762df0efdf4038874c917ff7259f7b1794d67"
+              }
+            }
+          }
+        }
+      },
+      "journals_absent": true,
+      "earlier_gb_gbc_atari_tg16_sega_progress_files_unchanged": 18,
+      "all_existing_managed_native_files_unchanged": 19,
+      "preexisting_standalone_and_managed_files_unchanged": 13,
+      "existing_gba_snes_progress_files_unchanged": 8,
+      "core_hashes": {
+        "mgba": "b5a6ed40ede735ea7f1d56916f4ceed8c2aabe4d481fe3383ae2b5e5485b6545",
+        "snes9x": "dfd51707769000b08551e61eee4fe1a68d9e6188d62bf849c762339fa6bebcd3",
+        "gambatte": "940085c7a138b0ff5161c56e1e92bdab06ba9d12d29430c9b406628ed2b8aa26",
+        "stella": "144acc1ba3defb1ab7eae7da64d90fbe2754527aaf1fc616819afdb5758379f9",
+        "mednafen_pce_fast": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+        "genesis_plus_gx": "c01d7782bfdd6486710f42893138f5f521e7cd190c5c44fa2b5b76b79cc8639c",
+        "picodrive": "92d28b94fd9381a9dea670e57d58a0f3252a99d0ffde8d310add41f81f90a4fd",
+        "mupen64plus_next": "4335b6b118873b04f7f752ed618e5690855def9263c6d4eaf2af366e647bc3c7"
+      },
+      "independent_platform_bindings_retained": [
+        "gba",
+        "snes",
+        "gb",
+        "gbc",
+        "atari2600",
+        "tg16",
+        "genesis",
+        "sms",
+        "gamegear",
+        "sega32",
+        "n64"
+      ]
+    },
+    "log_review": {
+      "since": "2026-11-07T21:08:00Z",
+      "lines": 81,
+      "warnings_or_errors": 0,
+      "sha256": "ba7c92b5e8d7aa294af99155f29c5141df007f7d4bb83877955ec259356ea22f"
+    }
+  },
+  "evidence_directory": ".tool-cache/android-retroarch-cores/2026-11-07",
+  "observations": {
+    "n64-1073-mono-saved.png": "In-game MONO selected before first synchronization.",
+    "n64-1073-ordinary-save-mono-restored.png": "Fresh launch retained MONO after native save restoration.",
+    "n64-1073-analog-gameplay.png": "Analog movement outside the castle.",
+    "n64-1073-gameplay-state-created.png": "RetroArch confirmed saved slot 0.",
+    "n64-1073-gameplay-state-reloaded.png": "RetroArch confirmed loaded slot 0 in the gameplay scene.",
+    "n64-1073-stereo-restored.png": "Original STEREO preference restored.",
+    "n64-1073-final-sync.png": "Final normal Quit and Broomm sync."
+  },
+  "limitations": [
+    "One Android arm64 device/account for N64; other ABIs have archive/ELF verification only. Earlier GB/GBC checks separately exercised both accounts.",
+    "N64 ordinary-save observation is the game sound preference, not completed star/save-slot progression. Controller-pak/Flash RAM contents are carried in full but those devices were not separately exercised by this title.",
+    "Packaged ROM was an 8 MiB raw z64. Other byte orders, ZIP and exact 64 MiB boundaries have automated file/launch checks, not additional N64 game acceptance.",
+    "64DD, Transfer Pak media and texture packs remain outside this increment.",
+    "Seven other selected cores and disc/firmware integration remain pending; PR #4 stays draft.",
+    "macOS preview is ad-hoc signed, not notarized."
+  ],
+  "observation_sha256": {
+    "n64-1073-mono-saved.png": "b661068fb7cb2356fc70093a77c78542f4fc5b2f20f3b9ec6fa9cf1cca0d9a0c",
+    "n64-1073-ordinary-save-mono-restored.png": "f1b8109bb00acf7e0334f581f282ae234e2a83798074a92c0cb2746ec85bd7c6",
+    "n64-1073-analog-gameplay.png": "fc4ac6273a1e243541d6c1513f878f0afa35f4d923df1be785dda67053bb0f8c",
+    "n64-1073-gameplay-state-created.png": "11dfb54b4c82a53cd81d8e71a5dab405dea677dedd48907c86a08e0592897886",
+    "n64-1073-gameplay-state-reloaded.png": "91002781b93ba755bbbca84a33ad8cf51d92d007d9c3dcfb9d667934a82b6622",
+    "n64-1073-stereo-restored.png": "ec50d9925276d4729431fa10502d6981bd3cb6bf77b172e75fa90db87554963c",
+    "n64-1073-final-sync.png": "1e90bd9f64555a59ac18bb47c248555dd648052208ed925e229b94ffc6942d79"
+  }
+}

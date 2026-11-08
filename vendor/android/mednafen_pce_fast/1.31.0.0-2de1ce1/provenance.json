@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "core": "mednafen_pce_fast",
+  "build_version": "1.31.0.0-2de1ce1",
+  "source_repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+  "source_commit": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+  "source_archive": "https://codeload.github.com/libretro/beetle-pce-fast-libretro/tar.gz/2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+  "source_sha256": "6a6846f6d3b25d5883b23a80b78ea968127b306c36e21c9499a3b5be00f6831a",
+  "captured": "2026-11-07",
+  "license": "GPL-2.0; third-party notices retained",
+  "entry": "mednafen_pce_fast_libretro_android.so",
+  "build_recipe": "https://github.com/libretro/beetle-pce-fast-libretro/blob/2de1ce1c3f237b161c126c54ba407990bb86d1e9/jni/Android.mk",
+  "reproduction_limit": "Unmodified official Libretro Buildbot archives. Embedded native version identifies the source revision. Exact upstream NDK environment is not attested as reproduced.",
+  "archives": {
+    "arm64-v8a": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+        "source_revision": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "source_archive": "https://codeload.github.com/libretro/beetle-pce-fast-libretro/tar.gz/2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "archive_sha256": "6a6846f6d3b25d5883b23a80b78ea968127b306c36e21c9499a3b5be00f6831a"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/arm64-v8a/mednafen_pce_fast_libretro_android.so.zip",
+      "archive_bytes": 374150,
+      "archive_sha256": "b766eaddcb8da5ce5af6aeb8ac4a72e54f07b9ab255461dfc3f525f2ef1e448a",
+      "payload_bytes": 3214088,
+      "payload_sha256": "57c3d7ea453a892c36c482cd5d3881d94da342708d214633d05e3fba0902f9e1",
+      "elf_class": 2,
+      "elf_machine": 183,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "armeabi-v7a": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+        "source_revision": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "source_archive": "https://codeload.github.com/libretro/beetle-pce-fast-libretro/tar.gz/2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "archive_sha256": "6a6846f6d3b25d5883b23a80b78ea968127b306c36e21c9499a3b5be00f6831a"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/armeabi-v7a/mednafen_pce_fast_libretro_android.so.zip",
+      "archive_bytes": 301173,
+      "archive_sha256": "2fbfffe0356dc671c3c265a2ea41b49b00502a01d61a6b09b21eb8fed7a14b9b",
+      "payload_bytes": 1678760,
+      "payload_sha256": "bdfe0fee9b5698dd80b1e94255970f25a32146807a9a0d8bf582876b84b2f87d",
+      "elf_class": 1,
+      "elf_machine": 40,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+        "source_revision": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "source_archive": "https://codeload.github.com/libretro/beetle-pce-fast-libretro/tar.gz/2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "archive_sha256": "6a6846f6d3b25d5883b23a80b78ea968127b306c36e21c9499a3b5be00f6831a"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86/mednafen_pce_fast_libretro_android.so.zip",
+      "archive_bytes": 371312,
+      "archive_sha256": "fb49098504b90b9e755918637bfd6978a13a110aaed705594c524f40de26ae3d",
+      "payload_bytes": 1884460,
+      "payload_sha256": "602d97f16d9f9ec59571a3bddf0fa9bd2556c09e83fd33983abb62bf40de9950",
+      "elf_class": 1,
+      "elf_machine": 3,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    },
+    "x86_64": {
+      "source": {
+        "repository": "https://github.com/libretro/beetle-pce-fast-libretro",
+        "source_revision": "2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "source_archive": "https://codeload.github.com/libretro/beetle-pce-fast-libretro/tar.gz/2de1ce1c3f237b161c126c54ba407990bb86d1e9",
+        "archive_sha256": "6a6846f6d3b25d5883b23a80b78ea968127b306c36e21c9499a3b5be00f6831a"
+      },
+      "source_url": "https://buildbot.libretro.com/nightly/android/latest/x86_64/mednafen_pce_fast_libretro_android.so.zip",
+      "archive_bytes": 407953,
+      "archive_sha256": "f4989731293ae00b6a2bb3fa5d3eb07089592ebe178ac095ed79e93afb84615a",
+      "payload_bytes": 3310544,
+      "payload_sha256": "5774470071d3aee2504b55fbec372663fa1847457548d799d95d40a4900c5103",
+      "elf_class": 2,
+      "elf_machine": 62,
+      "needed": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ]
+    }
+  },
+  "notices": [
+    {
+      "path": "notices/COPYING",
+      "sha256": "a6996dcf0c334281f734560926e079b2dbbd5b78e81c0ca00a413ec01e1cd2fb"
+    },
+    {
+      "path": "notices/deps/libchdr/LICENSE.txt",
+      "sha256": "e3989a7aee74a91b8cdbdfe204a6b8d03288863ec7533a21c51f1a987ba73539"
+    },
+    {
+      "path": "notices/deps/lzma-19.00/LICENSE",
+      "sha256": "06721414a6decad6d6677feb470f01f47126e154d895d85bc1e17628697715e5"
+    },
+    {
+      "path": "notices/deps/zstd/COPYING",
+      "sha256": "f9c375a1be4a41f7b70301dd83c91cb89e41567478859b77eef375a52d782505"
+    },
+    {
+      "path": "notices/deps/zstd/LICENSE",
+      "sha256": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+    },
+    {
+      "path": "notices/mednafen/tremor/COPYING",
+      "sha256": "d2ab5758336489da61c12cc5bb757da5339c4ae9001f9bb0562b4370249af814"
+    }
+  ]
+}
