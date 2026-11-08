@@ -51,6 +51,19 @@ state replay/offline, removal/reinstall and the updated macOS package remain to
 be completed. Other standalone emulators have not begun. See the
 [PSP workflow and boundaries](docs/android-standalone-root.md).
 
+Build 1112 (`d990333`) passes a real account-2 state replay after account 3,
+unchanged primary 255, the repeated RetroArch preservation audit and live-writer
+refusal with unchanged journals/no capture or publication. Lumines II (RomM
+5939, `ULUS10183`/1.00) created a native ordinary save; its cloud/reload acceptance
+is still pending. Returning to PPSSPP after bringing the original Broomm activity
+above it exposed Android clearing that Broomm activity. The retained session
+journal protects the save. Rooted PSP now launches in its own Android task and
+uses app lifecycle/native shutdown proof without an Activity result. Both new
+lifecycle regressions pass (25 Android emulator/UI cases), as does bridge
+compilation and targeted analysis; packaging and native re-execution are pending.
+The `d990333` macOS ZIP passed archive/universal/signature verification; a fresh
+package for the handoff correction remains required.
+
 ## Standalone Android root discovery — 2026-11-08
 
 PR #4 merged as `eb6fc60` after the current normal CI package passed the Thor

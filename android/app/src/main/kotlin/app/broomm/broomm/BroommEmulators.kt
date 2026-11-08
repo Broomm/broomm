@@ -236,7 +236,16 @@ class BroommEmulators(private val activity: Activity) {
                                 if (nativeRom == null) {
                                     for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                activity.startActivityForResult(intent, gameRequest)
+                                if (call.argument<String>("emulator") == "ppsspp" && activeRoot != null) {
+                                    // Rooted PSP completion uses its native shutdown
+                                    // proof and app lifecycle, not an Activity result.
+                                    // Keep PPSSPP's task separate: its launcher can
+                                    // otherwise clear Broomm above a resumed game.
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    activity.startActivity(intent)
+                                } else {
+                                    activity.startActivityForResult(intent, gameRequest)
+                                }
                             } catch (e: Exception) {
                                 for (other in uris) activity.revokeUriPermission(other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 activity.getSharedPreferences("game-grants", 0).edit().remove(token).commit()

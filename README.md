@@ -18,7 +18,11 @@ two-account state isolation. Ordinary PSP saving and replay/offline acceptance
 remain pending. If preparation cannot verify PPSSPP's shutdown, use **Open
 PPSSPP → Exit**, then **Check and play**; the new direct recovery action is
 awaiting its device build. PR #5 remains draft until PSP is complete; no later
-emulator has begun. The macOS package is being refreshed for that UI correction.
+emulator has begun. Build 1112 also passes the account-2 state replay and
+live-writer refusal. Lumines II has created a native ordinary save, with cloud
+reload still pending. The live return test exposed Android clearing Broomm's
+activity; the rooted PSP task correction passes local lifecycle/bridge checks
+and awaits its device build. The macOS package is being refreshed for that fix.
 
 **Earlier 2026-11-05 checkpoint:** further Linux ARM64 troubleshooting is deferred.
 Eden's startup/shutdown failures and Azahar's dual-screen Vulkan abort are

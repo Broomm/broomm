@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/root_saves.dart';
+import 'package:broomm/src/android/psp_root.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/files.dart';
@@ -50,6 +51,18 @@ class ObservedRetroArchSession extends AndroidGameSession {
   @override
   Future<AndroidRetroArchState> finishIfRetroArchClosed() async {
     if (exit == AndroidRetroArchState.closed) active = false;
+    return exit;
+  }
+}
+
+class ObservedPspSession extends AndroidGameSession {
+  ObservedPspSession(super.manager, super.cloud);
+  AndroidPspState exit = AndroidPspState.running;
+  int checks = 0;
+  @override
+  Future<AndroidPspState> finishIfPspClosed() async {
+    checks++;
+    if (exit == AndroidPspState.closed) active = false;
     return exit;
   }
 }
@@ -716,6 +729,99 @@ void main() {
       await t.pumpAndSettle();
       expect(find.byType(AndroidSessionScreen), findsNothing);
       expect(find.text('Play'), findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets(
+    'rooted PSP completes from app lifecycle without an activity result',
+    (t) async {
+      final session = ObservedPspSession(manager, RecordingCloud(data));
+      session.exit = AndroidPspState.closed;
+      await t.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => AndroidSessionScreen(
+                    session: session,
+                    title: 'Lumines II',
+                    emulator: 'PPSSPP',
+                    cloudReady: true,
+                    rooted: true,
+                    start: ({required bool emulatorClosed}) async {
+                      session.active = true;
+                    },
+                    finish: () async =>
+                        fail('Native exit needs no confirmation.'),
+                  ),
+                ),
+              ),
+              child: const Text('Play PSP'),
+            ),
+          ),
+        ),
+      );
+      await t.tap(find.text('Play PSP'));
+      await t.pumpAndSettle();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isFalse);
+      expect(session.checks, 1);
+      expect(find.byType(AndroidSessionScreen), findsNothing);
+      expect(find.text('Play PSP'), findsOneWidget);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.checks, 1);
+      await t.pumpWidget(const SizedBox());
+      session.dispose();
+    },
+  );
+
+  testWidgets(
+    'rooted PSP retains live and uncertain writers on lifecycle return',
+    (t) async {
+      final session = ObservedPspSession(manager, RecordingCloud(data));
+      var resumes = 0;
+      await t.pumpWidget(
+        MaterialApp(
+          home: AndroidSessionScreen(
+            session: session,
+            title: 'Lumines II',
+            emulator: 'PPSSPP',
+            rooted: true,
+            cloudReady: true,
+            start: ({required bool emulatorClosed}) async =>
+                session.active = true,
+            resume: () async => resumes++,
+            finish: () async => fail('A live writer must not synchronize.'),
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      await t.tap(find.text('Check for exit'));
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      expect(session.checks, 2);
+      await t.tap(find.text('Return to emulator'));
+      await t.pumpAndSettle();
+      expect(resumes, 1);
+      session.exit = AndroidPspState.unknown;
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await t.pumpAndSettle();
+      expect(session.active, isTrue);
+      expect(session.checks, 3);
+      expect(find.byType(AndroidSessionScreen), findsOneWidget);
+      expect(find.text('Finished? Sync progress'), findsNothing);
       await t.pumpWidget(const SizedBox());
       session.dispose();
     },

@@ -76,8 +76,8 @@ settings. Retry **Check setup** and allow Magisk. Download LocoRoco from RomM,
 choose **Play**, make an ordinary save and manual state, then use Android Back
 and PPSSPP's **Exit to menu → Exit**. Expected: automatic sync, a restored
 standalone selection and no cross-account progress. Returning while PPSSPP is
-running must keep the session active. These new in-app observations are pending;
-the native seed/research results below do not establish them.
+running must keep the session active. The observations verified below remain
+separate from the earlier native seed/research results.
 
 Build 1111 (`eac1db0`, full CI APK) now passes content-URI LocoRoco launch, native
 manual-state capture, automatic normal-Exit synchronization and standalone-pointer
@@ -101,6 +101,27 @@ original files, fifteen cores and eighteen connections. ADB injected gamepad/men
 events remain inconclusive; owner closure is recorded separately from automated
 PSP touch checks. All native Windows CI checks and five platform packages passed
 for `eac1db0`.
+
+Build 1112 (`d990333`) also replayed account 2's retained slot 2 after switching
+back from account 3. Normal Exit kept both state pairs byte-identical and primary
+255 unchanged. The complete CI run and five platform packages pass. Its local
+macOS ZIP passed archive integrity, seven universal Mach-O checks and deep/strict
+source/extracted signatures.
+
+For ordinary saves, Broomm downloaded Lumines II from the owner's RomM catalogue
+(5939, native `ULUS10183`, revision 1.00). Its confirmed-empty load dialog led to
+a new game-local profile with the first avatar and native **Save completed**
+(64 KB Play Data). Cloud publication and ordinary reload are not yet established.
+The live-writer check brought the existing Broomm activity above the paused native
+game: Broomm reported PPSSPP still running, retained every journal unchanged and
+made no capture or remote publication. The subsequent **Return to emulator**
+reused PPSSPP's activity but Android removed the Broomm activity above it; normal
+native Exit then returned to the launcher. Its save and session journal remain
+retained for recovery. The correction launches rooted PSP in its own Android
+task, relying on app lifecycle and the native shutdown proof rather than an
+Activity result. Two new UI regressions cover normal completion without a result
+and retention of live/unknown writers; all 25 emulator/UI cases, targeted analysis
+and bridge compilation pass. Device re-execution and fresh packaging are pending.
 
 ```sh
 devbox run -- flutter --suppress-analytics test --no-pub test/android_psp_root_test.dart
