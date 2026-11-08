@@ -5,6 +5,7 @@ import hashlib
 import os
 from pathlib import Path
 import secrets
+import shutil
 import stat
 import time
 import urllib.error
@@ -21,8 +22,19 @@ WRAPPER_SHA256 = "16caeaf66d57a0d1d2087fef6a97efa62de8da69afa5b908f40db35afc4342
 DISTRIBUTION = "https://services.gradle.org/distributions/gradle-9.3.1-all.zip"
 
 
+def flutter_wrapper():
+    executable = shutil.which("flutter")
+    if executable is None:
+        raise RuntimeError("The pinned Flutter environment is required before Gradle preparation")
+    wrapper = (Path(executable).resolve().parent.parent /
+               "bin/cache/artifacts/gradle_wrapper/gradle/wrapper/gradle-wrapper.jar")
+    if hashlib.sha256(wrapper.read_bytes()).hexdigest() != WRAPPER_SHA256:
+        raise RuntimeError("Flutter's generated Gradle wrapper changed; review its cache/lock pins")
+    return wrapper
+
+
 def cache_parts():
-    # PathAssembler in our checked-in wrapper: positive MD5(uri) in base 36.
+    # PathAssembler in Flutter's supplied wrapper: positive MD5(uri) in base 36.
     # This is only the wrapper's directory key; SHA-256 verifies the artifact.
     value = int.from_bytes(hashlib.md5(DISTRIBUTION.encode()).digest(), "big")
     key = ""
@@ -134,8 +146,10 @@ def main():
         raise RuntimeError("Gradle cache seeding is limited to disposable CI runners")
     root = Path(__file__).resolve().parents[2]
     properties = root / "android/gradle/wrapper/gradle-wrapper.properties"
-    if hashlib.sha256(properties.with_name("gradle-wrapper.jar").read_bytes()).hexdigest() != WRAPPER_SHA256:
-        raise RuntimeError("Gradle wrapper changed; review its cache and lock behavior")
+    flutter_wrapper()
+    generated = properties.with_name("gradle-wrapper.jar")
+    if generated.exists() and hashlib.sha256(generated.read_bytes()).hexdigest() != WRAPPER_SHA256:
+        raise RuntimeError("The generated project wrapper differs from Flutter's verified artifact")
     values = dict(line.split("=", 1) for line in properties.read_text().splitlines() if "=" in line)
     if values != {"distributionBase": "GRADLE_USER_HOME", "distributionPath": "wrapper/dists",
                   "zipStoreBase": "GRADLE_USER_HOME", "zipStorePath": "wrapper/dists",

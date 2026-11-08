@@ -43,9 +43,9 @@ class GradleSeedTests(unittest.TestCase):
                 self.assertEqual(foreign.read_bytes(), b"retained partial transfer")
 
     def test_actual_java_wrapper_cache_path_and_record_lock_are_respected(self):
-        # Use the real checked-in wrapper and a separate Java process holding
+        # Use Flutter's real supplied wrapper and a separate Java process holding
         # its actual FileChannel lock; a Python-only imitation proves neither.
-        wrapper = Path(__file__).resolve().parents[2] / "android/gradle/wrapper/gradle-wrapper.jar"
+        wrapper = bootstrap.flutter_wrapper()
         self.assertEqual(hashlib.sha256(wrapper.read_bytes()).hexdigest(), bootstrap.WRAPPER_SHA256)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

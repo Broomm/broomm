@@ -25,7 +25,7 @@ Flutter action and pre-provisioned native toolchain.
 For local regression checks, run from the repository:
 
 ```sh
-devbox run --config tool/android -- bash -c 'cd ../.. && python3 -m unittest discover -s tool/ci -p "test_seed_*.py" -v'
+devbox run -- devbox --config tool/android run -- bash -c 'cd ../.. && python3 -m unittest discover -s tool/ci -p "test_seed_*.py" -v'
 devbox run --config tool/ci/lint check
 ```
 
@@ -56,12 +56,18 @@ own temporary file. No SDK installation or license acceptance is involved.
 
 Three additional regression cases exercise exact/offline cache replay, corrupt
 or partial inputs and preservation, and a separate Java process using the actual
-checked-in wrapper's cache path and `FileChannel` lock. Together, all six tests
-pass locally. CI runs them on Linux and macOS; its pre-provisioned Java/Python
+Flutter-supplied wrapper's cache path and `FileChannel` lock. Together, all six tests
+pass locally. CI runs Devbox cases before bootstrap and Gradle cases after the pinned Flutter environment is available on Linux and macOS. Its pre-provisioned Java/Python
 are bootstrap prerequisites, while application compilation stays in Devbox.
 The Gradle seed entry point is CI-only and receives the job token for that step.
 Temporary test directories clean themselves up; CI cache cleanup is runner
 disposal. Hosted Android compilation after this correction remains pending.
-The actual checked-in wrapper also extracted the real verified ZIP and reported
+The actual Flutter-supplied wrapper also extracted the real verified ZIP and reported
 Gradle 9.3.1 offline on macOS through Devbox's Java, without a download, SDK build
 or license request. Its disposable distribution cache was removed afterward.
+
+The first hosted regression incorrectly expected the ignored generated project
+wrapper JAR in a clean checkout. That failure is retained. The corrected check
+resolves and hashes the wrapper supplied by the pinned Flutter SDK; Gradle
+checks run after that environment is prepared, while Devbox checks still run
+before bootstrap. All six corrected local checks and workflow lint pass.
