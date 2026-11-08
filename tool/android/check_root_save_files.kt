@@ -51,6 +51,7 @@ fun main(args: Array<String>) {
         failure { files.path("files/Broomm/${"b".repeat(32)}/43/foreign.srm") }
         check(files.hash(target) == oldHash)
         println("PASS: atomic save replacement, UID/GID/mode/label restoration, compare-before-write and linked/path refusal")
+        checkProgressWriterClosure(root, label)
 
         for (point in listOf("staged", "linked")) {
             val relative = prefix + "$point.srm"
@@ -309,6 +310,66 @@ fun main(args: Array<String>) {
         root.deleteRecursively()
         check(!root.exists())
     }
+}
+
+private fun checkProgressWriterClosure(root: File, label: ByteArray) {
+    fun refused(work: () -> Unit) {
+        try { work(); error("Expected writer refusal") }
+        catch (e: IllegalStateException) { check(e.message != "Expected writer refusal") }
+    }
+    val relative = "files/Broomm/${"9".repeat(32)}/52/saves/Closure.srm"
+    val token = "8".repeat(32) + "-in"
+    val old = byteArrayOf(10, 20, 30)
+    val next = ByteArray(131072) { 42 }
+    val oldHash = RootSaveFiles.digest(old)
+    val nextHash = RootSaveFiles.digest(next)
+    val plain = RootSaveFiles(root, 2000, label, {})
+    plain.replace(relative, null, oldHash, old, null, token)
+    var writer = true
+    val guarded = RootSaveFiles(root, 2000, label, {},
+        writerClosed = { check(!writer) { "Writer is active" } })
+    refused { guarded.replace(relative, oldHash, nextHash, next, null, token) }
+    refused { guarded.replace(relative, null, oldHash, old, null, token) }
+    check(plain.hash(plain.path(relative)) == oldHash)
+    check(!File(plain.path(relative).parentFile, ".Closure.srm.broomm-$token").exists())
+
+    writer = false
+    val arriving = RootSaveFiles(root, 2000, label, {},
+        checkpoint = { if (it == "staged") writer = true },
+        writerClosed = { check(!writer) { "Writer arrived during staging" } })
+    refused { arriving.replace(relative, oldHash, nextHash, next, null, token) }
+    check(plain.hash(plain.path(relative)) == oldHash)
+    check(File(plain.path(relative).parentFile, ".Closure.srm.broomm-$token").exists())
+    writer = false
+    guarded.replace(relative, oldHash, nextHash, next, null, token)
+    check(plain.hash(plain.path(relative)) == nextHash)
+    writer = true
+    refused { guarded.replace(relative, nextHash, null, null, null, token.replace("-in", "-out")) }
+    check(plain.hash(plain.path(relative)) == nextHash)
+    println("PASS: native writer blocks save replacement, idempotent replay and removal; writer arrival before publication retains old save and retry stage")
+
+    writer = false
+    val source = File(root, "library/52/content/Closure.gba")
+    check(source.parentFile!!.mkdirs()); source.writeBytes(next)
+    val romPath = relative.substringBefore("/saves/") + "/rom-${"7".repeat(32)}/Closure.gba"
+    val romArrival = RootSaveFiles(root, 2000, label, {},
+        checkpoint = { if (it == "rom-staged") writer = true },
+        writerClosed = { check(!writer) { "Writer arrived during ROM staging" } })
+    refused { romArrival.stageRom(romPath, source, 0, nextHash) }
+    val target = plain.path(romPath)
+    check(!target.exists() && File(target.parentFile, ".pending").exists())
+    refused { guarded.removeRom(romPath, nextHash) }
+    check(File(target.parentFile, ".pending").exists() && source.readBytes().contentEquals(next))
+    writer = false
+    guarded.removeRom(romPath, nextHash)
+    guarded.stageRom(romPath, source, 0, nextHash)
+    writer = true
+    refused { guarded.removeRom(romPath, nextHash) }
+    check(target.exists() && plain.hash(target) == nextHash)
+    writer = false
+    guarded.removeRom(romPath, nextHash)
+    check(!target.parentFile!!.exists() && source.readBytes().contentEquals(next))
+    println("PASS: native writer arrival blocks ROM publication and pending/published cleanup; closed retry preserves library source")
 }
 
 private fun checkOperaStorage(root: File, label: ByteArray) {

@@ -14,6 +14,7 @@ internal class RootSaveFiles(
     private val live: () -> Unit,
     private val checkpoint: (String) -> Unit = {},
     private val coreName: String = "mgba",
+    private val writerClosed: () -> Unit = {},
 ) {
     fun progressLimit(path: String): Int = limit(path, coreName)
     fun present(file: File): Boolean = try { Os.lstat(file.path); true }
@@ -361,7 +362,7 @@ internal class RootSaveFiles(
     private fun publish(relative: String, before: String?, after: String?, payload: ByteArray?,
                         wantedMetadata: String?, token: String, limit: Int,
                         sessionConfiguration: Boolean = false, stateGroup: String? = null, beforeCommit: () -> Unit = {}) {
-        live()
+        live(); writerClosed()
         require(Regex("[a-f0-9]{32}-(in|out)").matches(token))
         require(listOfNotNull(before, after).all { Regex("[a-f0-9]{64}").matches(it) })
         require((after == null) == (payload == null))
@@ -374,7 +375,7 @@ internal class RootSaveFiles(
             val a = Os.lstat(file.path); val b = Os.lstat(stage.path)
             if (a.st_ino == b.st_ino && a.st_dev == b.st_dev) {
                 require(after != null && a.st_nlink == 2L && metadata(file, 2) == metadata(stage, 2) && hash(file, limit) == after)
-                live(); Os.remove(stage.path); flushDirectory(file.parentFile!!)
+                live(); writerClosed(); Os.remove(stage.path); flushDirectory(file.parentFile!!)
             }
         }
         fun current(): String? = if (present(file)) { metadata(file); hash(file, limit) } else null
@@ -385,7 +386,7 @@ internal class RootSaveFiles(
         }
         require(observed == before) { "Emulator save changed before replacement. Recovery was kept." }
         if (after == null) {
-            live(); beforeCommit(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
+            live(); writerClosed(); beforeCommit(); require(current() == before); Os.remove(file.path); flushDirectory(file.parentFile!!); return
         }
         parents(relative, token)
         if (sessionConfiguration) {
@@ -399,7 +400,7 @@ internal class RootSaveFiles(
             val s = Os.lstat(stage.path)
             require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == 1L && s.st_uid in setOf(0, uid))
             // This is a private, journal-owned stage, never the public save.
-            live(); Os.remove(stage.path)
+            live(); writerClosed(); Os.remove(stage.path)
         }
         run {
             val fd = Os.open(stage.path, OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_NOFOLLOW, 384)
@@ -409,7 +410,7 @@ internal class RootSaveFiles(
             }
         }
         require(hash(stage, limit) == after && metadata(stage) == mode)
-        live(); beforeCommit(); require(current() == before)
+        live(); writerClosed(); beforeCommit(); require(current() == before)
         // Existing destination replacement is atomic. New publication uses an
         // exclusive hard-link; the deterministic stage permits interrupted-link recovery.
         if (before == null) {
@@ -588,6 +589,7 @@ internal class RootSaveFiles(
     }
 
     fun stageRom(relative: String, source: File, caller: Int, expected: String, prepared: Boolean = false): File {
+        live(); writerClosed()
         val parts = romPath(relative, coreName)
         val limit = romLimit(parts[3])
         require(source.name == parts[3])
@@ -609,7 +611,8 @@ internal class RootSaveFiles(
             Os.fsync(fd)
         }
         require(transferRom(stage, uid, limit = limit) == expected && metadata(stage) == mode) { "Staged RetroArch ROM failed verification" }
-        live()
+        checkpoint("rom-staged")
+        live(); writerClosed()
         Os.link(stage.path, target.path)
         Os.remove(stage.path)
         flushDirectory(directory)
@@ -618,6 +621,7 @@ internal class RootSaveFiles(
     }
 
     fun removeRom(relative: String, expected: String) {
+        live(); writerClosed()
         romPath(relative, coreName)
         val target = path(relative)
         val directory = target.parentFile!!
@@ -640,8 +644,9 @@ internal class RootSaveFiles(
             }
         }
         live()
-        for (entry in entries) Os.remove(entry.path)
+        for (entry in entries) { live(); writerClosed(); Os.remove(entry.path) }
         flushDirectory(directory)
+        live(); writerClosed()
         Os.remove(directory.path)
         flushDirectory(directory.parentFile!!)
     }

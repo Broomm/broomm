@@ -59,11 +59,14 @@ class RootSaveService : RootService() {
             live()
             val coreName = request.getString("coreName") ?: "mgba"
             RootSaveFiles.corePath(coreName)
-            val files = RootSaveFiles(root, uid, label, ::live, coreName = coreName)
             fun ensureClosed() {
                 val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
                 check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up RetroArch." }
             }
+            val progressOperation = operation in setOf("check", "list", "read", "replace", "stagerom", "removerom")
+            val files = RootSaveFiles(root, uid, label, ::live, coreName = coreName,
+                writerClosed = { if (progressOperation) ensureClosed() })
+            if (progressOperation) ensureClosed()
             fun abi() = retroArchFrontendAbi(packageManager.getApplicationInfo(pkg, 0).nativeLibraryDir)
             fun installedApk(): File {
                 val apk = File(packageManager.getApplicationInfo(pkg, 0).sourceDir)
@@ -204,6 +207,7 @@ class RootSaveService : RootService() {
                 else -> error("Unsupported root file operation")
             }
             require(RootInspection.identity(this, pkg, 0) == before) { "Emulator changed during root operation. Recovery was kept." }
+            if (progressOperation) ensureClosed()
             live(); result
         }
     }

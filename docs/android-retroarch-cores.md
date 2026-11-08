@@ -750,3 +750,23 @@ This establishes one arm64 device/game, default native backup modes and both
 saved accounts. Other ABI gameplay, cross-device play, completed-game progress,
 special cartridges and selected Mednafen/shared/4 MiB modes remain separate.
 CUE transport and special-cartridge auto-detection are unfinished.
+
+
+## Native writer checks at progress publication
+
+The root service now verifies closure before and after ordinary save/file
+operations, with another native check immediately before publication or removal.
+Previously those operations relied on Dart's earlier observation; immutable
+firmware/core operations already had their own native closure callbacks. A
+writer arriving during staging blocks public replacement and keeps the old
+save/private stage for a closed retry. A live or unknown writer also blocks
+idempotent replay and ROM cleanup. Read-only inspection/lifecycle calls remain
+available during gameplay.
+
+Bridge and fixture compilation and all 21 disposable Thor native groups pass.
+Two new groups deterministically hold the writer gate and change it at the
+staged-publication checkpoint, verifying old-save preservation, retained pending
+ROMs, cleanup refusal and successful closed retries. Packaged application
+acceptance of this additional guard remains pending; Saturn build 1093 predates
+it. Native image transport still completes its exact 1 GiB case within the
+unchanged deadline (2,769 ms). No new library or global device setting is used.

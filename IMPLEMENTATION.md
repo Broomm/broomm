@@ -1,5 +1,23 @@
 # Implementation plan
 
+## Native rooted progress writer guard — 2026-11-08
+
+Review found ordinary root save replacement and ROM cleanup relying on Dart's
+previous process observation. The service now verifies the selected package is
+idle before and after progress operations, and native publication/removal checks
+again at its mutation boundary. A writer appearing during staging leaves the
+old public save and private retry stage intact. Active/unknown writers also block
+idempotent replay, ROM publication and pending/published ROM cleanup. Inspection
+and lifecycle observation remain read-only and usable while the emulator runs.
+
+Bridge and fixture compilation pass. All 21 disposable Thor native groups pass,
+including two new groups with explicit held/arriving writer gates and closed
+retry. The exact 1 GiB image fixture completed in 2,769 ms under its unchanged
+30-second deadline. This is mechanism verification; an installed APK using the
+new service guard and its operation timings still need packaged acceptance.
+The earlier Saturn build 1093 acceptance predates this correction. No game,
+account or existing native progress was modified by these disposable fixtures.
+
 ## Flycast artifact preparation — 2026-11-08
 
 Four unmodified official Libretro ABI archives identify native source `7adbf3c`.
