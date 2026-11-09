@@ -94,30 +94,47 @@ internal class RootMelonFiles(
         require(parser.nextTag() == XmlPullParser.START_TAG && parser.name == "map")
         var useRomDirectory = true
         var customSaveDirectory = false
+        var scansRomDirectories = false
+        var customBios = false
+        var console = "ds"
         var stateLocation = "save_dir"
         val seen = mutableSetOf<String>()
         while (parser.next() != XmlPullParser.END_DOCUMENT) {
             if (parser.eventType != XmlPullParser.START_TAG || parser.depth != 2) continue
             val key = parser.getAttributeValue(null, "name") ?: continue
-            if (key !in setOf("use_rom_dir", "sram_dir", "save_state_location")) continue
+            if (key !in setOf("use_rom_dir", "sram_dir", "save_state_location", "rom_search_dirs", "console_type", "use_custom_bios")) continue
             require(seen.add(key)) { "Ambiguous melonDS save preferences." }
             when (key) {
-                "use_rom_dir" -> {
+                "use_rom_dir", "use_custom_bios" -> {
                     require(parser.name == "boolean")
-                    useRomDirectory = parser.getAttributeValue(null, "value").toBooleanStrict()
+                    val enabled = parser.getAttributeValue(null, "value").toBooleanStrict()
+                    if (key == "use_rom_dir") useRomDirectory = enabled else customBios = enabled
                 }
-                "sram_dir" -> {
+                "sram_dir", "rom_search_dirs" -> {
                     require(parser.name == "set")
-                    customSaveDirectory = parser.nextTag() != XmlPullParser.END_TAG
+                    val configured = parser.nextTag() != XmlPullParser.END_TAG
+                    if (key == "sram_dir") customSaveDirectory = configured else scansRomDirectories = configured
                 }
-                "save_state_location" -> {
+                "save_state_location", "console_type" -> {
                     require(parser.name == "string")
-                    stateLocation = parser.nextText()
+                    val value = parser.nextText().lowercase()
+                    if (key == "save_state_location") stateLocation = value else console = value
                 }
             }
         }
         require(useRomDirectory || !customSaveDirectory) {
             "melonDS uses a custom save directory. Use shared-folder setup for that directory."
+        }
+        val cache = "files/rom_data.json"
+        // The native resolver can substitute a scanned ROM with the same name
+        // and size, including its writable parent and per-game settings.
+        require(!scansRomDirectories &&
+            (!storage.present(storage.path(cache)) ||
+                String(storage.bytes(storage.existing(cache), 256 * 1024)).trim() == "[]")) {
+            "melonDS has its own ROM library. Use shared-folder setup so those native files remain separate."
+        }
+        require(console == "ds" && !customBios) {
+            "Root melonDS currently supports standard DS mode with the built-in BIOS."
         }
         return when (stateLocation) {
             "save_dir" -> "files/saves"

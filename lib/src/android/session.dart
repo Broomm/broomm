@@ -405,6 +405,7 @@ class AndroidGameSession extends ChangeNotifier {
         nativeRom: nativeRom,
         rootedPsp: pspPlan != null,
         rootedDuck: duckPlan != null,
+        rootedMelon: layout is AndroidSavePlan && layout.melonRooted,
         cancellation: _preparation,
         phase: _preparePhase,
         configuration: _game?.layout is AndroidSavePlan

@@ -170,8 +170,12 @@ class BroommEmulators(private val activity: Activity) {
                             require(!rootedDuck || call.argument<String>("emulator") == "duckstation" && pkg == "com.github.stenzek.duckstation") { "Invalid rooted PS1 launch" }
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
+                            val rootedMelon = call.argument<Boolean>("rootedMelon") == true
+                            if (rootedMelon) require(pkg == MELON_PACKAGE && call.argument<String>("emulator") == "melonds" &&
+                                currentApp.getValue("version") == MELON_VERSION) { "Invalid rooted melonDS launch." }
                             val duckDocuments = call.argument<String>("emulator") == "duckstation" &&
                                 duckStationDocuments(pkg, currentApp.getValue("build"))
+                            val documentGame = duckDocuments || rootedMelon
                             val files = (call.argument<List<String>>("files") ?: error("Missing game manifest"))
                                 .map { gameLibraryFile(activity.filesDir, it).path }
                             val selected = gameLibraryFile(activity.filesDir,
@@ -189,7 +193,7 @@ class BroommEmulators(private val activity: Activity) {
                                 else UUID.randomUUID().toString().replace("-", "")
                             val activeRoot = call.argument<String>("root")
                             require(activeRoot == null || Regex("[a-f0-9]{32}:(ppsspp|melonds|azahar)").matches(activeRoot))
-                            val documents = if (duckDocuments) files.map {
+                            val documents = if (documentGame) files.map {
                                 gameGrantPath(listOf("document", "$token:${it.removePrefix("$content/")}"))
                             } else emptyList()
                             check(activity.getSharedPreferences("game-grants", 0).edit()
@@ -197,8 +201,8 @@ class BroommEmulators(private val activity: Activity) {
                                 .putString("active-root", activeRoot).commit())
                             val uris = files.mapIndexed { index, path ->
                                 Uri.Builder().scheme("content").authority(
-                                    "${activity.packageName}.games" + if (duckDocuments) ".documents" else "").also { builder ->
-                                    if (duckDocuments) builder.appendPath("document").appendPath(documents[index].documentId)
+                                    "${activity.packageName}.games" + if (documentGame) ".documents" else "").also { builder ->
+                                    if (documentGame) builder.appendPath("document").appendPath(documents[index].documentId)
                                     else {
                                         builder.appendPath("game").appendPath(token)
                                         for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)

@@ -111,14 +111,14 @@ class AndroidEmulatorSetup extends ChangeNotifier {
           ? AndroidSetupStep.ready
           : AndroidSetupStep.initialize;
     } else {
-      final binding = manager.folder(emulator);
-      if (binding == null) {
+      final tree = manager.folder(emulator)?['tree'];
+      if (tree == null) {
         step = AndroidSetupStep.folder;
       } else {
         final lease = await SessionLease.acquire(manager.data);
         try {
           await manager.ensureSetupAllowed();
-          await manager.confirmSharedStorage(emulator, binding['tree']!);
+          await manager.confirmSharedStorage(emulator, tree);
           step = AndroidSetupStep.ready;
         } finally {
           await lease.release();

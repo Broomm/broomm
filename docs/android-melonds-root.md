@@ -5,12 +5,15 @@ the GitHub APK with version code 40 on Android user 0 and ARM64. The pinned
 APK hash is `646eb4564c71b0817ace6474e92c169da16630d58826c43e0fe648896311ec94`.
 The signer is `0493bb8749289f0304cc868489dd68b930c19ccc4dce2da876bfe6b9bdbabebc`.
 
-The native reader checks the three save-location preferences in
+The native reader checks the effective save locations and DS mode in
 `me.magnum.melonds_preferences.xml` without changing them. The [reviewed source](https://github.com/rafaelvcaetano/melonDS-android/blob/5ec3648d68382dea9c17d6fbf02544e5c2c0afed/app/src/main/java/me/magnum/melonds/impl/SharedPreferencesSettingsRepository.kt)
 uses its Android media save directory for launcher games with no writable ROM
 parent. Its numbered states go in the save directory or its separate native
-state directory. Both modes use the same raw DS save and exact APK state
-identity as the existing connected-folder path. Custom folders use the shared
+state directory. Both locations use the same raw DS save and exact APK state
+identity as the existing connected-folder path. The reviewed launcher
+hands melonDS an exact read-only Android game document. A native ROM library
+can substitute an already scanned file with the same name and size, so the
+root route requires an empty native library. Custom folders use the shared
 setup route.
 
 The root service verifies ownership, the Android mount, the installed build,

@@ -1653,6 +1653,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? nativeRom,
     bool rootedPsp = false,
     bool rootedDuck = false,
+    bool rootedMelon = false,
     DownloadCancellation? cancellation,
     void Function(String)? phase,
   }) async {
@@ -1669,6 +1670,10 @@ class AndroidEmulators extends ChangeNotifier {
             profile == null ||
             duckRoot(package: app.package) == null))
       throw const FormatException('Invalid rooted PS1 launch');
+    if (rootedMelon &&
+        (emulator.id != 'melonds' ||
+            !hasCurrentRoot(emulator, 'nds', package: app.package)))
+      throw const FormatException('Invalid rooted melonDS launch');
     if (!app.enabled)
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
@@ -1696,6 +1701,7 @@ class AndroidEmulators extends ChangeNotifier {
       if (documentToken != null) 'documentToken': documentToken,
       if (rootedPsp) 'rootedPsp': true,
       if (rootedDuck) 'rootedDuck': true,
+      if (rootedMelon) 'rootedMelon': true,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
       if (nativeRom != null) 'nativeRom': nativeRom,
