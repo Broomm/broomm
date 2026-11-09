@@ -289,13 +289,14 @@ void main() {
       'games/42/$stateGroup/SLUS-00561_1.sav',
       duckStateEnvelope(p.publication),
     );
-    await native.settings.writeAsString(
-      (await native.settings.readAsString()).replaceFirst(
-        'ResolutionScale = 2',
-        'ResolutionScale = 3',
-      ),
-      flush: true,
+    const shaders =
+        '[PostProcessing/Stage1]\nShaderName = crt\nuse_frame = true\n'
+        '[PostProcessing/Stage2]\nShaderName = color\n';
+    final edited = (await native.settings.readAsString()).replaceFirst(
+      'ResolutionScale = 2',
+      'ResolutionScale = 3',
     );
+    await native.settings.writeAsString('$edited\n$shaders', flush: true);
     native.state = 'quiescent';
     await session.finish(game(p), p, automatic: true);
     expect(await native.settings.readAsString(), original);
@@ -307,6 +308,10 @@ void main() {
     final second = await plan(other);
     await prepare(second);
     final secondRecord = await progressJson(await roots.profileFile(other));
+    expect(
+      androidIni(await native.settings.readAsString()).keys,
+      isNot(contains('PostProcessing/Stage1/ShaderName')),
+    );
     expect(
       await native.files({
         ...roots.arguments(secondRecord),
@@ -327,10 +332,12 @@ void main() {
           .readAsBytes(),
       card(3),
     );
-    expect(
-      await native.settings.readAsString(),
-      contains('ResolutionScale = 3'),
-    );
+    final restored = androidIni(await native.settings.readAsString());
+    expect(restored['GPU/ResolutionScale'], '3');
+    expect(restored['PostProcessing/Stage1/ShaderName'], 'crt');
+    expect(restored['PostProcessing/Stage1/use_frame'], 'true');
+    expect(restored['PostProcessing/Stage2/ShaderName'], 'color');
+    expect(restored['MemoryCards/Directory'], '$workspace/games/42/cards');
     await session.finish(game(p), p, automatic: false);
     expect(await native.settings.readAsString(), original);
   });
@@ -357,6 +364,28 @@ void main() {
     expect(await native.settings.readAsString(), original);
     expect(await roots.loan(), isNull);
   });
+
+  test(
+    'slash in a preference key cannot become a nested section during a loan',
+    () async {
+      final original = await native.settings.readAsString();
+      final r = await roots.profile(serverId, profileId, native.binding);
+      final file = File('${native.memory(r).path}/profile.ini');
+      const ambiguous = '[PostProcessing]\nStage1/ShaderName = crt\n';
+      await file.writeAsString(ambiguous, flush: true);
+      await expectLater(
+        roots.borrow(r, kind: 'settings', transaction: progressNonce()),
+        throwsFormatException,
+      );
+      expect(await roots.loan(), isNull);
+      expect(await native.settings.readAsString(), original);
+      expect(await file.readAsString(), ambiguous);
+      expect(
+        () => duckSettingsSeed('[GPU]\nFoo/Bar = value\n'),
+        throwsFormatException,
+      );
+    },
+  );
 
   test('lost settings publication reply is recovered from the durable loan without adopting standalone credentials', () async {
     final original = await native.settings.readAsString(),
