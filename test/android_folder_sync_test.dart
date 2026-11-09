@@ -314,6 +314,82 @@ void main() {
         .setMockMethodCallHandler(channel, null);
     await temp.delete(recursive: true);
   });
+  test(
+    'native startup refusal keeps synced progress and allows retry',
+    () async {
+      final native = await Directory('${temp.path}/native').create();
+      fixture.melonRoot = native;
+      fixture.trees['fixture:melon'] = native;
+      final emulator = androidEmulators.singleWhere((e) => e.id == 'melonds');
+      await manager.load();
+      await manager.connectMelonRoot(emulator);
+      final rom = await ds(), server = api();
+      final g = await game(profileId, server, rom);
+      final session = await start(g, rom);
+      await put(native, 'files/saves/Ranger.sav', List.filled(512, 5));
+      await session.finish(emulatorClosed: true);
+      final synced = await cloud.store(g).state();
+      expect(synced['remote'], isNotNull);
+      expect(synced['pending'], isFalse);
+
+      Future<void> play() => session.start(
+        server: serverId,
+        profile: profileId,
+        rom: 42,
+        emulator: emulator,
+        app: manager.app(emulator)!,
+        files: [rom.path],
+        selected: rom.path,
+        prepare: (_, _) async => g,
+      );
+      final standalone = await put(native, 'files/saves/Ranger.sav', [8, 9]);
+      fixture.melonRunning = true;
+      await expectLater(
+        play(),
+        throwsA(
+          isA<PlatformException>().having((e) => e.code, 'code', 'writer-live'),
+        ),
+      );
+      expect(session.active, isFalse);
+      expect(await session.pending(), isNull);
+      expect(await cloud.store(g).state(), synced);
+      expect(await standalone.readAsBytes(), [8, 9]);
+      expect(server.records, hasLength(1));
+
+      fixture.melonRunning = false;
+      await play();
+      expect(await standalone.readAsBytes(), List.filled(512, 5));
+      await session.finish(emulatorClosed: true);
+      expect(await standalone.readAsBytes(), [8, 9]);
+      expect(await session.pending(), isNull);
+      expect(server.records, hasLength(1));
+    },
+  );
+  test(
+    'a failed Android game preparation leaves no session to recover',
+    () async {
+      final rom = await ds(), e = emulator('melonds');
+      final session = AndroidGameSession(manager, cloud);
+      sessions.add(session);
+      await expectLater(
+        session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: e,
+          app: manager.app(e)!,
+          files: [rom.path],
+          selected: rom.path,
+          prepare: (_, _) async =>
+              throw StateError('Folder access was revoked.'),
+        ),
+        throwsStateError,
+      );
+      expect(session.active, isFalse);
+      expect(await session.pending(), isNull);
+      expect(fixture.replacements, 0);
+    },
+  );
   test('rooted DS keeps native files while live, then syncs each profile and restores originals', () async {
     final native = await Directory('${temp.path}/native').create();
     fixture.melonRoot = native;
