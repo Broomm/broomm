@@ -753,11 +753,14 @@ void main() {
     expect(await File('${external.path}/Ranger.sav').readAsBytes(), [42]);
     expect(remote.contents[remote.records.keys.single], List.filled(512, 1));
   });
-  for (final interrupted in [false, true]) {
+  for (final mode in ['ready', 'interrupted', 'unverified']) {
     test(
-      interrupted
-          ? 'MMJ recovery removes staged media after a lost native reply'
-          : 'verified MMJ launches its staged game and preserves standalone states',
+      switch (mode) {
+        'interrupted' =>
+          'MMJ recovery removes staged media after a lost native reply',
+        'unverified' => 'MMJ rejects the incompatible legacy URI before starting a save transaction',
+        _ => 'verified MMJ launches its staged game and preserves standalone states',
+      },
       () async {
         const id = 'citra-mmj';
         fixture.mmjReady = false;
@@ -767,7 +770,7 @@ void main() {
         );
         expect(manager.folder(emulator(id)), isNull);
         fixture.mmjReady = true;
-        final external = await connect(id, verifyMmj: true);
+        final external = await connect(id, verifyMmj: mode != 'unverified');
         final bytes = Uint8List(0x500)..setAll(0, base3ds());
         ByteData.sublistView(bytes)
             .setUint64(0x400, int.parse(baseTitle, radix: 16), Endian.little);
@@ -780,7 +783,8 @@ void main() {
           rom.path,
           contentId: '42',
         ) as AndroidSavePlan;
-        expect(plan.areas.where((a) => a.id.startsWith('states-')), isEmpty);
+        if (mode != 'unverified')
+          expect(plan.areas.where((a) => a.id.startsWith('states-')), isEmpty);
         final statePath = 'states/${baseTitle.toUpperCase()}.01.cst';
         final standalone = await put(external, statePath, [1, 3, 5]);
         final remote = api();
@@ -794,7 +798,7 @@ void main() {
         );
         final session = AndroidGameSession(manager, cloud);
         sessions.add(session);
-        fixture.loseMmjStageReply = interrupted;
+        fixture.loseMmjStageReply = mode == 'interrupted';
         final launch = session.start(
           server: serverId,
           profile: profileId,
@@ -805,7 +809,15 @@ void main() {
           selected: rom.path,
           game: game,
         );
-        if (interrupted) {
+        if (mode == 'unverified') {
+          await expectLater(launch, throwsStateError);
+          expect(await session.pending(), isNull);
+          expect(fixture.mmjStage, isNull);
+          expect(fixture.mmjLaunch, isNull);
+          expect(await standalone.readAsBytes(), [1, 3, 5]);
+          return;
+        }
+        if (mode == 'interrupted') {
           await expectLater(launch, throwsA(isA<PlatformException>()));
           expect(fixture.mmjLaunch, isNull);
         } else {

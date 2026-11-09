@@ -71,7 +71,7 @@ class RootSaveService : RootService() {
             }
             fun closed() = requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
             closed()
-            requireCitraSharedFolder(this, uid, request.getString("tree")!!)
+            if (operation != "mmjremoverom") requireCitraSharedFolder(this, uid, request.getString("tree")!!)
             val files = RootSaveFiles(root, uid, label, ::live, writerClosed = ::closed)
             val result = when (operation) {
                 "mmjfolder" -> Bundle()

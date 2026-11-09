@@ -9,6 +9,7 @@ import '../session_lease.dart';
 import '../romm/transfer.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
+import 'citra_mmj.dart';
 import 'root_saves.dart';
 import 'save_plan.dart';
 import 'shared_saves.dart';
@@ -250,6 +251,13 @@ class AndroidGameSession extends ChangeNotifier {
           ? await _prepareRoot(prepare)
           : await prepare(DownloadCancellation(), _preparePhase);
       final layout = preparedGame?.layout;
+      if (emulator.id == 'citra-mmj' &&
+          app.package == androidMmjSharedPackage &&
+          app.version == androidMmjSharedVersion &&
+          (layout is! AndroidSavePlan || !layout.mmjRooted))
+        throw StateError(
+          'Verify Citra MMJ’s rooted folder setup before playing. This build needs a private game path.',
+        );
       if (root != null) {
         if (layout is! AndroidSavePlan || !mapEquals(layout.binding, root))
           throw StateError(
