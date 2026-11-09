@@ -101,6 +101,7 @@ class RootInspection(private val activity: Activity) {
             "org.ppsspp.ppssppgold" to "org.ppsspp.ppsspp.PpssppActivity",
             "me.magnum.melonds" to "me.magnum.melonds.ui.emulator.EmulatorActivity",
             "org.azahar_emu.azahar" to "org.citra.citra_emu.activities.EmulationActivity",
+            "io.github.lime3ds.android" to "org.citra.citra_emu.activities.EmulationActivity",
             "org.citra.emu" to "org.citra.emu.ui.EmulationActivity",
             "com.antutu.ABenchMark" to "org.citra.emu.ui.EmulationActivity",
             "org.dolphinemu.dolphinemu" to "org.dolphinemu.dolphinemu.ui.main.MainActivity",

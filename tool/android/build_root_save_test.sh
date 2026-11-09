@@ -14,6 +14,8 @@ else broomm_hash="$(shasum -a 256 "$broomm_d8" | cut -d ' ' -f 1)"; fi
 [[ "$broomm_hash" == f8c762ff84640b10083b934a47278758a7665977e618fab0c927fff00521dea3 ]]
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootSaveFiles.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RootSaveTransfer.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RootDolphinFiles.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RootStandaloneProcess.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RetroArchCoreAbi.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RetroArchRootLaunch.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RetroArchControllerProfiles.kt \

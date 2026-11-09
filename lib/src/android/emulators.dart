@@ -5,11 +5,15 @@ import 'package:flutter/services.dart';
 
 import '../game_launch.dart';
 import '../retroarch.dart';
+import '../progress/digest.dart';
 import '../progress/files.dart';
 import '../romm/models.dart';
 import '../romm/transfer.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
+import 'azahar.dart';
+import 'citra_mmj.dart';
+import 'eden_root.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
 import 'psp_root.dart';
@@ -18,6 +22,8 @@ import 'flycast.dart' show clearAndroidFlycastPreferences;
 import 'duckstation_documents.dart';
 import 'duck_root.dart';
 import 'duck_root_store.dart';
+import 'melon_root.dart';
+import 'dolphin_root.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -88,7 +94,7 @@ const androidEmulators = [
   AndroidEmulator(
     'azahar',
     'Azahar',
-    ['org.azahar_emu.azahar'],
+    [androidAzaharScopedPackage, 'org.azahar_emu.azahar'],
     {'3ds'},
     'https://github.com/azahar-emu/azahar/releases',
     'org.citra.citra_emu.activities.EmulationActivity',
@@ -225,6 +231,16 @@ class AndroidEmulators extends ChangeNotifier {
         .map((p) => installed[p])
         .whereType<AndroidApp>()
         .toList();
+    if (emulator.id == 'azahar') {
+      final configured = apps.where(
+        (a) =>
+            a.enabled &&
+            (_folders.containsKey('azahar:${a.package}') ||
+                a.package == 'org.azahar_emu.azahar' &&
+                    _trees.keys.any((key) => key.endsWith(':azahar'))),
+      );
+      if (configured.isNotEmpty) return configured.first;
+    }
     return apps.where((a) => a.enabled).firstOrNull ?? apps.firstOrNull;
   }
 
@@ -260,6 +276,18 @@ class AndroidEmulators extends ChangeNotifier {
       return duckRoot(package: package);
     if (emulator.id == 'ppsspp' && platform == 'psp')
       return pspRoot(package: package);
+    if (emulator.id == 'melonds' && platform == 'nds') {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidMelonRootAccess ? binding : null;
+    }
+    if (emulator.id == 'dolphin' && {'ngc', 'wii'}.contains(platform)) {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidDolphinRootAccess ? binding : null;
+    }
+    if (emulator.id == 'eden' && platform == 'switch') {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidEdenRootAccess ? binding : null;
+    }
     final selected = app(emulator, package: package);
     if (emulator.id != 'retroarch' ||
         selected == null ||
@@ -314,6 +342,87 @@ class AndroidEmulators extends ChangeNotifier {
           await lease.release();
         }
       }, requiresApkPermission: false);
+
+  Future<void> connectMelonRoot(AndroidEmulator emulator) => _connectMediaRoot(
+    emulator,
+    id: 'melonds',
+    package: androidMelonRootPackage,
+    version: androidMelonRootVersion,
+    access: androidMelonRootAccess,
+    method: 'rootMelonInspect',
+    valid: androidMelonRootBinding,
+  );
+
+  Future<void> connectDolphinRoot(AndroidEmulator emulator, String platform) =>
+      _connectMediaRoot(
+        emulator,
+        id: 'dolphin',
+        package: androidDolphinRootPackage,
+        version: androidDolphinRootVersion,
+        access: androidDolphinRootAccess,
+        method: 'rootDolphinInspect',
+        valid: androidDolphinRootBinding,
+        platform: platform,
+      );
+
+  Future<void> connectEdenRoot(
+    AndroidEmulator emulator, {
+    Future<void> Function(AndroidApp)? provision,
+  }) => _connectMediaRoot(
+    emulator,
+    id: 'eden',
+    package: androidEdenRootPackage,
+    version: androidEdenRootVersion,
+    access: androidEdenRootAccess,
+    method: 'rootEdenInspect',
+    valid: androidEdenRootBinding,
+    provision: provision,
+  );
+
+  Future<void> _connectMediaRoot(
+    AndroidEmulator emulator, {
+    required String id,
+    required String package,
+    required String version,
+    required String access,
+    required String method,
+    required bool Function(Map<String, String>) valid,
+    String? platform,
+    Future<void> Function(AndroidApp)? provision,
+  }) async {
+    final lease = await SessionLease.acquire(data);
+    try {
+      await ensureSetupAllowed();
+      final selected = app(emulator);
+      if (emulator.id != id ||
+          selected?.package != package ||
+          selected?.version != version)
+        throw StateError(
+          'Use shared-folder setup for this ${emulator.name} build.',
+        );
+      await provision?.call(selected!);
+      final report = await channel.invokeMapMethod<String, String>(method, {
+        'package': selected!.package,
+        'build': selected.build,
+        if (platform != null) 'platform': platform,
+      });
+      final binding = {...?report, 'access': access};
+      if (binding.remove('version') case final String version)
+        binding['emulatorVersion'] = version;
+      if (!valid(binding) || binding['build'] != selected.build)
+        throw StateError(
+          '${emulator.name} did not verify its native save storage.',
+        );
+      final next = {..._folders, '${emulator.id}:${selected.package}': binding};
+      await _save(folders: next);
+      _folders
+        ..clear()
+        ..addAll(next);
+      _emit();
+    } finally {
+      await lease.release();
+    }
+  }
 
   Future<void> disconnectDuckRoot() async {
     final lease = await SessionLease.acquire(data);
@@ -430,6 +539,8 @@ class AndroidEmulators extends ChangeNotifier {
       (platform == null &&
           (emulator.id == 'duckstation' && duckRoot() != null ||
               emulator.id == 'ppsspp' && pspRoot() != null ||
+              emulator.id == 'melonds' && hasCurrentRoot(emulator, 'nds') ||
+              emulator.id == 'dolphin' && hasCurrentRoot(emulator, 'ngc') ||
               gbaRoot(emulator) != null ||
               rootConnection(emulator, 'snes') != null ||
               rootConnection(emulator, 'gb') != null ||
@@ -766,6 +877,7 @@ class AndroidEmulators extends ChangeNotifier {
         'package': package,
         'emulator': emulator.id,
       });
+
       await _save(
         trees: trees,
         folders: folders,
@@ -886,13 +998,34 @@ class AndroidEmulators extends ChangeNotifier {
 
   Future<void> confirmSharedStorage(
     AndroidEmulator emulator,
-    String uri,
-  ) async {
+    String uri, {
+    bool verifyAzahar = false,
+    bool verifyMmj = false,
+  }) async {
     if (!settingsKnown) throw StateError('Refresh emulator settings first.');
     final selected = app(emulator);
     if (selected == null || !sharedTree(emulator, selected.package, uri))
       throw const FormatException('Invalid emulator folder identity');
-    final binding = {'tree': uri, 'package': selected.package};
+    if (verifyAzahar &&
+        (emulator.id != 'azahar' ||
+            selected.package != androidAzaharScopedPackage ||
+            selected.version != androidAzaharScopedVersion))
+      throw StateError('Refresh Azahar’s reviewed installation before setup.');
+    if (verifyMmj &&
+        (emulator.id != 'citra-mmj' ||
+            selected.package != androidMmjSharedPackage ||
+            selected.version != androidMmjSharedVersion))
+      throw StateError(
+        'Refresh Citra MMJ’s reviewed installation before setup.',
+      );
+    final binding = {
+      'tree': uri,
+      'package': selected.package,
+      if (verifyAzahar) 'access': androidAzaharRootFolderAccess,
+      if (verifyAzahar) 'azaharBuild': selected.build,
+      if (verifyMmj) 'access': androidMmjRootFolderAccess,
+      if (verifyMmj) 'mmjBuild': selected.build,
+    };
     await channel.invokeMethod<void>('sharedCheck', {
       ...binding,
       'emulator': emulator.id,
@@ -918,7 +1051,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 18,
+        'version': 21,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -999,6 +1132,9 @@ class AndroidEmulators extends ChangeNotifier {
               16,
               17,
               18,
+              19,
+              20,
+              21,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -1027,9 +1163,34 @@ class AndroidEmulators extends ChangeNotifier {
             roots[binding['package']!] = binding;
             continue;
           }
-          if (emulator == null ||
-              binding['tree'] == null ||
-              !sharedTree(emulator, binding['package']!, binding['tree']!))
+          final melonRoot =
+              record['version'] >= 19 &&
+              emulator?.id == 'melonds' &&
+              androidMelonRootBinding(binding);
+          final dolphinRoot =
+              record['version'] >= 20 &&
+              emulator?.id == 'dolphin' &&
+              androidDolphinRootBinding(binding);
+          final edenRoot =
+              record['version'] >= 21 &&
+              emulator?.id == 'eden' &&
+              androidEdenRootBinding(binding);
+          if (binding['access'] == androidAzaharRootFolderAccess &&
+              (emulator?.id != 'azahar' ||
+                  binding['package'] != androidAzaharScopedPackage ||
+                  (binding['azaharBuild'] ?? '').isEmpty))
+            throw const FormatException('Invalid verified Azahar folder');
+          if (binding['access'] == androidMmjRootFolderAccess &&
+              (emulator?.id != 'citra-mmj' ||
+                  binding['package'] != androidMmjSharedPackage ||
+                  (binding['mmjBuild'] ?? '').isEmpty))
+            throw const FormatException('Invalid verified Citra MMJ folder');
+          if (!melonRoot &&
+              !dolphinRoot &&
+              !edenRoot &&
+              (emulator == null ||
+                  binding['tree'] == null ||
+                  !sharedTree(emulator, binding['package']!, binding['tree']!)))
             throw const FormatException('Invalid connected emulator folder');
           checked[entry.key] = binding;
         }
@@ -1052,6 +1213,9 @@ class AndroidEmulators extends ChangeNotifier {
           16,
           17,
           18,
+          19,
+          20,
+          21,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -1083,6 +1247,9 @@ class AndroidEmulators extends ChangeNotifier {
           16,
           17,
           18,
+          19,
+          20,
+          21,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1111,6 +1278,9 @@ class AndroidEmulators extends ChangeNotifier {
           16,
           17,
           18,
+          19,
+          20,
+          21,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1392,6 +1562,17 @@ class AndroidEmulators extends ChangeNotifier {
         }
         _emit();
       });
+      final pinnedHash = switch (emulator.id) {
+        'melonds' => androidMelonRootApkSha256,
+        'azahar' => androidAzaharScopedApkSha256,
+        'dolphin' => androidDolphinRootApkSha256,
+        'eden' => androidEdenRootApkSha256,
+        _ => null,
+      };
+      if (pinnedHash != null && await progressFileHash(apk) != pinnedHash)
+        throw FormatException(
+          'The ${emulator.name} APK did not match the reviewed download.',
+        );
       if (_download!.cancelled)
         throw StateError('Installation download cancelled.');
       phase?.call(
@@ -1401,6 +1582,8 @@ class AndroidEmulators extends ChangeNotifier {
         'path': apk.path,
         'packages': emulator.id == 'ppsspp'
             ? ['org.ppsspp.ppsspp']
+            : emulator.id == 'azahar'
+            ? [androidAzaharScopedPackage]
             : emulator.packages,
         'requiredActivity': emulator.activity,
       });
@@ -1601,6 +1784,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? nativeRom,
     bool rootedPsp = false,
     bool rootedDuck = false,
+    bool rootedMelon = false,
     DownloadCancellation? cancellation,
     void Function(String)? phase,
   }) async {
@@ -1617,6 +1801,10 @@ class AndroidEmulators extends ChangeNotifier {
             profile == null ||
             duckRoot(package: app.package) == null))
       throw const FormatException('Invalid rooted PS1 launch');
+    if (rootedMelon &&
+        (emulator.id != 'melonds' ||
+            !hasCurrentRoot(emulator, 'nds', package: app.package)))
+      throw const FormatException('Invalid rooted melonDS launch');
     if (!app.enabled)
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
@@ -1644,9 +1832,11 @@ class AndroidEmulators extends ChangeNotifier {
       if (documentToken != null) 'documentToken': documentToken,
       if (rootedPsp) 'rootedPsp': true,
       if (rootedDuck) 'rootedDuck': true,
+      if (rootedMelon) 'rootedMelon': true,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
       if (nativeRom != null) 'nativeRom': nativeRom,
+      if (nativeRom != null && emulator.id == 'citra-mmj') 'profile': profile!,
       if (profile != null &&
           folder(emulator) == null &&
           emulator.id != 'citra-mmj' &&

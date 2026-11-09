@@ -1,9 +1,12 @@
 # Android emulator status
 
-**Current 2026-11-08:** rooted RetroArch's eighteen routes/fifteen cores and
-[regular PPSSPP sessions](android-standalone-root.md) passed Thor acceptance.
-PR #5 is merged. [DuckStation initialized-storage inspection](android-duckstation-root.md)
-is the next read-only increment; its root save sessions remain pending.
+**Current 2026-11-09:** rooted RetroArch's eighteen routes/fifteen cores,
+[regular PPSSPP sessions](android-standalone-root.md) and
+[DuckStation save transactions](android-duckstation-transactions.md) have
+Thor acceptance records. PR #6 is merged. [Rooted melonDS](android-melonds-root.md)
+has a Mario Kart DS save and state round trip on Thor build 1132. The Sega 32X follow-up
+verified the gameplay state round trip, with in-game scenario save/load still
+unverified.
 The dated tables below retain the earlier connected-folder checkpoint.
 
 **Next milestone, selected 2026-11-05:** implement an optional root-backed

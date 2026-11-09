@@ -39,10 +39,17 @@ class RootSaveService : RootService() {
         val deadline = request.getLong("deadline")
         fun live() { check(SystemClock.elapsedRealtime() <= deadline) { "Root operation expired. Recovery was kept." } }
         live()
+        val operation = request.getString("operation") ?: error("Missing root operation.")
         val pkg = request.getString("package")!!
         val psp = request.getString("operation")?.startsWith("psp") == true
         val duck = request.getString("operation")?.startsWith("duck") == true
-        require(if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        val melon = request.getString("operation")?.startsWith("melon") == true
+        val dolphin = request.getString("operation")?.startsWith("dolphin") == true
+        val azahar = request.getString("operation") == "azaharfolder"
+        val mmj = operation.startsWith("mmj")
+        val eden = request.getString("operation")?.startsWith("eden") == true
+        val arms = request.getString("operation")?.startsWith("armsx2bios") == true
+        require(if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -53,10 +60,126 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (arms) return SharedDocumentLock.acquire(storage).use {
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(android.os.Build.VERSION.SDK_INT >= 33 && app.splitSourceDirs.isNullOrEmpty() &&
+                File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 1787L &&
+                before["signer"] == ARMSX2_SIGNER && before["version"] == ARMSX2_VERSION) {
+                "Automatic PS2 BIOS installation supports the reviewed ARM64 ARMSX2 2.9.2 APK."
+            }
+            val firmware = RootArmsx2Firmware(before, ::live)
+            val result = when (operation) {
+                "armsx2biosstatus" -> firmware.status()
+                "armsx2biosprovision" -> firmware.provision(request, caller)
+                else -> error("Unknown ARMSX2 BIOS operation.")
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "ARMSX2 changed during root access." }
+            live()
+            result
+        }
+        if (eden) return SharedDocumentLock.acquire(storage).use {
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
+                File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 32873047L &&
+                before["signer"] == EDEN_SIGNER && before["version"] == EDEN_VERSION) {
+                "Root saves support the reviewed ARM64 Eden 0.2.1 release."
+            }
+            val files = RootEdenFiles(before, ::live)
+            val result = if (operation == "edeninspect") files.setup()
+                else if (operation == "edenfirmwarestatus") files.firmwareStatus()
+                else {
+                if (operation !in setOf("edenkey", "edenprovision"))
+                    gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                files.operation(request, caller)
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "Eden changed during root access. Recovery was kept." }
+            live()
+            result
+        }
+        if (mmj) return SharedDocumentLock.acquire(storage).use {
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
+                File(app.nativeLibraryDir).name == "arm64" && app.targetSdkVersion == 29 &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 3932L &&
+                before["signer"] == CITRA_SHARED_SIGNER && before["version"] == CITRA_SHARED_VERSION) {
+                "Root verification supports the reviewed standard Citra MMJ APK."
+            }
+            fun closed() = requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
+            closed()
+            if (operation != "mmjremoverom") requireCitraSharedFolder(this, uid, request.getString("tree")!!)
+            val files = RootSaveFiles(root, uid, label, ::live, writerClosed = ::closed)
+            val result = when (operation) {
+                "mmjfolder" -> Bundle()
+                "mmjstagerom" -> {
+                    val source = gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                    val rom = files.stageMmjRom(request.getString("path")!!, source, caller, request.getString("sha256")!!)
+                    Bundle().apply { putString("rom", rom.path) }
+                }
+                "mmjremoverom" -> {
+                    files.removeMmjRom(request.getString("path")!!, request.getString("sha256")!!)
+                    Bundle()
+                }
+                else -> error("Unknown Citra MMJ operation.")
+            }
+            closed()
+            require(RootInspection.identity(this, pkg, 0) == before) { "Citra MMJ changed during root access." }
+            live()
+            result
+        }
+        if (azahar) return SharedDocumentLock.acquire(storage).use {
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
+                File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 33989152L &&
+                before["signer"] == AZAHAR_SCOPED_SIGNER && before["version"] == "2126.2-googleplay") {
+                "Root verification supports the reviewed Azahar APK. Use shared-folder setup for other builds."
+            }
+            requireNoEmulatorProcess(uid, "Azahar", ::live)
+            requireAzaharFolder(RootSaveFiles(root, uid, label, ::live), request.getString("tree")!!)
+            requireNoEmulatorProcess(uid, "Azahar", ::live)
+            require(RootInspection.identity(this, pkg, 0) == before) { "Azahar changed during folder verification." }
+            live()
+            Bundle()
+        }
+        if (melon) return SharedDocumentLock.acquire(storage).use {
+            require(android.os.Build.VERSION.SDK_INT >= 30) { "Root melonDS requires Android 11 or newer." }
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(app.splitSourceDirs.isNullOrEmpty() && File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 40L &&
+                before["signer"] == MELON_SIGNER && before["version"] == MELON_VERSION) {
+                "Root melonDS supports the reviewed ARM64 release. Use shared-folder setup on other builds."
+            }
+            val files = RootMelonFiles(before, ::live)
+            val result = if (operation == "meloninspect") files.report() else {
+                gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                files.operation(request, caller)
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "melonDS changed during root access. Recovery was kept." }
+            live()
+            result
+        }
+        if (dolphin) return SharedDocumentLock.acquire(storage).use {
+            require(android.os.Build.VERSION.SDK_INT >= 30) { "Root Dolphin requires Android 11 or newer." }
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(app.splitSourceDirs.isNullOrEmpty() && File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 43114L &&
+                before["signer"] == DOLPHIN_SIGNER && before["version"] == DOLPHIN_VERSION) {
+                "Root Dolphin supports the reviewed ARM64 release. Use shared-folder setup on other builds."
+            }
+            val files = RootDolphinFiles(before, ::live)
+            val result = if (operation == "dolphininspect") files.report(request.getString("platform")!!) else {
+                val game = gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                files.operation(request, game, caller)
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "Dolphin changed during root access. Recovery was kept." }
+            live()
+            result
+        }
         if (duck) return SharedDocumentLock.acquire(storage).use {
             require(android.os.Build.VERSION.SDK_INT >= 30) { "Root DuckStation saves require Android 11 or newer." }
             val app = packageManager.getApplicationInfo(pkg, 0)

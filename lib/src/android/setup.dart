@@ -3,7 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
+import '../romm/client.dart';
+import '../romm/transfer.dart';
+import 'firmware.dart';
+import 'azahar.dart';
+import 'citra_mmj.dart';
+import 'eden_root.dart';
 import 'emulators.dart';
+import 'melon_root.dart';
+import 'dolphin_root.dart';
 import 'root_saves.dart';
 
 enum AndroidSetupStep { install, waitingInstall, initialize, folder, ready }
@@ -14,8 +22,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     this.manager,
     this.emulator,
     this.platform,
-    this.profile,
-  ) {
+    this.profile, {
+    this.client,
+    this.platformId,
+  }) {
     manager.addListener(_installed);
   }
 
@@ -23,10 +33,46 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   final AndroidEmulator emulator;
   final String platform;
   final String profile;
+  final RommClient? client;
+  final int? platformId;
+  DownloadCancellation? _firmware;
+  String? firmwarePhase;
+  bool get preparingFirmware => _firmware != null;
+  void cancelFirmware() => _firmware?.cancel();
   AndroidSetupStep step = AndroidSetupStep.install;
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
   Map<String, String> _previousBuilds = {};
+  ({String uri, String package, String build})? _pendingFolder;
+
+  bool get hasPendingFolder {
+    final selected = _pendingFolder;
+    final app = manager.app(emulator);
+    return selected != null &&
+        selected.package == app?.package &&
+        selected.build == app?.build;
+  }
+
+  bool get azaharRootSetup =>
+      !_shared &&
+      emulator.id == 'azahar' &&
+      manager.app(emulator)?.package == androidAzaharScopedPackage &&
+      manager.app(emulator)?.version == androidAzaharScopedVersion;
+
+  bool get mmjRootSetup =>
+      !_shared &&
+      emulator.id == 'citra-mmj' &&
+      manager.app(emulator)?.package == androidMmjSharedPackage &&
+      manager.app(emulator)?.version == androidMmjSharedVersion;
+
+  bool get canUseShared3dsFolder =>
+      !_shared &&
+      (azaharRootSetup ||
+          mmjRootSetup ||
+          {
+            androidAzaharRootFolderAccess,
+            androidMmjRootFolderAccess,
+          }.contains(manager.folder(emulator)?['access']));
 
   bool get _rooted =>
       !_shared &&
@@ -34,7 +80,16 @@ class AndroidEmulatorSetup extends ChangeNotifier {
           emulator.id == 'ppsspp' &&
               platform == 'psp' &&
               manager.app(emulator)?.package == 'org.ppsspp.ppsspp' ||
-          emulator.id == 'duckstation' && platform == 'psx') &&
+          emulator.id == 'duckstation' && platform == 'psx' ||
+          emulator.id == 'melonds' &&
+              platform == 'nds' &&
+              manager.app(emulator)?.version == androidMelonRootVersion ||
+          emulator.id == 'dolphin' &&
+              {'ngc', 'wii'}.contains(platform) &&
+              manager.app(emulator)?.version == androidDolphinRootVersion ||
+          emulator.id == 'eden' &&
+              platform == 'switch' &&
+              manager.app(emulator)?.version == androidEdenRootVersion) &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -74,6 +129,21 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
   }
 
+  Future<void> _prepareFirmware(
+    Future<void> Function(DownloadCancellation, void Function(String)) action,
+  ) async {
+    final cancellation = _firmware = DownloadCancellation();
+    try {
+      await action(cancellation, (value) {
+        firmwarePhase = value;
+        if (!_disposed) notifyListeners();
+      });
+    } finally {
+      _firmware = null;
+      firmwarePhase = null;
+    }
+  }
+
   Future<void> verify() => _run(() async {
     final app = manager.app(emulator);
     if (app == null) {
@@ -82,8 +152,62 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
     if (!app.enabled)
       throw StateError('Enable ${emulator.name} in Android settings first.');
+    final source = client, id = platformId;
+    if (!_shared &&
+        emulator.id == 'armsx2' &&
+        platform == 'ps2' &&
+        source != null &&
+        id != null &&
+        canProvisionArmsx2Bios(app)) {
+      step = AndroidSetupStep.initialize;
+      final lease = await SessionLease.acquire(manager.data);
+      try {
+        await manager.ensureSetupAllowed();
+        await _prepareFirmware(
+          (cancellation, phase) => provisionAndroidArmsx2Bios(
+            manager,
+            app,
+            id,
+            source,
+            cancellation,
+            phase,
+          ),
+        );
+      } finally {
+        await lease.release();
+      }
+    }
     if (_rooted) {
       step = AndroidSetupStep.initialize;
+      if (emulator.id == 'melonds') {
+        await manager.connectMelonRoot(emulator);
+        step = AndroidSetupStep.ready;
+        return;
+      }
+      if (emulator.id == 'dolphin') {
+        await manager.connectDolphinRoot(emulator, platform);
+        step = AndroidSetupStep.ready;
+        return;
+      }
+      if (emulator.id == 'eden') {
+        await manager.connectEdenRoot(
+          emulator,
+          provision: source == null || id == null
+              ? null
+              : (app) => _prepareFirmware(
+                  (cancellation, phase) => provisionAndroidEden(
+                    manager,
+                    app,
+                    id,
+                    source,
+                    cancellation,
+                    phase,
+                  ),
+                ),
+        );
+        step = AndroidSetupStep.ready;
+        return;
+      }
       if (emulator.id == 'duckstation') {
         await manager.connectDuckRoot(emulator);
         step = AndroidSetupStep.ready;
@@ -102,14 +226,25 @@ class AndroidEmulatorSetup extends ChangeNotifier {
           ? AndroidSetupStep.ready
           : AndroidSetupStep.initialize;
     } else {
-      final binding = manager.folder(emulator);
-      if (binding == null) {
+      final tree = manager.folder(emulator)?['tree'];
+      if (tree == null) {
         step = AndroidSetupStep.folder;
       } else {
         final lease = await SessionLease.acquire(manager.data);
         try {
           await manager.ensureSetupAllowed();
-          await manager.confirmSharedStorage(emulator, binding['tree']!);
+          await manager.confirmSharedStorage(
+            emulator,
+            tree,
+            verifyAzahar:
+                !_shared &&
+                manager.folder(emulator)?['access'] ==
+                    androidAzaharRootFolderAccess,
+            verifyMmj:
+                !_shared &&
+                manager.folder(emulator)?['access'] ==
+                    androidMmjRootFolderAccess,
+          );
           step = AndroidSetupStep.ready;
         } finally {
           await lease.release();
@@ -119,6 +254,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   });
 
   Future<void> install({bool imported = false}) => _run(() async {
+    _pendingFolder = null;
     _previousBuilds = {
       for (final package in emulator.packages)
         if (manager.installed[package] case final app?) package: app.build,
@@ -153,28 +289,48 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   }
 
   Future<void> useSharedFolder() => _run(() async {
-    if (manager.rootConnection(emulator, platform) != null)
+    // A verified shared grant replaces a native media connection.
+    if (!{'melonds', 'dolphin', 'eden'}.contains(emulator.id) &&
+        manager.rootConnection(emulator, platform) != null)
       if (emulator.id == 'duckstation')
         await manager.disconnectDuckRoot();
       else if (emulator.id == 'ppsspp')
         await manager.disconnectPspRoot();
       else
         await manager.disconnectGbaRoot(emulator, platform: platform);
+    _pendingFolder = null;
     _shared = true;
     step = AndroidSetupStep.folder;
   });
 
-  Future<void> selectFolder() => _run(() async {
+  Future<void> selectFolder({bool change = false}) => _run(() async {
     final lease = await SessionLease.acquire(manager.data);
     try {
       await manager.ensureSetupAllowed();
       final app = manager.app(emulator);
       if (app == null) throw StateError('Install ${emulator.name} first.');
-      final uri = await manager.chooseFolder(emulator);
+      if (!hasPendingFolder) _pendingFolder = null;
+      // The picker can wake a cached emulator process. Keep the grant after
+      // a failed check so retrying can verify it with the emulator stopped.
+      final uri = !change && _pendingFolder != null
+          ? _pendingFolder!.uri
+          : await manager.chooseFolder(emulator, package: app.package);
       if (uri == null) return;
-      if (manager.app(emulator)?.build != app.build)
+      final current = manager.app(emulator);
+      if (current?.package != app.package || current?.build != app.build) {
+        _pendingFolder = null;
         throw StateError('The emulator changed. Select its save folder again.');
-      await manager.confirmSharedStorage(emulator, uri);
+      }
+      final verifyAzahar = azaharRootSetup, verifyMmj = mmjRootSetup;
+      if (verifyAzahar || verifyMmj)
+        _pendingFolder = (uri: uri, package: app.package, build: app.build);
+      await manager.confirmSharedStorage(
+        emulator,
+        uri,
+        verifyAzahar: verifyAzahar,
+        verifyMmj: verifyMmj,
+      );
+      _pendingFolder = null;
       step = AndroidSetupStep.ready;
     } finally {
       await lease.release();
@@ -184,6 +340,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    cancelFirmware();
     manager.removeListener(_installed);
     super.dispose();
   }

@@ -9,6 +9,7 @@ import '../session_lease.dart';
 import '../romm/transfer.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
+import 'citra_mmj.dart';
 import 'root_saves.dart';
 import 'save_plan.dart';
 import 'shared_saves.dart';
@@ -17,6 +18,9 @@ import 'psp_session.dart';
 import 'duck_root.dart';
 import 'duck_session.dart';
 import 'duckstation_documents.dart';
+import 'melon_root.dart';
+import 'dolphin_root.dart';
+import 'eden_root.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -191,6 +195,7 @@ class AndroidGameSession extends ChangeNotifier {
       throw StateError('An Android game session is already active.');
     busy = true;
     error = '';
+    phase = '';
     _emit();
     try {
       String? nativeRom;
@@ -241,11 +246,20 @@ class AndroidGameSession extends ChangeNotifier {
         await _duck.roots.restoreSettingsLoan();
         await _duck.roots.ensureClosed(binding);
       }
-      final rootedGame = rooted && prepare != null
+      final preparedGame = prepare == null
+          ? game
+          : rooted
           ? await _prepareRoot(prepare)
-          : game;
+          : await prepare(DownloadCancellation(), _preparePhase);
+      final layout = preparedGame?.layout;
+      if (emulator.id == 'citra-mmj' &&
+          app.package == androidMmjSharedPackage &&
+          app.version == androidMmjSharedVersion &&
+          (layout is! AndroidSavePlan || !layout.mmjRooted))
+        throw StateError(
+          'Verify Citra MMJ’s rooted folder setup before playing. This build needs a private game path.',
+        );
       if (root != null) {
-        final layout = rootedGame?.layout;
         if (layout is! AndroidSavePlan || !mapEquals(layout.binding, root))
           throw StateError(
             'The RetroArch root save route changed. Progress was kept.',
@@ -254,25 +268,36 @@ class AndroidGameSession extends ChangeNotifier {
           throw const AndroidRetroArchSetupRequired();
       }
       if (pspRooted &&
-          (rootedGame?.layout is! AndroidPspPlan ||
+          (layout is! AndroidPspPlan ||
               !mapEquals(
-                (rootedGame!.layout as AndroidPspPlan).binding,
+                layout.binding,
                 manager.pspRoot(package: app.package),
               )))
         throw StateError(
           'The PPSSPP root save route changed. Progress was kept.',
         );
       if (duckRooted &&
-          (rootedGame?.layout is! AndroidDuckPlan ||
+          (layout is! AndroidDuckPlan ||
               !mapEquals(
-                (rootedGame!.layout as AndroidDuckPlan).binding,
+                layout.binding,
                 manager.duckRoot(package: app.package),
               )))
         throw StateError(
           'The DuckStation root route changed. Progress was kept.',
         );
+      if (preparedGame != null &&
+          (preparedGame.server != server ||
+              preparedGame.profile != profile ||
+              preparedGame.rom != rom))
+        throw StateError(
+          'Android progress belongs to another game or profile. No cloud save was changed.',
+        );
+      if (layout is AndroidSavePlan && layout.nativeMediaRoot)
+        await manager.channel.invokeMethod<void>(
+          layout.method('Check'),
+          layout.arguments,
+        );
       if (pspRooted || duckRooted) _preparation = DownloadCancellation();
-      _game = game;
       _launched = false;
       _retroArchProcess = null;
       // Publish before sync or handoff. An exception/unknown platform reply
@@ -293,27 +318,18 @@ class AndroidGameSession extends ChangeNotifier {
           'selected': selected,
           if (rooted) 'rooted': true,
           if (rooted) 'rootPlatform': platform,
+          if (layout is AndroidSavePlan && layout.nativeMediaRoot)
+            'access': layout.binding['access'],
+          if (layout != null)
+            'stateAreas': [
+              for (final area in layout.areas)
+                if (area.id.startsWith('states-')) area.id,
+            ],
         },
       );
+      _game = preparedGame;
       active = true;
-      _game = rooted || prepare == null
-          ? rootedGame
-          : await prepare(DownloadCancellation(), _preparePhase);
-      final layout = _game?.layout;
       if (_game != null) {
-        if (_game!.server != server ||
-            _game!.profile != profile ||
-            _game!.rom != rom)
-          throw StateError(
-            'Android progress belongs to another game or profile. No cloud save was changed.',
-          );
-        await progressWrite(marker, {
-          ...(await pending())!,
-          'stateAreas': [
-            for (final area in _game!.layout.areas)
-              if (area.id.startsWith('states-')) area.id,
-          ],
-        });
         if (layout is AndroidSavePlan &&
             layout.rooted &&
             layout.launch['prepareControllerProfiles'] == 'true') {
@@ -344,6 +360,10 @@ class AndroidGameSession extends ChangeNotifier {
             phase = 'Preparing the game file for RetroArch…';
             _emit();
             nativeRom = await _shared.stageRootRom(_game!, plan);
+          } else if (plan.mmjRooted) {
+            phase = 'Preparing the game file for Citra MMJ…';
+            _emit();
+            nativeRom = await _shared.stageMmjRom(_game!, plan);
           }
         } else if (layout is AndroidPspPlan) {
           phase = 'Preparing this profile’s private PSP memory stick…';
@@ -376,6 +396,11 @@ class AndroidGameSession extends ChangeNotifier {
       final duckClock = duckPlan == null
           ? null
           : await _duck.launching(_game!, duckPlan);
+      if (layout is AndroidSavePlan && layout.nativeMediaRoot)
+        await manager.channel.invokeMethod<void>(
+          layout.method('Check'),
+          layout.arguments,
+        );
       _preparation?.check();
       if (emulator.id == 'duckstation' &&
           app.version == androidDuckStationDocumentVersion) {
@@ -392,6 +417,7 @@ class AndroidGameSession extends ChangeNotifier {
         nativeRom: nativeRom,
         rootedPsp: pspPlan != null,
         rootedDuck: duckPlan != null,
+        rootedMelon: layout is AndroidSavePlan && layout.melonRooted,
         cancellation: _preparation,
         phase: _preparePhase,
         configuration: _game?.layout is AndroidSavePlan
@@ -853,6 +879,15 @@ class AndroidGameSession extends ChangeNotifier {
       if (record['emulator'] == 'ppsspp' && await _psp.pending)
         throw StateError(
           'PSP owns a private memory-stick handoff. Finish its verified recovery before leaving this session. All copies were kept.',
+        );
+      if (await _shared.pending &&
+          {
+            androidMelonRootAccess,
+            androidDolphinRootAccess,
+            androidEdenRootAccess,
+          }.contains((await progressJson(_shared.journal))['access']))
+        throw StateError(
+          'Finish the original rooted save transaction. Recovery was kept.',
         );
       // Do not inspect potentially incomplete native/shadow working files here.
       // Existing sealed snapshots remain authoritative until explicit review.

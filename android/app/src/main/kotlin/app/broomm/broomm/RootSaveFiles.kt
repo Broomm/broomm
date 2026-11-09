@@ -15,6 +15,7 @@ internal class RootSaveFiles(
     private val checkpoint: (String) -> Unit = {},
     private val coreName: String = "mgba",
     private val writerClosed: () -> Unit = {},
+    private val mediaGroup: Int? = null,
 ) {
     fun progressLimit(path: String): Int = limit(path, coreName)
     fun present(file: File): Boolean = try { Os.lstat(file.path); true }
@@ -32,7 +33,9 @@ internal class RootSaveFiles(
     fun existing(relative: String): File = path(relative).also { metadata(it) }
     fun metadata(file: File, links: Long = 1): String {
         val s = Os.lstat(file.path)
-        require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == links && (s.st_mode and 4095) <= 511 && s.st_uid == uid && Os.getxattr(file.path, "security.selinux").contentEquals(label)) { "Save ownership, links or security label changed. Files were kept." }
+        require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == links && (s.st_mode and 4095) <= 511 &&
+            s.st_uid == uid && (mediaGroup == null || s.st_gid == mediaGroup) &&
+            Os.getxattr(file.path, "security.selinux").contentEquals(label)) { "Save ownership, links or security label changed. Files were kept." }
         return "${s.st_uid} ${s.st_gid} ${(s.st_mode and 511).toString(8)} ${String(label).trimEnd('\u0000')}"
     }
     fun bytes(file: File, max: Int): ByteArray {
@@ -40,11 +43,11 @@ internal class RootSaveFiles(
         return FileInputStream(fd).use { input ->
             val stat = Os.fstat(fd)
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_size in 0..max.toLong()) { "Root file exceeds its supported size." }
-            val out = java.io.ByteArrayOutputStream()
-            val buffer = ByteArray(16384)
-            while (true) { live(); val n = input.read(buffer); if (n < 0) break; require(out.size() + n <= max); out.write(buffer, 0, n) }
-            require(out.size().toLong() == stat.st_size && Os.fstat(fd).st_mtime == stat.st_mtime && Os.lstat(file.path).st_ino == stat.st_ino) { "Root file changed during inspection." }
-            out.toByteArray()
+            val bytes = RootSaveTransfer.readExact(input, stat.st_size.toInt(), live)
+            require(Os.fstat(fd).st_mtime == stat.st_mtime && Os.lstat(file.path).st_ino == stat.st_ino) {
+                "Root file changed during inspection."
+            }
+            bytes
         }
     }
     fun hash(file: File, max: Int = MAX_BYTES): String = digest(bytes(file, max))
@@ -57,7 +60,7 @@ internal class RootSaveFiles(
         require(p.size == 4 && p[0].toInt() == uid && p[1].toInt() >= 0 && Regex("[0-7]{3}").matches(p[2]) && p[3] == String(label).trimEnd('\u0000'))
         Os.chown(file.path, uid, p[1].toInt()); Os.chmod(file.path, p[2].toInt(8)); Os.setxattr(file.path, "security.selinux", label, 0)
     }
-    private fun parents(relative: String, token: String) {
+    fun parents(relative: String, token: String) {
         var parent = root
         for (part in relative.split('/').dropLast(1)) {
             val target = File(parent, part)
@@ -70,13 +73,18 @@ internal class RootSaveFiles(
                     val old = Os.lstat(stage.path)
                     require(OsConstants.S_ISDIR(old.st_mode) && old.st_uid in setOf(0, uid) && stage.list()?.isEmpty() == true)
                 } else Os.mkdir(stage.path, 448)
-                Os.chown(stage.path, uid, uid); Os.setxattr(stage.path, "security.selinux", label, 0)
+                Os.chown(stage.path, uid, mediaGroup ?: uid)
+                if (mediaGroup != null) Os.chmod(stage.path, 1528) // 02770
+                Os.setxattr(stage.path, "security.selinux", label, 0)
                 flushDirectory(stage)
                 require(!present(target))
                 Os.rename(stage.path, target.path); flushDirectory(parent)
             }
             val s = Os.lstat(target.path)
-            require(OsConstants.S_ISDIR(s.st_mode) && (s.st_mode and 4095) <= 511 && s.st_uid == uid && Os.getxattr(target.path, "security.selinux").contentEquals(label))
+            require(OsConstants.S_ISDIR(s.st_mode) &&
+                (if (mediaGroup == null) (s.st_mode and 4095) <= 511
+                    else (s.st_mode and 3072) == 1024 && s.st_gid == mediaGroup) &&
+                s.st_uid == uid && Os.getxattr(target.path, "security.selinux").contentEquals(label))
             parent = target
         }
     }
@@ -434,6 +442,13 @@ internal class RootSaveFiles(
             sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
     }
 
+    /** The standalone adapter supplies an already resolved exact native filename. */
+    fun replaceStandalone(relative: String, before: String?, after: String?, payload: ByteArray?,
+                           metadata: String?, token: String, limit: Int, revalidate: () -> Unit) {
+        require(mediaGroup != null && (metadata == null || metadata.split(' ').getOrNull(1) == mediaGroup.toString()))
+        publish(relative, before, after, payload, metadata, token, limit, beforeCommit = revalidate)
+    }
+
     /** One concrete immutable Lynx BIOS, separate from save/config allowlists. */
     fun lynxFirmware(relative: String, config: String, before: String?, after: String?,
                      payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
@@ -525,7 +540,7 @@ internal class RootSaveFiles(
             parents(relative.substringBeforeLast('/') + "/states/" +
                 (stateGroup?.let { "$it/" } ?: "") + "reserved.state", token)
         }
-        val mode = wantedMetadata ?: if (present(file)) metadata(file) else "$uid $uid 600 ${String(label).trimEnd('\u0000')}"
+        val mode = wantedMetadata ?: if (present(file)) metadata(file) else "$uid ${mediaGroup ?: uid} 600 ${String(label).trimEnd('\u0000')}"
         if (present(stage)) {
             val s = Os.lstat(stage.path)
             require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == 1L && s.st_uid in setOf(0, uid))
@@ -728,19 +743,31 @@ internal class RootSaveFiles(
                 source.parentFile!!.parentFile!!.name == parts[2].removePrefix("rom-") &&
                 source.parentFile!!.parentFile!!.parentFile!!.name == "shared-session")
         } else require(source.path.substringBefore("/content/").substringAfterLast('/') == parts[1])
+        return stageVerifiedRom(relative, source, caller, expected, limit, parts[2])
+    }
+
+    fun stageMmjRom(relative: String, source: File, caller: Int, expected: String): File {
+        val parts = mmjRomPath(relative)
+        require(source.name == parts[3] && source.path.substringBefore("/content/").substringAfterLast('/') == parts[1])
+        return stageVerifiedRom(relative, source, caller, expected, MMJ_ROM_LIMIT, parts[2])
+    }
+
+    private fun stageVerifiedRom(relative: String, source: File, caller: Int, expected: String, limit: Long, transaction: String): File {
+        live(); writerClosed()
+        require(Regex("[a-f0-9]{64}").matches(expected))
         val target = path(relative)
         val directory = target.parentFile!!
-        require(!present(directory)) { "RetroArch session ROM directory already exists. Finish recovery first." }
-        parents(relative, parts[2].removePrefix("rom-") + "-in")
+        require(!present(directory)) { "Session ROM directory already exists. Finish recovery first." }
+        parents(relative, transaction.removePrefix("rom-") + "-in")
         val stage = File(directory, ".pending")
         val mode = "$uid $uid 400 ${String(label).trimEnd('\u0000')}"
         val fd = Os.open(stage.path, OsConstants.O_WRONLY or OsConstants.O_CREAT or OsConstants.O_EXCL or OsConstants.O_NOFOLLOW, 384)
         FileOutputStream(fd).use { out ->
-            require(transferRom(source, caller, out, limit = limit) == expected) { "RetroArch ROM changed before staging" }
+            require(transferRom(source, caller, out, limit = limit) == expected) { "Game file changed before staging" }
             attributes(stage, mode)
             Os.fsync(fd)
         }
-        require(transferRom(stage, uid, limit = limit) == expected && metadata(stage) == mode) { "Staged RetroArch ROM failed verification" }
+        require(transferRom(stage, uid, limit = limit) == expected && metadata(stage) == mode) { "Staged game file failed verification" }
         checkpoint("rom-staged")
         live(); writerClosed()
         Os.link(stage.path, target.path)
@@ -751,16 +778,26 @@ internal class RootSaveFiles(
     }
 
     fun removeRom(relative: String, expected: String) {
+        val parts = romPath(relative, coreName)
+        removeVerifiedRom(relative, expected, romLimit(parts[3]))
+    }
+
+    fun removeMmjRom(relative: String, expected: String) {
+        mmjRomPath(relative)
+        removeVerifiedRom(relative, expected, MMJ_ROM_LIMIT)
+    }
+
+    private fun removeVerifiedRom(relative: String, expected: String, limit: Long) {
         live(); writerClosed()
-        romPath(relative, coreName)
+        require(Regex("[a-f0-9]{64}").matches(expected))
         val target = path(relative)
         val directory = target.parentFile!!
         if (!present(directory)) return
         val dir = Os.lstat(directory.path)
         require(OsConstants.S_ISDIR(dir.st_mode) && dir.st_uid == uid &&
             Os.getxattr(directory.path, "security.selinux").contentEquals(label))
-        val entries = directory.listFiles() ?: error("Cannot inspect staged RetroArch ROM")
-        require(entries.all { it.name == ".pending" || it == target }) { "Unexpected files in RetroArch ROM staging directory" }
+        val entries = directory.listFiles() ?: error("Cannot inspect staged game file")
+        require(entries.all { it.name == ".pending" || it == target }) { "Unexpected files in game staging directory" }
         for (entry in entries) {
             val stat = Os.lstat(entry.path)
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink in 1L..2L)
@@ -769,8 +806,8 @@ internal class RootSaveFiles(
                 require(stat.st_dev == other.st_dev && stat.st_ino == other.st_ino)
             }
             if (entry == target || stat.st_uid != 0) metadata(entry, stat.st_nlink)
-            if (entry == target) require(transferRom(entry, uid, links = stat.st_nlink, limit = romLimit(target.name)) == expected) {
-                "Staged RetroArch ROM changed. Its files were kept."
+            if (entry == target) require(transferRom(entry, uid, links = stat.st_nlink, limit = limit) == expected) {
+                "Staged game file changed. Its files were kept."
             }
         }
         live()
@@ -789,6 +826,7 @@ internal class RootSaveFiles(
             else if (coreName == "mupen64plus_next" && name.substringAfterLast('.').lowercase() in setOf("z64", "v64", "n64")) 64L else 32L) * 1024 * 1024
 
     companion object {
+        private const val MMJ_ROM_LIMIT = 4L * 1024 * 1024 * 1024
         const val MAX_BYTES = 262144
         private const val MAX_CORE_BYTES = 96 * 1024 * 1024
         const val MAX_STATE_BYTES = 16 * 1024 * 1024
@@ -822,6 +860,13 @@ internal class RootSaveFiles(
             require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
                 path.split('/').none { it == "." || it == ".." } &&
                 Regex("files/Broomm/[a-f0-9]{32}/[a-zA-Z0-9_-]{1,128}/$suffix").matches(path)) { "Root path is outside the selected managed RetroArch files." }
+        }
+
+        fun mmjRomPath(path: String): List<String> {
+            require(path.length <= 512 && path.none { it.code < 32 || it == '\\' } &&
+                Regex("files/Broomm/[a-f0-9]{32}/[1-9][0-9]*/rom-[a-f0-9]{32}/[^/]+(?i:\\.(?:cci|3ds|cxi|app))")
+                    .matches(path)) { "Game path is outside the Citra MMJ session." }
+            return path.split('/').drop(2)
         }
 
         fun romPath(path: String, core: String = "mgba"): List<String> {

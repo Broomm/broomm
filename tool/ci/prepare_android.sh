@@ -24,6 +24,35 @@ org.gradle.workers.max=2
 org.gradle.parallel=false
 org.gradle.vfs.watch=false
 EOF
+# Keep both pinned Kotlin versions on Maven Central's alternate official
+# hostname. The hosted runner's primary hostname redirects these large JARs
+# to a GitHub release URL that returned HTTP 504. The init script covers
+# Flutter's included Gradle build as well as the Android app.
+mkdir -p "$PWD/.tool-cache/android/gradle/init.d"
+cat > "$PWD/.tool-cache/android/gradle/init.d/kotlin-compiler.gradle" <<'EOF'
+def pinCompiler = { repositories ->
+    repositories.exclusiveContent {
+        forRepository {
+            repositories.maven {
+                name = "pinnedKotlinCompiler"
+                url = "https://repo1.maven.org/maven2/"
+            }
+        }
+        filter {
+            includeVersion("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.2.21")
+            includeVersion("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.4.0")
+        }
+    }
+}
+gradle.settingsEvaluated { settings ->
+    def management = settings.dependencyResolutionManagement
+    if (management.repositoriesMode.get() == org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_PROJECT) {
+        gradle.beforeProject { project -> pinCompiler(project.repositories) }
+    } else {
+        pinCompiler(management.repositories)
+    }
+}
+EOF
 test ! -f android/key.properties
 test ! -f android/app/release.jks
 {

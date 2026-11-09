@@ -37,6 +37,37 @@ in DuckStation and return to Broomm. Broomm checks closure, syncs the private
 cards and compatible states to RomM, and restores standalone settings. See the
 linked walkthrough for the tested build, recovery steps and remaining checks.
 
+The [rooted melonDS preview](docs/android-melonds-root.md) uses the reviewed
+Android 2.0.1 GitHub build and raw `.nds` cartridges. Open melonDS once to
+initialize it, then use **Emulator Settings → Nintendo DS → melonDS → Set up**.
+Play from Broomm, save in the game and use melonDS’s Exit action before
+finishing sync. The walkthrough includes requirements for the native save
+location and what to do if Android keeps the app running.
+
+The [rooted Dolphin preview](docs/android-dolphin-root.md) uses the official
+2609a APK and default GameCube GCI or Wii NAND save locations. Open Dolphin once,
+close it, then choose **Emulator Settings → GameCube** or **Wii → Dolphin →
+Set up**. Use **Exit Emulation** after saving, then finish sync in Broomm.
+
+For the [Azahar scoped-storage preview](docs/android-azahar-folder.md), use
+**Emulator Settings → Nintendo 3DS → Azahar → Set up**. Open Azahar once,
+select a dedicated folder under internal **Documents**, then exit and select
+the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
+Azahar’s configured folder. Save in the game, exit Azahar, and finish sync in
+Broomm.
+
+The [Citra MMJ preview](docs/mmj-shared-saves.md) verifies the standard
+20251112 APK’s shared `citra-emu` directory on rooted Android. Finish MMJ’s
+first-run legacy storage setup, exit it, then choose **Emulator Settings →
+Nintendo 3DS → Citra MMJ → Set up**. Connect **Internal storage/citra-emu**.
+Ordinary saves use RomM history. Legacy state files stay in native recovery.
+
+The [rooted Eden preview](docs/android-eden-root.md) uses the official
+0.2.1 Standard APK. Open Eden once, configure its keys and firmware, and
+keep one console account with the default NAND and save locations. Then
+choose **Emulator Settings → Nintendo Switch → Eden → Set up**. Quit
+emulation before finishing sync in Broomm.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.
@@ -527,7 +558,14 @@ needs accessible memcards/states and Shared cards. The
 has exact settings, prerequisites and limits. A folder connection serves all
 Broomm profiles. Missing setup leads to Emulator Settings before Play.
 
-For MMJ use **Internal storage/citra-emu** and confirm it actually uses shared storage; private Storage Access builds are unsupported. Broomm preserves standalone progress, swaps the active profile/game's saves for play, and restores the original afterward. On return choose **Finished? Sync progress** only after saving/closing the emulator; **Not finished** keeps the session active. Saves use timestamped BROOMM history and native extensions, with imports/backups in the game's Options menu. After interruption use **Finish previous game session**; **Reconnect original save folder** handles revoked grants, and **Keep emulator folder unchanged · Finish** retains copies when normal recovery cannot complete. States have separate physical/build groups; Eden has no states. BIOS/firmware and new content installers are later work, with no additional Wii update integration planned. See [effects, offline behavior and cleanup](docs/android-installation-and-saves.md#recovery-effects-and-cleanup).
+On rooted Android, **Emulator Settings → Nintendo Switch → Eden → Set up**
+can provision missing Switch firmware, `prod.keys` and `title.keys` from
+the active profile’s RomM firmware catalogue. Open and close Eden once
+first. **PlayStation 2 → ARMSX2 → Set up** can import a missing `bios.bin`
+from RomM into the reviewed ARM64 2.9.2 SDK33 app. Keep ARMSX2 closed during
+import. This BIOS action is separate from connecting its shared save folder.
+
+For MMJ use **Internal storage/citra-emu** and confirm it actually uses shared storage; private Storage Access builds are unsupported. Broomm preserves standalone progress, swaps the active profile/game's saves for play, and restores the original afterward. On return choose **Finished? Sync progress** only after saving/closing the emulator; **Not finished** keeps the session active. Saves use timestamped BROOMM history and native extensions, with imports/backups in the game's Options menu. After interruption use **Finish previous game session**; **Reconnect original save folder** handles revoked grants, and **Keep emulator folder unchanged · Finish** retains copies when normal recovery cannot complete. States have separate physical/build groups; Eden has no states. Android game update and DLC installation remain separate, with no additional Wii update integration planned. See [effects, offline behavior and cleanup](docs/android-installation-and-saves.md#recovery-effects-and-cleanup).
 
 Verify the Android workflow and compile its native sources:
 

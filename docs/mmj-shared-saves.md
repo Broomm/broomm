@@ -1,5 +1,50 @@
 # Citra MMJ shared-folder saves
 
+## Root verification preview
+
+The reviewed [standard 20251112 APK](https://github.com/weihuoya/citra/releases/tag/20251112)
+uses package `org.citra.emu`, version name `3eb22034a`, version code 3932,
+and signer `5ebda360d963001a31b3a062b6151f7d38345d8da49540e74895825ed0ca5e1a`.
+On Android 11 or newer with ARM64 and user 0, Broomm can verify the
+emulator’s legacy storage mode and the initialized primary `citra-emu`
+directory before document access. MMJ needs its own Android legacy media
+permission on first launch. Broomm uses a persisted grant to the specific
+folder. The [upstream storage initialization](https://github.com/weihuoya/citra/blob/20251112/src/android/app/src/main/java/org/citra/emu/utils/CitraDirectory.java)
+uses the private app folder when legacy mode is unavailable.
+
+In Broomm use **Emulator Settings → Nintendo 3DS → Citra MMJ → Set up**.
+Open MMJ once, complete its first-run storage setup, exit and select
+**Internal storage/citra-emu**. If Android’s picker starts a cached MMJ
+process, stop MMJ in Android’s app settings after exit, then choose **Verify
+selected folder**. Broomm reuses the grant for this retry. **Use shared
+folder** retains the previous setup flow for compatible builds. After saving
+in the game, choose **Exit Game** in MMJ and finish sync in Broomm. The
+verified route synchronizes ordinary title data and extdata. It keeps matching legacy state files in the native recovery
+transaction and restores their original bytes. The reviewed APK has no
+confirmed native state support, so this route excludes them from RomM.
+
+The installed standard APK’s legacy launch code resolves a content URI
+to a filesystem path. Its converter cannot resolve Broomm’s provider.
+Broomm stages the selected installed 3DS image in MMJ’s private storage
+and verifies the copy before launch. Allow free space for an additional
+copy of the game, up to 4 GiB. The save journal retains the staged file’s
+identity so it can be removed after confirmed emulator closure, including
+after interruption. When first moving an existing Azahar save into MMJ,
+use **Home → game → Options → Use existing save file** to copy the desired
+RomM version into MMJ’s workspace. Earlier cloud versions are kept.
+
+On the Thor, the standard APK granted legacy media access and Broomm build
+1152 verified the selected folder. Its URI launch crashed inside MMJ. Build
+1161 staged a verified 1 GiB private image and launched Mario Kart 7 into
+Single Player across the Thor’s two displays. Broomm captured and read back
+RomM version 281, restored the standalone folder, and removed the temporary
+ROM. Replay matched the saved ordinary files byte for byte. The second RomM
+account kept its previous save and state. The owner’s original progress was
+restored after testing. Flutter regressions cover loss of a staging reply
+and refusal before a save transaction when the launch is incompatible.
+
+## Earlier shared-folder workflow
+
 2026-10-30. The owner selected MMJ's shared `citra-emu` folder as the supported Android storage mode. Ordinary save synchronization is implemented through a user-granted Storage Access Framework tree. Private `Android/data` storage and MMJ's Storage Access build remain unsupported. Android device execution is still required; host-side tests and Kotlin compilation do not establish native emulator acceptance.
 
 ## Setup and use

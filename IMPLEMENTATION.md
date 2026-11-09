@@ -1,5 +1,105 @@
 # Implementation plan
 
+## Android firmware setup from RomM
+
+The rooted Eden preview uses the active RomM profile to provision missing
+Switch keys and firmware during Set up. The standard ARM64 ARMSX2 2.9.2
+SDK33 build can likewise provision a missing 4 MiB PS2 BIOS. Both reuse
+desktop catalogue selection and checksum validation. The Android bridge
+verifies the pinned package and closed emulator before writing, and keeps
+existing firmware. ARMSX2’s ordinary Android folder connection remains
+separate from its BIOS import. On the Thor, build 1157 imported both
+Eden key files and 238 firmware NCAs from RomM and verified the connection.
+ARMSX2 imported its BIOS from the same profile. Its native launcher
+adopted the BIOS and booted Katamari Damacy to the memory-card prompt.
+Rooted PS2 saves and states remain pending.
+
+## Standalone Android follow-up — Eden
+
+The rooted route scopes ordinary saves to the selected Switch title and the
+reviewed Eden app’s default NAND. It validates the app-owned media mount,
+effective save paths and one initialized console account. The existing Dart
+journal retains standalone bytes, isolates RomM profiles and captures only
+the selected title’s account and device save directories. Eden must be
+closed before file access. Setup can import missing firmware and keys
+from RomM. The first packaged launch exposed a read-only Android reply
+when clearing a header key and during AES processing of encrypted media.
+The code uses owned buffers. Regression tests verify encrypted title
+identification and a parse failure. Build 1162 on the Thor restored the
+primary profile's existing Super Mario Bros. Wonder save and uploaded,
+verified and replayed a new save for the second profile. The Thor used Eden's
+app-local Turnip T23 driver after a crash in the stock Vulkan driver.
+This verifies ordinary saves. Eden states and Android update/DLC installation
+remain outside this increment.
+See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
+
+## Standalone Android follow-up — Citra MMJ
+
+The reviewed standard Citra MMJ APK can verify its primary shared
+`citra-emu` storage through root. The check requires the legacy storage
+grant, initialized native directories, and process absence. Save transfer
+still uses the Android folder grant and the existing journal. Matching
+legacy state files are kept in recovery but are excluded from cloud sync
+for this build. The Thor granted media and folder access and reached
+Mario Kart 7’s title screen from a private filesystem path. A content URI
+crashes the standard APK’s legacy launch code. Broomm now stages a
+verified private image and records it for removal in session recovery.
+Cumulative build 1161 launched Mario Kart 7 on the Thor, uploaded and
+verified RomM version 281, replayed the same native save bytes, and removed
+the temporary image after exit. The other RomM account retained its original
+save and state.
+See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
+
+## Standalone Android follow-up — Azahar
+
+Setup uses the pinned official Azahar 2126.2 scoped-storage APK for new
+installations and keeps an existing configured Vanilla installation. On
+rooted Android, Broomm checks the reviewed package, its actual user-data
+folder preference, and process absence before using the folder grant. The
+existing 3DS save/state transaction still owns staging, readback and recovery.
+The explicit shared-folder fallback remains available. Thor build 1146
+recovered the primary Mario Kart 7 state after correcting the bridge’s
+private snapshot path. RomM readback, byte-exact restore and native state
+loads passed for two accounts across builds 1146 and 1148. Both save
+histories stayed separate. See the [Azahar walkthrough](docs/android-azahar-folder.md).
+
+## Standalone Android follow-up — Dolphin
+
+The Dolphin increment adds optional root access to the official 2609a
+Android release. Setup verifies its default app storage and save settings.
+The save transaction identifies the selected disc, scopes GameCube GCI files
+by title header or Wii NAND files by title directory, and keeps numbered
+states in the exact APK's compatibility group. Process absence is required
+for file effects. The shared-folder route remains available. On the Thor,
+Luigi’s Mansion synced a game-created GCI and two native states. On build
+1152 it restored all three files and loaded the in-game save. Wii Sports
+synced its game-created NAND save and two native states, then restored the
+exact bytes and loaded the saved sports menu after upgrading to build 1136.
+The native startup check also refused a cached Dolphin process with no
+recovery record or cloud change. A second RomM account started without the
+primary GameCube card or states, then synced and reloaded its own state.
+See the [Dolphin walkthrough](docs/android-dolphin-root.md).
+
+## Standalone Android follow-up — melonDS
+
+PR #6 merged as `a3ade0a` after all checks passed. The six remaining Android
+standalone apps are melonDS, Dolphin, Azahar, Citra MMJ, ARMSX2 and Eden.
+
+The first follow-up implements rooted Nintendo DS cartridge saves and
+matching states for the reviewed melonDS release. Setup checks the package,
+Android user, native media generation and effective save preferences. Play
+uses the existing journal to preserve standalone files, restore private
+progress, capture after process absence and synchronize with RomM. The
+ordinary DS save format and existing state identity stay compatible. Setup
+checks the pinned official APK hash before Android's installer opens.
+Thor build 1132 recovered a real Mario Kart DS cartridge save and 19.5 MB
+state from an interrupted session. RomM readback and byte-for-byte native
+restore passed, including loading the state in melonDS. A cached melonDS
+process on the Thor required Android's app Stop after the native game Exit.
+The second saved RomM account created an independent save and state, with
+separate cloud versions and cleared recovery journals for both accounts.
+See the [melonDS walkthrough and evidence](docs/android-melonds-root.md).
+
 ## Rooted DuckStation transactions — Thor validation
 
 PR #6 now implements Dart-owned private whole cards, publication/build-specific

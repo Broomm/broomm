@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.DocumentsContract
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
@@ -46,6 +47,10 @@ class BroommEmulators(private val activity: Activity) {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
+                        "rootMmjStageRom", "rootMmjRemoveRom",
+                        "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
+                        "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
+                        "rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootEdenInspect", "rootEdenFirmwareStatus", "rootEdenProvision", "rootEdenKey", "rootEdenScope", "rootEdenCheck", "rootEdenList", "rootEdenRead", "rootEdenReplace",
                         "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckGame", "rootDuckList", "rootDuckRead", "rootDuckReplace", "rootDuckProfileList", "rootDuckProfileRead", "rootDuckProfileReplace" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
@@ -169,8 +174,12 @@ class BroommEmulators(private val activity: Activity) {
                             require(!rootedDuck || call.argument<String>("emulator") == "duckstation" && pkg == "com.github.stenzek.duckstation") { "Invalid rooted PS1 launch" }
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
+                            val rootedMelon = call.argument<Boolean>("rootedMelon") == true
+                            if (rootedMelon) require(pkg == MELON_PACKAGE && call.argument<String>("emulator") == "melonds" &&
+                                currentApp.getValue("version") == MELON_VERSION) { "Invalid rooted melonDS launch." }
                             val duckDocuments = call.argument<String>("emulator") == "duckstation" &&
                                 duckStationDocuments(pkg, currentApp.getValue("build"))
+                            val documentGame = duckDocuments || rootedMelon
                             val files = (call.argument<List<String>>("files") ?: error("Missing game manifest"))
                                 .map { gameLibraryFile(activity.filesDir, it).path }
                             val selected = gameLibraryFile(activity.filesDir,
@@ -188,7 +197,7 @@ class BroommEmulators(private val activity: Activity) {
                                 else UUID.randomUUID().toString().replace("-", "")
                             val activeRoot = call.argument<String>("root")
                             require(activeRoot == null || Regex("[a-f0-9]{32}:(ppsspp|melonds|azahar)").matches(activeRoot))
-                            val documents = if (duckDocuments) files.map {
+                            val documents = if (documentGame) files.map {
                                 gameGrantPath(listOf("document", "$token:${it.removePrefix("$content/")}"))
                             } else emptyList()
                             check(activity.getSharedPreferences("game-grants", 0).edit()
@@ -196,8 +205,8 @@ class BroommEmulators(private val activity: Activity) {
                                 .putString("active-root", activeRoot).commit())
                             val uris = files.mapIndexed { index, path ->
                                 Uri.Builder().scheme("content").authority(
-                                    "${activity.packageName}.games" + if (duckDocuments) ".documents" else "").also { builder ->
-                                    if (duckDocuments) builder.appendPath("document").appendPath(documents[index].documentId)
+                                    "${activity.packageName}.games" + if (documentGame) ".documents" else "").also { builder ->
+                                    if (documentGame) builder.appendPath("document").appendPath(documents[index].documentId)
                                     else {
                                         builder.appendPath("game").appendPath(token)
                                         for (part in path.removePrefix("$content/").split('/')) builder.appendPath(part)
@@ -218,11 +227,27 @@ class BroommEmulators(private val activity: Activity) {
                                     // Dolphin treats every ClipData item as a disc.
                                     // Related files get separate grants, not fake discs.
                                     clipData = ClipData.newRawUri("Game", uri)
-                                } else require(call.argument<String>("emulator") == "retroarch")
+                                } else require(call.argument<String>("emulator") in setOf("retroarch", "citra-mmj"))
                                 when (call.argument<String>("emulator")) {
                                     "melonds" -> putExtra("uri", uri)
-                                    "azahar" -> { putExtra("SelectedGame", uri.toString()); putExtra("launchedFromShortcut", true) }
-                                    "citra-mmj" -> putExtra("GamePath", uri.toString())
+                                    "azahar" -> {
+                                        putExtra("SelectedGame", uri.toString())
+                                        putExtra("launchedFromShortcut", true)
+                                        putExtra("launched_from_shortcut", true)
+                                    }
+                                    "citra-mmj" -> {
+                                        if (nativeRom != null) {
+                                            require(pkg == CITRA_SHARED_PACKAGE && currentApp.getValue("version") == CITRA_SHARED_VERSION)
+                                            val nativeData = activity.packageManager.getApplicationInfo(pkg, 0).dataDir
+                                            val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
+                                                .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
+                                                ?: error("Game file is outside Citra MMJ’s private session.")
+                                            val parts = RootSaveFiles.mmjRomPath(nativeRom.removePrefix("$root/"))
+                                            require(parts[0] == call.argument<String>("profile") &&
+                                                parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name)
+                                        }
+                                        putExtra("GamePath", nativeRom ?: uri.toString())
+                                    }
                                     "dolphin" -> putExtra("AutoStartFile", uri.toString())
                                     "duckstation" -> {
                                         putExtra("bootPath", if (duckDocuments)
@@ -299,7 +324,7 @@ class BroommEmulators(private val activity: Activity) {
                         "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
                         "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"))
                         "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
-                            background(result) { sharedFolder.operation(call) }
+                            sharedOperation(call, result)
                         else -> result.notImplemented()
                     }
                 } catch (e: Exception) {
@@ -372,6 +397,32 @@ class BroommEmulators(private val activity: Activity) {
         worker.execute { try {
             val value = work(); main.post { result.success(value) }
         } catch (e: Exception) { main.post { result.error("android-emulator", e.message ?: "Android operation failed", null) } } }
+    }
+    private fun sharedOperation(call: MethodCall, result: MethodChannel.Result) {
+        val (emulator, pkg, method) = when (call.argument<String>("access")) {
+            AZAHAR_ROOT_FOLDER -> Triple("azahar", AZAHAR_SCOPED_PACKAGE, "rootAzaharFolder")
+            CITRA_ROOT_FOLDER -> Triple("citra-mmj", CITRA_SHARED_PACKAGE, "rootMmjFolder")
+            else -> {
+                background(result) { sharedFolder.operation(call) }
+                return
+            }
+        }
+        require(call.argument<String>("emulator") == emulator && call.argument<String>("package") == pkg) {
+            "Invalid verified 3DS folder."
+        }
+        val verification = MethodCall(method, mapOf(
+            "package" to pkg,
+            "build" to call.argument<String>(if (emulator == "azahar") "azaharBuild" else "mmjBuild"),
+            "tree" to call.argument<String>("tree"),
+        ))
+        rootSaves.operation(verification, object : MethodChannel.Result {
+            override fun success(value: Any?) {
+                try { background(result) { sharedFolder.operation(call) } }
+                catch (e: Exception) { result.error("android-emulator", "3DS folder access was interrupted.", null) }
+            }
+            override fun error(code: String, message: String?, details: Any?) = result.error(code, message, details)
+            override fun notImplemented() = result.notImplemented()
+        })
     }
     @Suppress("DEPRECATION")
     fun activityResult(request: Int, code: Int, data: Intent?): Boolean {

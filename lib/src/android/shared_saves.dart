@@ -12,6 +12,8 @@ import 'save_plan.dart';
 import 'opera.dart';
 import 'saturn.dart';
 import 'flycast_session.dart';
+import 'melon_root.dart';
+import 'citra_mmj.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -25,7 +27,16 @@ class SharedAndroidSaves {
     '${manager.data.path}/android/shared-session/${record['transaction']}',
   );
   Map<String, dynamic> inventory(Object? value, AndroidSavePlan plan) {
-    if (value is! Map || value.length > (plan.rooted ? 128 : progressMaxFiles))
+    final limit = plan.melonRooted
+        ? 10
+        : plan.dolphinRooted
+        ? 96
+        : plan.edenRooted
+        ? 256
+        : plan.rooted
+        ? 128
+        : progressMaxFiles;
+    if (value is! Map || value.length > limit)
       throw const FormatException('Invalid Android save inventory');
     final files = value.cast<String, dynamic>();
     var total = 0;
@@ -40,7 +51,7 @@ class SharedAndroidSaves {
           v['bytes'] is! int ||
           v['bytes'] < 0 ||
           v['bytes'] >
-              (plan.rooted
+              (plan.rootFileMetadata
                   ? _rootProgressLimit(plan, e.key)
                   : progressMaxFileBytes) ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
@@ -66,10 +77,10 @@ class SharedAndroidSaves {
         throw const FormatException(
           'Saturn backup memory is incomplete. Existing progress was kept.',
         );
-      if (plan.rooted &&
+      if (plan.rootFileMetadata &&
           (v['metadata'] is! String ||
               !RegExp(
-                '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
+                '^${plan.binding['uid']} ${plan.nativeMediaRoot ? plan.binding['externalGid'] : '[0-9]+'} [0-7]{3} ${RegExp.escape(plan.binding[plan.nativeMediaRoot ? 'externalLabel' : 'label']!)}\$',
               ).hasMatch(v['metadata'] as String)))
         throw const FormatException(
           'Root save ownership metadata is incomplete.',
@@ -111,6 +122,11 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
+        (plan.nativeMediaRoot && r['selected'] != plan.launch['romPath']) ||
+        (plan.dolphinRooted && r['platform'] != plan.launch['platform']) ||
+        (plan.edenRooted &&
+            (r['accountPath'] != plan.launch['accountPath'] ||
+                r['devicePath'] != plan.launch['devicePath'])) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
@@ -428,6 +444,11 @@ class SharedAndroidSaves {
       'title': plan.game,
       'build': build,
       'selected': selected,
+      if (plan.nativeMediaRoot)
+        'stateAreas': [
+          for (final area in plan.areas)
+            if (area.id.startsWith('states-')) area.id,
+        ],
       if (plan.rooted) 'rootConfigPath': plan.launch['configPath'],
       if (plan.rooted && plan.launch['platform'] != null)
         'rootPlatform': plan.launch['platform'],
@@ -512,10 +533,10 @@ class SharedAndroidSaves {
           metadata = {
             'bytes': await e.value.length(),
             'sha256': await progressFileHash(e.value),
-            if (plan.rooted)
+            if (plan.rootFileMetadata)
               'metadata':
                   (r['original'] as Map)[remote]?['metadata'] ??
-                  '${plan.binding['uid']} ${plan.binding['uid']} 600 ${plan.binding['label']}',
+                  '${plan.binding['uid']} ${plan.binding[plan.nativeMediaRoot ? 'externalGid' : 'uid']} 600 ${plan.binding[plan.nativeMediaRoot ? 'externalLabel' : 'label']}',
           };
       if (working.containsKey(remote))
         throw const FormatException('Ambiguous Android save mapping');
@@ -689,6 +710,57 @@ class SharedAndroidSaves {
     }
   }
 
+  String _mmjRomPath(Map<String, dynamic> record) {
+    final name = File(record['selected'] as String).uri.pathSegments.last;
+    progressRelative(name);
+    if (!RegExp(
+      r'^.+\.(cci|3ds|cxi|app)$',
+      caseSensitive: false,
+    ).hasMatch(name))
+      throw const FormatException('Unsupported Citra MMJ game file.');
+    return 'files/Broomm/${record['profile']}/${record['rom']}/rom-${record['transaction']}/$name';
+  }
+
+  Future<String> stageMmjRom(CloudGame game, AndroidSavePlan plan) async {
+    final r = await record(game, plan);
+    if (!plan.mmjRooted || r['phase'] != 'installed')
+      throw StateError('Citra MMJ’s verified save route is required.');
+    final path = _mmjRomPath(r), source = File(r['selected'] as String);
+    final bytes = await source.length();
+    if (bytes < 1 || bytes > 4 * 1024 * 1024 * 1024)
+      throw StateError('Citra MMJ game files must be at most 4 GiB.');
+    final hash = await progressFileHash(source);
+    r['romStage'] = path;
+    r['romStageSha256'] = hash;
+    await progressWrite(journal, r);
+    return (await manager.channel.invokeMethod<String>('rootMmjStageRom', {
+      'package': plan.binding['package'],
+      'build': plan.binding['mmjBuild'],
+      'tree': plan.binding['tree'],
+      'path': path,
+      'source': source.path,
+      'sha256': hash,
+    }))!;
+  }
+
+  Future<void> _removeMmjRom(Map<String, dynamic> record) async {
+    if (record['access'] != androidMmjRootFolderAccess ||
+        record['romStage'] == null)
+      return;
+    final path = _mmjRomPath(record), hash = record['romStageSha256'];
+    if (record['romStage'] != path ||
+        hash is! String ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
+      throw const FormatException('Citra MMJ game staging identity changed.');
+    await manager.channel.invokeMethod<void>('rootMmjRemoveRom', {
+      'package': record['package'],
+      'build': record['mmjBuild'],
+      'tree': record['tree'],
+      'path': path,
+      'sha256': hash,
+    });
+  }
+
   Future<String> stageRootRom(CloudGame game, AndroidSavePlan plan) async {
     final r = await record(game, plan);
     var source = File(r['selected'] as String);
@@ -836,7 +908,7 @@ class SharedAndroidSaves {
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
-        if (plan.rooted) 'metadata': after[path]?['metadata'],
+        if (plan.rootFileMetadata) 'metadata': after[path]?['metadata'],
         'token': '${r['transaction']}-${afterKey == 'working' ? 'in' : 'out'}',
       });
     }
@@ -866,11 +938,11 @@ class SharedAndroidSaves {
     final files = await list(plan), capture = 'captures/${progressNonce()}';
     // Flycast validates its native legacy-card renames after holding all new
     // game/resource bytes. Other cores still require every installed path.
-    if (plan.rooted &&
+    if (plan.rootFileMetadata &&
         plan.launch['coreName'] != 'flycast' &&
         (r['working'] as Map).keys.any((path) => !files.containsKey(path)))
       throw StateError(
-        'An installed RetroArch save or state is missing. Recovery copies were kept; restore the working file before syncing.',
+        'An installed ${plan.emulator.name} save or state is missing. Recovery copies were kept; restore the working file before syncing.',
       );
     if (files.isEmpty)
       cloud.notice(
@@ -903,8 +975,7 @@ class SharedAndroidSaves {
     );
     for (final e in files.entries) {
       final key = plan.localKey(e.key)!;
-      if (!game.layout.areas.any((a) => key.startsWith('${a.id}/')))
-        continue; // Changed-build states stay in retained native capture.
+      if (!game.layout.areas.any((a) => key.startsWith('${a.id}/'))) continue; // Auxiliary files and changed-build states stay in native capture.
       await copy(
         await progressFile(directory(r), '$capture/native/${e.key}'),
         await layout.target(key),
@@ -947,6 +1018,7 @@ class SharedAndroidSaves {
     }
     if (r['phase'] != 'restored')
       throw StateError('Capture progress before restoring standalone saves.');
+    await _removeMmjRom(r);
     if (r['romStage'] case final String path when plan.rooted) {
       final config = plan.launch['configPath']!;
       final parent = config.substring(0, config.lastIndexOf('/'));
@@ -1034,11 +1106,16 @@ class SharedAndroidSaves {
 
   Future<void> keepFolder(String server, String profile, int rom) async {
     final r = await progressJson(journal);
+    if (r['access'] == androidMelonRootAccess)
+      throw StateError(
+        'Finish the original melonDS save transaction. Recovery was kept.',
+      );
     if (r['server'] != server ||
         r['profile'] != profile ||
         r['rom'] != rom ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(r['transaction'] as String? ?? ''))
       throw const FormatException('Android recovery identity changed');
+    await _removeMmjRom(r);
     await progressWrite(
       await progressFile(directory(r), 'kept-shared-folder.json'),
       {
@@ -1108,6 +1185,16 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 32) * 1024 * 1024;
+  if (plan.edenRooted) return 64 * 1024 * 1024;
+  if (plan.dolphinRooted) {
+    final mib = path.startsWith('files/StateSaves/')
+        ? 64
+        : path.startsWith('files/GC/')
+        ? 17
+        : 32;
+    return mib * 1024 * 1024;
+  }
   if (plan.launch['coreName'] == 'flycast')
     return path.contains('/states/') ? 64 * 1024 * 1024 : 131072;
   if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))

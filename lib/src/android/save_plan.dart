@@ -18,6 +18,10 @@ import 'lynx_firmware.dart';
 import 'opera.dart';
 import 'saturn.dart';
 import 'flycast.dart';
+import 'melon_root.dart';
+import 'dolphin_root.dart';
+import 'citra_mmj.dart';
+import 'eden_root.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -133,9 +137,31 @@ class AndroidSavePlan extends ProgressLayout {
     ...binding,
     'emulator': emulator.id,
     if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
+    if (nativeMediaRoot) 'romPath': launch['romPath']!,
+    if (dolphinRooted) 'platform': launch['platform']!,
+    if (edenRooted) ...{
+      'title': game,
+      'accountPath': launch['accountPath']!,
+      'devicePath': launch['devicePath']!,
+    },
   };
+  bool get mmjRooted => binding['access'] == androidMmjRootFolderAccess;
   bool get rooted => androidRootAccessModes.contains(binding['access']);
-  String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
+  bool get melonRooted => binding['access'] == androidMelonRootAccess;
+  bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
+  bool get edenRooted => binding['access'] == androidEdenRootAccess;
+  bool get nativeMediaRoot => melonRooted || dolphinRooted || edenRooted;
+  bool get rootFileMetadata => rooted || nativeMediaRoot;
+  String method(String operation) =>
+      '${melonRooted
+          ? 'rootMelon'
+          : dolphinRooted
+          ? 'rootDolphin'
+          : edenRooted
+          ? 'rootEden'
+          : rooted
+          ? 'root'
+          : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
       .singleWhere(
         (a) =>
@@ -268,6 +294,19 @@ Future<AndroidSavePlan> connectedAndroidProgress(
   final root = await manager.privateRoot(profile, emulator),
       reader = AndroidFolderReader(manager, emulator, package: package);
   final app = manager.app(emulator, package: package)!;
+  final melon = emulator.id == 'melonds'
+      ? manager.rootConnection(emulator, platform.slug, package: package)
+      : null;
+  if (melon != null &&
+      (melon['build'] != app.build || !rom.toLowerCase().endsWith('.nds')))
+    throw StateError(
+      'Root melonDS needs its connected build and a raw .nds cartridge. Check Emulator Settings.',
+    );
+  final dolphin = emulator.id == 'dolphin'
+      ? manager.rootConnection(emulator, platform.slug, package: package)
+      : null;
+  if (dolphin != null && dolphin['build'] != app.build)
+    throw StateError('Verify Dolphin’s changed installation before playing.');
   final build = await manager.fingerprint(app);
   String state(String extra) {
     final hash = ProgressDigest.sha256()..add(utf8.encode('$build:$extra'));
@@ -323,15 +362,29 @@ Future<AndroidSavePlan> connectedAndroidProgress(
           ),
         ],
       );
-      // Pick the custom save folder itself, with states set to the save folder.
-      for (final a in layout.areas) remote.add(AndroidSaveArea(a, '@root'));
+      for (final area in layout.areas) {
+        remote.add(
+          AndroidSaveArea(
+            area,
+            melon == null
+                ? '@root'
+                : area.id == 'save'
+                ? 'files/saves'
+                : melon['stateDirectory']!,
+          ),
+        );
+      }
+      if (melon != null) launch['romPath'] = rom;
     case 'azahar':
     case 'citra-mmj':
+      final verifiedMmj =
+          manager.folder(emulator, package: app.package)?['access'] ==
+          androidMmjRootFolderAccess;
       layout = await threeDsProgressLayout(
         root.path,
         'user',
         rom,
-        state: state(emulator.id),
+        state: verifiedMmj ? null : state(emulator.id),
       );
       const zeros = '00000000000000000000000000000000';
       var id0 = zeros, id1 = zeros;
@@ -358,6 +411,18 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         path: (a) =>
             a.path.substring(5).replaceFirst('$zeros/$zeros', '$id0/$id1'),
       );
+      if (verifiedMmj)
+        remote.add(
+          AndroidSaveArea(
+            ProgressArea(
+              'mmj-native-states',
+              'user/states',
+              prefix: '${layout.game.toUpperCase()}.',
+              suffix: '.cst',
+            ),
+            'states',
+          ),
+        );
     case 'dolphin':
       layout = await gameProgressLayout(
         ResolvedSession(
@@ -376,21 +441,67 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         ),
         platform.slug,
       );
+      if (dolphin != null &&
+          (layout.format == 'dolphin-wii-channel-v1' ||
+              platform.slug == 'ngc' &&
+                  !{'E', 'J', 'P'}.contains(layout.game[3])))
+        throw StateError(
+          'Use a supported Dolphin disc and region for rooted saves.',
+        );
       final ordinary = layout.areas
-          .where((a) => !a.id.startsWith('states-'))
+          .where(
+            (a) =>
+                !a.id.startsWith('states-') &&
+                (dolphin == null || !a.id.startsWith('dlc-')),
+          )
           .toList();
       layout = ProgressLayout(root.path, layout.format, layout.game, [
         ...ordinary,
         for (final a in layout.areas.where((a) => a.id.startsWith('states-')))
-          ProgressArea(state('Dolphin'), a.path, prefix: a.prefix),
+          ProgressArea(
+            state('Dolphin'),
+            a.path,
+            prefix: a.prefix,
+            pattern: dolphin == null ? null : r'^[A-Z0-9]{6}\.s(?:0[0-9]|10)$',
+          ),
       ], note: layout.note);
-      final config = androidIni(await reader.text('Config/Dolphin.ini') ?? '');
-      if (platform.slug == 'ngc' &&
-          ['SlotA', 'SlotB'].any((key) => config['Core/$key'] != '8'))
-        throw StateError(
-          'Set Dolphin’s GameCube memory cards to GCI Folder for both slots before using cloud saves.',
+      if (dolphin == null) {
+        final config = androidIni(
+          await reader.text('Config/Dolphin.ini') ?? '',
         );
-      bind(layout);
+        if (platform.slug == 'ngc' &&
+            ['SlotA', 'SlotB'].any((key) => config['Core/$key'] != '8'))
+          throw StateError(
+            'Set Dolphin’s GameCube memory cards to GCI Folder for both slots before using cloud saves.',
+          );
+        bind(layout);
+      } else {
+        launch.addAll({'romPath': rom, 'platform': platform.slug});
+        bind(layout, path: (a) => 'files/${a.path.substring(5)}');
+        // Dolphin can replace these global files when saving or loading a
+        // numbered state. Keep them in the native transaction only.
+        for (final name in ['lastState.sav', 'lastState.sav.dtm', 'undo.dtm']) {
+          remote.add(
+            AndroidSaveArea(
+              ProgressArea('dolphin-undo', 'user/StateSaves', exact: name),
+              'files/StateSaves',
+            ),
+          );
+        }
+        for (final area in ordinary.where((a) => a.gciId != null)) {
+          remote.add(
+            AndroidSaveArea(
+              ProgressArea(
+                'dolphin-undo-${area.id}',
+                area.path,
+                suffix: '.gci.deleted',
+                gciId: area.gciId,
+              ),
+              'files/${area.path.substring(5)}',
+            ),
+          );
+        }
+      }
     case 'duckstation':
     case 'armsx2':
       final ps2 = emulator.id == 'armsx2';
@@ -595,6 +706,66 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         },
       });
     case 'eden':
+      final rooted = manager.rootConnection(
+        emulator,
+        platform.slug,
+        package: package,
+      );
+      if (rooted != null) {
+        if (rooted['build'] != app.build)
+          throw StateError(
+            'Verify Eden’s changed installation before playing.',
+          );
+        final receivedKey = await manager.channel.invokeMethod<Uint8List>(
+          'rootEdenKey',
+          rooted,
+        );
+        if (receivedKey == null || receivedKey.length != 32)
+          throw const FormatException(
+            'Eden’s header key could not be verified.',
+          );
+        final key = Uint8List.fromList(receivedKey);
+        final String title;
+        try {
+          title = await switchBaseIdentity(
+            File(rom),
+            key,
+            decryptSector: (bytes, key, sector) =>
+                androidXts(manager, bytes, key, sector),
+          );
+        } finally {
+          key.fillRange(0, key.length, 0);
+        }
+        final native = await manager.channel.invokeMapMethod<String, String>(
+          'rootEdenScope',
+          {...rooted, 'romPath': rom, 'title': title},
+        );
+        final account = native?['accountPath'], device = native?['devicePath'];
+        if (account == null ||
+            device == null ||
+            account == device ||
+            !account.startsWith('files/nand/user/save/') ||
+            !device.startsWith('files/nand/user/save/'))
+          throw const FormatException(
+            'Eden’s save locations could not be verified.',
+          );
+        progressRelative(account);
+        progressRelative(device);
+        layout = ProgressLayout(root.path, 'ryubing-directory-v1', title, [
+          ProgressArea('save', 'user/save'),
+          ProgressArea('device', 'user/device'),
+        ]);
+        launch.addAll({
+          'romPath': rom,
+          'accountPath': account,
+          'devicePath': device,
+        });
+        remote.addAll([
+          AndroidSaveArea(layout.areas[0], account),
+          AndroidSaveArea(layout.areas[1], device),
+        ]);
+        break;
+      }
       final profileData = await reader.bytes(
         'nand/system/save/8000000000000010/su/avators/profiles.dat',
       );
@@ -728,12 +899,17 @@ Future<Uint8List> androidXts(
 ) async {
   final iv = Uint8List(16);
   ByteData.sublistView(iv).setUint64(8, sector);
-  Future<Uint8List> aes(Uint8List b, Uint8List k, bool decrypt) async =>
-      (await manager.channel.invokeMethod<Uint8List>('aesEcb', {
-        'bytes': b,
-        'key': k,
-        'decrypt': decrypt,
-      }))!;
+  Future<Uint8List> aes(Uint8List b, Uint8List k, bool decrypt) async {
+    final reply = await manager.channel.invokeMethod<Uint8List>('aesEcb', {
+      'bytes': b,
+      'key': k,
+      'decrypt': decrypt,
+    });
+    if (reply == null || reply.length != b.length)
+      throw const FormatException('Android AES returned an invalid block.');
+    return Uint8List.fromList(reply);
+  }
+
   final tweak = await aes(iv, Uint8List.sublistView(key, 16), false),
       input = Uint8List(512),
       tweaks = Uint8List(512);

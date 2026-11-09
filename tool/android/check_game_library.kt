@@ -10,6 +10,7 @@ import app.broomm.broomm.grantedGameFile
 import app.broomm.broomm.duckStationDocumentLaunch
 import app.broomm.broomm.duckStationGamePath
 import app.broomm.broomm.duckStationDocumentToken
+import app.broomm.broomm.sharedSaveSnapshotFile
 import java.io.File
 import java.nio.file.Files
 
@@ -105,6 +106,24 @@ fun main() {
         privateLink.delete()
         check(prepared.readBytes().contentEquals(byteArrayOf(3, 4)))
         println("PASS: private prepared cartridge aliases and service-relative handoff; wrong transaction/name, traversal, nested and linked sources refused")
+        val snapshot = File(real, "broomm/android/shared-session/$transaction/captures/slot.cst")
+        check(snapshot.parentFile.mkdirs())
+        val logicalSnapshot = File(alias, snapshot.relativeTo(real).path)
+        check(sharedSaveSnapshotFile(alias, logicalSnapshot.path) == snapshot && !snapshot.exists())
+        val recovery = File(real, "broomm/android/mmj-session/$transaction/original/main")
+        recovery.parentFile.mkdirs()
+        recovery.writeBytes(byteArrayOf(7))
+        check(sharedSaveSnapshotFile(alias, recovery.path).readBytes().contentEquals(byteArrayOf(7)))
+        val wrongBase = File(real, "android/shared-session/$transaction/main")
+        wrongBase.parentFile.mkdirs()
+        wrongBase.writeBytes(byteArrayOf(8))
+        check(runCatching { sharedSaveSnapshotFile(alias, wrongBase.path) }.isFailure)
+        check(runCatching { sharedSaveSnapshotFile(alias, "${snapshot.parent}/../captures/slot.cst") }.isFailure)
+        val linkedSnapshot = File(snapshot.parentFile, "linked")
+        Files.createSymbolicLink(linkedSnapshot.toPath(), recovery.toPath())
+        check(runCatching { sharedSaveSnapshotFile(alias, linkedSnapshot.path) }.isFailure)
+        linkedSnapshot.delete()
+        println("PASS: shared capture and legacy MMJ recovery resolve inside the Broomm data root; sibling, traversal and linked files refused")
         directory.delete(); link.delete(); alias.delete()
         check(rom.readBytes().contentEquals(byteArrayOf(1, 2)))
         println("PASS: actual Broomm library and trusted framework alias; old/foreign, traversal, missing and linked paths rejected")

@@ -67,6 +67,7 @@
         <package android:name="org.ppsspp.ppssppgold" />
         <package android:name="me.magnum.melonds" />
         <package android:name="org.azahar_emu.azahar" />
+        <package android:name="io.github.lime3ds.android" />
         <package android:name="org.citra.emu" />
         <package android:name="com.antutu.ABenchMark" />
         <package android:name="org.dolphinemu.dolphinemu" />
