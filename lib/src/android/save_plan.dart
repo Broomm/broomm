@@ -259,7 +259,7 @@ class AndroidFolderReader {
   }
 }
 
-Map<String, String> androidIni(String text) {
+Map<String, String> androidIni(String text, {bool rejectSlashInKey = false}) {
   final result = <String, String>{};
   var section = '';
   for (final line in const LineSplitter().convert(text)) {
@@ -271,8 +271,12 @@ Map<String, String> androidIni(String text) {
     if (v.startsWith('#') || v.startsWith(';')) continue;
     final split = v.indexOf('=');
     if (split < 1) continue;
-    final key =
-            '${section.isEmpty ? '' : '$section/'}${v.substring(0, split).trim()}',
+    final name = v.substring(0, split).trim();
+    if (rejectSlashInKey && name.contains('/'))
+      throw const FormatException(
+        'Unsupported slash in emulator preference key.',
+      );
+    final key = section.isEmpty ? name : '$section/$name',
         raw = v.substring(split + 1).trim();
     final value = raw.startsWith('"') && raw.endsWith('"')
         ? raw.substring(1, raw.length - 1)

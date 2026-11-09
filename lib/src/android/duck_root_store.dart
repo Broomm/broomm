@@ -448,7 +448,7 @@ class AndroidDuckRootStore {
     if (await progressFileHash(source) != prefs['sha256'])
       throw StateError('Private PS1 settings capture failed.');
     final config = duckIni({
-      ...androidIni(await source.readAsString()),
+      ...androidIni(await source.readAsString(), rejectSlashInKey: true),
       ...(r['routes'] as Map).cast<String, String>(),
     });
     final original = await progressFile(dir, 'original.ini'),

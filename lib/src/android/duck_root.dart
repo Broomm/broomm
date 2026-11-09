@@ -372,10 +372,12 @@ Future<Map<String, dynamic>> readAndroidDuckInventory(
 String duckIni(Map<String, String> values) {
   final sections = <String, Map<String, String>>{};
   for (final e in values.entries) {
-    final slash = e.key.indexOf('/');
+    // DuckStation uses hierarchical section names for shader stages.
+    // Keys from native profiles are checked before joining them to sections.
+    final slash = e.key.lastIndexOf('/');
     if (slash < 1 ||
         e.value.runes.any((c) => c < 32 || c == 127) ||
-        !RegExp(r'^[A-Za-z0-9_. -]+/[A-Za-z0-9_. -]+$').hasMatch(e.key))
+        !RegExp(r'^[A-Za-z0-9_. -]+(?:/[A-Za-z0-9_. -]+)+$').hasMatch(e.key))
       throw const FormatException(
         'Unsupported DuckStation preference encoding.',
       );
@@ -416,7 +418,7 @@ String duckSettingsSeed(String source) {
   };
   return duckIni(
     Map.fromEntries(
-      androidIni(source).entries.where(
+      androidIni(source, rejectSlashInKey: true).entries.where(
         (e) =>
             sections.contains(e.key.split('/').first) ||
             e.key.startsWith('Main/') && main.contains(e.key.substring(5)),

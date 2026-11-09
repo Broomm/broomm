@@ -1,5 +1,13 @@
 # Implementation plan
 
+## Android DuckStation shader preferences
+
+The Thor’s private PS1 profile contained native shader-stage sections such as
+`[PostProcessing/Stage1]`. The previous settings writer rejected their slash
+before the game launched. The settings loan now preserves hierarchical section
+names while still validating route keys. A slash in the raw preference key
+fails before publication so it cannot be interpreted as part of a section.
+
 ## Android session recovery follow-up
 
 The Thor’s build 1176 logs recorded Dolphin’s game activity finishing with

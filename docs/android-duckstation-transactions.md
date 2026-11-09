@@ -30,6 +30,9 @@ detached and uses the same private settings. Full private backups retain two
 verified generations before removal; reinstall uses a new storage generation
 and replays the verified archive. Interrupted writes/loans keep their journals
 and held copies. Missing known working data is damaged recovery, not deletion.
+Private settings can include DuckStation's nested post-processing sections.
+The loan writer preserves those section names and validates preference keys
+before publishing the temporary configuration.
 
 Existing initialized BIOS images are copied read-only into private storage.
 The reviewed beta reads `BIOS/SearchDirectory` and `MemoryCards/Directory` for
