@@ -56,11 +56,19 @@ The ordinary Setup and Play actions launched Luigi’s Mansion (GLME01) and
 Wii Sports (RSPE01) in official Dolphin 2609a on the Thor. Native savestates
 were enabled in Dolphin’s General settings for these checks.
 
-- GameCube, Broomm build 1134. Luigi’s Mansion created a 31,594,946-byte
+- GameCube, Broomm builds 1134, 1148 and 1152. Luigi’s Mansion created a 31,594,946-byte
   native state in the foyer. RomM confirmed version 272. The next Play
   restored the identical state, and native Quick Load returned to the foyer.
-  The GameCube fixture verified GCI transport. A new in-game GCI save has
-  yet to be created and loaded.
+  Build 1148 resumed the later tutorial state and reached Toad’s save point.
+  The game wrote a 24,640-byte Slot A GCI. RomM verified version 277 with
+  the GCI and both existing states. Build 1152 restored all three files byte
+  for byte. The game’s file picker showed **File 1 · Up to Area 1** and
+  loaded it into the lab. The restored working card used mode 0600 with
+  the original emulator owner, group and security label.
+  The second RomM account started with **New Game** and no state files.
+  It created a 25,445,582-byte Slot 1 state. RomM read back version 278
+  and replay restored only that state. Dolphin loaded it with File 2
+  highlighted, and the primary account’s version 277 stayed intact.
 - Wii, Broomm builds 1134 and 1136. Wii Sports created `RPSports.dat` and
   `banner.bin` in its NAND save directory, plus two native states. RomM
   confirmed version 273. After an in-place upgrade to 1136, Play restored all
@@ -68,5 +76,10 @@ were enabled in Dolphin’s General settings for these checks.
 
 Both games exited through Dolphin’s Exit Emulation action. When Android
 retained a cached process, Broomm required that process to stop before
-writing saves. This test used one RomM account. CI passed checks and all
-five packages for the [build 1136 revision](https://github.com/Broomm/broomm/actions/runs/42565836150).
+writing saves. Build 1152 also refused startup with the cached launcher
+present and kept the RomM checkpoint unchanged. The read-only check now
+completes before Broomm opens a recovery record. The Wii round trip and
+GameCube card write used the primary account. CI passed checks and all five packages for the
+[build 1136 revision](https://github.com/Broomm/broomm/actions/runs/42565836150),
+the [Dolphin startup fix](https://github.com/Broomm/broomm/actions/runs/42577141071)
+and [cumulative build 1152](https://github.com/Broomm/broomm/actions/runs/42577144121).

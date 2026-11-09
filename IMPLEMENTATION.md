@@ -57,8 +57,11 @@ installations and keeps an existing configured Vanilla installation. On
 rooted Android, Broomm checks the reviewed package, its actual user-data
 folder preference, and process absence before using the folder grant. The
 existing 3DS save/state transaction still owns staging, readback and recovery.
-The explicit shared-folder fallback remains available. Packaged game and
-RomM acceptance are pending. See the [Azahar walkthrough](docs/android-azahar-folder.md).
+The explicit shared-folder fallback remains available. Thor build 1146
+recovered the primary Mario Kart 7 state after correcting the bridge’s
+private snapshot path. RomM readback, byte-exact restore and native state
+loads passed for two accounts across builds 1146 and 1148. Both save
+histories stayed separate. See the [Azahar walkthrough](docs/android-azahar-folder.md).
 
 ## Standalone Android follow-up — Dolphin
 
@@ -68,11 +71,14 @@ The save transaction identifies the selected disc, scopes GameCube GCI files
 by title header or Wii NAND files by title directory, and keeps numbered
 states in the exact APK's compatibility group. Process absence is required
 for file effects. The shared-folder route remains available. On the Thor,
-Luigi’s Mansion synced and reloaded a native GameCube state. Wii Sports
+Luigi’s Mansion synced a game-created GCI and two native states. On build
+1152 it restored all three files and loaded the in-game save. Wii Sports
 synced its game-created NAND save and two native states, then restored the
 exact bytes and loaded the saved sports menu after upgrading to build 1136.
-A new game-created GameCube GCI and a two-account Dolphin round trip remain
-unverified. See the [Dolphin walkthrough](docs/android-dolphin-root.md).
+The native startup check also refused a cached Dolphin process with no
+recovery record or cloud change. A second RomM account started without the
+primary GameCube card or states, then synced and reloaded its own state.
+See the [Dolphin walkthrough](docs/android-dolphin-root.md).
 
 ## Standalone Android follow-up — melonDS
 
