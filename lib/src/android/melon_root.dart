@@ -44,9 +44,7 @@ bool androidMelonRootBinding(Map<String, String> binding) {
       }.contains(binding['dataDir']) &&
       RegExp(r'^u:object_r:app_data_file:s0(?::c[0-9]+(?:,c[0-9]+)*)?$')
           .hasMatch(label) &&
-      (media == 'u:object_r:media_rw_data_file:s0' ||
-          media ==
-              label.replaceFirst('app_data_file:', 'media_rw_data_file:')) &&
+      media == label.replaceFirst('app_data_file:', 'media_rw_data_file:') &&
       ['externalDevice', 'externalInode'].every(
         (key) => RegExp(r'^[1-9][0-9]{0,18}$').hasMatch(binding[key] ?? ''),
       );

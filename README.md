@@ -37,6 +37,13 @@ in DuckStation and return to Broomm. Broomm checks closure, syncs the private
 cards and compatible states to RomM, and restores standalone settings. See the
 linked walkthrough for the tested build, recovery steps and remaining checks.
 
+The [rooted melonDS preview](docs/android-melonds-root.md) uses the reviewed
+Android 2.0.1 GitHub build and raw `.nds` cartridges. Open melonDS once to
+initialize it, then use **Emulator Settings → Nintendo DS → melonDS → Set up**.
+Play from Broomm, save in the game and use melonDS’s Exit action before
+finishing sync. The walkthrough includes requirements for the native save
+location and what to do if Android keeps the app running.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.

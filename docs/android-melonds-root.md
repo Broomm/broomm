@@ -25,6 +25,8 @@ capture. The Dart cloud transaction keeps interrupted and offline work
 recoverable. File payloads use bounded descriptors through the existing libsu
 service. The disposable Thor fixture verified real native publication,
 listing, exact readback, cleanup and refusal of a foreign save filename.
+The fixture also published with the app's effective media label while the
+package directory still had Android's initial generic label.
 
 On a rooted Android 11 or newer ARM64 device, install the official APK through
 **Emulator Settings → Nintendo DS → melonDS → Set up**. Open melonDS once to

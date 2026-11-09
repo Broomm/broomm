@@ -33,7 +33,8 @@ class AndroidFolderFixture {
   String? picked;
   Directory? melonRoot;
   bool melonRunning = false;
-  final melonMetadata = '10139 1078 660 u:object_r:media_rw_data_file:s0';
+  final melonMetadata =
+      '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
     final args = (call.arguments as Map?)?.cast<String, dynamic>() ?? {};
     if (call.method.startsWith('rootMelon')) {
@@ -48,7 +49,8 @@ class AndroidFolderFixture {
           'uid': '10139',
           'dataDir': '/data/user/0/$androidMelonRootPackage',
           'label': 'u:object_r:app_data_file:s0:c139,c256,c512,c768',
-          'externalLabel': 'u:object_r:media_rw_data_file:s0',
+          'externalLabel':
+              'u:object_r:media_rw_data_file:s0:c139,c256,c512,c768',
           'externalGid': '1078',
           'externalDevice': '65038',
           'externalInode': '32295',

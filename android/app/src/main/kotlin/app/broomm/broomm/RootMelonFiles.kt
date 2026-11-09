@@ -23,7 +23,8 @@ internal class RootMelonFiles(
     private val internalLabel = Os.getxattr(internal.path, "security.selinux")
     private val root = File("/data/media/0/Android/data/$MELON_PACKAGE")
     private val logical = File("/storage/emulated/0/Android/data/$MELON_PACKAGE")
-    private val label = Os.getxattr(root.path, "security.selinux")
+    private val rootLabel = Os.getxattr(root.path, "security.selinux")
+    private val label = String(internalLabel).replace("app_data_file:", "media_rw_data_file:").toByteArray()
     private val first = Os.lstat(root.path)
     private val gid = first.st_gid
     private val fileAccess = RootSaveFiles(root, uid, label, live, writerClosed = ::closed, mediaGroup = gid)
@@ -31,9 +32,8 @@ internal class RootMelonFiles(
     init {
         require(identity["package"] == MELON_PACKAGE && identity["user"] == 0 &&
             identity["version"] == MELON_VERSION && identity["signer"] == MELON_SIGNER)
-        val labelText = String(label).trimEnd('\u0000')
-        require(labelText == "u:object_r:media_rw_data_file:s0" ||
-            labelText == String(internalLabel).trimEnd('\u0000').replace("app_data_file:", "media_rw_data_file:"))
+        require(rootLabel.contentEquals(label) ||
+            String(rootLabel).trimEnd('\u0000') == "u:object_r:media_rw_data_file:s0")
         verifyRoot()
     }
 
@@ -47,8 +47,8 @@ internal class RootMelonFiles(
             OsConstants.S_ISDIR(first.st_mode) && first.st_uid == uid && gid == 1078 &&
             (first.st_mode and 4095) == 1528 &&
             sameDirectory(first, Os.lstat(root.path)) && sameDirectory(first, Os.lstat(logical.path)) &&
-            Os.getxattr(root.path, "security.selinux").contentEquals(label) &&
-            Os.getxattr(logical.path, "security.selinux").contentEquals(label)) {
+            Os.getxattr(root.path, "security.selinux").contentEquals(rootLabel) &&
+            Os.getxattr(logical.path, "security.selinux").contentEquals(rootLabel)) {
             "melonDS storage ownership or mount changed. Recovery was kept."
         }
     }
@@ -147,6 +147,8 @@ internal class RootMelonFiles(
         closed()
         return Bundle().apply {
             putString("label", String(internalLabel).trimEnd('\u0000'))
+            // Android can relabel the package directory on first use. Bind
+            // the effective file label separately from the directory check.
             putString("externalLabel", String(label).trimEnd('\u0000'))
             putString("externalGid", gid.toString())
             putString("externalDevice", first.st_dev.toString())
