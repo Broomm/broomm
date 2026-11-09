@@ -187,17 +187,25 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                     onPressed: setup.useSharedFolder,
                     child: const Text('Use shared folder'),
                   ),
-                ConsoleButton(
-                  onPressed: setup.open,
-                  child: const Text('Open emulator'),
-                ),
+                if (setup.hasPendingFolder)
+                  ConsoleButton(
+                    onPressed: () => setup.selectFolder(change: true),
+                    child: const Text('Choose another folder'),
+                  )
+                else
+                  ConsoleButton(
+                    onPressed: setup.open,
+                    child: const Text('Open emulator'),
+                  ),
                 ConsoleButton(
                   autofocus: true,
                   onPressed: setup.step == AndroidSetupStep.folder
                       ? setup.selectFolder
                       : setup.verify,
                   child: Text(
-                    setup.step == AndroidSetupStep.folder
+                    setup.hasPendingFolder
+                        ? 'Verify selected folder'
+                        : setup.step == AndroidSetupStep.folder
                         ? 'Emulator closed · Select folder'
                         : 'Check setup',
                   ),

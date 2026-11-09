@@ -43,6 +43,15 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
   Map<String, String> _previousBuilds = {};
+  ({String uri, String package, String build})? _pendingFolder;
+
+  bool get hasPendingFolder {
+    final selected = _pendingFolder;
+    final app = manager.app(emulator);
+    return selected != null &&
+        selected.package == app?.package &&
+        selected.build == app?.build;
+  }
 
   bool get azaharRootSetup =>
       !_shared &&
@@ -245,6 +254,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   });
 
   Future<void> install({bool imported = false}) => _run(() async {
+    _pendingFolder = null;
     _previousBuilds = {
       for (final package in emulator.packages)
         if (manager.installed[package] case final app?) package: app.build,
@@ -288,26 +298,39 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         await manager.disconnectPspRoot();
       else
         await manager.disconnectGbaRoot(emulator, platform: platform);
+    _pendingFolder = null;
     _shared = true;
     step = AndroidSetupStep.folder;
   });
 
-  Future<void> selectFolder() => _run(() async {
+  Future<void> selectFolder({bool change = false}) => _run(() async {
     final lease = await SessionLease.acquire(manager.data);
     try {
       await manager.ensureSetupAllowed();
       final app = manager.app(emulator);
       if (app == null) throw StateError('Install ${emulator.name} first.');
-      final uri = await manager.chooseFolder(emulator);
+      if (!hasPendingFolder) _pendingFolder = null;
+      // The picker can wake a cached emulator process. Keep the grant after
+      // a failed check so retrying can verify it with the emulator stopped.
+      final uri = !change && _pendingFolder != null
+          ? _pendingFolder!.uri
+          : await manager.chooseFolder(emulator, package: app.package);
       if (uri == null) return;
-      if (manager.app(emulator)?.build != app.build)
+      final current = manager.app(emulator);
+      if (current?.package != app.package || current?.build != app.build) {
+        _pendingFolder = null;
         throw StateError('The emulator changed. Select its save folder again.');
+      }
+      final verifyAzahar = azaharRootSetup, verifyMmj = mmjRootSetup;
+      if (verifyAzahar || verifyMmj)
+        _pendingFolder = (uri: uri, package: app.package, build: app.build);
       await manager.confirmSharedStorage(
         emulator,
         uri,
-        verifyAzahar: azaharRootSetup,
-        verifyMmj: mmjRootSetup,
+        verifyAzahar: verifyAzahar,
+        verifyMmj: verifyMmj,
       );
+      _pendingFolder = null;
       step = AndroidSetupStep.ready;
     } finally {
       await lease.release();
