@@ -6,6 +6,7 @@ import '../session_lease.dart';
 import '../romm/client.dart';
 import '../romm/transfer.dart';
 import 'firmware.dart';
+import 'armsx2_root.dart';
 import 'azahar.dart';
 import 'citra_mmj.dart';
 import 'eden_root.dart';
@@ -89,7 +90,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
               manager.app(emulator)?.version == androidDolphinRootVersion ||
           emulator.id == 'eden' &&
               platform == 'switch' &&
-              manager.app(emulator)?.version == androidEdenRootVersion) &&
+              manager.app(emulator)?.version == androidEdenRootVersion ||
+          emulator.id == 'armsx2' &&
+              platform == 'ps2' &&
+              manager.app(emulator)?.package == androidArmsx2RootPackage &&
+              manager.app(emulator)?.version == androidArmsx2RootVersion) &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -205,6 +210,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
                   ),
                 ),
         );
+        step = AndroidSetupStep.ready;
+        return;
+      }
+      if (emulator.id == 'armsx2') {
+        await manager.connectArmsx2Root(emulator);
         step = AndroidSetupStep.ready;
         return;
       }

@@ -104,6 +104,18 @@ void main() {
       throwsStateError,
     );
   });
+  test('ARMSX2 setup uses the reviewed versioned ARM64 APK', () async {
+    final download = AndroidApkDownload(
+      client: ApkClient((_) => throw StateError('Unexpected release lookup')),
+    );
+    final uri = await download.source('armsx2', ['arm64-v8a']);
+    expect(uri.host, 'github.com');
+    expect(uri.path, endsWith('/2.9.2/ARMSX2-2.9.2-legacy-armv8.0-sdk26.apk'));
+    await expectLater(
+      download.source('armsx2', ['x86_64']),
+      throwsUnsupportedError,
+    );
+  });
   test('Azahar setup uses the versioned scoped-storage APK', () async {
     final client = ApkClient(
       (_) => throw StateError('Unexpected release lookup'),

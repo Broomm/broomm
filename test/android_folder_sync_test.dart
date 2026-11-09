@@ -5,6 +5,7 @@ import 'dart:typed_data' show Endian;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/armsx2_root.dart';
 import 'package:broomm/src/aes128.dart';
 import 'package:broomm/src/switch_content.dart';
 import 'package:broomm/src/android/citra_mmj.dart';
@@ -38,6 +39,9 @@ class AndroidFolderFixture {
   int? failAt;
   String? picked;
   Directory? melonRoot, dolphinRoot, edenRoot;
+  Directory? armsRoot;
+  String armsMedia = '28:29:1048576:1';
+  bool armsRunning = false;
   bool melonRunning = false;
   bool edenRunning = false;
   String edenAccount = '2F29316245B7594BEC4EA86C0C27E3CD';
@@ -49,6 +53,44 @@ class AndroidFolderFixture {
       '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
     final args = (call.arguments as Map?)?.cast<String, dynamic>() ?? {};
+    if (call.method.startsWith('rootArmsx2')) {
+      if (armsRunning) throw PlatformException(code: 'writer-live');
+      if (call.method == 'rootArmsx2Inspect')
+        return {
+          'package': androidArmsx2RootPackage,
+          'build': 'a' * 64,
+          'version': androidArmsx2RootVersion,
+          'signer': androidArmsx2RootSigner,
+          'user': '0',
+          'uid': '10139',
+          'dataDir': '/data/user/0/$androidArmsx2RootPackage',
+          'label': 'u:object_r:app_data_file:s0:c139,c256,c512,c768',
+          'externalLabel':
+              'u:object_r:media_rw_data_file:s0:c139,c256,c512,c768',
+          'externalGid': '1078',
+          'externalDevice': '28',
+          'externalInode': '29',
+        };
+      if (call.method == 'rootArmsx2Scope')
+        return {
+          'serial': 'SLUS-21008',
+          'crc': 'FA7E3081',
+          'mediaStamp': armsMedia,
+        };
+      if (args['mediaStamp'] != armsMedia)
+        throw PlatformException(code: 'disc-changed');
+      trees['fixture:arms'] = armsRoot!;
+      final result = await this.call(
+        MethodCall(call.method.replaceFirst('rootArmsx2', 'shared'), {
+          ...args,
+          'tree': 'fixture:arms',
+        }),
+      );
+      if (result is Map<String, dynamic>)
+        for (final row in result.values)
+          (row as Map)['metadata'] = melonMetadata;
+      return result;
+    }
     if (call.method.startsWith('rootEden')) {
       if (edenRunning) throw PlatformException(code: 'writer-live');
       if (call.method == 'rootEdenInspect')
@@ -160,6 +202,8 @@ class AndroidFolderFixture {
                     ? androidDolphinRootVersion
                     : edenRoot != null && p == androidEdenRootPackage
                     ? androidEdenRootVersion
+                    : armsRoot != null && p == androidArmsx2RootPackage
+                    ? androidArmsx2RootVersion
                     : p == androidMmjSharedPackage
                     ? androidMmjSharedVersion
                     : 'fixture',
@@ -676,6 +720,105 @@ void main() {
     await manager.load();
     expect(manager.app(e)!.package, 'com.armsx2');
     expect(manager.folder(e), isNotNull);
+  });
+  test('rooted ARMSX2 round trips both native progress types and isolates accounts', () async {
+    final notices = <String>[];
+    cloud = CloudSaves(data, notice: (message, _) => notices.add(message));
+    final native = fixture.armsRoot = await Directory('${temp.path}/ps2')
+        .create();
+    final e = emulator('armsx2'), rom = await put(temp, 'Katamari.chd', [42]);
+    await manager.load();
+    await manager.connectArmsx2Root(e);
+    await manager.load();
+    expect(manager.connected(profileId, e, platform: 'ps2'), isTrue);
+    Future<CloudGame> gameFor(String profile, SaveServer remote) async =>
+        CloudGame(
+          server: serverId,
+          profile: profile,
+          user: remote.user,
+          rom: 42,
+          client: remote,
+          layout: await androidProgressLayout(
+            manager,
+            profile,
+            e,
+            playablePlatforms.firstWhere((p) => p.slug == 'ps2'),
+            rom.path,
+            contentId: '42',
+          ),
+        );
+    Future<AndroidGameSession> launch(CloudGame game) async {
+      final session = AndroidGameSession(manager, cloud);
+      sessions.add(session);
+      await session.start(
+        server: serverId,
+        profile: game.profile,
+        rom: game.rom,
+        emulator: e,
+        app: manager.app(e)!,
+        files: [rom.path],
+        selected: rom.path,
+        game: game,
+      );
+      return session;
+    }
+
+    final first = await gameFor(profileId, api(3));
+    final second = await gameFor('2' * 32, api(4));
+    final plan = first.layout as AndroidSavePlan;
+    expect(plan.format, 'ps2-cards-v1');
+    final card = plan.remotePath('save/slot1.ps2');
+    const state = 'files/sstates/SLUS-21008 (FA7E3081).01.p2s';
+    const otherState = 'files/sstates/SLUS-21008 (DEADBEEF).01.p2s';
+    expect(plan.localKey(otherState), isNull);
+    expect(plan.localKey(state), startsWith('states-'));
+    Uint8List cardBytes(int value) => Uint8List(8650752)
+      ..setAll(0, ascii.encode('Sony PS2 Memory Card Format '))
+      ..[42] = value;
+    final original = await put(native, card, cardBytes(3));
+    final originalState = await put(native, state, [1]);
+    final other = await put(native, otherState, [6]);
+    final run = await launch(first);
+    expect(await original.exists(), isFalse);
+    expect(await originalState.exists(), isFalse);
+    await put(native, card, cardBytes(4));
+    await put(native, state, [2]);
+    fixture.armsRunning = true;
+    await expectLater(
+      run.finish(emulatorClosed: true),
+      throwsA(isA<PlatformException>()),
+    );
+    fixture.armsRunning = false;
+    final media = fixture.armsMedia;
+    fixture.armsMedia = '28:30:1048576:1';
+    await expectLater(
+      run.finish(emulatorClosed: true),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await SharedAndroidSaves(manager).pending, isTrue);
+    fixture.armsMedia = media;
+    await run.finish(emulatorClosed: true);
+    expect(await original.readAsBytes(), cardBytes(3));
+    expect(await originalState.readAsBytes(), [1]);
+    expect(await other.readAsBytes(), [6]);
+    expect(
+      (await cloud.store(first).state())['remote'],
+      isNotNull,
+      reason: notices.join('\n'),
+    );
+    final isolated = await launch(second);
+    expect(await original.exists(), isFalse);
+    expect(await originalState.exists(), isFalse);
+    await put(native, card, cardBytes(5));
+    await isolated.finish(emulatorClosed: true);
+    final replay = await launch(first);
+    expect(await original.readAsBytes(), cardBytes(4));
+    expect(await originalState.readAsBytes(), [2]);
+    await replay.finish(emulatorClosed: true);
+    expect(await original.readAsBytes(), cardBytes(3));
+    expect(await originalState.readAsBytes(), [1]);
+    expect(await other.readAsBytes(), [6]);
+    expect(await SharedAndroidSaves(manager).pending, isFalse);
   });
   test('an unchanged APK reinstall refreshes inspection without splitting compatible Android states', () async {
     await connect('melonds');

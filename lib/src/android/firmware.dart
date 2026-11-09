@@ -7,6 +7,7 @@ import '../progress/files.dart';
 import '../romm/client.dart';
 import '../romm/transfer.dart';
 import '../switch_firmware.dart';
+import 'armsx2_root.dart';
 import 'eden_root.dart';
 import 'emulators.dart';
 import 'root_media.dart';
@@ -92,14 +93,11 @@ Future<void> provisionAndroidEden(
   }
 }
 
-const _armsPackage = 'com.armsx2';
-const _armsVersion = '2.9.2';
-const _armsSigner =
-    'df91c9ce39d3f53c9bab5f2c1e0820e761800c93f1805305b87e87486d244d5a';
 const _armsFirmwareAccess = 'armsx2-firmware-v1';
 
 bool canProvisionArmsx2Bios(AndroidApp app) =>
-    app.package == _armsPackage && app.version == _armsVersion;
+    app.package == androidArmsx2RootPackage &&
+    app.version == androidArmsx2RootVersion;
 
 Future<void> provisionAndroidArmsx2Bios(
   AndroidEmulators manager,
@@ -120,9 +118,9 @@ Future<void> provisionAndroidArmsx2Bios(
   if (!androidAppMediaBinding(
         binding,
         access: _armsFirmwareAccess,
-        package: _armsPackage,
-        version: _armsVersion,
-        signer: _armsSigner,
+        package: androidArmsx2RootPackage,
+        version: androidArmsx2RootVersion,
+        signer: androidArmsx2RootSigner,
       ) ||
       binding['build'] != app.build ||
       !{'true', 'false'}.contains(missing))

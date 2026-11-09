@@ -33,6 +33,8 @@ class SharedAndroidSaves {
         ? 96
         : plan.edenRooted
         ? 256
+        : plan.armsx2Rooted
+        ? 34
         : plan.rooted
         ? 128
         : progressMaxFiles;
@@ -77,6 +79,10 @@ class SharedAndroidSaves {
         throw const FormatException(
           'Saturn backup memory is incomplete. Existing progress was kept.',
         );
+      if (plan.armsx2Rooted &&
+          e.key.startsWith('files/memcards/') &&
+          !const {8650752, 17301504, 34603008, 69206016}.contains(v['bytes']))
+        throw const FormatException('ARMSX2 memory card is incomplete.');
       if (plan.rootFileMetadata &&
           (v['metadata'] is! String ||
               !RegExp(
@@ -127,6 +133,10 @@ class SharedAndroidSaves {
         (plan.edenRooted &&
             (r['accountPath'] != plan.launch['accountPath'] ||
                 r['devicePath'] != plan.launch['devicePath'])) ||
+        (plan.armsx2Rooted &&
+            (r['serial'] != plan.launch['serial'] ||
+                r['crc'] != plan.launch['crc'] ||
+                r['mediaStamp'] != plan.launch['mediaStamp'])) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
@@ -1187,6 +1197,8 @@ int _rootRomLimit(AndroidSavePlan plan) =>
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
   if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 32) * 1024 * 1024;
   if (plan.edenRooted) return 64 * 1024 * 1024;
+  if (plan.armsx2Rooted)
+    return path.startsWith('files/memcards/') ? 69206016 : 64 * 1024 * 1024;
   if (plan.dolphinRooted) {
     final mib = path.startsWith('files/StateSaves/')
         ? 64
