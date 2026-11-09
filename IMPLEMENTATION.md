@@ -11,7 +11,10 @@ for this build. The Thor granted media and folder access and reached
 Mario Kart 7’s title screen from a private filesystem path. A content URI
 crashes the standard APK’s legacy launch code. Broomm now stages a
 verified private image and records it for removal in session recovery.
-Packaged launch and native save round-trip acceptance are pending.
+Cumulative build 1161 launched Mario Kart 7 on the Thor, uploaded and
+verified RomM version 281, replayed the same native save bytes, and removed
+the temporary image after exit. The other RomM account retained its original
+save and state.
 See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
 
 ## Standalone Android follow-up — Azahar

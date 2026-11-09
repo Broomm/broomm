@@ -34,11 +34,14 @@ use **Home → game → Options → Use existing save file** to copy the desired
 RomM version into MMJ’s workspace. Earlier cloud versions are kept.
 
 On the Thor, the standard APK granted legacy media access and Broomm build
-1152 verified the selected folder. Its URI launch crashed inside MMJ. A
-native test with a temporary private copy reached Mario Kart 7’s title
-screen using the verified raw-path contract. Flutter regressions exercise
-the handoff, lost staging reply and removal in recovery. Packaged launch
-and an ordinary-save round trip remain pending.
+1152 verified the selected folder. Its URI launch crashed inside MMJ. Build
+1161 staged a verified 1 GiB private image and launched Mario Kart 7 into
+Single Player across the Thor’s two displays. Broomm captured and read back
+RomM version 281, restored the standalone folder, and removed the temporary
+ROM. Replay matched the saved ordinary files byte for byte. The second RomM
+account kept its previous save and state. The owner’s original progress was
+restored after testing. Flutter regressions cover loss of a staging reply
+and refusal before a save transaction when the launch is incompatible.
 
 ## Earlier shared-folder workflow
 
