@@ -25,8 +25,12 @@ closed before file access. Setup can import missing firmware and keys
 from RomM. The first packaged launch exposed a read-only Android reply
 when clearing a header key and during AES processing of encrypted media.
 The code uses owned buffers. Regression tests verify encrypted title
-identification and a parse failure. Native gameplay and
-RomM save readback remain pending.
+identification and a parse failure. Build 1162 on the Thor restored the
+primary profile's existing Super Mario Bros. Wonder save and uploaded,
+verified and replayed a new save for the second profile. The Thor used Eden's
+app-local Turnip T23 driver after a crash in the stock Vulkan driver.
+This verifies ordinary saves. Eden states and Android update/DLC installation
+remain outside this increment.
 See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
 
 ## Standalone Android follow-up — Citra MMJ
@@ -40,7 +44,10 @@ for this build. The Thor granted media and folder access and reached
 Mario Kart 7’s title screen from a private filesystem path. A content URI
 crashes the standard APK’s legacy launch code. Broomm now stages a
 verified private image and records it for removal in session recovery.
-Packaged launch and native save round-trip acceptance are pending.
+Cumulative build 1161 launched Mario Kart 7 on the Thor, uploaded and
+verified RomM version 281, replayed the same native save bytes, and removed
+the temporary image after exit. The other RomM account retained its original
+save and state.
 See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
 
 ## Standalone Android follow-up — Azahar

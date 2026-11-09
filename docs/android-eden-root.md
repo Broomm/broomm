@@ -44,5 +44,21 @@ existing destination. Build 1157 then imported both keys and 238 firmware
 NCAs from the real RomM catalogue and marked Eden ready. That build's first
 game launch exposed an immutable Android message buffer. The current code
 copies the header-key and AES replies before mutating them. Regression
-coverage includes encrypted title identification and format errors. Super Mario Bros. Wonder is staged for
-packaged gameplay and RomM save verification.
+coverage includes encrypted title identification and format errors.
+
+Build 1162 on the Thor handed Super Mario Bros. Wonder to Eden with four
+verified ordinary save files from RomM version 84. The Qualcomm system
+driver 512.676.53 crashed in its Vulkan worker. After Broomm verified the
+same save hashes and restored the standalone folder, Eden’s first-run
+wizard recognized the imported keys and firmware. Eden’s GPU driver
+manager recommended Turnip T23 for the device’s Adreno 740. With that
+app-local driver selected, the game loaded World 2, Fluff-Puff Peaks,
+with 18 lives. Normal exit cleared both Broomm journals and left RomM
+version 84 active. [Turnip T23 release](https://github.com/MrPurple666/purple-turnip/releases/tag/vturnip_mrpurple_T23-toasted.adpkg)
+
+The second RomM profile started Wonder with an empty save inventory and
+created a Daisy save at World 1, Pipe-Rock Plateau, with five lives. Normal
+exit synced version 283. The confirmed RomM snapshot matched all four
+native files by SHA-256. A new Broomm launch restored those four files, and
+Eden showed the same World 1 save. The primary profile remained on version
+84 throughout.
