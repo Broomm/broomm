@@ -30,10 +30,10 @@ EOF
 # Flutter's included Gradle build as well as the Android app.
 mkdir -p "$PWD/.tool-cache/android/gradle/init.d"
 cat > "$PWD/.tool-cache/android/gradle/init.d/kotlin-compiler.gradle" <<'EOF'
-gradle.beforeProject { project ->
-    project.repositories.exclusiveContent {
+def pinCompiler = { repositories ->
+    repositories.exclusiveContent {
         forRepository {
-            project.repositories.maven {
+            repositories.maven {
                 name = "pinnedKotlinCompiler"
                 url = "https://repo1.maven.org/maven2/"
             }
@@ -42,6 +42,14 @@ gradle.beforeProject { project ->
             includeVersion("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.2.21")
             includeVersion("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.4.0")
         }
+    }
+}
+gradle.settingsEvaluated { settings ->
+    def management = settings.dependencyResolutionManagement
+    if (management.repositoriesMode.get() == org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_PROJECT) {
+        gradle.beforeProject { project -> pinCompiler(project.repositories) }
+    } else {
+        pinCompiler(management.repositories)
     }
 }
 EOF
