@@ -169,7 +169,7 @@ internal class RootMelonFiles(
             stem.none { it.code < 32 || it == '/' || it == '\\' })
         val states = native.getString("stateDirectory")!!
         return mapOf("files/saves/$stem.sav" to 8 * 1024 * 1024) +
-            (0..8).associate { "$states/$stem.ml$it" to 16 * 1024 * 1024 }
+            (0..8).associate { "$states/$stem.ml$it" to 32 * 1024 * 1024 }
     }
 
     private fun resolve(path: String): File {
@@ -205,12 +205,9 @@ internal class RootMelonFiles(
         return when (request.getString("operation")) {
             "meloncheck" -> Bundle()
             "melonlist" -> Bundle().apply {
-                var total = 0L
                 val files = Bundle()
                 for ((path, max) in scope) {
-                    val (entry, payload) = entry(path, max) ?: continue
-                    total += payload.size
-                    require(total <= 128L * 1024 * 1024) { "melonDS progress exceeds its size limit." }
+                    val (entry, _) = entry(path, max) ?: continue
                     files.putBundle(path, entry)
                 }
                 putBundle("files", files)

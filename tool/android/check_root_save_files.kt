@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Parcel
 import android.os.ParcelFileDescriptor
 import android.system.OsConstants
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
@@ -34,6 +35,9 @@ fun main(args: Array<String>) {
             return
         }
         val old = byteArrayOf(1, 2, 3); val next = ByteArray(131072) { 7 }
+        check(RootSaveTransfer.readExact(ByteArrayInputStream(next), next.size) {}.contentEquals(next))
+        failure { RootSaveTransfer.readExact(ByteArrayInputStream(old), old.size + 1) {} }
+        failure { RootSaveTransfer.readExact(ByteArrayInputStream(old), old.size - 1) {} }
         val oldHash = RootSaveFiles.digest(old); val nextHash = RootSaveFiles.digest(next)
         files.replace(path, null, oldHash, old, null, token)
         val target = files.path(path)

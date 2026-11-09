@@ -3,6 +3,7 @@ package app.broomm.broomm
 import android.os.ParcelFileDescriptor
 import android.system.Os
 import android.system.OsConstants
+import java.io.InputStream
 
 /** Bounded app-owned descriptors keep save-state bytes out of Binder parcels. */
 internal object RootSaveTransfer {
@@ -12,20 +13,26 @@ internal object RootSaveTransfer {
         require(OsConstants.S_ISREG(before.st_mode) && before.st_uid == owner && before.st_nlink == 1L &&
             before.st_size in 0..limit.toLong()) { "Invalid private save transfer source." }
         ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { input ->
-            val output = java.io.ByteArrayOutputStream()
-            val buffer = ByteArray(65536)
-            while (true) {
-                live()
-                val n = input.read(buffer)
-                if (n < 0) break
-                require(output.size() + n <= limit)
-                output.write(buffer, 0, n)
-            }
+            val bytes = readExact(input, before.st_size.toInt(), live)
             val after = Os.fstat(fd)
-            require(output.size().toLong() == before.st_size && before.st_size == after.st_size &&
+            require(before.st_size == after.st_size &&
                 before.st_mtime == after.st_mtime && before.st_ctime == after.st_ctime)
-            output.toByteArray()
+            bytes
         }
+    }
+
+    fun readExact(input: InputStream, size: Int, live: () -> Unit): ByteArray {
+        val bytes = ByteArray(size)
+        var offset = 0
+        while (offset < size) {
+            live()
+            val n = input.read(bytes, offset, minOf(65536, size - offset))
+            require(n > 0) { "Root file shortened during transfer." }
+            offset += n
+        }
+        live()
+        require(input.read() == -1) { "Root file grew during transfer." }
+        return bytes
     }
 
     fun write(descriptor: ParcelFileDescriptor, owner: Int, bytes: ByteArray, live: () -> Unit) = descriptor.use {

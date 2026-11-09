@@ -9,6 +9,7 @@ import 'package:broomm/src/android/melon_root.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
+import 'package:broomm/src/android/shared_saves.dart';
 import 'package:broomm/src/game_launch.dart';
 import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/layout.dart';
@@ -346,6 +347,28 @@ void main() {
     expect(await unrelated.readAsBytes(), [99]);
     expect(await standalone.readAsBytes(), [7, 7]);
     expect(await standaloneSlot.readAsBytes(), [8]);
+  });
+  test('rooted DS inventories a full set of native states but bounds each slot', () async {
+    fixture.melonRoot = temp;
+    final emulator = androidEmulators.singleWhere((e) => e.id == 'melonds');
+    await manager.load();
+    await manager.connectMelonRoot(emulator);
+    final plan =
+        (await game(profileId, api(), await ds())).layout as AndroidSavePlan;
+    final saves = SharedAndroidSaves(manager);
+    Map<String, Object> state(int bytes) => {
+      'bytes': bytes,
+      'sha256': '0' * 64,
+      'metadata':
+          '${plan.binding['uid']} ${plan.binding['externalGid']} 660 ${plan.binding['externalLabel']}',
+    };
+    final files = {
+      for (var slot = 0; slot <= 8; slot++)
+        'files/savestates/Ranger.ml$slot': state(19498151),
+    };
+    expect(saves.inventory(files, plan), hasLength(9));
+    files['files/savestates/Ranger.ml1'] = state(32 * 1024 * 1024 + 1);
+    expect(() => saves.inventory(files, plan), throwsFormatException);
   });
   test(
     'a changed melonDS installation cannot use the stored root binding',

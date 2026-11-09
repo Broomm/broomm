@@ -43,11 +43,11 @@ internal class RootSaveFiles(
         return FileInputStream(fd).use { input ->
             val stat = Os.fstat(fd)
             require(OsConstants.S_ISREG(stat.st_mode) && stat.st_size in 0..max.toLong()) { "Root file exceeds its supported size." }
-            val out = java.io.ByteArrayOutputStream()
-            val buffer = ByteArray(16384)
-            while (true) { live(); val n = input.read(buffer); if (n < 0) break; require(out.size() + n <= max); out.write(buffer, 0, n) }
-            require(out.size().toLong() == stat.st_size && Os.fstat(fd).st_mtime == stat.st_mtime && Os.lstat(file.path).st_ino == stat.st_ino) { "Root file changed during inspection." }
-            out.toByteArray()
+            val bytes = RootSaveTransfer.readExact(input, stat.st_size.toInt(), live)
+            require(Os.fstat(fd).st_mtime == stat.st_mtime && Os.lstat(file.path).st_ino == stat.st_ino) {
+                "Root file changed during inspection."
+            }
+            bytes
         }
     }
     fun hash(file: File, max: Int = MAX_BYTES): String = digest(bytes(file, max))

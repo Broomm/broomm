@@ -82,9 +82,7 @@ class SharedAndroidSaves {
         );
       total += v['bytes'] as int;
       if (total >
-          (plan.melonRooted
-              ? 128 * 1024 * 1024
-              : plan.rooted
+          (plan.rooted
               ? (plan.launch['coreName'] == 'flycast' ? 128 : 64) * 1024 * 1024
               : progressMaxBytes))
         throw const FormatException('Android progress exceeds its size limit');
@@ -1126,7 +1124,7 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
-  if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 16) * 1024 * 1024;
+  if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 32) * 1024 * 1024;
   if (plan.launch['coreName'] == 'flycast')
     return path.contains('/states/') ? 64 * 1024 * 1024 : 131072;
   if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))
