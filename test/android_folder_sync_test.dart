@@ -5,6 +5,8 @@ import 'dart:typed_data' show Endian;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/aes128.dart';
+import 'package:broomm/src/switch_content.dart';
 import 'package:broomm/src/android/citra_mmj.dart';
 import 'package:broomm/src/android/dolphin_root.dart';
 import 'package:broomm/src/android/eden_root.dart';
@@ -140,6 +142,8 @@ class AndroidFolderFixture {
       return result;
     }
     switch (call.method) {
+      case 'aesEcb':
+        return aes128Ecb(args['bytes'], args['key'], decrypt: args['decrypt']);
       case 'sharedPick':
         if (picked != null) revoked = false;
         return picked;
@@ -1035,7 +1039,7 @@ void main() {
     expect(await retainedState.readAsBytes(), [6]);
   });
 
-  Future<File> switchFixture() async {
+  Future<File> switchFixture({bool encrypted = false}) async {
     final name = ascii.encode('${'1' * 32}.nca\u0000'),
         offset = 40 + name.length;
     final bytes = Uint8List(offset + 0xc00), d = ByteData.sublistView(bytes);
@@ -1051,13 +1055,23 @@ void main() {
       int.parse('0100000000010000', radix: 16),
       Endian.little,
     );
+    if (encrypted)
+      bytes.setAll(
+        offset + 0x200,
+        switchXtsSector(
+          Uint8List.sublistView(bytes, offset + 0x200, offset + 0x400),
+          Uint8List(32),
+          1,
+          decrypt: false,
+        ),
+      );
     return put(temp, 'switch.nsp', bytes);
   }
 
   test('rooted Eden stops for live or changed writers and restores only the selected title', () async {
     final external = fixture.edenRoot = await Directory('${temp.path}/eden')
         .create();
-    final eden = emulator('eden'), rom = await switchFixture();
+    final eden = emulator('eden'), rom = await switchFixture(encrypted: true);
     // Android engine replies can expose a read-only typed-data buffer.
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -1067,7 +1081,7 @@ void main() {
         final reply = channel.codec.encodeSuccessEnvelope(
           await fixture.call(call),
         );
-        return call.method == 'rootEdenKey'
+        return {'rootEdenKey', 'aesEcb'}.contains(call.method)
             ? reply.asUnmodifiableView()
             : reply;
       } on PlatformException catch (error) {

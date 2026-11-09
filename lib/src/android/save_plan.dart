@@ -899,12 +899,17 @@ Future<Uint8List> androidXts(
 ) async {
   final iv = Uint8List(16);
   ByteData.sublistView(iv).setUint64(8, sector);
-  Future<Uint8List> aes(Uint8List b, Uint8List k, bool decrypt) async =>
-      (await manager.channel.invokeMethod<Uint8List>('aesEcb', {
-        'bytes': b,
-        'key': k,
-        'decrypt': decrypt,
-      }))!;
+  Future<Uint8List> aes(Uint8List b, Uint8List k, bool decrypt) async {
+    final reply = await manager.channel.invokeMethod<Uint8List>('aesEcb', {
+      'bytes': b,
+      'key': k,
+      'decrypt': decrypt,
+    });
+    if (reply == null || reply.length != b.length)
+      throw const FormatException('Android AES returned an invalid block.');
+    return Uint8List.fromList(reply);
+  }
+
   final tweak = await aes(iv, Uint8List.sublistView(key, 16), false),
       input = Uint8List(512),
       tweaks = Uint8List(512);

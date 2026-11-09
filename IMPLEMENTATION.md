@@ -23,8 +23,9 @@ journal retains standalone bytes, isolates RomM profiles and captures only
 the selected title’s account and device save directories. Eden must be
 closed before file access. Setup can import missing firmware and keys
 from RomM. The first packaged launch exposed a read-only Android reply
-when clearing a header key. The fix clears an owned copy and regression
-tests verify both a valid title and a parse failure. Native gameplay and
+when clearing a header key and during AES processing of encrypted media.
+The code uses owned buffers. Regression tests verify encrypted title
+identification and a parse failure. Native gameplay and
 RomM save readback remain pending.
 See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
 

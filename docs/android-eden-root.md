@@ -43,6 +43,6 @@ and refusal of duplicates, traversal, a wrong archive digest and an
 existing destination. Build 1157 then imported both keys and 238 firmware
 NCAs from the real RomM catalogue and marked Eden ready. That build's first
 game launch exposed an immutable Android message buffer. The current code
-uses an owned key copy with regression coverage for successful title
-identification and format errors. Super Mario Bros. Wonder is staged for
+copies the header-key and AES replies before mutating them. Regression
+coverage includes encrypted title identification and format errors. Super Mario Bros. Wonder is staged for
 packaged gameplay and RomM save verification.
