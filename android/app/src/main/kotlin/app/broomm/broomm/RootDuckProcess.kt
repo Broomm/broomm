@@ -116,6 +116,30 @@ internal class RootDuckProcess(private val context: Context, private val uid: In
         val name = RootDuckImage.bounded(File("/proc/$pid/cmdline"), 256).trimEnd('\u0000')
         require(name == pkg && ticks(pid) == start && processes() == listOf(pid)) { "DuckStation process identity changed. Recovery was kept." }
     }
+    /** Raise only the game task of the generation Broomm launched. The
+     * launcher can start a new emulation activity during recovery. */
+    @Suppress("DEPRECATION")
+    fun resume(request: Bundle) {
+        val pid = request.getInt("pid")
+        val start = request.getLong("startTicks")
+        require(pid > 0 && start > 0) { "DuckStation’s game process is unavailable." }
+        live(); verify(pid, start)
+        val identity = Binder.clearCallingIdentity()
+        try {
+            val manager = context.getSystemService(ActivityManager::class.java)
+            val tasks = manager.getRunningTasks(256)
+            require(tasks.size < 256)
+            val task = tasks.singleOrNull {
+                val top = it.topActivity
+                // Android reserves task IDs 0–99999 for user 0.
+                it.isRunning && it.taskId in 1 until 100000 &&
+                    top?.packageName == pkg && top.className == "$pkg.EmulationActivity"
+            } ?: error("DuckStation’s game is no longer open. Check for exit to finish the session.")
+            live(); verify(pid, start)
+            manager.moveTaskToFront(task.taskId, 0)
+        } finally { Binder.restoreCallingIdentity(identity) }
+    }
+
     @Suppress("DEPRECATION") private fun emulating(): Boolean {
         val token = Binder.clearCallingIdentity()
         return try {

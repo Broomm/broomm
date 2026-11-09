@@ -455,6 +455,12 @@ private fun checkOperaStorage(root: File, label: ByteArray) {
     val optionFile = File(optionRoot, "Opera.opt").apply { writeText("opera_nvram_version = \"7\"\n"); Os.chown(path,2000,2000);Os.chmod(path,384) }
     check(String(files.options(optionFile.path,listOf(optionRoot))!!) == optionFile.readText())
     check(files.options(File(optionRoot,"absent.opt").path,listOf(optionRoot)) == null)
+    check(files.options(File(optionRoot,"missing/Opera.opt").path,listOf(optionRoot)) == null)
+    refused { files.options(File(optionFile,"child.opt").path,listOf(optionRoot)) }
+    val linkedDirectory = File(optionRoot,"linked-directory")
+    Os.symlink(optionRoot.path,linkedDirectory.path)
+    refused { files.options(File(linkedDirectory,"Opera.opt").path,listOf(optionRoot)) }
+    Os.remove(linkedDirectory.path)
     refused { files.options(optionFile.path,listOf(File(root,"foreign"))) }
     val link = File(optionRoot,"linked.opt");Os.symlink(optionFile.path,link.path)
     refused { files.options(link.path,listOf(optionRoot)) };Os.remove(link.path)

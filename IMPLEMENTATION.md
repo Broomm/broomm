@@ -1,5 +1,29 @@
 # Implementation plan
 
+## Android session recovery follow-up
+
+The Thor’s build 1176 logs recorded Dolphin’s game activity finishing with
+its process still present. Azahar, melonDS and Eden also needed explicit
+closure during the owner’s tests. Eden also had a separate native segmentation
+fault on its Vulkan worker inside the Thor’s stock Adreno driver. The
+standalone return check now reuses a connected root service to match a normal Android process exit to the launched
+generation. Cached and interrupted sessions retain recovery. Force close uses
+the session’s recorded installation and Android user, checks for surviving
+writers and keeps captured progress for local review. The interruption is
+recorded before the native effect so a lost reply cannot authorize publication.
+
+Crash Bash’s DuckStation session recovered its progress and later published a
+RomM card. Android logged several launches of DuckStation’s emulation activity
+from DuckStation’s own process. Broomm’s Return action now raises an existing
+game task instead of starting its launcher during a rooted session.
+
+Alone in the Dark failed during the optional Opera option lookup before game
+handoff. The Thor’s emulated-storage mount reported a leaf for
+`Opera/Opera.opt` while its parent was missing. The root reader now verifies
+the parent directories and continues to the next option source on confirmed
+absence. Invalid or linked paths remain errors. The Thor passed the native
+filesystem fixture and a read-only probe against the exact stale mount entry.
+
 ## Android first-run setup follow-up
 
 New shared connections for Azahar, Citra MMJ and PPSSPP prepare their fixed

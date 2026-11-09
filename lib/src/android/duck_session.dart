@@ -550,6 +550,7 @@ class AndroidDuckSession {
     CloudGame game,
     AndroidDuckPlan plan, {
     required bool automatic,
+    bool forced = false,
   }) async {
     final r = await record(game, plan);
     final launched = {
@@ -558,7 +559,9 @@ class AndroidDuckSession {
       'captured',
       'finishing',
     }.contains(r['phase']);
-    final exit = await exitState(game, plan);
+    final exit = forced
+        ? AndroidDuckState.interrupted
+        : await exitState(game, plan);
     r.addAll(await record(game, plan));
     if (launched &&
         !{AndroidDuckState.closed, AndroidDuckState.interrupted}.contains(exit))

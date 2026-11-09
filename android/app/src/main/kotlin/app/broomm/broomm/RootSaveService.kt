@@ -42,7 +42,8 @@ class RootSaveService : RootService() {
         val operation = request.getString("operation") ?: error("Missing root operation.")
         val pkg = request.getString("package")!!
         val psp = request.getString("operation")?.startsWith("psp") == true
-        val duck = request.getString("operation")?.startsWith("duck") == true
+        val duck = operation.startsWith("duck")
+        val sessionOperation = operation in setOf("emulatorlifecycle", "emulatorstop")
         val melon = request.getString("operation")?.startsWith("melon") == true
         val dolphin = request.getString("operation")?.startsWith("dolphin") == true
         val azahar = request.getString("operation") == "azaharfolder"
@@ -50,7 +51,8 @@ class RootSaveService : RootService() {
         val eden = request.getString("operation")?.startsWith("eden") == true
         val arms = operation.startsWith("armsx2")
         val prepareFolder = operation == "preparesharedfolder"
-        require(if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        require(if (sessionOperation) RootInspection.supports(pkg)
+            else if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -61,9 +63,23 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (!prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (!sessionOperation && !prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "duckresume", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (sessionOperation) return SharedDocumentLock.acquire(storage).use {
+            fun sameApp() {
+                live()
+                require(RootInspection.identity(this, pkg, 0) == before) { "Emulator changed during the session." }
+            }
+            sameApp()
+            val answer = when (operation) {
+                "emulatorlifecycle" -> RootRetroArchProcess(this, pkg, uid, ::live).observe(request, callerPid, caller)
+                "emulatorstop" -> { forceStopEmulator(pkg, uid, ::live); Bundle() }
+                else -> error("Unsupported emulator session operation.")
+            }
+            sameApp()
+            answer
+        }
         if (prepareFolder) return SharedDocumentLock.acquire(storage).use {
             live()
             require(RootInspection.identity(this, pkg, 0) == before) { "Emulator changed during setup." }
@@ -199,7 +215,10 @@ class RootSaveService : RootService() {
             }
             val image = RootDuckImage(File(app.sourceDir), ::live)
             val process = RootDuckProcess(this, uid, image, ::live)
-            val result = if (operation in setOf("ducklifecycle", "duckstop")) process.observe(request, dispose = operation == "duckstop") else {
+            val result = if (operation == "duckresume") {
+                process.resume(request)
+                Bundle()
+            } else if (operation in setOf("ducklifecycle", "duckstop")) process.observe(request, dispose = operation == "duckstop") else {
                 val files = RootDuckFiles(this, before, ::live, process::absent)
                 if (operation != "duckinspect") files.validate(request)
                 when (operation) {

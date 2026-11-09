@@ -171,9 +171,12 @@ Android detects and uses compatible installed emulator apps and can guide users 
 
 During installation and save setup, ask the player to open each emulator once,
 complete its first-run setup and permissions, then close it before playing from
-Broomm. Explain how to quit and dismiss its Android Recents card. Offer its
-Android App info for explicit force-stop after a normal save and quit when
-needed. Returning to Broomm must never force-stop a potentially live writer.
+Broomm. Explain how to quit and dismiss its Android Recents card. In an
+active rooted session offer an explicit, confirmed Force close for the verified
+emulator package after saving and quitting. Verify process absence and retain
+captured progress locally for review. Android App info remains available for
+manual recovery. Returning to Broomm must never force-stop a potentially live
+writer.
 
 For new shared-folder setups on rooted Android, prepare the default selectable
 folders under `Broomm/` for Azahar and shared PPSSPP, and prepare Citra MMJ's
@@ -202,9 +205,10 @@ Detect ARMSX2 stable `com.armsx2` and nightly `com.armsx2.nightly`, preferring
 enabled stable when both exist. Connect a stable emulator/package folder once
 for all Broomm profiles; keep per-profile/game progress privately and preserve
 standalone saves through journaled swaps. On return, show **Finished? Sync
-progress** and explain that the player must save/close the emulator first.
-The owner's explicit confirmation is sufficient; do not add process-exit hooks
-or OS probing. Broomm's own transfer/session locks still apply. BIOS/firmware
+progress** when native exit proof is unavailable, and explain that the player
+must save and close the emulator first. Shared-folder play without an authorized
+root connection uses explicit closure confirmation. Broomm's transfer and
+session locks still apply. BIOS/firmware
 and new content installers are later work. No additional Wii update support is
 required for the owner's library; preserve existing desktop WAD/DLC behavior.
 
@@ -228,6 +232,9 @@ transactions and recovery in Dart behind a narrow Android access adapter.
 For supported rooted RetroArch routes, start from **Play** when a privileged check
 verifies RetroArch is closed. On return, sync automatically after matching a
 normal exit to the launched emulator process and verifying its writer is gone.
+Use the same exit evidence for standalone apps when an authorized root
+connection and the launched process generation are available. Activity closure
+or disappearance from Recents alone does not establish writer absence.
 A running emulator blocks save changes. Keep manual recovery when the exit is
 uncertain or interrupted. Root does not extend Android into the desktop
 controller/injection/overlay scope. See the

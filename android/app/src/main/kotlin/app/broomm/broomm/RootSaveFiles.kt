@@ -332,16 +332,33 @@ internal class RootSaveFiles(
             absolute.none { it.code < 32 || it == '\\' } &&
             absolute.split('/').drop(1).none { it.isEmpty() || it == "." || it == ".." } &&
             (absolute.endsWith(".opt") || absolute.endsWith(".cfg"))) { "Invalid RetroArch option path." }
-        require(roots.any { absolute.startsWith(it.path + "/") }) {
-            "Keep core options inside RetroArch's config or application folder before Play."
-        }
+        val boundary = roots.firstOrNull { absolute.startsWith(it.path + "/") }
+            ?: error("Keep core options inside RetroArch's config or application folder before Play.")
         val file = File(absolute)
         require(file.canonicalPath == file.absolutePath) { "Linked RetroArch option files are unsupported." }
+        // Android's emulated mount can retain a leaf inode after its parent
+        // directory disappears. Verify the directory chain before opening it.
+        var parent = boundary
+        if (!optionDirectory(parent)) return null
+        for (part in absolute.removePrefix(boundary.path + "/").split('/').dropLast(1)) {
+            parent = File(parent, part)
+            if (!optionDirectory(parent)) return null
+        }
         if (!present(file)) return null
         val stat = Os.lstat(file.path)
         require(OsConstants.S_ISREG(stat.st_mode) && stat.st_nlink == 1L)
         if (file.path.startsWith(root.path + "/")) metadata(file)
         return bytes(file, MAX_BYTES)
+    }
+
+    private fun optionDirectory(file: File): Boolean {
+        val stat = try { Os.lstat(file.path) }
+            catch (e: android.system.ErrnoException) {
+                if (e.errno == OsConstants.ENOENT) return false
+                throw e
+            }
+        require(OsConstants.S_ISDIR(stat.st_mode)) { "Invalid RetroArch option directory." }
+        return true
     }
 
     /** Selected immutable Opera BIOS/font, isolated from mutable NVRAM. */

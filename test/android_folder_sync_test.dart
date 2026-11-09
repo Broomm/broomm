@@ -1220,6 +1220,8 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     messenger.setMockMessageHandler(channel.name, (message) async {
       final call = channel.codec.decodeMethodCall(message!);
+      if (call.method == 'rootSessionAvailable')
+        return channel.codec.encodeSuccessEnvelope(false);
       try {
         final reply = channel.codec.encodeSuccessEnvelope(
           await fixture.call(call),

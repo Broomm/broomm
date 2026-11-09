@@ -579,6 +579,7 @@ class AndroidPspSession {
     CloudGame game,
     AndroidPspPlan plan, {
     required bool automatic,
+    bool forced = false,
   }) async {
     final r = await record(game, plan);
     await roots.ensureClosed(plan.binding);
@@ -588,7 +589,9 @@ class AndroidPspSession {
       'captured',
       'finishing',
     }.contains(r['phase']);
-    final exit = await exitState(game, plan);
+    final exit = forced
+        ? AndroidPspState.interrupted
+        : await exitState(game, plan);
     if (automatic && (exit != AndroidPspState.closed || !launched))
       throw StateError(
         'PPSSPP normal exit was not verified. Recovery was kept.',

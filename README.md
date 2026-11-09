@@ -16,8 +16,12 @@ one. For the rooted PPSSPP route, choose **Skip for now / App Private Data**.
 
 Save in the emulator and use its **Quit** or **Exit** action if available.
 Open Android Recents and swipe away the emulator's card before returning to
-Broomm. If it stays open after you save and quit, Broomm's **Android App info**
-button takes you to Android's **Force stop** control.
+Broomm. A verified normal exit syncs automatically when the rooted session
+can track the emulator process. If Android keeps the app open after you
+save and quit, choose **Force close → Force close and recover** on the session
+screen. Review recovered progress in Cloud Saves before uploading. Android
+App info provides Android's **Force stop** control on shared setups without
+root.
 
 For DuckStation, **Download page** opens the official beta page. Download and
 open its APK, confirm installation in Android, then return to Broomm. The
