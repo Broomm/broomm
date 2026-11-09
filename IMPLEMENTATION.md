@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Standalone Android follow-up — melonDS
+
+PR #6 merged as `a3ade0a` after all checks passed. The six remaining Android
+standalone apps are melonDS, Dolphin, Azahar, Citra MMJ, ARMSX2 and Eden.
+
+The first follow-up implements rooted Nintendo DS cartridge saves and
+matching states for the reviewed melonDS release. Setup checks the package,
+Android user, native media generation and effective save preferences. Play
+uses the existing journal to preserve standalone files, restore private
+progress, capture after process absence and synchronize with RomM. The
+ordinary DS save format and existing state identity stay compatible. Setup
+checks the pinned official APK hash before Android's installer opens.
+The [melonDS walkthrough](docs/android-melonds-root.md) records tested
+boundaries and outstanding packaged and gameplay verification.
+
 ## Rooted DuckStation transactions — Thor validation
 
 PR #6 now implements Dart-owned private whole cards, publication/build-specific

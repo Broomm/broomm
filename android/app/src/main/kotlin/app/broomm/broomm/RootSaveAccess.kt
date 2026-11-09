@@ -111,12 +111,13 @@ class RootSaveAccess(private val activity: Activity) {
             val pkg = call.argument<String>("package")!!
             val psp = call.method.startsWith("rootPsp")
             val duck = call.method.startsWith("rootDuck")
+            val melon = call.method.startsWith("rootMelon")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
-            require(if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            require(if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -128,6 +129,14 @@ class RootSaveAccess(private val activity: Activity) {
                 putString("operation", call.method.removePrefix("root").lowercase())
                 for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup", "configPath"))
                     putString(key, call.argument<String>(key))
+            }
+            if (melon && call.method != "rootMelonInspect") {
+                for (key in listOf("externalLabel", "externalGid", "externalDevice", "externalInode", "stateDirectory")) {
+                    val value = call.argument<String>(key) ?: error("Missing melonDS storage identity.")
+                    require(value.length <= 128)
+                    request.putString(key, value)
+                }
+                request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, call.argument<String>("romPath")!!))
             }
             if (psp || duck) {
                 for (key in listOf("server", "profile", "ownerNonce", "archiveNonce", "discId", "discVersion", "excluded", "selection",
@@ -180,7 +189,8 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            if (call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead")) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
+            val reading = call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead", "rootMelonRead")
+            if (reading) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
                 worker.execute {
@@ -189,8 +199,8 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace")) call.argument<String>("source") else null
-                            val target = if (call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead")) call.argument<String>("target") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace", "rootMelonReplace")) call.argument<String>("source") else null
+                            val target = if (reading) call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = if (call.method in setOf("rootPspProfileReplace", "rootPspProfileRead", "rootDuckProfileReplace", "rootDuckProfileRead") && call.argument<String>("archiveNonce") != null)
                                     privatePspArchiveFile(source ?: target!!, call, target != null) else privateFile(source ?: target!!)
@@ -217,7 +227,7 @@ class RootSaveAccess(private val activity: Activity) {
                             }
                         }
                         val value: Any? = when (call.method) {
-                            "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootMelonInspect" -> identity.mapValues { it.value.toString() } + mapped
                             "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
@@ -226,7 +236,7 @@ class RootSaveAccess(private val activity: Activity) {
                                 answer.getBundle("files")!!.let { all -> all.keySet().associateWith { key ->
                                     all.getBundle(key)!!.let { item -> mapOf("bytes" to item.getLong("bytes"), "sha256" to item.getString("sha256"), "metadata" to item.getString("metadata")) }
                                 } })
-                            "rootList", "rootFlycastList" -> {
+                            "rootList", "rootFlycastList", "rootMelonList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
                                     val entry = entries.getBundle(key)!!

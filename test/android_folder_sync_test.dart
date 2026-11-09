@@ -5,6 +5,7 @@ import 'dart:typed_data' show Endian;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/melon_root.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
@@ -30,8 +31,56 @@ class AndroidFolderFixture {
   int apkScans = 0;
   int? failAt;
   String? picked;
+  Directory? melonRoot;
+  bool melonRunning = false;
+  final melonMetadata = '10139 1078 660 u:object_r:media_rw_data_file:s0';
   Future<Object?> call(MethodCall call) async {
     final args = (call.arguments as Map?)?.cast<String, dynamic>() ?? {};
+    if (call.method.startsWith('rootMelon')) {
+      if (melonRunning) throw PlatformException(code: 'writer-live');
+      if (call.method == 'rootMelonInspect') {
+        return {
+          'package': androidMelonRootPackage,
+          'build': 'a' * 64,
+          'version': androidMelonRootVersion,
+          'signer': androidMelonRootSigner,
+          'user': '0',
+          'uid': '10139',
+          'dataDir': '/data/user/0/$androidMelonRootPackage',
+          'label': 'u:object_r:app_data_file:s0:c139,c256,c512,c768',
+          'externalLabel': 'u:object_r:media_rw_data_file:s0',
+          'externalGid': '1078',
+          'externalDevice': '65038',
+          'externalInode': '32295',
+          'stateDirectory': 'files/savestates',
+        };
+      }
+      final root = melonRoot!;
+      final relative = args['path'] as String?;
+      final target = relative == null ? null : File('${root.path}/$relative');
+      final result = await this.call(
+        MethodCall(call.method.replaceFirst('rootMelon', 'shared'), {
+          ...args,
+          'tree': 'fixture:melon',
+        }),
+      );
+      if (call.method == 'rootMelonReplace' && target != null) {
+        final metadata = File('${target.path}.metadata');
+        if (args['after'] != null) {
+          await metadata.writeAsString(args['metadata'] as String);
+        } else if (await metadata.exists()) {
+          await metadata.delete();
+        }
+      }
+      if (result is! Map<String, dynamic>) return result;
+      for (final entry in result.entries) {
+        final meta = File('${root.path}/${entry.key}.metadata');
+        (entry.value as Map)['metadata'] = await meta.exists()
+            ? await meta.readAsString()
+            : melonMetadata;
+      }
+      return result;
+    }
     switch (call.method) {
       case 'sharedPick':
         if (picked != null) revoked = false;
@@ -40,7 +89,13 @@ class AndroidFolderFixture {
         return [
           for (final e in androidEmulators)
             for (final p in e.packages)
-              {'package': p, 'build': 'a' * 64, 'version': 'fixture'},
+              {
+                'package': p,
+                'build': 'a' * 64,
+                'version': melonRoot != null && p == androidMelonRootPackage
+                    ? androidMelonRootVersion
+                    : 'fixture',
+              },
         ];
       case 'fingerprint':
         apkScans++;
@@ -246,6 +301,66 @@ void main() {
         .setMockMethodCallHandler(channel, null);
     await temp.delete(recursive: true);
   });
+  test('rooted DS keeps native files while live, then syncs each profile and restores originals', () async {
+    final native = await Directory('${temp.path}/native').create();
+    fixture.melonRoot = native;
+    fixture.trees['fixture:melon'] = native;
+    final app = emulator('melonds');
+    await manager.load();
+    await manager.connectMelonRoot(app);
+    await manager.load();
+    expect(manager.connected(profileId, app, platform: 'nds'), isTrue);
+    final rom = await ds(), first = api(), second = api(9);
+    final standalone = await put(native, 'files/saves/Ranger.sav', [7, 7]);
+    final unrelated = await put(native, 'files/saves/Other.sav', [99]);
+    final standaloneSlot = await put(native, 'files/savestates/Ranger.ml1', [
+      8,
+    ]);
+    final a = await game(profileId, first, rom), session = await start(a, rom);
+    expect(await standalone.exists(), isFalse);
+    expect(await standaloneSlot.exists(), isFalse);
+    await standalone.writeAsBytes(List.filled(512, 1));
+    await standaloneSlot.writeAsBytes([4, 5]);
+    fixture.melonRunning = true;
+    await expectLater(
+      session.finish(emulatorClosed: true, recovery: a),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await standaloneSlot.readAsBytes(), [4, 5]);
+    expect(first.records, isEmpty);
+    expect(await session.pending(), isNotNull);
+    fixture.melonRunning = false;
+    await session.finish(emulatorClosed: true, recovery: a);
+    expect(first.contents[first.records.keys.single], List.filled(512, 1));
+    expect(first.stateRecords, isNotEmpty);
+    expect(await standalone.readAsBytes(), [7, 7]);
+    expect(await standaloneSlot.readAsBytes(), [8]);
+    final b = await game('2' * 32, second, rom), other = await start(b, rom);
+    expect(await standalone.exists(), isFalse);
+    expect(await standaloneSlot.exists(), isFalse);
+    await standalone.writeAsBytes(List.filled(512, 2));
+    await other.finish(emulatorClosed: true, recovery: b);
+    expect(second.contents[second.records.keys.single], List.filled(512, 2));
+    expect(await unrelated.readAsBytes(), [99]);
+    expect(await standalone.readAsBytes(), [7, 7]);
+    expect(await standaloneSlot.readAsBytes(), [8]);
+  });
+  test(
+    'a changed melonDS installation cannot use the stored root binding',
+    () async {
+      fixture.melonRoot = temp;
+      final emulator = androidEmulators.singleWhere((e) => e.id == 'melonds');
+      await manager.load();
+      await manager.connectMelonRoot(emulator);
+      manager.installed[androidMelonRootPackage] = const AndroidApp(
+        androidMelonRootPackage,
+        androidMelonRootVersion,
+        'changed',
+      );
+      expect(manager.connected(profileId, emulator, platform: 'nds'), isFalse);
+      await expectLater(game(profileId, api(), await ds()), throwsStateError);
+    },
+  );
   test('stable ARMSX2 is preferred; nightly remains discoverable with its own persistent folder', () async {
     final e = emulator('armsx2');
     expect(

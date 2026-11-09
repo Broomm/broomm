@@ -46,6 +46,7 @@ class BroommEmulators(private val activity: Activity) {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
+                        "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckGame", "rootDuckList", "rootDuckRead", "rootDuckReplace", "rootDuckProfileList", "rootDuckProfileRead", "rootDuckProfileReplace" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())

@@ -12,6 +12,7 @@ import 'save_plan.dart';
 import 'opera.dart';
 import 'saturn.dart';
 import 'flycast_session.dart';
+import 'melon_root.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -25,7 +26,12 @@ class SharedAndroidSaves {
     '${manager.data.path}/android/shared-session/${record['transaction']}',
   );
   Map<String, dynamic> inventory(Object? value, AndroidSavePlan plan) {
-    if (value is! Map || value.length > (plan.rooted ? 128 : progressMaxFiles))
+    final limit = plan.melonRooted
+        ? 10
+        : plan.rooted
+        ? 128
+        : progressMaxFiles;
+    if (value is! Map || value.length > limit)
       throw const FormatException('Invalid Android save inventory');
     final files = value.cast<String, dynamic>();
     var total = 0;
@@ -40,7 +46,7 @@ class SharedAndroidSaves {
           v['bytes'] is! int ||
           v['bytes'] < 0 ||
           v['bytes'] >
-              (plan.rooted
+              (plan.rootFileMetadata
                   ? _rootProgressLimit(plan, e.key)
                   : progressMaxFileBytes) ||
           !RegExp(r'^[a-f0-9]{64}$').hasMatch(v['sha256'] as String? ?? ''))
@@ -66,17 +72,19 @@ class SharedAndroidSaves {
         throw const FormatException(
           'Saturn backup memory is incomplete. Existing progress was kept.',
         );
-      if (plan.rooted &&
+      if (plan.rootFileMetadata &&
           (v['metadata'] is! String ||
               !RegExp(
-                '^${plan.binding['uid']} [0-9]+ [0-7]{3} ${RegExp.escape(plan.binding['label']!)}\$',
+                '^${plan.binding['uid']} ${plan.melonRooted ? plan.binding['externalGid'] : '[0-9]+'} [0-7]{3} ${RegExp.escape(plan.binding[plan.melonRooted ? 'externalLabel' : 'label']!)}\$',
               ).hasMatch(v['metadata'] as String)))
         throw const FormatException(
           'Root save ownership metadata is incomplete.',
         );
       total += v['bytes'] as int;
       if (total >
-          (plan.rooted
+          (plan.melonRooted
+              ? 128 * 1024 * 1024
+              : plan.rooted
               ? (plan.launch['coreName'] == 'flycast' ? 128 : 64) * 1024 * 1024
               : progressMaxBytes))
         throw const FormatException('Android progress exceeds its size limit');
@@ -111,6 +119,7 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
+        (plan.melonRooted && r['selected'] != plan.launch['romPath']) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
@@ -428,6 +437,11 @@ class SharedAndroidSaves {
       'title': plan.game,
       'build': build,
       'selected': selected,
+      if (plan.melonRooted)
+        'stateAreas': [
+          for (final area in plan.areas)
+            if (area.id.startsWith('states-')) area.id,
+        ],
       if (plan.rooted) 'rootConfigPath': plan.launch['configPath'],
       if (plan.rooted && plan.launch['platform'] != null)
         'rootPlatform': plan.launch['platform'],
@@ -512,10 +526,10 @@ class SharedAndroidSaves {
           metadata = {
             'bytes': await e.value.length(),
             'sha256': await progressFileHash(e.value),
-            if (plan.rooted)
+            if (plan.rootFileMetadata)
               'metadata':
                   (r['original'] as Map)[remote]?['metadata'] ??
-                  '${plan.binding['uid']} ${plan.binding['uid']} 600 ${plan.binding['label']}',
+                  '${plan.binding['uid']} ${plan.binding[plan.melonRooted ? 'externalGid' : 'uid']} 600 ${plan.binding[plan.melonRooted ? 'externalLabel' : 'label']}',
           };
       if (working.containsKey(remote))
         throw const FormatException('Ambiguous Android save mapping');
@@ -836,7 +850,7 @@ class SharedAndroidSaves {
         'before': before[path]?['sha256'],
         'after': after[path]?['sha256'],
         'source': file?.path,
-        if (plan.rooted) 'metadata': after[path]?['metadata'],
+        if (plan.rootFileMetadata) 'metadata': after[path]?['metadata'],
         'token': '${r['transaction']}-${afterKey == 'working' ? 'in' : 'out'}',
       });
     }
@@ -866,11 +880,11 @@ class SharedAndroidSaves {
     final files = await list(plan), capture = 'captures/${progressNonce()}';
     // Flycast validates its native legacy-card renames after holding all new
     // game/resource bytes. Other cores still require every installed path.
-    if (plan.rooted &&
+    if (plan.rootFileMetadata &&
         plan.launch['coreName'] != 'flycast' &&
         (r['working'] as Map).keys.any((path) => !files.containsKey(path)))
       throw StateError(
-        'An installed RetroArch save or state is missing. Recovery copies were kept; restore the working file before syncing.',
+        'An installed ${plan.emulator.name} save or state is missing. Recovery copies were kept; restore the working file before syncing.',
       );
     if (files.isEmpty)
       cloud.notice(
@@ -1034,6 +1048,10 @@ class SharedAndroidSaves {
 
   Future<void> keepFolder(String server, String profile, int rom) async {
     final r = await progressJson(journal);
+    if (r['access'] == androidMelonRootAccess)
+      throw StateError(
+        'Finish the original melonDS save transaction. Recovery was kept.',
+      );
     if (r['server'] != server ||
         r['profile'] != profile ||
         r['rom'] != rom ||
@@ -1108,6 +1126,7 @@ int _rootRomLimit(AndroidSavePlan plan) =>
     1024;
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
+  if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 16) * 1024 * 1024;
   if (plan.launch['coreName'] == 'flycast')
     return path.contains('/states/') ? 64 * 1024 * 1024 : 131072;
   if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))

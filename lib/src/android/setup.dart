@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
 import 'emulators.dart';
+import 'melon_root.dart';
 import 'root_saves.dart';
 
 enum AndroidSetupStep { install, waitingInstall, initialize, folder, ready }
@@ -34,7 +35,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
           emulator.id == 'ppsspp' &&
               platform == 'psp' &&
               manager.app(emulator)?.package == 'org.ppsspp.ppsspp' ||
-          emulator.id == 'duckstation' && platform == 'psx') &&
+          emulator.id == 'duckstation' && platform == 'psx' ||
+          emulator.id == 'melonds' &&
+              platform == 'nds' &&
+              manager.app(emulator)?.version == androidMelonRootVersion) &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -84,6 +88,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       throw StateError('Enable ${emulator.name} in Android settings first.');
     if (_rooted) {
       step = AndroidSetupStep.initialize;
+      if (emulator.id == 'melonds') {
+        await manager.connectMelonRoot(emulator);
+        step = AndroidSetupStep.ready;
+        return;
+      }
       if (emulator.id == 'duckstation') {
         await manager.connectDuckRoot(emulator);
         step = AndroidSetupStep.ready;
@@ -153,7 +162,9 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   }
 
   Future<void> useSharedFolder() => _run(() async {
-    if (manager.rootConnection(emulator, platform) != null)
+    // The new shared grant replaces the melonDS connection once verified.
+    if (emulator.id != 'melonds' &&
+        manager.rootConnection(emulator, platform) != null)
       if (emulator.id == 'duckstation')
         await manager.disconnectDuckRoot();
       else if (emulator.id == 'ppsspp')

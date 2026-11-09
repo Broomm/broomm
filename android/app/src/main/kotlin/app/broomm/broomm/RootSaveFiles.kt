@@ -15,6 +15,7 @@ internal class RootSaveFiles(
     private val checkpoint: (String) -> Unit = {},
     private val coreName: String = "mgba",
     private val writerClosed: () -> Unit = {},
+    private val mediaGroup: Int? = null,
 ) {
     fun progressLimit(path: String): Int = limit(path, coreName)
     fun present(file: File): Boolean = try { Os.lstat(file.path); true }
@@ -32,7 +33,9 @@ internal class RootSaveFiles(
     fun existing(relative: String): File = path(relative).also { metadata(it) }
     fun metadata(file: File, links: Long = 1): String {
         val s = Os.lstat(file.path)
-        require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == links && (s.st_mode and 4095) <= 511 && s.st_uid == uid && Os.getxattr(file.path, "security.selinux").contentEquals(label)) { "Save ownership, links or security label changed. Files were kept." }
+        require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == links && (s.st_mode and 4095) <= 511 &&
+            s.st_uid == uid && (mediaGroup == null || s.st_gid == mediaGroup) &&
+            Os.getxattr(file.path, "security.selinux").contentEquals(label)) { "Save ownership, links or security label changed. Files were kept." }
         return "${s.st_uid} ${s.st_gid} ${(s.st_mode and 511).toString(8)} ${String(label).trimEnd('\u0000')}"
     }
     fun bytes(file: File, max: Int): ByteArray {
@@ -70,13 +73,18 @@ internal class RootSaveFiles(
                     val old = Os.lstat(stage.path)
                     require(OsConstants.S_ISDIR(old.st_mode) && old.st_uid in setOf(0, uid) && stage.list()?.isEmpty() == true)
                 } else Os.mkdir(stage.path, 448)
-                Os.chown(stage.path, uid, uid); Os.setxattr(stage.path, "security.selinux", label, 0)
+                Os.chown(stage.path, uid, mediaGroup ?: uid)
+                if (mediaGroup != null) Os.chmod(stage.path, 1528) // 02770
+                Os.setxattr(stage.path, "security.selinux", label, 0)
                 flushDirectory(stage)
                 require(!present(target))
                 Os.rename(stage.path, target.path); flushDirectory(parent)
             }
             val s = Os.lstat(target.path)
-            require(OsConstants.S_ISDIR(s.st_mode) && (s.st_mode and 4095) <= 511 && s.st_uid == uid && Os.getxattr(target.path, "security.selinux").contentEquals(label))
+            require(OsConstants.S_ISDIR(s.st_mode) &&
+                (if (mediaGroup == null) (s.st_mode and 4095) <= 511
+                    else (s.st_mode and 3072) == 1024 && s.st_gid == mediaGroup) &&
+                s.st_uid == uid && Os.getxattr(target.path, "security.selinux").contentEquals(label))
             parent = target
         }
     }
@@ -434,6 +442,13 @@ internal class RootSaveFiles(
             sessionConfiguration = relative.endsWith(".cfg"), stateGroup = stateGroup)
     }
 
+    /** The standalone adapter supplies an already resolved exact native filename. */
+    fun replaceStandalone(relative: String, before: String?, after: String?, payload: ByteArray?,
+                           metadata: String?, token: String, limit: Int, revalidate: () -> Unit) {
+        require(mediaGroup != null && (metadata == null || metadata.split(' ').getOrNull(1) == mediaGroup.toString()))
+        publish(relative, before, after, payload, metadata, token, limit, beforeCommit = revalidate)
+    }
+
     /** One concrete immutable Lynx BIOS, separate from save/config allowlists. */
     fun lynxFirmware(relative: String, config: String, before: String?, after: String?,
                      payload: ByteArray?, token: String, ensureClosed: () -> Unit) {
@@ -525,7 +540,7 @@ internal class RootSaveFiles(
             parents(relative.substringBeforeLast('/') + "/states/" +
                 (stateGroup?.let { "$it/" } ?: "") + "reserved.state", token)
         }
-        val mode = wantedMetadata ?: if (present(file)) metadata(file) else "$uid $uid 600 ${String(label).trimEnd('\u0000')}"
+        val mode = wantedMetadata ?: if (present(file)) metadata(file) else "$uid ${mediaGroup ?: uid} 600 ${String(label).trimEnd('\u0000')}"
         if (present(stage)) {
             val s = Os.lstat(stage.path)
             require(OsConstants.S_ISREG(s.st_mode) && s.st_nlink == 1L && s.st_uid in setOf(0, uid))

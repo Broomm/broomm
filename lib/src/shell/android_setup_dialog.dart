@@ -160,7 +160,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                 if (setup.problem != null &&
                     (emulator.id == 'retroarch' &&
                             androidRootRetroCore(widget.platform) != null ||
-                        {'ppsspp', 'duckstation'}.contains(emulator.id)) &&
+                        {
+                          'ppsspp',
+                          'duckstation',
+                          'melonds',
+                        }.contains(emulator.id)) &&
                     setup.step != AndroidSetupStep.folder)
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,

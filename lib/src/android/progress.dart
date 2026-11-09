@@ -75,7 +75,8 @@ Future<ProgressLayout> androidProgressLayout(
       contentId ?? File(rom).parent.path.split('/').last,
       package: package,
     );
-  if (manager.tree(profile, emulator, package: package) == null)
+  if (manager.folder(emulator, package: package) == null &&
+      manager.tree(profile, emulator, package: package) == null)
     throw StateError(
       'Configure ${emulator.name}’s Broomm save folder in Emulator Settings first. Android cannot read another app’s private saves.',
     );

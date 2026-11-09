@@ -42,7 +42,8 @@ class RootSaveService : RootService() {
         val pkg = request.getString("package")!!
         val psp = request.getString("operation")?.startsWith("psp") == true
         val duck = request.getString("operation")?.startsWith("duck") == true
-        require(if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        val melon = request.getString("operation")?.startsWith("melon") == true
+        require(if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -54,9 +55,26 @@ class RootSaveService : RootService() {
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
         val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (melon) return SharedDocumentLock.acquire(storage).use {
+            require(android.os.Build.VERSION.SDK_INT >= 30) { "Root melonDS requires Android 11 or newer." }
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(app.splitSourceDirs.isNullOrEmpty() && File(app.nativeLibraryDir).name == "arm64" &&
+                packageManager.getPackageInfo(pkg, 0).longVersionCode == 40L &&
+                before["signer"] == MELON_SIGNER && before["version"] == MELON_VERSION) {
+                "Root melonDS supports the reviewed ARM64 release. Use shared-folder setup on other builds."
+            }
+            val files = RootMelonFiles(before, ::live)
+            val result = if (operation == "meloninspect") files.report() else {
+                gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                files.operation(request, caller)
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "melonDS changed during root access. Recovery was kept." }
+            live()
+            result
+        }
         if (duck) return SharedDocumentLock.acquire(storage).use {
             require(android.os.Build.VERSION.SDK_INT >= 30) { "Root DuckStation saves require Android 11 or newer." }
             val app = packageManager.getApplicationInfo(pkg, 0)

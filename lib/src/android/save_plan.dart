@@ -18,6 +18,7 @@ import 'lynx_firmware.dart';
 import 'opera.dart';
 import 'saturn.dart';
 import 'flycast.dart';
+import 'melon_root.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -133,9 +134,17 @@ class AndroidSavePlan extends ProgressLayout {
     ...binding,
     'emulator': emulator.id,
     if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
+    if (melonRooted) 'romPath': launch['romPath']!,
   };
   bool get rooted => androidRootAccessModes.contains(binding['access']);
-  String method(String operation) => '${rooted ? 'root' : 'shared'}$operation';
+  bool get melonRooted => binding['access'] == androidMelonRootAccess;
+  bool get rootFileMetadata => rooted || melonRooted;
+  String method(String operation) =>
+      '${melonRooted
+          ? 'rootMelon'
+          : rooted
+          ? 'root'
+          : 'shared'}$operation';
   String remotePath(String key) => remoteAreas
       .singleWhere(
         (a) =>
@@ -268,6 +277,14 @@ Future<AndroidSavePlan> connectedAndroidProgress(
   final root = await manager.privateRoot(profile, emulator),
       reader = AndroidFolderReader(manager, emulator, package: package);
   final app = manager.app(emulator, package: package)!;
+  final melon = emulator.id == 'melonds'
+      ? manager.rootConnection(emulator, platform.slug, package: package)
+      : null;
+  if (melon != null &&
+      (melon['build'] != app.build || !rom.toLowerCase().endsWith('.nds')))
+    throw StateError(
+      'Root melonDS needs its connected build and a raw .nds cartridge. Check Emulator Settings.',
+    );
   final build = await manager.fingerprint(app);
   String state(String extra) {
     final hash = ProgressDigest.sha256()..add(utf8.encode('$build:$extra'));
@@ -323,8 +340,19 @@ Future<AndroidSavePlan> connectedAndroidProgress(
           ),
         ],
       );
-      // Pick the custom save folder itself, with states set to the save folder.
-      for (final a in layout.areas) remote.add(AndroidSaveArea(a, '@root'));
+      for (final area in layout.areas) {
+        remote.add(
+          AndroidSaveArea(
+            area,
+            melon == null
+                ? '@root'
+                : area.id == 'save'
+                ? 'files/saves'
+                : melon['stateDirectory']!,
+          ),
+        );
+      }
+      if (melon != null) launch['romPath'] = rom;
     case 'azahar':
     case 'citra-mmj':
       layout = await threeDsProgressLayout(
