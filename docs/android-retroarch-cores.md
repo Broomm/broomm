@@ -189,6 +189,18 @@ opened Scenario Quest. Its manual title state published as primary 228 and
 loaded on relaunch. No ordinary SRAM was created; completed 32X gameplay is
 not claimed.
 
+The PR #6 follow-up tested Chaotix with RetroArch 1.22.2 and PicoDrive
+2.05-1890c29 on the Thor. Both RomM profiles played Isolated Island and
+published distinct gameplay states in slot 1 on normal Quit (primaries
+261 and 263; state archives 51 and 53). Build 1126 restored the owner's
+1 KiB cartridge file and both prior states byte for byte; loading slot 1
+returned to the saved practice scene. A separate run selected Data 1 with
+Auto saving, rescued Espio, opened the first gate and reached the next
+practice section. It did not reach World Entrance or write a scenario
+checkpoint. The 1 KiB file from both profiles matches the initialized
+cartridge data, so this proves file transport and state replay, with
+in-game scenario save/load still open.
+
 Normal final exit removed all new native session files and journals. All 19
 existing managed native files, 13 pre-existing standalone/managed files, eight
 prior GBA/SNES progress files and eleven earlier GB/GBC/Atari/TG16 progress

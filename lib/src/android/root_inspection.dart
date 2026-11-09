@@ -54,6 +54,11 @@ class AndroidRootReport {
         'Root inspection returned an incomplete or mismatched identity. No save connection was created.',
       );
     }
+    if (values.containsKey('memoryStick') && values.containsKey('appFiles')) {
+      throw const FormatException(
+        'Root inspection returned conflicting storage observations.',
+      );
+    }
     if (values.containsKey('memoryStick')) {
       final memory = values['memoryStick'];
       final privatePath =
@@ -91,6 +96,43 @@ class AndroidRootReport {
       }
       return AndroidRootReport._(
         Map.unmodifiable({...values, 'memoryStick': Map.unmodifiable(memory)}),
+      );
+    }
+    if (values.containsKey('appFiles')) {
+      final files = values['appFiles'];
+      final mediaLabel = (values['label'] as String).replaceFirst(
+        'u:object_r:app_data_file:',
+        'u:object_r:media_rw_data_file:',
+      );
+      if (app.package != 'com.github.stenzek.duckstation' ||
+          user != 0 ||
+          files is! Map ||
+          files.length != 7 ||
+          files['path'] !=
+              '/storage/emulated/0/Android/data/${app.package}/files' ||
+          files['gid'] is! int ||
+          (files['gid'] as int) < 0 ||
+          files['mode'] is! String ||
+          !RegExp(r'^[0-7]{3,4}$').hasMatch(files['mode']) ||
+          (int.parse(files['mode'], radix: 8) & 7) != 0 ||
+          ((int.parse(files['mode'], radix: 8) >> 6) & 7) != 7 ||
+          !(values['label'] as String).startsWith(
+            'u:object_r:app_data_file:s0',
+          ) ||
+          files['label'] != mediaLabel ||
+          files['device'] is! int ||
+          (files['device'] as int) <= 0 ||
+          files['inode'] is! int ||
+          (files['inode'] as int) <= 0 ||
+          files['settingsBytes'] is! int ||
+          (files['settingsBytes'] as int) < 1 ||
+          (files['settingsBytes'] as int) > 1024 * 1024) {
+        throw const FormatException(
+          'DuckStation app-files inspection was incomplete or mismatched. Nothing was connected.',
+        );
+      }
+      return AndroidRootReport._(
+        Map.unmodifiable({...values, 'appFiles': Map.unmodifiable(files)}),
       );
     }
     return AndroidRootReport._(Map.unmodifiable(values));

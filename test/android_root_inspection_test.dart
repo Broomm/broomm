@@ -147,6 +147,130 @@ void main() {
     });
   });
 
+  final duck = androidEmulators.singleWhere((e) => e.id == 'duckstation');
+  final duckApp = AndroidApp(
+    duck.packages.single,
+    '0.1-12693-gcc4a0d678',
+    'd' * 64,
+  );
+  final duckFiles = {
+    'path': '/storage/emulated/0/Android/data/${duckApp.package}/files',
+    'gid': 1078,
+    'mode': '2770',
+    'label': 'u:object_r:media_rw_data_file:s0:c123,c256,c512,c768',
+    'device': 65038,
+    'inode': 27858,
+    'settingsBytes': 9913,
+  };
+  Map<String, dynamic> duckReport() => {
+    ...report(),
+    'package': duckApp.package,
+    'version': duckApp.version,
+    'build': duckApp.build,
+    'dataDir': '/data/user/0/${duckApp.package}',
+    'appFiles': duckFiles,
+  };
+
+  test(
+    'DuckStation metadata remains immutable and is not a save-folder binding',
+    () async {
+      handler = (_) async => duckReport();
+      final value = await inspector.inspect(duck, duckApp);
+      expect(value.values['appFiles'], duckFiles);
+      expect(calls.map((c) => c.method), ['inspect']);
+      expect(
+        () => (value.values['appFiles'] as Map)['gid'] = 0,
+        throwsUnsupportedError,
+      );
+      for (final change in [
+        {'path': '/storage/emulated/0/Android/data/foreign/files'},
+        {'gid': -1},
+        {'mode': '2777'},
+        {'mode': '2660'},
+        {'label': report()['label']},
+        {'device': 0},
+        {'inode': '27858'},
+        {'settingsBytes': 0},
+        {'settingsBytes': 1048577},
+        {'extra': true},
+      ]) {
+        handler = (_) async => {
+          ...duckReport(),
+          'appFiles': {...duckFiles, ...change},
+        };
+        await expectLater(
+          inspector.inspect(duck, duckApp),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+
+  test(
+    'DuckStation storage cannot cross application or Android-user identity',
+    () async {
+      handler = (_) async => {...report(), 'appFiles': duckFiles};
+      await expectLater(
+        inspector.inspect(emulator, app),
+        throwsFormatException,
+      );
+      handler = (_) async => {
+        ...duckReport(),
+        'user': 10,
+        'uid': 1010123,
+        'gid': 1010123,
+        'dataDir': '/data/user/10/${duckApp.package}',
+      };
+      await expectLater(
+        inspector.inspect(duck, duckApp),
+        throwsFormatException,
+      );
+      handler = (_) async => {
+        ...duckReport(),
+        'memoryStick': {'kind': 'other'},
+      };
+      await expectLater(
+        inspector.inspect(duck, duckApp),
+        throwsFormatException,
+      );
+      handler = (_) async => throw PlatformException(
+        code: 'storage-unavailable',
+        message: 'Initialize DuckStation first.',
+      );
+      await expectLater(
+        inspector.inspect(duck, duckApp),
+        throwsA(isA<PlatformException>()),
+      );
+    },
+  );
+
+  testWidgets(
+    'DuckStation inspection explains the uninspected save-folder boundary',
+    (tester) async {
+      handler = (_) async => duckReport();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AndroidRootInspectionDialog(
+              emulator: duck,
+              app: duckApp,
+              inspector: inspector,
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Request root inspection'));
+      await tester.pumpAndSettle();
+      expect(find.text('Read-only inspection completed'), findsOneWidget);
+      expect(
+        find.textContaining(
+          'Selected save folders and their contents were not inspected',
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   test(
     'cancel rejects a late success and permits an explicit fresh request',
     () async {

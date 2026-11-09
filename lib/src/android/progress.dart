@@ -9,6 +9,7 @@ import 'emulators.dart';
 import 'save_plan.dart';
 import 'root_saves.dart';
 import 'psp_root.dart';
+import 'duck_root.dart';
 
 /// The emulator uses a user-selected Android DocumentsProvider directory whose
 /// bytes remain in this profile's Broomm storage. No external app-private path
@@ -20,6 +21,8 @@ Future<ProgressLayout> androidProgressLayout(
   GamePlatform platform,
   String rom, {
   String? contentId,
+  int? platformId,
+  List<String>? files,
   String? package,
 }) async {
   if (!manager.settingsKnown)
@@ -32,6 +35,25 @@ Future<ProgressLayout> androidProgressLayout(
     );
   final app = manager.app(emulator, package: package);
   if (app == null) throw StateError('Install ${emulator.name} first.');
+  if (emulator.id == 'duckstation' &&
+      platform.slug == 'psx' &&
+      manager.duckRoot(package: package) != null) {
+    if (files == null ||
+        contentId == null ||
+        platformId == null ||
+        platformId < 1)
+      throw StateError('PS1 requires its installed game publication.');
+    return rootedAndroidDuckProgress(
+      manager,
+      profile,
+      emulator,
+      rom,
+      contentId,
+      files,
+      platformId: platformId,
+      package: package,
+    );
+  }
   if (emulator.id == 'ppsspp' &&
       platform.slug == 'psp' &&
       manager.pspRoot(package: package) != null)

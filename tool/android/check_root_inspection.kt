@@ -1,6 +1,7 @@
 import app.broomm.broomm.RootInspectionCommand
 import app.broomm.broomm.RootInspectionFailure
 import app.broomm.broomm.PpssppStorageInspection
+import app.broomm.broomm.DuckStationStorageInspection
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
@@ -21,6 +22,11 @@ private fun pspReport() = report(pspRoot) +
     "BROOMM_PSP_STORAGE_V1\nprivate\n/storage/emulated/0/Android/data/$psp/files\n" +
     "$uid 1078 2770 $mediaLabel 65038 28074\n$uid $uid 600 $label 56 1\n" +
     "$uid 1078 660 $mediaLabel 18822 1\n"
+private const val duck = DuckStationStorageInspection.PACKAGE
+private const val duckRoot = "/data/user/0/$duck"
+private fun duckReport() = report(duckRoot) +
+    "BROOMM_DUCKSTATION_STORAGE_V1\n/storage/emulated/0/Android/data/$duck/files\n" +
+    "$uid 1078 2770 $mediaLabel 65038 27858\n$uid 1078 660 $mediaLabel 9913 1 65038 27859\n"
 
 fun main(args: Array<String>) {
     if (args.isNotEmpty()) {
@@ -28,7 +34,22 @@ fun main(args: Array<String>) {
             print(RootInspectionCommand.SCRIPT + "\n" + PpssppStorageInspection.SCRIPT)
             return
         }
-        check(System.`in`.bufferedReader().readLine() == if (args[0].startsWith("psp")) pspRoot else root)
+        if (args[0] == "emit-duck-script") {
+            print(RootInspectionCommand.SCRIPT + "\n" + DuckStationStorageInspection.SCRIPT)
+            return
+        }
+        if (args[0] == "parse-duck-report") {
+            check(args.size == 2)
+            val bytes = System.`in`.readNBytes(16385)
+            check(bytes.size <= 16384)
+            println(DuckStationStorageInspection.parse(bytes.toString(Charsets.UTF_8), setOf(duckRoot), args[1].toInt()))
+            return
+        }
+        check(System.`in`.bufferedReader().readLine() == when {
+            args[0].startsWith("psp") -> pspRoot
+            args[0].startsWith("duck") -> duckRoot
+            else -> root
+        })
         when (args[0]) {
             "success" -> print(report())
             "denied" -> { print(report()); exitProcess(1) }
@@ -42,6 +63,9 @@ fun main(args: Array<String>) {
             "psp-success" -> print(pspReport())
             "psp-shared" -> print(report(pspRoot) + "BROOMM_PSP_STORAGE_V1\nother\n$uid $uid 600 $label 90 1\n")
             "psp-unavailable" -> { print(report(pspRoot)); exitProcess(65) }
+            "duck-success" -> print(duckReport())
+            "duck-unavailable" -> { print(report(duckRoot)); exitProcess(66) }
+            "duck-partial" -> print(duckReport().dropLast(1))
         }
         return
     }
@@ -53,7 +77,11 @@ fun main(args: Array<String>) {
     val children = mutableListOf<Process>()
     fun command(mode: String, timeout: Long = 5000, started: CountDownLatch? = null) = RootInspectionCommand(start = { argv ->
         val script = RootInspectionCommand.SCRIPT +
-            if (mode.startsWith("psp")) "\n" + PpssppStorageInspection.SCRIPT else ""
+            when {
+                mode.startsWith("psp") -> "\n" + PpssppStorageInspection.SCRIPT
+                mode.startsWith("duck") -> "\n" + DuckStationStorageInspection.SCRIPT
+                else -> ""
+            }
         check(argv == listOf("su", "-M", "-c", script))
         check(!argv.last().contains(pkg)) // Paths remain stdin data, never shell source.
         ProcessBuilder(File(System.getProperty("java.home"), "bin/java").path,
@@ -109,8 +137,27 @@ fun main(args: Array<String>) {
             pspReport().replace("56 1", "1025 1"),
             pspReport().dropLast(1), pspReport() + "extra\n",
         )) expectFailure { PpssppStorageInspection.parse(bad, setOf(pspRoot), uid, psp) }
+        val duckFiles = command("duck-success").inspect(duck, uid, 0, duckRoot)["appFiles"] as Map<*, *>
+        check(duckFiles["path"] == "/storage/emulated/0/Android/data/$duck/files" &&
+            duckFiles["inode"] == 27858L && duckFiles["settingsBytes"] == 9913L)
+        expectFailure("storage-unavailable") { command("duck-unavailable").inspect(duck, uid, 0, duckRoot) }
+        expectFailure { command("duck-partial").inspect(duck, uid, 0, duckRoot) }
+        for (bad in listOf(
+            duckReport().replace("/Android/data/$duck/", "/Android/data/foreign/"),
+            duckReport().replace("2770", "2777"),
+            duckReport().replace("2770", "2660"),
+            duckReport().replace("1078 660", "1079 660"),
+            duckReport().replace("1078 660", "1078 664"),
+            duckReport().replace("9913 1", "9913 2"),
+            duckReport().replace("9913 1", "1048577 1"),
+            duckReport().replace("1 65038 27859", "1 65039 27859"),
+            duckReport().replace("media_rw_data_file", "app_data_file"),
+            duckReport().replace("65038 27858", "65038 0"),
+            duckReport() + "extra\n",
+        )) expectFailure { DuckStationStorageInspection.parse(bad, setOf(duckRoot), uid) }
         println("PASS: subprocess success; denial/partial/diagnostic refusal; output bound; deadline; coordinated cancellation; missing su; user/path/UID/label identity")
         println("PASS: PPSSPP app-private/shared observations; unavailable storage stays failed; foreign path, changed group/label, extra links, permissive mode and incomplete response refused")
+        println("PASS: DuckStation initialized metadata; unavailable/partial observation stays failed; foreign storage, changed group/device/label, links, permissions and oversized settings refused")
     } finally {
         for (child in synchronized(children) { children.toList() }) {
             child.destroyForcibly()

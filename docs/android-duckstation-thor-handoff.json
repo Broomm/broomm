@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-08",
+  "scope": "DuckStation native read-only document handoff and state-reference replay only; not root save synchronization",
+  "pr": "https://github.com/Broomm/broomm/pull/6",
+  "source": "fef75642f5508f59cd73af03e72fddaa3cbd7749",
+  "ci": {
+    "run": 42528636639,
+    "url": "https://github.com/Broomm/broomm/actions/runs/42528636639",
+    "all_checks_and_five_packages": "passed"
+  },
+  "device": {
+    "model": "AYN Thor",
+    "android": 13,
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "observations": "Injected ADB UI and native metadata; no owner physical-input or display acceptance"
+  },
+  "broomm": {
+    "build": 1122,
+    "normal_apk_sha256": "4a3c2e9745391d45688a93c5f0b0a8296c337753001a298e440f8904564354f6",
+    "normal_payloads_identical_to_ci": 160,
+    "retained_preview_key": "unchanged",
+    "data_preserving_upgrade": true,
+    "fixture_apk_sha256": "5a86fd54e20be1e89948d7e8f1bb3859c8195ce41d150fcdaa35f90baceba685",
+    "fixture_changed_payloads": [
+      "lib/arm64-v8a/libapp.so"
+    ],
+    "fixture_unchanged_payloads": 159,
+    "normal_preview_restored": true,
+    "application_uid_unchanged": 10134
+  },
+  "native": {
+    "package": "com.github.stenzek.duckstation",
+    "version": "0.1-12693-gcc4a0d678",
+    "version_code": 12126,
+    "tested_abi": "arm64-v8a",
+    "apk_sha256": "3e944243fa6d201d2c2c935f1a1b104fe7e2696c6f2a6b3d719fa212660d73f7",
+    "signer_sha256": "a6357957d296b3b03edeb62da317cb347ecde63b6577977ffcbfe0d9a6975450",
+    "elf_sha256": "46435267ea46ae686561dcb4f03e6063d58debe135174056d3dc408896156d73",
+    "apk_redistributed": false
+  },
+  "game": {
+    "romm_id": 6583,
+    "title": "Mega Man X4",
+    "native_serial": "SLUS-00561",
+    "media": "single CHD",
+    "bytes": 380622493,
+    "bios_sha256": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3",
+    "managed_publication_identity": "ROM/platform/release identity and sorted relative filenames/published sizes; local IDs and publication time excluded",
+    "rom_payload_opened_for_launch_identity": false
+  },
+  "accepted": {
+    "fresh_document_boot": "opening sequence rendered",
+    "new_slot": 4,
+    "new_state_bytes": 926103,
+    "new_state_sha256": "aae6e442fd44092ea067feed099c0b3025745aef547c70522a534412b646c27e",
+    "all_four_slots_unchanged_after_replay": true,
+    "replay_after_complete_revocation_and_broomm_restart": "opening sequence replayed without expired-media warning",
+    "saved_header_matches_fresh_publication_identity": true,
+    "preparation_ms": [
+      4,
+      3
+    ],
+    "receipt_phase_ms": [
+      1,
+      1
+    ],
+    "native_normal_close": "returned to Broomm on both tests",
+    "final_grant_records_empty": true,
+    "final_game_uri_grants_absent": true,
+    "original_native_settings_bytes_ownership_label_restored": true,
+    "original_settings_sha256": "7f554e69e299de15d9339aacd4e635675f30f14c36673f61dac5ca993e3edab7",
+    "native_bios_unchanged": true,
+    "all_android_journals_absent": true,
+    "cloud_session_started": false,
+    "credentials_exported_or_decrypted": false,
+    "both_saved_accounts_restored_through_normal_ui": true,
+    "owner_account_restored_at_end": true
+  },
+  "research_cleanup": {
+    "input_result": "Start/touch diagnostics did not conclusively reach interactive gameplay",
+    "only_changed_preference": "TouchscreenController/AnalogControllerLayout=Digital; removed by exact original INI restoration",
+    "closed_research_cache_stopped_after_fresh_status_observation": true,
+    "all_four_slot_hashes_preserved": true,
+    "resume_and_playtime": "naturally changed during native normal closure",
+    "temporary_transfer_and_log_files": "removed from device; private local evidence retained"
+  },
+  "earlier_emulator_preservation": {
+    "psp": "both private inventories, archives and checkpoints identical to accepted build1115",
+    "retroarch_progress_files": 49,
+    "managed_native_files": 19,
+    "original_files": 13,
+    "retained_vmu_backups": 4,
+    "cores": 15,
+    "bindings": 18
+  },
+  "writer_research": {
+    "not_shipped": true,
+    "bytes_read_per_status_observation": 5,
+    "observed_session_states": {
+      "running": 2,
+      "paused": 3,
+      "closed": 0
+    },
+    "observed_outstanding_state_writes": 0,
+    "nonzero_writer_or_process_replacement_races": "not tested",
+    "memory_card_writer_and_preference_flush_contract": "pending",
+    "status_only_authorizes_save_capture": false
+  },
+  "remaining": [
+    "Production shutdown and settings-cache contract",
+    "Profile/game-private whole cards, manual/resume/global states and preferences",
+    "Ordinary in-game save and interactive/physical-input acceptance",
+    "Two-account DuckStation save/state round trips",
+    "Offline, interrupted recovery and removal/reinstall acceptance",
+    "Other native APKs/ABIs remain unverified"
+  ]
+}

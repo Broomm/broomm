@@ -26,7 +26,12 @@ class RootInspectionCommand(
         // app-data mounts. Select the global namespace for this command only;
         // never modify root-manager policy or the application's namespace.
         val psp = pkg in PpssppStorageInspection.packages && user == 0
-        val script = if (psp) SCRIPT + "\n" + PpssppStorageInspection.SCRIPT else SCRIPT
+        val duck = pkg == DuckStationStorageInspection.PACKAGE && user == 0
+        val script = SCRIPT + when {
+            psp -> "\n" + PpssppStorageInspection.SCRIPT
+            duck -> "\n" + DuckStationStorageInspection.SCRIPT
+            else -> ""
+        }
         val process = try { start(listOf("su", "-M", "-c", script)) }
         catch (_: IOException) { throw RootInspectionFailure("unavailable", "Root command unavailable. Use connected folders or check your existing root manager.") }
         val stdout = ByteArrayOutputStream()
@@ -65,6 +70,7 @@ class RootInspectionCommand(
                         63 -> RootInspectionFailure("directory-unresolved", "The emulator directory could not be resolved. No storage connection was created.")
                         64 -> RootInspectionFailure("metadata-unavailable", "Emulator directory metadata could not be read. No storage connection was created.")
                         65 -> RootInspectionFailure("storage-unavailable", "PPSSPP's selected memory stick could not be verified. Open PPSSPP, wait for its menu, use Exit, then retry inspection. Nothing was connected or changed.")
+                        66 -> RootInspectionFailure("storage-unavailable", "DuckStation's app-private files and initialized settings metadata could not be verified. Open DuckStation, complete first-run setup, wait for its menu, then retry inspection. Nothing was connected or changed.")
                         else -> RootInspectionFailure("failed", "Root command failed (exit $exit). Check Broomm's root grant and root-manager support for the global mount namespace (-M). No storage connection was created.")
                     }
                     // Do not log arbitrary su diagnostics (which can contain secrets
@@ -72,6 +78,7 @@ class RootInspectionCommand(
                     if (stderr.size() != 0) throw RootInspectionFailure("failed", "Root inspection returned unexpected diagnostics. No storage connection was created.")
                     val output = stdout.toString("UTF-8")
                     return if (psp) PpssppStorageInspection.parse(output, roots, uid, pkg)
+                        else if (duck) DuckStationStorageInspection.parse(output, roots, uid)
                         else parse(output, roots, uid)
                 }
                 Thread.sleep(10)

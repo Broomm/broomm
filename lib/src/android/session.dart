@@ -14,6 +14,9 @@ import 'save_plan.dart';
 import 'shared_saves.dart';
 import 'psp_root.dart';
 import 'psp_session.dart';
+import 'duck_root.dart';
+import 'duck_session.dart';
+import 'duckstation_documents.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -61,6 +64,13 @@ class AndroidGameSession extends ChangeNotifier {
     check: () => _preparation?.check(),
   );
 
+  late final _duck = AndroidDuckSession(
+    manager,
+    cloud,
+    check: () => _preparation?.check(),
+    cancellation: () => _preparation,
+  );
+
   Future<Map<String, dynamic>?> pending() async {
     final Map<String, dynamic> value;
     var sharedSwap = false;
@@ -71,7 +81,9 @@ class AndroidGameSession extends ChangeNotifier {
         sharedSwap = true;
         value = await progressJson(_shared.journal);
       } else {
-        if (await _psp.pending) {
+        if (await _duck.pending) {
+          value = await progressJson(_duck.journal);
+        } else if (await _psp.pending) {
           value = await progressJson(_psp.journal);
         } else {
           if (!await _mmj.pending) return null;
@@ -194,14 +206,19 @@ class AndroidGameSession extends ChangeNotifier {
       await manager.ensureNoWriters(closureConfirmed: true);
       final platform = rootPlatform ?? (core == 'snes9x' ? 'snes' : 'gba');
       final pspRooted = rooted && emulator.id == 'ppsspp' && platform == 'psp';
-      if (rooted && !pspRooted && androidRootRetroCore(platform) != core)
+      final duckRooted =
+          rooted && emulator.id == 'duckstation' && platform == 'psx';
+      if (rooted &&
+          !pspRooted &&
+          !duckRooted &&
+          androidRootRetroCore(platform) != core)
         throw const FormatException(
           'Rooted RetroArch platform/core identity differs.',
         );
-      final root = rooted && !pspRooted
+      final root = rooted && !pspRooted && !duckRooted
           ? manager.rootConnection(emulator, platform, package: app.package)
           : null;
-      if (rooted && !pspRooted && root == null)
+      if (rooted && !pspRooted && !duckRooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
       if (root != null) {
         phase = 'Checking whether RetroArch is closed…';
@@ -216,6 +233,13 @@ class AndroidGameSession extends ChangeNotifier {
           throw StateError('Verify PPSSPP root setup before playing.');
         await _psp.roots.restoreSettingsLoan();
         await _psp.roots.ensureClosed(binding);
+      }
+      if (duckRooted) {
+        final binding = manager.duckRoot(package: app.package);
+        if (binding == null || binding['build'] != app.build)
+          throw StateError('Verify DuckStation root setup before playing.');
+        await _duck.roots.restoreSettingsLoan();
+        await _duck.roots.ensureClosed(binding);
       }
       final rootedGame = rooted && prepare != null
           ? await _prepareRoot(prepare)
@@ -238,7 +262,16 @@ class AndroidGameSession extends ChangeNotifier {
         throw StateError(
           'The PPSSPP root save route changed. Progress was kept.',
         );
-      if (pspRooted) _preparation = DownloadCancellation();
+      if (duckRooted &&
+          (rootedGame?.layout is! AndroidDuckPlan ||
+              !mapEquals(
+                (rootedGame!.layout as AndroidDuckPlan).binding,
+                manager.duckRoot(package: app.package),
+              )))
+        throw StateError(
+          'The DuckStation root route changed. Progress was kept.',
+        );
+      if (pspRooted || duckRooted) _preparation = DownloadCancellation();
       _game = game;
       _launched = false;
       _retroArchProcess = null;
@@ -295,8 +328,12 @@ class AndroidGameSession extends ChangeNotifier {
         _emit();
         if (layout is AndroidPspPlan)
           await _psp.prepare(_game!, layout, resolve: resolve);
+        if (layout is AndroidDuckPlan)
+          await _duck.prepare(_game!, layout, resolve: resolve);
         await cloud.beforePlay(_game!, resolve: resolve);
         if (layout is AndroidPspPlan) await _psp.cloudPrepared(_game!, layout);
+        if (layout is AndroidDuckPlan)
+          await _duck.cloudPrepared(_game!, layout);
         if (_game!.layout case final AndroidSavePlan plan) {
           phase = 'Preparing ${emulator.name}’s connected save folder…';
           _emit();
@@ -312,6 +349,10 @@ class AndroidGameSession extends ChangeNotifier {
           phase = 'Preparing this profile’s private PSP memory stick…';
           _emit();
           await _psp.install(_game!, layout);
+        } else if (layout is AndroidDuckPlan) {
+          phase = 'Preparing private PS1 cards and states…';
+          _emit();
+          await _duck.install(_game!, layout);
         } else if (emulator.id == 'citra-mmj') {
           phase = 'Preparing MMJ’s shared save folder…';
           _emit();
@@ -329,7 +370,18 @@ class AndroidGameSession extends ChangeNotifier {
       final pspClock = pspPlan == null
           ? null
           : await _psp.launching(_game!, pspPlan);
+      final duckPlan = _game?.layout is AndroidDuckPlan
+          ? _game!.layout as AndroidDuckPlan
+          : null;
+      final duckClock = duckPlan == null
+          ? null
+          : await _duck.launching(_game!, duckPlan);
       _preparation?.check();
+      if (emulator.id == 'duckstation' &&
+          app.version == androidDuckStationDocumentVersion) {
+        _preparation = DownloadCancellation();
+        if (disposed) _preparation!.cancel();
+      }
       await manager.launch(
         emulator,
         app,
@@ -339,12 +391,19 @@ class AndroidGameSession extends ChangeNotifier {
         profile: profile,
         nativeRom: nativeRom,
         rootedPsp: pspPlan != null,
+        rootedDuck: duckPlan != null,
+        cancellation: _preparation,
+        phase: _preparePhase,
         configuration: _game?.layout is AndroidSavePlan
             ? (_game!.layout as AndroidSavePlan).launch['configNative']
             : null,
       );
       _launched = true;
-      phase = pspPlan != null
+      if (duckPlan != null && duckClock != null)
+        await _duck.identify(_game!, duckPlan, duckClock);
+      phase = duckPlan != null
+          ? 'Save and choose Close Game in DuckStation, then return to Broomm.'
+          : pspPlan != null
           ? 'Save and use PPSSPP’s Exit action, then return to Broomm.'
           : root == null
           ? 'Game handed to ${emulator.name}. Save and exit the emulator, then finish this session.'
@@ -489,10 +548,36 @@ class AndroidGameSession extends ChangeNotifier {
     return AndroidPspState.closed;
   }
 
+  Future<AndroidDuckState> finishIfDuckClosed() async {
+    if (busy) return AndroidDuckState.unknown;
+    busy = true;
+    _emit();
+    try {
+      final game = _game;
+      if (game == null || game.layout is! AndroidDuckPlan)
+        return AndroidDuckState.unknown;
+      final state = await _duck.exitState(game, game.layout as AndroidDuckPlan);
+      if (state == AndroidDuckState.closed) {
+        busy = false;
+        await _finish(duckAutomatic: true);
+      } else {
+        phase = state == AndroidDuckState.running
+            ? 'DuckStation is still running. Save and choose Close Game.'
+            : 'DuckStation closure could not be verified. Recovery was kept.';
+        _emit();
+      }
+      return state;
+    } finally {
+      busy = false;
+      _emit();
+    }
+  }
+
   Future<AndroidRetroArchState> _finish({
     CloudGame? recovery,
     bool automatic = false,
     bool pspAutomatic = false,
+    bool duckAutomatic = false,
   }) async {
     if (busy) throw StateError('The Android session is still busy.');
     busy = true;
@@ -512,6 +597,37 @@ class AndroidGameSession extends ChangeNotifier {
       }
       _lease ??= await SessionLease.acquire(manager.data);
       await manager.ensureNoWriters(closureConfirmed: true);
+      if (record['emulator'] == 'duckstation' &&
+          (record['rooted'] == true || await _duck.pending)) {
+        final game = recovery ?? _game;
+        if (game == null ||
+            game.layout is! AndroidDuckPlan ||
+            game.server != record['server'] ||
+            game.profile != record['profile'] ||
+            game.rom != record['rom'])
+          throw StateError(
+            'Choose the original PS1 game, profile and root setup to finish recovery.',
+          );
+        if (await _duck.pending)
+          await _duck.finish(
+            game,
+            game.layout as AndroidDuckPlan,
+            automatic: duckAutomatic,
+          );
+        else
+          await _duck.roots.ensureClosed(
+            (game.layout as AndroidDuckPlan).binding,
+          );
+        await manager.releaseGrants();
+        if (await progressExists(marker.path)) await marker.delete();
+        active = false;
+        _game = null;
+        _launched = false;
+        phase = 'PS1 session finished. Private progress and pending cloud transfers were retained.';
+        await _lease?.release();
+        _lease = null;
+        return AndroidRetroArchState.closed;
+      }
       if (record['emulator'] == 'ppsspp' &&
           (record['rooted'] == true || await _psp.pending)) {
         final game = recovery ?? _game;
@@ -730,6 +846,10 @@ class AndroidGameSession extends ChangeNotifier {
       await manager.ensureNoWriters(closureConfirmed: emulatorClosed);
       final root = await _recoveryRoot(record);
       if (root != null) await _checkRetroArchIdle(root, emulatorClosed: true);
+      if (record['emulator'] == 'duckstation' && await _duck.pending)
+        throw StateError(
+          'Finish the original PS1 settings loan before leaving recovery. All copies were kept.',
+        );
       if (record['emulator'] == 'ppsspp' && await _psp.pending)
         throw StateError(
           'PSP owns a private memory-stick handoff. Finish its verified recovery before leaving this session. All copies were kept.',

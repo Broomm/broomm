@@ -1,5 +1,88 @@
 # Implementation plan
 
+## Rooted DuckStation transactions — Thor validation
+
+PR #6 now implements Dart-owned private whole cards, publication/build-specific
+states, private preference loans, RomM BIOS provisioning, journals, recovery and
+full private backups for the reviewed beta's ARM64/user-0 boundary. Setup,
+Open emulator, Play and Remove use the compact existing actions. Native file
+effects require process absence. A small owned NDK/JNI mechanism freezes a
+verified idle cache and rechecks native writers plus a completed framework
+client pause before generation-bound disposal. No external runtime dependency
+or upstream APK redistribution is added.
+
+Four-ABI compilation, real Thor disposable kernel/file regressions, an actual
+paused-menu disposal, real binary pause evidence and native Slot 4 envelope
+validation pass. Original native settings, BIOS and Slots 1–4 remain identical.
+Host checks cover two-account cloud transactions, preferences, unsafe/lost-reply
+recovery and serialized automatic completion. On Thor build 1126, Mega Man X4
+loaded the owner's existing card, created a second card in-game, and loaded
+that save after automatic Close Game sync and RomM readback. Native states
+replayed under fresh document grants. Both profiles kept their states and
+preferences separate; offline progress uploaded after reconnecting. Restarting
+Broomm while DuckStation was running kept the journal and refused capture
+until normal Close Game. Recovery then published and read back the progress
+and restored the standalone settings. Remove backed up both profiles before
+Android uninstalled DuckStation; setup after reinstall restored both profiles
+under the new installation, and their progress synced again. Preservation
+audits passed for existing PSP and RetroArch progress. All CI checks and five
+packages passed for the installed source.
+
+The Sega 32X follow-up verified Chaotix gameplay, independent PicoDrive states
+for two accounts, automatic upload and readback, and replay of the owner's
+state with exact SRAM restoration. New in-game cartridge progress was not
+written during the test, so its in-game save and load remain unverified.
+No other standalone emulator enters PR #6.
+See the [implementation and evidence boundaries](docs/android-duckstation-transactions.md).
+
+## DuckStation read-only storage increment — 2026-11-08
+
+PSP PR #5 merged as `d30d5dd` after its final CI and Thor acceptance. The next
+standalone branch adds initialized DuckStation app-files metadata to the global
+root inspector. Exact user-0 paths, mount correspondence, owner/group/label,
+permissions, regular settings-file identity and stable observations are verified
+without reading settings contents or creating a save connection. The dialog
+distinguishes this app-files snapshot from selected save-folder inspection.
+Eleven focused Flutter cases, Kotlin/JVM refusal boundaries, bridge compilation
+and targeted analysis pass. Direct production-script/parser execution on the
+Thor preserved native settings bytes/metadata. Official beta 12126 initialized
+through native UI and detected Odin Controller; the later game/BIOS/handoff
+evidence is recorded below. Production writer and account-save integration remain pending. See [evidence and next requirements](docs/android-duckstation-root.md).
+
+Build 1118 subsequently passed the complete in-app diagnostic, unchanged native
+settings/BIOS, both saved-account restorations and repeated PSP/RetroArch
+preservation audits. All CI checks/five packages passed for `7fc0e8f`.
+Native PS1 research found a fresh-boot defect hidden by successful state resume:
+the reviewed beta consumes a translated document path, not a raw content URI.
+The next correction adds read-only document aliases and version/signer-bound
+launch translation; JVM refusals and bridge compilation pass. Actual Broomm
+provider test on build 1119 exposed that document-shaped aliases on a generic
+content provider are insufficient. An opaque-ID experiment also misresolved
+the optional SBI sidecar to the ROM. A dedicated read-only DocumentsProvider
+now keeps related-file identity correct, with no browsable roots or write
+capability. Build 1120 passed real provider fresh boot, native Slot 2 creation,
+normal Close Game and complete grant revocation. Its replay under a new grant
+warned about the expired embedded CD path, so reliable states are not accepted.
+A Dart-owned stable content-set identity now addresses that native reference
+without retaining access between sessions. Build 1121 passed the corrected
+native Slot 3 replay after complete permission
+revocation, a Broomm restart and a fresh grant. The regular preview was restored;
+both saved accounts and all earlier PSP/RetroArch inventories passed again.
+Its content hashing took about 4.9 seconds per 380-MB launch and contradicted
+the product's no-launch-ROM-scan rule. The current correction derives the stable
+identity from the installed RomM publication record and metadata instead.
+Forty-two focused tests, all 750 source tests (one existing host skip) and
+analysis pass. All CI checks/five packages passed as `fef7564`; build 1122
+replayed a newly saved Slot 4 after complete revocation, Broomm restart and
+regrant without the expired-media warning. Receipt/metadata preparation took
+4 and 3 ms on the Thor. Original settings and all four native slots are verified;
+normal-preview restoration and the repeated preservation audit are recorded in
+[the scoped device evidence](docs/android-duckstation-thor-handoff.json).
+Native Slots 1–4/resume remain unassigned; ordinary-save/input/root-session
+acceptance is still outstanding. Native logging research also shows why a
+cached process or system-destroyed callback alone cannot prove asynchronous
+state publication has finished.
+
 ## Rooted PPSSPP sessions — Thor and packaged acceptance passed
 
 PR #5 implements Android 11+/user-0 root saves for the reviewed regular PPSSPP
@@ -31,7 +114,8 @@ are absent, selection is restored and all checkpoints are acknowledged.
 
 The repeated audit preserves all 49 earlier RetroArch progress files, nineteen
 managed native files, thirteen original files, four retained VMU backups, fifteen
-cores and eighteen platform bindings. No later standalone emulator has begun.
+cores and eighteen platform bindings. DuckStation begins separately with the
+read-only increment above.
 The [device evidence](docs/android-ppsspp-thor-acceptance.json) separates injected
 ADB input from owner actuation and native profile saves from scored gameplay.
 

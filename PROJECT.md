@@ -233,6 +233,15 @@ cloud exports scoped to native savedata and compatible states. Preserve the
 original standalone selection and data; use supported native first-run and Exit
 behavior. Record exact reviewed APK/ABI and native device acceptance separately.
 
+Rooted PlayStation uses DuckStation with profile/game-private whole memory
+cards, exact-build/media-compatible states and private preferences. Preserve
+the original standalone configuration through a durable loan, and never assign
+standalone saves to a game by title. A cached process alone cannot establish
+completed writers or persisted settings. Verify native teardown, pending saves
+and a completed settings callback before removing its idle cache; keep recovery
+when those observations are unavailable. Retain full private backups across
+external-app removal and reinstall, with ordinary BIOS provisioning from RomM.
+
 After the first requested root save action, reuse that connection for the
 Broomm activity, including while the player is in the emulator. Release it
 when the activity closes. Keep root requests tied to user actions and preserve
@@ -242,7 +251,8 @@ Keep Android emulator cards compact with the desktop actions **Set up**,
 **Verify setup**, **Open emulator**, **Set as default** and **Remove**. Setup
 owns installation, first-open guidance and save access. On supported rooted
 RetroArch routes it requests root and provisions the selected platform's core automatically.
-Other routes request their Android folder grant within Setup. Select a default
+Reviewed rooted standalone routes also obtain private save access within Setup;
+other routes request their Android folder grant there. Select a default
 only after setup is complete. Removal asks Android to uninstall the selected
 external app and clears its Broomm connections/defaults after verified absence.
 Explain that uninstall deletes the external app's private settings, cores and

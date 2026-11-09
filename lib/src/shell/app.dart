@@ -655,7 +655,8 @@ class _BroommAppState extends State<BroommApp> {
     final profile = m.profile!, server = m.server!;
     final rooted =
         (androidRootRetroCore(platform.slug) != null ||
-            emulator.id == 'ppsspp' && platform.slug == 'psp') &&
+            emulator.id == 'ppsspp' && platform.slug == 'psp' ||
+            emulator.id == 'duckstation' && platform.slug == 'psx') &&
         m.android.hasCurrentRoot(emulator, platform.slug, package: app.package);
     final cloudReady =
         m.android.connected(profile.id, emulator, platform: platform.slug) &&
@@ -902,7 +903,9 @@ class _BroommAppState extends State<BroommApp> {
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           recovering: true,
-          rooted: record['emulator'] == 'ppsspp' && record['rooted'] == true,
+          rooted:
+              {'ppsspp', 'duckstation'}.contains(record['emulator']) &&
+              record['rooted'] == true,
           title: entry?.game.name ?? 'Unfinished Android game session',
           emulator: emulator.name,
           resume: m.android.app(emulator) == null

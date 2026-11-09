@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "status": "native mechanisms and packaged DuckStation acceptance passed on the Thor",
+  "source_base": "8a7d5115f2594a132206a88bedd64bdd9904fd23",
+  "source_sha256": {
+    "android/app/src/main/cpp/root_process.c": "ee5e907ffc8373ce4272c51682aed53276cc33ecc52cde1530e3fea1299623d0",
+    "android/app/src/main/cpp/Android.mk": "e65ac02a43f2447e79aaa103a01d4c73c52807bcbecdf9c45c6248f695c241c6",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootProcessKernel.kt": "a49c941afed0dee85b112959d25636e7be3f8a684f95fe2147a6f925d838f933",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt": "bae7c475312bba5a25db5da8ed2a96c3890ef9a636450e45a48574e15b8325d0",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckFiles.kt": "6375f9caa137cd5eda877c2fdeeb2a1f84fb1677c9f92388d8a89fe83bfd9636",
+    "android/app/src/main/kotlin/app/broomm/broomm/DuckPauseProof.kt": "820e1899000fb5a8e575a86e630fba90ef9477a8e006b38d24a46d63a88f65e5"
+  },
+  "ownership": "Broomm-owned implementation; no upstream APK, binary or implementation copied",
+  "toolchain": {
+    "ndk": "29.0.14206865",
+    "recipe": "tool/android/build_root_process_test.sh",
+    "libraries": "four ABI fixture builds; packaged library hashes recorded below"
+  },
+  "libraries": [
+    {
+      "abi": "arm64-v8a",
+      "bytes": 14808,
+      "sha256": "bdecc332ab1224313880fc4fea1d9da4597c74cc6f082bbccdcd85f0cfb4a81a",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "Thor ARM64 fixture"
+    },
+    {
+      "abi": "armeabi-v7a",
+      "bytes": 9832,
+      "sha256": "6de1852a376f5c1325547ab6a0b86c713a32dda70c1ebb864cc61bcb27ca4741",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    },
+    {
+      "abi": "x86",
+      "bytes": 13240,
+      "sha256": "31ba256bc3d9e4249198bf3d92c0f366a642c52406600b5ab60bdeacb45f5cf2",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    },
+    {
+      "abi": "x86_64",
+      "bytes": 14984,
+      "sha256": "b79bc461b9cee474ac061ad716276a64d19c3f4156c38c1183a4116c95579aa9",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    }
+  ],
+  "device": {
+    "name": "AYN Thor",
+    "android": "13",
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "executed": [
+      "six disposable multi-threaded kernel safety groups",
+      "completed framework client pause parser and captured real binary events",
+      "production Kotlin/JNI frozen idle-cache disposal with parent-side lifecycle recheck",
+      "native file interruption/publication/ownership/descriptor and path-boundary regressions",
+      "native Slot 4 envelope and stable media publication validation"
+    ]
+  },
+  "original_resource_sha256": {
+    "settings.ini": "7f554e69e299de15d9339aacd4e635675f30f14c36673f61dac5ca993e3edab7",
+    "bios/ps-22a.bin": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3",
+    "savestates/SLUS-00561_1.sav": "d5a177e7edfbd629f1b9f75141b6c132bedb2c87d98c02be45bd1a81959e5578",
+    "savestates/SLUS-00561_2.sav": "af8f721b0b6b379fff61019b7c82728412037f22854d4a3d6b66f179f380435c",
+    "savestates/SLUS-00561_3.sav": "c1e05fed4dc07e49adc1e3edb70706feb6bdfc8aad0215a767edf0d023816b60",
+    "savestates/SLUS-00561_4.sav": "aae6e442fd44092ea067feed099c0b3025745aef547c70522a534412b646c27e"
+  },
+  "limits": [
+    "reviewed DuckStation beta 12126 on Android user 0 and ARM64 only",
+    "real application integration executed on the Thor; no native acceptance claim for other devices, builds or ABIs",
+    "Sega 32X gameplay state round trip passed; new in-game scenario save/load unverified"
+  ],
+  "packaged": {
+    "build": "1125",
+    "code_sha": "d4dec29acfdca1f5eab1def9525d067dd77533eb",
+    "signed_apk_sha256": "46e05e909fde70267676817efb02ebcfc9099397738bbe5949b7d6f3eb15a68f",
+    "libraries": {
+      "arm64-v8a": {
+        "bytes": 14808,
+        "sha256": "5237c8c3c78e7244f26061f7bbe7b95f66c94bf9d3eae30462af2c5b8ffb64b5",
+        "zip_data_offset": 8650752,
+        "alignment": 16384
+      },
+      "armeabi-v7a": {
+        "bytes": 9644,
+        "sha256": "17123501f3c05dc53ace4e5d9a0150c733b2aa8f746b98c733bf90ea7420e0e0",
+        "zip_data_offset": 29523968,
+        "alignment": 16384
+      },
+      "x86_64": {
+        "bytes": 14984,
+        "sha256": "5529b9f5680e7ea0e1a059852842428e8c31e61ca9b1639ef6d27afb9276262f",
+        "zip_data_offset": 46825472,
+        "alignment": 16384
+      }
+    },
+    "verification": "Verified CI source artifact, 163 identical payloads after stable Thor signing; ARM64 packaged pause/disposal and file effects executed."
+  },
+  "packaged_followup": {
+    "build": "1126",
+    "code_sha": "7cf35ed57ee1c5b41af12e269ec1ffaa1e7a9dc9",
+    "signed_apk_sha256": "0ead58628a216ae6881aee4142c4e6141e273078259cb77b1cfd31e025267baf",
+    "libraries": {
+      "arm64-v8a": {
+        "bytes": 14808,
+        "sha256": "5237c8c3c78e7244f26061f7bbe7b95f66c94bf9d3eae30462af2c5b8ffb64b5",
+        "zip_data_offset": 8650752,
+        "alignment": 16384
+      },
+      "armeabi-v7a": {
+        "bytes": 9644,
+        "sha256": "17123501f3c05dc53ace4e5d9a0150c733b2aa8f746b98c733bf90ea7420e0e0",
+        "zip_data_offset": 29523968,
+        "alignment": 16384
+      },
+      "x86_64": {
+        "bytes": 14984,
+        "sha256": "5529b9f5680e7ea0e1a059852842428e8c31e61ca9b1639ef6d27afb9276262f",
+        "zip_data_offset": 46825472,
+        "alignment": 16384
+      }
+    },
+    "ci": {
+      "run": 42541477118,
+      "artifact": 13641827826,
+      "all_checks_and_five_packages_passed": true
+    },
+    "verification": "Verified CI source artifact and 163 identical APK payloads after retained Thor signing. Packaged ARM64 native gameplay and save transactions executed.",
+    "acceptance": {
+      "game": "Mega Man X4 (SLUS-00561)",
+      "romm_game": 6583,
+      "romm_version": "5.4.0",
+      "duckstation_version_code": 12126,
+      "duckstation_apk_sha256": "3e944243fa6d201d2c2c935f1a1b104fe7e2696c6f2a6b3d719fa212660d73f7",
+      "memory_cards": {
+        "bytes_each": 131072,
+        "existing_card_1_unchanged": true,
+        "native_card_2_save_and_reload": true,
+        "primary": 266,
+        "state_archive": 55
+      },
+      "native_states": {
+        "separate_manual_slots": {
+          "profile_2": [
+            1,
+            4
+          ],
+          "profile_3": [
+            2
+          ]
+        },
+        "second_profile_state_only_primary": 264,
+        "retained_macos_states": 11
+      },
+      "offline": {
+        "kept_pending_without_remote_write": true,
+        "reconnected_primary": 265,
+        "state_archive": 54,
+        "queued_slot_1_restored_byte_for_byte": true
+      },
+      "broomm_interruption": {
+        "live_writer_and_journals_retained": true,
+        "capture_refused_while_live": true,
+        "recovered_primary": 267,
+        "state_archive": 56
+      },
+      "removal_and_reinstall": {
+        "private_backup_files": {
+          "profile_2": 7,
+          "profile_3": 4
+        },
+        "new_android_uid": true,
+        "native_slot_2_replayed_after_restore": true,
+        "standalone_files_independently_preserved": 8,
+        "primary_after_close": {
+          "profile_2": 268,
+          "profile_3": 269
+        }
+      }
+    }
+  }
+}
