@@ -5,6 +5,7 @@ import 'dart:io';
 import '../progress/files.dart';
 import '../io_worker.dart';
 import 'melon_root.dart';
+import 'dolphin_root.dart';
 
 /// Explicit emulator installation only. No polling or unattended upgrades.
 class AndroidApkDownload {
@@ -128,9 +129,7 @@ class AndroidApkDownload {
       case 'melonds':
         return Uri.parse(androidMelonRootApk);
       case 'dolphin':
-        return Uri.parse(
-          'https://dl.dolphin-emu.org/releases/2609a/dolphin-2609a.apk',
-        );
+        return Uri.parse(androidDolphinRootApk);
       case 'eden':
         return Uri.parse(
           'https://stable.eden-emu.dev/v0.2.1/Eden-Android-v0.2.1-standard.apk',

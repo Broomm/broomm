@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor
 import android.system.OsConstants
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -35,6 +36,32 @@ fun main(args: Array<String>) {
             return
         }
         val old = byteArrayOf(1, 2, 3); val next = ByteArray(131072) { 7 }
+        val cube = File(root, "cube.rvz")
+        cube.writeBytes(ByteArray(0x58 + 128).also { header ->
+            ByteBuffer.wrap(header).putInt(0x52565a01).putInt(0x58 + 0x1c, 0xc2339f3d.toInt())
+            "GLME01".toByteArray().copyInto(header, 0x58)
+            header[0x58 + 7] = 2
+        })
+        check(readDolphinDisc(cube, "ngc") == DolphinDisc("GLME01", 2))
+        failure { readDolphinDisc(cube, "wii") }
+        val wii = File(root, "wii.wbfs")
+        val block = 1 shl 21
+        val partition = ByteArray(block + 128).also { header ->
+            ByteBuffer.wrap(header).putInt(0x57424653).putInt(512 + 0x18, 0x5d1c9ea3)
+                .putShort(512 + 256, 1)
+            header[8] = 9; header[9] = 21; header[12] = 1
+            "RSPE01".toByteArray().copyInto(header, 512)
+            header.copyInto(header, block, 512, 512 + 128)
+        }
+        wii.writeBytes(partition)
+        check(readDolphinDisc(wii, "wii") == DolphinDisc("RSPE01", 0))
+        partition[13] = 2
+        wii.writeBytes(partition)
+        failure { readDolphinDisc(wii, "wii") }
+        partition[13] = 0
+        partition[block + 3] = 'J'.code.toByte()
+        wii.writeBytes(partition)
+        failure { readDolphinDisc(wii, "wii") }
         check(RootSaveTransfer.readExact(ByteArrayInputStream(next), next.size) {}.contentEquals(next))
         failure { RootSaveTransfer.readExact(ByteArrayInputStream(old), old.size + 1) {} }
         failure { RootSaveTransfer.readExact(ByteArrayInputStream(old), old.size - 1) {} }

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../session_lease.dart';
 import 'emulators.dart';
 import 'melon_root.dart';
+import 'dolphin_root.dart';
 import 'root_saves.dart';
 
 enum AndroidSetupStep { install, waitingInstall, initialize, folder, ready }
@@ -38,7 +39,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
           emulator.id == 'duckstation' && platform == 'psx' ||
           emulator.id == 'melonds' &&
               platform == 'nds' &&
-              manager.app(emulator)?.version == androidMelonRootVersion) &&
+              manager.app(emulator)?.version == androidMelonRootVersion ||
+          emulator.id == 'dolphin' &&
+              {'ngc', 'wii'}.contains(platform) &&
+              manager.app(emulator)?.version == androidDolphinRootVersion) &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -90,6 +94,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       step = AndroidSetupStep.initialize;
       if (emulator.id == 'melonds') {
         await manager.connectMelonRoot(emulator);
+        step = AndroidSetupStep.ready;
+        return;
+      }
+      if (emulator.id == 'dolphin') {
+        await manager.connectDolphinRoot(emulator, platform);
         step = AndroidSetupStep.ready;
         return;
       }
@@ -162,8 +171,8 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   }
 
   Future<void> useSharedFolder() => _run(() async {
-    // The new shared grant replaces the melonDS connection once verified.
-    if (emulator.id != 'melonds' &&
+    // A verified shared grant replaces a native media connection.
+    if (!{'melonds', 'dolphin'}.contains(emulator.id) &&
         manager.rootConnection(emulator, platform) != null)
       if (emulator.id == 'duckstation')
         await manager.disconnectDuckRoot();

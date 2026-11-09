@@ -28,6 +28,8 @@ class SharedAndroidSaves {
   Map<String, dynamic> inventory(Object? value, AndroidSavePlan plan) {
     final limit = plan.melonRooted
         ? 10
+        : plan.dolphinRooted
+        ? 96
         : plan.rooted
         ? 128
         : progressMaxFiles;
@@ -75,7 +77,7 @@ class SharedAndroidSaves {
       if (plan.rootFileMetadata &&
           (v['metadata'] is! String ||
               !RegExp(
-                '^${plan.binding['uid']} ${plan.melonRooted ? plan.binding['externalGid'] : '[0-9]+'} [0-7]{3} ${RegExp.escape(plan.binding[plan.melonRooted ? 'externalLabel' : 'label']!)}\$',
+                '^${plan.binding['uid']} ${plan.nativeMediaRoot ? plan.binding['externalGid'] : '[0-9]+'} [0-7]{3} ${RegExp.escape(plan.binding[plan.nativeMediaRoot ? 'externalLabel' : 'label']!)}\$',
               ).hasMatch(v['metadata'] as String)))
         throw const FormatException(
           'Root save ownership metadata is incomplete.',
@@ -117,7 +119,8 @@ class SharedAndroidSaves {
         r['emulator'] != plan.emulator.id ||
         r['tree'] != plan.binding['tree'] ||
         r['package'] != plan.binding['package'] ||
-        (plan.melonRooted && r['selected'] != plan.launch['romPath']) ||
+        (plan.nativeMediaRoot && r['selected'] != plan.launch['romPath']) ||
+        (plan.dolphinRooted && r['platform'] != plan.launch['platform']) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
@@ -435,7 +438,7 @@ class SharedAndroidSaves {
       'title': plan.game,
       'build': build,
       'selected': selected,
-      if (plan.melonRooted)
+      if (plan.nativeMediaRoot)
         'stateAreas': [
           for (final area in plan.areas)
             if (area.id.startsWith('states-')) area.id,
@@ -527,7 +530,7 @@ class SharedAndroidSaves {
             if (plan.rootFileMetadata)
               'metadata':
                   (r['original'] as Map)[remote]?['metadata'] ??
-                  '${plan.binding['uid']} ${plan.binding[plan.melonRooted ? 'externalGid' : 'uid']} 600 ${plan.binding[plan.melonRooted ? 'externalLabel' : 'label']}',
+                  '${plan.binding['uid']} ${plan.binding[plan.nativeMediaRoot ? 'externalGid' : 'uid']} 600 ${plan.binding[plan.nativeMediaRoot ? 'externalLabel' : 'label']}',
           };
       if (working.containsKey(remote))
         throw const FormatException('Ambiguous Android save mapping');
@@ -1125,6 +1128,14 @@ int _rootRomLimit(AndroidSavePlan plan) =>
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
   if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 32) * 1024 * 1024;
+  if (plan.dolphinRooted) {
+    final mib = path.startsWith('files/StateSaves/')
+        ? 64
+        : path.startsWith('files/GC/')
+        ? 17
+        : 32;
+    return mib * 1024 * 1024;
+  }
   if (plan.launch['coreName'] == 'flycast')
     return path.contains('/states/') ? 64 * 1024 * 1024 : 131072;
   if (plan.launch['coreName'] == 'mednafen_saturn' && path.contains('/saves/'))

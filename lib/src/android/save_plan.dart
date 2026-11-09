@@ -19,6 +19,7 @@ import 'opera.dart';
 import 'saturn.dart';
 import 'flycast.dart';
 import 'melon_root.dart';
+import 'dolphin_root.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -134,14 +135,19 @@ class AndroidSavePlan extends ProgressLayout {
     ...binding,
     'emulator': emulator.id,
     if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
-    if (melonRooted) 'romPath': launch['romPath']!,
+    if (nativeMediaRoot) 'romPath': launch['romPath']!,
+    if (dolphinRooted) 'platform': launch['platform']!,
   };
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
-  bool get rootFileMetadata => rooted || melonRooted;
+  bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
+  bool get nativeMediaRoot => melonRooted || dolphinRooted;
+  bool get rootFileMetadata => rooted || nativeMediaRoot;
   String method(String operation) =>
       '${melonRooted
           ? 'rootMelon'
+          : dolphinRooted
+          ? 'rootDolphin'
           : rooted
           ? 'root'
           : 'shared'}$operation';
@@ -285,6 +291,11 @@ Future<AndroidSavePlan> connectedAndroidProgress(
     throw StateError(
       'Root melonDS needs its connected build and a raw .nds cartridge. Check Emulator Settings.',
     );
+  final dolphin = emulator.id == 'dolphin'
+      ? manager.rootConnection(emulator, platform.slug, package: package)
+      : null;
+  if (dolphin != null && dolphin['build'] != app.build)
+    throw StateError('Verify Dolphin’s changed installation before playing.');
   final build = await manager.fingerprint(app);
   String state(String extra) {
     final hash = ProgressDigest.sha256()..add(utf8.encode('$build:$extra'));
@@ -404,21 +415,44 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         ),
         platform.slug,
       );
+      if (dolphin != null &&
+          (layout.format == 'dolphin-wii-channel-v1' ||
+              platform.slug == 'ngc' &&
+                  !{'E', 'J', 'P'}.contains(layout.game[3])))
+        throw StateError(
+          'Use a supported Dolphin disc and region for rooted saves.',
+        );
       final ordinary = layout.areas
-          .where((a) => !a.id.startsWith('states-'))
+          .where(
+            (a) =>
+                !a.id.startsWith('states-') &&
+                (dolphin == null || !a.id.startsWith('dlc-')),
+          )
           .toList();
       layout = ProgressLayout(root.path, layout.format, layout.game, [
         ...ordinary,
         for (final a in layout.areas.where((a) => a.id.startsWith('states-')))
-          ProgressArea(state('Dolphin'), a.path, prefix: a.prefix),
+          ProgressArea(
+            state('Dolphin'),
+            a.path,
+            prefix: a.prefix,
+            pattern: dolphin == null ? null : r'^[A-Z0-9]{6}\.s(?:0[0-9]|10)$',
+          ),
       ], note: layout.note);
-      final config = androidIni(await reader.text('Config/Dolphin.ini') ?? '');
-      if (platform.slug == 'ngc' &&
-          ['SlotA', 'SlotB'].any((key) => config['Core/$key'] != '8'))
-        throw StateError(
-          'Set Dolphin’s GameCube memory cards to GCI Folder for both slots before using cloud saves.',
+      if (dolphin == null) {
+        final config = androidIni(
+          await reader.text('Config/Dolphin.ini') ?? '',
         );
-      bind(layout);
+        if (platform.slug == 'ngc' &&
+            ['SlotA', 'SlotB'].any((key) => config['Core/$key'] != '8'))
+          throw StateError(
+            'Set Dolphin’s GameCube memory cards to GCI Folder for both slots before using cloud saves.',
+          );
+        bind(layout);
+      } else {
+        launch.addAll({'romPath': rom, 'platform': platform.slug});
+        bind(layout, path: (a) => 'files/${a.path.substring(5)}');
+      }
     case 'duckstation':
     case 'armsx2':
       final ps2 = emulator.id == 'armsx2';

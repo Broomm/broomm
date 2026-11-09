@@ -5,6 +5,7 @@ import 'dart:typed_data' show Endian;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/dolphin_root.dart';
 import 'package:broomm/src/android/melon_root.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/save_plan.dart';
@@ -32,42 +33,49 @@ class AndroidFolderFixture {
   int apkScans = 0;
   int? failAt;
   String? picked;
-  Directory? melonRoot;
+  Directory? melonRoot, dolphinRoot;
   bool melonRunning = false;
   final melonMetadata =
       '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
     final args = (call.arguments as Map?)?.cast<String, dynamic>() ?? {};
-    if (call.method.startsWith('rootMelon')) {
+    final melon = call.method.startsWith('rootMelon');
+    if (melon || call.method.startsWith('rootDolphin')) {
+      final prefix = melon ? 'rootMelon' : 'rootDolphin';
       if (melonRunning) throw PlatformException(code: 'writer-live');
-      if (call.method == 'rootMelonInspect') {
+      if (call.method == '${prefix}Inspect') {
+        final package = melon
+            ? androidMelonRootPackage
+            : androidDolphinRootPackage;
         return {
-          'package': androidMelonRootPackage,
+          'package': package,
           'build': 'a' * 64,
-          'version': androidMelonRootVersion,
-          'signer': androidMelonRootSigner,
+          'version': melon
+              ? androidMelonRootVersion
+              : androidDolphinRootVersion,
+          'signer': melon ? androidMelonRootSigner : androidDolphinRootSigner,
           'user': '0',
           'uid': '10139',
-          'dataDir': '/data/user/0/$androidMelonRootPackage',
+          'dataDir': '/data/user/0/$package',
           'label': 'u:object_r:app_data_file:s0:c139,c256,c512,c768',
           'externalLabel':
               'u:object_r:media_rw_data_file:s0:c139,c256,c512,c768',
           'externalGid': '1078',
           'externalDevice': '65038',
           'externalInode': '32295',
-          'stateDirectory': 'files/savestates',
+          if (melon) 'stateDirectory': 'files/savestates',
         };
       }
-      final root = melonRoot!;
+      final root = (melon ? melonRoot : dolphinRoot)!;
       final relative = args['path'] as String?;
       final target = relative == null ? null : File('${root.path}/$relative');
       final result = await this.call(
-        MethodCall(call.method.replaceFirst('rootMelon', 'shared'), {
+        MethodCall(call.method.replaceFirst(prefix, 'shared'), {
           ...args,
-          'tree': 'fixture:melon',
+          'tree': melon ? 'fixture:melon' : 'fixture:dolphin',
         }),
       );
-      if (call.method == 'rootMelonReplace' && target != null) {
+      if (call.method == '${prefix}Replace' && target != null) {
         final metadata = File('${target.path}.metadata');
         if (args['after'] != null) {
           await metadata.writeAsString(args['metadata'] as String);
@@ -97,6 +105,8 @@ class AndroidFolderFixture {
                 'build': 'a' * 64,
                 'version': melonRoot != null && p == androidMelonRootPackage
                     ? androidMelonRootVersion
+                    : dolphinRoot != null && p == androidDolphinRootPackage
+                    ? androidDolphinRootVersion
                     : 'fixture',
               },
         ];
@@ -386,6 +396,103 @@ void main() {
       await expectLater(game(profileId, api(), await ds()), throwsStateError);
     },
   );
+  test(
+    'rooted Dolphin preserves standalone GCI files and isolates title data',
+    () async {
+      final native = await Directory('${temp.path}/dolphin-native').create();
+      fixture.dolphinRoot = native;
+      fixture.trees['fixture:dolphin'] = native;
+      final app = emulator('dolphin');
+      await manager.load();
+      await manager.connectDolphinRoot(app, 'ngc');
+      await manager.load();
+      expect(manager.connected(profileId, app, platform: 'ngc'), isTrue);
+      expect(manager.connected(profileId, app, platform: 'wii'), isTrue);
+      Future<AndroidSavePlan> plan(
+        String platform,
+        String id,
+        int offset,
+        int magic,
+      ) async {
+        final header = Uint8List(128)..setAll(0, ascii.encode(id));
+        ByteData.sublistView(header).setUint32(offset, magic);
+        final disc = await put(temp, '$id.iso', header);
+        return await androidProgressLayout(
+          manager,
+          profileId,
+          app,
+          playablePlatforms.firstWhere((p) => p.slug == platform),
+          disc.path,
+          contentId: '42',
+        ) as AndroidSavePlan;
+      }
+
+      final gc = await plan('ngc', 'GAFE01', 0x1c, 0xc2339f3d);
+      final wii = await plan('wii', 'RZDE01', 0x18, 0x5d1c9ea3);
+      expect(gc.method('List'), 'rootDolphinList');
+      expect(gc.localKey('files/StateSaves/GAFE01.s00'), isNotNull);
+      expect(gc.localKey('files/StateSaves/GAFE01.s99'), isNull);
+      expect(gc.localKey('files/StateSaves/RZDE01.s00'), isNull);
+      expect(
+        wii.localKey('files/Wii/title/00010000/525a4445/data/save.dat'),
+        'save/save.dat',
+      );
+      expect(
+        wii.localKey('files/Wii/title/00010000/525a444a/data/save.dat'),
+        isNull,
+      );
+      expect(
+        wii.localKey('files/Wii/title/00010000/525a4445/content/title.tmd'),
+        isNull,
+      );
+      final saves = SharedAndroidSaves(manager);
+      final server = api();
+      final cloudGame = CloudGame(
+        server: serverId,
+        profile: profileId,
+        user: server.user,
+        rom: 42,
+        client: server,
+        layout: gc,
+      );
+      Uint8List gci(String id, int fill) =>
+          Uint8List.fromList(List.filled(64 + 8192, fill))
+            ..setAll(0, ascii.encode(id));
+      const folder = 'files/GC/USA/Card A';
+      final standalone = await put(
+        native,
+        '$folder/Standalone.gci',
+        gci('GAFE01', 1),
+      );
+      final unrelated = await put(
+        native,
+        '$folder/Other.gci',
+        gci('GZLE01', 2),
+      );
+      final selected = gc.launch['romPath']!;
+      await saves.begin(
+        cloudGame,
+        gc,
+        manager.app(app)!.build,
+        selected: selected,
+      );
+      expect(await standalone.exists(), isFalse);
+      final written = await put(
+        native,
+        '$folder/Session.gci',
+        gci('GAFE01', 3),
+      );
+      await put(native, 'files/StateSaves/GAFE01.s00', gci('GAFE01', 4));
+      expect(await saves.capture(cloudGame, cloud, gc), isTrue);
+      await saves.restoreOriginal(cloudGame, gc);
+      expect(await standalone.readAsBytes(), gci('GAFE01', 1));
+      expect(await unrelated.readAsBytes(), gci('GZLE01', 2));
+      expect(await written.exists(), isFalse);
+      expect(await saves.pending, isFalse);
+      expect((await gc.files()).keys, contains('cardA/Session.gci'));
+    },
+  );
+
   test('stable ARMSX2 is preferred; nightly remains discoverable with its own persistent folder', () async {
     final e = emulator('armsx2');
     expect(

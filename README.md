@@ -44,6 +44,11 @@ Play from Broomm, save in the game and use melonDS’s Exit action before
 finishing sync. The walkthrough includes requirements for the native save
 location and what to do if Android keeps the app running.
 
+The [rooted Dolphin preview](docs/android-dolphin-root.md) uses the official
+2609a APK and default GameCube GCI or Wii NAND save locations. Open Dolphin once,
+close it, then choose **Emulator Settings → GameCube** or **Wii → Dolphin →
+Set up**. Use **Exit Emulation** after saving, then finish sync in Broomm.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.

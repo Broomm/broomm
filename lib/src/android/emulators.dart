@@ -20,6 +20,7 @@ import 'duckstation_documents.dart';
 import 'duck_root.dart';
 import 'duck_root_store.dart';
 import 'melon_root.dart';
+import 'dolphin_root.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -266,6 +267,10 @@ class AndroidEmulators extends ChangeNotifier {
       final binding = folder(emulator, package: package);
       return binding?['access'] == androidMelonRootAccess ? binding : null;
     }
+    if (emulator.id == 'dolphin' && {'ngc', 'wii'}.contains(platform)) {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidDolphinRootAccess ? binding : null;
+    }
     final selected = app(emulator, package: package);
     if (emulator.id != 'retroarch' ||
         selected == null ||
@@ -321,25 +326,60 @@ class AndroidEmulators extends ChangeNotifier {
         }
       }, requiresApkPermission: false);
 
-  Future<void> connectMelonRoot(AndroidEmulator emulator) async {
+  Future<void> connectMelonRoot(AndroidEmulator emulator) => _connectMediaRoot(
+    emulator,
+    id: 'melonds',
+    package: androidMelonRootPackage,
+    version: androidMelonRootVersion,
+    access: androidMelonRootAccess,
+    method: 'rootMelonInspect',
+    valid: androidMelonRootBinding,
+  );
+
+  Future<void> connectDolphinRoot(AndroidEmulator emulator, String platform) =>
+      _connectMediaRoot(
+        emulator,
+        id: 'dolphin',
+        package: androidDolphinRootPackage,
+        version: androidDolphinRootVersion,
+        access: androidDolphinRootAccess,
+        method: 'rootDolphinInspect',
+        valid: androidDolphinRootBinding,
+        platform: platform,
+      );
+
+  Future<void> _connectMediaRoot(
+    AndroidEmulator emulator, {
+    required String id,
+    required String package,
+    required String version,
+    required String access,
+    required String method,
+    required bool Function(Map<String, String>) valid,
+    String? platform,
+  }) async {
     final lease = await SessionLease.acquire(data);
     try {
       await ensureSetupAllowed();
       final selected = app(emulator);
-      if (emulator.id != 'melonds' ||
-          selected?.package != androidMelonRootPackage ||
-          selected?.version != androidMelonRootVersion)
-        throw StateError('Use shared-folder setup for this melonDS build.');
-      final report = await channel.invokeMapMethod<String, String>(
-        'rootMelonInspect',
-        {'package': selected!.package, 'build': selected.build},
-      );
-      final binding = {...?report, 'access': androidMelonRootAccess};
+      if (emulator.id != id ||
+          selected?.package != package ||
+          selected?.version != version)
+        throw StateError(
+          'Use shared-folder setup for this ${emulator.name} build.',
+        );
+      final report = await channel.invokeMapMethod<String, String>(method, {
+        'package': selected!.package,
+        'build': selected.build,
+        if (platform != null) 'platform': platform,
+      });
+      final binding = {...?report, 'access': access};
       if (binding.remove('version') case final String version)
         binding['emulatorVersion'] = version;
-      if (!androidMelonRootBinding(binding) ||
-          binding['build'] != selected.build)
-        throw StateError('melonDS did not verify its native save storage.');
+      if (!valid(binding) || binding['build'] != selected.build)
+        throw StateError(
+          '${emulator.name} did not verify its native save storage.',
+        );
       final next = {..._folders, '${emulator.id}:${selected.package}': binding};
       await _save(folders: next);
       _folders
@@ -467,6 +507,7 @@ class AndroidEmulators extends ChangeNotifier {
           (emulator.id == 'duckstation' && duckRoot() != null ||
               emulator.id == 'ppsspp' && pspRoot() != null ||
               emulator.id == 'melonds' && hasCurrentRoot(emulator, 'nds') ||
+              emulator.id == 'dolphin' && hasCurrentRoot(emulator, 'ngc') ||
               gbaRoot(emulator) != null ||
               rootConnection(emulator, 'snes') != null ||
               rootConnection(emulator, 'gb') != null ||
@@ -956,7 +997,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 19,
+        'version': 20,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -1038,6 +1079,7 @@ class AndroidEmulators extends ChangeNotifier {
               17,
               18,
               19,
+              20,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -1070,7 +1112,12 @@ class AndroidEmulators extends ChangeNotifier {
               record['version'] >= 19 &&
               emulator?.id == 'melonds' &&
               androidMelonRootBinding(binding);
+          final dolphinRoot =
+              record['version'] >= 20 &&
+              emulator?.id == 'dolphin' &&
+              androidDolphinRootBinding(binding);
           if (!melonRoot &&
+              !dolphinRoot &&
               (emulator == null ||
                   binding['tree'] == null ||
                   !sharedTree(emulator, binding['package']!, binding['tree']!)))
@@ -1097,6 +1144,7 @@ class AndroidEmulators extends ChangeNotifier {
           17,
           18,
           19,
+          20,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -1129,6 +1177,7 @@ class AndroidEmulators extends ChangeNotifier {
           17,
           18,
           19,
+          20,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1158,6 +1207,7 @@ class AndroidEmulators extends ChangeNotifier {
           17,
           18,
           19,
+          20,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1439,10 +1489,14 @@ class AndroidEmulators extends ChangeNotifier {
         }
         _emit();
       });
-      if (emulator.id == 'melonds' &&
-          await progressFileHash(apk) != androidMelonRootApkSha256)
-        throw const FormatException(
-          'The melonDS APK did not match the reviewed download.',
+      final pinnedHash = switch (emulator.id) {
+        'melonds' => androidMelonRootApkSha256,
+        'dolphin' => androidDolphinRootApkSha256,
+        _ => null,
+      };
+      if (pinnedHash != null && await progressFileHash(apk) != pinnedHash)
+        throw FormatException(
+          'The ${emulator.name} APK did not match the reviewed download.',
         );
       if (_download!.cancelled)
         throw StateError('Installation download cancelled.');

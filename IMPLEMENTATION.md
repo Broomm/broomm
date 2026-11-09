@@ -1,5 +1,15 @@
 # Implementation plan
 
+## Standalone Android follow-up — Dolphin
+
+The Dolphin increment adds optional root access to the official 2609a
+Android release. Setup verifies its default app storage and save settings.
+The save transaction identifies the selected disc, scopes GameCube GCI files
+by title header or Wii NAND files by title directory, and keeps numbered
+states in the exact APK's compatibility group. Process absence is required
+for file effects. The shared-folder route remains available. Native launch
+and RomM save acceptance are pending. See the [Dolphin walkthrough](docs/android-dolphin-root.md).
+
 ## Standalone Android follow-up — melonDS
 
 PR #6 merged as `a3ade0a` after all checks passed. The six remaining Android

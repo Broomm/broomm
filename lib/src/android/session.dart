@@ -18,6 +18,7 @@ import 'duck_root.dart';
 import 'duck_session.dart';
 import 'duckstation_documents.dart';
 import 'melon_root.dart';
+import 'dolphin_root.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -310,16 +311,16 @@ class AndroidGameSession extends ChangeNotifier {
           );
         await progressWrite(marker, {
           ...(await pending())!,
-          if (layout is AndroidSavePlan && layout.melonRooted)
-            'access': androidMelonRootAccess,
+          if (layout is AndroidSavePlan && layout.nativeMediaRoot)
+            'access': layout.binding['access'],
           'stateAreas': [
             for (final area in _game!.layout.areas)
               if (area.id.startsWith('states-')) area.id,
           ],
         });
-        if (layout is AndroidSavePlan && layout.melonRooted)
+        if (layout is AndroidSavePlan && layout.nativeMediaRoot)
           await manager.channel.invokeMethod<void>(
-            'rootMelonCheck',
+            layout.method('Check'),
             layout.arguments,
           );
         if (layout is AndroidSavePlan &&
@@ -384,9 +385,9 @@ class AndroidGameSession extends ChangeNotifier {
       final duckClock = duckPlan == null
           ? null
           : await _duck.launching(_game!, duckPlan);
-      if (layout is AndroidSavePlan && layout.melonRooted)
+      if (layout is AndroidSavePlan && layout.nativeMediaRoot)
         await manager.channel.invokeMethod<void>(
-          'rootMelonCheck',
+          layout.method('Check'),
           layout.arguments,
         );
       _preparation?.check();
@@ -869,10 +870,12 @@ class AndroidGameSession extends ChangeNotifier {
           'PSP owns a private memory-stick handoff. Finish its verified recovery before leaving this session. All copies were kept.',
         );
       if (await _shared.pending &&
-          (await progressJson(_shared.journal))['access'] ==
-              androidMelonRootAccess)
+          {
+            androidMelonRootAccess,
+            androidDolphinRootAccess,
+          }.contains((await progressJson(_shared.journal))['access']))
         throw StateError(
-          'Finish the original melonDS save transaction. Recovery was kept.',
+          'Finish the original rooted save transaction. Recovery was kept.',
         );
       // Do not inspect potentially incomplete native/shadow working files here.
       // Existing sealed snapshots remain authoritative until explicit review.

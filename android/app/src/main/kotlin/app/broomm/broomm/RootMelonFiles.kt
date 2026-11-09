@@ -2,7 +2,6 @@ package app.broomm.broomm
 
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
-import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
 import android.system.StructStat
@@ -53,30 +52,7 @@ internal class RootMelonFiles(
         }
     }
 
-    private fun closed() {
-        val processes = File("/proc").list() ?: error("Cannot verify that melonDS has stopped.")
-        require(processes.size <= 16384)
-        for (name in processes) {
-            if (name.toIntOrNull()?.let { it > 0 } != true) continue
-            live()
-            val owned = try {
-                val owner = Os.stat("/proc/$name").st_uid
-                owner == uid || owner == 0 && File("/proc/$name/status").useLines { lines ->
-                    lines.take(16).any { line ->
-                        line.startsWith("Uid:") && line.substringAfter(':').trim()
-                            .split(Regex("\\s+")).any { it == uid.toString() }
-                    }
-                }
-            } catch (e: ErrnoException) {
-                if (e.errno == OsConstants.ENOENT || e.errno == OsConstants.ESRCH) false else throw e
-            } catch (e: java.io.FileNotFoundException) {
-                if (!File("/proc/$name").exists()) false else throw e
-            }
-            check(!owned) {
-                "Save and exit melonDS. If Android keeps it open, stop melonDS in Android app settings, then retry in Broomm."
-            }
-        }
-    }
+    private fun closed() = requireNoEmulatorProcess(uid, "melonDS", live)
 
     private fun stateDirectory(): String {
         val storage = RootSaveFiles(internal, uid, internalLabel, live)
