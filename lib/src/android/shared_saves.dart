@@ -918,8 +918,7 @@ class SharedAndroidSaves {
     );
     for (final e in files.entries) {
       final key = plan.localKey(e.key)!;
-      if (!game.layout.areas.any((a) => key.startsWith('${a.id}/')))
-        continue; // Changed-build states stay in retained native capture.
+      if (!game.layout.areas.any((a) => key.startsWith('${a.id}/'))) continue; // Auxiliary files and changed-build states stay in native capture.
       await copy(
         await progressFile(directory(r), '$capture/native/${e.key}'),
         await layout.target(key),

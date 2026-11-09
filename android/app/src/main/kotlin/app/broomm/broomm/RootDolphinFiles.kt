@@ -18,6 +18,11 @@ internal const val DOLPHIN_VERSION = "2609a"
 private const val DOLPHIN_STATE_BYTES = 64 * 1024 * 1024
 private const val DOLPHIN_WII_BYTES = 32 * 1024 * 1024
 private const val DOLPHIN_GCI_BYTES = 17 * 1024 * 1024
+private val dolphinUndoFiles = setOf(
+    "files/StateSaves/lastState.sav",
+    "files/StateSaves/lastState.sav.dtm",
+    "files/StateSaves/undo.dtm",
+)
 
 /** The official app's default GCI slots, Wii disc save data and numbered states. */
 internal class RootDolphinFiles(identity: Map<String, Any>, private val live: () -> Unit) {
@@ -196,7 +201,7 @@ internal class RootDolphinFiles(identity: Map<String, Any>, private val live: ()
             for (slot in listOf("Card A", "Card B")) {
                 val dir = "${scope.data}/$slot"
                 for (file in children(dir, 4096)) {
-                    if (!file.name.endsWith(".gci")) continue
+                    if (!file.name.endsWith(".gci") && !file.name.endsWith(".gci.deleted")) continue
                     if (header(path("$dir/${file.name}")) == scope.id) selected.add("$dir/${file.name}")
                 }
             }
@@ -225,6 +230,9 @@ internal class RootDolphinFiles(identity: Map<String, Any>, private val live: ()
             }
             if (files.present(path(relative))) selected.add(relative)
         }
+        // Native state overwrites can replace these global files even when
+        // their previous contents belonged to a different game.
+        selected.addAll(dolphinUndoFiles.filter { files.present(path(it)) })
         require(selected.size <= 96 && selected.sumOf { it.toByteArray().size } <= 48 * 1024) {
             "Dolphin’s save inventory exceeds its supported limit."
         }
@@ -311,18 +319,20 @@ private data class DolphinScope(val id: String, val platform: String, val data: 
     fun state(slot: Int): String = "files/StateSaves/$id.s${slot.toString().padStart(2, '0')}"
 
     fun limit(path: String): Int {
-        if ((0..10).any { path == state(it) }) return DOLPHIN_STATE_BYTES
+        if (path in dolphinUndoFiles || (0..10).any { path == state(it) })
+            return DOLPHIN_STATE_BYTES
         if (platform == "ngc") {
             val folder = path.substringBeforeLast('/')
             require(folder in setOf("$data/Card A", "$data/Card B") &&
-                path.endsWith(".gci"))
+                (path.endsWith(".gci") || path.endsWith(".gci.deleted")))
             return DOLPHIN_GCI_BYTES
         }
         require(path.startsWith("$data/") && path.length > data.length + 1)
         return DOLPHIN_WII_BYTES
     }
 
-    fun hasHeader(path: String): Boolean = platform == "ngc" || path.startsWith("files/StateSaves/")
+    fun hasHeader(path: String): Boolean =
+        path !in dolphinUndoFiles && (platform == "ngc" || path.startsWith("files/StateSaves/"))
 
     fun validate(path: String, bytes: ByteArray) {
         if (hasHeader(path)) {

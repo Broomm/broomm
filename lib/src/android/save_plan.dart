@@ -452,6 +452,29 @@ Future<AndroidSavePlan> connectedAndroidProgress(
       } else {
         launch.addAll({'romPath': rom, 'platform': platform.slug});
         bind(layout, path: (a) => 'files/${a.path.substring(5)}');
+        // Dolphin can replace these global files when saving or loading a
+        // numbered state. Keep them in the native transaction only.
+        for (final name in ['lastState.sav', 'lastState.sav.dtm', 'undo.dtm']) {
+          remote.add(
+            AndroidSaveArea(
+              ProgressArea('dolphin-undo', 'user/StateSaves', exact: name),
+              'files/StateSaves',
+            ),
+          );
+        }
+        for (final area in ordinary.where((a) => a.gciId != null)) {
+          remote.add(
+            AndroidSaveArea(
+              ProgressArea(
+                'dolphin-undo-${area.id}',
+                area.path,
+                suffix: '.gci.deleted',
+                gciId: area.gciId,
+              ),
+              'files/${area.path.substring(5)}',
+            ),
+          );
+        }
       }
     case 'duckstation':
     case 'armsx2':

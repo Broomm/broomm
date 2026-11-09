@@ -19,6 +19,9 @@ selected title's ordinary data directory alone. Numbered Dolphin states
 are scoped to the selected disc and exact installed build. Each state is
 bounded at 64 MiB and the title inventory at 512 MiB. Linked paths, foreign
 headers and unsupported movie companions keep recovery pending.
+Dolphin's global state undo files and the selected game's deleted GCI
+backups stay in the native recovery transaction and are excluded from
+RomM uploads. The transaction restores their original bytes.
 
 The reviewed upstream sources describe [native user-directory selection](https://github.com/dolphin-emu/dolphin/blob/2609a/Source/Android/app/src/main/java/org/dolphinemu/dolphinemu/utils/DirectoryInitialization.kt),
 [GameCube slot defaults](https://github.com/dolphin-emu/dolphin/blob/2609a/Source/Core/Core/Config/MainSettings.cpp),
@@ -37,7 +40,7 @@ Dolphin process. Stop it through Android's app settings after exiting the game
 if Broomm still detects it. Broomm keeps the original native bytes and recovery
 journal until it can verify capture and restoration.
 
-This increment covers GameCube disc regions USA, Japan and PAL and ordinary
+This increment covers GameCube discs with region codes E, J or P and ordinary
 Wii discs. WAD channels, Wii add-on installation and raw GameCube cards are
 outside the rooted route. Use shared-folder setup for eligible custom
 configurations. Device initialization and workflow tests are separate from

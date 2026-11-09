@@ -469,6 +469,16 @@ void main() {
         '$folder/Other.gci',
         gci('GZLE01', 2),
       );
+      final undo = await put(
+        native,
+        'files/StateSaves/lastState.sav',
+        gci('GZLE01', 5),
+      );
+      final deleted = await put(
+        native,
+        '$folder/Standalone.gci.deleted',
+        gci('GAFE01', 6),
+      );
       final selected = gc.launch['romPath']!;
       await saves.begin(
         cloudGame,
@@ -477,19 +487,28 @@ void main() {
         selected: selected,
       );
       expect(await standalone.exists(), isFalse);
+      expect(await undo.exists(), isFalse);
+      expect(await deleted.exists(), isFalse);
       final written = await put(
         native,
         '$folder/Session.gci',
         gci('GAFE01', 3),
       );
       await put(native, 'files/StateSaves/GAFE01.s00', gci('GAFE01', 4));
+      await undo.writeAsBytes(gci('GAFE01', 7));
       expect(await saves.capture(cloudGame, cloud, gc), isTrue);
       await saves.restoreOriginal(cloudGame, gc);
       expect(await standalone.readAsBytes(), gci('GAFE01', 1));
       expect(await unrelated.readAsBytes(), gci('GZLE01', 2));
+      expect(await undo.readAsBytes(), gci('GZLE01', 5));
+      expect(await deleted.readAsBytes(), gci('GAFE01', 6));
       expect(await written.exists(), isFalse);
       expect(await saves.pending, isFalse);
       expect((await gc.files()).keys, contains('cardA/Session.gci'));
+      expect(
+        (await gc.files()).keys,
+        everyElement(isNot(startsWith('dolphin-undo'))),
+      );
     },
   );
 
