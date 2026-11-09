@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../android/emulators.dart';
 import '../android/root_saves.dart';
 import '../android/setup.dart';
+import '../romm/client.dart';
 import 'controls.dart';
 
 class AndroidSetupDialog extends StatefulWidget {
@@ -12,12 +13,16 @@ class AndroidSetupDialog extends StatefulWidget {
     required this.emulator,
     required this.platform,
     required this.profile,
+    this.client,
+    this.platformId,
     this.autoComplete = true,
   });
   final AndroidEmulators manager;
   final AndroidEmulator emulator;
   final String platform, profile;
   final bool autoComplete;
+  final RommClient? client;
+  final int? platformId;
 
   @override
   State<AndroidSetupDialog> createState() => _AndroidSetupDialogState();
@@ -30,6 +35,8 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
     widget.emulator,
     widget.platform,
     widget.profile,
+    client: widget.client,
+    platformId: widget.platformId,
   )..addListener(_changed);
   bool completing = false;
 
@@ -96,7 +103,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                           'snes9x' => 'Snes9x',
                           _ => emulator.name,
                         }} · ${(manager.downloadedBytes / (1024 * 1024)).toStringAsFixed(1)} MB'
-                      : 'Preparing ${emulator.name}…',
+                      : setup.firmwarePhase ?? 'Preparing ${emulator.name}…',
                 ),
               ] else
                 Text(switch (setup.step) {
@@ -118,6 +125,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
               ConsoleButton(
                 onPressed: manager.cancelDownload,
                 child: const Text('Cancel download'),
+              ),
+            if (setup.busy && setup.preparingFirmware)
+              ConsoleButton(
+                onPressed: setup.cancelFirmware,
+                child: const Text('Cancel setup'),
               ),
             if (!setup.busy) ...[
               ConsoleButton(
@@ -168,6 +180,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                                   'melonds',
                                   'dolphin',
                                   'eden',
+                                  'armsx2',
                                 }.contains(emulator.id)) &&
                             setup.step != AndroidSetupStep.folder))
                   ConsoleButton(

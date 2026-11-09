@@ -7,17 +7,20 @@ import java.io.InputStream
 
 /** Bounded app-owned descriptors keep save-state bytes out of Binder parcels. */
 internal object RootSaveTransfer {
-    fun read(descriptor: ParcelFileDescriptor, owner: Int, limit: Int, live: () -> Unit): ByteArray = descriptor.use {
+    fun read(descriptor: ParcelFileDescriptor, owner: Int, limit: Int, live: () -> Unit): ByteArray =
+        source(descriptor, owner, limit.toLong()) { input, size -> readExact(input, size.toInt(), live) }
+
+    fun <T> source(descriptor: ParcelFileDescriptor, owner: Int, limit: Long, read: (InputStream, Long) -> T): T = descriptor.use {
         val fd = descriptor.fileDescriptor
         val before = Os.fstat(fd)
         require(OsConstants.S_ISREG(before.st_mode) && before.st_uid == owner && before.st_nlink == 1L &&
-            before.st_size in 0..limit.toLong()) { "Invalid private save transfer source." }
+            before.st_size in 0..limit) { "Invalid private save transfer source." }
         ParcelFileDescriptor.AutoCloseInputStream(descriptor).use { input ->
-            val bytes = readExact(input, before.st_size.toInt(), live)
+            val value = read(input, before.st_size)
             val after = Os.fstat(fd)
             require(before.st_size == after.st_size &&
                 before.st_mtime == after.st_mtime && before.st_ctime == after.st_ctime)
-            bytes
+            value
         }
     }
 

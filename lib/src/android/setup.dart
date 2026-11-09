@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
+import '../romm/client.dart';
+import '../romm/transfer.dart';
+import 'firmware.dart';
 import 'azahar.dart';
 import 'citra_mmj.dart';
 import 'eden_root.dart';
@@ -19,8 +22,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     this.manager,
     this.emulator,
     this.platform,
-    this.profile,
-  ) {
+    this.profile, {
+    this.client,
+    this.platformId,
+  }) {
     manager.addListener(_installed);
   }
 
@@ -28,6 +33,12 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   final AndroidEmulator emulator;
   final String platform;
   final String profile;
+  final RommClient? client;
+  final int? platformId;
+  DownloadCancellation? _firmware;
+  String? firmwarePhase;
+  bool get preparingFirmware => _firmware != null;
+  void cancelFirmware() => _firmware?.cancel();
   AndroidSetupStep step = AndroidSetupStep.install;
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
@@ -109,6 +120,21 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
   }
 
+  Future<void> _prepareFirmware(
+    Future<void> Function(DownloadCancellation, void Function(String)) action,
+  ) async {
+    final cancellation = _firmware = DownloadCancellation();
+    try {
+      await action(cancellation, (value) {
+        firmwarePhase = value;
+        if (!_disposed) notifyListeners();
+      });
+    } finally {
+      _firmware = null;
+      firmwarePhase = null;
+    }
+  }
+
   Future<void> verify() => _run(() async {
     final app = manager.app(emulator);
     if (app == null) {
@@ -117,6 +143,31 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
     if (!app.enabled)
       throw StateError('Enable ${emulator.name} in Android settings first.');
+    final source = client, id = platformId;
+    if (!_shared &&
+        emulator.id == 'armsx2' &&
+        platform == 'ps2' &&
+        source != null &&
+        id != null &&
+        canProvisionArmsx2Bios(app)) {
+      step = AndroidSetupStep.initialize;
+      final lease = await SessionLease.acquire(manager.data);
+      try {
+        await manager.ensureSetupAllowed();
+        await _prepareFirmware(
+          (cancellation, phase) => provisionAndroidArmsx2Bios(
+            manager,
+            app,
+            id,
+            source,
+            cancellation,
+            phase,
+          ),
+        );
+      } finally {
+        await lease.release();
+      }
+    }
     if (_rooted) {
       step = AndroidSetupStep.initialize;
       if (emulator.id == 'melonds') {
@@ -130,7 +181,21 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         return;
       }
       if (emulator.id == 'eden') {
-        await manager.connectEdenRoot(emulator);
+        await manager.connectEdenRoot(
+          emulator,
+          provision: source == null || id == null
+              ? null
+              : (app) => _prepareFirmware(
+                  (cancellation, phase) => provisionAndroidEden(
+                    manager,
+                    app,
+                    id,
+                    source,
+                    cancellation,
+                    phase,
+                  ),
+                ),
+        );
         step = AndroidSetupStep.ready;
         return;
       }
@@ -252,6 +317,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    cancelFirmware();
     manager.removeListener(_installed);
     super.dispose();
   }

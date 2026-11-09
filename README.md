@@ -558,7 +558,14 @@ needs accessible memcards/states and Shared cards. The
 has exact settings, prerequisites and limits. A folder connection serves all
 Broomm profiles. Missing setup leads to Emulator Settings before Play.
 
-For MMJ use **Internal storage/citra-emu** and confirm it actually uses shared storage; private Storage Access builds are unsupported. Broomm preserves standalone progress, swaps the active profile/game's saves for play, and restores the original afterward. On return choose **Finished? Sync progress** only after saving/closing the emulator; **Not finished** keeps the session active. Saves use timestamped BROOMM history and native extensions, with imports/backups in the game's Options menu. After interruption use **Finish previous game session**; **Reconnect original save folder** handles revoked grants, and **Keep emulator folder unchanged · Finish** retains copies when normal recovery cannot complete. States have separate physical/build groups; Eden has no states. BIOS/firmware and new content installers are later work, with no additional Wii update integration planned. See [effects, offline behavior and cleanup](docs/android-installation-and-saves.md#recovery-effects-and-cleanup).
+On rooted Android, **Emulator Settings → Nintendo Switch → Eden → Set up**
+can provision missing Switch firmware, `prod.keys` and `title.keys` from
+the active profile’s RomM firmware catalogue. Open and close Eden once
+first. **PlayStation 2 → ARMSX2 → Set up** can import a missing `bios.bin`
+from RomM into the reviewed ARM64 2.9.2 SDK33 app. Keep ARMSX2 closed during
+import. This BIOS action is separate from connecting its shared save folder.
+
+For MMJ use **Internal storage/citra-emu** and confirm it actually uses shared storage; private Storage Access builds are unsupported. Broomm preserves standalone progress, swaps the active profile/game's saves for play, and restores the original afterward. On return choose **Finished? Sync progress** only after saving/closing the emulator; **Not finished** keeps the session active. Saves use timestamped BROOMM history and native extensions, with imports/backups in the game's Options menu. After interruption use **Finish previous game session**; **Reconnect original save folder** handles revoked grants, and **Keep emulator folder unchanged · Finish** retains copies when normal recovery cannot complete. States have separate physical/build groups; Eden has no states. Android game update and DLC installation remain separate, with no additional Wii update integration planned. See [effects, offline behavior and cleanup](docs/android-installation-and-saves.md#recovery-effects-and-cleanup).
 
 Verify the Android workflow and compile its native sources:
 

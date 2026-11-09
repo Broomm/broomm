@@ -22,7 +22,24 @@ Future<void> ensurePlayStationFirmware(
   final ps2 = isPs2Emulator(e.name);
   if (!ps2 && e.name != 'DuckStation')
     throw const FormatException('Not a PlayStation BIOS integration');
-  final system = Directory('${e.root}/system');
+  await ensurePlayStationBios(
+    Directory('${e.root}/system'),
+    ps2: ps2,
+    platformId: platformId,
+    client: client,
+    cancellation: cancellation,
+    phase: phase,
+  );
+}
+
+Future<void> ensurePlayStationBios(
+  Directory system, {
+  required bool ps2,
+  required int platformId,
+  required RommClient client,
+  required DownloadCancellation cancellation,
+  required void Function(String) phase,
+}) async {
   await ownedDirectory(system);
   final bios = await addonFile(system, 'bios.bin', createParents: false);
   Future<bool> valid(File file) async {

@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Android firmware setup from RomM
+
+The rooted Eden preview uses the active RomM profile to provision missing
+Switch keys and firmware during Set up. The standard ARM64 ARMSX2 2.9.2
+SDK33 build can likewise provision a missing 4 MiB PS2 BIOS. Both reuse
+desktop catalogue selection and checksum validation. The Android bridge
+verifies the pinned package and closed emulator before writing, and keeps
+existing firmware. ARMSX2’s ordinary Android folder connection remains
+separate from its BIOS import. Rooted PS2 saves and native gameplay
+acceptance are pending.
+
 ## Standalone Android follow-up — Eden
 
 The rooted route scopes ordinary saves to the selected Switch title and the

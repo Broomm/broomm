@@ -49,7 +49,7 @@ class BroommEmulators(private val activity: Activity) {
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
-                        "rootEdenInspect", "rootEdenKey", "rootEdenScope", "rootEdenCheck", "rootEdenList", "rootEdenRead", "rootEdenReplace",
+                        "rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootEdenInspect", "rootEdenFirmwareStatus", "rootEdenProvision", "rootEdenKey", "rootEdenScope", "rootEdenCheck", "rootEdenList", "rootEdenRead", "rootEdenReplace",
                         "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckGame", "rootDuckList", "rootDuckRead", "rootDuckReplace", "rootDuckProfileList", "rootDuckProfileRead", "rootDuckProfileReplace" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())

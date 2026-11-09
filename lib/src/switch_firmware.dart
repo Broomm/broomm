@@ -72,11 +72,32 @@ void validateSwitchKeyFile(String text, {required bool prod}) {
 /// Same registered/<NCA ID>.nca/00 layout used by Ryubing's InstallFromZip.
 /// Extraction is bounded and confined before any resource is published.
 Future<Directory> stageSwitchFirmware(File archive, Directory stage) async {
-  final zip = await ProgressZip.read(
-    archive,
-    maxBytes: 2 * 1024 * 1024 * 1024,
-    maxEntryBytes: 512 * 1024 * 1024,
-  );
+  final zip = await _switchFirmwareZip(archive);
+  final targets = _switchFirmwareEntries(zip);
+  final unpacked = Directory('${stage.path}/unpacked');
+  await ownedDirectory(unpacked);
+  await zip.extract(unpacked);
+  final registered = Directory('${stage.path}/registered');
+  await ownedDirectory(registered);
+  for (final e in targets.entries) {
+    final source = await addonFile(unpacked, e.value),
+        target = await addonFile(
+          registered,
+          '${e.key}.nca/00',
+          createParents: true,
+        );
+    await source.rename(target.path);
+  }
+  return registered;
+}
+
+Future<ProgressZip> _switchFirmwareZip(File archive) => ProgressZip.read(
+  archive,
+  maxBytes: 2 * 1024 * 1024 * 1024,
+  maxEntryBytes: 512 * 1024 * 1024,
+);
+
+Map<String, String> _switchFirmwareEntries(ProgressZip zip) {
   if (zip.entries.isEmpty || zip.entries.length > 4096)
     throw const FormatException(
       'Firmware ZIP contains no usable NCAs or exceeds its file limit',
@@ -97,21 +118,75 @@ Future<Directory> stageSwitchFirmware(File archive, Directory stage) async {
       );
     targets[match[1]!.toLowerCase()] = e.name;
   }
-  final unpacked = Directory('${stage.path}/unpacked');
-  await ownedDirectory(unpacked);
-  await zip.extract(unpacked);
-  final registered = Directory('${stage.path}/registered');
-  await ownedDirectory(registered);
-  for (final e in targets.entries) {
-    final source = await addonFile(unpacked, e.value),
-        target = await addonFile(
-          registered,
-          '${e.key}.nca/00',
-          createParents: true,
-        );
-    await source.rename(target.path);
-  }
-  return registered;
+  return targets;
+}
+
+Future<void> validateSwitchFirmwareArchive(File archive) async {
+  _switchFirmwareEntries(await _switchFirmwareZip(archive));
+}
+
+Future<Map<String, RommFirmware>> rommSwitchResources(
+  RommClient client,
+  int platformId,
+) async {
+  final files = await client.firmware(platformId);
+  final zip = files
+      .where(
+        (f) =>
+            f.platformId == platformId && f.name.toLowerCase().endsWith('.zip'),
+      )
+      .toList();
+  final prod = files
+      .where(
+        (f) =>
+            f.platformId == platformId && f.name.toLowerCase() == 'prod.keys',
+      )
+      .toList();
+  final title = files
+      .where(
+        (f) =>
+            f.platformId == platformId && f.name.toLowerCase() == 'title.keys',
+      )
+      .toList();
+  if (zip.length != 1 || prod.length != 1 || title.length != 1)
+    throw const RommFailure(
+      'Configure exactly one firmware ZIP, prod.keys and title.keys in the Switch platform’s RomM BIOS/firmware catalogue. Existing resources were kept.',
+    );
+  return {
+    'switch_firmware': zip.single,
+    'prod_keys': prod.single,
+    'title_keys': title.single,
+  };
+}
+
+Future<File> downloadRommSwitchResource(
+  RommClient client,
+  String key,
+  RommFirmware source,
+  Directory stage,
+  DownloadCancellation cancellation,
+  void Function(String) phase,
+) async {
+  final firmware = key == 'switch_firmware';
+  final downloaded = File('${stage.path}/${source.id}.download');
+  phase('Downloading ${firmware ? 'Switch firmware' : source.name} from RomM');
+  await client.downloadFirmware(
+    source,
+    downloaded,
+    cancellation: cancellation,
+    onProgress: (_) {},
+  );
+  if (await Isolate.run(() => progressFileHash(downloaded, md5: true)) !=
+      source.md5)
+    throw const RommFailure(
+      'A Switch resource download did not match RomM. Nothing was replaced.',
+    );
+  if (!firmware)
+    validateSwitchKeyFile(
+      await downloaded.readAsString(),
+      prod: key == 'prod_keys',
+    );
+  return downloaded;
 }
 
 /// Provision missing resources only. A newer ZIP on RomM never silently
@@ -161,36 +236,7 @@ Future<void> ensureSwitchFirmware(
   }
   if (needed.isNotEmpty) {
     phase('Checking RomM for Switch firmware and keys');
-    final files = await client.firmware(platformId);
-    final zip = files
-        .where(
-          (f) =>
-              f.platformId == platformId &&
-              f.name.toLowerCase().endsWith('.zip'),
-        )
-        .toList();
-    final prod = files
-        .where(
-          (f) =>
-              f.platformId == platformId && f.name.toLowerCase() == 'prod.keys',
-        )
-        .toList();
-    final title = files
-        .where(
-          (f) =>
-              f.platformId == platformId &&
-              f.name.toLowerCase() == 'title.keys',
-        )
-        .toList();
-    if (zip.length != 1 || prod.length != 1 || title.length != 1)
-      throw const RommFailure(
-        'Configure exactly one firmware ZIP, prod.keys and title.keys in the Switch platform’s RomM BIOS/firmware catalogue. Existing resources were kept.',
-      );
-    final selected = {
-      'switch_firmware': zip.single,
-      'prod_keys': prod.single,
-      'title_keys': title.single,
-    };
+    final selected = await rommSwitchResources(client, platformId);
     final stage = await resources.createTemp('.switch-resources-');
     try {
       await addonWrite(File('${stage.path}/owner.json'), {
@@ -200,34 +246,21 @@ Future<void> ensureSwitchFirmware(
       });
       for (final key in needed) {
         cancellation.check();
-        final source = selected[key]!,
-            downloaded = File('${stage.path}/${source.id}.download');
-        phase(
-          'Downloading ${key == 'switch_firmware' ? 'Switch firmware' : source.name} from RomM',
-        );
-        await client.downloadFirmware(
+        final source = selected[key]!;
+        final downloaded = await downloadRommSwitchResource(
+          client,
+          key,
           source,
-          downloaded,
-          cancellation: cancellation,
-          onProgress: (_) {},
+          stage,
+          cancellation,
+          phase,
         );
-        if (await Isolate.run(() => progressFileHash(downloaded, md5: true)) !=
-            source.md5)
-          throw const RommFailure(
-            'A Switch resource download did not match RomM. Nothing was replaced.',
-          );
-        FileSystemEntity ready;
+        FileSystemEntity ready = downloaded;
         if (key == 'switch_firmware') {
           phase('Installing private Switch firmware');
           ready = await Isolate.run(
             () => stageSwitchFirmware(downloaded, stage),
           );
-        } else {
-          validateSwitchKeyFile(
-            await downloaded.readAsString(),
-            prod: key == 'prod_keys',
-          );
-          ready = downloaded;
         }
         final target = await addonPath(resources, key);
         cancellation.check();

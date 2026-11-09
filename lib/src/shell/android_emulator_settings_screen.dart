@@ -85,6 +85,8 @@ class _AndroidEmulatorSettingsScreenState
             emulator: emulator,
             platform: slug,
             profile: profile.id,
+            client: model.client,
+            platformId: platform.id,
             autoComplete: !manager.connected(
               profile.id,
               emulator,

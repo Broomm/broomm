@@ -365,7 +365,10 @@ class AndroidEmulators extends ChangeNotifier {
         platform: platform,
       );
 
-  Future<void> connectEdenRoot(AndroidEmulator emulator) => _connectMediaRoot(
+  Future<void> connectEdenRoot(
+    AndroidEmulator emulator, {
+    Future<void> Function(AndroidApp)? provision,
+  }) => _connectMediaRoot(
     emulator,
     id: 'eden',
     package: androidEdenRootPackage,
@@ -373,6 +376,7 @@ class AndroidEmulators extends ChangeNotifier {
     access: androidEdenRootAccess,
     method: 'rootEdenInspect',
     valid: androidEdenRootBinding,
+    provision: provision,
   );
 
   Future<void> _connectMediaRoot(
@@ -384,6 +388,7 @@ class AndroidEmulators extends ChangeNotifier {
     required String method,
     required bool Function(Map<String, String>) valid,
     String? platform,
+    Future<void> Function(AndroidApp)? provision,
   }) async {
     final lease = await SessionLease.acquire(data);
     try {
@@ -395,6 +400,7 @@ class AndroidEmulators extends ChangeNotifier {
         throw StateError(
           'Use shared-folder setup for this ${emulator.name} build.',
         );
+      await provision?.call(selected!);
       final report = await channel.invokeMapMethod<String, String>(method, {
         'package': selected!.package,
         'build': selected.build,

@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:broomm/src/android/eden_root.dart';
+import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/firmware.dart';
 import 'package:broomm/src/managed_emulators.dart';
 import 'package:broomm/src/progress/digest.dart';
 import 'package:broomm/src/progress/zip.dart';
@@ -57,6 +61,7 @@ class _Client extends RommClient {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late Directory root;
   late _Manager manager;
   const profile = 'a123456789abcdef0123456789abcdef';
@@ -146,6 +151,159 @@ void main() {
       }),
     );
   });
+  for (final mode in ['missing', 'installed', 'damaged']) {
+    test(
+      'Android Eden verifies and provisions the $mode resource set safely',
+      () async {
+        const channel = MethodChannel('test/eden-firmware');
+        final android = AndroidEmulators(root, channel: channel, enabled: true);
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final c = await client();
+        const build =
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+        const app = AndroidApp(
+          androidEdenRootPackage,
+          androidEdenRootVersion,
+          build,
+        );
+        final published = <String, String>{};
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'rootEdenFirmwareStatus') {
+            return {
+              'package': app.package,
+              'build': build,
+              'version': app.version,
+              'signer': androidEdenRootSigner,
+              'user': '0',
+              'uid': '10144',
+              'dataDir': '/data/user/0/${app.package}',
+              'label': 'u:object_r:app_data_file:s0:c144,c256,c512,c768',
+              'externalLabel':
+                  'u:object_r:media_rw_data_file:s0:c144,c256,c512,c768',
+              'externalGid': '1078',
+              'externalDevice': '1',
+              'externalInode': '2',
+              'missing': mode == 'installed'
+                  ? ''
+                  : 'prod_keys,title_keys,switch_firmware',
+            };
+          }
+          expect(call.method, 'rootEdenProvision');
+          final args = (call.arguments as Map).cast<String, String>();
+          final path = File(args['source']!);
+          expect(args['after'], await progressFileHash(path));
+          published[args['path']!] = path.path;
+          return null;
+        });
+        try {
+          if (mode == 'damaged') c.payloads[1] = utf8.encode('damaged');
+          final setup = provisionAndroidEden(
+            android,
+            app,
+            8,
+            c,
+            DownloadCancellation(),
+            (_) {},
+          );
+          if (mode == 'damaged') {
+            await expectLater(setup, throwsA(isA<RommFailure>()));
+          } else {
+            await setup;
+          }
+          if (mode == 'missing') {
+            expect(published.keys, [
+              'prod_keys',
+              'title_keys',
+              'switch_firmware',
+            ]);
+            for (final path in published.values) {
+              expect(await File(path).exists(), isFalse);
+            }
+          } else {
+            expect(published, isEmpty);
+          }
+          if (mode == 'installed') expect(c.calls, isEmpty);
+        } finally {
+          c.close();
+          messenger.setMockMethodCallHandler(channel, null);
+          android.dispose();
+        }
+      },
+    );
+  }
+
+  for (final existing in [false, true]) {
+    test(
+      'Android ARMSX2 keeps installed BIOS and publishes only a verified missing BIOS ($existing)',
+      () async {
+        const channel = MethodChannel('test/armsx2-bios');
+        final android = AndroidEmulators(root, channel: channel, enabled: true);
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        const build =
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+        const app = AndroidApp('com.armsx2', '2.9.2', build);
+        final bytes = Uint8List(4 * 1024 * 1024)
+          ..setAll(0, ascii.encode('ROMDIR ROMVER'));
+        final digest = (ProgressDigest.md5()..add(bytes)).finish();
+        final c = _Client(
+          [RommFirmware(1, 8, 'bios.bin', bytes.length, digest)],
+          {1: bytes},
+        );
+        String? published;
+        messenger.setMockMethodCallHandler(channel, (call) async {
+          if (call.method == 'rootArmsx2BiosStatus') {
+            return {
+              'package': app.package,
+              'build': build,
+              'version': app.version,
+              'signer': 'df91c9ce39d3f53c9bab5f2c1e0820e761800c93f1805305b87e87486d244d5a',
+              'user': '0',
+              'uid': '10143',
+              'dataDir': '/data/user/0/com.armsx2',
+              'label': 'u:object_r:app_data_file:s0:c143,c256,c512,c768',
+              'externalLabel':
+                  'u:object_r:media_rw_data_file:s0:c143,c256,c512,c768',
+              'externalGid': '1078',
+              'externalDevice': '1',
+              'externalInode': '2',
+              'missing': (!existing).toString(),
+            };
+          }
+          expect(call.method, 'rootArmsx2BiosProvision');
+          final args = (call.arguments as Map).cast<String, String>();
+          final staged = File(args['source']!);
+          expect(await staged.length(), bytes.length);
+          expect(args['after'], await progressFileHash(staged));
+          published = staged.path;
+          return null;
+        });
+        try {
+          await provisionAndroidArmsx2Bios(
+            android,
+            app,
+            8,
+            c,
+            DownloadCancellation(),
+            (_) {},
+          );
+          expect(c.calls, existing ? isEmpty : [1]);
+          if (existing) {
+            expect(published, isNull);
+          } else {
+            expect(published, isNotNull);
+            expect(await File(published!).exists(), isFalse);
+          }
+        } finally {
+          c.close();
+          messenger.setMockMethodCallHandler(channel, null);
+          android.dispose();
+        }
+      },
+    );
+  }
+
   test('Eden firmware uses its native NAND paths and keeps the other Switch console isolated', () async {
     final c = await client();
     try {

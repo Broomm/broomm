@@ -128,16 +128,71 @@ internal class RootEdenFiles(identity: Map<String, Any>, private val live: () ->
         return ByteArray(32) { values.single().substring(it * 2, it * 2 + 2).toInt(16).toByte() }
     }
 
+    private val registered = "files/nand/system/Contents/registered"
+    private val keyPaths = mapOf("prod_keys" to "files/keys/prod.keys", "title_keys" to "files/keys/title.keys")
+
+    private fun firmwarePresent(): Boolean {
+        val folder = path(registered)
+        if (!files.present(folder)) return false
+        directory(folder)
+        val names = folder.list() ?: error("Eden’s firmware directory could not be read.")
+        require(names.size <= 4096)
+        return names.any { Regex("[a-fA-F0-9]{32}(?:\\.cnmt)?\\.nca").matches(it) }
+    }
+
+    fun firmwareStatus(): Bundle = report().apply {
+        val missing = mutableListOf<String>()
+        for ((resource, relative) in keyPaths) {
+            val target = path(relative)
+            if (!files.present(target) || Os.lstat(target.path).st_nlink == 2L)
+                missing.add(resource)
+            else files.existing(relative)
+        }
+        if (!firmwarePresent()) missing.add("switch_firmware")
+        closed()
+        putString("missing", if (missing.any { it != "title_keys" }) missing.joinToString(",") else "")
+    }
+
+    private fun provision(request: Bundle, caller: Int): Bundle {
+        val resource = request.getString("path")!!
+        val after = request.getString("after")!!
+        require(Regex("[a-f0-9]{64}").matches(after))
+        val token = after.take(32) + "-in"
+        val source = request.getParcelable<ParcelFileDescriptor>("transfer")!!
+        if (resource == "switch_firmware") {
+            if (!firmwarePresent()) {
+                closed()
+                files.parents(registered, token)
+                val target = path(registered)
+                fun verifyEmpty() {
+                    live(); closed(); verifySettings(); path(registered)
+                    if (files.present(target)) {
+                        directory(target)
+                        require(target.list()?.isEmpty() == true) { "Eden already has files in its firmware folder. They were kept." }
+                    }
+                }
+                installEdenFirmware(target, source, caller, after, uid, label, live, ::verifyEmpty)
+            }
+            require(firmwarePresent()) { "Eden firmware installation was not confirmed." }
+        } else {
+            val relative = keyPaths[resource] ?: error("Invalid Switch resource.")
+            val target = path(relative)
+            if (!files.present(target) || Os.lstat(target.path).st_nlink == 2L) {
+                val bytes = RootSaveTransfer.read(source, caller, 256 * 1024, live)
+                files.replaceStandalone(relative, null, after, bytes, null, token, 256 * 1024) {
+                    closed(); verifySettings(); path(relative)
+                }
+            }
+            if (resource == "prod_keys") headerKey().fill(0) else files.existing(relative)
+        }
+        closed()
+        return Bundle()
+    }
+
     fun setup(): Bundle {
         val binding = report()
         headerKey().fill(0)
-        val registered = path("files/nand/system/Contents/registered")
-        require(files.present(registered)) { "Install your Switch firmware inside Eden before setup." }
-        directory(registered)
-        val names = registered.list() ?: error("Eden’s firmware directory could not be read.")
-        require(names.size <= 4096 && names.any { Regex("[a-fA-F0-9]{32}\\.nca").matches(it) }) {
-            "Install your Switch firmware inside Eden before setup."
-        }
+        require(firmwarePresent()) { "Install Switch firmware from RomM or inside Eden before setup." }
         closed()
         return binding
     }
@@ -203,6 +258,7 @@ internal class RootEdenFiles(identity: Map<String, Any>, private val live: () ->
             "Eden’s installation or save storage changed. Recovery was kept."
         }
         val action = request.getString("operation")
+        if (action == "edenprovision") return provision(request, caller)
         if (action == "edenkey") return Bundle().apply { putByteArray("headerKey", headerKey()); closed() }
         val title = request.getString("title")!!
         val scope = scope(title)

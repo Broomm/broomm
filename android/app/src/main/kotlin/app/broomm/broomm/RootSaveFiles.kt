@@ -60,7 +60,7 @@ internal class RootSaveFiles(
         require(p.size == 4 && p[0].toInt() == uid && p[1].toInt() >= 0 && Regex("[0-7]{3}").matches(p[2]) && p[3] == String(label).trimEnd('\u0000'))
         Os.chown(file.path, uid, p[1].toInt()); Os.chmod(file.path, p[2].toInt(8)); Os.setxattr(file.path, "security.selinux", label, 0)
     }
-    private fun parents(relative: String, token: String) {
+    fun parents(relative: String, token: String) {
         var parent = root
         for (part in relative.split('/').dropLast(1)) {
             val target = File(parent, part)
