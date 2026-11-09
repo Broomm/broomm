@@ -163,6 +163,11 @@ jobs:
         run: |
           mkdir -p build/native-linux-checks
           bash tool/ci/run.sh bash tool/check_root_process.sh > build/native-linux-checks/root-process-sanitizers.log 2>&1
+      - name: Android PS2 disc header checks
+        if: ${{ !cancelled() && matrix.platform == 'linux' }}
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/android/check_ps2_chd.sh > build/native-linux-checks/ps2-chd.log 2>&1
       # Full native memory cards require repeated durable copies/readback. Give
       # those tests the runner without competing suites, with unchanged limits.
       - name: Test full-size save workflows
