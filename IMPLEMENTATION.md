@@ -7,8 +7,11 @@ The reviewed standard Citra MMJ APK can verify its primary shared
 grant, initialized native directories, and process absence. Save transfer
 still uses the Android folder grant and the existing journal. Matching
 legacy state files are kept in recovery but are excluded from cloud sync
-for this build. Host workflow tests and Kotlin compilation pass. The
-native save round trip is pending the app’s first-run storage permission.
+for this build. The Thor granted media and folder access and reached
+Mario Kart 7’s title screen from a private filesystem path. A content URI
+crashes the standard APK’s legacy launch code. Broomm now stages a
+verified private image and records it for removal in session recovery.
+Packaged launch and native save round-trip acceptance are pending.
 See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
 
 ## Standalone Android follow-up — Azahar

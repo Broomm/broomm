@@ -39,13 +39,14 @@ class RootSaveService : RootService() {
         val deadline = request.getLong("deadline")
         fun live() { check(SystemClock.elapsedRealtime() <= deadline) { "Root operation expired. Recovery was kept." } }
         live()
+        val operation = request.getString("operation") ?: error("Missing root operation.")
         val pkg = request.getString("package")!!
         val psp = request.getString("operation")?.startsWith("psp") == true
         val duck = request.getString("operation")?.startsWith("duck") == true
         val melon = request.getString("operation")?.startsWith("melon") == true
         val dolphin = request.getString("operation")?.startsWith("dolphin") == true
         val azahar = request.getString("operation") == "azaharfolder"
-        val mmj = request.getString("operation") == "mmjfolder"
+        val mmj = operation.startsWith("mmj")
         require(if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
@@ -57,8 +58,7 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         if (mmj) return SharedDocumentLock.acquire(storage).use {
@@ -66,15 +66,30 @@ class RootSaveService : RootService() {
             require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
                 File(app.nativeLibraryDir).name == "arm64" && app.targetSdkVersion == 29 &&
                 packageManager.getPackageInfo(pkg, 0).longVersionCode == 3932L &&
-                before["signer"] == CITRA_SHARED_SIGNER && before["version"] == "3eb22034a") {
+                before["signer"] == CITRA_SHARED_SIGNER && before["version"] == CITRA_SHARED_VERSION) {
                 "Root verification supports the reviewed standard Citra MMJ APK."
             }
-            requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
+            fun closed() = requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
+            closed()
             requireCitraSharedFolder(this, uid, request.getString("tree")!!)
-            requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
-            require(RootInspection.identity(this, pkg, 0) == before) { "Citra MMJ changed during folder verification." }
+            val files = RootSaveFiles(root, uid, label, ::live, writerClosed = ::closed)
+            val result = when (operation) {
+                "mmjfolder" -> Bundle()
+                "mmjstagerom" -> {
+                    val source = gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                    val rom = files.stageMmjRom(request.getString("path")!!, source, caller, request.getString("sha256")!!)
+                    Bundle().apply { putString("rom", rom.path) }
+                }
+                "mmjremoverom" -> {
+                    files.removeMmjRom(request.getString("path")!!, request.getString("sha256")!!)
+                    Bundle()
+                }
+                else -> error("Unknown Citra MMJ operation.")
+            }
+            closed()
+            require(RootInspection.identity(this, pkg, 0) == before) { "Citra MMJ changed during root access." }
             live()
-            Bundle()
+            result
         }
         if (azahar) return SharedDocumentLock.acquire(storage).use {
             val app = packageManager.getApplicationInfo(pkg, 0)

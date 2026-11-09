@@ -351,6 +351,10 @@ class AndroidGameSession extends ChangeNotifier {
             phase = 'Preparing the game file for RetroArch…';
             _emit();
             nativeRom = await _shared.stageRootRom(_game!, plan);
+          } else if (plan.mmjRooted) {
+            phase = 'Preparing the game file for Citra MMJ…';
+            _emit();
+            nativeRom = await _shared.stageMmjRom(_game!, plan);
           }
         } else if (layout is AndroidPspPlan) {
           phase = 'Preparing this profile’s private PSP memory stick…';

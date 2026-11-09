@@ -37,6 +37,9 @@ class AndroidFolderFixture {
   Directory? melonRoot, dolphinRoot;
   bool melonRunning = false;
   bool mmjReady = true;
+  bool loseMmjStageReply = false;
+  Map<String, dynamic>? mmjStage;
+  String? mmjLaunch;
   final melonMetadata =
       '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
@@ -121,7 +124,22 @@ class AndroidFolderFixture {
         return 99; // Explicit closure confirmation is sufficient.
       case 'ioBusy':
         return false;
+      case 'rootMmjStageRom':
+        expect(args['package'], androidMmjSharedPackage);
+        expect(args['build'], 'a' * 64);
+        expect(await progressFileHash(File(args['source'])), args['sha256']);
+        mmjStage = args;
+        if (loseMmjStageReply)
+          throw PlatformException(code: 'stage-reply-lost');
+        return '/data/user/0/${args['package']}/${args['path']}';
+      case 'rootMmjRemoveRom':
+        expect(args['path'], mmjStage?['path']);
+        expect(args['sha256'], mmjStage?['sha256']);
+        mmjStage = null;
+        return null;
       case 'launch':
+        if (args['emulator'] == 'citra-mmj')
+          mmjLaunch = args['nativeRom'] as String?;
         return 'game-token';
       case 'releaseGrants':
         return null;
@@ -735,58 +753,77 @@ void main() {
     expect(await File('${external.path}/Ranger.sav').readAsBytes(), [42]);
     expect(remote.contents[remote.records.keys.single], List.filled(512, 1));
   });
-  test('verified MMJ refuses uncertain storage and preserves legacy states without publishing them', () async {
-    const id = 'citra-mmj';
-    fixture.mmjReady = false;
-    await expectLater(
-      connect(id, verifyMmj: true),
-      throwsA(isA<PlatformException>()),
+  for (final interrupted in [false, true]) {
+    test(
+      interrupted
+          ? 'MMJ recovery removes staged media after a lost native reply'
+          : 'verified MMJ launches its staged game and preserves standalone states',
+      () async {
+        const id = 'citra-mmj';
+        fixture.mmjReady = false;
+        await expectLater(
+          connect(id, verifyMmj: true),
+          throwsA(isA<PlatformException>()),
+        );
+        expect(manager.folder(emulator(id)), isNull);
+        fixture.mmjReady = true;
+        final external = await connect(id, verifyMmj: true);
+        final bytes = Uint8List(0x500)..setAll(0, base3ds());
+        ByteData.sublistView(bytes)
+            .setUint64(0x400, int.parse(baseTitle, radix: 16), Endian.little);
+        final rom = await put(temp, 'game.3ds', bytes);
+        final plan = await androidProgressLayout(
+          manager,
+          profileId,
+          emulator(id),
+          playablePlatforms.firstWhere((p) => p.slug == '3ds'),
+          rom.path,
+          contentId: '42',
+        ) as AndroidSavePlan;
+        expect(plan.areas.where((a) => a.id.startsWith('states-')), isEmpty);
+        final statePath = 'states/${baseTitle.toUpperCase()}.01.cst';
+        final standalone = await put(external, statePath, [1, 3, 5]);
+        final remote = api();
+        final game = CloudGame(
+          server: serverId,
+          profile: profileId,
+          user: remote.user,
+          rom: 42,
+          client: remote,
+          layout: plan,
+        );
+        final session = AndroidGameSession(manager, cloud);
+        sessions.add(session);
+        fixture.loseMmjStageReply = interrupted;
+        final launch = session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: emulator(id),
+          app: manager.app(emulator(id))!,
+          files: [rom.path],
+          selected: rom.path,
+          game: game,
+        );
+        if (interrupted) {
+          await expectLater(launch, throwsA(isA<PlatformException>()));
+          expect(fixture.mmjLaunch, isNull);
+        } else {
+          await launch;
+          expect(
+            fixture.mmjLaunch,
+            '/data/user/0/$androidMmjSharedPackage/${fixture.mmjStage!['path']}',
+          );
+          await put(external, statePath, [2, 4, 6]);
+        }
+        expect(fixture.mmjStage, isNotNull);
+        await session.finish(emulatorClosed: true);
+        expect(fixture.mmjStage, isNull);
+        expect(await standalone.readAsBytes(), [1, 3, 5]);
+        expect(remote.records, isEmpty);
+      },
     );
-    expect(manager.folder(emulator(id)), isNull);
-    fixture.mmjReady = true;
-    final external = await connect(id, verifyMmj: true);
-    final bytes = Uint8List(0x500)..setAll(0, base3ds());
-    ByteData.sublistView(bytes)
-        .setUint64(0x400, int.parse(baseTitle, radix: 16), Endian.little);
-    final rom = await put(temp, 'game.3ds', bytes);
-    final plan = await androidProgressLayout(
-      manager,
-      profileId,
-      emulator(id),
-      playablePlatforms.firstWhere((p) => p.slug == '3ds'),
-      rom.path,
-      contentId: '42',
-    ) as AndroidSavePlan;
-    expect(plan.areas.where((a) => a.id.startsWith('states-')), isEmpty);
-    final statePath = 'states/${baseTitle.toUpperCase()}.01.cst';
-    final standalone = await put(external, statePath, [1, 3, 5]);
-    final remote = api();
-    final game = CloudGame(
-      server: serverId,
-      profile: profileId,
-      user: remote.user,
-      rom: 42,
-      client: remote,
-      layout: plan,
-    );
-    final session = AndroidGameSession(manager, cloud);
-    sessions.add(session);
-    await session.start(
-      server: serverId,
-      profile: profileId,
-      rom: 42,
-      emulator: emulator(id),
-      app: manager.app(emulator(id))!,
-      files: [rom.path],
-      selected: rom.path,
-      game: game,
-    );
-    expect(await standalone.exists(), isFalse);
-    await put(external, statePath, [2, 4, 6]);
-    await session.finish(emulatorClosed: true);
-    expect(await standalone.readAsBytes(), [1, 3, 5]);
-    expect(remote.records, isEmpty);
-  });
+  }
 
   test('PSP, 3DS, GameCube, PS1, PS2 and RetroArch resolve constrained native save boundaries', () async {
     final psp = await put(temp, 'game.pbp', pspPbp());

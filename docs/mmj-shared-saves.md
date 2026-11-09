@@ -14,18 +14,31 @@ uses the private app folder when legacy mode is unavailable.
 
 In Broomm use **Emulator Settings → Nintendo 3DS → Citra MMJ → Set up**.
 Open MMJ once, complete its first-run storage setup, exit and select
-**Internal storage/citra-emu**. If MMJ remains cached, stop it in Android’s
-app settings after exit. **Use shared folder** remains an explicit fallback
-for the previous setup flow. After saving in the game, quit MMJ and finish
-sync in Broomm. The verified route synchronizes ordinary title data and
-extdata. It keeps matching legacy state files in the native recovery
+**Internal storage/citra-emu**. If Android’s picker starts a cached MMJ
+process, stop MMJ in Android’s app settings after exit, then choose **Verify
+selected folder**. Broomm reuses the grant for this retry. **Use shared
+folder** retains the previous setup flow for compatible builds. After saving
+in the game, choose **Exit Game** in MMJ and finish sync in Broomm. The
+verified route synchronizes ordinary title data and extdata. It keeps matching legacy state files in the native recovery
 transaction and restores their original bytes. The reviewed APK has no
 confirmed native state support, so this route excludes them from RomM.
 
-Focused Dart tests verified refusal to connect uncertain storage and
-preservation of standalone states. Android Kotlin compilation passed. On
-the Thor the official app reached Android’s legacy media prompt. Native
-folder, gameplay and RomM acceptance are pending that permission.
+The installed standard APK’s legacy launch code resolves a content URI
+to a filesystem path. Its converter cannot resolve Broomm’s provider.
+Broomm stages the selected installed 3DS image in MMJ’s private storage
+and verifies the copy before launch. Allow free space for an additional
+copy of the game, up to 4 GiB. The save journal retains the staged file’s
+identity so it can be removed after confirmed emulator closure, including
+after interruption. When first moving an existing Azahar save into MMJ,
+use **Home → game → Options → Use existing save file** to copy the desired
+RomM version into MMJ’s workspace. Earlier cloud versions are kept.
+
+On the Thor, the standard APK granted legacy media access and Broomm build
+1152 verified the selected folder. Its URI launch crashed inside MMJ. A
+native test with a temporary private copy reached Mario Kart 7’s title
+screen using the verified raw-path contract. Flutter regressions exercise
+the handoff, lost staging reply and removal in recovery. Packaged launch
+and an ordinary-save round trip remain pending.
 
 ## Earlier shared-folder workflow
 

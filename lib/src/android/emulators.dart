@@ -1805,6 +1805,7 @@ class AndroidEmulators extends ChangeNotifier {
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
       if (nativeRom != null) 'nativeRom': nativeRom,
+      if (nativeRom != null && emulator.id == 'citra-mmj') 'profile': profile!,
       if (profile != null &&
           folder(emulator) == null &&
           emulator.id != 'citra-mmj' &&

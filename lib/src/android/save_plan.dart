@@ -139,6 +139,7 @@ class AndroidSavePlan extends ProgressLayout {
     if (nativeMediaRoot) 'romPath': launch['romPath']!,
     if (dolphinRooted) 'platform': launch['platform']!,
   };
+  bool get mmjRooted => binding['access'] == androidMmjRootFolderAccess;
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
   bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;

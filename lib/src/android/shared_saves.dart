@@ -13,6 +13,7 @@ import 'opera.dart';
 import 'saturn.dart';
 import 'flycast_session.dart';
 import 'melon_root.dart';
+import 'citra_mmj.dart';
 
 /// One journaled external-folder transaction. The session holds SessionLease;
 /// the session supplies emulator-closure evidence before save operations.
@@ -704,6 +705,57 @@ class SharedAndroidSaves {
     }
   }
 
+  String _mmjRomPath(Map<String, dynamic> record) {
+    final name = File(record['selected'] as String).uri.pathSegments.last;
+    progressRelative(name);
+    if (!RegExp(
+      r'^.+\.(cci|3ds|cxi|app)$',
+      caseSensitive: false,
+    ).hasMatch(name))
+      throw const FormatException('Unsupported Citra MMJ game file.');
+    return 'files/Broomm/${record['profile']}/${record['rom']}/rom-${record['transaction']}/$name';
+  }
+
+  Future<String> stageMmjRom(CloudGame game, AndroidSavePlan plan) async {
+    final r = await record(game, plan);
+    if (!plan.mmjRooted || r['phase'] != 'installed')
+      throw StateError('Citra MMJ’s verified save route is required.');
+    final path = _mmjRomPath(r), source = File(r['selected'] as String);
+    final bytes = await source.length();
+    if (bytes < 1 || bytes > 4 * 1024 * 1024 * 1024)
+      throw StateError('Citra MMJ game files must be at most 4 GiB.');
+    final hash = await progressFileHash(source);
+    r['romStage'] = path;
+    r['romStageSha256'] = hash;
+    await progressWrite(journal, r);
+    return (await manager.channel.invokeMethod<String>('rootMmjStageRom', {
+      'package': plan.binding['package'],
+      'build': plan.binding['mmjBuild'],
+      'tree': plan.binding['tree'],
+      'path': path,
+      'source': source.path,
+      'sha256': hash,
+    }))!;
+  }
+
+  Future<void> _removeMmjRom(Map<String, dynamic> record) async {
+    if (record['access'] != androidMmjRootFolderAccess ||
+        record['romStage'] == null)
+      return;
+    final path = _mmjRomPath(record), hash = record['romStageSha256'];
+    if (record['romStage'] != path ||
+        hash is! String ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(hash))
+      throw const FormatException('Citra MMJ game staging identity changed.');
+    await manager.channel.invokeMethod<void>('rootMmjRemoveRom', {
+      'package': record['package'],
+      'build': record['mmjBuild'],
+      'tree': record['tree'],
+      'path': path,
+      'sha256': hash,
+    });
+  }
+
   Future<String> stageRootRom(CloudGame game, AndroidSavePlan plan) async {
     final r = await record(game, plan);
     var source = File(r['selected'] as String);
@@ -961,6 +1013,7 @@ class SharedAndroidSaves {
     }
     if (r['phase'] != 'restored')
       throw StateError('Capture progress before restoring standalone saves.');
+    await _removeMmjRom(r);
     if (r['romStage'] case final String path when plan.rooted) {
       final config = plan.launch['configPath']!;
       final parent = config.substring(0, config.lastIndexOf('/'));
@@ -1057,6 +1110,7 @@ class SharedAndroidSaves {
         r['rom'] != rom ||
         !RegExp(r'^[a-f0-9]{32}$').hasMatch(r['transaction'] as String? ?? ''))
       throw const FormatException('Android recovery identity changed');
+    await _removeMmjRom(r);
     await progressWrite(
       await progressFile(directory(r), 'kept-shared-folder.json'),
       {
