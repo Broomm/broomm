@@ -110,6 +110,7 @@ class RootSaveAccess(private val activity: Activity) {
         interrupted = { finish(error = it) }
         try {
             val pkg = call.argument<String>("package")!!
+            val prepareFolder = call.method == "rootPrepareSharedFolder"
             val psp = call.method.startsWith("rootPsp")
             val duck = call.method.startsWith("rootDuck")
             val melon = call.method.startsWith("rootMelon")
@@ -120,11 +121,11 @@ class RootSaveAccess(private val activity: Activity) {
             val arms = call.method.startsWith("rootArmsx2")
             val armsProgress = arms && call.method !in setOf("rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootArmsx2Inspect")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
-            require(if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            require(if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (!prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -284,6 +285,7 @@ class RootSaveAccess(private val activity: Activity) {
                         }
                         val value: Any? = when (call.method) {
                             "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootMelonInspect", "rootDolphinInspect", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootPrepareSharedFolder" -> true
                             "rootEdenKey" -> answer.getByteArray("headerKey")
                             "rootEdenScope", "rootArmsx2Scope" -> mapped
                             "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped

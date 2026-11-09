@@ -49,7 +49,8 @@ class RootSaveService : RootService() {
         val mmj = operation.startsWith("mmj")
         val eden = request.getString("operation")?.startsWith("eden") == true
         val arms = operation.startsWith("armsx2")
-        require(if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        val prepareFolder = operation == "preparesharedfolder"
+        require(if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -60,9 +61,15 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (!prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (prepareFolder) return SharedDocumentLock.acquire(storage).use {
+            live()
+            require(RootInspection.identity(this, pkg, 0) == before) { "Emulator changed during setup." }
+            prepareSharedSetupFolder(pkg)
+            Bundle()
+        }
         if (arms) return SharedDocumentLock.acquire(storage).use {
             val app = packageManager.getApplicationInfo(pkg, 0)
             require(android.os.Build.VERSION.SDK_INT >= 33 && app.splitSourceDirs.isNullOrEmpty() &&

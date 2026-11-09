@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../session_lease.dart';
 import '../romm/client.dart';
@@ -43,6 +44,12 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   AndroidSetupStep step = AndroidSetupStep.install;
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
+  String? folderProblem;
+  AndroidApp? _preparedApp;
+  bool get preparedFolder =>
+      _preparedApp != null &&
+      _preparedApp!.package == manager.app(emulator)?.package &&
+      _preparedApp!.build == manager.app(emulator)?.build;
   Map<String, String> _previousBuilds = {};
   ({String uri, String package, String build})? _pendingFolder;
 
@@ -149,6 +156,22 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
   }
 
+  Future<void> _prepareDefaultFolder(AndroidApp app) async {
+    folderProblem = null;
+    if (androidDefaultSharedFolder(emulator) == null || preparedFolder) return;
+    final lease = await SessionLease.acquire(manager.data);
+    try {
+      await manager.ensureSetupAllowed();
+      try {
+        if (await manager.prepareSharedFolder(app)) _preparedApp = app;
+      } on PlatformException {
+        folderProblem = 'Broomm could not prepare the default folder. You can still select a folder already configured in the emulator.';
+      }
+    } finally {
+      await lease.release();
+    }
+  }
+
   Future<void> verify() => _run(() async {
     final app = manager.app(emulator);
     if (app == null) {
@@ -239,6 +262,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       final tree = manager.folder(emulator)?['tree'];
       if (tree == null) {
         step = AndroidSetupStep.folder;
+        await _prepareDefaultFolder(app);
       } else {
         final lease = await SessionLease.acquire(manager.data);
         try {
@@ -288,6 +312,12 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     _opened = true;
   });
 
+  Future<void> openAppInfo() => _run(() async {
+    final app = manager.app(emulator);
+    if (app == null) throw StateError('Install ${emulator.name} first.');
+    await manager.openAppInfo(app.package);
+  });
+
   Future<void> resumed() async {
     if (busy) return;
     if (step == AndroidSetupStep.waitingInstall) {
@@ -311,6 +341,9 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     _pendingFolder = null;
     _shared = true;
     step = AndroidSetupStep.folder;
+    final app = manager.app(emulator);
+    if (app != null && manager.folder(emulator) == null)
+      await _prepareDefaultFolder(app);
   });
 
   Future<void> selectFolder({bool change = false}) => _run(() async {
@@ -324,7 +357,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       // a failed check so retrying can verify it with the emulator stopped.
       final uri = !change && _pendingFolder != null
           ? _pendingFolder!.uri
-          : await manager.chooseFolder(emulator, package: app.package);
+          : await manager.chooseFolder(
+              emulator,
+              package: app.package,
+              prepared: !change && preparedFolder,
+            );
       if (uri == null) return;
       final current = manager.app(emulator);
       if (current?.package != app.package || current?.build != app.build) {
@@ -341,6 +378,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         verifyMmj: verifyMmj,
       );
       _pendingFolder = null;
+      folderProblem = null;
       step = AndroidSetupStep.ready;
     } finally {
       await lease.release();
@@ -356,18 +394,37 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   }
 }
 
-String androidSetupInstructions(AndroidEmulator emulator) =>
+String androidCloseInstructions(String emulator) =>
+    'Use $emulator’s Quit or Exit command if available. Open Android Recents and swipe away its card before returning to Broomm. Switching apps can leave it running.';
+
+String? androidDefaultSharedFolder(AndroidEmulator emulator) =>
     switch (emulator.id) {
-      'ppsspp' => 'In PPSSPP, select a shared Memory Stick folder. Select that same folder here; it contains PSP/SAVEDATA and PSP/PPSSPP_STATE.',
-      'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
-      'azahar' => 'In Azahar, select a shared user-data folder. Select that same folder here, containing sdmc and states.',
-      'citra-mmj' => 'Use MMJ’s normal shared citra-emu folder, usually Internal storage/citra-emu. Private Android/data and Storage Access builds are unsupported. Check that MMJ uses this folder.',
-      'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder.',
-      'retroarch' => 'Install the required core in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root containing cores and files.',
-      'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game cards. Select the full folder containing PCSX2-Android.ini, memcards and sstates.',
-      'duckstation' => 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
-      'eden' => 'Initialize its console account and configure keys and firmware in Eden. Select Eden from the picker sidebar and grant its full user-data root.',
-      _ => throw UnsupportedError(
-        'No Android setup instructions for ${emulator.name}.',
-      ),
+      'azahar' => 'Broomm/Azahar',
+      'citra-mmj' => 'citra-emu',
+      'ppsspp' => 'Broomm/PPSSPP',
+      _ => null,
     };
+
+String androidSetupInstructions(
+  AndroidEmulator emulator, {
+  required bool prepared,
+}) => switch (emulator.id) {
+  'ppsspp' =>
+    prepared
+        ? 'In PPSSPP, choose Internal storage → Broomm → PPSSPP as the Memory Stick folder. If you already configured one, keep it. Select the same folder in Broomm.'
+        : 'In PPSSPP, choose a shared Memory Stick folder, then select that same folder in Broomm.',
+  'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
+  'azahar' =>
+    prepared
+        ? 'In Azahar, choose Internal storage → Broomm → Azahar as the user-data folder. If you already configured one, keep it. Select the same folder in Broomm.'
+        : 'In Azahar, choose a shared user-data folder, then select that same folder in Broomm.',
+  'citra-mmj' => 'Allow Citra MMJ’s storage permission and wait for its main menu. Then select Internal storage → citra-emu in Broomm.',
+  'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder.',
+  'retroarch' => 'Install the required core in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root containing cores and files.',
+  'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game cards. Select the full folder containing PCSX2-Android.ini, memcards and sstates.',
+  'duckstation' => 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
+  'eden' => 'Initialize its console account and configure keys and firmware in Eden. Select Eden from the picker sidebar and grant its full user-data root.',
+  _ => throw UnsupportedError(
+    'No Android setup instructions for ${emulator.name}.',
+  ),
+};

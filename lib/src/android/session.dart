@@ -76,6 +76,16 @@ class AndroidGameSession extends ChangeNotifier {
     cancellation: () => _preparation,
   );
 
+  Future<void> openEmulatorAppInfo() async {
+    final record = await pending();
+    final package = record?['package'];
+    if (package is! String)
+      throw StateError(
+        'This session’s emulator package could not be verified.',
+      );
+    await manager.openAppInfo(package);
+  }
+
   Future<Map<String, dynamic>?> pending() async {
     final Map<String, dynamic> value;
     var sharedSwap = false;

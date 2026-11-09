@@ -77,6 +77,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
     listenable: Listenable.merge([setup, widget.manager]),
     builder: (context, _) {
       final manager = widget.manager, emulator = widget.emulator;
+      final duck = emulator.id == 'duckstation';
+      final close = androidCloseInstructions(emulator.name);
+      final initialize = emulator.id == 'ppsspp'
+          ? 'Open PPSSPP once, choose Skip for now / App Private Data and wait for the main menu.'
+          : 'Open ${emulator.name} once and finish its first-run setup and permissions.';
       final downloading = manager.installing != null;
       return PopScope(
         canPop: !setup.busy,
@@ -108,16 +113,29 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
               ] else
                 Text(switch (setup.step) {
                   AndroidSetupStep.install =>
-                    'Install ${emulator.name} and confirm Android’s installation prompt. Setup continues when Android confirms the app is installed.',
+                    duck
+                        ? 'Open DuckStation’s official beta page to download the APK, then open the downloaded file and confirm Android’s installation prompt.'
+                        : 'Install ${emulator.name} and confirm Android’s installation prompt. Setup continues when Android confirms the app is installed.',
                   AndroidSetupStep.waitingInstall =>
-                    'Finish installing ${emulator.name} in Android, then return here to continue setup.',
-                  AndroidSetupStep.initialize =>
-                    'Open ${emulator.name} once, finish its first-run setup and permissions, then quit it. Broomm will check setup when you return.',
+                    duck
+                        ? 'Install the APK from DuckStation’s official beta page, then return here to continue setup.'
+                        : 'Finish installing ${emulator.name} in Android, then return here to continue setup.',
+                  AndroidSetupStep.initialize => '$initialize\n\n$close',
                   AndroidSetupStep.folder =>
-                    'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator)}\n\nClose the emulator before selecting its folder.',
+                    'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator, prepared: setup.preparedFolder)}\n\n$close',
                   AndroidSetupStep.ready => 'Ready to play',
                 }),
+              if (setup.folderProblem case final problem?)
+                ProblemNotice(problem),
               if (setup.problem != null) ProblemNotice(setup.problem!),
+              if (setup.problem != null &&
+                  {
+                    AndroidSetupStep.initialize,
+                    AndroidSetupStep.folder,
+                  }.contains(setup.step))
+                const Text(
+                  'If the emulator stays open after you save and quit, use Force stop in Android App info.',
+                ),
             ],
           ),
           actions: [
@@ -143,7 +161,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                 ),
                 ConsoleButton(
                   onPressed: setup.install,
-                  child: const Text('Get APK'),
+                  child: Text(duck ? 'Download page' : 'Get APK'),
                 ),
                 ConsoleButton(
                   autofocus: true,
@@ -186,6 +204,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,
                     child: const Text('Use shared folder'),
+                  ),
+                if (setup.problem != null)
+                  ConsoleButton(
+                    onPressed: setup.openAppInfo,
+                    child: const Text('Android App info'),
                   ),
                 if (setup.hasPendingFolder)
                   ConsoleButton(

@@ -3,6 +3,26 @@
 CI's pinned Devbox bootstrap, local regression commands and disposable-runner
 effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
 
+### Android first-run setup
+
+On rooted Android, **Emulator Settings → Set up** prepares **Internal storage →
+Broomm → Azahar** for Azahar, **Internal storage → citra-emu** for Citra MMJ and
+**Internal storage → Broomm → PPSSPP** for PPSSPP's shared Memory Stick option.
+Choose the named folder in Azahar or PPSSPP and select the same folder in
+Broomm. Citra MMJ uses its fixed folder after you allow its storage permission
+and reach its main menu. MMJ's shared-storage build expects `citra-emu` at the
+root of internal storage. Keep your existing folder if you already configured
+one. For the rooted PPSSPP route, choose **Skip for now / App Private Data**.
+
+Save in the emulator and use its **Quit** or **Exit** action if available.
+Open Android Recents and swipe away the emulator's card before returning to
+Broomm. If it stays open after you save and quit, Broomm's **Android App info**
+button takes you to Android's **Force stop** control.
+
+For DuckStation, **Download page** opens the official beta page. Download and
+open its APK, confirm installation in Android, then return to Broomm. The
+publisher asks apps to link to its [official beta download page](https://downloads.duckstation.org/android-testing/).
+
 **2026-11-08 checkpoint:** rooted Android RetroArch now implements eighteen
 platform routes with fifteen pinned cores. Native Thor checks cover the roster,
 including Dreamcast VMU/state/preferences, two saved accounts and offline boot.
@@ -51,8 +71,8 @@ Set up**. Use **Exit Emulation** after saving, then finish sync in Broomm.
 
 For the [Azahar scoped-storage preview](docs/android-azahar-folder.md), use
 **Emulator Settings → Nintendo 3DS → Azahar → Set up**. Open Azahar once,
-select a dedicated folder under internal **Documents**, then exit and select
-the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
+select **Internal storage → Broomm → Azahar** or keep its existing user-data
+folder, then exit and select the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
 Azahar’s configured folder. Save in the game, exit Azahar, and finish sync in
 Broomm.
 

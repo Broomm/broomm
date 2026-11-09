@@ -637,6 +637,26 @@ void main() {
     },
   );
 
+  test('Android App info targets only the active emulator package', () async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    try {
+      await expectLater(session.openEmulatorAppInfo(), throwsStateError);
+      expect(calls.where((call) => call.method == 'emulatorAppInfo'), isEmpty);
+
+      await launch(session);
+      await session.openEmulatorAppInfo();
+      final request = calls.singleWhere(
+        (call) => call.method == 'emulatorAppInfo',
+      );
+      expect(request.arguments, {'package': 'org.ppsspp.ppsspp'});
+      expect(await session.pending(), isNotNull);
+      expect(session.active, isTrue);
+      await session.finish(emulatorClosed: true);
+    } finally {
+      session.dispose();
+    }
+  });
+
   testWidgets(
     'returning from an emulator offers sync and declining retains the active session',
     (t) async {
@@ -660,8 +680,8 @@ void main() {
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await t.pumpAndSettle();
-      expect(find.text('Finished? Sync progress'), findsOneWidget);
-      await t.tap(find.text('Not finished'));
+      expect(find.text('Emulator closed · Sync progress'), findsOneWidget);
+      await t.tap(find.text('Keep playing'));
       await t.pumpAndSettle();
       expect(finishes, 0);
       expect(session.active, true);
@@ -743,7 +763,7 @@ void main() {
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await t.pumpAndSettle();
       expect(find.text('Return to emulator'), findsOneWidget);
-      expect(find.text('Finished? Sync progress'), findsNothing);
+      expect(find.text('Android App info'), findsNothing);
 
       session.exit = AndroidRetroArchState.closed;
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -843,7 +863,7 @@ void main() {
       expect(session.active, isTrue);
       expect(session.checks, 3);
       expect(find.byType(AndroidSessionScreen), findsOneWidget);
-      expect(find.text('Finished? Sync progress'), findsNothing);
+      expect(find.text('Android App info'), findsNothing);
       await t.pumpWidget(const SizedBox());
       session.dispose();
     },

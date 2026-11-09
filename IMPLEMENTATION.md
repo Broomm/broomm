@@ -1,5 +1,25 @@
 # Implementation plan
 
+## Android first-run setup follow-up
+
+New shared connections for Azahar, Citra MMJ and PPSSPP prepare their fixed
+primary-storage folders through Android's emulated storage mount on rooted
+devices. Azahar and shared PPSSPP use `Broomm/Azahar` and `Broomm/PPSSPP`.
+The picker starts in the prepared child folder. Existing grants and native
+folder choices remain supported. Citra MMJ requires `citra-emu` at the
+storage root, initializes its own data and still needs its media permission.
+Rooted PPSSPP initializes App Private Data and keeps using its private progress
+workflow. If root is
+unavailable, the shared picker accepts a folder already configured in the
+emulator.
+
+The setup and session dialogs explain Quit or Exit and dismissing the emulator
+from Android Recents. Android App info is available for explicit force-stop
+after saving and quitting. Root lifecycle proof and writer exclusion still
+gate the save transfer. DuckStation's official beta page remains its APK
+distribution entry point. The setup dialog explains the browser and Android
+installer steps.
+
 ## Standalone Android follow-up — ARMSX2
 
 The rooted route checks the reviewed 2.9.2 package, default app storage and
