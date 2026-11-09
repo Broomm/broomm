@@ -670,11 +670,13 @@ class _BroommAppState extends State<BroommApp> {
       );
       return;
     }
+    final forceCloseAvailable = await m.android.hasRootTools();
     await navigator.currentState!.push<void>(
       MaterialPageRoute(
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           title: entry.game.name,
+          forceCloseAvailable: forceCloseAvailable,
           emulator: emulator.name,
           cloudReady: cloudReady,
           rooted: rooted,
@@ -875,11 +877,13 @@ class _BroommAppState extends State<BroommApp> {
                   resolveCloudConflict(navigator.currentContext!, conflict),
             );
           },
-          resume: () => m.android.open(
-            emulator,
-            package: app.package,
-            resumeSession: true,
-          ),
+          resume: rooted && emulator.id == 'duckstation'
+              ? m.androidSession.resumeDuckGame
+              : () => m.android.open(
+                  emulator,
+                  package: app.package,
+                  resumeSession: true,
+                ),
           finish: () async => m.androidSession.finish(
             emulatorClosed: true,
             recovery: cloudReady
@@ -898,11 +902,13 @@ class _BroommAppState extends State<BroommApp> {
       (e) => e.id == record['emulator'],
     );
     final entry = m.installation(record['rom'] as int);
+    final forceCloseAvailable = await m.android.hasRootTools();
     await navigator.currentState!.push<void>(
       MaterialPageRoute(
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           recovering: true,
+          forceCloseAvailable: forceCloseAvailable,
           rooted:
               {'ppsspp', 'duckstation'}.contains(record['emulator']) &&
               record['rooted'] == true,
@@ -910,6 +916,8 @@ class _BroommAppState extends State<BroommApp> {
           emulator: emulator.name,
           resume: m.android.app(emulator) == null
               ? null
+              : emulator.id == 'duckstation' && record['rooted'] == true
+              ? m.androidSession.resumeDuckGame
               : () => m.android.open(
                   emulator,
                   package: record['package'] as String?,

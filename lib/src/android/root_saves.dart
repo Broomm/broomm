@@ -61,9 +61,10 @@ readAndroidRetroArchState(
   Map<String, String> binding, {
   int? launchedAfter,
   Map<String, int>? process,
+  bool standalone = false,
 }) async {
   final report = await manager.channel.invokeMapMethod<String, dynamic>(
-    'rootLifecycle',
+    standalone ? 'rootEmulatorLifecycle' : 'rootLifecycle',
     {
       ...binding,
       if (launchedAfter != null) 'launchedAfter': launchedAfter,
@@ -74,7 +75,7 @@ readAndroidRetroArchState(
       .where((state) => state.name == report?['state'])
       .firstOrNull;
   if (state == null)
-    throw const FormatException('Invalid RetroArch process report.');
+    throw const FormatException('Invalid Android emulator process report.');
   const keys = ['pid', 'startTicks', 'observedElapsed', 'observedWall'];
   return (
     state: state,

@@ -47,7 +47,9 @@ class AndroidGameSession extends ChangeNotifier {
   SessionLease? _lease;
   CloudGame? _game;
   bool _launched = false;
-  Map<String, int>? _retroArchProcess;
+  Map<String, int>? _retroArchProcess, _standaloneProcess;
+  AndroidApp? _standaloneApp;
+  bool get tracksStandaloneExit => _standaloneProcess != null;
   DownloadCancellation? _preparation;
   bool get canCancelPreparation =>
       _preparation != null && !_preparation!.cancelled;
@@ -84,6 +86,94 @@ class AndroidGameSession extends ChangeNotifier {
         'This session’s emulator package could not be verified.',
       );
     await manager.openAppInfo(package);
+  }
+
+  AndroidApp _sessionApp(Map<String, dynamic> record) {
+    final emulator = androidEmulators.singleWhere(
+      (item) => item.id == record['emulator'],
+    );
+    final package = record['package'];
+    final build = record['build'];
+    final app = package is String && emulator.packages.contains(package)
+        ? manager.app(emulator, package: package)
+        : null;
+    if (app == null || build != null && app.build != build)
+      throw StateError('The emulator installation changed. Recovery was kept.');
+    return app;
+  }
+
+  Map<String, String> _processIdentity(AndroidApp app) => {
+    'package': app.package,
+    'build': app.build,
+  };
+
+  Future<void> resumeDuckGame() async {
+    final record = await pending();
+    if (record == null || record['emulator'] != 'duckstation')
+      throw StateError('There is no DuckStation game session to return to.');
+    final app = _sessionApp(record);
+    final handoff = await _duck.pending
+        ? await progressJson(_duck.journal)
+        : null;
+    final binding = handoff?['binding'], process = handoff?['process'];
+    if (handoff == null ||
+        handoff['version'] != 1 ||
+        ![
+          'server',
+          'profile',
+          'rom',
+          'package',
+          'emulator',
+        ].every((key) => handoff[key] == record[key]) ||
+        binding is! Map ||
+        binding['build'] != app.build ||
+        process is! Map)
+      throw StateError(
+        'DuckStation’s original game process is unavailable. Check for exit.',
+      );
+    await manager.channel.invokeMethod<void>('rootDuckResume', {
+      ..._processIdentity(app),
+      'process': process,
+    });
+  }
+
+  Future<void> forceClose() async {
+    if (busy) throw StateError('Wait for the current Android operation.');
+    busy = true;
+    _emit();
+    try {
+      if (!await progressExists(marker.path))
+        throw StateError(
+          'The original emulator session record is unavailable. Use Android App info.',
+        );
+      _lease ??= await SessionLease.acquire(manager.data);
+      final record = await pending();
+      if (record == null || !await progressExists(marker.path))
+        throw StateError(
+          'The original emulator session record is unavailable. Use Android App info.',
+        );
+      final app = _sessionApp(record);
+      if (record['build'] != app.build)
+        throw StateError(
+          'The original emulator build is unavailable. Use Android App info.',
+        );
+      await manager.ensureNoWriters(closureConfirmed: true);
+      // Mark the session before the native effect. An interrupted reply or
+      // restart must never treat a force-closed session as a clean exit.
+      final stopped = {...record, 'forceClosed': true};
+      stopped.remove('forceCloseVerified');
+      await progressWrite(marker, stopped);
+      phase = 'Force-closing the emulator…';
+      _emit();
+      await manager.channel.invokeMethod<void>(
+        'rootEmulatorStop',
+        _processIdentity(app),
+      );
+      await progressWrite(marker, {...stopped, 'forceCloseVerified': true});
+    } finally {
+      busy = false;
+      _emit();
+    }
   }
 
   Future<Map<String, dynamic>?> pending() async {
@@ -311,6 +401,8 @@ class AndroidGameSession extends ChangeNotifier {
       if (pspRooted || duckRooted) _preparation = DownloadCancellation();
       _launched = false;
       _retroArchProcess = null;
+      _standaloneProcess = null;
+      _standaloneApp = null;
       // Publish before sync or handoff. An exception/unknown platform reply
       // keeps the marker until closure is confirmed; it cannot be a false exit.
       await progressWrite(
@@ -326,6 +418,7 @@ class AndroidGameSession extends ChangeNotifier {
           'rom': rom,
           'emulator': emulator.id,
           'package': app.package,
+          'build': app.build,
           'selected': selected,
           if (rooted) 'rooted': true,
           if (rooted) 'rootPlatform': platform,
@@ -413,6 +506,9 @@ class AndroidGameSession extends ChangeNotifier {
           layout.arguments,
         );
       _preparation?.check();
+      final standaloneClock = !rooted && emulator.id != 'retroarch'
+          ? await _standaloneLaunchClock(app)
+          : null;
       if (emulator.id == 'duckstation' &&
           app.version == androidDuckStationDocumentVersion) {
         _preparation = DownloadCancellation();
@@ -436,6 +532,8 @@ class AndroidGameSession extends ChangeNotifier {
             : null,
       );
       _launched = true;
+      if (standaloneClock != null)
+        await _identifyStandalone(app, standaloneClock);
       if (duckPlan != null && duckClock != null)
         await _duck.identify(_game!, duckPlan, duckClock);
       phase = duckPlan != null
@@ -610,9 +708,103 @@ class AndroidGameSession extends ChangeNotifier {
     }
   }
 
+  Future<int?> _standaloneLaunchClock(AndroidApp app) async {
+    try {
+      // Reuse an authorized root connection. Shared-only play never prompts
+      // for superuser access just to collect optional lifecycle evidence.
+      if (await manager.channel.invokeMethod<bool>('rootSessionAvailable') !=
+          true)
+        return null;
+      final report = await readAndroidRetroArchState(
+        manager,
+        _processIdentity(app),
+        standalone: true,
+      );
+      return report.state == AndroidRetroArchState.idle ? report.elapsed : null;
+    } catch (_) {
+      cloud.phase?.call('Android emulator exit tracking was unavailable.');
+      return null;
+    }
+  }
+
+  Future<void> _identifyStandalone(AndroidApp app, int clock) async {
+    try {
+      for (var attempt = 0; attempt < 5 && !disposed; attempt++) {
+        final report = await readAndroidRetroArchState(
+          manager,
+          _processIdentity(app),
+          launchedAfter: clock,
+          standalone: true,
+        );
+        if (report.process != null) {
+          _standaloneApp = app;
+          _standaloneProcess = report.process;
+          return;
+        }
+        if (report.state == AndroidRetroArchState.unknown) break;
+        if (attempt < 4)
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+    } catch (_) {
+      cloud.phase?.call('Android emulator process could not be tracked.');
+    }
+  }
+
+  Future<AndroidRetroArchState> finishIfStandaloneClosed() async {
+    final app = _standaloneApp, process = _standaloneProcess;
+    if (app == null || process == null || !_launched || busy)
+      return AndroidRetroArchState.unknown;
+    busy = true;
+    _emit();
+    try {
+      var state = AndroidRetroArchState.unknown;
+      for (var attempt = 0; attempt < 5; attempt++) {
+        state = (await readAndroidRetroArchState(
+          manager,
+          _processIdentity(app),
+          process: process,
+          standalone: true,
+        )).state;
+        if (state == AndroidRetroArchState.closed ||
+            state == AndroidRetroArchState.interrupted)
+          break;
+        if (attempt < 4)
+          await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+      if (state == AndroidRetroArchState.closed) {
+        cloud.phase?.call(
+          'Verified Android emulator exit. Synchronizing progress.',
+        );
+        busy = false;
+        return await _finish(standaloneAutomatic: true);
+      }
+      phase = state == AndroidRetroArchState.running
+          ? 'Android still has the emulator open. Save and exit, or use Force close to recover progress.'
+          : 'The emulator’s normal exit could not be verified. Recovery was kept.';
+      return state;
+    } finally {
+      busy = false;
+      _emit();
+    }
+  }
+
+  Future<void> _requireStandaloneExit() async {
+    final report = await readAndroidRetroArchState(
+      manager,
+      _processIdentity(_standaloneApp!),
+      process: _standaloneProcess!,
+      standalone: true,
+    );
+    if (report.state != AndroidRetroArchState.closed)
+      throw StateError(
+        'The emulator’s exit could no longer be verified. Recovery was kept.',
+      );
+  }
+
   Future<AndroidRetroArchState> _finish({
     CloudGame? recovery,
     bool automatic = false,
+    bool standaloneAutomatic = false,
     bool pspAutomatic = false,
     bool duckAutomatic = false,
   }) async {
@@ -650,6 +842,7 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidDuckPlan,
             automatic: duckAutomatic,
+            forced: record['forceClosed'] == true,
           );
         else
           await _duck.roots.ensureClosed(
@@ -683,6 +876,7 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidPspPlan,
             automatic: pspAutomatic,
+            forced: record['forceClosed'] == true,
           );
         else
           await _psp.roots.ensureClosed(
@@ -699,6 +893,23 @@ class AndroidGameSession extends ChangeNotifier {
         return AndroidRetroArchState.closed;
       }
       final root = await _recoveryRoot(record);
+      final forcedApp = record['forceCloseVerified'] == true
+          ? _sessionApp(record)
+          : null;
+      Future<void> verifyStandaloneClosure() async {
+        if (standaloneAutomatic) await _requireStandaloneExit();
+        if (forcedApp == null) return;
+        final report = await readAndroidRetroArchState(
+          manager,
+          _processIdentity(forcedApp),
+          standalone: true,
+        );
+        if (report.state != AndroidRetroArchState.idle)
+          throw StateError(
+            'The force-closed emulator is open again. Recovery was kept.',
+          );
+      }
+
       var rootExit = AndroidRetroArchState.unknown;
       if (root != null) {
         final process = _retroArchProcess;
@@ -793,13 +1004,16 @@ class AndroidGameSession extends ChangeNotifier {
         _emit();
         if (root != null)
           await _checkRetroArchIdle(root, emulatorClosed: !automatic);
+        await verifyStandaloneClosure();
         final capture = sharedPending
             ? await _shared.capture(game, cloud, sharedPlan!)
             : !mmjPending || await _mmj.capture(game, cloud);
         if (capture) {
           if (root != null)
             await _checkRetroArchIdle(root, emulatorClosed: !automatic);
+          await verifyStandaloneClosure();
           final unclean =
+              record['forceClosed'] == true ||
               _game == null ||
               !_launched ||
               changedBuild ||
@@ -808,6 +1022,7 @@ class AndroidGameSession extends ChangeNotifier {
         }
         if (root != null)
           await _checkRetroArchIdle(root, emulatorClosed: !automatic);
+        await verifyStandaloneClosure();
         if (mmjPending) await _mmj.restoreOriginal(game);
         if (sharedPending) await _shared.restoreOriginal(game, sharedPlan!);
       }
@@ -817,6 +1032,8 @@ class AndroidGameSession extends ChangeNotifier {
       _game = null;
       _launched = false;
       _retroArchProcess = null;
+      _standaloneProcess = null;
+      _standaloneApp = null;
       phase = game == null
           ? 'Session finished. Progress remains in the external emulator.'
           : 'Session finished. Local recovery and pending cloud transfers were retained.';

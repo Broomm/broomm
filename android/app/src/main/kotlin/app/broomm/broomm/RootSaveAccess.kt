@@ -78,6 +78,7 @@ class RootSaveAccess(private val activity: Activity) {
     }
 
     fun busy() = running.get()
+    fun connected() = connection?.binder?.isBinderAlive == true
     fun operation(call: MethodCall, result: MethodChannel.Result) {
         check(!closed && running.compareAndSet(false, true)) { "A root file operation is already running." }
         if (restartRequired) {
@@ -113,6 +114,7 @@ class RootSaveAccess(private val activity: Activity) {
             val prepareFolder = call.method == "rootPrepareSharedFolder"
             val psp = call.method.startsWith("rootPsp")
             val duck = call.method.startsWith("rootDuck")
+            val sessionOperation = call.method in setOf("rootEmulatorLifecycle", "rootEmulatorStop")
             val melon = call.method.startsWith("rootMelon")
             val dolphin = call.method.startsWith("rootDolphin")
             val azahar = call.method == "rootAzaharFolder"
@@ -121,11 +123,12 @@ class RootSaveAccess(private val activity: Activity) {
             val arms = call.method.startsWith("rootArmsx2")
             val armsProgress = arms && call.method !in setOf("rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootArmsx2Inspect")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
-            require(if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            require(if (sessionOperation) RootInspection.supports(pkg)
+                else if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (!prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (!sessionOperation && !prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckResume", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -194,7 +197,7 @@ class RootSaveAccess(private val activity: Activity) {
                     call.argument<Number>(key)?.let { require(it.toLong() > 0); request.putLong(key, it.toLong()) }
             }
             if (duck) for (key in listOf("pauseElapsed","pauseWall")) call.argument<Number>(key)?.let { require(it.toLong()>0); request.putLong(key,it.toLong()) }
-            if (call.method == "rootLifecycle") {
+            if (call.method in setOf("rootLifecycle", "rootEmulatorLifecycle")) {
                 call.argument<Number>("launchedAfter")?.toLong()?.let {
                     require(it in 0..SystemClock.elapsedRealtime())
                     request.putLong("launchedAfter", it)
@@ -288,7 +291,7 @@ class RootSaveAccess(private val activity: Activity) {
                             "rootPrepareSharedFolder" -> true
                             "rootEdenKey" -> answer.getByteArray("headerKey")
                             "rootEdenScope", "rootArmsx2Scope" -> mapped
-                            "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
+                            "rootLifecycle", "rootEmulatorLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
                             "rootStageRom", "rootMmjStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
@@ -319,6 +322,10 @@ class RootSaveAccess(private val activity: Activity) {
             if (bound?.isBinderAlive == true) {
                 phase("reusing root service")
                 dispatch(bound)
+                return
+            }
+            if (call.method == "rootEmulatorLifecycle") {
+                finish(mapOf("state" to "unknown"))
                 return
             }
             connection?.unbind()

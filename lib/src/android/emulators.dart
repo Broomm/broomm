@@ -999,9 +999,11 @@ class AndroidEmulators extends ChangeNotifier {
         (emulator.id != 'citra-mmj' || parts.last == 'citra-emu');
   }
 
+  Future<bool> hasRootTools() async =>
+      await channel.invokeMethod<bool>('canPrepareSharedFolder') == true;
+
   Future<bool> prepareSharedFolder(AndroidApp app) async {
-    if (await channel.invokeMethod<bool>('canPrepareSharedFolder') != true)
-      return false;
+    if (!await hasRootTools()) return false;
     return await channel.invokeMethod<bool>('rootPrepareSharedFolder', {
           'package': app.package,
           'build': app.build,

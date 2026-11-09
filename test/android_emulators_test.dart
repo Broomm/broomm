@@ -76,7 +76,7 @@ void main() {
   Object? failure;
   int writers = 0;
   bool managerDisposed = false;
-  Future<Object?> Function(MethodCall)? handoff;
+  Future<Object?> Function(MethodCall)? handoff, nativeSession;
   AndroidEmulator emulator(String id) =>
       androidEmulators.singleWhere((e) => e.id == id);
   Future<void> configure(String id) async {
@@ -119,6 +119,7 @@ void main() {
     calls = [];
     failure = null;
     handoff = null;
+    nativeSession = null;
     writers = 0;
     managerDisposed = false;
     apps = [
@@ -152,6 +153,11 @@ void main() {
             case 'dataRoot':
               final args = call.arguments as Map;
               return 'content://app.broomm.broomm.emulator-data/tree/${Uri.encodeComponent('${args['profile']}:${args['emulator']}')}';
+            case 'rootSessionAvailable':
+            case 'rootEmulatorLifecycle':
+            case 'rootEmulatorStop':
+            case 'rootDuckResume':
+              return nativeSession?.call(call);
             case 'launch':
               return handoff == null
                   ? '0123456789abcdef0123456789abcdef'
@@ -636,6 +642,140 @@ void main() {
       session.dispose();
     },
   );
+
+  test('force close checkpoints the exact session before stopping and recovers locally', () async {
+    final api = SaveServer(), cloud = RecordingCloud(data);
+    final session = AndroidGameSession(manager, cloud);
+    var lostReply = true, reopened = false;
+    nativeSession = (call) async {
+      if (call.method == 'rootEmulatorLifecycle')
+        return {'state': reopened ? 'running' : 'idle'};
+      if (call.method != 'rootEmulatorStop') return null;
+      expect(call.arguments, {
+        'package': 'org.ppsspp.ppsspp',
+        'build': buildHash,
+      });
+      expect((await session.pending())?['forceClosed'], isTrue);
+      if (lostReply) throw PlatformException(code: 'lost-reply');
+      return null;
+    };
+    try {
+      await launch(session, game: game(cloud, api));
+      await expectLater(
+        session.forceClose(),
+        throwsA(isA<PlatformException>()),
+      );
+      expect(cloud.calls, ['before:$profileId']);
+      expect(session.active, isTrue);
+      expect(await session.pending(), isNotNull);
+
+      lostReply = false;
+      await session.forceClose();
+      reopened = true;
+      await expectLater(session.finish(emulatorClosed: true), throwsStateError);
+      expect(cloud.calls, ['before:$profileId']);
+      expect(await session.pending(), isNotNull);
+      reopened = false;
+      await session.forceClose();
+      await session.finish(emulatorClosed: true);
+      expect(cloud.calls, ['before:$profileId', 'after:1']);
+      expect(await session.pending(), isNull);
+    } finally {
+      session.dispose();
+      api.close();
+    }
+  });
+
+  test(
+    'standalone session automatically syncs only a matched normal exit',
+    () async {
+      final api = SaveServer(), cloud = RecordingCloud(data);
+      final session = AndroidGameSession(manager, cloud);
+      var exit = 'interrupted';
+      const observed = {
+        'pid': 42,
+        'startTicks': 51,
+        'observedElapsed': 512,
+        'observedWall': 1551,
+      };
+      nativeSession = (call) async {
+        if (call.method == 'rootSessionAvailable') return true;
+        expect(call.method, 'rootEmulatorLifecycle');
+        final args = call.arguments as Map;
+        expect(args['package'], 'org.ppsspp.ppsspp');
+        expect(args['build'], buildHash);
+        if (args.containsKey('launchedAfter')) {
+          expect(args['launchedAfter'], 500);
+          return {'state': 'running', ...observed};
+        }
+        if (args.containsKey('process')) {
+          expect(args['process'], observed);
+          return {'state': exit};
+        }
+        return {'state': 'idle', 'elapsed': 500};
+      };
+      try {
+        await launch(session, game: game(cloud, api));
+        expect(session.tracksStandaloneExit, isTrue);
+        expect(
+          await session.finishIfStandaloneClosed(),
+          AndroidRetroArchState.interrupted,
+        );
+        expect(cloud.calls, ['before:$profileId']);
+        expect(session.active, isTrue);
+        exit = 'closed';
+        expect(
+          await session.finishIfStandaloneClosed(),
+          AndroidRetroArchState.closed,
+        );
+        expect(cloud.calls, ['before:$profileId', 'after:0']);
+        expect(await session.pending(), isNull);
+      } finally {
+        session.dispose();
+        api.close();
+      }
+    },
+  );
+
+  test('DuckStation resume addresses the existing game without opening its launcher', () async {
+    const package = 'com.github.stenzek.duckstation';
+    apps.add({'package': package, 'version': 'fixture', 'build': buildHash});
+    await manager.load();
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    final duck = emulator('duckstation');
+    try {
+      await expectLater(session.resumeDuckGame(), throwsStateError);
+      await session.start(
+        server: serverId,
+        profile: profileId,
+        rom: 42,
+        emulator: duck,
+        app: manager.app(duck)!,
+        files: ['/fixture/Game.chd'],
+        selected: '/fixture/Game.chd',
+      );
+      await expectLater(session.resumeDuckGame(), throwsStateError);
+      const process = {'pid': 42, 'startTicks': 51};
+      final journal = await progressFile(data, 'android/duck-swap.json');
+      await progressWrite(journal, {
+        ...(await session.pending())!,
+        'binding': {'build': buildHash},
+        'process': process,
+      });
+      await session.resumeDuckGame();
+      expect(calls.singleWhere((c) => c.method == 'rootDuckResume').arguments, {
+        'package': package,
+        'build': buildHash,
+        'process': process,
+      });
+      await journal.delete();
+      expect(calls.where((c) => c.method == 'open'), isEmpty);
+      expect(session.active, isTrue);
+      await session.finish(emulatorClosed: true);
+    } finally {
+      session.dispose();
+    }
+  });
 
   test('Android App info targets only the active emulator package', () async {
     final session = AndroidGameSession(manager, RecordingCloud(data));

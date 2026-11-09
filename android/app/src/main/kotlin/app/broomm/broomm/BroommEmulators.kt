@@ -48,6 +48,7 @@ class BroommEmulators(private val activity: Activity) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
                         "rootMmjStageRom", "rootMmjRemoveRom", "rootPrepareSharedFolder",
+                        "rootEmulatorLifecycle", "rootEmulatorStop", "rootDuckResume",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
                         "rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootArmsx2Inspect", "rootArmsx2Scope", "rootArmsx2Check", "rootArmsx2List", "rootArmsx2Read", "rootArmsx2Replace",
@@ -108,6 +109,7 @@ class BroommEmulators(private val activity: Activity) {
                                 Uri.fromParts("package", pkg, null)))
                             result.success(null)
                         }
+                        "rootSessionAvailable" -> result.success(rootSaves.connected())
                         "canPrepareSharedFolder" -> result.success(
                             System.getenv("PATH").orEmpty().split(':').any { it.startsWith('/') && File(it, "su").canExecute() })
                         "installPage" -> {

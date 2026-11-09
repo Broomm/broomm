@@ -20,18 +20,19 @@ class AndroidSessionScreen extends StatefulWidget {
     this.cloudReady = false,
     this.recovering = false,
     this.rooted = false,
+    this.forceCloseAvailable = false,
   });
   final AndroidGameSession session;
   final String title, emulator;
   final Future<void> Function({required bool emulatorClosed})? start;
   final Future<void> Function()? resume;
   final Future<void> Function() finish;
-  final bool cloudReady, recovering, rooted;
+  final bool cloudReady, recovering, rooted, forceCloseAvailable;
   @override
   State<AndroidSessionScreen> createState() => _AndroidSessionScreenState();
 }
 
-enum _FinishChoice { keepPlaying, appInfo, closed }
+enum _FinishChoice { keepPlaying, appInfo, forceClose, closed }
 
 class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     with WidgetsBindingObserver {
@@ -68,7 +69,15 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     _offerSync = false;
     _promptOpen = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (mounted) await run(widget.rooted ? finishRooted : finishPrompt);
+      if (mounted) {
+        await run(
+          widget.rooted
+              ? finishRooted
+              : widget.session.tracksStandaloneExit
+              ? finishStandalone
+              : finishPrompt,
+        );
+      }
       _promptOpen = false;
     });
     WidgetsBinding.instance.ensureVisualUpdate();
@@ -121,6 +130,38 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     if (_retroArchState == AndroidRetroArchState.closed) complete();
   }
 
+  Future<void> finishStandalone() async {
+    _retroArchState = await widget.session.finishIfStandaloneClosed();
+    if (_retroArchState == AndroidRetroArchState.closed) complete();
+  }
+
+  Future<void> forceClose() async {
+    final confirmed = await showConsoleDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text('Force-close ${widget.emulator}?'),
+        content: const Text(
+          'Save in the emulator before force-closing it. Unsaved progress can be lost. Broomm will keep recovered files locally for review before syncing.',
+        ),
+        actions: [
+          ConsoleButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(c, false),
+            child: const Text('Cancel'),
+          ),
+          ConsoleButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Force close and recover'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.session.forceClose();
+    await widget.finish();
+    complete();
+  }
+
   void complete() {
     if (!mounted) return;
     setState(() => completed = true);
@@ -137,7 +178,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
         title: const Text('Finish game session?'),
         content: Text(
           'Save your progress in ${widget.emulator} first. ${androidCloseInstructions(widget.emulator)}\n\n'
-          'If it stays open after you save and quit, use Force stop in Android App info.',
+          '${widget.forceCloseAvailable ? 'If Android keeps it open, use Force close after saving and quitting.' : 'If it stays open after you save and quit, use Force stop in Android App info.'}',
         ),
         actions: [
           ConsoleButton(
@@ -145,10 +186,16 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
             onPressed: () => Navigator.pop(c, _FinishChoice.keepPlaying),
             child: const Text('Keep playing'),
           ),
-          ConsoleButton(
-            onPressed: () => Navigator.pop(c, _FinishChoice.appInfo),
-            child: const Text('Android App info'),
-          ),
+          if (widget.forceCloseAvailable)
+            ConsoleButton(
+              onPressed: () => Navigator.pop(c, _FinishChoice.forceClose),
+              child: const Text('Force close'),
+            )
+          else
+            ConsoleButton(
+              onPressed: () => Navigator.pop(c, _FinishChoice.appInfo),
+              child: const Text('Android App info'),
+            ),
           ConsoleButton(
             onPressed: () => Navigator.pop(c, _FinishChoice.closed),
             child: Text(
@@ -161,16 +208,22 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
       ),
     );
     if (choice == _FinishChoice.appInfo) {
-      _openingAppInfo = true;
-      try {
-        await widget.session.openEmulatorAppInfo();
-      } catch (_) {
-        _openingAppInfo = false;
-        rethrow;
-      }
+      await openAppInfo();
+    } else if (choice == _FinishChoice.forceClose) {
+      if (mounted) await forceClose();
     } else if (choice == _FinishChoice.closed) {
       await widget.finish();
       complete();
+    }
+  }
+
+  Future<void> openAppInfo() async {
+    _openingAppInfo = true;
+    try {
+      await widget.session.openEmulatorAppInfo();
+    } catch (_) {
+      _openingAppInfo = false;
+      rethrow;
     }
   }
 
@@ -210,7 +263,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
       final session = widget.session;
       final active = session.active || widget.recovering && !completed;
       final checkExit =
-          widget.rooted &&
+          (widget.rooted || session.tracksStandaloneExit) &&
           _retroArchState != AndroidRetroArchState.unknown &&
           _retroArchState != AndroidRetroArchState.interrupted;
       return PopScope(
@@ -385,7 +438,11 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                           onPressed: session.busy
                               ? null
                               : checkExit
-                              ? () => run(finishRooted)
+                              ? () => run(
+                                  widget.rooted
+                                      ? finishRooted
+                                      : finishStandalone,
+                                )
                               : () => run(finishPrompt),
                           child: Text(
                             checkExit
@@ -397,6 +454,22 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                                 : 'Finish game session',
                           ),
                         ),
+                        if (widget.forceCloseAvailable) ...[
+                          const SizedBox(height: 12),
+                          ConsoleButton(
+                            onPressed: session.busy
+                                ? null
+                                : () => run(forceClose),
+                            child: const Text('Force close'),
+                          ),
+                          if (error != null)
+                            ConsoleButton(
+                              onPressed: session.busy
+                                  ? null
+                                  : () => run(openAppInfo),
+                              child: const Text('Android App info'),
+                            ),
+                        ],
                       ] else if (!session.busy) ...[
                         if (!started) const SizedBox(height: 12),
                         ConsoleButton(
