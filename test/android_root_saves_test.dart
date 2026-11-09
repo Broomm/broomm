@@ -1736,7 +1736,7 @@ void main() {
     expect(manager.hasCurrentRoot(emulator, 'dc'), false);
     await manager.connectGbaRoot(emulator, platform: 'dc');
     await manager.load();
-    expect((await progressJson(settings))['version'], 19);
+    expect((await progressJson(settings))['version'], 20);
     for (final slug in [...prior, 'dc'])
       expect(manager.hasCurrentRoot(emulator, slug), true);
     (old['retroRoots'] as Map)['dc:$pkg'] = manager.rootConnection(
