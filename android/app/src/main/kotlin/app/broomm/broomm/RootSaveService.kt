@@ -48,7 +48,7 @@ class RootSaveService : RootService() {
         val azahar = request.getString("operation") == "azaharfolder"
         val mmj = operation.startsWith("mmj")
         val eden = request.getString("operation")?.startsWith("eden") == true
-        val arms = request.getString("operation")?.startsWith("armsx2bios") == true
+        val arms = operation.startsWith("armsx2")
         require(if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
@@ -60,22 +60,26 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         if (arms) return SharedDocumentLock.acquire(storage).use {
             val app = packageManager.getApplicationInfo(pkg, 0)
             require(android.os.Build.VERSION.SDK_INT >= 33 && app.splitSourceDirs.isNullOrEmpty() &&
-                File(app.nativeLibraryDir).name == "arm64" &&
+                File(app.nativeLibraryDir).name == "arm64" && app.minSdkVersion in setOf(26, 33) &&
                 packageManager.getPackageInfo(pkg, 0).longVersionCode == 1787L &&
                 before["signer"] == ARMSX2_SIGNER && before["version"] == ARMSX2_VERSION) {
-                "Automatic PS2 BIOS installation supports the reviewed ARM64 ARMSX2 2.9.2 APK."
+                "Rooted PS2 setup supports the reviewed ARM64 ARMSX2 2.9.2 APK."
             }
-            val firmware = RootArmsx2Firmware(before, ::live)
+            val files = RootArmsx2Files(before, ::live)
             val result = when (operation) {
-                "armsx2biosstatus" -> firmware.status()
-                "armsx2biosprovision" -> firmware.provision(request, caller)
-                else -> error("Unknown ARMSX2 BIOS operation.")
+                "armsx2biosstatus" -> files.status()
+                "armsx2biosprovision" -> files.provision(request, caller)
+                "armsx2inspect" -> files.setup()
+                else -> {
+                    val game = gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
+                    files.progress(request, game, caller)
+                }
             }
             require(RootInspection.identity(this, pkg, 0) == before) { "ARMSX2 changed during root access." }
             live()

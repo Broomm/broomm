@@ -2,3 +2,4 @@
 -keep class app.broomm.broomm.RootSaveService { *; }
 -keep class app.broomm.broomm.RootProcessKernel { *; }
 -keep interface app.broomm.broomm.RootProcessGuard { *; }
+-keep class app.broomm.broomm.Armsx2Chd { *; }

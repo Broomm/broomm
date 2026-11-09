@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Standalone Android follow-up — ARMSX2
+
+The rooted route checks the reviewed 2.9.2 package, default app storage and
+effective card settings. A bounded disc reader identifies the selected PS2
+disc from ISO9660 boot metadata, including CHD sectors decoded by the
+approved pinned libchdr. The journal swaps only the two default whole
+cards and matching native state files, restores standalone originals and
+keeps recovery when the writer, disc or installation cannot be verified.
+Ordinary cards retain the existing desktop cloud format. State groups bind
+the disc identity and exact installed Android APK. See the
+[ARMSX2 setup and recovery walkthrough](docs/android-armsx2-root.md).
+
 ## Android firmware setup from RomM
 
 The rooted Eden preview uses the active RomM profile to provision missing
@@ -12,7 +24,6 @@ separate from its BIOS import. On the Thor, build 1157 imported both
 Eden key files and 238 firmware NCAs from RomM and verified the connection.
 ARMSX2 imported its BIOS from the same profile. Its native launcher
 adopted the BIOS and booted Katamari Damacy to the memory-card prompt.
-Rooted PS2 saves and states remain pending.
 
 ## Standalone Android follow-up — Eden
 

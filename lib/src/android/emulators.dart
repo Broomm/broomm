@@ -12,6 +12,7 @@ import '../romm/transfer.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
 import 'azahar.dart';
+import 'armsx2_root.dart';
 import 'citra_mmj.dart';
 import 'eden_root.dart';
 import 'retroarch_core_setup.dart';
@@ -288,6 +289,10 @@ class AndroidEmulators extends ChangeNotifier {
       final binding = folder(emulator, package: package);
       return binding?['access'] == androidEdenRootAccess ? binding : null;
     }
+    if (emulator.id == 'armsx2' && platform == 'ps2') {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidArmsx2RootAccess ? binding : null;
+    }
     final selected = app(emulator, package: package);
     if (emulator.id != 'retroarch' ||
         selected == null ||
@@ -376,6 +381,20 @@ class AndroidEmulators extends ChangeNotifier {
     access: androidEdenRootAccess,
     method: 'rootEdenInspect',
     valid: androidEdenRootBinding,
+    provision: provision,
+  );
+
+  Future<void> connectArmsx2Root(
+    AndroidEmulator emulator, {
+    Future<void> Function(AndroidApp)? provision,
+  }) => _connectMediaRoot(
+    emulator,
+    id: 'armsx2',
+    package: androidArmsx2RootPackage,
+    version: androidArmsx2RootVersion,
+    access: androidArmsx2RootAccess,
+    method: 'rootArmsx2Inspect',
+    valid: androidArmsx2RootBinding,
     provision: provision,
   );
 
@@ -541,6 +560,7 @@ class AndroidEmulators extends ChangeNotifier {
               emulator.id == 'ppsspp' && pspRoot() != null ||
               emulator.id == 'melonds' && hasCurrentRoot(emulator, 'nds') ||
               emulator.id == 'dolphin' && hasCurrentRoot(emulator, 'ngc') ||
+              emulator.id == 'armsx2' && hasCurrentRoot(emulator, 'ps2') ||
               gbaRoot(emulator) != null ||
               rootConnection(emulator, 'snes') != null ||
               rootConnection(emulator, 'gb') != null ||
@@ -1051,7 +1071,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 21,
+        'version': 22,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -1135,6 +1155,7 @@ class AndroidEmulators extends ChangeNotifier {
               19,
               20,
               21,
+              22,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -1175,6 +1196,10 @@ class AndroidEmulators extends ChangeNotifier {
               record['version'] >= 21 &&
               emulator?.id == 'eden' &&
               androidEdenRootBinding(binding);
+          final armsRoot =
+              record['version'] >= 22 &&
+              emulator?.id == 'armsx2' &&
+              androidArmsx2RootBinding(binding);
           if (binding['access'] == androidAzaharRootFolderAccess &&
               (emulator?.id != 'azahar' ||
                   binding['package'] != androidAzaharScopedPackage ||
@@ -1188,6 +1213,7 @@ class AndroidEmulators extends ChangeNotifier {
           if (!melonRoot &&
               !dolphinRoot &&
               !edenRoot &&
+              !armsRoot &&
               (emulator == null ||
                   binding['tree'] == null ||
                   !sharedTree(emulator, binding['package']!, binding['tree']!)))
@@ -1216,6 +1242,7 @@ class AndroidEmulators extends ChangeNotifier {
           19,
           20,
           21,
+          22,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -1250,6 +1277,7 @@ class AndroidEmulators extends ChangeNotifier {
           19,
           20,
           21,
+          22,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1281,6 +1309,7 @@ class AndroidEmulators extends ChangeNotifier {
           19,
           20,
           21,
+          22,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1567,6 +1596,7 @@ class AndroidEmulators extends ChangeNotifier {
         'azahar' => androidAzaharScopedApkSha256,
         'dolphin' => androidDolphinRootApkSha256,
         'eden' => androidEdenRootApkSha256,
+        'armsx2' => androidArmsx2RootApkSha256,
         _ => null,
       };
       if (pinnedHash != null && await progressFileHash(apk) != pinnedHash)

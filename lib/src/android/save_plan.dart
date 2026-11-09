@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import '../emulators.dart';
 import '../game_launch.dart';
 import '../nintendo_ds.dart';
+import '../playstation.dart';
 import '../progress/digest.dart';
 import '../progress/files.dart';
 import '../progress/layout.dart';
@@ -22,6 +23,7 @@ import 'melon_root.dart';
 import 'dolphin_root.dart';
 import 'citra_mmj.dart';
 import 'eden_root.dart';
+import 'armsx2_root.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -144,13 +146,20 @@ class AndroidSavePlan extends ProgressLayout {
       'accountPath': launch['accountPath']!,
       'devicePath': launch['devicePath']!,
     },
+    if (armsx2Rooted) ...{
+      'serial': launch['serial']!,
+      'crc': launch['crc']!,
+      'mediaStamp': launch['mediaStamp']!,
+    },
   };
   bool get mmjRooted => binding['access'] == androidMmjRootFolderAccess;
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
   bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
   bool get edenRooted => binding['access'] == androidEdenRootAccess;
-  bool get nativeMediaRoot => melonRooted || dolphinRooted || edenRooted;
+  bool get armsx2Rooted => binding['access'] == androidArmsx2RootAccess;
+  bool get nativeMediaRoot =>
+      melonRooted || dolphinRooted || edenRooted || armsx2Rooted;
   bool get rootFileMetadata => rooted || nativeMediaRoot;
   String method(String operation) =>
       '${melonRooted
@@ -159,6 +168,8 @@ class AndroidSavePlan extends ProgressLayout {
           ? 'rootDolphin'
           : edenRooted
           ? 'rootEden'
+          : armsx2Rooted
+          ? 'rootArmsx2'
           : rooted
           ? 'root'
           : 'shared'}$operation';
@@ -505,6 +516,63 @@ Future<AndroidSavePlan> connectedAndroidProgress(
     case 'duckstation':
     case 'armsx2':
       final ps2 = emulator.id == 'armsx2';
+      final arms = ps2
+          ? manager.rootConnection(emulator, platform.slug, package: package)
+          : null;
+      if (arms != null) {
+        if (arms['build'] != app.build)
+          throw StateError(
+            'Verify ARMSX2’s changed installation before playing.',
+          );
+        final scope = await manager.channel.invokeMapMethod<String, String>(
+          'rootArmsx2Scope',
+          {...arms, 'romPath': rom},
+        );
+        final serial = scope?['serial'],
+            crc = scope?['crc'],
+            media = scope?['mediaStamp'];
+        if (serial == null ||
+            crc == null ||
+            media == null ||
+            !RegExp(r'^\d+:\d+:\d+:\d+$').hasMatch(media) ||
+            !RegExp(r'^[A-Z]{4}-[0-9]{5}$').hasMatch(serial) ||
+            !RegExp(r'^[0-9A-F]{8}$').hasMatch(crc))
+          throw const FormatException('Invalid ARMSX2 disc identity.');
+        final gameDirectory = playStationGameDirectory(content);
+        final cards = ProgressArea(
+          'save',
+          '$gameDirectory/cards',
+          pattern: r'^slot[12]\.ps2$',
+        );
+        final states = ProgressArea(
+          state('armsx2:$serial:$crc'),
+          '$gameDirectory/states/armsx2',
+          pattern:
+              '^${RegExp.escape('$serial ($crc).')}'
+              r'(?:[0-9]{2}\.p2s(?:\.backup)?|resume\.p2s|autosave(?:\.[2-5])?\.p2s)$',
+        );
+        layout = ProgressLayout(root.path, 'ps2-cards-v1', content, [
+          cards,
+          states,
+        ]);
+        for (var slot = 1; slot <= 2; slot++) {
+          remote.add(
+            AndroidSaveArea(
+              ProgressArea('save', cards.path, exact: 'slot$slot.ps2'),
+              'files/memcards',
+              rename: 'mcd00$slot.ps2',
+            ),
+          );
+        }
+        remote.add(AndroidSaveArea(states, 'files/sstates'));
+        launch.addAll({
+          'romPath': rom,
+          'serial': serial,
+          'crc': crc,
+          'mediaStamp': media,
+        });
+        break;
+      }
       final text = await reader.text(
         ps2 ? 'PCSX2-Android.ini' : 'settings.ini',
       );

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../progress/files.dart';
 import '../io_worker.dart';
+import 'armsx2_root.dart';
 import 'azahar.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
@@ -91,10 +92,6 @@ class AndroidApkDownload {
       final name = a['name'] as String;
       return switch (id) {
         'citra-mmj' => RegExp(r'^Citra_MMJ_[0-9]+\.apk$').hasMatch(name),
-        // ARMv8.0 is the conservative compatible choice, including ARMv8.2 CPUs.
-        'armsx2' => RegExp(
-          r'^ARMSX2-.+-legacy-armv8\.0-sdk26\.apk$',
-        ).hasMatch(name),
         _ => false,
       };
     }).toList();
@@ -134,12 +131,13 @@ class AndroidApkDownload {
         return Uri.parse(
           'https://stable.eden-emu.dev/v0.2.1/Eden-Android-v0.2.1-standard.apk',
         );
-      default:
-        if (id == 'armsx2' && !arm64)
+      case 'armsx2':
+        if (!arm64)
           throw UnsupportedError('ARMSX2 requires a 64-bit ARM device.');
+        return Uri.parse(androidArmsx2RootApk);
+      default:
         final repository = switch (id) {
           'citra-mmj' => 'weihuoya/citra',
-          'armsx2' => 'ARMSX2/ARMSX2',
           _ => throw UnsupportedError(
             'Use this emulator’s official store/download page.',
           ),
