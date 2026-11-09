@@ -12,8 +12,13 @@ uses the existing journal to preserve standalone files, restore private
 progress, capture after process absence and synchronize with RomM. The
 ordinary DS save format and existing state identity stay compatible. Setup
 checks the pinned official APK hash before Android's installer opens.
-The [melonDS walkthrough](docs/android-melonds-root.md) records tested
-boundaries and outstanding packaged and gameplay verification.
+Thor build 1132 recovered a real Mario Kart DS cartridge save and 19.5 MB
+state from an interrupted session. RomM readback and byte-for-byte native
+restore passed, including loading the state in melonDS. A cached melonDS
+process on the Thor required Android's app Stop after the native game Exit.
+The second saved RomM account created an independent save and state, with
+separate cloud versions and cleared recovery journals for both accounts.
+See the [melonDS walkthrough and evidence](docs/android-melonds-root.md).
 
 ## Rooted DuckStation transactions — Thor validation
 

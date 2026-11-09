@@ -4,7 +4,7 @@
 [regular PPSSPP sessions](android-standalone-root.md) and
 [DuckStation save transactions](android-duckstation-transactions.md) have
 Thor acceptance records. PR #6 is merged. [Rooted melonDS](android-melonds-root.md)
-is the first increment for the remaining six apps. The Sega 32X follow-up
+has a Mario Kart DS save and state round trip on Thor build 1132. The Sega 32X follow-up
 verified the gameplay state round trip, with in-game scenario save/load still
 unverified.
 The dated tables below retain the earlier connected-folder checkpoint.

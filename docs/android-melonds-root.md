@@ -28,6 +28,33 @@ listing, exact readback, cleanup and refusal of a foreign save filename.
 The fixture also published with the app's effective media label while the
 package directory still had Android's initial generic label.
 
+## Thor verification
+
+On AYN Thor with Android 13 and Magisk 31.1, build 1131 completed normal
+Setup and launched Mario Kart DS (USA, Australia) on both screens. Creating
+the game's license changed its 262,144-byte cartridge save. Native slot 1
+produced a 19,498,151-byte state, which exceeded the original 16 MiB bound.
+The refused sync left both files and the recovery journals intact.
+
+Build 1132 at `488f896` accepts states up to 32 MiB per slot. The native
+fixture published and captured a copy of the actual state with verified
+ownership and cleaned up the fixture. The in-place APK upgrade preserved
+both files, the journals and both saved accounts. Broomm recovered the
+interrupted session and required review before uploading its progress. After
+**Use device progress**, RomM readback succeeded and Broomm restored the
+cartridge save and state byte-for-byte before Play. Loading slot 1 returned
+the emulator to the captured game menu. A normal second finish cleared
+the journals and removed both temporary native copies.
+
+The other saved RomM account started with a fresh cartridge save and no
+state in slot 1. It created a different cartridge save and used slot 2.
+Both accounts finished with separate RomM versions and state hashes, no
+pending transfer and no remaining session journal. Input was sent over ADB.
+CI run [42561379858](https://github.com/Broomm/broomm/actions/runs/42561379858)
+passed the checks and all five packages for the tested code revision.
+
+## Setup and play
+
 On a rooted Android 11 or newer ARM64 device, install the official APK through
 **Emulator Settings → Nintendo DS → melonDS → Set up**. Open melonDS once to
 initialize it. Use its default save location and set **Save state location** to
@@ -36,5 +63,5 @@ Play an installed `.nds` cartridge. Save in the game, choose the native Exit
 action, return to Broomm and finish the session. If Android retains the
 melonDS process, stop it through Android's app settings after saving and
 exiting the game, then retry sync. Broomm requires process absence and keeps
-the journal if it cannot prove that. No physical input, full packaged launch
-or real RomM save round trip is claimed by the file fixture.
+the journal if it cannot prove that. On the Thor, Android retained the
+process after the normal native Exit, so this step was needed.
