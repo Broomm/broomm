@@ -155,6 +155,7 @@ void main() {
               return 'content://app.broomm.broomm.emulator-data/tree/${Uri.encodeComponent('${args['profile']}:${args['emulator']}')}';
             case 'rootSessionAvailable':
             case 'rootEmulatorLifecycle':
+            case 'rootPspSharedLifecycle':
             case 'rootEmulatorStop':
             case 'rootDuckResume':
               return nativeSession?.call(call);
@@ -643,7 +644,7 @@ void main() {
     },
   );
 
-  test('force close checkpoints the exact session before stopping and recovers locally', () async {
+  test('force close checkpoints the exact session and syncs only once the emulator is stopped', () async {
     final api = SaveServer(), cloud = RecordingCloud(data);
     final session = AndroidGameSession(manager, cloud);
     var lostReply = true, reopened = false;
@@ -667,7 +668,7 @@ void main() {
       );
       expect(cloud.calls, ['before:$profileId']);
       expect(session.active, isTrue);
-      expect(await session.pending(), isNotNull);
+      expect((await session.pending())?['forceCloseSync'], isNull);
 
       lostReply = false;
       await session.forceClose();
@@ -678,7 +679,71 @@ void main() {
       reopened = false;
       await session.forceClose();
       await session.finish(emulatorClosed: true);
+      expect(cloud.calls, ['before:$profileId', 'after:0']);
+      expect(await session.pending(), isNull);
+    } finally {
+      session.dispose();
+      api.close();
+    }
+  });
+
+  test('a lost force-close reply keeps captured progress for review', () async {
+    final api = SaveServer(), cloud = RecordingCloud(data);
+    final session = AndroidGameSession(manager, cloud);
+    nativeSession = (call) async {
+      if (call.method == 'rootEmulatorStop')
+        throw PlatformException(code: 'lost-reply');
+      return null;
+    };
+    try {
+      await launch(session, game: game(cloud, api));
+      await expectLater(
+        session.forceClose(),
+        throwsA(isA<PlatformException>()),
+      );
+      expect((await session.pending())?['forceCloseSync'], isNull);
+      await session.finish(emulatorClosed: true);
       expect(cloud.calls, ['before:$profileId', 'after:1']);
+    } finally {
+      session.dispose();
+      api.close();
+    }
+  });
+
+  test('shared PPSSPP tracks the new activity in its cached process and syncs a verified exit', () async {
+    final api = SaveServer(), cloud = RecordingCloud(data);
+    final session = AndroidGameSession(manager, cloud);
+    const process = {
+      'pid': 42,
+      'startTicks': 21,
+      'launchElapsed': 500,
+      'launchWall': 1500,
+      'activityCreated': 1512,
+    };
+    nativeSession = (call) async {
+      if (call.method == 'rootSessionAvailable') return true;
+      expect(call.method, 'rootPspSharedLifecycle');
+      final args = call.arguments as Map;
+      expect(args['package'], 'org.ppsspp.ppsspp');
+      if (args.containsKey('process')) {
+        expect(args['process'], process);
+        return {'state': 'closed', 'elapsed': 650, 'wall': 1650};
+      }
+      if (args.containsKey('launchElapsed')) {
+        expect(args['launchElapsed'], 500);
+        expect(args['launchWall'], 1500);
+        return {'state': 'running', 'elapsed': 520, 'wall': 1520, ...process};
+      }
+      return {'state': 'idle', 'elapsed': 500, 'wall': 1500};
+    };
+    try {
+      await launch(session, game: game(cloud, api));
+      expect(session.tracksStandaloneExit, isTrue);
+      expect(
+        await session.finishIfStandaloneClosed(),
+        AndroidRetroArchState.closed,
+      );
+      expect(cloud.calls, ['before:$profileId', 'after:0']);
       expect(await session.pending(), isNull);
     } finally {
       session.dispose();
@@ -689,6 +754,8 @@ void main() {
   test(
     'standalone session automatically syncs only a matched normal exit',
     () async {
+      apps.first['version'] = 'unreviewed';
+      await manager.load();
       final api = SaveServer(), cloud = RecordingCloud(data);
       final session = AndroidGameSession(manager, cloud);
       var exit = 'interrupted';

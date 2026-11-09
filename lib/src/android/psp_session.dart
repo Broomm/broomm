@@ -580,6 +580,7 @@ class AndroidPspSession {
     AndroidPspPlan plan, {
     required bool automatic,
     bool forced = false,
+    bool forceCloseSync = false,
   }) async {
     final r = await record(game, plan);
     await roots.ensureClosed(plan.binding);
@@ -641,7 +642,10 @@ class AndroidPspSession {
     }
     if (r['phase'] == 'captured') {
       // Capture/restore the sealed snapshot is idempotent after a lost reply.
-      await cloud.afterPlay(game, exit == AndroidPspState.closed ? 0 : 1);
+      await cloud.afterPlay(
+        game,
+        exit == AndroidPspState.closed || forced && forceCloseSync ? 0 : 1,
+      );
       r['phase'] = 'finishing';
       await progressWrite(journal, r);
     } else if (!launched) {

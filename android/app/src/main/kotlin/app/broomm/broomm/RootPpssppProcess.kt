@@ -10,7 +10,6 @@ import android.os.SystemClock
 import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import kotlin.math.abs
@@ -49,42 +48,6 @@ internal class RootPpssppProcess(
             }.take(2).toList()
     }
 
-    // Literal arguments only. Both pipes are drained without waiting for a
-    // descendant's EOF; the root service's operation deadline remains active.
-    private fun command(arguments: List<String>, limit: Int): ByteArray {
-        val process = ProcessBuilder(arguments).start()
-        val output = ByteArrayOutputStream(); val errors = ByteArrayOutputStream()
-        val deadline = SystemClock.elapsedRealtime() + 3000
-        fun drain(stream: java.io.InputStream, target: ByteArrayOutputStream) {
-            val b = ByteArray(4096)
-            while (stream.available() > 0) {
-                live(); check(SystemClock.elapsedRealtime() < deadline)
-                val n = stream.read(b, 0, minOf(b.size, stream.available()))
-                if (n <= 0) break
-                check(output.size() + errors.size() + n <= limit)
-                target.write(b, 0, n)
-            }
-        }
-        try {
-            process.outputStream.close()
-            while (true) {
-                live(); check(SystemClock.elapsedRealtime() < deadline)
-                drain(process.inputStream, output); drain(process.errorStream, errors)
-                val exit = try { process.exitValue() } catch (_: IllegalThreadStateException) { null }
-                if (exit != null) {
-                    drain(process.inputStream, output); drain(process.errorStream, errors)
-                    check(exit == 0 && errors.size() == 0) { "PPSSPP lifecycle query failed." }
-                    return output.toByteArray()
-                }
-                Thread.sleep(5)
-            }
-        } finally {
-            process.destroy()
-            for (s in listOf(process.inputStream, process.errorStream, process.outputStream))
-                try { s.close() } catch (_: IOException) { }
-        }
-    }
-
     @Suppress("DEPRECATION")
     private fun activityPresent(): Boolean {
         val identity = Binder.clearCallingIdentity()
@@ -96,7 +59,7 @@ internal class RootPpssppProcess(
         } finally { Binder.restoreCallingIdentity(identity) }
     }
 
-    fun observe(request: Bundle = Bundle()): Bundle = try {
+    fun observe(request: Bundle = Bundle(), requireLaunchActivity: Boolean = false): Bundle = try {
         check(Build.VERSION.SDK_INT >= 30)
         val elapsed = SystemClock.elapsedRealtime(); val wall = System.currentTimeMillis()
         val launchElapsed = request.getLong("launchElapsed", -1)
@@ -119,10 +82,10 @@ internal class RootPpssppProcess(
             check(name == pkg && uidOf(path) == uid && start > 0)
             if (session) check(request.getInt("pid") == pid && request.getLong("startTicks") == start)
             val tasks = activityPresent()
-            val status = String(command(listOf("/system/bin/cmd", "activity", "get-uid-state", uid.toString()), 256), Charsets.US_ASCII).trim()
+            val status = String(rootLifecycleCommand(listOf("/system/bin/cmd", "activity", "get-uid-state", uid.toString()), 256, live), Charsets.US_ASCII).trim()
             val cached = Regex("(?:18 \\(CACHED_RECENT\\)|19 \\(CACHED_EMPTY\\))").matches(status)
             val earliest = wall - elapsed + start * 1000 / rate() - 1000
-            val log = command(listOf("/system/bin/logcat", "-B", "-b", "main", "-d", "--pid=$pid", "--uid=$uid", "-t", "1000", "-s", "PpssppActivity:I"), PpssppShutdownProof.MAX_BYTES)
+            val log = rootLifecycleCommand(listOf("/system/bin/logcat", "-B", "-b", "main", "-d", "--pid=$pid", "--uid=$uid", "-t", "1000", "-s", "PpssppActivity:I"), PpssppShutdownProof.MAX_BYTES, live)
             observation("binaryLifecycleBytes=${log.size}")
             val afterWall = System.currentTimeMillis(); val afterElapsed = SystemClock.elapsedRealtime()
             check(abs(afterWall - wall - (afterElapsed - elapsed)) <= 100 &&
@@ -130,17 +93,21 @@ internal class RootPpssppProcess(
             val proof = PpssppShutdownProof.inspect(log, pid, uid, earliest, afterWall)
             val stopped = !tasks && cached && proof.closed != null && !activityPresent()
             observation("pid=$pid start=$start earliest=$earliest latest=$afterWall activities=$tasks cached=$cached created=${proof.created} closed=${proof.closed}")
+            val matchedLaunch = !requireLaunchActivity || proof.created != null &&
+                proof.created >= launchWall &&
+                (!session || request.getLong("activityCreated") == proof.created)
             val value = when {
                 stopped && launchElapsed < 0 && !session -> "idle"
-                stopped && proof.closed >= launchWall -> "closed"
+                stopped && proof.closed >= launchWall && matchedLaunch -> "closed"
                 stopped -> "unknown"
                 tasks || !cached -> "running"
                 else -> "unknown"
             }
             state(value, afterElapsed, afterWall).apply {
-                if (launchElapsed >= 0 && proof.created != null && proof.created >= launchWall) {
+                if (launchElapsed >= 0 && proof.created != null && proof.created >= launchWall && matchedLaunch) {
                     putInt("pid", pid); putLong("startTicks", start)
                     putLong("launchElapsed", launchElapsed); putLong("launchWall", launchWall)
+                    if (requireLaunchActivity) putLong("activityCreated", proof.created)
                 }
             }
         }

@@ -173,9 +173,10 @@ During installation and save setup, ask the player to open each emulator once,
 complete its first-run setup and permissions, then close it before playing from
 Broomm. Explain how to quit and dismiss its Android Recents card. In an
 active rooted session offer an explicit, confirmed Force close for the verified
-emulator package after saving and quitting. Verify process absence and retain
-captured progress locally for review. Android App info remains available for
-manual recovery. Returning to Broomm must never force-stop a potentially live
+emulator package after saving and quitting. Verify process absence and send
+validated progress through the normal sync workflow. A lost or unverified
+stop reply keeps recovery. Android App info remains available for manual
+recovery. Returning to Broomm must never force-stop a potentially live
 writer.
 
 For new shared-folder setups on rooted Android, prepare the default selectable

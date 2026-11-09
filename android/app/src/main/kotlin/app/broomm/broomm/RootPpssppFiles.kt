@@ -45,7 +45,7 @@ internal class RootPpssppFiles(
         require(pkg == "org.ppsspp.ppsspp" && identity["user"] == 0)
         val app = context.packageManager.getApplicationInfo(pkg, 0)
         require(app.splitSourceDirs.isNullOrEmpty()) { "Root PSP saves require the reviewed universal PPSSPP 1.20.4 APK." }
-        checkpoint("apk"); verifyApk(File(app.sourceDir)); checkpoint("apk-verified")
+        checkpoint("apk"); verifyApk(File(app.sourceDir), live); checkpoint("apk-verified")
         val library = File(app.nativeLibraryDir, "libppsspp_jni.so")
         checkpoint("library"); require(library.canonicalPath == library.path)
         val h = ByteArray(64)
@@ -480,24 +480,24 @@ internal class RootPpssppFiles(
         val fd = Os.open(file.path, OsConstants.O_RDONLY or OsConstants.O_NOFOLLOW, 0)
         try { require(OsConstants.S_ISREG(Os.fstat(fd).st_mode)); Os.fsync(fd) } finally { Os.close(fd) }
     }
-    private fun verifyApk(apk: File) {
-        require(apk.path.startsWith("/data/app/") && apk.canonicalPath == apk.path)
-        val before = Os.lstat(apk.path)
-        require(OsConstants.S_ISREG(before.st_mode) && before.st_size == 45448397L) { "Root PSP saves require the reviewed universal PPSSPP 1.20.4 APK. Existing data was kept." }
-        val key = apk.path + ":" + snapshot(before)
-        if (verifiedApk != key) {
-            val hash = MessageDigest.getInstance("SHA-256")
-            apk.inputStream().use { input -> val buffer = ByteArray(65536); var size = 0L
-                while (true) { live(); val n = input.read(buffer); if (n < 0) break
-                    size += n; require(size <= before.st_size); hash.update(buffer, 0, n) }
-                require(size == before.st_size) }
-            require(hash.digest().hex() == APK && snapshot(Os.lstat(apk.path)) == snapshot(before)) {
-                "This PPSSPP build has not been verified for rooted saves. Its existing data was kept."
-            }
-            verifiedApk = key
-        }
-    }
     companion object {
+        fun verifyApk(apk: File, live: () -> Unit) {
+            require(apk.path.startsWith("/data/app/") && apk.canonicalPath == apk.path)
+            val before = Os.lstat(apk.path)
+            require(OsConstants.S_ISREG(before.st_mode) && before.st_size == 45448397L) { "Root PSP saves require the reviewed universal PPSSPP 1.20.4 APK. Existing data was kept." }
+            val key = apk.path + ":" + snapshot(before)
+            if (verifiedApk != key) {
+                val hash = MessageDigest.getInstance("SHA-256")
+                apk.inputStream().use { input -> val buffer = ByteArray(65536); var size = 0L
+                    while (true) { live(); val n = input.read(buffer); if (n < 0) break
+                        size += n; require(size <= before.st_size); hash.update(buffer, 0, n) }
+                    require(size == before.st_size) }
+                require(hash.digest().hex() == APK && snapshot(Os.lstat(apk.path)) == snapshot(before)) {
+                    "This PPSSPP build has not been verified for rooted saves. Its existing data was kept."
+                }
+                verifiedApk = key
+            }
+        }
         const val APK = "dd702a31270ecd68db37afee311d6efe08b1d4da9601d2750ce1a73bbd316c3f"
         const val MAX_FILE = 256 * 1024 * 1024
         const val PROFILE_FILE = 1024 * 1024 * 1024

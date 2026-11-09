@@ -551,6 +551,7 @@ class AndroidDuckSession {
     AndroidDuckPlan plan, {
     required bool automatic,
     bool forced = false,
+    bool forceCloseSync = false,
   }) async {
     final r = await record(game, plan);
     final launched = {
@@ -616,7 +617,10 @@ class AndroidDuckSession {
     }
     if (r['phase'] == 'captured') {
       // Capture/restore the sealed snapshot is idempotent after a lost reply.
-      await cloud.afterPlay(game, exit == AndroidDuckState.closed ? 0 : 1);
+      await cloud.afterPlay(
+        game,
+        exit == AndroidDuckState.closed || forced && forceCloseSync ? 0 : 1,
+      );
       r['phase'] = 'finishing';
       await progressWrite(journal, r);
     } else if (!launched) {

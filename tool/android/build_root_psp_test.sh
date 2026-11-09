@@ -9,6 +9,8 @@ else broomm_psp_hash="$(shasum -a 256 "$broomm_psp_d8" | cut -d ' ' -f 1)"; fi
 [[ "$broomm_psp_hash" == f8c762ff84640b10083b934a47278758a7665977e618fab0c927fff00521dea3 ]]
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootPpssppFiles.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RootPpssppProcess.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RootStandaloneProcess.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/AndroidShutdownLog.kt \
   android/app/src/main/kotlin/app/broomm/broomm/PpssppShutdownProof.kt \
   tool/android/check_root_psp_files.kt -jvm-target 17 -include-runtime \
   -classpath "$broomm_psp_cache/api/android.jar" -d "$broomm_psp_cache/root-psp-test.jar"

@@ -334,6 +334,30 @@ void main() {
     await session.finish(game(p), p, automatic: false);
     expect(await native.settings.readAsString(), original);
   });
+  test('confirmed force close uploads a captured DuckStation card and restores standalone settings', () async {
+    final original = await native.settings.readAsString(), p = await plan();
+    // This fixture already models the concrete game transaction. The general
+    // supervisor separately verifies and journals the user-authorized stop.
+    await prepare(p);
+    await session.launching(game(p), p);
+    native.state = 'running';
+    await session.identify(game(p), p, 100);
+    final r = await progressJson(await roots.profileFile(profileId));
+    await native.put(r, 'games/42/cards/card1.mcd', card(7));
+    native.state = 'idle';
+    await session.finish(
+      game(p),
+      p,
+      automatic: false,
+      forced: true,
+      forceCloseSync: true,
+    );
+    expect(api.records, isNotEmpty);
+    expect(await (await p.target('save/card1.mcd')).readAsBytes(), card(7));
+    expect(await native.settings.readAsString(), original);
+    expect(await roots.loan(), isNull);
+  });
+
   test('lost settings publication reply is recovered from the durable loan without adopting standalone credentials', () async {
     final original = await native.settings.readAsString(),
         r = await roots.profile(serverId, profileId, native.binding);

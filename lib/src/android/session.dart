@@ -47,9 +47,9 @@ class AndroidGameSession extends ChangeNotifier {
   SessionLease? _lease;
   CloudGame? _game;
   bool _launched = false;
-  Map<String, int>? _retroArchProcess, _standaloneProcess;
-  AndroidApp? _standaloneApp;
-  bool get tracksStandaloneExit => _standaloneProcess != null;
+  Map<String, int>? _retroArchProcess;
+  Future<AndroidRetroArchState> Function()? _standaloneExit;
+  bool get tracksStandaloneExit => _standaloneExit != null;
   DownloadCancellation? _preparation;
   bool get canCancelPreparation =>
       _preparation != null && !_preparation!.cancelled;
@@ -158,10 +158,10 @@ class AndroidGameSession extends ChangeNotifier {
           'The original emulator build is unavailable. Use Android App info.',
         );
       await manager.ensureNoWriters(closureConfirmed: true);
-      // Mark the session before the native effect. An interrupted reply or
-      // restart must never treat a force-closed session as a clean exit.
-      final stopped = {...record, 'forceClosed': true};
-      stopped.remove('forceCloseVerified');
+      // A failed or lost native reply leaves an interrupted session.
+      final stopped = {...record, 'forceClosed': true}
+        ..remove('forceCloseVerified')
+        ..remove('forceCloseSync');
       await progressWrite(marker, stopped);
       phase = 'Force-closing the emulator…';
       _emit();
@@ -169,7 +169,11 @@ class AndroidGameSession extends ChangeNotifier {
         'rootEmulatorStop',
         _processIdentity(app),
       );
-      await progressWrite(marker, {...stopped, 'forceCloseVerified': true});
+      await progressWrite(marker, {
+        ...stopped,
+        'forceCloseVerified': true,
+        if (_launched || record['launched'] == true) 'forceCloseSync': true,
+      });
     } finally {
       busy = false;
       _emit();
@@ -401,8 +405,7 @@ class AndroidGameSession extends ChangeNotifier {
       if (pspRooted || duckRooted) _preparation = DownloadCancellation();
       _launched = false;
       _retroArchProcess = null;
-      _standaloneProcess = null;
-      _standaloneApp = null;
+      _standaloneExit = null;
       // Publish before sync or handoff. An exception/unknown platform reply
       // keeps the marker until closure is confirmed; it cannot be a false exit.
       await progressWrite(
@@ -532,6 +535,10 @@ class AndroidGameSession extends ChangeNotifier {
             : null,
       );
       _launched = true;
+      await progressWrite(marker, {
+        ...await progressJson(marker),
+        'launched': true,
+      });
       if (standaloneClock != null)
         await _identifyStandalone(app, standaloneClock);
       if (duckPlan != null && duckClock != null)
@@ -708,40 +715,85 @@ class AndroidGameSession extends ChangeNotifier {
     }
   }
 
-  Future<int?> _standaloneLaunchClock(AndroidApp app) async {
+  Future<({int elapsed, int? wall})?> _standaloneLaunchClock(
+    AndroidApp app,
+  ) async {
     try {
-      // Reuse an authorized root connection. Shared-only play never prompts
-      // for superuser access just to collect optional lifecycle evidence.
+      // Shared-only play reuses an authorized connection for exit evidence.
       if (await manager.channel.invokeMethod<bool>('rootSessionAvailable') !=
           true)
         return null;
+      final identity = _processIdentity(app);
+      if (app.package == 'org.ppsspp.ppsspp' &&
+          {'v1.20.4', '1.20.4'}.contains(app.version)) {
+        final report = await readAndroidPspState(
+          manager,
+          identity,
+          shared: true,
+        );
+        return (elapsed: report.elapsed, wall: report.wall);
+      }
       final report = await readAndroidRetroArchState(
         manager,
-        _processIdentity(app),
+        identity,
         standalone: true,
       );
-      return report.state == AndroidRetroArchState.idle ? report.elapsed : null;
+      final elapsed = report.elapsed;
+      return report.state == AndroidRetroArchState.idle && elapsed != null
+          ? (elapsed: elapsed, wall: null)
+          : null;
     } catch (_) {
       cloud.phase?.call('Android emulator exit tracking was unavailable.');
       return null;
     }
   }
 
-  Future<void> _identifyStandalone(AndroidApp app, int clock) async {
+  Future<void> _identifyStandalone(
+    AndroidApp app,
+    ({int elapsed, int? wall}) clock,
+  ) async {
+    final identity = _processIdentity(app);
     try {
       for (var attempt = 0; attempt < 5 && !disposed; attempt++) {
-        final report = await readAndroidRetroArchState(
-          manager,
-          _processIdentity(app),
-          launchedAfter: clock,
-          standalone: true,
-        );
-        if (report.process != null) {
-          _standaloneApp = app;
-          _standaloneProcess = report.process;
-          return;
+        final wall = clock.wall;
+        if (wall != null) {
+          final report = await readAndroidPspState(
+            manager,
+            identity,
+            launchedAfter: (elapsed: clock.elapsed, wall: wall),
+            shared: true,
+          );
+          final process = report.process;
+          if (process != null) {
+            _standaloneExit = () async => AndroidRetroArchState.values.byName(
+              (await readAndroidPspState(
+                manager,
+                identity,
+                process: process,
+                shared: true,
+              )).state.name,
+            );
+            return;
+          }
+        } else {
+          final report = await readAndroidRetroArchState(
+            manager,
+            identity,
+            launchedAfter: clock.elapsed,
+            standalone: true,
+          );
+          final process = report.process;
+          if (process != null) {
+            _standaloneExit = () async => (await readAndroidRetroArchState(
+              manager,
+              identity,
+              process: process,
+              standalone: true,
+            )).state;
+            return;
+          }
+          if (report.state == AndroidRetroArchState.unknown) break;
         }
-        if (report.state == AndroidRetroArchState.unknown) break;
         if (attempt < 4)
           await Future<void>.delayed(const Duration(milliseconds: 200));
       }
@@ -751,20 +803,15 @@ class AndroidGameSession extends ChangeNotifier {
   }
 
   Future<AndroidRetroArchState> finishIfStandaloneClosed() async {
-    final app = _standaloneApp, process = _standaloneProcess;
-    if (app == null || process == null || !_launched || busy)
+    final observe = _standaloneExit;
+    if (observe == null || !_launched || busy)
       return AndroidRetroArchState.unknown;
     busy = true;
     _emit();
     try {
       var state = AndroidRetroArchState.unknown;
       for (var attempt = 0; attempt < 5; attempt++) {
-        state = (await readAndroidRetroArchState(
-          manager,
-          _processIdentity(app),
-          process: process,
-          standalone: true,
-        )).state;
+        state = await observe();
         if (state == AndroidRetroArchState.closed ||
             state == AndroidRetroArchState.interrupted)
           break;
@@ -779,7 +826,7 @@ class AndroidGameSession extends ChangeNotifier {
         return await _finish(standaloneAutomatic: true);
       }
       phase = state == AndroidRetroArchState.running
-          ? 'Android still has the emulator open. Save and exit, or use Force close to recover progress.'
+          ? 'Android still has the emulator open. Save and exit, or use Force close and sync after saving.'
           : 'The emulator’s normal exit could not be verified. Recovery was kept.';
       return state;
     } finally {
@@ -789,13 +836,7 @@ class AndroidGameSession extends ChangeNotifier {
   }
 
   Future<void> _requireStandaloneExit() async {
-    final report = await readAndroidRetroArchState(
-      manager,
-      _processIdentity(_standaloneApp!),
-      process: _standaloneProcess!,
-      standalone: true,
-    );
-    if (report.state != AndroidRetroArchState.closed)
+    if (await _standaloneExit?.call() != AndroidRetroArchState.closed)
       throw StateError(
         'The emulator’s exit could no longer be verified. Recovery was kept.',
       );
@@ -826,6 +867,11 @@ class AndroidGameSession extends ChangeNotifier {
       }
       _lease ??= await SessionLease.acquire(manager.data);
       await manager.ensureNoWriters(closureConfirmed: true);
+      final forced = record['forceClosed'] == true;
+      final forceCloseSync =
+          forced &&
+          record['forceCloseVerified'] == true &&
+          record['forceCloseSync'] == true;
       if (record['emulator'] == 'duckstation' &&
           (record['rooted'] == true || await _duck.pending)) {
         final game = recovery ?? _game;
@@ -842,7 +888,8 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidDuckPlan,
             automatic: duckAutomatic,
-            forced: record['forceClosed'] == true,
+            forced: forced,
+            forceCloseSync: forceCloseSync,
           );
         else
           await _duck.roots.ensureClosed(
@@ -876,7 +923,8 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidPspPlan,
             automatic: pspAutomatic,
-            forced: record['forceClosed'] == true,
+            forced: forced,
+            forceCloseSync: forceCloseSync,
           );
         else
           await _psp.roots.ensureClosed(
@@ -1013,11 +1061,12 @@ class AndroidGameSession extends ChangeNotifier {
             await _checkRetroArchIdle(root, emulatorClosed: !automatic);
           await verifyStandaloneClosure();
           final unclean =
-              record['forceClosed'] == true ||
-              _game == null ||
-              !_launched ||
               changedBuild ||
-              root != null && rootExit != AndroidRetroArchState.closed;
+              !forceCloseSync &&
+                  (forced ||
+                      _game == null ||
+                      !_launched ||
+                      root != null && rootExit != AndroidRetroArchState.closed);
           await cloud.afterPlay(game, unclean ? 1 : 0);
         }
         if (root != null)
@@ -1032,8 +1081,7 @@ class AndroidGameSession extends ChangeNotifier {
       _game = null;
       _launched = false;
       _retroArchProcess = null;
-      _standaloneProcess = null;
-      _standaloneApp = null;
+      _standaloneExit = null;
       phase = game == null
           ? 'Session finished. Progress remains in the external emulator.'
           : 'Session finished. Local recovery and pending cloud transfers were retained.';

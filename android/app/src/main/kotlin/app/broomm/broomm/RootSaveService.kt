@@ -34,6 +34,14 @@ class RootSaveService : RootService() {
     }
     override fun onBind(intent: Intent): IBinder = binder
 
+    private fun reviewedArmsx2(pkg: String, identity: Map<String, Any>): Boolean {
+        val app = packageManager.getApplicationInfo(pkg, 0)
+        return android.os.Build.VERSION.SDK_INT >= 33 && app.splitSourceDirs.isNullOrEmpty() &&
+            File(app.nativeLibraryDir).name == "arm64" && app.minSdkVersion in setOf(26, 33) &&
+            packageManager.getPackageInfo(pkg, 0).longVersionCode == 1787L &&
+            identity["signer"] == ARMSX2_SIGNER && identity["version"] == ARMSX2_VERSION
+    }
+
     private fun operation(request: Bundle, caller: Int, callerPid: Int): Bundle {
         require(Process.myUid() == 0 && caller / 100000 == 0) { "The first root save route requires Android user 0." }
         val deadline = request.getLong("deadline")
@@ -63,7 +71,7 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (!sessionOperation && !prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop", "duckresume", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (!sessionOperation && !prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "pspsharedlifecycle", "duckinspect", "ducklifecycle", "duckstop", "duckresume", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
         if (sessionOperation) return SharedDocumentLock.acquire(storage).use {
@@ -73,7 +81,17 @@ class RootSaveService : RootService() {
             }
             sameApp()
             val answer = when (operation) {
-                "emulatorlifecycle" -> RootRetroArchProcess(this, pkg, uid, ::live).observe(request, callerPid, caller)
+                "emulatorlifecycle" -> {
+                    val nativeExit: ((Int, Long, Long) -> Boolean)? =
+                        if (pkg == ARMSX2_PACKAGE && reviewedArmsx2(pkg, before)) { pid, observed, exited ->
+                            val logs = rootLifecycleCommand(listOf(
+                                "/system/bin/logcat", "-B", "-b", "main", "-d", "--pid=$pid", "--uid=$uid",
+                                "-t", "1000", "-s", "System.out:I", "STDOUT:W", "Process:I"),
+                                AndroidShutdownLog.MAX_BYTES, ::live)
+                            Armsx2ShutdownProof.closed(logs, pid, uid, observed, exited)
+                        } else null
+                    RootRetroArchProcess(this, pkg, uid, ::live, nativeExit).observe(request, callerPid, caller)
+                }
                 "emulatorstop" -> { forceStopEmulator(pkg, uid, ::live); Bundle() }
                 else -> error("Unsupported emulator session operation.")
             }
@@ -87,11 +105,7 @@ class RootSaveService : RootService() {
             Bundle()
         }
         if (arms) return SharedDocumentLock.acquire(storage).use {
-            val app = packageManager.getApplicationInfo(pkg, 0)
-            require(android.os.Build.VERSION.SDK_INT >= 33 && app.splitSourceDirs.isNullOrEmpty() &&
-                File(app.nativeLibraryDir).name == "arm64" && app.minSdkVersion in setOf(26, 33) &&
-                packageManager.getPackageInfo(pkg, 0).longVersionCode == 1787L &&
-                before["signer"] == ARMSX2_SIGNER && before["version"] == ARMSX2_VERSION) {
+            require(reviewedArmsx2(pkg, before)) {
                 "Rooted PS2 setup supports the reviewed ARM64 ARMSX2 2.9.2 APK."
             }
             val files = RootArmsx2Files(before, ::live)
@@ -240,6 +254,15 @@ class RootSaveService : RootService() {
         if (psp) return SharedDocumentLock.acquire(storage).use {
             live()
             val process = RootPpssppProcess(this, pkg, uid, ::live)
+            if (operation == "pspsharedlifecycle") {
+                val app = packageManager.getApplicationInfo(pkg, 0)
+                require(app.splitSourceDirs.isNullOrEmpty())
+                RootPpssppFiles.verifyApk(File(app.sourceDir), ::live)
+                val observation = process.observe(request, requireLaunchActivity = true)
+                require(RootInspection.identity(this, pkg, 0) == before)
+                live()
+                return@use observation
+            }
             val files = RootPpssppFiles(this, before, ::live, process::ensureClosed)
             if (operation != "pspinspect") files.validate(request)
             val result = when (operation) {
