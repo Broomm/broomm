@@ -151,14 +151,18 @@ jobs:
           bash tool/ci/run.sh bash tool/check_linux_native.sh > build/native-linux-checks/sanitizers.log 2>&1
       - name: Android root process kernel checks
         if: ${{ !cancelled() && matrix.platform == 'linux' }}
-        run: bash tool/ci/run.sh bash tool/check_root_process.sh > build/native-linux-checks/root-process.log 2>&1
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/check_root_process.sh > build/native-linux-checks/root-process.log 2>&1
       - name: Android root process kernel sanitizers
         if: ${{ !cancelled() && matrix.platform == 'linux' }}
         env:
           BROOMM_NATIVE_SANITIZERS: '1'
           # LSan itself uses ptrace; these tests deliberately own that tracer.
           ASAN_OPTIONS: detect_leaks=0
-        run: bash tool/ci/run.sh bash tool/check_root_process.sh > build/native-linux-checks/root-process-sanitizers.log 2>&1
+        run: |
+          mkdir -p build/native-linux-checks
+          bash tool/ci/run.sh bash tool/check_root_process.sh > build/native-linux-checks/root-process-sanitizers.log 2>&1
       # Full native memory cards require repeated durable copies/readback. Give
       # those tests the runner without competing suites, with unchanged limits.
       - name: Test full-size save workflows

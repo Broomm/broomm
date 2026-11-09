@@ -278,8 +278,7 @@ static int root_stop_idle_guarded(const struct root_stop_request *r, int (*allow
         close(pipes[0]); close(confirm[1]);
         if (prctl(PR_SET_PDEATHSIG, SIGKILL, 0L, 0L, 0L) || getppid() != parent) _exit(2);
         int result = root_trace_stop(r, pidfd, pipes[1], confirm[0]);
-        (void)write(pipes[1], &result, sizeof(result));
-        _exit(0);
+        _exit(write(pipes[1], &result, sizeof(result)) == sizeof(result) ? 0 : 2);
     }
     close(pipes[1]); close(pidfd);
     if (child < 0) { close(pipes[0]); close(confirm[0]); close(confirm[1]); return ROOT_UNAVAILABLE; }

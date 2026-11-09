@@ -2,9 +2,9 @@
   "schema": 1,
   "date": "2026-11-08",
   "status": "native mechanisms verified; packaged PS1 transactions pending",
-  "source_base": "0125573b06d77039b04422c941c7a031b6be902a",
+  "source_base": "8a7d5115f2594a132206a88bedd64bdd9904fd23",
   "source_sha256": {
-    "android/app/src/main/cpp/root_process.c": "1dfc658268d54c0c2ec3ae322bfd6df9297e7742ea73bb092d2c444a1ac4600d",
+    "android/app/src/main/cpp/root_process.c": "ee5e907ffc8373ce4272c51682aed53276cc33ecc52cde1530e3fea1299623d0",
     "android/app/src/main/cpp/Android.mk": "e65ac02a43f2447e79aaa103a01d4c73c52807bcbecdf9c45c6248f695c241c6",
     "android/app/src/main/kotlin/app/broomm/broomm/RootProcessKernel.kt": "a49c941afed0dee85b112959d25636e7be3f8a684f95fe2147a6f925d838f933",
     "android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt": "1d2a5dfa28661f457b2353e9505e1a030898e3be8315961b936a88be530d5312",
@@ -21,7 +21,7 @@
     {
       "abi": "arm64-v8a",
       "bytes": 14808,
-      "sha256": "3f5d7eb1438b7b7b44956777d397e0fd5695d79cf9a9657d3641a106d07e823d",
+      "sha256": "bdecc332ab1224313880fc4fea1d9da4597c74cc6f082bbccdcd85f0cfb4a81a",
       "system_dependencies": [
         "libc.so",
         "libm.so",
@@ -31,8 +31,8 @@
     },
     {
       "abi": "armeabi-v7a",
-      "bytes": 9816,
-      "sha256": "019b0b433a2231033e5b4d611f366951f9326dd739ca74e4ded6d471587e94b0",
+      "bytes": 9832,
+      "sha256": "6de1852a376f5c1325547ab6a0b86c713a32dda70c1ebb864cc61bcb27ca4741",
       "system_dependencies": [
         "libc.so",
         "libm.so",
@@ -42,8 +42,8 @@
     },
     {
       "abi": "x86",
-      "bytes": 13224,
-      "sha256": "a9066b348247172ef67bfdb67d3b3759c31ce80173c8a200afb4868da54ebe5a",
+      "bytes": 13240,
+      "sha256": "31ba256bc3d9e4249198bf3d92c0f366a642c52406600b5ab60bdeacb45f5cf2",
       "system_dependencies": [
         "libc.so",
         "libm.so",
@@ -53,8 +53,8 @@
     },
     {
       "abi": "x86_64",
-      "bytes": 14968,
-      "sha256": "a778669a7964fc5b73dde4a938be15e72833ec2442e02dd675a2eb16ca0379de",
+      "bytes": 14984,
+      "sha256": "b79bc461b9cee474ac061ad716276a64d19c3f4156c38c1183a4116c95579aa9",
       "system_dependencies": [
         "libc.so",
         "libm.so",
