@@ -6,11 +6,12 @@ effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.m
 ### Android first-run setup
 
 On rooted Android, **Emulator Settings → Set up** prepares **Internal storage →
-Broomm-Azahar** for Azahar, **Internal storage → citra-emu** for Citra MMJ and
-**Internal storage → Broomm-PPSSPP** for PPSSPP's shared Memory Stick option.
+Broomm → Azahar** for Azahar, **Internal storage → citra-emu** for Citra MMJ and
+**Internal storage → Broomm → PPSSPP** for PPSSPP's shared Memory Stick option.
 Choose the named folder in Azahar or PPSSPP and select the same folder in
 Broomm. Citra MMJ uses its fixed folder after you allow its storage permission
-and reach its main menu. Keep your existing folder if you already configured
+and reach its main menu. MMJ's shared-storage build expects `citra-emu` at the
+root of internal storage. Keep your existing folder if you already configured
 one. For the rooted PPSSPP route, choose **Skip for now / App Private Data**.
 
 Save in the emulator and use its **Quit** or **Exit** action if available.
@@ -70,7 +71,7 @@ Set up**. Use **Exit Emulation** after saving, then finish sync in Broomm.
 
 For the [Azahar scoped-storage preview](docs/android-azahar-folder.md), use
 **Emulator Settings → Nintendo 3DS → Azahar → Set up**. Open Azahar once,
-select **Internal storage → Broomm-Azahar** or keep its existing user-data
+select **Internal storage → Broomm → Azahar** or keep its existing user-data
 folder, then exit and select the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
 Azahar’s configured folder. Save in the game, exit Azahar, and finish sync in
 Broomm.

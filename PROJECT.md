@@ -176,9 +176,10 @@ Android App info for explicit force-stop after a normal save and quit when
 needed. Returning to Broomm must never force-stop a potentially live writer.
 
 For new shared-folder setups on rooted Android, prepare the default selectable
-folders for Azahar, Citra MMJ and PPSSPP. Tell the player exactly which folder
-to select and preserve any existing emulator folder choice. Rooted PPSSPP
-keeps its App Private Data workflow.
+folders under `Broomm/` for Azahar and shared PPSSPP, and prepare Citra MMJ's
+fixed `citra-emu` folder at the storage root. Tell the player exactly which
+folder to select and preserve any existing emulator folder choice. Rooted
+PPSSPP keeps its App Private Data workflow.
 
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 

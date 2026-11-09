@@ -15,13 +15,15 @@ void main() {
       'Azahar ${useFallback ? 'requires explicit shared fallback after failed verification' : 'persists the verified scoped package and folder'}',
       () async {
         const channel = MethodChannel('app.broomm/azahar-setup-test');
-        const tree =
-            'content://com.android.externalstorage.documents/tree/primary%3ADocuments%2FAzahar';
+        final tree = useFallback
+            ? 'content://com.android.externalstorage.documents/tree/primary%3ADocuments%2FAzahar'
+            : 'content://com.android.externalstorage.documents/tree/primary%3ABroomm%2FAzahar';
         final emulator = androidEmulators.singleWhere((e) => e.id == 'azahar');
         final data = await Directory.systemTemp.createTemp('broomm-azahar-');
         final messenger =
             TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
         final checks = <Map>[];
+        var folderPreparations = 0;
         messenger.setMockMethodCallHandler(channel, (call) async {
           switch (call.method) {
             case 'installed':
@@ -40,6 +42,7 @@ void main() {
             case 'canPrepareSharedFolder':
               return true;
             case 'rootPrepareSharedFolder':
+              folderPreparations++;
               expect(call.arguments['package'], androidAzaharScopedPackage);
               expect(call.arguments['build'], 'a' * 64);
               return true;
@@ -67,7 +70,7 @@ void main() {
           expect(setup.preparedFolder, isTrue);
           expect(
             androidSetupInstructions(emulator, prepared: true),
-            contains('Internal storage → Broomm-Azahar'),
+            contains('Internal storage → Broomm → Azahar'),
           );
           await setup.selectFolder();
           expect(checks.single['access'], androidAzaharRootFolderAccess);
@@ -87,6 +90,10 @@ void main() {
             manager.folder(emulator)?['access'],
             useFallback ? null : androidAzaharRootFolderAccess,
           );
+          await setup.verify();
+          expect(setup.step, AndroidSetupStep.ready);
+          expect(manager.folder(emulator)?['tree'], tree);
+          expect(folderPreparations, 1);
         } finally {
           setup.dispose();
           manager.dispose();
@@ -224,13 +231,12 @@ void main() {
       expect(setup.preparedFolder, isTrue);
       expect(
         androidSetupInstructions(emulator, prepared: true),
-        contains('Internal storage → Broomm-PPSSPP'),
+        contains('Internal storage → Broomm → PPSSPP'),
       );
       await setup.selectFolder();
       expect(setup.step, AndroidSetupStep.folder);
       expect(manager.folder(emulator), isNull);
-      picked =
-          'content://com.android.externalstorage.documents/tree/primary%3APSP';
+      picked = 'content://com.android.externalstorage.documents/tree/primary%3ABroomm%2FPPSSPP';
       await setup.selectFolder();
       expect(setup.step, AndroidSetupStep.ready);
       expect(manager.folder(emulator)?['tree'], picked);

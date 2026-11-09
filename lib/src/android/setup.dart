@@ -399,9 +399,9 @@ String androidCloseInstructions(String emulator) =>
 
 String? androidDefaultSharedFolder(AndroidEmulator emulator) =>
     switch (emulator.id) {
-      'azahar' => 'Broomm-Azahar',
+      'azahar' => 'Broomm/Azahar',
       'citra-mmj' => 'citra-emu',
-      'ppsspp' => 'Broomm-PPSSPP',
+      'ppsspp' => 'Broomm/PPSSPP',
       _ => null,
     };
 
@@ -411,12 +411,12 @@ String androidSetupInstructions(
 }) => switch (emulator.id) {
   'ppsspp' =>
     prepared
-        ? 'In PPSSPP, choose Internal storage → Broomm-PPSSPP as the Memory Stick folder. If you already configured one, keep it. Select the same folder in Broomm.'
+        ? 'In PPSSPP, choose Internal storage → Broomm → PPSSPP as the Memory Stick folder. If you already configured one, keep it. Select the same folder in Broomm.'
         : 'In PPSSPP, choose a shared Memory Stick folder, then select that same folder in Broomm.',
   'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
   'azahar' =>
     prepared
-        ? 'In Azahar, choose Internal storage → Broomm-Azahar as the user-data folder. If you already configured one, keep it. Select the same folder in Broomm.'
+        ? 'In Azahar, choose Internal storage → Broomm → Azahar as the user-data folder. If you already configured one, keep it. Select the same folder in Broomm.'
         : 'In Azahar, choose a shared user-data folder, then select that same folder in Broomm.',
   'citra-mmj' => 'Allow Citra MMJ’s storage permission and wait for its main menu. Then select Internal storage → citra-emu in Broomm.',
   'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder.',

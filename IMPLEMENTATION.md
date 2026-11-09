@@ -4,10 +4,12 @@
 
 New shared connections for Azahar, Citra MMJ and PPSSPP prepare their fixed
 primary-storage folders through Android's emulated storage mount on rooted
-devices. The picker starts there when preparation succeeds. Existing grants
-and native folder choices remain supported. Citra MMJ initializes its own
-data and still needs its media permission. Rooted PPSSPP initializes App
-Private Data and keeps using its private progress workflow. If root is
+devices. Azahar and shared PPSSPP use `Broomm/Azahar` and `Broomm/PPSSPP`.
+The picker starts in the prepared child folder. Existing grants and native
+folder choices remain supported. Citra MMJ requires `citra-emu` at the
+storage root, initializes its own data and still needs its media permission.
+Rooted PPSSPP initializes App Private Data and keeps using its private progress
+workflow. If root is
 unavailable, the shared picker accepts a folder already configured in the
 emulator.
 
