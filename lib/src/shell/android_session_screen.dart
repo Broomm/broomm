@@ -4,6 +4,7 @@ import '../android/root_saves.dart';
 import '../android/session.dart';
 import '../android/psp_root.dart';
 import '../android/duck_root.dart';
+import '../android/setup.dart';
 import 'controls.dart';
 import 'navigation.dart';
 
@@ -30,6 +31,8 @@ class AndroidSessionScreen extends StatefulWidget {
   State<AndroidSessionScreen> createState() => _AndroidSessionScreenState();
 }
 
+enum _FinishChoice { keepPlaying, appInfo, closed }
+
 class _AndroidSessionScreenState extends State<AndroidSessionScreen>
     with WidgetsBindingObserver {
   bool started = false;
@@ -38,8 +41,14 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   bool _manualStart = false, _frontendSetup = false;
   AndroidRetroArchState? _retroArchState;
   bool _leftForEmulator = false, _offerSync = false, _promptOpen = false;
+  bool _openingAppInfo = false;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_openingAppInfo) {
+      if (state == AppLifecycleState.resumed) _openingAppInfo = false;
+      return;
+    }
     if (state == AppLifecycleState.paused && widget.session.active)
       _leftForEmulator = true;
     if (state == AppLifecycleState.resumed && _leftForEmulator) {
@@ -122,29 +131,47 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   }
 
   Future<void> finishPrompt() async {
-    final confirmed = await showConsoleDialog<bool>(
+    final choice = await showConsoleDialog<_FinishChoice>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Finished? Sync progress'),
-        content: const Text(
-          'Save your progress and close the emulator before syncing. Returning to Broomm can leave it running. Only continue when you have finished playing.',
+        title: const Text('Finish game session?'),
+        content: Text(
+          'Save your progress in ${widget.emulator} first. ${androidCloseInstructions(widget.emulator)}\n\n'
+          'If it stays open after you save and quit, use Force stop in Android App info.',
         ),
         actions: [
           ConsoleButton(
             autofocus: true,
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Not finished'),
+            onPressed: () => Navigator.pop(c, _FinishChoice.keepPlaying),
+            child: const Text('Keep playing'),
           ),
           ConsoleButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Emulator closed · Sync progress'),
+            onPressed: () => Navigator.pop(c, _FinishChoice.appInfo),
+            child: const Text('Android App info'),
+          ),
+          ConsoleButton(
+            onPressed: () => Navigator.pop(c, _FinishChoice.closed),
+            child: Text(
+              widget.cloudReady
+                  ? 'Emulator closed · Sync progress'
+                  : 'Emulator closed · Finish',
+            ),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
-    await widget.finish();
-    complete();
+    if (choice == _FinishChoice.appInfo) {
+      _openingAppInfo = true;
+      try {
+        await widget.session.openEmulatorAppInfo();
+      } catch (_) {
+        _openingAppInfo = false;
+        rethrow;
+      }
+    } else if (choice == _FinishChoice.closed) {
+      await widget.finish();
+      complete();
+    }
   }
 
   Future<void> run(Future<void> Function() action) async {
@@ -226,7 +253,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                             ? session.phase
                             : widget.rooted
                             ? 'Checking whether ${widget.emulator} is closed…'
-                            : 'Save and close any open emulator before Broomm restores cloud progress and launches the game.',
+                            : 'Broomm restores cloud progress before launching the game. Save any open progress first. ${androidCloseInstructions(widget.emulator)}',
                         style: const TextStyle(height: 1.6),
                       ),
                       if (!widget.cloudReady && !widget.recovering) ...[
@@ -359,38 +386,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                               ? null
                               : checkExit
                               ? () => run(finishRooted)
-                              : () => run(() async {
-                                  final confirmed =
-                                      await showConsoleDialog<bool>(
-                                        context: context,
-                                        builder: (c) => AlertDialog(
-                                          title: const Text(
-                                            'Finish game session?',
-                                          ),
-                                          content: const Text(
-                                            'Save your progress and exit the emulator completely first. Switching back to Broomm can leave the emulator running in the background.',
-                                          ),
-                                          actions: [
-                                            ConsoleButton(
-                                              autofocus: true,
-                                              onPressed: () =>
-                                                  Navigator.pop(c, false),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            ConsoleButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(c, true),
-                                              child: const Text(
-                                                'Emulator closed · Finish',
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                  if (confirmed != true) return;
-                                  await widget.finish();
-                                  complete();
-                                }),
+                              : () => run(finishPrompt),
                           child: Text(
                             checkExit
                                 ? 'Check for exit'

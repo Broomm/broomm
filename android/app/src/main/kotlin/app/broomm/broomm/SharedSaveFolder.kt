@@ -39,12 +39,18 @@ class SharedSaveFolder(private val activity: Activity) {
         fun check() = signal.throwIfCanceled()
         fun cancel() { signal.cancel(); try { descriptor.get()?.close() } catch (_: Exception) {} }
     }
-    fun pick(result: MethodChannel.Result, emulator: String? = null, pkg: String? = null) {
+    fun pick(result: MethodChannel.Result, emulator: String? = null, pkg: String? = null, prepared: Boolean = false) {
         check(pending == null) { "A save-folder picker is already open" }
         pending = result
         pickingEmulator = emulator; pickingPackage = pkg
         try {
             activity.startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                if (prepared && android.os.Build.VERSION.SDK_INT >= 26) {
+                    val folder = defaultSharedSetupFolder(pkg)
+                    require(folder != null)
+                    putExtra(DocumentsContract.EXTRA_INITIAL_URI, DocumentsContract.buildDocumentUri(
+                        "com.android.externalstorage.documents", "primary:$folder"))
+                }
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
                     Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
             }, picker)

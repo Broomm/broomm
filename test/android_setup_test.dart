@@ -37,8 +37,15 @@ void main() {
                   'version': '2126.2-vanilla',
                 },
               ];
+            case 'canPrepareSharedFolder':
+              return true;
+            case 'rootPrepareSharedFolder':
+              expect(call.arguments['package'], androidAzaharScopedPackage);
+              expect(call.arguments['build'], 'a' * 64);
+              return true;
             case 'sharedPick':
               expect(call.arguments['package'], androidAzaharScopedPackage);
+              expect(call.arguments['prepared'], true);
               return tree;
             case 'sharedCheck':
               final binding = call.arguments as Map;
@@ -57,6 +64,11 @@ void main() {
         try {
           await manager.load();
           await setup.verify();
+          expect(setup.preparedFolder, isTrue);
+          expect(
+            androidSetupInstructions(emulator, prepared: true),
+            contains('Internal storage → Broomm-Azahar'),
+          );
           await setup.selectFolder();
           expect(checks.single['access'], androidAzaharRootFolderAccess);
           expect(checks.single['azaharBuild'], 'a' * 64);
@@ -105,7 +117,12 @@ void main() {
                 'version': androidMmjSharedVersion,
               },
             ];
+          case 'canPrepareSharedFolder':
+            return !repick;
+          case 'rootPrepareSharedFolder':
+            throw PlatformException(code: 'folder-unavailable');
           case 'sharedPick':
+            expect(call.arguments['prepared'], isNull);
             picks++;
             return tree;
           case 'sharedCheck':
@@ -124,6 +141,11 @@ void main() {
       try {
         await manager.load();
         await setup.verify();
+        expect(setup.preparedFolder, isFalse);
+        expect(
+          setup.folderProblem,
+          repick ? isNull : contains('could not prepare'),
+        );
         await setup.selectFolder();
         expect(setup.problem, contains('emulator-running'));
         expect(setup.hasPendingFolder, isTrue);
@@ -167,7 +189,8 @@ void main() {
                 },
             ],
             'canInstallPackages' => true,
-            'installApk' || 'sharedCheck' => null,
+            'installApk' || 'sharedCheck' || 'emulatorAppInfo' => null,
+            'canPrepareSharedFolder' || 'rootPrepareSharedFolder' => true,
             'sharedPick' => picked,
             'ioBusy' => false,
             _ => throw StateError(call.method),
@@ -193,7 +216,16 @@ void main() {
       installed = true;
       await manager.load();
       await continued.future;
+      expect(calls, isNot(contains('rootPrepareSharedFolder')));
+      await setup.openAppInfo();
+      expect(calls.last, 'emulatorAppInfo');
       await setup.useSharedFolder();
+      expect(setup.problem, isNull);
+      expect(setup.preparedFolder, isTrue);
+      expect(
+        androidSetupInstructions(emulator, prepared: true),
+        contains('Internal storage → Broomm-PPSSPP'),
+      );
       await setup.selectFolder();
       expect(setup.step, AndroidSetupStep.folder);
       expect(manager.folder(emulator), isNull);

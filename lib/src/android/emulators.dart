@@ -999,13 +999,28 @@ class AndroidEmulators extends ChangeNotifier {
         (emulator.id != 'citra-mmj' || parts.last == 'citra-emu');
   }
 
+  Future<bool> prepareSharedFolder(AndroidApp app) async {
+    if (await channel.invokeMethod<bool>('canPrepareSharedFolder') != true)
+      return false;
+    return await channel.invokeMethod<bool>('rootPrepareSharedFolder', {
+          'package': app.package,
+          'build': app.build,
+        }) ==
+        true;
+  }
+
+  Future<void> openAppInfo(String package) =>
+      channel.invokeMethod<void>('emulatorAppInfo', {'package': package});
+
   Future<String?> chooseFolder(
     AndroidEmulator emulator, {
     String? package,
+    bool prepared = false,
   }) async {
     final selected = app(emulator, package: package);
     if (selected == null) throw StateError('Install ${emulator.name} first.');
     final uri = await channel.invokeMethod<String>('sharedPick', {
+      if (prepared) 'prepared': true,
       'emulator': emulator.id,
       'package': selected.package,
     });

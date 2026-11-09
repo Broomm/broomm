@@ -47,7 +47,7 @@ class BroommEmulators(private val activity: Activity) {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
-                        "rootMmjStageRom", "rootMmjRemoveRom",
+                        "rootMmjStageRom", "rootMmjRemoveRom", "rootPrepareSharedFolder",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
                         "rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootArmsx2Inspect", "rootArmsx2Scope", "rootArmsx2Check", "rootArmsx2List", "rootArmsx2Read", "rootArmsx2Replace",
@@ -101,6 +101,15 @@ class BroommEmulators(private val activity: Activity) {
                                 if (matches) app(pkg) else null
                             }
                         }
+                        "emulatorAppInfo" -> {
+                            val pkg = packageName(call.argument<String>("package"))
+                            require(RootInspection.supports(pkg) && app(pkg) != null) { "Emulator app is unavailable." }
+                            activity.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.fromParts("package", pkg, null)))
+                            result.success(null)
+                        }
+                        "canPrepareSharedFolder" -> result.success(
+                            System.getenv("PATH").orEmpty().split(':').any { it.startsWith('/') && File(it, "su").canExecute() })
                         "installPage" -> {
                             val url = Uri.parse(call.argument<String>("url")!!)
                             require(url.scheme == "https" && url.host in setOf("www.ppsspp.org", "github.com", "azahar-emu.org", "dolphin-emu.org", "git.eden-emu.dev", "www.retroarch.com", "play.google.com", "downloads.duckstation.org"))
@@ -323,7 +332,7 @@ class BroommEmulators(private val activity: Activity) {
                         }
                         "writers" -> result.success(EmulatorDocumentsProvider.writers.get() + if (sharedFolder.busy()) 1 else 0)
                         "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
-                        "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"))
+                        "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"), call.argument<Boolean>("prepared") == true)
                         "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
                             sharedOperation(call, result)
                         else -> result.notImplemented()

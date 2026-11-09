@@ -171,7 +171,14 @@ Android detects and uses compatible installed emulator apps and can guide users 
 
 During installation and save setup, ask the player to open each emulator once,
 complete its first-run setup and permissions, then close it before playing from
-Broomm. Keep this guidance in the setup flows.
+Broomm. Explain how to quit and dismiss its Android Recents card. Offer its
+Android App info for explicit force-stop after a normal save and quit when
+needed. Returning to Broomm must never force-stop a potentially live writer.
+
+For new shared-folder setups on rooted Android, prepare the default selectable
+folders for Azahar, Citra MMJ and PPSSPP. Tell the player exactly which folder
+to select and preserve any existing emulator folder choice. Rooted PPSSPP
+keeps its App Private Data workflow.
 
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 
