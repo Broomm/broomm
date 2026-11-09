@@ -43,10 +43,30 @@ journal until it can verify capture and restoration.
 This increment covers GameCube discs with region codes E, J or P and ordinary
 Wii discs. WAD channels, Wii add-on installation and raw GameCube cards are
 outside the rooted route. Use shared-folder setup for eligible custom
-configurations. Device initialization and workflow tests are separate from
-end-to-end game and RomM verification.
+configurations.
+
+## Thor verification
 
 The Thor fixture ran the production file adapter against the official
 installed package. Both GameCube and Wii accepted a scoped save and state,
 returned the exact bytes through descriptors, refused foreign title files,
 and removed the fixtures. Dolphin's configuration hash was unchanged.
+
+The ordinary Setup and Play actions launched Luigi’s Mansion (GLME01) and
+Wii Sports (RSPE01) in official Dolphin 2609a on the Thor. Native savestates
+were enabled in Dolphin’s General settings for these checks.
+
+- GameCube, Broomm build 1134. Luigi’s Mansion created a 31,594,946-byte
+  native state in the foyer. RomM confirmed version 272. The next Play
+  restored the identical state, and native Quick Load returned to the foyer.
+  The GameCube fixture verified GCI transport. A new in-game GCI save has
+  yet to be created and loaded.
+- Wii, Broomm builds 1134 and 1136. Wii Sports created `RPSports.dat` and
+  `banner.bin` in its NAND save directory, plus two native states. RomM
+  confirmed version 273. After an in-place upgrade to 1136, Play restored all
+  four files byte for byte and Dolphin loaded slot 1 at the sports menu.
+
+Both games exited through Dolphin’s Exit Emulation action. When Android
+retained a cached process, Broomm required that process to stop before
+writing saves. This test used one RomM account. CI passed checks and all
+five packages for the [build 1136 revision](https://github.com/Broomm/broomm/actions/runs/42565836150).

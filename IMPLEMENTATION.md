@@ -7,8 +7,12 @@ Android release. Setup verifies its default app storage and save settings.
 The save transaction identifies the selected disc, scopes GameCube GCI files
 by title header or Wii NAND files by title directory, and keeps numbered
 states in the exact APK's compatibility group. Process absence is required
-for file effects. The shared-folder route remains available. Native launch
-and RomM save acceptance are pending. See the [Dolphin walkthrough](docs/android-dolphin-root.md).
+for file effects. The shared-folder route remains available. On the Thor,
+Luigi’s Mansion synced and reloaded a native GameCube state. Wii Sports
+synced its game-created NAND save and two native states, then restored the
+exact bytes and loaded the saved sports menu after upgrading to build 1136.
+A new game-created GameCube GCI and a two-account Dolphin round trip remain
+unverified. See the [Dolphin walkthrough](docs/android-dolphin-root.md).
 
 ## Standalone Android follow-up — melonDS
 
