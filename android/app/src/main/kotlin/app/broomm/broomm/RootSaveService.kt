@@ -41,7 +41,8 @@ class RootSaveService : RootService() {
         live()
         val pkg = request.getString("package")!!
         val psp = request.getString("operation")?.startsWith("psp") == true
-        require(if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+        val duck = request.getString("operation")?.startsWith("duck") == true
+        require(if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
             require(before[key].toString() == request.getString(key)) { "Emulator identity changed. Reconnect after finishing recovery." }
@@ -53,9 +54,36 @@ class RootSaveService : RootService() {
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
         val operation = request.getString("operation")
-        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "duckinspect", "ducklifecycle", "duckstop")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
         val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
         require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (duck) return SharedDocumentLock.acquire(storage).use {
+            require(android.os.Build.VERSION.SDK_INT >= 30) { "Root DuckStation saves require Android 11 or newer." }
+            val app = packageManager.getApplicationInfo(pkg, 0)
+            require(app.splitSourceDirs.isNullOrEmpty() && File(app.nativeLibraryDir).name == "arm64") {
+                "Root DuckStation saves currently require the reviewed ARM64 beta. Use shared-folder setup on other builds."
+            }
+            val image = RootDuckImage(File(app.sourceDir), ::live)
+            val process = RootDuckProcess(this, uid, image, ::live)
+            val result = if (operation in setOf("ducklifecycle", "duckstop")) process.observe(request, dispose = operation == "duckstop") else {
+                val files = RootDuckFiles(this, before, ::live, process::absent)
+                if (operation != "duckinspect") files.validate(request)
+                when (operation) {
+                    "duckinspect" -> files.report()
+                    "duckprofile" -> files.initialize(request)
+                    "duckgame" -> files.prepareGame(request)
+                    "ducklist" -> files.inventory(request)
+                    "duckprofilelist" -> files.inventory(request, profileData = true)
+                    "duckread" -> files.capture(request, request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller)
+                    "duckprofileread" -> files.capture(request, request.getParcelable<ParcelFileDescriptor>("transfer")!!, caller, profileData = true)
+                    "duckreplace" -> files.replace(request, request.getParcelable<ParcelFileDescriptor>("transfer"), caller)
+                    "duckprofilereplace" -> files.replace(request, request.getParcelable<ParcelFileDescriptor>("transfer"), caller, profileData = true)
+                    else -> error("Unsupported DuckStation root operation")
+                }
+            }
+            require(RootInspection.identity(this, pkg, 0) == before) { "DuckStation changed during root access. Recovery was kept." }
+            live(); result
+        }
         if (psp) return SharedDocumentLock.acquire(storage).use {
             live()
             val process = RootPpssppProcess(this, pkg, uid, ::live)

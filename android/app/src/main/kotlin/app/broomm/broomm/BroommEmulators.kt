@@ -45,7 +45,8 @@ class BroommEmulators(private val activity: Activity) {
                 try {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
-                        "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace" ->
+                        "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
+                        "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckGame", "rootDuckList", "rootDuckRead", "rootDuckReplace", "rootDuckProfileList", "rootDuckProfileRead", "rootDuckProfileReplace" ->
                             rootSaves.operation(call, result)
                         "canInstallPackages" -> result.success(installPermission.allowed())
                         "requestInstallPermission" -> installPermission.request(result)
@@ -96,7 +97,7 @@ class BroommEmulators(private val activity: Activity) {
                         }
                         "installPage" -> {
                             val url = Uri.parse(call.argument<String>("url")!!)
-                            require(url.scheme == "https" && url.host in setOf("www.ppsspp.org", "github.com", "azahar-emu.org", "dolphin-emu.org", "git.eden-emu.dev", "www.retroarch.com", "play.google.com"))
+                            require(url.scheme == "https" && url.host in setOf("www.ppsspp.org", "github.com", "azahar-emu.org", "dolphin-emu.org", "git.eden-emu.dev", "www.retroarch.com", "play.google.com", "downloads.duckstation.org"))
                             activity.startActivity(Intent(Intent.ACTION_VIEW, url))
                             result.success(null)
                         }
@@ -117,6 +118,12 @@ class BroommEmulators(private val activity: Activity) {
                             val intent = activity.packageManager.getLaunchIntentForPackage(pkg)
                                 ?: throw IllegalStateException("Emulator is unavailable. Refresh installation status.")
                             activity.startActivity(intent)
+                            result.success(null)
+                        }
+                        "returnToBroomm" -> {
+                            activity.startActivity(Intent(activity, MainActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            })
                             result.success(null)
                         }
                         "dataRoot" -> {
@@ -157,7 +164,9 @@ class BroommEmulators(private val activity: Activity) {
                         "launch" -> {
                             val rootedPsp = call.argument<Boolean>("rootedPsp") == true
                             require(!rootedPsp || call.argument<String>("emulator") == "ppsspp") { "Invalid rooted PSP launch" }
+                            val rootedDuck = call.argument<Boolean>("rootedDuck") == true
                             val pkg = packageName(call.argument<String>("package"))
+                            require(!rootedDuck || call.argument<String>("emulator") == "duckstation" && pkg == "com.github.stenzek.duckstation") { "Invalid rooted PS1 launch" }
                             val currentApp = app(pkg)
                             require(currentApp?.get("build") == call.argument<String>("build") && currentApp?.get("enabled") == "true") { "Emulator changed or is disabled. Refresh status before launching." }
                             val duckDocuments = call.argument<String>("emulator") == "duckstation" &&
@@ -255,8 +264,8 @@ class BroommEmulators(private val activity: Activity) {
                                 if (nativeRom == null) {
                                     for (other in uris) activity.grantUriPermission(pkg, other, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
-                                if (rootedPsp) {
-                                    // Rooted PSP completion uses its native shutdown
+                                if (rootedPsp || rootedDuck) {
+                                    // Rooted standalone completion uses native shutdown
                                     // proof and app lifecycle, not an Activity result.
                                     // Keep PPSSPP's task separate: its launcher can
                                     // otherwise clear Broomm above a resumed game.

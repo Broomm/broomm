@@ -33,7 +33,8 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       (emulator.id == 'retroarch' && androidRootRetroCore(platform) != null ||
           emulator.id == 'ppsspp' &&
               platform == 'psp' &&
-              manager.app(emulator)?.package == 'org.ppsspp.ppsspp') &&
+              manager.app(emulator)?.package == 'org.ppsspp.ppsspp' ||
+          emulator.id == 'duckstation' && platform == 'psx') &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -83,6 +84,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       throw StateError('Enable ${emulator.name} in Android settings first.');
     if (_rooted) {
       step = AndroidSetupStep.initialize;
+      if (emulator.id == 'duckstation') {
+        await manager.connectDuckRoot(emulator);
+        step = AndroidSetupStep.ready;
+        return;
+      }
       if (emulator.id == 'ppsspp') {
         await manager.connectPspRoot(emulator);
         step = AndroidSetupStep.ready;
@@ -148,7 +154,9 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   Future<void> useSharedFolder() => _run(() async {
     if (manager.rootConnection(emulator, platform) != null)
-      if (emulator.id == 'ppsspp')
+      if (emulator.id == 'duckstation')
+        await manager.disconnectDuckRoot();
+      else if (emulator.id == 'ppsspp')
         await manager.disconnectPspRoot();
       else
         await manager.disconnectGbaRoot(emulator, platform: platform);

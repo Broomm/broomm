@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../android/root_saves.dart';
 import '../android/session.dart';
 import '../android/psp_root.dart';
+import '../android/duck_root.dart';
 import 'controls.dart';
 import 'navigation.dart';
 
@@ -83,6 +84,18 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
   }
 
   Future<void> finishRooted() async {
+    if (widget.emulator == 'DuckStation') {
+      final state = await widget.session.finishIfDuckClosed();
+      if (state == AndroidDuckState.closed) complete();
+      _retroArchState =
+          {
+            AndroidDuckState.unknown,
+            AndroidDuckState.interrupted,
+          }.contains(state)
+          ? AndroidRetroArchState.unknown
+          : null;
+      return;
+    }
     if (widget.emulator == 'PPSSPP') {
       final state = await widget.session.finishIfPspClosed();
       if (state == AndroidPspState.closed) complete();
@@ -252,7 +265,11 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                         ),
                       if (error != null &&
                           active &&
-                          !(widget.rooted && widget.emulator == 'PPSSPP'))
+                          !(widget.rooted &&
+                              {
+                                'PPSSPP',
+                                'DuckStation',
+                              }.contains(widget.emulator)))
                         ConsoleButton(
                           onPressed: session.busy
                               ? null
@@ -261,7 +278,11 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                         ),
                       if (error != null &&
                           active &&
-                          !(widget.rooted && widget.emulator == 'PPSSPP'))
+                          !(widget.rooted &&
+                              {
+                                'PPSSPP',
+                                'DuckStation',
+                              }.contains(widget.emulator)))
                         ConsoleButton(
                           onPressed: session.busy
                               ? null

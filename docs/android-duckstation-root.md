@@ -5,6 +5,12 @@ DuckStation is the next standalone increment. This document separates the
 implemented read-only diagnostic from the save-writing work still required.
 The existing connected-folder adapter remains separate.
 
+The subsequent [transaction implementation](android-duckstation-transactions.md)
+now adds private cards/states/preferences, durable recovery, BIOS provisioning
+and removal backups. Native mechanism tests pass; packaged two-account game
+acceptance remains pending. The earlier sections below retain their original
+research/acceptance scope and do not establish that later integration.
+
 ## Implemented: initialized app-files inspection
 
 The global **Emulator Settings → Inspect root access** diagnostic inspects

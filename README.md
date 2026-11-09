@@ -28,6 +28,12 @@ installed record, taking 3–4 ms without rescanning the ROM. The
 from root save sessions, ordinary saves and account-private DuckStation progress,
 which remain pending.
 
+PR #6 now contains the [rooted DuckStation transaction implementation](docs/android-duckstation-transactions.md):
+private whole cards/states/preferences, BIOS provisioning, durable recovery and
+removal backups. Native Thor mechanism tests and host workflows pass; the new
+packaged device round trips are still pending. Build 1122 above does not contain
+these transactions. The local macOS preview is being rebuilt for this increment.
+
 Current local macOS preview: [download the universal archive](build/releases/Broomm-macOS-android-duckstation-preview.zip).
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.
@@ -348,7 +354,7 @@ Android has APK installation/discovery and connected save adapters. See the
 [Android status](docs/android-emulators.md) for each emulator's verification
 and content support. **Emulator Settings → Refresh status** refreshes package
 observations. **Set up** guides official APK/store installation, first open and
-save access. DuckStation uses its store and PPSSPP Gold remains a paid
+save access. DuckStation links its official Android download page and PPSSPP Gold remains a paid
 entitlement. Stable `com.armsx2` and nightly `com.armsx2.nightly` are both
 detected; enabled stable wins when both exist. Successful setup makes the
 emulator the default for that platform. Play opens the external app using its

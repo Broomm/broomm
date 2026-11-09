@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "date": "2026-11-08",
+  "status": "native mechanisms verified; packaged PS1 transactions pending",
+  "source_base": "0125573b06d77039b04422c941c7a031b6be902a",
+  "source_sha256": {
+    "android/app/src/main/cpp/root_process.c": "1dfc658268d54c0c2ec3ae322bfd6df9297e7742ea73bb092d2c444a1ac4600d",
+    "android/app/src/main/cpp/Android.mk": "e65ac02a43f2447e79aaa103a01d4c73c52807bcbecdf9c45c6248f695c241c6",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootProcessKernel.kt": "a49c941afed0dee85b112959d25636e7be3f8a684f95fe2147a6f925d838f933",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt": "1d2a5dfa28661f457b2353e9505e1a030898e3be8315961b936a88be530d5312",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckFiles.kt": "6375f9caa137cd5eda877c2fdeeb2a1f84fb1677c9f92388d8a89fe83bfd9636",
+    "android/app/src/main/kotlin/app/broomm/broomm/DuckPauseProof.kt": "820e1899000fb5a8e575a86e630fba90ef9477a8e006b38d24a46d63a88f65e5"
+  },
+  "ownership": "Broomm-owned implementation; no upstream APK, binary or implementation copied",
+  "toolchain": {
+    "ndk": "29.0.14206865",
+    "recipe": "tool/android/build_root_process_test.sh",
+    "libraries": "developer fixture builds; final packaged library hashes pending"
+  },
+  "libraries": [
+    {
+      "abi": "arm64-v8a",
+      "bytes": 14808,
+      "sha256": "3f5d7eb1438b7b7b44956777d397e0fd5695d79cf9a9657d3641a106d07e823d",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "Thor ARM64 fixture"
+    },
+    {
+      "abi": "armeabi-v7a",
+      "bytes": 9816,
+      "sha256": "019b0b433a2231033e5b4d611f366951f9326dd739ca74e4ded6d471587e94b0",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    },
+    {
+      "abi": "x86",
+      "bytes": 13224,
+      "sha256": "a9066b348247172ef67bfdb67d3b3759c31ce80173c8a200afb4868da54ebe5a",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    },
+    {
+      "abi": "x86_64",
+      "bytes": 14968,
+      "sha256": "a778669a7964fc5b73dde4a938be15e72833ec2442e02dd675a2eb16ca0379de",
+      "system_dependencies": [
+        "libc.so",
+        "libm.so",
+        "libdl.so"
+      ],
+      "native_execution": "compilation only"
+    }
+  ],
+  "device": {
+    "name": "AYN Thor",
+    "android": "13",
+    "android_user": 0,
+    "root_manager": "Magisk 31.1",
+    "executed": [
+      "six disposable multi-threaded kernel safety groups",
+      "completed framework client pause parser and captured real binary events",
+      "production Kotlin/JNI frozen idle-cache disposal with parent-side lifecycle recheck",
+      "native file interruption/publication/ownership/descriptor and path-boundary regressions",
+      "native Slot 4 envelope and stable media publication validation"
+    ]
+  },
+  "original_resource_sha256": {
+    "settings.ini": "7f554e69e299de15d9339aacd4e635675f30f14c36673f61dac5ca993e3edab7",
+    "bios/ps-22a.bin": "71af94d1e47a68c11e8fdb9f8368040601514a42a5a399cda48c7d3bff1e99d3",
+    "savestates/SLUS-00561_1.sav": "d5a177e7edfbd629f1b9f75141b6c132bedb2c87d98c02be45bd1a81959e5578",
+    "savestates/SLUS-00561_2.sav": "af8f721b0b6b379fff61019b7c82728412037f22854d4a3d6b66f179f380435c",
+    "savestates/SLUS-00561_3.sav": "c1e05fed4dc07e49adc1e3edb70706feb6bdfc8aad0215a767edf0d023816b60",
+    "savestates/SLUS-00561_4.sav": "aae6e442fd44092ea067feed099c0b3025745aef547c70522a534412b646c27e"
+  },
+  "limits": [
+    "reviewed beta 12126 ARM64 target only",
+    "no physical PS1 cloud/card/two-account acceptance yet",
+    "no claim of another OS/ABI from compilation",
+    "Sega 32X ordinary in-game save and two-account acceptance still pending"
+  ]
+}

@@ -1,5 +1,25 @@
 # Implementation plan
 
+## Rooted DuckStation transactions — implementation awaiting packaged acceptance
+
+PR #6 now implements Dart-owned private whole cards, publication/build-specific
+states, private preference loans, RomM BIOS provisioning, journals, recovery and
+full private backups for the reviewed beta's ARM64/user-0 boundary. Setup,
+Open emulator, Play and Remove use the compact existing actions. Native file
+effects require process absence. A small owned NDK/JNI mechanism freezes a
+verified idle cache and rechecks native writers plus a completed framework
+client pause before generation-bound disposal. No external runtime dependency
+or upstream APK redistribution is added.
+
+Four-ABI compilation, real Thor disposable kernel/file regressions, an actual
+paused-menu disposal, real binary pause evidence and native Slot 4 envelope
+validation pass. Original native settings, BIOS and Slots 1–4 remain identical.
+Host checks cover two-account cloud transactions, preferences, unsafe/lost-reply
+recovery and serialized automatic completion. Packaged physical-device PS1
+save/state/account/offline/reinstall acceptance is still pending. Sega 32X's
+ordinary in-game save and two-account acceptance follow; no other standalone
+emulator enters PR #6. See the [implementation and evidence boundaries](docs/android-duckstation-transactions.md).
+
 ## DuckStation read-only storage increment — 2026-11-08
 
 PSP PR #5 merged as `d30d5dd` after its final CI and Thor acceptance. The next

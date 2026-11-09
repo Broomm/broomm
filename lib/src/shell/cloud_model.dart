@@ -74,10 +74,11 @@ extension ShellCloudSaves on ShellModel {
         identical(cached.client, c))
       return cached;
     if (resolved == null) {
-      final files = gameCandidates(
-        platform,
-        await library.contentFiles(entry, excludeAddons: true),
+      final installedFiles = await library.contentFiles(
+        entry,
+        excludeAddons: true,
       );
+      final files = gameCandidates(platform, installedFiles);
       if (files.length != 1 && androidRom == null)
         throw StateError(
           'Launch this game once and choose its game file before managing cloud saves.',
@@ -106,6 +107,8 @@ extension ShellCloudSaves on ShellModel {
           platform,
           androidRom ?? files.single,
           contentId: '$id',
+          files: installedFiles,
+          platformId: entry.game.platformId,
           package: sessionPackage,
         );
         final result = CloudGame(

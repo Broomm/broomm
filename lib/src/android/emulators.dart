@@ -16,6 +16,8 @@ import 'psp_root.dart';
 import 'psp_root_store.dart';
 import 'flycast.dart' show clearAndroidFlycastPreferences;
 import 'duckstation_documents.dart';
+import 'duck_root.dart';
+import 'duck_root_store.dart';
 
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
@@ -133,7 +135,7 @@ const androidEmulators = [
     'DuckStation',
     ['com.github.stenzek.duckstation'],
     {'psx'},
-    'https://play.google.com/store/apps/details?id=com.github.stenzek.duckstation',
+    'https://downloads.duckstation.org/android-testing/',
     'com.github.stenzek.duckstation.EmulationActivity',
     'android.intent.action.MAIN',
   ),
@@ -178,6 +180,7 @@ class AndroidEmulators extends ChangeNotifier {
   final _snesRoots = <String, Map<String, String>>{};
   final _retroRoots = <String, Map<String, String>>{};
   final _pspRoots = <String, Map<String, String>>{};
+  final _duckRoots = <String, Map<String, String>>{};
   final _fingerprints = <String, String>{};
   bool busy = false, _disposed = false;
   AndroidApkDownload? _download;
@@ -253,6 +256,8 @@ class AndroidEmulators extends ChangeNotifier {
     String platform, {
     String? package,
   }) {
+    if (emulator.id == 'duckstation' && platform == 'psx')
+      return duckRoot(package: package);
     if (emulator.id == 'ppsspp' && platform == 'psp')
       return pspRoot(package: package);
     final selected = app(emulator, package: package);
@@ -267,6 +272,67 @@ class AndroidEmulators extends ChangeNotifier {
     final emulator = androidEmulators.singleWhere((e) => e.id == 'ppsspp');
     final selected = app(emulator, package: package);
     return selected == null ? null : _pspRoots[selected.package];
+  }
+
+  Map<String, String>? duckRoot({String? package}) {
+    final selected = app(
+      androidEmulators.singleWhere((e) => e.id == 'duckstation'),
+      package: package,
+    );
+    return selected == null ? null : _duckRoots[selected.package];
+  }
+
+  Future<AndroidApp?> connectDuckRoot(AndroidEmulator emulator) =>
+      _withInstallPermission(() async {
+        final lease = await SessionLease.acquire(data);
+        try {
+          await ensureSetupAllowed();
+          if (emulator.id != 'duckstation')
+            throw StateError('Select DuckStation first.');
+          final selected = app(emulator);
+          if (selected == null || !selected.enabled)
+            throw StateError('Install and enable DuckStation first.');
+          final roots = AndroidDuckRootStore(this);
+          await roots.restoreSettingsLoan();
+          await roots.ensureClosed({
+            'package': selected.package,
+            'build': selected.build,
+          });
+          final binding = androidDuckRootIdentity(
+            await inspectAndroidDuckRoot(this, selected),
+            selected,
+          );
+          final next = {..._duckRoots, selected.package: binding};
+          await _save(duckRoots: next);
+          _duckRoots
+            ..clear()
+            ..addAll(next);
+          phase?.call('DuckStation private saves and states are ready.');
+          _emit();
+          return null;
+        } finally {
+          await lease.release();
+        }
+      }, requiresApkPermission: false);
+
+  Future<void> disconnectDuckRoot() async {
+    final lease = await SessionLease.acquire(data);
+    try {
+      await ensureSetupAllowed();
+      await AndroidDuckRootStore(this).restoreSettingsLoan();
+      final selected = app(
+        androidEmulators.singleWhere((e) => e.id == 'duckstation'),
+      );
+      if (selected == null) throw StateError('Refresh DuckStation first.');
+      final next = {..._duckRoots}..remove(selected.package);
+      await _save(duckRoots: next);
+      _duckRoots
+        ..clear()
+        ..addAll(next);
+      _emit();
+    } finally {
+      await lease.release();
+    }
   }
 
   Future<AndroidApp?> connectPspRoot(AndroidEmulator emulator) =>
@@ -362,7 +428,8 @@ class AndroidEmulators extends ChangeNotifier {
     String? platform,
   }) =>
       (platform == null &&
-          (emulator.id == 'ppsspp' && pspRoot() != null ||
+          (emulator.id == 'duckstation' && duckRoot() != null ||
+              emulator.id == 'ppsspp' && pspRoot() != null ||
               gbaRoot(emulator) != null ||
               rootConnection(emulator, 'snes') != null ||
               rootConnection(emulator, 'gb') != null ||
@@ -662,6 +729,8 @@ class AndroidEmulators extends ChangeNotifier {
           );
         if (emulator.id == 'ppsspp')
           await AndroidPspRootStore(this).backupInstallation(package);
+        if (emulator.id == 'duckstation')
+          await AndroidDuckRootStore(this).backupInstallation(package);
         final removed = await channel.invokeMethod<bool>('uninstall', {
           'package': package,
           'build': current.build,
@@ -689,6 +758,7 @@ class AndroidEmulators extends ChangeNotifier {
       final retroRoots = {..._retroRoots}
         ..removeWhere((key, _) => key.endsWith(':$package'));
       final pspRoots = {..._pspRoots}..remove(package);
+      final duckRoots = {..._duckRoots}..remove(package);
       final trees = Map<String, String>.fromEntries(
         _trees.entries.where((e) => !e.key.endsWith(':${emulator.id}')),
       );
@@ -703,6 +773,7 @@ class AndroidEmulators extends ChangeNotifier {
         snesRoots: snesRoots,
         retroRoots: retroRoots,
         pspRoots: pspRoots,
+        duckRoots: duckRoots,
       );
       _trees
         ..clear()
@@ -722,8 +793,13 @@ class AndroidEmulators extends ChangeNotifier {
       _pspRoots
         ..clear()
         ..addAll(pspRoots);
+      _duckRoots
+        ..clear()
+        ..addAll(duckRoots);
       if (emulator.id == 'ppsspp')
         await AndroidPspRootStore(this).retireInstallation(package);
+      if (emulator.id == 'duckstation')
+        await AndroidDuckRootStore(this).retireInstallation(package);
       if (emulator.id == 'retroarch')
         await clearAndroidFlycastPreferences(data);
       await onRemoved?.call(emulator);
@@ -837,17 +913,19 @@ class AndroidEmulators extends ChangeNotifier {
     Map<String, Map<String, String>>? snesRoots,
     Map<String, Map<String, String>>? retroRoots,
     Map<String, Map<String, String>>? pspRoots,
+    Map<String, Map<String, String>>? duckRoots,
   }) async {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 17,
+        'version': 18,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
         'snesRoots': snesRoots ?? _snesRoots,
         'retroRoots': retroRoots ?? _retroRoots,
         'pspRoots': pspRoots ?? _pspRoots,
+        'duckRoots': duckRoots ?? _duckRoots,
         'fingerprints': _fingerprints,
       },
     );
@@ -920,6 +998,7 @@ class AndroidEmulators extends ChangeNotifier {
               15,
               16,
               17,
+              18,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -972,6 +1051,7 @@ class AndroidEmulators extends ChangeNotifier {
           15,
           16,
           17,
+          18,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -1002,6 +1082,7 @@ class AndroidEmulators extends ChangeNotifier {
           15,
           16,
           17,
+          18,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1029,6 +1110,7 @@ class AndroidEmulators extends ChangeNotifier {
           15,
           16,
           17,
+          18,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1073,7 +1155,7 @@ class AndroidEmulators extends ChangeNotifier {
           ..clear()
           ..addAll(retroRoots);
         final pspRoots = <String, Map<String, String>>{};
-        if (record['version'] == 17) {
+        if (record['version'] >= 17) {
           if (record['pspRoots'] is! Map)
             throw const FormatException('Missing PSP root settings.');
           for (final entry in (record['pspRoots'] as Map).entries) {
@@ -1087,6 +1169,22 @@ class AndroidEmulators extends ChangeNotifier {
         _pspRoots
           ..clear()
           ..addAll(pspRoots);
+        final duckRoots = <String, Map<String, String>>{};
+        if (record['version'] >= 18) {
+          if (record['duckRoots'] is! Map)
+            throw const FormatException('Missing DuckStation root settings.');
+          for (final e in (record['duckRoots'] as Map).entries) {
+            final b = (e.value as Map).cast<String, String>();
+            if (e.key != b['package'] || !androidDuckRootBinding(b))
+              throw const FormatException(
+                'Invalid DuckStation root connection.',
+              );
+            duckRoots[e.key as String] = b;
+          }
+        }
+        _duckRoots
+          ..clear()
+          ..addAll(duckRoots);
         final hashes = (record['fingerprints'] as Map? ?? {})
             .cast<String, String>();
         if (hashes.entries.any(
@@ -1103,6 +1201,7 @@ class AndroidEmulators extends ChangeNotifier {
         _folders.clear();
         _gbaRoots.clear();
         _pspRoots.clear();
+        _duckRoots.clear();
         _snesRoots.clear();
         _retroRoots.clear();
       }
@@ -1350,6 +1449,14 @@ class AndroidEmulators extends ChangeNotifier {
         'Enable ${emulator.name} in Android app settings first.',
       );
     if (!resumeSession &&
+        emulator.id == 'duckstation' &&
+        profile != null &&
+        server != null &&
+        duckRoot(package: package) != null) {
+      await AndroidDuckRootStore(this).openSettings(server, profile, selected);
+      return;
+    }
+    if (!resumeSession &&
         emulator.id == 'ppsspp' &&
         profile != null &&
         server != null &&
@@ -1493,6 +1600,7 @@ class AndroidEmulators extends ChangeNotifier {
     String? configuration,
     String? nativeRom,
     bool rootedPsp = false,
+    bool rootedDuck = false,
     DownloadCancellation? cancellation,
     void Function(String)? phase,
   }) async {
@@ -1504,6 +1612,11 @@ class AndroidEmulators extends ChangeNotifier {
       throw const FormatException('Android emulator/game selection changed');
     if (rootedPsp && (emulator.id != 'ppsspp' || profile == null))
       throw const FormatException('Invalid rooted PSP launch');
+    if (rootedDuck &&
+        (emulator.id != 'duckstation' ||
+            profile == null ||
+            duckRoot(package: app.package) == null))
+      throw const FormatException('Invalid rooted PS1 launch');
     if (!app.enabled)
       throw StateError(
         'Enable ${emulator.name} in Android app settings first.',
@@ -1530,6 +1643,7 @@ class AndroidEmulators extends ChangeNotifier {
       'selected': selected,
       if (documentToken != null) 'documentToken': documentToken,
       if (rootedPsp) 'rootedPsp': true,
+      if (rootedDuck) 'rootedDuck': true,
       if (core != null) 'core': core,
       if (configuration != null) 'configuration': configuration,
       if (nativeRom != null) 'nativeRom': nativeRom,

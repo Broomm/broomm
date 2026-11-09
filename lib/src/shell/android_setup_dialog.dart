@@ -153,16 +153,14 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   autofocus: true,
                   onPressed: setup.install,
                   child: Text(
-                    emulator.id == 'duckstation'
-                        ? 'Open Play Store'
-                        : 'Install',
+                    emulator.id == 'duckstation' ? 'Download page' : 'Install',
                   ),
                 ),
               ] else ...[
                 if (setup.problem != null &&
                     (emulator.id == 'retroarch' &&
                             androidRootRetroCore(widget.platform) != null ||
-                        emulator.id == 'ppsspp') &&
+                        {'ppsspp', 'duckstation'}.contains(emulator.id)) &&
                     setup.step != AndroidSetupStep.folder)
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,
