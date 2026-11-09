@@ -1058,11 +1058,43 @@ void main() {
     final external = fixture.edenRoot = await Directory('${temp.path}/eden')
         .create();
     final eden = emulator('eden'), rom = await switchFixture();
+    // Android engine replies can expose a read-only typed-data buffer.
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMessageHandler(channel.name, (message) async {
+      final call = channel.codec.decodeMethodCall(message!);
+      try {
+        final reply = channel.codec.encodeSuccessEnvelope(
+          await fixture.call(call),
+        );
+        return call.method == 'rootEdenKey'
+            ? reply.asUnmodifiableView()
+            : reply;
+      } on PlatformException catch (error) {
+        return channel.codec.encodeErrorEnvelope(
+          code: error.code,
+          message: error.message,
+          details: error.details,
+        );
+      }
+    });
     await manager.load();
     await manager.connectEdenRoot(eden);
     await manager.load();
     final platform = playablePlatforms.firstWhere(
       (p) => p.emulatorId == 'eden',
+    );
+    final invalidRom = await put(temp, 'invalid.nsp', List.filled(512, 0));
+    await expectLater(
+      androidProgressLayout(
+        manager,
+        profileId,
+        eden,
+        platform,
+        invalidRom.path,
+        contentId: '42',
+      ),
+      throwsFormatException,
     );
     final plan = await androidProgressLayout(
       manager,

@@ -8,8 +8,11 @@ SDK33 build can likewise provision a missing 4 MiB PS2 BIOS. Both reuse
 desktop catalogue selection and checksum validation. The Android bridge
 verifies the pinned package and closed emulator before writing, and keeps
 existing firmware. ARMSX2’s ordinary Android folder connection remains
-separate from its BIOS import. Rooted PS2 saves and native gameplay
-acceptance are pending.
+separate from its BIOS import. On the Thor, build 1157 imported both
+Eden key files and 238 firmware NCAs from RomM and verified the connection.
+ARMSX2 imported its BIOS from the same profile. Its native launcher
+adopted the BIOS and booted Katamari Damacy to the memory-card prompt.
+Rooted PS2 saves and states remain pending.
 
 ## Standalone Android follow-up — Eden
 
@@ -19,8 +22,10 @@ effective save paths and one initialized console account. The existing Dart
 journal retains standalone bytes, isolates RomM profiles and captures only
 the selected title’s account and device save directories. Eden must be
 closed before file access. Setup can import missing firmware and keys
-from RomM.
-Native gameplay and RomM readback remain pending on the Thor.
+from RomM. The first packaged launch exposed a read-only Android reply
+when clearing a header key. The fix clears an owned copy and regression
+tests verify both a valid title and a parse failure. Native gameplay and
+RomM save readback remain pending.
 See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
 
 ## Standalone Android follow-up — Citra MMJ

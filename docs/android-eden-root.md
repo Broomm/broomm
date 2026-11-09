@@ -38,5 +38,11 @@ The Thor fixture ran the production storage adapter against the initialized
 official package. It published and captured the same bytes for a disposable
 title, refused a different title and a changed account path, and removed
 the fixture. Eden’s settings and console-account file hashes stayed
-unchanged. Real gameplay and RomM sync remain separate from this fixture. Super Mario
-Bros. Wonder is staged for that check.
+unchanged. A separate isolated Thor fixture checked firmware publication
+and refusal of duplicates, traversal, a wrong archive digest and an
+existing destination. Build 1157 then imported both keys and 238 firmware
+NCAs from the real RomM catalogue and marked Eden ready. That build's first
+game launch exposed an immutable Android message buffer. The current code
+uses an owned key copy with regression coverage for successful title
+identification and format errors. Super Mario Bros. Wonder is staged for
+packaged gameplay and RomM save verification.

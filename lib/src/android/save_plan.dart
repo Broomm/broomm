@@ -716,14 +716,15 @@ Future<AndroidSavePlan> connectedAndroidProgress(
           throw StateError(
             'Verify Eden’s changed installation before playing.',
           );
-        final key = await manager.channel.invokeMethod<Uint8List>(
+        final receivedKey = await manager.channel.invokeMethod<Uint8List>(
           'rootEdenKey',
           rooted,
         );
-        if (key == null || key.length != 32)
+        if (receivedKey == null || receivedKey.length != 32)
           throw const FormatException(
             'Eden’s header key could not be verified.',
           );
+        final key = Uint8List.fromList(receivedKey);
         final String title;
         try {
           title = await switchBaseIdentity(
