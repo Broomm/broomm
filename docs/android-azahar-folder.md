@@ -38,4 +38,30 @@ or restoration fails.
 Keep the chosen Documents folder if you want to keep standalone progress.
 Broomm’s Remove action uninstalls the selected APK and clears its Broomm
 connection. Android’s shared folder and Broomm’s private cloud history are
-separate. Native setup, launch and RomM acceptance are tracked independently.
+separate.
+
+## Thor verification
+
+Build 1141 set up the scoped APK through Broomm and launched Mario Kart 7
+(title `0004000000030800`). Azahar loaded the three files from the primary
+account’s existing RomM save and wrote an 18,033,801-byte Slot 1 state. The
+Android bridge rejected the private capture path and retained both recovery
+journals and all four native files.
+
+Build 1146 corrected the bridge to use Broomm’s app data directory for shared
+captures and legacy MMJ recovery. An in-place update preserved both journals
+and all four file hashes. **Finish previous game session** captured the state
+and restored the standalone folder. On the next Play, **Use device progress**
+published and read back RomM version 275. The original three save files and
+Slot 1 restored byte for byte, and Azahar loaded the saved menu selection.
+
+The second RomM account started with no title save or state, then created
+its own ordinary save and a 14,671,691-byte Slot 2. RomM read back version
+276. The cumulative build 1148 restored the second account’s save and
+Slot 2 byte for byte, with Slot 1 absent. Azahar loaded Slot 2. Both
+accounts completed with no pending transfer or recovery journal.
+
+Native path regressions cover an allowed capture target and legacy recovery
+source, and refuse sibling paths, traversal, and links. All checks and five
+packages passed for [build 1146](https://github.com/Broomm/broomm/actions/runs/42574216171)
+and [build 1148](https://github.com/Broomm/broomm/actions/runs/42574255749).

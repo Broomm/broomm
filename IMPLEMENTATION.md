@@ -7,8 +7,11 @@ installations and keeps an existing configured Vanilla installation. On
 rooted Android, Broomm checks the reviewed package, its actual user-data
 folder preference, and process absence before using the folder grant. The
 existing 3DS save/state transaction still owns staging, readback and recovery.
-The explicit shared-folder fallback remains available. Packaged game and
-RomM acceptance are pending. See the [Azahar walkthrough](docs/android-azahar-folder.md).
+The explicit shared-folder fallback remains available. Thor build 1146
+recovered the primary Mario Kart 7 state after correcting the bridge’s
+private snapshot path. RomM readback, byte-exact restore and native state
+loads passed for two accounts across builds 1146 and 1148. Both save
+histories stayed separate. See the [Azahar walkthrough](docs/android-azahar-folder.md).
 
 ## Standalone Android follow-up — Dolphin
 
