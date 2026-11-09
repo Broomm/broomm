@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Standalone Android follow-up — Eden
+
+The rooted route scopes ordinary saves to the selected Switch title and the
+reviewed Eden app’s default NAND. It validates the app-owned media mount,
+effective save paths and one initialized console account. The existing Dart
+journal retains standalone bytes, isolates RomM profiles and captures only
+the selected title’s account and device save directories. Eden must be
+closed before file access. Firmware and keys are configured inside Eden.
+Native gameplay and RomM readback remain pending on the Thor.
+See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
+
 ## Standalone Android follow-up — Citra MMJ
 
 The reviewed standard Citra MMJ APK can verify its primary shared

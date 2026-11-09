@@ -30,6 +30,8 @@ class SharedAndroidSaves {
         ? 10
         : plan.dolphinRooted
         ? 96
+        : plan.edenRooted
+        ? 256
         : plan.rooted
         ? 128
         : progressMaxFiles;
@@ -121,6 +123,9 @@ class SharedAndroidSaves {
         r['package'] != plan.binding['package'] ||
         (plan.nativeMediaRoot && r['selected'] != plan.launch['romPath']) ||
         (plan.dolphinRooted && r['platform'] != plan.launch['platform']) ||
+        (plan.edenRooted &&
+            (r['accountPath'] != plan.launch['accountPath'] ||
+                r['devicePath'] != plan.launch['devicePath'])) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
         plan.binding.entries.any((e) => r[e.key] != e.value) ||
@@ -1127,6 +1132,7 @@ int _rootRomLimit(AndroidSavePlan plan) =>
 
 int _rootProgressLimit(AndroidSavePlan plan, String path) {
   if (plan.melonRooted) return (path.endsWith('.sav') ? 8 : 32) * 1024 * 1024;
+  if (plan.edenRooted) return 64 * 1024 * 1024;
   if (plan.dolphinRooted) {
     final mib = path.startsWith('files/StateSaves/')
         ? 64

@@ -21,6 +21,7 @@ import 'flycast.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
 import 'citra_mmj.dart';
+import 'eden_root.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -138,17 +139,25 @@ class AndroidSavePlan extends ProgressLayout {
     if (rooted && launch['coreName'] != null) 'coreName': launch['coreName']!,
     if (nativeMediaRoot) 'romPath': launch['romPath']!,
     if (dolphinRooted) 'platform': launch['platform']!,
+    if (edenRooted) ...{
+      'title': game,
+      'accountPath': launch['accountPath']!,
+      'devicePath': launch['devicePath']!,
+    },
   };
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
   bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
-  bool get nativeMediaRoot => melonRooted || dolphinRooted;
+  bool get edenRooted => binding['access'] == androidEdenRootAccess;
+  bool get nativeMediaRoot => melonRooted || dolphinRooted || edenRooted;
   bool get rootFileMetadata => rooted || nativeMediaRoot;
   String method(String operation) =>
       '${melonRooted
           ? 'rootMelon'
           : dolphinRooted
           ? 'rootDolphin'
+          : edenRooted
+          ? 'rootEden'
           : rooted
           ? 'root'
           : 'shared'}$operation';
@@ -696,6 +705,65 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         },
       });
     case 'eden':
+      final rooted = manager.rootConnection(
+        emulator,
+        platform.slug,
+        package: package,
+      );
+      if (rooted != null) {
+        if (rooted['build'] != app.build)
+          throw StateError(
+            'Verify Eden’s changed installation before playing.',
+          );
+        final key = await manager.channel.invokeMethod<Uint8List>(
+          'rootEdenKey',
+          rooted,
+        );
+        if (key == null || key.length != 32)
+          throw const FormatException(
+            'Eden’s header key could not be verified.',
+          );
+        final String title;
+        try {
+          title = await switchBaseIdentity(
+            File(rom),
+            key,
+            decryptSector: (bytes, key, sector) =>
+                androidXts(manager, bytes, key, sector),
+          );
+        } finally {
+          key.fillRange(0, key.length, 0);
+        }
+        final native = await manager.channel.invokeMapMethod<String, String>(
+          'rootEdenScope',
+          {...rooted, 'romPath': rom, 'title': title},
+        );
+        final account = native?['accountPath'], device = native?['devicePath'];
+        if (account == null ||
+            device == null ||
+            account == device ||
+            !account.startsWith('files/nand/user/save/') ||
+            !device.startsWith('files/nand/user/save/'))
+          throw const FormatException(
+            'Eden’s save locations could not be verified.',
+          );
+        progressRelative(account);
+        progressRelative(device);
+        layout = ProgressLayout(root.path, 'ryubing-directory-v1', title, [
+          ProgressArea('save', 'user/save'),
+          ProgressArea('device', 'user/device'),
+        ]);
+        launch.addAll({
+          'romPath': rom,
+          'accountPath': account,
+          'devicePath': device,
+        });
+        remote.addAll([
+          AndroidSaveArea(layout.areas[0], account),
+          AndroidSaveArea(layout.areas[1], device),
+        ]);
+        break;
+      }
       final profileData = await reader.bytes(
         'nand/system/save/8000000000000010/su/avators/profiles.dat',
       );

@@ -62,6 +62,12 @@ first-run legacy storage setup, exit it, then choose **Emulator Settings →
 Nintendo 3DS → Citra MMJ → Set up**. Connect **Internal storage/citra-emu**.
 Ordinary saves use RomM history. Legacy state files stay in native recovery.
 
+The [rooted Eden preview](docs/android-eden-root.md) uses the official
+0.2.1 Standard APK. Open Eden once, configure its keys and firmware, and
+keep one console account with the default NAND and save locations. Then
+choose **Emulator Settings → Nintendo Switch → Eden → Set up**. Quit
+emulation before finishing sync in Broomm.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.

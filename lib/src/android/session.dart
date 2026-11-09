@@ -19,6 +19,7 @@ import 'duck_session.dart';
 import 'duckstation_documents.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
+import 'eden_root.dart';
 
 class AndroidClosureUnverified implements Exception {
   const AndroidClosureUnverified();
@@ -873,6 +874,7 @@ class AndroidGameSession extends ChangeNotifier {
           {
             androidMelonRootAccess,
             androidDolphinRootAccess,
+            androidEdenRootAccess,
           }.contains((await progressJson(_shared.journal))['access']))
         throw StateError(
           'Finish the original rooted save transaction. Recovery was kept.',

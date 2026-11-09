@@ -166,6 +166,8 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                                   'ppsspp',
                                   'duckstation',
                                   'melonds',
+                                  'dolphin',
+                                  'eden',
                                 }.contains(emulator.id)) &&
                             setup.step != AndroidSetupStep.folder))
                   ConsoleButton(

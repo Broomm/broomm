@@ -115,12 +115,13 @@ class RootSaveAccess(private val activity: Activity) {
             val dolphin = call.method.startsWith("rootDolphin")
             val azahar = call.method == "rootAzaharFolder"
             val mmj = call.method == "rootMmjFolder"
+            val eden = call.method.startsWith("rootEden")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
-            require(if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            require(if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootEdenInspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -144,7 +145,8 @@ class RootSaveAccess(private val activity: Activity) {
                 request.putString("platform", platform)
             }
             if (melon && call.method != "rootMelonInspect" ||
-                dolphin && call.method != "rootDolphinInspect") {
+                dolphin && call.method != "rootDolphinInspect" ||
+                eden && call.method != "rootEdenInspect") {
                 val keys = listOf("externalLabel", "externalGid", "externalDevice", "externalInode") +
                     if (melon) listOf("stateDirectory") else emptyList()
                 for (key in keys) {
@@ -152,7 +154,14 @@ class RootSaveAccess(private val activity: Activity) {
                     require(value.length <= 128)
                     request.putString(key, value)
                 }
-                request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, call.argument<String>("romPath")!!))
+                if (!eden || call.method != "rootEdenKey")
+                    request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, call.argument<String>("romPath")!!))
+            }
+            if (eden) for (key in listOf("title", "accountPath", "devicePath")) {
+                call.argument<String>(key)?.let { value ->
+                    require(value.length in 1..256)
+                    request.putString(key, value)
+                }
             }
             if (psp || duck) {
                 for (key in listOf("server", "profile", "ownerNonce", "archiveNonce", "discId", "discVersion", "excluded", "selection",
@@ -205,7 +214,7 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            val reading = call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead", "rootMelonRead", "rootDolphinRead")
+            val reading = call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead", "rootMelonRead", "rootDolphinRead", "rootEdenRead")
             if (reading) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
@@ -215,7 +224,7 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace", "rootMelonReplace", "rootDolphinReplace")) call.argument<String>("source") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace", "rootMelonReplace", "rootDolphinReplace", "rootEdenReplace")) call.argument<String>("source") else null
                             val target = if (reading) call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = if (call.method in setOf("rootPspProfileReplace", "rootPspProfileRead", "rootDuckProfileReplace", "rootDuckProfileRead") && call.argument<String>("archiveNonce") != null)
@@ -243,7 +252,9 @@ class RootSaveAccess(private val activity: Activity) {
                             }
                         }
                         val value: Any? = when (call.method) {
-                            "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootMelonInspect", "rootDolphinInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootMelonInspect", "rootDolphinInspect", "rootEdenInspect" -> identity.mapValues { it.value.toString() } + mapped
+                            "rootEdenKey" -> answer.getByteArray("headerKey")
+                            "rootEdenScope" -> mapped
                             "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
                             "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
@@ -252,7 +263,7 @@ class RootSaveAccess(private val activity: Activity) {
                                 answer.getBundle("files")!!.let { all -> all.keySet().associateWith { key ->
                                     all.getBundle(key)!!.let { item -> mapOf("bytes" to item.getLong("bytes"), "sha256" to item.getString("sha256"), "metadata" to item.getString("metadata")) }
                                 } })
-                            "rootList", "rootFlycastList", "rootMelonList", "rootDolphinList" -> {
+                            "rootList", "rootFlycastList", "rootMelonList", "rootDolphinList", "rootEdenList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
                                     val entry = entries.getBundle(key)!!

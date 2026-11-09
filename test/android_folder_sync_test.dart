@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/citra_mmj.dart';
 import 'package:broomm/src/android/dolphin_root.dart';
+import 'package:broomm/src/android/eden_root.dart';
 import 'package:broomm/src/android/melon_root.dart';
 import 'package:broomm/src/android/progress.dart';
 import 'package:broomm/src/android/save_plan.dart';
@@ -34,13 +35,54 @@ class AndroidFolderFixture {
   int apkScans = 0;
   int? failAt;
   String? picked;
-  Directory? melonRoot, dolphinRoot;
+  Directory? melonRoot, dolphinRoot, edenRoot;
   bool melonRunning = false;
+  bool edenRunning = false;
+  String edenAccount = '2F29316245B7594BEC4EA86C0C27E3CD';
   bool mmjReady = true;
   final melonMetadata =
       '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
     final args = (call.arguments as Map?)?.cast<String, dynamic>() ?? {};
+    if (call.method.startsWith('rootEden')) {
+      if (edenRunning) throw PlatformException(code: 'writer-live');
+      if (call.method == 'rootEdenInspect')
+        return {
+          'package': androidEdenRootPackage,
+          'build': 'a' * 64,
+          'version': androidEdenRootVersion,
+          'signer': androidEdenRootSigner,
+          'user': '0',
+          'uid': '10139',
+          'dataDir': '/data/user/0/$androidEdenRootPackage',
+          'label': 'u:object_r:app_data_file:s0:c139,c256,c512,c768',
+          'externalLabel':
+              'u:object_r:media_rw_data_file:s0:c139,c256,c512,c768',
+          'externalGid': '1078',
+          'externalDevice': '28',
+          'externalInode': '29',
+        };
+      if (call.method == 'rootEdenKey') return Uint8List(32);
+      final title = (args['title'] as String).toUpperCase();
+      const base = 'files/nand/user/save/0000000000000000';
+      final account = '$base/$edenAccount/$title';
+      final device = '$base/${'0' * 32}/$title';
+      if (call.method == 'rootEdenScope')
+        return {'accountPath': account, 'devicePath': device};
+      if (args['accountPath'] != account || args['devicePath'] != device)
+        throw PlatformException(code: 'eden-scope-changed');
+      trees['fixture:eden'] = edenRoot!;
+      final result = await this.call(
+        MethodCall(call.method.replaceFirst('rootEden', 'shared'), {
+          ...args,
+          'tree': 'fixture:eden',
+        }),
+      );
+      if (result is Map<String, dynamic>)
+        for (final row in result.values)
+          (row as Map)['metadata'] = melonMetadata;
+      return result;
+    }
     final melon = call.method.startsWith('rootMelon');
     if (melon || call.method.startsWith('rootDolphin')) {
       final prefix = melon ? 'rootMelon' : 'rootDolphin';
@@ -109,6 +151,8 @@ class AndroidFolderFixture {
                     ? androidMelonRootVersion
                     : dolphinRoot != null && p == androidDolphinRootPackage
                     ? androidDolphinRootVersion
+                    : edenRoot != null && p == androidEdenRootPackage
+                    ? androidEdenRootVersion
                     : p == androidMmjSharedPackage
                     ? androidMmjSharedVersion
                     : 'fixture',
@@ -865,6 +909,96 @@ void main() {
     expect(await retainedState.readAsBytes(), [6]);
   });
 
+  Future<File> switchFixture() async {
+    final name = ascii.encode('${'1' * 32}.nca\u0000'),
+        offset = 40 + name.length;
+    final bytes = Uint8List(offset + 0xc00), d = ByteData.sublistView(bytes);
+    bytes.setAll(0, ascii.encode('PFS0'));
+    d.setUint32(4, 1, Endian.little);
+    d.setUint32(8, name.length, Endian.little);
+    d.setUint64(24, 0xc00, Endian.little);
+    bytes.setAll(40, name);
+    bytes.setAll(offset + 0x200, ascii.encode('NCA3'));
+    d.setUint64(offset + 0x208, 0xc00, Endian.little);
+    d.setUint64(
+      offset + 0x210,
+      int.parse('0100000000010000', radix: 16),
+      Endian.little,
+    );
+    return put(temp, 'switch.nsp', bytes);
+  }
+
+  test('rooted Eden stops for live or changed writers and restores only the selected title', () async {
+    final external = fixture.edenRoot = await Directory('${temp.path}/eden')
+        .create();
+    final eden = emulator('eden'), rom = await switchFixture();
+    await manager.load();
+    await manager.connectEdenRoot(eden);
+    await manager.load();
+    final platform = playablePlatforms.firstWhere(
+      (p) => p.emulatorId == 'eden',
+    );
+    final plan = await androidProgressLayout(
+      manager,
+      profileId,
+      eden,
+      platform,
+      rom.path,
+      contentId: '42',
+    ) as AndroidSavePlan;
+    expect(plan.edenRooted, isTrue);
+    expect(plan.format, 'ryubing-directory-v1');
+    final native = plan.remotePath('save/main');
+    final original = await put(external, native, [5, 7]);
+    final other = await put(
+      external,
+      native.replaceFirst('0100000000010000', '0100000000020000'),
+      [11],
+    );
+    final remote = api();
+    final game = CloudGame(
+      server: serverId,
+      profile: profileId,
+      user: remote.user,
+      rom: 42,
+      client: remote,
+      layout: plan,
+    );
+    final s = AndroidGameSession(manager, cloud);
+    sessions.add(s);
+    await s.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: eden,
+      app: manager.app(eden)!,
+      files: [rom.path],
+      selected: rom.path,
+      game: game,
+    );
+    expect(await original.exists(), isFalse);
+    await put(external, native, [8, 9]);
+    fixture.edenRunning = true;
+    await expectLater(
+      s.finish(emulatorClosed: true),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(await original.readAsBytes(), [8, 9]);
+    fixture.edenRunning = false;
+    final account = fixture.edenAccount;
+    fixture.edenAccount = 'A' * 32;
+    await expectLater(
+      s.finish(emulatorClosed: true),
+      throwsA(isA<PlatformException>()),
+    );
+    fixture.edenAccount = account;
+    await s.finish(emulatorClosed: true);
+    expect(await original.readAsBytes(), [5, 7]);
+    expect(await other.readAsBytes(), [11]);
+    expect(remote.records, hasLength(1));
+    expect(await SharedAndroidSaves(manager).pending, isFalse);
+  });
+
   test('Eden follows native per-title legacy/future placement without capturing another console account or NAND contents', () async {
     final external = await connect('eden'), profiles = Uint8List(0x650);
     // One UUID half has the high bit set. Its native folder must remain 32
@@ -886,22 +1020,7 @@ void main() {
       'keys/prod.keys',
       utf8.encode('header_key = ${'0' * 64}\n'),
     );
-    final name = ascii.encode('${'1' * 32}.nca\u0000'),
-        offset = 40 + name.length;
-    final bytes = Uint8List(offset + 0xc00), d = ByteData.sublistView(bytes);
-    bytes.setAll(0, ascii.encode('PFS0'));
-    d.setUint32(4, 1, Endian.little);
-    d.setUint32(8, name.length, Endian.little);
-    d.setUint64(24, 0xc00, Endian.little);
-    bytes.setAll(40, name);
-    bytes.setAll(offset + 0x200, ascii.encode('NCA3'));
-    d.setUint64(offset + 0x208, 0xc00, Endian.little);
-    d.setUint64(
-      offset + 0x210,
-      int.parse('0100000000010000', radix: 16),
-      Endian.little,
-    );
-    final rom = await put(temp, 'switch.nsp', bytes);
+    final rom = await switchFixture();
     // An account directory for another title must not select the new layout.
     await Directory(
       '${external.path}/nand/user/save/account/$raw/0100000000020000/0',

@@ -13,6 +13,7 @@ import '../session_lease.dart';
 import 'apk_download.dart';
 import 'azahar.dart';
 import 'citra_mmj.dart';
+import 'eden_root.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
 import 'psp_root.dart';
@@ -283,6 +284,10 @@ class AndroidEmulators extends ChangeNotifier {
       final binding = folder(emulator, package: package);
       return binding?['access'] == androidDolphinRootAccess ? binding : null;
     }
+    if (emulator.id == 'eden' && platform == 'switch') {
+      final binding = folder(emulator, package: package);
+      return binding?['access'] == androidEdenRootAccess ? binding : null;
+    }
     final selected = app(emulator, package: package);
     if (emulator.id != 'retroarch' ||
         selected == null ||
@@ -359,6 +364,16 @@ class AndroidEmulators extends ChangeNotifier {
         valid: androidDolphinRootBinding,
         platform: platform,
       );
+
+  Future<void> connectEdenRoot(AndroidEmulator emulator) => _connectMediaRoot(
+    emulator,
+    id: 'eden',
+    package: androidEdenRootPackage,
+    version: androidEdenRootVersion,
+    access: androidEdenRootAccess,
+    method: 'rootEdenInspect',
+    valid: androidEdenRootBinding,
+  );
 
   Future<void> _connectMediaRoot(
     AndroidEmulator emulator, {
@@ -1030,7 +1045,7 @@ class AndroidEmulators extends ChangeNotifier {
     await progressWrite(
       await progressFile(data, 'android/emulators.json', createParents: true),
       {
-        'version': 20,
+        'version': 21,
         'trees': trees ?? _trees,
         'folders': folders ?? _folders,
         'gbaRoots': gbaRoots ?? _gbaRoots,
@@ -1113,6 +1128,7 @@ class AndroidEmulators extends ChangeNotifier {
               18,
               19,
               20,
+              21,
             ].contains(record['version']) ||
             record['trees'] is! Map)
           throw const FormatException('Invalid Android emulator settings');
@@ -1149,6 +1165,10 @@ class AndroidEmulators extends ChangeNotifier {
               record['version'] >= 20 &&
               emulator?.id == 'dolphin' &&
               androidDolphinRootBinding(binding);
+          final edenRoot =
+              record['version'] >= 21 &&
+              emulator?.id == 'eden' &&
+              androidEdenRootBinding(binding);
           if (binding['access'] == androidAzaharRootFolderAccess &&
               (emulator?.id != 'azahar' ||
                   binding['package'] != androidAzaharScopedPackage ||
@@ -1161,6 +1181,7 @@ class AndroidEmulators extends ChangeNotifier {
             throw const FormatException('Invalid verified Citra MMJ folder');
           if (!melonRoot &&
               !dolphinRoot &&
+              !edenRoot &&
               (emulator == null ||
                   binding['tree'] == null ||
                   !sharedTree(emulator, binding['package']!, binding['tree']!)))
@@ -1188,6 +1209,7 @@ class AndroidEmulators extends ChangeNotifier {
           18,
           19,
           20,
+          21,
         ].contains(record['version'])) {
           final savedRoots = (record['gbaRoots'] as Map)
               .cast<String, dynamic>();
@@ -1221,6 +1243,7 @@ class AndroidEmulators extends ChangeNotifier {
           18,
           19,
           20,
+          21,
         ].contains(record['version'])) {
           for (final entry in (record['snesRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1251,6 +1274,7 @@ class AndroidEmulators extends ChangeNotifier {
           18,
           19,
           20,
+          21,
         ].contains(record['version'])) {
           for (final entry in (record['retroRoots'] as Map).entries) {
             final binding = (entry.value as Map).cast<String, String>();
@@ -1536,6 +1560,7 @@ class AndroidEmulators extends ChangeNotifier {
         'melonds' => androidMelonRootApkSha256,
         'azahar' => androidAzaharScopedApkSha256,
         'dolphin' => androidDolphinRootApkSha256,
+        'eden' => androidEdenRootApkSha256,
         _ => null,
       };
       if (pinnedHash != null && await progressFileHash(apk) != pinnedHash)

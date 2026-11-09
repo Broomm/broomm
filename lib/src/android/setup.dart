@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../session_lease.dart';
 import 'azahar.dart';
 import 'citra_mmj.dart';
+import 'eden_root.dart';
 import 'emulators.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
@@ -65,7 +66,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
               manager.app(emulator)?.version == androidMelonRootVersion ||
           emulator.id == 'dolphin' &&
               {'ngc', 'wii'}.contains(platform) &&
-              manager.app(emulator)?.version == androidDolphinRootVersion) &&
+              manager.app(emulator)?.version == androidDolphinRootVersion ||
+          emulator.id == 'eden' &&
+              platform == 'switch' &&
+              manager.app(emulator)?.version == androidEdenRootVersion) &&
       (manager.rootConnection(emulator, platform) != null ||
           manager.tree(profile, emulator) == null);
 
@@ -122,6 +126,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       }
       if (emulator.id == 'dolphin') {
         await manager.connectDolphinRoot(emulator, platform);
+        step = AndroidSetupStep.ready;
+        return;
+      }
+      if (emulator.id == 'eden') {
+        await manager.connectEdenRoot(emulator);
         step = AndroidSetupStep.ready;
         return;
       }
@@ -206,7 +215,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   Future<void> useSharedFolder() => _run(() async {
     // A verified shared grant replaces a native media connection.
-    if (!{'melonds', 'dolphin'}.contains(emulator.id) &&
+    if (!{'melonds', 'dolphin', 'eden'}.contains(emulator.id) &&
         manager.rootConnection(emulator, platform) != null)
       if (emulator.id == 'duckstation')
         await manager.disconnectDuckRoot();
