@@ -194,6 +194,7 @@ class AndroidGameSession extends ChangeNotifier {
       throw StateError('An Android game session is already active.');
     busy = true;
     error = '';
+    phase = '';
     _emit();
     try {
       String? nativeRom;
@@ -244,11 +245,13 @@ class AndroidGameSession extends ChangeNotifier {
         await _duck.roots.restoreSettingsLoan();
         await _duck.roots.ensureClosed(binding);
       }
-      final rootedGame = rooted && prepare != null
+      final preparedGame = prepare == null
+          ? game
+          : rooted
           ? await _prepareRoot(prepare)
-          : game;
+          : await prepare(DownloadCancellation(), _preparePhase);
+      final layout = preparedGame?.layout;
       if (root != null) {
-        final layout = rootedGame?.layout;
         if (layout is! AndroidSavePlan || !mapEquals(layout.binding, root))
           throw StateError(
             'The RetroArch root save route changed. Progress was kept.',
@@ -257,25 +260,36 @@ class AndroidGameSession extends ChangeNotifier {
           throw const AndroidRetroArchSetupRequired();
       }
       if (pspRooted &&
-          (rootedGame?.layout is! AndroidPspPlan ||
+          (layout is! AndroidPspPlan ||
               !mapEquals(
-                (rootedGame!.layout as AndroidPspPlan).binding,
+                layout.binding,
                 manager.pspRoot(package: app.package),
               )))
         throw StateError(
           'The PPSSPP root save route changed. Progress was kept.',
         );
       if (duckRooted &&
-          (rootedGame?.layout is! AndroidDuckPlan ||
+          (layout is! AndroidDuckPlan ||
               !mapEquals(
-                (rootedGame!.layout as AndroidDuckPlan).binding,
+                layout.binding,
                 manager.duckRoot(package: app.package),
               )))
         throw StateError(
           'The DuckStation root route changed. Progress was kept.',
         );
+      if (preparedGame != null &&
+          (preparedGame.server != server ||
+              preparedGame.profile != profile ||
+              preparedGame.rom != rom))
+        throw StateError(
+          'Android progress belongs to another game or profile. No cloud save was changed.',
+        );
+      if (layout is AndroidSavePlan && layout.nativeMediaRoot)
+        await manager.channel.invokeMethod<void>(
+          layout.method('Check'),
+          layout.arguments,
+        );
       if (pspRooted || duckRooted) _preparation = DownloadCancellation();
-      _game = game;
       _launched = false;
       _retroArchProcess = null;
       // Publish before sync or handoff. An exception/unknown platform reply
@@ -296,34 +310,18 @@ class AndroidGameSession extends ChangeNotifier {
           'selected': selected,
           if (rooted) 'rooted': true,
           if (rooted) 'rootPlatform': platform,
-        },
-      );
-      active = true;
-      _game = rooted || prepare == null
-          ? rootedGame
-          : await prepare(DownloadCancellation(), _preparePhase);
-      final layout = _game?.layout;
-      if (_game != null) {
-        if (_game!.server != server ||
-            _game!.profile != profile ||
-            _game!.rom != rom)
-          throw StateError(
-            'Android progress belongs to another game or profile. No cloud save was changed.',
-          );
-        await progressWrite(marker, {
-          ...(await pending())!,
           if (layout is AndroidSavePlan && layout.nativeMediaRoot)
             'access': layout.binding['access'],
-          'stateAreas': [
-            for (final area in _game!.layout.areas)
-              if (area.id.startsWith('states-')) area.id,
-          ],
-        });
-        if (layout is AndroidSavePlan && layout.nativeMediaRoot)
-          await manager.channel.invokeMethod<void>(
-            layout.method('Check'),
-            layout.arguments,
-          );
+          if (layout != null)
+            'stateAreas': [
+              for (final area in layout.areas)
+                if (area.id.startsWith('states-')) area.id,
+            ],
+        },
+      );
+      _game = preparedGame;
+      active = true;
+      if (_game != null) {
         if (layout is AndroidSavePlan &&
             layout.rooted &&
             layout.launch['prepareControllerProfiles'] == 'true') {
