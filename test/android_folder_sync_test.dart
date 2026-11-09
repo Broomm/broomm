@@ -344,7 +344,8 @@ void main() {
   Future<File> ds() =>
       put(temp, 'Ranger.nds', Uint8List(32)..setAll(12, ascii.encode('APRE')));
   setUp(() async {
-    temp = await Directory.systemTemp.createTemp('broomm-folder-');
+    // A 3DS capture adds its native console directories to this prefix.
+    temp = await Directory.systemTemp.createTemp('bf-');
     data = await Directory('${temp.path}/data').create();
     fixture = AndroidFolderFixture(temp);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
