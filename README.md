@@ -30,11 +30,11 @@ which remain pending.
 
 PR #6 now contains the [rooted DuckStation transaction implementation](docs/android-duckstation-transactions.md):
 private whole cards/states/preferences, BIOS provisioning, durable recovery and
-removal backups. Native Thor mechanism tests and host workflows pass; the new
-packaged device round trips are still pending. Build 1122 above does not contain
-these transactions. The local macOS preview is being rebuilt for this increment.
+removal backups. Native Thor mechanism tests and host workflows pass. Build
+1125 restored a RomM memory card and uploaded/read back native states on Thor;
+the remaining device checks are tracked in the linked walkthrough.
 
-Current local macOS preview: [download the universal archive](build/releases/Broomm-macOS-android-duckstation-preview.zip).
+The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.
 

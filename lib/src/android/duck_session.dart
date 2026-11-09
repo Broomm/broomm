@@ -512,11 +512,31 @@ class AndroidDuckSession {
           : AndroidDuckState.unknown;
     final process = (r['process'] as Map?)?.cast<String, int>();
     if (process == null) return AndroidDuckState.unknown;
-    final status = await readAndroidDuckState(
+    final clock = Stopwatch()..start();
+    var reported = false;
+    var status = await readAndroidDuckState(
       manager,
       plan.binding,
       process: process,
     );
+    while ({
+          AndroidDuckState.menu,
+          AndroidDuckState.settling,
+        }.contains(status.state) &&
+        status.process != null) {
+      if (clock.elapsed >= const Duration(seconds: 2))
+        return AndroidDuckState.unknown;
+      if (!reported) {
+        roots.phase('Waiting for the game to finish closing.');
+        reported = true;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      status = await readAndroidDuckState(
+        manager,
+        plan.binding,
+        process: process,
+      );
+    }
     if (status.state == AndroidDuckState.quiescent) {
       await roots.ensureClosed(plan.binding, process: process);
       r['normalClosed'] = true;

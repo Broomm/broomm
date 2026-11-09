@@ -170,13 +170,21 @@ internal class RootDuckProcess(private val context: Context, private val uid: In
         val status = image.snapshot(pid)
         verify(pid, start)
         observation("state=${status.state} pending=${status.pending} cards=${status.cards}")
-        if (status.state in 2..3) return result("running").apply { putInt("pid", pid); putLong("startTicks", start) }
+        fun identified(state: String) = result(state).apply { putInt("pid", pid); putLong("startTicks", start) }
+        if (status.state in 2..3) return identified("running")
+        // A return to Broomm can precede teardown or Android's task/UID update.
+        // This is only a wait hint for the exact launched generation.
+        val expected = request.containsKey("pid") && !dispose
+        if (expected && (status.state == 4 || status.state == 0 && status.pending != 0L))
+            return identified("settling")
         if (status.state != 0 || status.pending != 0L || status.cards) return result("unknown")
         val activity = emulating(); val androidState = uidState()
         val background = background(androidState)
         observation("emulationActivity=$activity cached=$background")
-        if (activity || !background) return result(if (!activity && androidState == "2 (TOP)") "menu" else "unknown").apply {
-            if (!activity && androidState == "2 (TOP)") { putInt("pid", pid); putLong("startTicks", start) }
+        if (activity || !background) return when {
+            !activity && androidState == "2 (TOP)" -> identified("menu")
+            expected -> identified("settling")
+            else -> result("unknown")
         }
         if (!dispose) return result("quiescent").apply { putInt("pid", pid); putLong("startTicks", start); putBoolean("paused",paused(request,pid,start)) }
         require(request.containsKey("pid")) { "Verify DuckStation’s cached process before closing it." }

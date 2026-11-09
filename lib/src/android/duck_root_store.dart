@@ -384,8 +384,8 @@ class AndroidDuckRootStore {
     final base = androidDuckDirectory(profile),
         game = plan == null ? '$base/unassigned' : '$base/games/${plan.game}';
     return {
-      'Folders/BIOS': '$base/bios',
-      'Folders/MemoryCards': '$game/cards',
+      'BIOS/SearchDirectory': '$base/bios',
+      'MemoryCards/Directory': '$game/cards',
       'Folders/SaveStates': plan == null
           ? '$game/states'
           : '$game/${plan.stateGroup}',

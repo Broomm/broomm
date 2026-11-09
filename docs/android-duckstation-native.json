@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "date": "2026-11-08",
-  "status": "native mechanisms verified; packaged PS1 transactions pending",
+  "status": "native mechanisms and first packaged save transaction verified; full Thor acceptance pending",
   "source_base": "8a7d5115f2594a132206a88bedd64bdd9904fd23",
   "source_sha256": {
     "android/app/src/main/cpp/root_process.c": "ee5e907ffc8373ce4272c51682aed53276cc33ecc52cde1530e3fea1299623d0",
     "android/app/src/main/cpp/Android.mk": "e65ac02a43f2447e79aaa103a01d4c73c52807bcbecdf9c45c6248f695c241c6",
     "android/app/src/main/kotlin/app/broomm/broomm/RootProcessKernel.kt": "a49c941afed0dee85b112959d25636e7be3f8a684f95fe2147a6f925d838f933",
-    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt": "1d2a5dfa28661f457b2353e9505e1a030898e3be8315961b936a88be530d5312",
+    "android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt": "bae7c475312bba5a25db5da8ed2a96c3890ef9a636450e45a48574e15b8325d0",
     "android/app/src/main/kotlin/app/broomm/broomm/RootDuckFiles.kt": "6375f9caa137cd5eda877c2fdeeb2a1f84fb1677c9f92388d8a89fe83bfd9636",
     "android/app/src/main/kotlin/app/broomm/broomm/DuckPauseProof.kt": "820e1899000fb5a8e575a86e630fba90ef9477a8e006b38d24a46d63a88f65e5"
   },
@@ -86,8 +86,34 @@
   },
   "limits": [
     "reviewed beta 12126 ARM64 target only",
-    "no physical PS1 cloud/card/two-account acceptance yet",
+    "first packaged card restore/state publication verified; in-game creation and two-account acceptance pending",
     "no claim of another OS/ABI from compilation",
     "Sega 32X ordinary in-game save and two-account acceptance still pending"
-  ]
+  ],
+  "packaged": {
+    "build": "1125",
+    "code_sha": "d4dec29acfdca1f5eab1def9525d067dd77533eb",
+    "signed_apk_sha256": "46e05e909fde70267676817efb02ebcfc9099397738bbe5949b7d6f3eb15a68f",
+    "libraries": {
+      "arm64-v8a": {
+        "bytes": 14808,
+        "sha256": "5237c8c3c78e7244f26061f7bbe7b95f66c94bf9d3eae30462af2c5b8ffb64b5",
+        "zip_data_offset": 8650752,
+        "alignment": 16384
+      },
+      "armeabi-v7a": {
+        "bytes": 9644,
+        "sha256": "17123501f3c05dc53ace4e5d9a0150c733b2aa8f746b98c733bf90ea7420e0e0",
+        "zip_data_offset": 29523968,
+        "alignment": 16384
+      },
+      "x86_64": {
+        "bytes": 14984,
+        "sha256": "5529b9f5680e7ea0e1a059852842428e8c31e61ca9b1639ef6d27afb9276262f",
+        "zip_data_offset": 46825472,
+        "alignment": 16384
+      }
+    },
+    "verification": "Verified CI source artifact, 163 identical payloads after stable Thor signing; ARM64 packaged pause/disposal and file effects executed."
+  }
 }

@@ -107,6 +107,7 @@ enum AndroidDuckState {
   idle,
   menu,
   running,
+  settling,
   quiescent,
   closed,
   interrupted,

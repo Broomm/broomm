@@ -1,8 +1,9 @@
 # Rooted DuckStation transactions
 
 2026-11-08. PR #6 contains this implementation and the remaining Sega 32X
-acceptance work. Packaged two-account PS1 acceptance is **pending**. Earlier
-build 1122 establishes the document handoff, not these new save transactions.
+acceptance work. The first packaged PS1 transaction passed on the Thor;
+two-account and recovery acceptance remain pending. Earlier build 1122
+establishes the document handoff, not these new save transactions.
 
 ## Implementation
 
@@ -32,6 +33,10 @@ and replays the verified archive. Interrupted writes/loans keep their journals
 and held copies. Missing known working data is damaged recovery, not deletion.
 
 Existing initialized BIOS images are copied read-only into private storage.
+The reviewed beta reads `BIOS/SearchDirectory` and `MemoryCards/Directory` for
+these directories. Native startup logs in build 1125 showed the fallback paths
+when the earlier preview used `Folders` keys. The corrected settings loan
+publishes the two native keys and retains explicit per-game card paths.
 If missing on Play, the existing checksum-verified PlayStation firmware workflow
 obtains the unique 512-KiB `bios.bin` from that RomM platform's catalogue. No
 external BIOS source or new download dependency is added.
@@ -131,7 +136,18 @@ build acceptance, separately from developer fixture compilation.
   and states, preferences, lost settings replies, unsafe routes and overlapping
   automatic completion. Full pre-package source checks are tracked separately.
 - Original native settings, BIOS and Slots 1–4 remain byte-identical after the
-  mechanism tests. No PS1 cloud session has run on the physical device yet.
+  mechanism tests.
+- Thor build 1125 (`d4dec29`, PR run 42539519239) passed normal Set up and Play
+  with DuckStation beta 12126. Mega Man X4 restored the existing RomM card,
+  generated native Slot 4 and a resume state, then uploaded and read back
+  ordinary primary 262 and state archive 52. Original settings and manual
+  states stayed byte-identical; the emulator updated its own playtime.
+  Returning immediately after Close Game initially reported uncertain closure.
+  Check for exit then proved the same native generation, completed the settings
+  pause/disposal, published both snapshots and cleared all three journals.
+  The follow-up waits briefly only for the identified closing generation or its
+  menu transition. It still requires a fresh positive closure proof before any
+  file effects.
 
 Retained failures include the test transport's missing main looper, assuming a
 read-only rather than executable first ELF mapping, an unrelated open SQLite
@@ -151,8 +167,8 @@ in-game, use **Close Game**, then return to Broomm for verified completion.
 The brief menu open/pause flushes cached preferences; no user closure
 acknowledgement is used when this proof succeeds.
 
-Required before PR #6 acceptance: actual ordinary memory-card creation/loading,
-manual state upload/regrant/replay, both saved RomM accounts, preference
+Required before PR #6 acceptance: actual in-game memory-card creation/loading,
+manual state regrant/replay, both saved RomM accounts, preference
 persistence, offline retention/reconnect, interrupted/live-writer recovery,
 normal Remove/reinstall with verified profile restoration and repeated prior
 PSP/RetroArch preservation. Then finish Sega 32X's in-game ordinary-save and

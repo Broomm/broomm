@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:broomm/src/android/duck_root.dart';
 import 'package:broomm/src/android/duck_root_store.dart';
 import 'package:broomm/src/android/duck_session.dart';
+import 'package:broomm/src/android/save_plan.dart';
 import 'package:broomm/src/android/session.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/progress/files.dart';
@@ -34,6 +35,7 @@ class DuckRootFixture extends PspRootFixture {
   File get settings => File('${root.path}/settings.ini');
   File get bios => File('${root.path}/bios.bin');
   bool holdWriter = false;
+  int settlingObservations = 0;
   String? losePath;
   Completer<void>? stopGate, stopEntered;
   Future<void> initialize() async {
@@ -102,14 +104,24 @@ class DuckRootFixture extends PspRootFixture {
         state = 'idle';
         return {'state': 'closed', 'elapsed': ++clock, 'wall': 100000 + clock};
       }
+      var observed = state;
+      if (settlingObservations > 0 && a['process'] != null) {
+        settlingObservations--;
+        observed = 'settling';
+      }
       return {
-        'state': state == 'idle' && a['process'] != null
+        'state': observed == 'idle' && a['process'] != null
             ? 'interrupted'
-            : state,
+            : observed,
         'elapsed': ++clock,
         'wall': 100000 + clock,
         'paused': state == 'quiescent' && a['pauseWall'] != null,
-        if ({'menu', 'running', 'quiescent'}.contains(state)) ...{
+        if ({
+          'menu',
+          'running',
+          'settling',
+          'quiescent',
+        }.contains(observed)) ...{
           'pid': 77,
           'startTicks': 99,
         },
@@ -255,6 +267,14 @@ void main() {
     final original = await native.settings.readAsString(), p = await plan();
     await prepare(p);
     final r = await progressJson(await roots.profileFile(profileId));
+    final published = androidIni(await native.settings.readAsString());
+    final workspace = androidDuckDirectory(r);
+    expect(published['BIOS/SearchDirectory'], '$workspace/bios');
+    expect(published['MemoryCards/Directory'], '$workspace/games/42/cards');
+    expect(
+      published['MemoryCards/Card1Path'],
+      '$workspace/games/42/cards/card1.mcd',
+    );
     expect(
       await File('${native.memory(r).path}/profile.ini').readAsString(),
       isNot(contains('original-private-token')),
@@ -424,7 +444,11 @@ void main() {
     expect(await supervisor.finishIfDuckClosed(), AndroidDuckState.running);
     final r = await progressJson(await roots.profileFile(profileId));
     await native.put(r, 'games/42/cards/card1.mcd', card(3));
+    native.state = 'unknown';
+    expect(await supervisor.finishIfDuckClosed(), AndroidDuckState.unknown);
+    expect(native.calls.where((m) => m == 'rootDuckStop'), isEmpty);
     native.state = 'quiescent';
+    native.settlingObservations = 1;
     final gate = Completer<void>();
     native.stopGate = gate;
     native.stopEntered = Completer<void>();
