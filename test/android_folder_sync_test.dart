@@ -819,7 +819,7 @@ void main() {
     expect(await originalState.readAsBytes(), [1]);
     expect(await other.readAsBytes(), [6]);
     expect(await SharedAndroidSaves(manager).pending, isFalse);
-  });
+  }, tags: ['full-size-save']);
   test('an unchanged APK reinstall refreshes inspection without splitting compatible Android states', () async {
     await connect('melonds');
     final rom = await ds(),

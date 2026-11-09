@@ -169,7 +169,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           mkdir -p build/test-results
-          bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter github --file-reporter json:build/test-results/full-size.json test/playstation_test.dart --tags full-size-save --concurrency=1
+          bash tool/ci/run.sh flutter --suppress-analytics test --no-pub --reporter github --file-reporter json:build/test-results/full-size.json test/playstation_test.dart test/android_folder_sync_test.dart --tags full-size-save --concurrency=1
       - name: Test native Windows updater
         if: ${{ !cancelled() && matrix.platform == 'windows' }}
         env:
