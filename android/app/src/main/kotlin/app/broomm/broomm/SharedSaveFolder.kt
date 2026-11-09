@@ -92,27 +92,18 @@ class SharedSaveFolder(private val activity: Activity) {
             if (shared) {
                 val id = uri.pathSegments[1]; val split = id.split(':', limit = 2)
                 require(split.size == 2 && Regex("[A-Za-z0-9_-]+").matches(split[0]) && split[1].isNotEmpty())
-                val segments = path(split[1])
+                val segments = sharedSavePath(split[1])
                 require(segments.first() != "Android" && (emulator != "citra-mmj" || segments == listOf("citra-emu"))) { "Private Android/data storage is inaccessible. Choose a shared emulator folder." }
             }
         }
         return uri
-    }
-    private fun path(value: String): List<String> {
-        require(value.length in 1..2048) { "Invalid shared save path" }
-        val parts = value.removePrefix("@root/").let { if (it == "@root") emptyList() else it.split('/') }
-        require(parts.size <= 32 && parts.all {
-            it.isNotEmpty() && it.length <= 200 && it != "." && it != ".." &&
-                it.none { c -> c.code < 32 || c == '\\' || c == ':' || c.code == 127 }
-        }) { "Invalid shared save path" }
-        return parts
     }
     private val columns = arrayOf(Document.COLUMN_DOCUMENT_ID, Document.COLUMN_DISPLAY_NAME, Document.COLUMN_MIME_TYPE,
         Document.COLUMN_SIZE, Document.COLUMN_FLAGS, Document.COLUMN_LAST_MODIFIED)
     private fun entry(cursor: android.database.Cursor): Entry {
         require(cursor.getInt(4) and Document.FLAG_VIRTUAL_DOCUMENT == 0) { "Virtual saves are unsupported" }
         val result = Entry(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3), cursor.getLong(5))
-        path(result.name)
+        sharedSavePath(result.name)
         require('/' !in result.name && result.size >= 0) { "Invalid shared save entry" }
         return result
     }
@@ -199,15 +190,6 @@ class SharedSaveFolder(private val activity: Activity) {
         require(count <= limit) { "Document exceeds its inspection limit" }
         return bytes.copyOf(count)
     }
-    private fun privateFile(value: String): File {
-        val candidates = listOf("android/mmj-session", "android/shared-session").map { File(activity.filesDir, it) }
-        val file = File(value)
-        val base = candidates.singleOrNull { file.path.startsWith(it.path + "/") } ?: error("Invalid private save snapshot path")
-        require(file.path.startsWith(base.path + "/") && file.canonicalPath == file.absolutePath &&
-            file.parentFile?.isDirectory == true && !file.isDirectory) { "Invalid private MMJ snapshot path" }
-        path(file.relativeTo(base).invariantSeparatorsPath)
-        return file
-    }
     private fun localHash(file: File, op: Operation): String {
         require(file.isFile && file.length() <= 256L * 1024 * 1024)
         val digest = MessageDigest.getInstance("SHA-256")
@@ -254,16 +236,16 @@ class SharedSaveFolder(private val activity: Activity) {
                 }
                 "sharedChildren" -> {
                     val relative = call.argument<String>("path") ?: ""
-                    val directory = if (relative.isEmpty()) root(tree, op) else find(tree, path(relative), op) ?: return emptyList<Map<String, Any>>()
+                    val directory = if (relative.isEmpty()) root(tree, op) else find(tree, sharedSavePath(relative), op) ?: return emptyList<Map<String, Any>>()
                     return children(tree, directory, op).map { mapOf("name" to it.name, "directory" to it.directory) }
                 }
                 "sharedStat" -> {
-                    val found = find(tree, path(call.argument<String>("path")!!), op) ?: return null
+                    val found = find(tree, sharedSavePath(call.argument<String>("path")!!), op) ?: return null
                     require(!found.directory)
                     return mapOf("id" to found.id, "bytes" to found.size, "modified" to found.modified)
                 }
                 "sharedBytes" -> {
-                    val found = find(tree, path(call.argument<String>("path")!!), op) ?: return null
+                    val found = find(tree, sharedSavePath(call.argument<String>("path")!!), op) ?: return null
                     require(!found.directory && found.size <= 1024*1024) { "Save configuration exceeds its inspection limit" }
                     val fd = resolver.openFileDescriptor(uri(tree, found.id), "r", op.signal) ?: error("Configuration cannot be opened")
                     op.descriptor.set(fd)
@@ -316,17 +298,17 @@ class SharedSaveFolder(private val activity: Activity) {
                     for (area in areas) {
                         visited.clear()
                         val relative = area["path"] ?: error("Missing save directory")
-                        val found = find(tree, path(relative), op) ?: continue
+                        val found = find(tree, sharedSavePath(relative), op) ?: continue
                         require(found.directory) { "Shared save directory is not a folder" }
                         visit(found, relative, area, relative, 0)
                     }
                     return result
                 }
                 "sharedRead" -> {
-                    val target = privateFile(call.argument<String>("target") ?: error("Missing snapshot target"))
+                    val target = sharedSaveSnapshotFile(activity.filesDir, call.argument<String>("target") ?: error("Missing snapshot target"))
                     require(target.createNewFile()) { "Snapshot destination already exists" }
                     try {
-                        val found = find(tree, path(call.argument<String>("path")!!), op) ?: error("Shared save disappeared")
+                        val found = find(tree, sharedSavePath(call.argument<String>("path")!!), op) ?: error("Shared save disappeared")
                         val (bytes, sha) = digest(tree, found, op, target)
                         require(bytes == call.argument<Number>("bytes")!!.toLong() && sha == call.argument<String>("sha256")) { "Shared save changed during snapshot" }
                     } catch (e: Exception) { target.delete(); throw e }
@@ -345,7 +327,7 @@ class SharedSaveFolder(private val activity: Activity) {
         }
     }
     private fun replace(call: MethodCall, tree: Uri, op: Operation) {
-        val parts = path(call.argument<String>("path")!!)
+        val parts = sharedSavePath(call.argument<String>("path")!!)
         val before = call.argument<String>("before")
         val after = call.argument<String>("after")
         require(listOfNotNull(before, after).all { Regex("[a-f0-9]{64}").matches(it) })
@@ -378,7 +360,7 @@ class SharedSaveFolder(private val activity: Activity) {
             require(current != null && DocumentsContract.deleteDocument(resolver, uri(tree, current.id)))
             return
         }
-        val source = privateFile(call.argument<String>("source") ?: error("Missing recovery source"))
+        val source = sharedSaveSnapshotFile(activity.filesDir, call.argument<String>("source") ?: error("Missing recovery source"))
         require(localHash(source, op) == after) { "Private recovery copy failed verification" }
         if (stage != null && stagedHash != after) {
             require(actual == before) { "Incomplete shared save stage; copies were kept" }
