@@ -385,21 +385,26 @@ class BroommEmulators(private val activity: Activity) {
         } catch (e: Exception) { main.post { result.error("android-emulator", e.message ?: "Android operation failed", null) } } }
     }
     private fun sharedOperation(call: MethodCall, result: MethodChannel.Result) {
-        if (call.argument<String>("access") != AZAHAR_ROOT_FOLDER) {
-            background(result) { sharedFolder.operation(call) }
-            return
+        val (emulator, pkg, method) = when (call.argument<String>("access")) {
+            AZAHAR_ROOT_FOLDER -> Triple("azahar", AZAHAR_SCOPED_PACKAGE, "rootAzaharFolder")
+            CITRA_ROOT_FOLDER -> Triple("citra-mmj", CITRA_SHARED_PACKAGE, "rootMmjFolder")
+            else -> {
+                background(result) { sharedFolder.operation(call) }
+                return
+            }
         }
-        require(call.argument<String>("emulator") == "azahar" &&
-            call.argument<String>("package") == AZAHAR_SCOPED_PACKAGE) { "Invalid verified Azahar folder." }
-        val verification = MethodCall("rootAzaharFolder", mapOf(
-            "package" to AZAHAR_SCOPED_PACKAGE,
-            "build" to call.argument<String>("azaharBuild"),
+        require(call.argument<String>("emulator") == emulator && call.argument<String>("package") == pkg) {
+            "Invalid verified 3DS folder."
+        }
+        val verification = MethodCall(method, mapOf(
+            "package" to pkg,
+            "build" to call.argument<String>(if (emulator == "azahar") "azaharBuild" else "mmjBuild"),
             "tree" to call.argument<String>("tree"),
         ))
         rootSaves.operation(verification, object : MethodChannel.Result {
             override fun success(value: Any?) {
                 try { background(result) { sharedFolder.operation(call) } }
-                catch (e: Exception) { result.error("android-emulator", "Azahar folder access was interrupted.", null) }
+                catch (e: Exception) { result.error("android-emulator", "3DS folder access was interrupted.", null) }
             }
             override fun error(code: String, message: String?, details: Any?) = result.error(code, message, details)
             override fun notImplemented() = result.notImplemented()

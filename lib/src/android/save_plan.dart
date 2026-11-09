@@ -20,6 +20,7 @@ import 'saturn.dart';
 import 'flycast.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
+import 'citra_mmj.dart';
 
 const androidRootAccessModes = {
   'root-gba-v1',
@@ -366,11 +367,14 @@ Future<AndroidSavePlan> connectedAndroidProgress(
       if (melon != null) launch['romPath'] = rom;
     case 'azahar':
     case 'citra-mmj':
+      final verifiedMmj =
+          manager.folder(emulator, package: app.package)?['access'] ==
+          androidMmjRootFolderAccess;
       layout = await threeDsProgressLayout(
         root.path,
         'user',
         rom,
-        state: state(emulator.id),
+        state: verifiedMmj ? null : state(emulator.id),
       );
       const zeros = '00000000000000000000000000000000';
       var id0 = zeros, id1 = zeros;
@@ -397,6 +401,18 @@ Future<AndroidSavePlan> connectedAndroidProgress(
         path: (a) =>
             a.path.substring(5).replaceFirst('$zeros/$zeros', '$id0/$id1'),
       );
+      if (verifiedMmj)
+        remote.add(
+          AndroidSaveArea(
+            ProgressArea(
+              'mmj-native-states',
+              'user/states',
+              prefix: '${layout.game.toUpperCase()}.',
+              suffix: '.cst',
+            ),
+            'states',
+          ),
+        );
     case 'dolphin':
       layout = await gameProgressLayout(
         ResolvedSession(

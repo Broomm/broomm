@@ -1,5 +1,16 @@
 # Implementation plan
 
+## Standalone Android follow-up — Citra MMJ
+
+The reviewed standard Citra MMJ APK can verify its primary shared
+`citra-emu` storage through root. The check requires the legacy storage
+grant, initialized native directories, and process absence. Save transfer
+still uses the Android folder grant and the existing journal. Matching
+legacy state files are kept in recovery but are excluded from cloud sync
+for this build. Host workflow tests and Kotlin compilation pass. The
+native save round trip is pending the app’s first-run storage permission.
+See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
+
 ## Standalone Android follow-up — Azahar
 
 Setup uses the pinned official Azahar 2126.2 scoped-storage APK for new

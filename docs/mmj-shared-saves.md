@@ -1,5 +1,34 @@
 # Citra MMJ shared-folder saves
 
+## Root verification preview
+
+The reviewed [standard 20251112 APK](https://github.com/weihuoya/citra/releases/tag/20251112)
+uses package `org.citra.emu`, version name `3eb22034a`, version code 3932,
+and signer `5ebda360d963001a31b3a062b6151f7d38345d8da49540e74895825ed0ca5e1a`.
+On Android 11 or newer with ARM64 and user 0, Broomm can verify the
+emulator’s legacy storage mode and the initialized primary `citra-emu`
+directory before document access. MMJ needs its own Android legacy media
+permission on first launch. Broomm uses a persisted grant to the specific
+folder. The [upstream storage initialization](https://github.com/weihuoya/citra/blob/20251112/src/android/app/src/main/java/org/citra/emu/utils/CitraDirectory.java)
+uses the private app folder when legacy mode is unavailable.
+
+In Broomm use **Emulator Settings → Nintendo 3DS → Citra MMJ → Set up**.
+Open MMJ once, complete its first-run storage setup, exit and select
+**Internal storage/citra-emu**. If MMJ remains cached, stop it in Android’s
+app settings after exit. **Use shared folder** remains an explicit fallback
+for the previous setup flow. After saving in the game, quit MMJ and finish
+sync in Broomm. The verified route synchronizes ordinary title data and
+extdata. It keeps matching legacy state files in the native recovery
+transaction and restores their original bytes. The reviewed APK has no
+confirmed native state support, so this route excludes them from RomM.
+
+Focused Dart tests verified refusal to connect uncertain storage and
+preservation of standalone states. Android Kotlin compilation passed. On
+the Thor the official app reached Android’s legacy media prompt. Native
+folder, gameplay and RomM acceptance are pending that permission.
+
+## Earlier shared-folder workflow
+
 2026-10-30. The owner selected MMJ's shared `citra-emu` folder as the supported Android storage mode. Ordinary save synchronization is implemented through a user-granted Storage Access Framework tree. Private `Android/data` storage and MMJ's Storage Access build remain unsupported. Android device execution is still required; host-side tests and Kotlin compilation do not establish native emulator acceptance.
 
 ## Setup and use

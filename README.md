@@ -56,6 +56,12 @@ the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
 Azahar’s configured folder. Save in the game, exit Azahar, and finish sync in
 Broomm.
 
+The [Citra MMJ preview](docs/mmj-shared-saves.md) verifies the standard
+20251112 APK’s shared `citra-emu` directory on rooted Android. Finish MMJ’s
+first-run legacy storage setup, exit it, then choose **Emulator Settings →
+Nintendo 3DS → Citra MMJ → Set up**. Connect **Internal storage/citra-emu**.
+Ordinary saves use RomM history. Legacy state files stay in native recovery.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.

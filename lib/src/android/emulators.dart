@@ -12,6 +12,7 @@ import '../romm/transfer.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
 import 'azahar.dart';
+import 'citra_mmj.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
 import 'psp_root.dart';
@@ -978,6 +979,7 @@ class AndroidEmulators extends ChangeNotifier {
     AndroidEmulator emulator,
     String uri, {
     bool verifyAzahar = false,
+    bool verifyMmj = false,
   }) async {
     if (!settingsKnown) throw StateError('Refresh emulator settings first.');
     final selected = app(emulator);
@@ -988,11 +990,20 @@ class AndroidEmulators extends ChangeNotifier {
             selected.package != androidAzaharScopedPackage ||
             selected.version != androidAzaharScopedVersion))
       throw StateError('Refresh Azahar’s reviewed installation before setup.');
+    if (verifyMmj &&
+        (emulator.id != 'citra-mmj' ||
+            selected.package != androidMmjSharedPackage ||
+            selected.version != androidMmjSharedVersion))
+      throw StateError(
+        'Refresh Citra MMJ’s reviewed installation before setup.',
+      );
     final binding = {
       'tree': uri,
       'package': selected.package,
       if (verifyAzahar) 'access': androidAzaharRootFolderAccess,
       if (verifyAzahar) 'azaharBuild': selected.build,
+      if (verifyMmj) 'access': androidMmjRootFolderAccess,
+      if (verifyMmj) 'mmjBuild': selected.build,
     };
     await channel.invokeMethod<void>('sharedCheck', {
       ...binding,
@@ -1143,6 +1154,11 @@ class AndroidEmulators extends ChangeNotifier {
                   binding['package'] != androidAzaharScopedPackage ||
                   (binding['azaharBuild'] ?? '').isEmpty))
             throw const FormatException('Invalid verified Azahar folder');
+          if (binding['access'] == androidMmjRootFolderAccess &&
+              (emulator?.id != 'citra-mmj' ||
+                  binding['package'] != androidMmjSharedPackage ||
+                  (binding['mmjBuild'] ?? '').isEmpty))
+            throw const FormatException('Invalid verified Citra MMJ folder');
           if (!melonRoot &&
               !dolphinRoot &&
               (emulator == null ||

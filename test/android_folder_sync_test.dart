@@ -5,6 +5,7 @@ import 'dart:typed_data' show Endian;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/android/emulators.dart';
+import 'package:broomm/src/android/citra_mmj.dart';
 import 'package:broomm/src/android/dolphin_root.dart';
 import 'package:broomm/src/android/melon_root.dart';
 import 'package:broomm/src/android/progress.dart';
@@ -35,6 +36,7 @@ class AndroidFolderFixture {
   String? picked;
   Directory? melonRoot, dolphinRoot;
   bool melonRunning = false;
+  bool mmjReady = true;
   final melonMetadata =
       '10139 1078 660 u:object_r:media_rw_data_file:s0:c139,c256,c512,c768';
   Future<Object?> call(MethodCall call) async {
@@ -107,6 +109,8 @@ class AndroidFolderFixture {
                     ? androidMelonRootVersion
                     : dolphinRoot != null && p == androidDolphinRootPackage
                     ? androidDolphinRootVersion
+                    : p == androidMmjSharedPackage
+                    ? androidMmjSharedVersion
                     : 'fixture',
               },
         ];
@@ -123,6 +127,8 @@ class AndroidFolderFixture {
         return null;
     }
     if (revoked) throw PlatformException(code: 'revoked');
+    if (args['access'] == androidMmjRootFolderAccess && !mmjReady)
+      throw PlatformException(code: 'mmj-storage-unverified');
     final tree = trees[args['tree']]!;
     String clean(String p) =>
         p == '@root' ? '' : p.replaceFirst(RegExp(r'^@root/'), '');
@@ -234,7 +240,7 @@ void main() {
   final sessions = <AndroidGameSession>[], apis = <SaveServer>[];
   AndroidEmulator emulator(String id) =>
       androidEmulators.singleWhere((e) => e.id == id);
-  Future<Directory> connect(String id) async {
+  Future<Directory> connect(String id, {bool verifyMmj = false}) async {
     final e = emulator(id), app = manager.app(e)!;
     final uri = id == 'retroarch'
         ? 'content://${app.package}.documents/tree/${Uri.encodeComponent('/data/user/0/${app.package}')}'
@@ -242,7 +248,7 @@ void main() {
     final root = await Directory('${temp.path}/external/$id')
         .create(recursive: true);
     fixture.trees[uri] = root;
-    await manager.confirmSharedStorage(e, uri);
+    await manager.confirmSharedStorage(e, uri, verifyMmj: verifyMmj);
     return root;
   }
 
@@ -652,6 +658,59 @@ void main() {
     expect(await File('${external.path}/Ranger.sav').readAsBytes(), [42]);
     expect(remote.contents[remote.records.keys.single], List.filled(512, 1));
   });
+  test('verified MMJ refuses uncertain storage and preserves legacy states without publishing them', () async {
+    const id = 'citra-mmj';
+    fixture.mmjReady = false;
+    await expectLater(
+      connect(id, verifyMmj: true),
+      throwsA(isA<PlatformException>()),
+    );
+    expect(manager.folder(emulator(id)), isNull);
+    fixture.mmjReady = true;
+    final external = await connect(id, verifyMmj: true);
+    final bytes = Uint8List(0x500)..setAll(0, base3ds());
+    ByteData.sublistView(bytes)
+        .setUint64(0x400, int.parse(baseTitle, radix: 16), Endian.little);
+    final rom = await put(temp, 'game.3ds', bytes);
+    final plan = await androidProgressLayout(
+      manager,
+      profileId,
+      emulator(id),
+      playablePlatforms.firstWhere((p) => p.slug == '3ds'),
+      rom.path,
+      contentId: '42',
+    ) as AndroidSavePlan;
+    expect(plan.areas.where((a) => a.id.startsWith('states-')), isEmpty);
+    final statePath = 'states/${baseTitle.toUpperCase()}.01.cst';
+    final standalone = await put(external, statePath, [1, 3, 5]);
+    final remote = api();
+    final game = CloudGame(
+      server: serverId,
+      profile: profileId,
+      user: remote.user,
+      rom: 42,
+      client: remote,
+      layout: plan,
+    );
+    final session = AndroidGameSession(manager, cloud);
+    sessions.add(session);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: 42,
+      emulator: emulator(id),
+      app: manager.app(emulator(id))!,
+      files: [rom.path],
+      selected: rom.path,
+      game: game,
+    );
+    expect(await standalone.exists(), isFalse);
+    await put(external, statePath, [2, 4, 6]);
+    await session.finish(emulatorClosed: true);
+    expect(await standalone.readAsBytes(), [1, 3, 5]);
+    expect(remote.records, isEmpty);
+  });
+
   test('PSP, 3DS, GameCube, PS1, PS2 and RetroArch resolve constrained native save boundaries', () async {
     final psp = await put(temp, 'game.pbp', pspPbp());
     await connect('ppsspp');

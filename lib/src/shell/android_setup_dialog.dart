@@ -158,7 +158,7 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                 ),
               ] else ...[
                 if (setup.problem != null &&
-                    (setup.canUseUnverifiedAzaharFolder ||
+                    (setup.canUseShared3dsFolder ||
                         (emulator.id == 'retroarch' &&
                                     androidRootRetroCore(widget.platform) !=
                                         null ||

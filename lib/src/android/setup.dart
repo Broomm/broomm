@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
 import 'azahar.dart';
+import 'citra_mmj.dart';
 import 'emulators.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
@@ -37,10 +38,20 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       manager.app(emulator)?.package == androidAzaharScopedPackage &&
       manager.app(emulator)?.version == androidAzaharScopedVersion;
 
-  bool get canUseUnverifiedAzaharFolder =>
+  bool get mmjRootSetup =>
+      !_shared &&
+      emulator.id == 'citra-mmj' &&
+      manager.app(emulator)?.package == androidMmjSharedPackage &&
+      manager.app(emulator)?.version == androidMmjSharedVersion;
+
+  bool get canUseShared3dsFolder =>
       !_shared &&
       (azaharRootSetup ||
-          manager.folder(emulator)?['access'] == androidAzaharRootFolderAccess);
+          mmjRootSetup ||
+          {
+            androidAzaharRootFolderAccess,
+            androidMmjRootFolderAccess,
+          }.contains(manager.folder(emulator)?['access']));
 
   bool get _rooted =>
       !_shared &&
@@ -146,6 +157,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
                 !_shared &&
                 manager.folder(emulator)?['access'] ==
                     androidAzaharRootFolderAccess,
+            verifyMmj:
+                !_shared &&
+                manager.folder(emulator)?['access'] ==
+                    androidMmjRootFolderAccess,
           );
           step = AndroidSetupStep.ready;
         } finally {
@@ -217,6 +232,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         emulator,
         uri,
         verifyAzahar: azaharRootSetup,
+        verifyMmj: mmjRootSetup,
       );
       step = AndroidSetupStep.ready;
     } finally {
