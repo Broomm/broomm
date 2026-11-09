@@ -24,15 +24,18 @@ adds read-only initialized-storage inspection and reviewed-beta document handoff
 Build **1122** passed real-provider CHD boot and native state replay after
 complete revocation, restart and regrant. Its publication identity uses the
 installed record, taking 3–4 ms without rescanning the ROM. The
-[handoff evidence](docs/android-duckstation-thor-handoff.json) keeps this separate
-from root save sessions, ordinary saves and account-private DuckStation progress,
-which remain pending.
+[handoff evidence](docs/android-duckstation-thor-handoff.json) records that
+earlier check separately from the rooted sessions below.
 
 PR #6 now contains the [rooted DuckStation transaction implementation](docs/android-duckstation-transactions.md):
 private whole cards/states/preferences, BIOS provisioning, durable recovery and
-removal backups. Native Thor mechanism tests and host workflows pass. Build
-1125 restored a RomM memory card and uploaded/read back native states on Thor;
-the remaining device checks are tracked in the linked walkthrough.
+removal backups. On a rooted Thor with the reviewed DuckStation beta, choose
+**Emulator Settings → PlayStation → DuckStation → Set up** and allow Magisk
+when prompted. If DuckStation has just been installed, open it once to let it
+initialize. Play a downloaded PS1 game, save in-game, then choose **Close Game**
+in DuckStation and return to Broomm. Broomm checks closure, syncs the private
+cards and compatible states to RomM, and restores standalone settings. See the
+linked walkthrough for the tested build, recovery steps and remaining checks.
 
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables

@@ -618,5 +618,63 @@
     "32X check covers render/menu/manual state, not a completed gameplay or ordinary SRAM round trip.",
     "macOS preview ad-hoc signed, not notarized.",
     "The Windows updater CI failure remains unresolved and PR #4 stays draft."
-  ]
+  ],
+  "pr6_32x_followup": {
+    "device": "AYN Thor, Android 13, Magisk 31.1, RetroArch 1.22.2 ARM64, PicoDrive 2.05-1890c29",
+    "game": 6775,
+    "rom_bytes": 3145728,
+    "title": "Knuckles’ Chaotix",
+    "profile_2": {
+      "build": 1122,
+      "code_sha": "fef75642f5508f59cd73af03e72fddaa3cbd7749",
+      "primary": 261,
+      "state_archive": 51,
+      "native_files": {
+        "saves/Chaotix ~ Knuckles' Chaotix (Japan, USA).srm": {
+          "bytes": 1024,
+          "sha256": "ff04a591172c2a5310972e018faf1ab9a1108045e02795ae05288f12f796b875"
+        },
+        "states/states-f8ba3b933067b8c8-android/Chaotix ~ Knuckles' Chaotix (Japan, USA).state": {
+          "bytes": 172152,
+          "sha256": "f1b3a11fece6f9e79a68895b68efea3d7da4fe5b08a511bfb794e69a47ef6c81"
+        },
+        "states/states-f8ba3b933067b8c8-android/Chaotix ~ Knuckles' Chaotix (Japan, USA).state1": {
+          "bytes": 139537,
+          "sha256": "42c6ad7aeaa01fd4ad6f6e2f257e3b2f2337864670eecefd52d60b6587618f83"
+        }
+      }
+    },
+    "profile_3": {
+      "build": 1125,
+      "code_sha": "d4dec29acfdca1f5eab1def9525d067dd77533eb",
+      "primary": 263,
+      "state_archive": 53,
+      "native_files": {
+        "saves/Chaotix ~ Knuckles' Chaotix (Japan, USA).srm": {
+          "bytes": 1024,
+          "sha256": "ff04a591172c2a5310972e018faf1ab9a1108045e02795ae05288f12f796b875"
+        },
+        "states/states-f8ba3b933067b8c8-android/Chaotix ~ Knuckles' Chaotix (Japan, USA).state1": {
+          "bytes": 136022,
+          "sha256": "a75c07570b87205729aad691aeb5f91fe35af68a1296309c4673a143e5d28ba7"
+        }
+      }
+    },
+    "replay": {
+      "build": 1126,
+      "code_sha": "7cf35ed57ee1c5b41af12e269ec1ffaa1e7a9dc9",
+      "profile": 2,
+      "exact_file_restore": true,
+      "loaded_slot_1_into_playable_isolated_island": true,
+      "normal_quit_cleared_native_working_files": true
+    },
+    "ordinary_scenario_test": {
+      "slot": 1,
+      "save_mode": "Auto",
+      "reached": "Second Isolated Island practice section after rescuing Espio and passing the first gate",
+      "cartridge_bytes_changed": false,
+      "romm_primary_after_quit": 261,
+      "limit": "Initialized cartridge file transfer verified; in-game scenario save/load remains unverified."
+    }
+  }
 }

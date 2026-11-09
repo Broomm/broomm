@@ -1,9 +1,8 @@
 # Rooted DuckStation transactions
 
-2026-11-08. PR #6 contains this implementation and the remaining Sega 32X
-acceptance work. The first packaged PS1 transaction passed on the Thor;
-two-account and recovery acceptance remain pending. Earlier build 1122
-establishes the document handoff, not these new save transactions.
+PR #6 contains this implementation and the Sega 32X acceptance work.
+Builds 1125–1126 exercised rooted PS1 saves on the Thor. Earlier build 1122
+establishes the document handoff separately from these save transactions.
 
 ## Implementation
 
@@ -148,6 +147,46 @@ build acceptance, separately from developer fixture compilation.
   The follow-up waits briefly only for the identified closing generation or its
   menu transition. It still requires a fresh positive closure proof before any
   file effects.
+- Build 1126 (`7cf35ed`, [PR run 42541477118](https://github.com/Broomm/broomm/actions/runs/42541477118))
+  passed all CI checks and five target packages. Native logs verified the
+  private BIOS, memory-card and state directories. The owner's profile loaded
+  the existing Mega Man X4 card into gameplay, then used the game's Save menu
+  to create Data 1 on the previously empty card 2. Broomm verified Close Game
+  and completed automatically: RomM readback confirmed primary 266 (both
+  whole cards) and archive 55 (including eleven retained Mac states). Both
+  128 KiB cards were restored on a new Play. The game's own Load Data menu read
+  Data 1 from card 2 and returned to Stage Select. DuckStation's older title
+  state only helped reach that menu; it predates the new card and DuckStation
+  explicitly reported replugging the current card. Card 1 stayed byte-identical.
+- The second RomM profile started without the owner's cards or manual slots.
+  Its native Slot 2 published and read back as primary 264; the owner's native
+  Slots 1 and 4 were separate. The owner's touch layout persisted across
+  sessions and a Broomm upgrade; the other profile kept its own layout.
+- With Wi-Fi disabled on the USB-connected Thor, a normal Close Game left a
+  verified pending local snapshot and no remote changes. After reconnection,
+  Broomm uploaded and read back primary 265 and archive 54. The next Play
+  installed the queued Slot 1 bytes exactly. Broomm also refused to finish
+  while the native writer was live, including after Broomm alone was stopped
+  and restarted. The journal, prior cloud checkpoint and same native writer
+  survived the interruption, and Return to emulator brought back the game.
+  After Close Game, Review and finish session published and read back primary
+  267 and archive 56, restored the standalone settings, and cleared all three
+  journals.
+- On build 1126, Remove verified backups of seven owner-profile files and
+  four second-profile files before Android uninstalled DuckStation. The same
+  official APK reinstalled with a new Android UID. After native first-run
+  setup and Broomm Set up, normal Play restored both private archives byte for
+  byte into new workspace generations. The second profile's native state
+  picker showed only its own Slot 2, and DuckStation loaded it. Both profiles
+  completed automatic sync after normal Close Game (primaries 268 and 269),
+  with no recovery journals left. The device test
+  independently preserved and restored the eight standalone files, including
+  the original settings, BIOS, and five states; Broomm's removal backup covers
+  its own profile data. The PSP and RetroArch preservation audits passed.
+
+The [Sega 32X follow-up](android-retroarch-cores.md) verified real Chaotix
+gameplay, isolated native states, upload/readback, gameplay state replay and
+exact SRAM transport. The test did not create new in-game cartridge progress.
 
 Retained failures include the test transport's missing main looper, assuming a
 read-only rather than executable first ELF mapping, an unrelated open SQLite
@@ -156,7 +195,7 @@ The latter refused the operation and left the native process running. The
 corrected test asserts that all four disposable target threads are in tracing
 stop before the parent can approve. Original assertions/limits were retained.
 
-## Device walkthrough and remaining acceptance
+## Device walkthrough
 
 Install the new retained-key PR APK over Broomm. On the rooted Thor, choose
 **Emulator Settings → PlayStation → DuckStation → Set up**. Obtain the reviewed
@@ -167,10 +206,14 @@ in-game, use **Close Game**, then return to Broomm for verified completion.
 The brief menu open/pause flushes cached preferences; no user closure
 acknowledgement is used when this proof succeeds.
 
-Required before PR #6 acceptance: actual in-game memory-card creation/loading,
-manual state regrant/replay, both saved RomM accounts, preference
-persistence, offline retention/reconnect, interrupted/live-writer recovery,
-normal Remove/reinstall with verified profile restoration and repeated prior
-PSP/RetroArch preservation. Then finish Sega 32X's in-game ordinary-save and
-two-account round trips; its earlier state/rendering observation is insufficient.
-Do not extend this PR to other standalone emulators.
+If Broomm was stopped while a game was open, choose Play again under the
+original profile to reach recovery. Use **Return to emulator** if the game is
+still running. After **Close Game**, choose **Review and finish session** if
+Broomm still shows the recovery screen. Broomm checks closure again before
+touching saves. An uncertain or interrupted writer leaves progress for review.
+
+**Remove** asks Android to uninstall DuckStation, which deletes standalone
+files. Broomm verifies both private profile backups before requesting that
+uninstall. To reuse them, reinstall the same reviewed APK, finish its first-run
+setup, close it, and use **Set up** in Broomm again. The first Play or Open
+emulator for each RomM profile restores its archive into a new workspace.

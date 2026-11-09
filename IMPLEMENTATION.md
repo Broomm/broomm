@@ -1,6 +1,6 @@
 # Implementation plan
 
-## Rooted DuckStation transactions — packaged acceptance underway
+## Rooted DuckStation transactions — Thor validation
 
 PR #6 now implements Dart-owned private whole cards, publication/build-specific
 states, private preference loans, RomM BIOS provisioning, journals, recovery and
@@ -15,14 +15,24 @@ Four-ABI compilation, real Thor disposable kernel/file regressions, an actual
 paused-menu disposal, real binary pause evidence and native Slot 4 envelope
 validation pass. Original native settings, BIOS and Slots 1–4 remain identical.
 Host checks cover two-account cloud transactions, preferences, unsafe/lost-reply
-recovery and serialized automatic completion. Thor build 1125 restored an
-existing Mega Man X4 card, created native manual/resume states, and published
-and read back both progress types after verified Close Game. Follow-up work
-corrects the native directory keys and waits briefly for the observed closure
-transition. In-game card creation, state replay, profile isolation, offline,
-recovery and reinstall are pending. Sega 32X build 1122 generated cartridge
-data and a gameplay state in Chaotix and uploaded both; the in-game reload
-and two-account checks are pending. No other standalone emulator enters PR #6.
+recovery and serialized automatic completion. On Thor build 1126, Mega Man X4
+loaded the owner's existing card, created a second card in-game, and loaded
+that save after automatic Close Game sync and RomM readback. Native states
+replayed under fresh document grants. Both profiles kept their states and
+preferences separate; offline progress uploaded after reconnecting. Restarting
+Broomm while DuckStation was running kept the journal and refused capture
+until normal Close Game. Recovery then published and read back the progress
+and restored the standalone settings. Remove backed up both profiles before
+Android uninstalled DuckStation; setup after reinstall restored both profiles
+under the new installation, and their progress synced again. Preservation
+audits passed for existing PSP and RetroArch progress. All CI checks and five
+packages passed for the installed source.
+
+The Sega 32X follow-up verified Chaotix gameplay, independent PicoDrive states
+for two accounts, automatic upload and readback, and replay of the owner's
+state with exact SRAM restoration. New in-game cartridge progress was not
+written during the test, so its in-game save and load remain unverified.
+No other standalone emulator enters PR #6.
 See the [implementation and evidence boundaries](docs/android-duckstation-transactions.md).
 
 ## DuckStation read-only storage increment — 2026-11-08
