@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:broomm/src/android/azahar.dart';
+import 'package:broomm/src/android/citra_mmj.dart';
 import 'package:broomm/src/android/emulators.dart';
 import 'package:broomm/src/android/setup.dart';
 import 'package:flutter/services.dart';
@@ -82,6 +83,69 @@ void main() {
         }
       },
     );
+  }
+  for (final repick in [false, true]) {
+    test(repick ? 'Citra MMJ can replace a pending folder selection' : 'Citra MMJ retries a granted folder without reopening the picker', () async {
+      const channel = MethodChannel('app.broomm/mmj-setup-test');
+      const tree =
+          'content://com.android.externalstorage.documents/tree/primary%3Acitra-emu';
+      final emulator = androidEmulators.singleWhere((e) => e.id == 'citra-mmj');
+      final data = await Directory.systemTemp.createTemp('broomm-mmj-');
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      var picks = 0;
+      final checks = <Map>[];
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        switch (call.method) {
+          case 'installed':
+            return [
+              {
+                'package': androidMmjSharedPackage,
+                'build': 'a' * 64,
+                'version': androidMmjSharedVersion,
+              },
+            ];
+          case 'sharedPick':
+            picks++;
+            return tree;
+          case 'sharedCheck':
+            checks.add(call.arguments as Map);
+            if (checks.length == 1)
+              throw PlatformException(code: 'emulator-running');
+            return null;
+          case 'ioBusy':
+            return false;
+          default:
+            throw StateError(call.method);
+        }
+      });
+      final manager = AndroidEmulators(data, channel: channel, enabled: true);
+      final setup = AndroidEmulatorSetup(manager, emulator, '3ds', 'a' * 32);
+      try {
+        await manager.load();
+        await setup.verify();
+        await setup.selectFolder();
+        expect(setup.problem, contains('emulator-running'));
+        expect(setup.hasPendingFolder, isTrue);
+        expect(setup.step, AndroidSetupStep.folder);
+        expect(manager.folder(emulator), isNull);
+
+        await setup.selectFolder(change: repick);
+        expect(picks, repick ? 2 : 1);
+        expect(checks, hasLength(2));
+        expect(checks.last, checks.first);
+        expect(setup.hasPendingFolder, isFalse);
+        expect(setup.step, AndroidSetupStep.ready);
+        await manager.load();
+        expect(manager.folder(emulator)?['tree'], tree);
+        expect(manager.folder(emulator)?['access'], androidMmjRootFolderAccess);
+      } finally {
+        setup.dispose();
+        manager.dispose();
+        messenger.setMockMethodCallHandler(channel, null);
+        await data.delete(recursive: true);
+      }
+    });
   }
   test('setup continues after package readback and retains a cancelled folder choice', () async {
     const channel = MethodChannel('app.broomm/setup-test');
