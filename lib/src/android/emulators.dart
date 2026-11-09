@@ -11,6 +11,7 @@ import '../romm/models.dart';
 import '../romm/transfer.dart';
 import '../session_lease.dart';
 import 'apk_download.dart';
+import 'azahar.dart';
 import 'retroarch_core_setup.dart';
 import 'root_saves.dart';
 import 'psp_root.dart';
@@ -91,7 +92,7 @@ const androidEmulators = [
   AndroidEmulator(
     'azahar',
     'Azahar',
-    ['org.azahar_emu.azahar'],
+    [androidAzaharScopedPackage, 'org.azahar_emu.azahar'],
     {'3ds'},
     'https://github.com/azahar-emu/azahar/releases',
     'org.citra.citra_emu.activities.EmulationActivity',
@@ -228,6 +229,16 @@ class AndroidEmulators extends ChangeNotifier {
         .map((p) => installed[p])
         .whereType<AndroidApp>()
         .toList();
+    if (emulator.id == 'azahar') {
+      final configured = apps.where(
+        (a) =>
+            a.enabled &&
+            (_folders.containsKey('azahar:${a.package}') ||
+                a.package == 'org.azahar_emu.azahar' &&
+                    _trees.keys.any((key) => key.endsWith(':azahar'))),
+      );
+      if (configured.isNotEmpty) return configured.first;
+    }
     return apps.where((a) => a.enabled).firstOrNull ?? apps.firstOrNull;
   }
 
@@ -965,13 +976,24 @@ class AndroidEmulators extends ChangeNotifier {
 
   Future<void> confirmSharedStorage(
     AndroidEmulator emulator,
-    String uri,
-  ) async {
+    String uri, {
+    bool verifyAzahar = false,
+  }) async {
     if (!settingsKnown) throw StateError('Refresh emulator settings first.');
     final selected = app(emulator);
     if (selected == null || !sharedTree(emulator, selected.package, uri))
       throw const FormatException('Invalid emulator folder identity');
-    final binding = {'tree': uri, 'package': selected.package};
+    if (verifyAzahar &&
+        (emulator.id != 'azahar' ||
+            selected.package != androidAzaharScopedPackage ||
+            selected.version != androidAzaharScopedVersion))
+      throw StateError('Refresh Azahar’s reviewed installation before setup.');
+    final binding = {
+      'tree': uri,
+      'package': selected.package,
+      if (verifyAzahar) 'access': androidAzaharRootFolderAccess,
+      if (verifyAzahar) 'azaharBuild': selected.build,
+    };
     await channel.invokeMethod<void>('sharedCheck', {
       ...binding,
       'emulator': emulator.id,
@@ -1116,6 +1138,11 @@ class AndroidEmulators extends ChangeNotifier {
               record['version'] >= 20 &&
               emulator?.id == 'dolphin' &&
               androidDolphinRootBinding(binding);
+          if (binding['access'] == androidAzaharRootFolderAccess &&
+              (emulator?.id != 'azahar' ||
+                  binding['package'] != androidAzaharScopedPackage ||
+                  (binding['azaharBuild'] ?? '').isEmpty))
+            throw const FormatException('Invalid verified Azahar folder');
           if (!melonRoot &&
               !dolphinRoot &&
               (emulator == null ||
@@ -1491,6 +1518,7 @@ class AndroidEmulators extends ChangeNotifier {
       });
       final pinnedHash = switch (emulator.id) {
         'melonds' => androidMelonRootApkSha256,
+        'azahar' => androidAzaharScopedApkSha256,
         'dolphin' => androidDolphinRootApkSha256,
         _ => null,
       };
@@ -1507,6 +1535,8 @@ class AndroidEmulators extends ChangeNotifier {
         'path': apk.path,
         'packages': emulator.id == 'ppsspp'
             ? ['org.ppsspp.ppsspp']
+            : emulator.id == 'azahar'
+            ? [androidAzaharScopedPackage]
             : emulator.packages,
         'requiredActivity': emulator.activity,
       });

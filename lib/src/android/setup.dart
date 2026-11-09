@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../session_lease.dart';
+import 'azahar.dart';
 import 'emulators.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
@@ -29,6 +30,17 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
   Map<String, String> _previousBuilds = {};
+
+  bool get azaharRootSetup =>
+      !_shared &&
+      emulator.id == 'azahar' &&
+      manager.app(emulator)?.package == androidAzaharScopedPackage &&
+      manager.app(emulator)?.version == androidAzaharScopedVersion;
+
+  bool get canUseUnverifiedAzaharFolder =>
+      !_shared &&
+      (azaharRootSetup ||
+          manager.folder(emulator)?['access'] == androidAzaharRootFolderAccess);
 
   bool get _rooted =>
       !_shared &&
@@ -127,7 +139,14 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         final lease = await SessionLease.acquire(manager.data);
         try {
           await manager.ensureSetupAllowed();
-          await manager.confirmSharedStorage(emulator, tree);
+          await manager.confirmSharedStorage(
+            emulator,
+            tree,
+            verifyAzahar:
+                !_shared &&
+                manager.folder(emulator)?['access'] ==
+                    androidAzaharRootFolderAccess,
+          );
           step = AndroidSetupStep.ready;
         } finally {
           await lease.release();
@@ -194,7 +213,11 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       if (uri == null) return;
       if (manager.app(emulator)?.build != app.build)
         throw StateError('The emulator changed. Select its save folder again.');
-      await manager.confirmSharedStorage(emulator, uri);
+      await manager.confirmSharedStorage(
+        emulator,
+        uri,
+        verifyAzahar: azaharRootSetup,
+      );
       step = AndroidSetupStep.ready;
     } finally {
       await lease.release();

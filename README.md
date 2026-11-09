@@ -49,6 +49,13 @@ The [rooted Dolphin preview](docs/android-dolphin-root.md) uses the official
 close it, then choose **Emulator Settings → GameCube** or **Wii → Dolphin →
 Set up**. Use **Exit Emulation** after saving, then finish sync in Broomm.
 
+For the [Azahar scoped-storage preview](docs/android-azahar-folder.md), use
+**Emulator Settings → Nintendo 3DS → Azahar → Set up**. Open Azahar once,
+select a dedicated folder under internal **Documents**, then exit and select
+the same folder in Broomm. On the reviewed APK, Magisk lets Broomm verify
+Azahar’s configured folder. Save in the game, exit Azahar, and finish sync in
+Broomm.
+
 The build-specific universal macOS preview is in `build/releases/`.
 It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
 automatic updates for development builds. Archive and extracted signatures are verified.

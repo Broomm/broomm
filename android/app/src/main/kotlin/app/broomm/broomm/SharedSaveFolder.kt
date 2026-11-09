@@ -80,7 +80,8 @@ class SharedSaveFolder(private val activity: Activity) {
             require(uri.authority == "com.android.externalstorage.documents" && Regex("[A-Za-z0-9_-]+:citra-emu").matches(uri.pathSegments[1])) { warning }
         } else {
             val packages = mapOf("ppsspp" to setOf("org.ppsspp.ppsspp", "org.ppsspp.ppssppgold"), "melonds" to setOf("me.magnum.melonds"),
-                "azahar" to setOf("org.azahar_emu.azahar"), "citra-mmj" to setOf("org.citra.emu", "com.antutu.ABenchMark"),
+                "azahar" to setOf("org.azahar_emu.azahar", "io.github.lime3ds.android"),
+                "citra-mmj" to setOf("org.citra.emu", "com.antutu.ABenchMark"),
                 "dolphin" to setOf("org.dolphinemu.dolphinemu"), "eden" to setOf("dev.eden.eden_emulator"),
                 "retroarch" to setOf("com.retroarch", "com.retroarch.aarch64", "com.retroarch.ra32"),
                 "armsx2" to setOf("com.armsx2", "com.armsx2.nightly"), "duckstation" to setOf("com.github.stenzek.duckstation"))

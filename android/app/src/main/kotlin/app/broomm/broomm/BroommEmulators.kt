@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.DocumentsContract
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONArray
 import org.json.JSONObject
@@ -227,7 +228,11 @@ class BroommEmulators(private val activity: Activity) {
                                 } else require(call.argument<String>("emulator") == "retroarch")
                                 when (call.argument<String>("emulator")) {
                                     "melonds" -> putExtra("uri", uri)
-                                    "azahar" -> { putExtra("SelectedGame", uri.toString()); putExtra("launchedFromShortcut", true) }
+                                    "azahar" -> {
+                                        putExtra("SelectedGame", uri.toString())
+                                        putExtra("launchedFromShortcut", true)
+                                        putExtra("launched_from_shortcut", true)
+                                    }
                                     "citra-mmj" -> putExtra("GamePath", uri.toString())
                                     "dolphin" -> putExtra("AutoStartFile", uri.toString())
                                     "duckstation" -> {
@@ -305,7 +310,7 @@ class BroommEmulators(private val activity: Activity) {
                         "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
                         "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"))
                         "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
-                            background(result) { sharedFolder.operation(call) }
+                            sharedOperation(call, result)
                         else -> result.notImplemented()
                     }
                 } catch (e: Exception) {
@@ -378,6 +383,27 @@ class BroommEmulators(private val activity: Activity) {
         worker.execute { try {
             val value = work(); main.post { result.success(value) }
         } catch (e: Exception) { main.post { result.error("android-emulator", e.message ?: "Android operation failed", null) } } }
+    }
+    private fun sharedOperation(call: MethodCall, result: MethodChannel.Result) {
+        if (call.argument<String>("access") != AZAHAR_ROOT_FOLDER) {
+            background(result) { sharedFolder.operation(call) }
+            return
+        }
+        require(call.argument<String>("emulator") == "azahar" &&
+            call.argument<String>("package") == AZAHAR_SCOPED_PACKAGE) { "Invalid verified Azahar folder." }
+        val verification = MethodCall("rootAzaharFolder", mapOf(
+            "package" to AZAHAR_SCOPED_PACKAGE,
+            "build" to call.argument<String>("azaharBuild"),
+            "tree" to call.argument<String>("tree"),
+        ))
+        rootSaves.operation(verification, object : MethodChannel.Result {
+            override fun success(value: Any?) {
+                try { background(result) { sharedFolder.operation(call) } }
+                catch (e: Exception) { result.error("android-emulator", "Azahar folder access was interrupted.", null) }
+            }
+            override fun error(code: String, message: String?, details: Any?) = result.error(code, message, details)
+            override fun notImplemented() = result.notImplemented()
+        })
     }
     @Suppress("DEPRECATION")
     fun activityResult(request: Int, code: Int, data: Intent?): Boolean {

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import '../progress/files.dart';
 import '../io_worker.dart';
+import 'azahar.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
 
@@ -89,9 +90,6 @@ class AndroidApkDownload {
     final candidates = assets.where((a) {
       final name = a['name'] as String;
       return switch (id) {
-        'azahar' => RegExp(
-          r'^azahar-android-vanilla-[0-9.]+\.apk$',
-        ).hasMatch(name),
         'citra-mmj' => RegExp(r'^Citra_MMJ_[0-9]+\.apk$').hasMatch(name),
         // ARMv8.0 is the conservative compatible choice, including ARMv8.2 CPUs.
         'armsx2' => RegExp(
@@ -128,6 +126,8 @@ class AndroidApkDownload {
         return Uri.parse('https://www.ppsspp.org/files/1_20_4/ppsspp.apk');
       case 'melonds':
         return Uri.parse(androidMelonRootApk);
+      case 'azahar':
+        return Uri.parse(androidAzaharScopedApk);
       case 'dolphin':
         return Uri.parse(androidDolphinRootApk);
       case 'eden':
@@ -138,7 +138,6 @@ class AndroidApkDownload {
         if (id == 'armsx2' && !arm64)
           throw UnsupportedError('ARMSX2 requires a 64-bit ARM device.');
         final repository = switch (id) {
-          'azahar' => 'azahar-emu/azahar',
           'citra-mmj' => 'weihuoya/citra',
           'armsx2' => 'ARMSX2/ARMSX2',
           _ => throw UnsupportedError(

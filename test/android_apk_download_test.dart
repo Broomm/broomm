@@ -76,7 +76,7 @@ void main() {
     () async => data = await Directory.systemTemp.createTemp('broomm-apk-'),
   );
   tearDown(() async => data.delete(recursive: true));
-  test('official assets select shared MMJ and vanilla Azahar, excluding storage-access and bundle variants', () {
+  test('official assets select standard shared MMJ and reject unsupported variants', () {
     Map<String, dynamic> release(List<String> names) => {
       'assets': [
         for (final name in names)
@@ -96,15 +96,6 @@ void main() {
       ]),
     );
     expect(mmj.path, endsWith('/Citra_MMJ_20251112.apk'));
-    final azahar = AndroidApkDownload.githubAsset(
-      'azahar',
-      release([
-        'azahar-android-googleplay-2126.2.apk',
-        'azahar-android-vanilla-2126.2.aab',
-        'azahar-android-vanilla-2126.2.apk',
-      ]),
-    );
-    expect(azahar.path, endsWith('/azahar-android-vanilla-2126.2.apk'));
     expect(
       () => AndroidApkDownload.githubAsset(
         'armsx2',
@@ -112,6 +103,19 @@ void main() {
       ),
       throwsStateError,
     );
+  });
+  test('Azahar setup uses the versioned scoped-storage APK', () async {
+    final client = ApkClient(
+      (_) => throw StateError('Unexpected release lookup'),
+    );
+    final download = AndroidApkDownload(client: client);
+    final uri = await download.source('azahar', ['arm64-v8a']);
+    expect(uri.host, 'github.com');
+    expect(
+      uri.path,
+      '/azahar-emu/azahar/releases/download/2126.2/azahar-android-googleplay-2126.2.apk',
+    );
+    expect(client.requests, isEmpty);
   });
   test('Install downloads the complete APK before handing a private file to Android; only readback confirms installation', () async {
     const channel = MethodChannel('app.broomm/apk-test');

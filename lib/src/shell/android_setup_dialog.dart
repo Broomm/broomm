@@ -158,14 +158,16 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                 ),
               ] else ...[
                 if (setup.problem != null &&
-                    (emulator.id == 'retroarch' &&
-                            androidRootRetroCore(widget.platform) != null ||
-                        {
-                          'ppsspp',
-                          'duckstation',
-                          'melonds',
-                        }.contains(emulator.id)) &&
-                    setup.step != AndroidSetupStep.folder)
+                    (setup.canUseUnverifiedAzaharFolder ||
+                        (emulator.id == 'retroarch' &&
+                                    androidRootRetroCore(widget.platform) !=
+                                        null ||
+                                {
+                                  'ppsspp',
+                                  'duckstation',
+                                  'melonds',
+                                }.contains(emulator.id)) &&
+                            setup.step != AndroidSetupStep.folder))
                   ConsoleButton(
                     onPressed: setup.useSharedFolder,
                     child: const Text('Use shared folder'),

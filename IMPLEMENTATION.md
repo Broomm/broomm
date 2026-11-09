@@ -1,5 +1,15 @@
 # Implementation plan
 
+## Standalone Android follow-up — Azahar
+
+Setup uses the pinned official Azahar 2126.2 scoped-storage APK for new
+installations and keeps an existing configured Vanilla installation. On
+rooted Android, Broomm checks the reviewed package, its actual user-data
+folder preference, and process absence before using the folder grant. The
+existing 3DS save/state transaction still owns staging, readback and recovery.
+The explicit shared-folder fallback remains available. Packaged game and
+RomM acceptance are pending. See the [Azahar walkthrough](docs/android-azahar-folder.md).
+
 ## Standalone Android follow-up — Dolphin
 
 The Dolphin increment adds optional root access to the official 2609a
