@@ -8,11 +8,14 @@ The save transaction identifies the selected disc, scopes GameCube GCI files
 by title header or Wii NAND files by title directory, and keeps numbered
 states in the exact APK's compatibility group. Process absence is required
 for file effects. The shared-folder route remains available. On the Thor,
-Luigi’s Mansion synced and reloaded a native GameCube state. Wii Sports
+Luigi’s Mansion synced a game-created GCI and two native states. On build
+1152 it restored all three files and loaded the in-game save. Wii Sports
 synced its game-created NAND save and two native states, then restored the
 exact bytes and loaded the saved sports menu after upgrading to build 1136.
-A new game-created GameCube GCI and a two-account Dolphin round trip remain
-unverified. See the [Dolphin walkthrough](docs/android-dolphin-root.md).
+The native startup check also refused a cached Dolphin process with no
+recovery record or cloud change. A second RomM account started without the
+primary GameCube card or states, then synced and reloaded its own state.
+See the [Dolphin walkthrough](docs/android-dolphin-root.md).
 
 ## Standalone Android follow-up — melonDS
 
