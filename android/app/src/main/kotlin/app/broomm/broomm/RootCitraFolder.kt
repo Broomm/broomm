@@ -10,6 +10,7 @@ import android.system.OsConstants
 import java.io.File
 
 internal const val CITRA_SHARED_PACKAGE = "org.citra.emu"
+internal const val CITRA_SHARED_VERSION = "3eb22034a"
 internal const val CITRA_SHARED_SIGNER = "5ebda360d963001a31b3a062b6151f7d38345d8da49540e74895825ed0ca5e1a"
 internal const val CITRA_ROOT_FOLDER = "root-mmj-folder-v1"
 

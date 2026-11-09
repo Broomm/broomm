@@ -47,6 +47,7 @@ class BroommEmulators(private val activity: Activity) {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
+                        "rootMmjStageRom", "rootMmjRemoveRom",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
                         "rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootEdenInspect", "rootEdenFirmwareStatus", "rootEdenProvision", "rootEdenKey", "rootEdenScope", "rootEdenCheck", "rootEdenList", "rootEdenRead", "rootEdenReplace",
@@ -226,7 +227,7 @@ class BroommEmulators(private val activity: Activity) {
                                     // Dolphin treats every ClipData item as a disc.
                                     // Related files get separate grants, not fake discs.
                                     clipData = ClipData.newRawUri("Game", uri)
-                                } else require(call.argument<String>("emulator") == "retroarch")
+                                } else require(call.argument<String>("emulator") in setOf("retroarch", "citra-mmj"))
                                 when (call.argument<String>("emulator")) {
                                     "melonds" -> putExtra("uri", uri)
                                     "azahar" -> {
@@ -234,7 +235,19 @@ class BroommEmulators(private val activity: Activity) {
                                         putExtra("launchedFromShortcut", true)
                                         putExtra("launched_from_shortcut", true)
                                     }
-                                    "citra-mmj" -> putExtra("GamePath", uri.toString())
+                                    "citra-mmj" -> {
+                                        if (nativeRom != null) {
+                                            require(pkg == CITRA_SHARED_PACKAGE && currentApp.getValue("version") == CITRA_SHARED_VERSION)
+                                            val nativeData = activity.packageManager.getApplicationInfo(pkg, 0).dataDir
+                                            val root = listOf(nativeData, "/data/data/$pkg", "/data/user/0/$pkg")
+                                                .firstOrNull { nativeRom.startsWith("$it/files/Broomm/") }
+                                                ?: error("Game file is outside Citra MMJ’s private session.")
+                                            val parts = RootSaveFiles.mmjRomPath(nativeRom.removePrefix("$root/"))
+                                            require(parts[0] == call.argument<String>("profile") &&
+                                                parts[1] == File(content).parentFile!!.name && parts[3] == File(selected).name)
+                                        }
+                                        putExtra("GamePath", nativeRom ?: uri.toString())
+                                    }
                                     "dolphin" -> putExtra("AutoStartFile", uri.toString())
                                     "duckstation" -> {
                                         putExtra("bootPath", if (duckDocuments)

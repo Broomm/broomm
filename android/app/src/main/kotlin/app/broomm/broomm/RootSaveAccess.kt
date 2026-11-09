@@ -105,7 +105,7 @@ class RootSaveAccess(private val activity: Activity) {
             if (error == null) result.success(value) else result.error("android-root-save", error, null)
         }
         val timeout = Runnable { finish(error = "Root access timed out during ${stage.get()}. Close and reopen Broomm before retrying; recovery was kept.") }
-        val operationTimeout = if (call.method == "rootEdenProvision" && call.argument<String>("path") == "switch_firmware") 120000L else 30000L
+        val operationTimeout = if ((call.method == "rootEdenProvision" && call.argument<String>("path") == "switch_firmware") || call.method in setOf("rootMmjStageRom", "rootMmjRemoveRom")) 120000L else 30000L
         main.postAtTime(timeout, done, SystemClock.uptimeMillis() + operationTimeout + 5000L)
         interrupted = { finish(error = it) }
         try {
@@ -115,7 +115,7 @@ class RootSaveAccess(private val activity: Activity) {
             val melon = call.method.startsWith("rootMelon")
             val dolphin = call.method.startsWith("rootDolphin")
             val azahar = call.method == "rootAzaharFolder"
-            val mmj = call.method == "rootMmjFolder"
+            val mmj = call.method.startsWith("rootMmj")
             val eden = call.method.startsWith("rootEden")
             val arms = call.method.startsWith("rootArmsx2Bios")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
@@ -123,7 +123,7 @@ class RootSaveAccess(private val activity: Activity) {
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -216,6 +216,8 @@ class RootSaveAccess(private val activity: Activity) {
                         activity.filesDir, source, parts[2].removePrefix("rom-"), parts[3]))
                 } else request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, source))
             }
+            if (call.method == "rootMmjStageRom")
+                request.putString("libraryRelative", gameLibraryRelative(activity.filesDir, call.argument<String>("source")!!))
             if (call.method == "rootList") {
                 val areas = call.argument<List<Map<String, String>>>("areas")!!
                 require(areas.size in 1..2 && areas.all { a -> a.size <= 3 && a.values.all { it.length <= 1024 } })
@@ -265,7 +267,7 @@ class RootSaveAccess(private val activity: Activity) {
                             "rootEdenKey" -> answer.getByteArray("headerKey")
                             "rootEdenScope" -> mapped
                             "rootLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
-                            "rootStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
+                            "rootStageRom", "rootMmjStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
                             "rootPspList", "rootPspProfileList", "rootDuckList", "rootDuckProfileList" -> mapOf("next" to answer.getString("next"), "files" to

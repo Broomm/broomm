@@ -18,7 +18,8 @@ reviewed Eden app’s default NAND. It validates the app-owned media mount,
 effective save paths and one initialized console account. The existing Dart
 journal retains standalone bytes, isolates RomM profiles and captures only
 the selected title’s account and device save directories. Eden must be
-closed before file access. Firmware and keys are configured inside Eden.
+closed before file access. Setup can import missing firmware and keys
+from RomM.
 Native gameplay and RomM readback remain pending on the Thor.
 See the [Eden setup and recovery walkthrough](docs/android-eden-root.md).
 
@@ -29,8 +30,11 @@ The reviewed standard Citra MMJ APK can verify its primary shared
 grant, initialized native directories, and process absence. Save transfer
 still uses the Android folder grant and the existing journal. Matching
 legacy state files are kept in recovery but are excluded from cloud sync
-for this build. Host workflow tests and Kotlin compilation pass. The
-native save round trip is pending the app’s first-run storage permission.
+for this build. The Thor granted media and folder access and reached
+Mario Kart 7’s title screen from a private filesystem path. A content URI
+crashes the standard APK’s legacy launch code. Broomm now stages a
+verified private image and records it for removal in session recovery.
+Packaged launch and native save round-trip acceptance are pending.
 See the [Citra MMJ setup and recovery walkthrough](docs/mmj-shared-saves.md).
 
 ## Standalone Android follow-up — Azahar

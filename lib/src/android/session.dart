@@ -9,6 +9,7 @@ import '../session_lease.dart';
 import '../romm/transfer.dart';
 import 'emulators.dart';
 import 'mmj_shared_saves.dart';
+import 'citra_mmj.dart';
 import 'root_saves.dart';
 import 'save_plan.dart';
 import 'shared_saves.dart';
@@ -251,6 +252,13 @@ class AndroidGameSession extends ChangeNotifier {
           ? await _prepareRoot(prepare)
           : await prepare(DownloadCancellation(), _preparePhase);
       final layout = preparedGame?.layout;
+      if (emulator.id == 'citra-mmj' &&
+          app.package == androidMmjSharedPackage &&
+          app.version == androidMmjSharedVersion &&
+          (layout is! AndroidSavePlan || !layout.mmjRooted))
+        throw StateError(
+          'Verify Citra MMJ’s rooted folder setup before playing. This build needs a private game path.',
+        );
       if (root != null) {
         if (layout is! AndroidSavePlan || !mapEquals(layout.binding, root))
           throw StateError(
@@ -352,6 +360,10 @@ class AndroidGameSession extends ChangeNotifier {
             phase = 'Preparing the game file for RetroArch…';
             _emit();
             nativeRom = await _shared.stageRootRom(_game!, plan);
+          } else if (plan.mmjRooted) {
+            phase = 'Preparing the game file for Citra MMJ…';
+            _emit();
+            nativeRom = await _shared.stageMmjRom(_game!, plan);
           }
         } else if (layout is AndroidPspPlan) {
           phase = 'Preparing this profile’s private PSP memory stick…';
