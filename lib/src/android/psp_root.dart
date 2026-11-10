@@ -172,11 +172,12 @@ readAndroidPspState(
   Map<String, String> binding, {
   Map<String, int>? process,
   ({int elapsed, int wall})? launchedAfter,
+  bool shared = false,
 }) async {
-  if (!androidPspRootBinding(binding))
+  if (!shared && !androidPspRootBinding(binding))
     throw const FormatException('Invalid PPSSPP root connection.');
   final report = await manager.channel.invokeMapMethod<String, dynamic>(
-    'rootPspLifecycle',
+    shared ? 'rootPspSharedLifecycle' : 'rootPspLifecycle',
     {
       ...binding,
       if (process != null) 'process': process,
@@ -195,7 +196,13 @@ readAndroidPspState(
       report!['elapsed'] <= 0 ||
       report['wall'] <= 0)
     throw const FormatException('Incomplete PPSSPP writer observation.');
-  const keys = {'pid', 'startTicks', 'launchElapsed', 'launchWall'};
+  final keys = {
+    'pid',
+    'startTicks',
+    'launchElapsed',
+    'launchWall',
+    if (shared) 'activityCreated',
+  };
   final observed = keys.every((key) => report[key] is int && report[key] > 0)
       ? {for (final key in keys) key: report[key] as int}
       : null;

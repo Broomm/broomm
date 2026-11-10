@@ -1,5 +1,29 @@
 # Implementation plan
 
+## Android confirmed stop and sync
+
+All Android save routes use normal sync after an explicitly confirmed Force
+close of a launched game. Broomm records interruption before issuing the
+Android package stop and records the sync decision after the stop is
+verified. A lost reply, reopened writer or changed save boundary preserves
+recovery. Existing interrupted records still require review.
+
+The Thor’s ARMSX2 2.9.2 exit completed native shutdown and then signaled
+its own process. Android recorded SIGKILL. Broomm accepts that exit only
+for the reviewed package after matching the native shutdown and self-signal
+logs to the launched PID and UID and confirming writer absence. Shared
+PPSSPP on the reviewed 1.20.4 APK now reuses its native shutdown proof. The
+new activity and its shutdown are matched even when Android retains the
+same process from an earlier game.
+
+## Android DuckStation shader preferences
+
+The Thor’s private PS1 profile contained native shader-stage sections such as
+`[PostProcessing/Stage1]`. The previous settings writer rejected their slash
+before the game launched. The settings loan now preserves hierarchical section
+names while still validating route keys. A slash in the raw preference key
+fails before publication so it cannot be interpreted as part of a section.
+
 ## Android session recovery follow-up
 
 The Thor’s build 1176 logs recorded Dolphin’s game activity finishing with

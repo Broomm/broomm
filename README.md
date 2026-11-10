@@ -18,10 +18,11 @@ Save in the emulator and use its **Quit** or **Exit** action if available.
 Open Android Recents and swipe away the emulator's card before returning to
 Broomm. A verified normal exit syncs automatically when the rooted session
 can track the emulator process. If Android keeps the app open after you
-save and quit, choose **Force close → Force close and recover** on the session
-screen. Review recovered progress in Cloud Saves before uploading. Android
-App info provides Android's **Force stop** control on shared setups without
-root.
+save and quit, choose **Force close → Force close and sync** on the session
+screen. Broomm checks that the process stopped and syncs the saved files it
+can verify. If closure or capture is uncertain, review the retained progress
+in Cloud Saves. Android App info provides Android's **Force stop** control
+on shared setups without root.
 
 For DuckStation, **Download page** opens the official beta page. Download and
 open its APK, confirm installation in Android, then return to Broomm. The

@@ -141,7 +141,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
       builder: (c) => AlertDialog(
         title: Text('Force-close ${widget.emulator}?'),
         content: const Text(
-          'Save in the emulator before force-closing it. Unsaved progress can be lost. Broomm will keep recovered files locally for review before syncing.',
+          'Save in the emulator before force-closing it. Unsaved progress can be lost. Broomm will sync the saved files it can verify after the emulator closes.',
         ),
         actions: [
           ConsoleButton(
@@ -151,7 +151,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
           ),
           ConsoleButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Force close and recover'),
+            child: const Text('Force close and sync'),
           ),
         ],
       ),

@@ -8,7 +8,9 @@ kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootInspectionCommand.kt \
   tool/android/check_root_inspection.kt -jvm-target 17 -include-runtime \
   -d .tool-cache/research/android/root-inspection-check.jar
 java -jar .tool-cache/research/android/root-inspection-check.jar
-kotlinc android/app/src/main/kotlin/app/broomm/broomm/PpssppShutdownProof.kt \
+kotlinc android/app/src/main/kotlin/app/broomm/broomm/AndroidShutdownLog.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/Armsx2ShutdownProof.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/PpssppShutdownProof.kt \
   tool/android/check_ppsspp_shutdown.kt -jvm-target 17 -include-runtime \
   -d .tool-cache/research/android/ppsspp-shutdown-check.jar
 java -jar .tool-cache/research/android/ppsspp-shutdown-check.jar

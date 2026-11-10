@@ -20,6 +20,7 @@ internal class RootRetroArchProcess(
     private val pkg: String,
     private val uid: Int,
     private val live: () -> Unit,
+    private val acceptSignaledExit: ((pid: Int, observed: Long, exited: Long) -> Boolean)? = null,
 ) {
     private fun uidOf(path: File): Int = File(path, "status").useLines { lines ->
         lines.first { it.startsWith("Uid:") }.substringAfter(':').trim()
@@ -110,9 +111,11 @@ internal class RootRetroArchProcess(
         if (record.pid != request.getInt("pid") || record.realUid != uid ||
             record.packageUid != uid || record.processName != pkg || record.timestamp > now)
             return state("unknown")
+        val closed = record.reason == ApplicationExitInfo.REASON_EXIT_SELF && record.status == 0 ||
+            record.reason == ApplicationExitInfo.REASON_SIGNALED && record.status == 9 &&
+            acceptSignaledExit?.invoke(record.pid, observed, record.timestamp) == true
         if (writers().isNotEmpty()) return state("running")
-        return state(if (record.reason == ApplicationExitInfo.REASON_EXIT_SELF && record.status == 0)
-            "closed" else "interrupted")
+        return state(if (closed) "closed" else "interrupted")
     }
 
     private fun state(value: String) = Bundle().apply { putString("state", value) }

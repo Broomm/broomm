@@ -110,6 +110,12 @@ class PspRootFixture {
   Future<Object?> call(MethodCall call) async {
     calls.add(call.method);
     final a = (call.arguments as Map?) ?? {};
+    if (call.method == 'rootEmulatorStop') {
+      expect(a['package'], binding['package']);
+      expect(a['build'], binding['build']);
+      state = 'idle';
+      return null;
+    }
     if (call.method == 'installed')
       return [
         {
@@ -409,6 +415,22 @@ void main() {
     );
     native.state = 'idle';
     await resumed.finishIfPspClosed();
+  });
+
+  test('confirmed force close publishes rooted PPSSPP savedata and restores the standalone memory stick', () async {
+    final p = await plan(), session = await start();
+    final owner = await activeProfile(profileId);
+    const save = [4, 2, 7];
+    await native.put(owner, 'PSP/SAVEDATA/ULUS10340SAVE/DATA.BIN', save);
+    await session.forceClose();
+    await session.finish(emulatorClosed: true);
+    expect(api.records, isNotEmpty);
+    expect(
+      await (await p.target('save/ULUS10340SAVE/DATA.BIN')).readAsBytes(),
+      save,
+    );
+    expect(native.selected, 'native');
+    expect(await session.pending(), isNull);
   });
 
   test('lost native publication replies retain durable recovery and replay the same operation before inventory', () async {

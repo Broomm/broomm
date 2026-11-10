@@ -128,7 +128,7 @@ class RootSaveAccess(private val activity: Activity) {
             val identity = RootInspection.identity(activity, pkg)
             require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
             require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (!sessionOperation && !prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckResume", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
+            if (!sessionOperation && !prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootPspSharedLifecycle", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckResume", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -188,7 +188,12 @@ class RootSaveAccess(private val activity: Activity) {
                 for ((key, limit) in listOf("config" to 262144, "controls" to 65536))
                     call.argument<ByteArray>(key)?.let { require(it.size <= limit); request.putByteArray(key, it) }
                 call.argument<Map<String, Number>>("process")?.let { process ->
-                    require(process.keys == (if (duck) setOf("pid", "startTicks") else setOf("pid", "startTicks", "launchElapsed", "launchWall")) && process.values.all { it.toLong() > 0 })
+                    val keys = when {
+                        duck -> setOf("pid", "startTicks")
+                        call.method == "rootPspSharedLifecycle" -> setOf("pid", "startTicks", "launchElapsed", "launchWall", "activityCreated")
+                        else -> setOf("pid", "startTicks", "launchElapsed", "launchWall")
+                    }
+                    require(process.keys == keys && process.values.all { it.toLong() > 0 })
                     require(process.getValue("pid").toLong() <= Int.MAX_VALUE)
                     request.putInt("pid", process.getValue("pid").toInt())
                     for (key in process.keys - "pid") request.putLong(key, process.getValue(key).toLong())
@@ -291,7 +296,7 @@ class RootSaveAccess(private val activity: Activity) {
                             "rootPrepareSharedFolder" -> true
                             "rootEdenKey" -> answer.getByteArray("headerKey")
                             "rootEdenScope", "rootArmsx2Scope" -> mapped
-                            "rootLifecycle", "rootEmulatorLifecycle", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
+                            "rootLifecycle", "rootEmulatorLifecycle", "rootPspLifecycle", "rootPspSharedLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
                             "rootStageRom", "rootMmjStageRom" -> answer.getString("rom") ?: error("Missing staged ROM")
                             "rootOptions" -> answer.getByteArray("bytes")
                             "rootInstallMgba", "rootInstallCore" -> answer.getString("core") ?: error("Missing installed mGBA checksum")
@@ -326,6 +331,10 @@ class RootSaveAccess(private val activity: Activity) {
             }
             if (call.method == "rootEmulatorLifecycle") {
                 finish(mapOf("state" to "unknown"))
+                return
+            }
+            if (call.method == "rootPspSharedLifecycle") {
+                finish(error = "The authorized root connection is unavailable.")
                 return
             }
             connection?.unbind()

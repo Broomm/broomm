@@ -55,4 +55,28 @@ fun main() {
     reject(entry("onDestroy end", 200001))
     val header = entry("onDestroy end", 100000); header[2] = 24; reject(header)
     println("PASS incomplete/oversized binary input and changed-clock/header refusal")
+    checkArmsx2Shutdown()
+}
+
+private fun checkArmsx2Shutdown() {
+    fun entryAt(text: String, at: Long, tag: String, thread: Int = pid + 1, priority: Byte = 4) =
+        entry(text, at, tag = tag, thread = thread, priority = priority)
+    val started = entryAt("@@ANDROID_STOP_JAVA@@ begin saveAutosave=false forced=false restart=false", 100000, "System.out")
+    val finished = entryAt("[  103.9348] @@ANDROID_STOP_DONE@@ waited_ms=64\n", 100080, "STDOUT", pid + 2, 5)
+    val returned = entryAt("@@ANDROID_STOP_JAVA@@ shutdown_return active=false runLoop=true state=PAUSED", 100081, "System.out")
+    val inactive = entryAt("[  104.8788] @@ANDROID_STOP@@ request active=0 state=0 execute_exit=1\n", 101025, "STDOUT", pid + 2, 5)
+    val selfSignal = entryAt("Sending signal. PID: $pid SIG: 9", 101026, "Process", pid)
+    val stopped = started + finished + returned + inactive
+    fun closed(bytes: ByteArray, exited: Long = 101073) =
+        Armsx2ShutdownProof.closed(bytes, pid, uid, 99000, exited)
+
+    check(closed(stopped + selfSignal))
+    check(!closed(selfSignal))
+    check(!closed(stopped))
+    check(!closed(started + returned + inactive + selfSignal))
+    check(!closed(stopped + entryAt("Sending signal. PID: ${pid + 1} SIG: 9", 101026, "Process", pid)))
+    check(!closed(stopped + selfSignal, 105000))
+    val restart = entryAt("@@ANDROID_STOP_JAVA@@ begin saveAutosave=false forced=false restart=true", 101026, "System.out")
+    check(!closed(stopped + restart + selfSignal))
+    println("PASS ARMSX2 completed native stop, self-signal, timing and restart boundaries")
 }

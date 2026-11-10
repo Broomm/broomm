@@ -46,7 +46,7 @@ class BroommEmulators(private val activity: Activity) {
                 try {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
-                        "rootPspInspect", "rootPspLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
+                        "rootPspInspect", "rootPspLifecycle", "rootPspSharedLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
                         "rootMmjStageRom", "rootMmjRemoveRom", "rootPrepareSharedFolder",
                         "rootEmulatorLifecycle", "rootEmulatorStop", "rootDuckResume",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
