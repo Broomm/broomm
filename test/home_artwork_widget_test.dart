@@ -544,6 +544,9 @@ void main() {
       t.view.physicalSize = const Size(1900, 900);
       await t.binding.setSurfaceSize(const Size(1900, 900));
       await t.pumpAndSettle();
+      // Finish each hero cache-width decode before changing the viewport or
+      // hiding the image, so Windows can release the encoded file mapping.
+      await decodeArtworkImages(t);
       final logoAtDefaultScale = t.getRect(logo).height;
       expect(logoAtDefaultScale, closeTo(192, 1));
       expect(
@@ -583,6 +586,7 @@ void main() {
       t.view.physicalSize = const Size(320, 600);
       await t.binding.setSurfaceSize(const Size(320, 600));
       await t.pumpAndSettle();
+      await decodeArtworkImages(t);
       expectDetailsAligned();
       final narrowLogo = t.getRect(logo);
       expect(narrowLogo.right, lessThanOrEqualTo(320));
