@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollDirection;
+import 'package:flutter/rendering.dart';
 
 import 'controls.dart';
 import 'navigation.dart';
@@ -14,6 +14,8 @@ import 'library.dart';
 import 'store_screen.dart';
 import '../game_launch.dart';
 import '../romm/models.dart';
+
+part 'home_details.dart';
 
 const homeTitles = [
   'Broomm settings',
@@ -131,6 +133,7 @@ class HomeScreenState extends State<HomeScreen>
   bool _userScrolling = false;
   final primary = FocusNode(debugLabel: 'Home primary action');
   final options = FocusNode(debugLabel: 'Home game options');
+  final libraryRetry = FocusNode(debugLabel: 'Retry game library');
   int? _previousIndex;
 
   void focusSelection() => requestConsoleFocus(tile(model.homeIndex));
@@ -158,10 +161,19 @@ class HomeScreenState extends State<HomeScreen>
           if (systemIndex + 1 < systemRow.length)
             requestConsoleFocus(systemRow[systemIndex + 1]);
         case TraversalDirection.down:
-          requestConsoleFocus(tile(selected));
+          requestConsoleFocus(
+            model.libraryError == null ? tile(selected) : libraryRetry,
+          );
         case TraversalDirection.up:
           break;
       }
+      return true;
+    }
+    if (current == libraryRetry) {
+      if (direction == TraversalDirection.down)
+        requestConsoleFocus(tile(selected));
+      if (direction == TraversalDirection.up)
+        requestConsoleFocus(systemRow.first);
       return true;
     }
     if (current == primary || current == options) {
@@ -188,6 +200,10 @@ class HomeScreenState extends State<HomeScreen>
       case TraversalDirection.right:
         if (index + 1 < count) requestConsoleFocus(tile(index + 1));
       case TraversalDirection.up:
+        if (model.libraryError != null) {
+          requestConsoleFocus(libraryRetry);
+          return true;
+        }
         final x = current.rect.center.dx;
         final nearest = systemRow.reduce(
           (a, b) => (a.rect.center.dx - x).abs() <= (b.rect.center.dx - x).abs()
@@ -201,7 +217,13 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
-    for (final node in [...tiles.values, ...system.values, primary, options]) {
+    for (final node in [
+      ...tiles.values,
+      ...system.values,
+      primary,
+      options,
+      libraryRetry,
+    ]) {
       node.dispose();
     }
     _growth.dispose();
@@ -240,22 +262,6 @@ class HomeScreenState extends State<HomeScreen>
     final logo = model.preferences.showArtwork
         ? installed?.artwork?.logo
         : null;
-    final primaryLabel = installed == null
-        ? 'Open'
-        : installing
-        ? 'Installing…'
-        : installed.removing
-        ? 'Finish deleting'
-        : gamePlatform(installed.game, model.platforms) != null
-        ? 'Play'
-        : 'View game';
-    final primaryText = Text(
-      primaryLabel,
-      style: const TextStyle(
-        color: Color(0xff101923),
-        fontWeight: FontWeight.w700,
-      ),
-    );
     return ConsoleDirections(
       onDirection: direction,
       child: LayoutBuilder(
@@ -273,174 +279,140 @@ class HomeScreenState extends State<HomeScreen>
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ConsoleScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.fromLTRB(
-                  margin + selectionLeft,
-                  12,
-                  consoleSideInset(size.maxWidth),
-                  8,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final (i, app) in model.systemApps.indexed)
-                      Padding(
-                        key: ValueKey('system-app-$app'),
-                        padding: EdgeInsets.only(left: i == 0 ? 0 : 12),
-                        child: Tooltip(
-                          message: homeTitles[app],
-                          excludeFromSemantics: true,
-                          child: ConsoleIconButton(
-                            focusNode: shortcut(app),
-                            autofocus: returnShortcut == app,
-                            label: homeTitles[app],
-                            onPressed: () => model.navigate(
-                              homeScreens[app],
-                              homeShortcut: app,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: size.maxHeight * .45),
+                child: ConsoleScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.fromLTRB(
+                    margin + selectionLeft,
+                    12,
+                    consoleSideInset(size.maxWidth),
+                    8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final (i, app) in model.systemApps.indexed)
+                        Padding(
+                          key: ValueKey('system-app-$app'),
+                          padding: EdgeInsets.only(left: i == 0 ? 0 : 12),
+                          child: Tooltip(
+                            message: homeTitles[app],
+                            excludeFromSemantics: true,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: ConsoleIconButton(
+                                focusNode: shortcut(app),
+                                autofocus: returnShortcut == app,
+                                label: homeTitles[app],
+                                onPressed: () => model.navigate(
+                                  homeScreens[app],
+                                  homeShortcut: app,
+                                ),
+                                fill: homeColors[app].withValues(alpha: .48),
+                                icon: homeIcons[app],
+                                showLabel: app == 0 || app == 2,
+                              ),
                             ),
-                            fill: homeColors[app].withValues(alpha: .48),
-                            icon: homeIcons[app],
-                            showLabel: app == 0 || app == 2,
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: margin),
-                  child: ConsoleScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (model.libraryError != null)
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: ProblemNotice(
-                              model.libraryError!,
-                              retry: model.loadLibrary,
+                  child: LayoutBuilder(
+                    builder: (context, body) {
+                      final libraryError = model.libraryError;
+                      final noticeHeight = libraryError == null
+                          ? 0.0
+                          : math.min(54.0, body.maxHeight * .22);
+                      final contentHeight = body.maxHeight - noticeHeight;
+                      final detailsReserve = math.min(
+                        88.0,
+                        contentHeight * .62,
+                      );
+                      final problem = installed?.problem;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (libraryError != null)
+                            _libraryNotice(libraryError, noticeHeight),
+                          _gameRail(
+                            context,
+                            index,
+                            tileSize,
+                            railWidth,
+                            maxHeight: contentHeight - detailsReserve,
+                            selectionLeft: selectionLeft,
+                            autofocus: returnShortcut == null,
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                selectionLeft,
+                                0,
+                                _railInset,
+                                math.min(8, detailsReserve * .12),
+                              ),
+                              child: _HomeDetails(
+                                logoGap: logo == null
+                                    ? null
+                                    : model.preferences.logoSpacing.gap,
+                                lead: installed == null
+                                    ? const FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          'Game Store',
+                                          style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      )
+                                    : logo == null
+                                    ? null
+                                    : _HomeGameLogo(
+                                        title: installed.game.name,
+                                        logo: logo,
+                                        scale:
+                                            model.preferences.logoScale / 100,
+                                      ),
+                                actions: _actions(
+                                  context,
+                                  installed,
+                                  installing,
+                                ),
+                                actionWidth: installed == null ? 185 : 330,
+                                note: installed == null
+                                    ? null
+                                    : ClipRect(
+                                        child: Tooltip(
+                                          message: problem ?? 'Select / Back · right-click · Shift+F10 for options',
+                                          excludeFromSemantics: true,
+                                          child: Text(
+                                            problem ?? 'Select / Back · right-click · Shift+F10 for options',
+                                            maxLines: problem == null ? 1 : 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: problem == null
+                                                  ? muted
+                                                  : ink,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                importantNote: problem != null,
+                              ),
                             ),
                           ),
-                        _gameRail(
-                          context,
-                          index,
-                          tileSize,
-                          railWidth,
-                          selectionLeft: selectionLeft,
-                          autofocus: returnShortcut == null,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            selectionLeft,
-                            logo == null ? 8 : 60,
-                            _railInset,
-                            18,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (installed == null)
-                                const Text(
-                                  'Game Store',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                              if (installed != null && logo != null)
-                                _HomeGameLogo(
-                                  title: installed.game.name,
-                                  logo: logo,
-                                  scale: model.preferences.logoScale / 100,
-                                ),
-                              if (installed?.problem case final problem?)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: Text(
-                                    problem,
-                                    style: const TextStyle(color: ink),
-                                  ),
-                                ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: installed == null ? 185 : 330,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: ConsoleButton(
-                                        focusNode: primary,
-                                        fill: ink,
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: primaryLabel == 'Play'
-                                              ? 10
-                                              : 22,
-                                          vertical: 16,
-                                        ),
-                                        onPressed: installing
-                                            ? null
-                                            : () => installed == null
-                                                  ? model.navigate(
-                                                      ShellScreen.store,
-                                                    )
-                                                  : openGame(
-                                                      context,
-                                                      installed,
-                                                    ),
-                                        child: Center(
-                                          child:
-                                              installed != null &&
-                                                  primaryLabel == 'Play' &&
-                                                  model.preferences.showArtwork
-                                              ? _platformPlayLabel(
-                                                  installed.game,
-                                                  primaryText,
-                                                  model.platformIcon(
-                                                    installed.game,
-                                                  ),
-                                                )
-                                              : primaryText,
-                                        ),
-                                      ),
-                                    ),
-                                    if (installed != null) ...[
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        flex: 2,
-                                        child: ConsoleButton(
-                                          focusNode: options,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 16,
-                                          ),
-                                          onPressed: () => Actions.maybeInvoke(
-                                            context,
-                                            const GameOptionsIntent(),
-                                          ),
-                                          child: const ActionLabel(
-                                            'Options',
-                                            icon: Icons.more_horiz,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              if (installed != null) ...[
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Select / Back · right-click · Shift+F10 for options',
-                                  style: TextStyle(color: muted, fontSize: 12),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -456,6 +428,116 @@ class HomeScreenState extends State<HomeScreen>
     final start = _startGrowth[id] ?? 0;
     final end = id == _selectedTile ? 1 : 0;
     return start + (end - start) * progress;
+  }
+
+  Widget _libraryNotice(String message, double height) => SizedBox(
+    height: height,
+    child: ClipRect(
+      child: Row(
+        children: [
+          Expanded(
+            child: Tooltip(
+              message: message,
+              excludeFromSemantics: true,
+              child: Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xffefd3aa)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: ConsoleButton(
+              focusNode: libraryRetry,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              onPressed: model.loadLibrary,
+              child: const Text('Retry'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _actions(
+    BuildContext context,
+    InstalledGame? installed,
+    bool installing,
+  ) {
+    final primaryLabel = installed == null
+        ? 'Open'
+        : installing
+        ? 'Installing…'
+        : installed.removing
+        ? 'Finish deleting'
+        : gamePlatform(installed.game, model.platforms) != null
+        ? 'Play'
+        : 'View game';
+    final primaryText = Text(
+      primaryLabel,
+      style: const TextStyle(
+        color: Color(0xff101923),
+        fontWeight: FontWeight.w700,
+      ),
+    );
+    return SizedBox(
+      key: const ValueKey('home-actions'),
+      height: 56,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            flex: 3,
+            child: ConsoleButton(
+              focusNode: primary,
+              fill: ink,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              onPressed: installing
+                  ? null
+                  : () => installed == null
+                        ? model.navigate(ShellScreen.store)
+                        : openGame(context, installed),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child:
+                      installed != null &&
+                          primaryLabel == 'Play' &&
+                          model.preferences.showArtwork
+                      ? _platformPlayLabel(
+                          installed.game,
+                          primaryText,
+                          model.platformIcon(installed.game),
+                        )
+                      : primaryText,
+                ),
+              ),
+            ),
+          ),
+          if (installed != null) ...[
+            const SizedBox(width: 14),
+            Expanded(
+              flex: 2,
+              child: ConsoleButton(
+                focusNode: options,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                onPressed: () =>
+                    Actions.maybeInvoke(context, const GameOptionsIntent()),
+                child: const Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ActionLabel('Options', icon: Icons.more_horiz),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   void _animateSelection(int index, double step, Duration duration) {
@@ -553,22 +635,50 @@ class HomeScreenState extends State<HomeScreen>
   Widget _gameRail(
     BuildContext context,
     int selected,
-    double size,
+    double preferredSize,
     double width, {
+    required double maxHeight,
     required double selectionLeft,
     required bool autofocus,
   }) {
-    const inset = _railInset, spacing = 16.0;
-    final enlarged = size * _selectedTileScale;
+    const spacing = 16.0;
+    final maxTileWidth = math.max(0.0, width - selectionLeft - _railInset);
+    final tileBudget = math.min(
+      preferredSize * _selectedTileScale,
+      maxTileWidth,
+    );
+    final initialInset = math.min(_railInset, maxHeight / 6);
+    final initialTile = math.min(tileBudget, maxHeight - initialInset * 2);
+    final game = model.selectedHomeGame?.game;
+    final sideWidth =
+        width - selectionLeft - initialTile - spacing - initialInset;
+    final compactCaption = maxHeight < 75 && sideWidth >= 120;
+    final beside =
+        game != null &&
+        (compactCaption ||
+            _HomeCaption.fitsBeside(
+              context,
+              game,
+              sideWidth,
+              initialTile - initialTile / _selectedTileScale,
+            ));
+    final caption = game != null && !beside
+        ? _HomeCaption.measure(context, game, width - _railInset * 2)
+        : null;
+    final captionHeight = caption == null
+        ? 0.0
+        : math.min(
+            caption.height + 4,
+            math.min(maxHeight, math.max(maxHeight * .42, caption.line + 12)),
+          );
+    final tileHeight = maxHeight - captionHeight;
+    final inset = math.min(_railInset, tileHeight / 6);
+    final enlarged = math.min(tileBudget, tileHeight - inset * 2);
+    final size = enlarged / _selectedTileScale;
     final step = size + spacing;
     final anchor = selectionLeft + enlarged;
     final duration = motionDuration(context, _selectionDuration);
     _animateSelection(selected, step, duration);
-    final game = model.selectedHomeGame?.game;
-    final sideWidth = width - anchor - spacing - inset;
-    final beside =
-        game != null &&
-        _HomeCaption.fitsBeside(context, game, sideWidth, enlarged - size);
 
     return SizedBox(
       width: width,
@@ -629,15 +739,36 @@ class HomeScreenState extends State<HomeScreen>
                     left: anchor + spacing,
                     right: inset,
                     bottom: inset,
-                    child: _HomeCaption(game: game),
+                    child: _HomeCaption(
+                      game: game,
+                      maxLines: compactCaption ? 1 : null,
+                    ),
                   ),
               ],
             ),
           ),
-          if (game != null && !beside)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(inset, 0, inset, 4),
-              child: _HomeCaption(game: game),
+          if (game != null && caption != null)
+            SizedBox(
+              height: captionHeight,
+              child: ClipRect(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    _railInset,
+                    0,
+                    _railInset,
+                    4,
+                  ),
+                  child: _HomeCaption(
+                    game: game,
+                    maxLines: captionHeight >= caption.height + 4
+                        ? null
+                        : math.max(
+                            1,
+                            ((captionHeight - 4) / caption.line).floor(),
+                          ),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -689,7 +820,7 @@ class HomeScreenState extends State<HomeScreen>
                     )
                   : ClipRRect(
                       borderRadius: BorderRadius.circular(17),
-                      child: _TileImage(model: model, entry: entry),
+                      child: _TileImage(model: model, entry: entry, size: size),
                     ),
             ),
           ),
@@ -700,8 +831,9 @@ class HomeScreenState extends State<HomeScreen>
 }
 
 class _HomeCaption extends StatelessWidget {
-  const _HomeCaption({required this.game});
+  const _HomeCaption({required this.game, this.maxLines});
   final RommGame game;
+  final int? maxLines;
 
   static const _badgeStyle = TextStyle(
     color: Color(0xff101923),
@@ -722,7 +854,16 @@ class _HomeCaption extends StatelessWidget {
     double height,
   ) {
     if (width < 120) return false;
-    TextPainter measure(
+    final caption = measure(context, game, width);
+    return caption.titleHeight <= math.max(height - 4, caption.line);
+  }
+
+  static ({double titleHeight, double height, double line}) measure(
+    BuildContext context,
+    RommGame game,
+    double width,
+  ) {
+    TextPainter painter(
       String text,
       TextStyle style, [
       double maxWidth = double.infinity,
@@ -740,14 +881,22 @@ class _HomeCaption extends StatelessWidget {
       )..layout(maxWidth: maxWidth);
     }
 
-    final badge = measure(homePlatformLabel(game), _badgeStyle);
+    final badge = painter(homePlatformLabel(game), _badgeStyle);
     final badgeWidth = math.min(_badgeLimit(width), badge.width + 16);
+    final badgeHeight = badge.height + 8;
     badge.dispose();
-    final title = measure(game.name, _titleStyle, width - badgeWidth - _gap);
-    final fits =
-        title.height <= math.max(height - 4, title.preferredLineHeight);
+    final title = painter(
+      game.name,
+      _titleStyle,
+      math.max(1, width - badgeWidth - _gap),
+    );
+    final result = (
+      titleHeight: title.height,
+      height: math.max(title.height, badgeHeight),
+      line: title.preferredLineHeight,
+    );
     title.dispose();
-    return fits;
+    return result;
   }
 
   @override
@@ -780,6 +929,8 @@ class _HomeCaption extends StatelessWidget {
               game.name,
               key: const ValueKey('home-game-title'),
               style: _titleStyle,
+              maxLines: maxLines,
+              overflow: maxLines == null ? null : TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -789,9 +940,14 @@ class _HomeCaption extends StatelessWidget {
 }
 
 class _TileImage extends StatelessWidget {
-  const _TileImage({required this.model, required this.entry});
+  const _TileImage({
+    required this.model,
+    required this.entry,
+    required this.size,
+  });
   final ShellModel model;
   final InstalledGame entry;
+  final double size;
   @override
   Widget build(BuildContext context) {
     final fallback = GameArtwork(model: model, game: entry.game, compact: true);
@@ -827,19 +983,19 @@ class _TileImage extends StatelessWidget {
       children: [
         art,
         Positioned(
-          top: 7,
-          right: 7,
+          top: math.min(7, size * .08),
+          right: math.min(7, size * .08),
           child: Tooltip(
             message: label,
             child: Semantics(
               label: label,
               child: Container(
-                padding: const EdgeInsets.all(5),
+                padding: EdgeInsets.all(math.min(5, size * .06)),
                 decoration: BoxDecoration(
                   color: const Color(0xf0101b28),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 22, color: color),
+                child: Icon(icon, size: math.min(22, size * .25), color: color),
               ),
             ),
           ),
@@ -859,28 +1015,25 @@ Widget _platformPlayLabel(
   builder: (context, snapshot) {
     final icon = snapshot.data;
     if (icon == null) return label;
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Tooltip(
-            message: game.platform,
-            excludeFromSemantics: true,
-            child: Image.memory(
-              icon,
-              key: const ValueKey('home-platform-icon'),
-              width: 20,
-              height: 20,
-              fit: BoxFit.contain,
-              semanticLabel: game.platform,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: game.platform,
+          excludeFromSemantics: true,
+          child: Image.memory(
+            icon,
+            key: const ValueKey('home-platform-icon'),
+            width: 20,
+            height: 20,
+            fit: BoxFit.contain,
+            semanticLabel: game.platform,
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
-          const SizedBox(width: 8),
-          label,
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        label,
+      ],
     );
   },
 );

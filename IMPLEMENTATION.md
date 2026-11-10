@@ -1,5 +1,46 @@
 # Implementation plan
 
+## Bottom-aligned Home actions — 2026-11-10
+
+Play and Options align with the bottom of the game logo when Home places
+them beside it. Static analysis, 802 Flutter tests and two offscreen
+renderers passed on macOS 27.0.1, with one existing host-gated skip. The
+Home widget test checks both relative heights and focus retention on
+resize. Android, Linux and Windows interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-home-bottom-actions.zip)
+is `0.1.26-dev` (1191), **24,385,674 bytes**, SHA-256
+`58f3ac44a42ed25f5fad52120a8a4f8bc88175c49e10fc467bd2b281fe02039e`.
+ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Home appearance and short-window layout — 2026-11-10
+
+UI scale and Logo scale each include 50%. The five Logo spacing presets
+persist with appearance settings. Default keeps the previous gap of
+72 logical pixels when the title sits beside the tile and there is room.
+The closer and farther presets change that gap in 20-point steps.
+
+Home fits above the footer with horizontal navigation for shortcuts and the
+game rail. The layout measures the artwork at its actual aspect ratio.
+Play and Options move to the logo's right when the stacked layout is too
+tall. Compact layouts can reduce the logo, spacing and tile sizes to keep
+actions visible. Library retry remains reachable from the game rail.
+
+Static analysis, 802 Flutter tests and both offscreen renderers passed on
+macOS 27.0.1, with one existing host-gated skip. Checks cover preference
+reload, each spacing preset, the 50% logo size, the short-window reflow,
+controller focus across resizing and a long title with a library problem.
+Both stacked and side-by-side Home previews were inspected. Native Android,
+Windows and Linux interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-home-fit.zip)
+is **24,388,577 bytes**, SHA-256
+`ca48f995ddde01f532b819b4f7bf6c76870be17a496583f6802c0f107311ed3b`.
+It is `0.1.26-dev` (1190), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
 ## Platform icon in Play and mint focus outline — 2026-11-10
 
 Home puts the cached RomM illustration inside Play, to the left of the

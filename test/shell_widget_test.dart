@@ -312,7 +312,7 @@ void main() {
     },
   );
   testWidgets(
-    'UI and logo scale are independently adjustable and persist through reload',
+    'UI scale, logo scale and spacing are independent and persist through reload',
     (t) async {
       await openHome(t, size: const Size(640, 400));
       final profile = find.byKey(const ValueKey('shell-profile'));
@@ -350,11 +350,23 @@ void main() {
         () => model.preferences.logoScale == 150,
       );
       expect(t.getRect(profile).height, closeTo(height * 1.25, 1));
+      await chooseScale('ui-scale-50', () => model.preferences.uiScale == 50);
+      expect(t.getRect(profile).height, closeTo(height * .5, 1));
+      await chooseScale(
+        'logo-scale-50',
+        () => model.preferences.logoScale == 50,
+      );
+      await chooseScale(
+        'logo-spacing-veryFar',
+        () => model.preferences.logoSpacing == HomeLogoSpacing.veryFar,
+      );
+      expect(t.getRect(profile).height, closeTo(height * .5, 1));
       final restored = await t.runAsync(
         () async => (await ShellStorage(root).load()).preferences,
       );
-      expect(restored!.uiScale, 125);
-      expect(restored.logoScale, 150);
+      expect(restored!.uiScale, 50);
+      expect(restored.logoScale, 50);
+      expect(restored.logoSpacing, HomeLogoSpacing.veryFar);
       expect(t.takeException(), isNull);
       await t.pumpWidget(const SizedBox());
     },

@@ -48,14 +48,27 @@ class SavedProfile {
   };
 }
 
+enum HomeLogoSpacing {
+  veryClose('Very close', 20),
+  close('Close', 40),
+  standard('Default', 60),
+  far('Far', 80),
+  veryFar('Very far', 100);
+
+  const HomeLogoSpacing(this.label, this.gap);
+  final String label;
+  final double gap;
+}
+
 class ShellPreferences {
-  static const scaleOptions = [75, 90, 100, 110, 125, 150];
+  static const scaleOptions = [50, 75, 90, 100, 110, 125, 150];
   static int _readScale(Object? value) =>
       value is int && scaleOptions.contains(value) ? value : 100;
   const ShellPreferences({
     this.reduceMotion = false,
     this.uiScale = 100,
     this.logoScale = 100,
+    this.logoSpacing = HomeLogoSpacing.standard,
     this.showArtwork = true,
     this.pageSize = 24,
     this.maxDownloads = 3,
@@ -76,6 +89,9 @@ class ShellPreferences {
     return ShellPreferences(
       uiScale: _readScale(j['uiScale']),
       logoScale: _readScale(j['logoScale']),
+      logoSpacing:
+          HomeLogoSpacing.values.asNameMap()[j['logoSpacing']] ??
+          HomeLogoSpacing.standard,
       reduceMotion: j['reduceMotion'] as bool? ?? false,
       showArtwork: j['showArtwork'] as bool? ?? true,
       pageSize: size,
@@ -87,11 +103,13 @@ class ShellPreferences {
   }
   final bool reduceMotion, showArtwork, verifyDownloads, linuxUseKeyring;
   final int pageSize, maxDownloads, uiScale, logoScale;
+  final HomeLogoSpacing logoSpacing;
   final String updateChannel;
   ShellPreferences copy({
     bool? reduceMotion,
     int? uiScale,
     int? logoScale,
+    HomeLogoSpacing? logoSpacing,
     bool? showArtwork,
     int? pageSize,
     int? maxDownloads,
@@ -102,6 +120,7 @@ class ShellPreferences {
     reduceMotion: reduceMotion ?? this.reduceMotion,
     uiScale: uiScale ?? this.uiScale,
     logoScale: logoScale ?? this.logoScale,
+    logoSpacing: logoSpacing ?? this.logoSpacing,
     showArtwork: showArtwork ?? this.showArtwork,
     pageSize: pageSize ?? this.pageSize,
     maxDownloads: maxDownloads ?? this.maxDownloads,
@@ -113,6 +132,7 @@ class ShellPreferences {
     'reduceMotion': reduceMotion,
     'uiScale': uiScale,
     'logoScale': logoScale,
+    'logoSpacing': logoSpacing.name,
     'showArtwork': showArtwork,
     'pageSize': pageSize,
     'maxDownloads': maxDownloads,

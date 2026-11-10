@@ -173,6 +173,19 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
+            _choices(
+              'Logo spacing',
+              'logo-spacing',
+              model.preferences.logoSpacing,
+              {
+                for (final spacing in HomeLogoSpacing.values)
+                  spacing: spacing.label,
+              },
+              (value) => model.savePreferences(
+                model.preferences.copy(logoSpacing: value),
+              ),
+            ),
+            const SizedBox(height: 18),
             _toggle(
               context,
               'Reduce motion',
@@ -395,6 +408,16 @@ class SettingsScreen extends StatelessWidget {
     String keyPrefix,
     int selected,
     Future<void> Function(int) save,
+  ) => _choices(title, keyPrefix, selected, {
+    for (final scale in ShellPreferences.scaleOptions) scale: '$scale%',
+  }, save);
+
+  Widget _choices<T>(
+    String title,
+    String keyPrefix,
+    T selected,
+    Map<T, String> choices,
+    Future<void> Function(T) save,
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -404,19 +427,21 @@ class SettingsScreen extends StatelessWidget {
         spacing: 12,
         runSpacing: 12,
         children: [
-          for (final scale in ShellPreferences.scaleOptions)
+          for (final MapEntry(key: value, value: label) in choices.entries)
             Semantics(
-              selected: scale == selected,
+              selected: value == selected,
               child: ConsoleButton(
-                key: ValueKey('$keyPrefix-$scale'),
-                label: '$title $scale%',
-                fill: scale == selected ? const Color(0xff355650) : surface,
-                onPressed: model.busy ? null : () => save(scale),
+                key: ValueKey(
+                  '$keyPrefix-${value is Enum ? value.name : value}',
+                ),
+                label: '$title $label',
+                fill: value == selected ? const Color(0xff355650) : surface,
+                onPressed: model.busy ? null : () => save(value),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 12,
                 ),
-                child: Text('$scale%'),
+                child: Text(label),
               ),
             ),
         ],

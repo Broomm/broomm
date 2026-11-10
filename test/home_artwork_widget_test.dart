@@ -541,8 +541,8 @@ void main() {
       }
 
       expectDetailsAligned();
-      t.view.physicalSize = const Size(1900, 900);
-      await t.binding.setSurfaceSize(const Size(1900, 900));
+      t.view.physicalSize = const Size(1900, 1100);
+      await t.binding.setSurfaceSize(const Size(1900, 1100));
       await t.pumpAndSettle();
       // Finish each hero cache-width decode before changing the viewport or
       // hiding the image, so Windows can release the encoded file mapping.
@@ -617,6 +617,138 @@ void main() {
       await finish(t);
     },
   );
+  testWidgets(
+    'Home measures the logo, then keeps the same focused Play button beside it in a short window',
+    (t) async {
+      final path = File('${root.path}/logo.png');
+      await t.runAsync(() => path.writeAsBytes(artworkPng(640, 200)));
+      model.installed = [
+        InstalledGame(
+          const RommGame(
+            id: 1,
+            name: 'Artwork Adventure',
+            platformId: 4,
+            platform: 'Nintendo GameCube',
+          ),
+          root,
+          7,
+          artwork: HomeArtwork(logo: path.path),
+        ),
+      ];
+      model.homeSelection(1);
+      await open(t, size: const Size(1000, 900));
+      await decodeArtworkImages(t);
+      final home = find.byType(HomeScreen);
+      final logo = find.byKey(const ValueKey('home-game-logo'));
+      final tile = find.byKey(const ValueKey(1));
+      final play = find.widgetWithText(ConsoleButton, 'Play');
+      final options = find.widgetWithText(ConsoleButton, 'Options');
+      final footer = find.byKey(const ValueKey('shell-profile'));
+      for (final (index, spacing) in HomeLogoSpacing.values.indexed) {
+        await t.runAsync(
+          () => model.savePreferences(
+            model.preferences.copy(logoSpacing: spacing),
+          ),
+        );
+        await t.pumpAndSettle();
+        expect(
+          t.getRect(logo).top - t.getRect(tile).bottom,
+          closeTo(32 + 20 * index, 1),
+        );
+        expect(t.getRect(play).top, greaterThan(t.getRect(logo).bottom));
+      }
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(logoScale: 50)),
+      );
+      await t.pumpAndSettle();
+      expect(t.getRect(logo).height, closeTo(96, 1));
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(logoScale: 150)),
+      );
+      await t.pumpAndSettle();
+      t.state<HomeScreenState>(home).focusSelection();
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pumpAndSettle();
+      final playNode = t.widget<ConsoleButton>(play).focusNode!;
+      expect(playNode.hasPrimaryFocus, true);
+
+      t.view.physicalSize = const Size(900, 420);
+      await t.binding.setSurfaceSize(const Size(900, 420));
+      await t.pumpAndSettle();
+      final playBounds = t.getRect(play);
+      final logoBounds = t.getRect(logo);
+      expect(playBounds.left, greaterThan(logoBounds.right));
+      expect(logoBounds.height, greaterThan(playBounds.height));
+      expect(playBounds.bottom, closeTo(logoBounds.bottom, 1));
+      expect(t.getRect(options).bottom, closeTo(logoBounds.bottom, 1));
+      expect(t.getRect(options).right, lessThan(900));
+      expect(playBounds.bottom, lessThan(t.getRect(footer).top));
+      expect(playNode.hasPrimaryFocus, true);
+      await t.dragFrom(t.getCenter(logo), const Offset(0, -100));
+      await t.pumpAndSettle();
+      expect(t.getRect(play), playBounds);
+      final scrollers = t.widgetList<Scrollable>(
+        find.descendant(of: home, matching: find.byType(Scrollable)),
+      );
+      expect(scrollers, isNotEmpty);
+      expect(
+        scrollers.every(
+          (s) => axisDirectionToAxis(s.axisDirection) == Axis.horizontal,
+        ),
+        true,
+      );
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pumpAndSettle();
+      expect(t.widget<ConsoleButton>(options).focusNode!.hasPrimaryFocus, true);
+
+      t.view.physicalSize = const Size(420, 300);
+      await t.binding.setSurfaceSize(const Size(420, 300));
+      await t.pumpAndSettle();
+      expect(t.getRect(logo).height, lessThan(t.getRect(play).height));
+      expect(t.getRect(play).bottom, closeTo(t.getRect(logo).bottom, 1));
+      expect(t.getRect(options).bottom, closeTo(t.getRect(logo).bottom, 1));
+      expect(t.getRect(options).bottom, lessThan(t.getRect(footer).top));
+      expect(t.widget<ConsoleButton>(options).focusNode!.hasPrimaryFocus, true);
+      expect(t.takeException(), isNull);
+      await finish(t);
+    },
+  );
+
+  testWidgets(
+    'short Home keeps Play and library retry reachable with a long caption and no logo',
+    (t) async {
+      addRailGames([List.filled(12, 'A very long game title').join(' ')]);
+      model.libraryError = List.filled(
+        8,
+        'Check your RomM connection.',
+      ).join(' ');
+      model.homeSelection(1);
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 150)),
+      );
+      await open(t, size: const Size(480, 360));
+      final home = find.byType(HomeScreen);
+      final retry = find.widgetWithText(ConsoleButton, 'Retry');
+      final play = find.widgetWithText(ConsoleButton, 'Play');
+      final footer = find.byKey(const ValueKey('shell-profile'));
+      expect(t.getRect(play).height, greaterThan(40));
+      expect(t.getRect(play).bottom, lessThan(t.getRect(footer).top));
+      t.state<HomeScreenState>(home).focusSelection();
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await t.pumpAndSettle();
+      expect(t.widget<ConsoleButton>(retry).focusNode!.hasPrimaryFocus, true);
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pumpAndSettle();
+      expect(t.widget<ConsoleButton>(play).focusNode!.hasPrimaryFocus, true);
+      expect(t.takeException(), isNull);
+      await finish(t);
+    },
+  );
+
   testWidgets(
     'Play shows the platform icon for a game without a logo at compact UI scale',
     (t) async {

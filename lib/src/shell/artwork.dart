@@ -79,6 +79,11 @@ class GameArtwork extends StatelessWidget {
       const Color(0xff235351),
       const Color(0xff674a3d),
     ];
+    final placeholderIcon = Icon(
+      Icons.sports_esports_outlined,
+      size: backdrop ? 80 : 38,
+      color: Colors.white24,
+    );
     final placeholder = DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -89,31 +94,27 @@ class GameArtwork extends StatelessWidget {
       ),
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.sports_esports_outlined,
-                size: backdrop ? 80 : 38,
-                color: Colors.white24,
-              ),
-              if (!compact) ...[
-                const SizedBox(height: 12),
-                Text(
-                  game.name,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: backdrop ? 25 : 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+          padding: EdgeInsets.all(compact ? 8 : 16),
+          child: compact
+              ? FittedBox(fit: BoxFit.scaleDown, child: placeholderIcon)
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    placeholderIcon,
+                    const SizedBox(height: 12),
+                    Text(
+                      game.name,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontSize: backdrop ? 25 : 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ],
-          ),
         ),
       ),
     );

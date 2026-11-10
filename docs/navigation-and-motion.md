@@ -9,13 +9,19 @@ space at both ends of the rail so selections settle near the left edge of the
 window. Tile size and scroll offset ease over 340 ms, or settle immediately
 with reduced motion.
 Titles wrap within the space beside the selection or move below the rail.
-The artwork and Play/Options rows share the selected tile’s left edge, as do
-the Game Store title and Open button. A game logo has at least 72 logical
-pixels of separation from the tile’s bottom edge. A cached RomM platform
+Very short layouts can shorten the visual caption while preserving the
+full accessible title. Home has horizontal navigation and fits vertically
+above the footer. The artwork and stacked Play/Options rows share the
+selected tile’s left edge, as do the Game Store title and Open button.
+When there is insufficient height for the stacked layout, Play and Options
+move to the right of the logo, align to its bottom edge, and retain focus.
+Logo spacing defaults to
+72 logical pixels from the tile's bottom edge when the caption is beside
+the tile and there is room. Each preset adds or subtracts 20 logical pixels.
+A cached RomM platform
 illustration, when available, appears inside Play to the left of the label.
-Logo scale and UI scale combine to
-size the logo while preserving its aspect ratio and fitting the available
-width. See the [current Home walkthrough](../README.md#home-and-save-sync-preview).
+Logo scale and UI scale combine to size the logo while preserving its
+aspect ratio and fitting the available space. See the [current Home walkthrough](../README.md#home-and-save-sync-preview).
 Earlier observations below describe their tested builds.
 
 Updated 2026-10-18. This review covered the product, implementation, decisions, architecture, profile/authentication, download/setup and controller research Markdown documents, then every implemented Flutter screen: server/profile selection and login, Home/header, Store/search/filters/details/download feedback, preferences, emulator setup/removal, game loading/pairing/paused/playing states and the local controller lab. Save conflict and Android emulator handoff screens are still future work, not reviewed implemented features.

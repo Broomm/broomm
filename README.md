@@ -2,7 +2,7 @@
 
 ## Home and save-sync preview
 
-[Download the universal macOS preview](build/releases/Broomm-macOS-play-and-focus.zip).
+[Download the universal macOS preview](build/releases/Broomm-macOS-home-bottom-actions.zip).
 Quit Broomm and any running game normally, unzip the archive, then open
 `broomm.app`. The preview uses the existing Broomm Application Support folder
 and saved profiles. It is ad-hoc signed and uses a development update identity.
@@ -12,7 +12,10 @@ Keep the data folder when removing the preview.
    The selected tile grows gradually and settles near the left edge,
    including at either end of the rail. The platform badge and title appear
    to its right, wrapping below when needed. The game artwork sits beneath
-   the tile, aligned with Play and Options. When RomM supplies a supported
+   the tile, aligned with Play and Options. Shorten the window to see those
+   buttons move to the right of the logo and align with its bottom edge
+   while Home stays vertically fixed.
+   When RomM supplies a supported
    platform icon, it appears inside the Play button to the left of the label.
    Game Store aligns its title and Open button with the tile. A completed download or
    successful game launch moves that game to the front of the installed games.
@@ -27,10 +30,11 @@ Keep the data folder when removing the preview.
    appear first and show their names beside their icons. Down returns to
    the selected tile. The mint-to-teal focus ring follows controller and
    keyboard focus across the UI, including on the profile picker.
-3. In **Broomm settings → Appearance → UI scale**, choose 75%, 90%, 100%,
+3. In **Broomm settings → Appearance → UI scale**, choose 50%, 75%, 90%, 100%,
    110%, 125% or 150%. **Logo scale** offers the same choices for just the
    Home game logo. The 100% logo fits within 780 × 192 logical pixels.
-   Both choices survive restart. Enable Reduce motion for instant tile changes.
+   **Logo spacing** offers Very close, Close, Default, Far and Very far.
+   These preferences survive restart. Enable Reduce motion for instant tile changes.
    On Android, swipe in from a screen edge to reveal the system bars.
 4. With a remembered profile offline, select the cloud-off icon beside the
    profile to retry RomM. A successful retry removes the icon. Local games
@@ -38,7 +42,7 @@ Keep the data folder when removing the preview.
 5. Save in the game and close the emulator normally. Verify a new BROOMM
    version in RomM when the ordinary save changed. A save-state-only change
    stays on the device. See [the cloud-save walkthrough](#verify-managed-cloud-saves)
-   and [implementation and verification](IMPLEMENTATION.md#platform-icon-in-play-and-mint-focus-outline--2026-11-10).
+   and [implementation and verification](IMPLEMENTATION.md#bottom-aligned-home-actions--2026-11-10).
 
 CI's pinned Devbox bootstrap, local regression commands and disposable-runner
 effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
