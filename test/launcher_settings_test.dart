@@ -21,6 +21,14 @@ class HeldLauncher extends LinuxLauncher {
   }
 }
 
+class LinuxLauncherSettingsModel extends ShellModel {
+  LinuxLauncherSettingsModel(super.storage, LinuxLauncher launcher)
+    : super(launcherInstaller: launcher);
+
+  @override
+  bool get linuxCredentialOptions => true;
+}
+
 void main() {
   late Directory root;
   setUp(
@@ -55,7 +63,7 @@ void main() {
     'Application section exposes a keyboard/controller reachable Linux action and reports restart guidance',
     (t) async {
       final launcher = HeldLauncher(true);
-      final model = ShellModel(ShellStorage(root), launcherInstaller: launcher);
+      final model = LinuxLauncherSettingsModel(ShellStorage(root), launcher);
       await t.runAsync(() => model.start());
       await t.pumpWidget(
         AnimatedBuilder(
@@ -79,18 +87,16 @@ void main() {
         of: button,
         matching: find.byType(FocusableActionDetector),
       );
-      for (
-        var i = 0;
-        i < 6 && !t.widget<FocusableActionDetector>(focus).focusNode!.hasFocus;
-        i++
-      ) {
+      final launcherFocus = t.widget<FocusableActionDetector>(focus).focusNode!;
+      final visited = <FocusNode?>{};
+      // Stop at a stalled or repeating focus path. The number of settings
+      // above the initial focus depends on the platform and window width.
+      while (!launcherFocus.hasFocus &&
+          visited.add(FocusManager.instance.primaryFocus)) {
         await t.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await t.pumpAndSettle();
       }
-      expect(
-        t.widget<FocusableActionDetector>(focus).focusNode!.hasFocus,
-        isTrue,
-      );
+      expect(launcherFocus.hasFocus, isTrue);
       await t.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
       await t.pumpAndSettle();
       expect(launcher.calls, 1);
