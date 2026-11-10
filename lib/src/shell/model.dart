@@ -10,6 +10,7 @@ import '../romm/models.dart';
 import '../romm/credential.dart';
 import '../romm/transfer.dart';
 import 'library.dart';
+import 'platform_icon_image.dart';
 import 'storage.dart';
 import '../managed_emulators.dart';
 import '../game_launch.dart';
@@ -171,7 +172,6 @@ class ShellModel extends ChangeNotifier {
     }
   }
 
-  bool _updateCardShown = false;
   String _updatePhase = '';
   int _updateProgressBucket = -1;
   String? _updateFailure;
@@ -194,24 +194,121 @@ class ShellModel extends ChangeNotifier {
       _updatePhase = phase;
       _updateProgressBucket = bucket;
     }
-    final shown = updates.available != null;
-    if (shown != _updateCardShown) {
-      homeIndex = shown
-          ? homeIndex + 1
-          : (homeIndex - 1).clamp(0, lastHomeIndex);
-      _updateCardShown = shown;
-    }
     _emit();
   }
 
-  List<int> get homeApps => [
-    if (updates.available != null) 4,
+  List<int> get systemApps => [
     0,
-    1,
-    if (downloads.isNotEmpty) 3,
     2,
+    if (updates.available != null) 4,
+    if (downloads.isNotEmpty) 3,
   ];
-  int get downloadHomeIndex => updates.available != null ? 3 : 2;
+
+  final _platformIcons = <(String, String), Future<Uint8List?>>{};
+
+  Future<Uint8List?> platformIcon(RommGame game) {
+    final selected = server, connection = client;
+    if (selected == null || connection == null) return Future.value();
+    final slugs = (
+      game.platformSlug.trim().toLowerCase(),
+      game.platformFsSlug.trim().toLowerCase(),
+    );
+    final cached = _platformIcons.remove(slugs);
+    final result = cached ?? _loadPlatformIcon(selected, connection, slugs);
+    _platformIcons[slugs] = result;
+    if (_platformIcons.length > 64) {
+      _platformIcons.remove(_platformIcons.keys.first);
+    }
+    return result;
+  }
+
+  Future<Uint8List?> _loadPlatformIcon(
+    SavedServer selected,
+    RommClient connection,
+    (String, String) slugs,
+  ) async {
+    try {
+      final candidates = {
+        slugs.$1,
+        slugs.$2,
+      }.where(RommClient.isPlatformIconSlug);
+      for (final slug in candidates) {
+        final icon = await library.platformIconFor(
+          selected.id,
+          slug,
+          validatePng: isDecodablePlatformIcon,
+        );
+        if (icon != null) return icon;
+      }
+      if (!connection.authenticationDeferred) {
+        for (final slug in candidates) {
+          final icon = await library.platformIconFor(
+            selected.id,
+            slug,
+            validatePng: isDecodablePlatformIcon,
+            client: connection,
+          );
+          if (icon != null) return icon;
+        }
+      }
+    } on RommFailure {
+      // Artwork is optional and must not affect connection or game status.
+    } on FileSystemException {
+      // A local storage problem can leave the platform badge as text.
+    }
+    return null;
+  }
+
+  int get lastHomeIndex => installed.length;
+  InstalledGame? get selectedHomeGame =>
+      homeIndex > 0 && homeIndex <= installed.length
+      ? installed[homeIndex - 1]
+      : null;
+
+  void _replaceInstalled(List<InstalledGame> next) {
+    final selected = selectedHomeGame?.game.id;
+    installed = next;
+    final index = selected == null
+        ? -1
+        : installed.indexWhere((entry) => entry.game.id == selected);
+    homeIndex = index >= 0 ? index + 1 : 0;
+  }
+
+  Future<void> recordPlay(int id) async {
+    final selected = server, generation = _context;
+    if (selected == null) return;
+    try {
+      final time = await library.recordPlay(selected.id, id);
+      if (generation != _context || disposed) return;
+      ++_libraryRevision;
+      _replaceInstalled(
+        [
+          for (final g in installed)
+            if (g.game.id == id)
+              InstalledGame(
+                g.game,
+                g.directory,
+                g.userId,
+                problem: g.problem,
+                artwork: g.artwork,
+                removing: g.removing,
+                interactedAt: time,
+              )
+            else
+              g,
+        ]..sort(InstalledGame.recentFirst),
+      );
+      _emit();
+    } catch (e) {
+      if (generation != _context || disposed) return;
+      log?.write(
+        'Could not record play activity for ROM $id. ${e.runtimeType}',
+        level: 'warning',
+      );
+      showNotice('Could not update the game’s recent activity.', problem: true);
+    }
+  }
+
   final SteamGridClient Function(String) gridFactory;
   late final steamGridCredentials = SteamGridCredentials(credentials);
   final artworkRequests = Queue<RommGame>();
@@ -273,6 +370,7 @@ class ShellModel extends ChangeNotifier {
               g.userId,
               problem: g.problem,
               artwork: art,
+              interactedAt: g.interactedAt,
             )
           else
             g,
@@ -332,9 +430,8 @@ class ShellModel extends ChangeNotifier {
     try {
       await work;
       if (generation != _context || disposed) return false;
-      installed = installed.where((g) => g.game.id != id).toList();
+      _replaceInstalled(installed.where((g) => g.game.id != id).toList());
       artworkRequests.removeWhere((g) => g.id == id);
-      homeIndex = homeIndex.clamp(0, homeAppCount - 1 + installed.length);
       downloadMessage =
           'Game deleted from this device. Saves and save states were kept.';
       log?.write(
@@ -774,7 +871,8 @@ class ShellModel extends ChangeNotifier {
 
   String search = '';
   int? platformId;
-  int homeIndex = 1;
+  int homeIndex = 0;
+  int? homeReturnShortcut;
   bool controllerSearchPending = false;
   List<RommPlatform> platforms = [];
   List<RommGame> recent = [];
@@ -1092,6 +1190,7 @@ class ShellModel extends ChangeNotifier {
       if (generation != _context || disposed || !identical(client, connection))
         throw const RommFailure('The profile selection changed.');
       connection.restoreAuthentication = null;
+      _platformIcons.clear();
       if (remembered) _rememberConnection(connection, selectedServer, saved);
       await loadLibrary();
       if (generation != _context || disposed) return;
@@ -1105,7 +1204,7 @@ class ShellModel extends ChangeNotifier {
           rejected: true,
         );
         if (generation == _context && !disposed) {
-          installed = [];
+          _replaceInstalled([]);
           libraryError = 'This account needs a valid sign-in before playing. Switch profile and sign in again.';
           _emit();
         }
@@ -1246,8 +1345,10 @@ class ShellModel extends ChangeNotifier {
     }
   }
 
-  void navigate(ShellScreen target) {
+  void navigate(ShellScreen target, {int? homeShortcut}) {
     if (busy || applicationUpdating || gameActive || !authenticated) return;
+    if (screen == ShellScreen.home && target != ShellScreen.home)
+      homeReturnShortcut = homeShortcut;
     error = null;
     screen = target;
     _emit();
@@ -1294,7 +1395,8 @@ class ShellModel extends ChangeNotifier {
     installed = [];
     libraryError = downloadError = downloadMessage = null;
     download = null;
-    homeIndex = 1;
+    homeIndex = 0;
+    homeReturnShortcut = null;
     screen = ShellScreen.profiles;
     error = null;
     _emit();
@@ -1359,6 +1461,7 @@ class ShellModel extends ChangeNotifier {
     storeBusy = false;
     moreBusy = false;
     _artwork.clear();
+    _platformIcons.clear();
     _artSizes.clear();
     _artBytes = 0;
   }
@@ -1667,7 +1770,7 @@ class ShellModel extends ChangeNotifier {
     try {
       final access = await storage.profileAccess(selected, active);
       if (access.rejected) {
-        installed = [];
+        _replaceInstalled([]);
         libraryError = 'This account needs a valid sign-in before playing. Switch profile and sign in again.';
         _emit();
         return;
@@ -1720,7 +1823,7 @@ class ShellModel extends ChangeNotifier {
         );
       if (generation != _context || disposed || revision != _libraryRevision)
         return;
-      installed = rejected ? [] : allowed;
+      _replaceInstalled(rejected ? [] : allowed);
       libraryError = problem;
       await refreshCloudStatus();
       unawaited(retryCloud());
@@ -1975,20 +2078,20 @@ class ShellModel extends ChangeNotifier {
         );
       }
       ++_libraryRevision;
-      installed =
-          [
-            ...installed,
-            InstalledGame(
-              result.game,
-              result.directory,
-              result.userId,
-              artwork: art,
-            ),
-          ]..sort(
-            (a, b) =>
-                a.game.name.toLowerCase().compareTo(b.game.name.toLowerCase()),
-          );
+      _replaceInstalled(
+        [
+          ...installed,
+          InstalledGame(
+            result.game,
+            result.directory,
+            result.userId,
+            artwork: art,
+            interactedAt: result.interactedAt,
+          ),
+        ]..sort(InstalledGame.recentFirst),
+      );
       log?.write('ROM ${game.id}: verified download published.');
+      unawaited(platformIcon(game));
       _emit();
       if (supportsAddons(game)) {
         try {

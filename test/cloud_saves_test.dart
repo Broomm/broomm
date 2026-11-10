@@ -19,8 +19,9 @@ class SaveServer extends RommClient {
   final stateRecords = <int, RommSave>{};
   final contents = <int, List<int>>{};
   final readIds = <int>[], updatedIds = <int>[];
-  int serial = 0, user = 3;
-  bool offline = false, loseUploadReply = false, loseStateReply = false;
+  int serial = 0, user = 3, stateCalls = 0;
+  bool offline = false, loseUploadReply = false;
+  int? loseSaveReadback;
   Future<void> check() async {
     if (offline) throw const RommFailure('Offline test server');
   }
@@ -68,12 +69,14 @@ class SaveServer extends RommClient {
   @override
   Future<List<RommSave>> states(int id) async {
     await check();
+    stateCalls++;
     return stateRecords.values.toList();
   }
 
   @override
   Future<RommSave> state(int id) async {
     await check();
+    stateCalls++;
     return stateRecords[id]!;
   }
 
@@ -87,6 +90,7 @@ class SaveServer extends RommClient {
   }) async {
     await check();
     cancellation.check();
+    stateCalls++;
     final id = ++serial, bytes = await file.readAsBytes();
     if (stateRecords.values.any((s) => s.name == name))
       throw const RommFailure('State already exists');
@@ -102,10 +106,6 @@ class SaveServer extends RommClient {
     );
     stateRecords[id] = result;
     contents[id] = bytes;
-    if (loseStateReply) {
-      loseStateReply = false;
-      throw const RommFailure('State reply lost');
-    }
     return result;
   }
 
@@ -115,12 +115,15 @@ class SaveServer extends RommClient {
     File destination, {
     required DownloadCancellation cancellation,
     void Function(int)? onProgress,
-  }) => downloadSave(
-    state,
-    destination,
-    cancellation: cancellation,
-    onProgress: onProgress,
-  );
+  }) {
+    stateCalls++;
+    return downloadSave(
+      state,
+      destination,
+      cancellation: cancellation,
+      onProgress: onProgress,
+    );
+  }
 
   @override
   Future<void> downloadSave(
@@ -132,6 +135,10 @@ class SaveServer extends RommClient {
     await check();
     cancellation.check();
     readIds.add(save.id);
+    if (save.id == loseSaveReadback) {
+      loseSaveReadback = null;
+      throw const RommFailure('Save readback interrupted');
+    }
     await destination.create(exclusive: true);
     await destination.writeAsBytes(contents[save.id]!, flush: true);
   }
@@ -525,59 +532,7 @@ void main() {
     expect(api.contents[record.id], competingBytes);
   });
 
-  for (final hostSuffix in ['linux-x64', 'android']) {
-    test(
-      'incompatible $hostSuffix states stay retained without being applied to another host',
-      () async {
-        CloudGame host(Device d, String stateId, String path) => CloudGame(
-          server: serverId,
-          profile: profileId,
-          user: 3,
-          rom: 42,
-          client: api,
-          layout: ProgressLayout(
-            d.native.path,
-            'azahar-data-v1',
-            '00040000000edf00',
-            [
-              const ProgressArea('save', 'private/game/data'),
-              ProgressArea(stateId, path),
-            ],
-          ),
-        );
-        final ga = host(a, 'states-1111111111111111-macos-arm64', 'stateA');
-        final gb = host(b, 'states-2222222222222222-$hostSuffix', 'stateB');
-        await a.write('first');
-        await a.cloud.idle(() => a.cloud.beforePlay(ga));
-        final stateA = File('${a.native.path}/stateA/game.cst');
-        await stateA.parent.create();
-        await stateA.writeAsString('mac state');
-        await a.cloud.idle(() => a.cloud.afterPlay(ga, 0));
-        await b.cloud.idle(() => b.cloud.beforePlay(gb));
-        expect(await File('${b.native.path}/stateA/game.cst').exists(), false);
-        expect(await b.save.readAsString(), 'first');
-        final stateB = File('${b.native.path}/stateB/game.cst');
-        await stateB.parent.create(recursive: true);
-        await stateB.writeAsString('linux state');
-        await b.write('second');
-        await b.cloud.idle(() => b.cloud.afterPlay(gb, 0));
-        await a.cloud.idle(() => a.cloud.sync(ga));
-        expect(await a.save.readAsString(), 'second');
-        expect(await stateA.readAsString(), 'mac state');
-        expect(await File('${a.native.path}/stateB/game.cst').exists(), false);
-        final state = await a.cloud.store(ga).state();
-        final snapshot = await a.cloud
-            .store(ga)
-            .load(state['snapshot'] as String);
-        expect(
-          snapshot.entries.keys.where((k) => k.startsWith('states-')),
-          hasLength(2),
-        );
-      },
-    );
-  }
-
-  test('Android raw SRAM and states retry without native files and stay incompatible with another build', () async {
+  test('Android raw SRAM retries without native files; same-build states stay local', () async {
     CloudGame android(Device d, String group) => CloudGame(
       server: serverId,
       profile: profileId,
@@ -610,7 +565,7 @@ void main() {
       ),
     );
     expect(await a.native.exists(), false);
-    expect(api.stateRecords, hasLength(1));
+    expect(api.stateCalls, 0);
     final same = android(b, group);
     await b.cloud.idle(() => b.cloud.beforePlay(same));
     expect(await (await same.layout.target('save/game.srm')).readAsBytes(), [
@@ -618,21 +573,9 @@ void main() {
       2,
     ]);
     expect(
-      await (await same.layout.target('$group/game.state2')).readAsBytes(),
-      [3, 4, 5],
-    );
-    await b.cloud.idle(() => b.cloud.afterPlay(same, 0));
-    const replacement = 'states-2222222222222222-android';
-    final next = android(b, replacement);
-    await b.cloud.idle(() => b.cloud.beforePlay(next));
-    expect(
-      await (await next.layout.target('$replacement/game.state2')).exists(),
+      await (await same.layout.target('$group/game.state2')).exists(),
       false,
     );
-    final st = b.cloud.store(next),
-        checkpoint = await b.cloud.store(next).state();
-    final kept = await st.load(checkpoint['snapshot'] as String);
-    expect(kept.entries, contains('$group/game.state2'));
   });
 
   test('other slots, names and emulator folders remain untouched when BROOMM history is created', () async {
@@ -676,105 +619,159 @@ void main() {
     expect(await a.save.readAsString(), 'local progress');
   });
 
-  test('legacy states are not assigned a current build; only session-written states acquire provenance and core changes cannot relabel them', () async {
-    CloudGame build(String id) => CloudGame(
-      server: serverId,
-      profile: profileId,
-      user: 3,
-      rom: 42,
-      client: api,
-      layout: ProgressLayout(
-        a.native.path,
-        'azahar-data-v1',
-        '00040000000edf00',
-        [
-          const ProgressArea('save', 'private/game/data'),
-          ProgressArea('states-$id-macos-arm64', 'states'),
-        ],
-      ),
-    );
-    final first = build('1111111111111111'), second = build('2222222222222222');
-    await a.write('progress');
-    final file = File('${a.native.path}/states/game.cst');
-    await file.parent.create();
-    await file.writeAsString('legacy unknown state');
-    await a.cloud.idle(() => a.cloud.beforePlay(first));
-    await a.cloud.idle(() => a.cloud.afterPlay(first, 0));
-    var st = a.cloud.store(first), state = await a.cloud.store(first).state();
-    var snap = await st.load(state['snapshot'] as String);
-    expect(snap.entries.keys.any((k) => k.startsWith('states-')), false);
-    expect(await file.readAsString(), 'legacy unknown state');
-    await a.cloud.idle(() => a.cloud.beforePlay(first));
-    await file.writeAsString('written by first build');
-    await a.cloud.idle(() => a.cloud.afterPlay(first, 0));
-    await a.cloud.idle(() => a.cloud.beforePlay(second));
-    await a.cloud.idle(() => a.cloud.afterPlay(second, 0));
-    st = a.cloud.store(second);
-    state = await st.state();
-    snap = await st.load(state['snapshot'] as String);
-    expect(
-      snap.entries.keys.where((k) => k.startsWith('states-1111')),
-      hasLength(1),
-    );
-    expect(snap.entries.keys.any((k) => k.startsWith('states-2222')), false);
-    expect(await file.readAsString(), 'written by first build');
-  });
+  const group = 'states-1111111111111111-macos-arm64';
+  CloudGame withStates(Device d) => CloudGame(
+    server: serverId,
+    profile: profileId,
+    user: 3,
+    rom: 42,
+    client: d.api,
+    layout: ProgressLayout(
+      d.native.path,
+      'azahar-data-v1',
+      '00040000000edf00',
+      [
+        const ProgressArea('save', 'private/game/data'),
+        const ProgressArea(group, 'states'),
+      ],
+    ),
+  );
 
-  test('automatic pull preserves an unverified local state without deleting the compatible cloud state', () async {
-    CloudGame host(Device d) => CloudGame(
-      server: serverId,
-      profile: profileId,
-      user: 3,
-      rom: 42,
-      client: api,
-      layout: ProgressLayout(
-        d.native.path,
-        'azahar-data-v1',
-        '00040000000edf00',
-        [
-          const ProgressArea('save', 'private/game/data'),
-          const ProgressArea('states-1111111111111111-macos-arm64', 'states'),
-        ],
-      ),
+  test('old mixed saves import ordinary bytes without pulling state assets or touching local states', () async {
+    final ga = withStates(a), gb = withStates(b);
+    await a.write('old ordinary save');
+    await (await ga.layout.target('$group/game.cst'))
+        .writeAsString('old cloud state');
+    final old = await a.cloud.store(ga).capture();
+    final mixed = api.add(
+      await old.bundle.readAsBytes(),
+      name: 'Broomm [2026-10-22_00-00-00].zip',
+      slot: 'BROOMM',
     );
-    final ga = host(a), gb = host(b);
-    await a.write('ordinary save');
-    await a.cloud.idle(() => a.cloud.beforePlay(ga));
-    final fa = File('${a.native.path}/states/game.cst');
-    await fa.parent.create();
-    await fa.writeAsString('compatible cloud state');
-    await a.cloud.idle(() => a.cloud.afterPlay(ga, 0));
-    final cloudBytes = {
-      for (final e in api.contents.entries) e.key: List<int>.from(e.value),
-    };
-    final fb = File('${b.native.path}/states/game.cst');
-    await fb.parent.create(recursive: true);
-    await fb.writeAsString('unverified local state');
+    final companion = RommSave(
+      id: 100,
+      romId: 42,
+      userId: 3,
+      name: mixed.name,
+      bytes: 10,
+      emulator: 'Broomm',
+      stateAsset: true,
+    );
+    api.stateRecords[companion.id] = companion;
+    final local = await gb.layout.target('$group/game.cst');
+    await local.writeAsString('keep local state');
     await b.cloud.idle(() => b.cloud.beforePlay(gb));
-    expect(await b.save.readAsString(), 'ordinary save');
-    expect(await fb.readAsString(), 'unverified local state');
-    await b.cloud.idle(() => b.cloud.afterPlay(gb, 0));
-    expect(api.contents, cloudBytes);
-    expect(await fb.readAsString(), 'unverified local state');
+    expect(await b.save.readAsString(), 'old ordinary save');
+    expect(await local.readAsString(), 'keep local state');
+    final st = b.cloud.store(gb);
+    final restored = await st.load((await st.state())['snapshot'] as String);
+    expect(restored.hasStates, false);
+    await b.cloud.idle(() => b.cloud.backup(gb, 'My save'));
+    final backup = api.records.values.singleWhere(
+      (s) => s.name == 'My save.zip',
+    );
+    final backupZip = await File('${tmp.path}/backup.zip')
+        .writeAsBytes(api.contents[backup.id]!);
+    expect((await st.importNative(backupZip)).hasStates, false);
+    await expectLater(
+      b.cloud.idle(() => b.cloud.useExisting(gb, companion)),
+      throwsA(isA<RommFailure>()),
+    );
+    expect(api.stateCalls, 0);
+    expect(api.stateRecords[companion.id], companion);
+    expect(await local.readAsString(), 'keep local state');
   });
 
-  test('keeping device progress acknowledges both conflict parents so an unchanged other device pulls without another choice', () async {
-    await a.write('common');
-    await a.sync();
-    await b.sync();
-    await a.write('chosen A');
-    await b.write('B version');
-    await b.sync();
-    await a.sync(resolve: (_) async => ProgressChoice.device);
-    var prompted = false;
-    await b.sync(
-      resolve: (_) async {
-        prompted = true;
-        return ProgressChoice.cancel;
-      },
+  test('legacy mixed common baseline compares ordinary saves when retrying an older queued snapshot', () async {
+    final game = withStates(a), st = a.cloud.store(game);
+    final localState = await game.layout.target('$group/game.cst');
+    await a.write('common save');
+    await localState.writeAsString('first state');
+    final common = await st.capture();
+    final remote = api.add(
+      await common.bundle.readAsBytes(),
+      name: 'Broomm [2026-10-22_00-00-00].zip',
+      slot: 'BROOMM',
     );
-    expect(prompted, false);
-    expect(await b.save.readAsString(), 'chosen A');
-    expect(api.records.values.where((s) => s.versioned), hasLength(3));
+    await a.write('queued save');
+    await localState.writeAsString('second state');
+    final pending = await st.capture();
+    await st.save({
+      'baseline': common.digest,
+      'commit': common.id,
+      'snapshot': st.storageId(common),
+      'local': st.storageId(pending),
+      'remote': remote.id,
+      'pending': true,
+    });
+    await a.cloud.idle(
+      () => a.cloud.retryPending(
+        server: serverId,
+        profile: profileId,
+        user: 3,
+        rom: 42,
+        client: api,
+      ),
+    );
+    expect(api.records, hasLength(2));
+    final newest = await st.load((await st.state())['snapshot'] as String);
+    expect(newest.ordinaryDigest, pending.ordinaryDigest);
+    expect(newest.hasStates, false);
+    expect(await localState.readAsString(), 'second state');
+    expect(api.stateCalls, 0);
   });
+
+  test(
+    'missing working save keeps a first offline snapshot queued for recovery',
+    () async {
+      final game = withStates(a), st = a.cloud.store(game);
+      await a.write('unsynced save');
+      api.offline = true;
+      await a.cloud.idle(() => a.cloud.afterPlay(game, 0));
+      final pending = await st.state();
+      await a.save.delete();
+      await File('${a.save.parent.parent.path}/00000001.metadata').delete();
+      await (await game.layout.target('$group/game.cst'))
+          .writeAsString('local state');
+      api.offline = false;
+      await expectLater(
+        a.cloud.idle(() => a.cloud.sync(game)),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await st.state())['local'], pending['local']);
+      expect((await st.load(pending['local'] as String)).ordinaryEmpty, false);
+      expect(api.records, isEmpty);
+    },
+  );
+
+  test(
+    'state-only sessions and legacy versions produce no new remote saves',
+    () async {
+      final ga = withStates(a), gb = withStates(b);
+      final state = await ga.layout.target('$group/game.cst');
+      await state.writeAsString('legacy state');
+      final old = await a.cloud.store(ga).capture();
+      final record = api.add(
+        await old.bundle.readAsBytes(),
+        name: 'Broomm [2026-10-22_00-00-00].zip',
+        slot: 'BROOMM',
+      );
+      await a.cloud.idle(() => a.cloud.beforePlay(ga));
+      await state.writeAsString('updated state');
+      await a.cloud.idle(() => a.cloud.afterPlay(ga, 0));
+      expect(await state.readAsString(), 'updated state');
+      expect(api.records.keys, [record.id]);
+      await expectLater(
+        a.cloud.idle(() => a.cloud.backup(ga, 'No ordinary save')),
+        throwsA(isA<RommFailure>()),
+      );
+      await b.cloud.idle(() => b.cloud.sync(gb));
+      expect(await (await gb.layout.target('$group/game.cst')).exists(), false);
+      await b.write('new ordinary save');
+      await b.cloud.idle(() => b.cloud.sync(gb));
+      expect(api.records, hasLength(2));
+      expect(api.contents[record.id], await old.bundle.readAsBytes());
+      expect(api.stateCalls, 0);
+    },
+  );
 }

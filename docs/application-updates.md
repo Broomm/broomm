@@ -114,9 +114,9 @@ not used. Ignored local logs are under
    follows the installed release: stable builds get stable releases; candidate
    builds also get newer candidates. Stable and Release candidates can be chosen
    explicitly. Settings retains the selection across profiles and restarts.
-3. When a newer complete release exists, **Update Broomm** appears first on Home.
-   The selected app/game retains its identity when that tile or Downloads appears.
-   Navigate to the tile and press A/Enter or click it. Download starts immediately;
+3. When a newer complete release exists, **Update Broomm** appears in the top
+   Home shortcuts. The selected game stays selected when either Update Broomm or
+   Downloads appears. Navigate to the shortcut and press A/Enter or click it. Download starts immediately;
    the update screen shows phases and percentage. B/Escape or **Cancel update**
    cancels preparation. The existing app stays usable after cancellation/failure.
 4. Before installation Broomm finishes save work, stops emulator setup, checkpoints

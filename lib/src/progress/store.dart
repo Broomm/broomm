@@ -25,7 +25,9 @@ class ProgressSnapshot {
   List<String> get parents => (manifest['parents'] as List).cast<String>();
   File get bundle => File('${directory.path}/broomm');
   bool get empty => entries.isEmpty;
+  bool get ordinaryEmpty => entries.keys.every((k) => k.startsWith('states-'));
   bool get hasStates => entries.keys.any((k) => k.startsWith('states-'));
+  bool get legacyStatesOmitted => manifest['legacyStatesOmitted'] == true;
   bool get nativeRemote => manifest['nativeRemote'] == true;
   String get ordinaryDigest => progressEntriesDigest({
     for (final e in entries.entries)
@@ -53,8 +55,10 @@ class ProgressStore {
     this.romId,
     this.userId, {
     this.ownerRoot,
+    this.ordinaryOnly = false,
   });
   final Directory? ownerRoot;
+  final bool ordinaryOnly;
   final Directory directory;
   final ProgressLayout layout;
   final int romId, userId;
@@ -114,7 +118,10 @@ class ProgressStore {
       if (manifest['version'] != 1 ||
           manifest['rom'] != romId ||
           manifest['user'] != userId ||
-          manifest['identity'] != layout.identity)
+          manifest['identity'] != layout.identity ||
+          ordinaryOnly &&
+              manifest['localStates'] != true &&
+              ProgressSnapshot(entry, manifest).hasStates)
         continue;
       snapshots.add(((await record.stat()).modified, id, entry));
     }
@@ -157,74 +164,41 @@ class ProgressStore {
     }
   }
 
-  Future<ProgressSnapshot> capture({
-    List<String> parents = const [],
-    ProgressSnapshot? retained,
-    Map<String, String>? knownStates,
-  }) => Isolate.run(
-    () => _stage((dir) async {
-      final files = <String, dynamic>{};
-      final native = await layout.files();
-      for (final e in native.entries) {
-        final out = await progressFile(
-          Directory('${dir.path}/files'),
-          e.key,
-          createParents: true,
-        );
-        final before = await progressFileHash(e.value);
-        if (e.key.startsWith('states-') &&
-            knownStates != null &&
-            knownStates[e.key] != before) {
-          // Keep a remote compatible state when a legacy local file occupies
-          // its path. Unknown native bytes must not be attributed to this build.
-          if (retained?.entries.containsKey(e.key) == true) {
-            await _copy(
-              await progressFile(
-                Directory('${retained!.directory.path}/files'),
-                e.key,
-              ),
-              out,
-            );
-            files[e.key] = retained.entries[e.key];
-          }
-          continue;
-        }
-        await _copy(e.value, out);
-        final hash = await progressFileHash(out);
-        if (hash != before || await progressFileHash(e.value) != before)
-          throw const FileSystemException(
-            'Game progress changed during its recovery snapshot. Nothing was uploaded.',
-          );
-        files[e.key] = {'sha256': hash, 'bytes': await out.length()};
-      }
-      // Preserve states belonging to other hosts/builds in the same managed file.
-      if (retained != null) {
-        for (final e in retained.entries.entries) {
-          if (layout.areas.any((a) => e.key.startsWith('${a.id}/'))) continue;
-          if (!e.key.startsWith('states-'))
-            throw const FormatException('Unsupported progress area');
-          await _copy(
-            await progressFile(
-              Directory('${retained.directory.path}/files'),
-              e.key,
-            ),
-            await progressFile(
+  Future<ProgressSnapshot> capture({List<String> parents = const []}) =>
+      Isolate.run(
+        () => _stage((dir) async {
+          final files = <String, dynamic>{};
+          final native = await layout.files(includeStates: !ordinaryOnly);
+          for (final e in native.entries) {
+            final out = await progressFile(
               Directory('${dir.path}/files'),
               e.key,
               createParents: true,
-            ),
+            );
+            final before = await progressFileHash(e.value);
+            await _copy(e.value, out);
+            final hash = await progressFileHash(out);
+            if (hash != before || await progressFileHash(e.value) != before)
+              throw const FileSystemException(
+                'Game progress changed during its recovery snapshot. Nothing was uploaded.',
+              );
+            files[e.key] = {'sha256': hash, 'bytes': await out.length()};
+          }
+          return _seal(
+            dir,
+            files,
+            parents,
+            localStates:
+                !ordinaryOnly && files.keys.any((k) => k.startsWith('states-')),
           );
-          files[e.key] = e.value;
-        }
-      }
-      return _seal(dir, files, parents);
-    }),
-  );
+        }),
+      );
   Future<ProgressSnapshot> _seal(
     Directory dir,
     Map<String, dynamic> entries,
     List<String> parents, {
     String? remoteCommit,
+    bool localStates = false,
   }) async {
     if (entries.length >= progressMaxFiles)
       throw const FormatException(
@@ -242,6 +216,7 @@ class ProgressStore {
     );
     final m = <String, dynamic>{
       'version': 1,
+      if (localStates) 'localStates': true,
       'rom': romId,
       'user': userId,
       'identity': layout.identity,
@@ -264,7 +239,7 @@ class ProgressStore {
   }
 
   Future<ProgressSnapshot> load(String id) => Isolate.run(() => _load(id));
-  Future<ProgressSnapshot> _load(String id) async {
+  Future<ProgressSnapshot> _load(String id, {bool? verifyStates}) async {
     await _check();
     if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(id))
       throw const FormatException('Invalid save recovery identity');
@@ -272,11 +247,15 @@ class ProgressStore {
     final m = await progressJson(
       await progressFile(directory, 'snapshots/$id/manifest.json'),
     );
-    await _verify(dir, m);
+    await _verify(dir, m, verifyStates: verifyStates ?? !ordinaryOnly);
     return ProgressSnapshot(dir, m);
   }
 
-  Future<void> _verify(Directory dir, Map<String, dynamic> m) async {
+  Future<void> _verify(
+    Directory dir,
+    Map<String, dynamic> m, {
+    bool verifyStates = true,
+  }) async {
     if (m['version'] != 1 ||
         m['rom'] != romId ||
         m['user'] != userId ||
@@ -324,12 +303,15 @@ class ProgressStore {
         if (!area.accepts(native))
           throw const FormatException('Save belongs to another game');
       }
-      final file = await progressFile(Directory('${dir.path}/files'), key);
-      if (await file.length() != v['bytes'] ||
-          await progressFileHash(file) != v['sha256'])
-        throw const FormatException('Save data failed its integrity check');
-      if (area?.gciId != null && !await progressGciMatches(file, area!.gciId!))
-        throw const FormatException('GameCube save belongs to another game');
+      if (verifyStates || !progressStateArea(group)) {
+        final file = await progressFile(Directory('${dir.path}/files'), key);
+        if (await file.length() != v['bytes'] ||
+            await progressFileHash(file) != v['sha256'])
+          throw const FormatException('Save data failed its integrity check');
+        if (area?.gciId != null &&
+            !await progressGciMatches(file, area!.gciId!))
+          throw const FormatException('GameCube save belongs to another game');
+      }
       total += v['bytes'] as int;
       if (total > progressMaxBytes)
         throw const FormatException('Save bundle is too large');
@@ -372,8 +354,30 @@ class ProgressStore {
               extracted.keys.any((k) => !expected.contains(k)))
             throw const FormatException('The save has unrecognized files');
           await _verify(dir, m);
-          // Give the local immutable copy its own storage ID; preserve remote commit in manifest.
-          await _copy(bundle, File('${dir.path}/broomm'));
+          final files = (m['files'] as Map).cast<String, dynamic>();
+          final states = files.keys
+              .where((k) => k.startsWith('states-'))
+              .toList();
+          if (ordinaryOnly && states.isNotEmpty) {
+            // Old saves can have states inside the saves endpoint ZIP. Verify
+            // the original, then retain only the in-game save and its lineage.
+            final data = Directory('${dir.path}/files');
+            for (final key in states) {
+              await (await progressFile(data, key)).delete();
+              files.remove(key);
+            }
+            m
+              ..remove('localStates')
+              ..['legacyStatesOmitted'] = true
+              ..['digest'] = progressEntriesDigest(files);
+            await progressWrite(manifest, m);
+            await ProgressZip.write(File('${dir.path}/broomm'), data, [
+              'broomm.json',
+              ...files.keys,
+            ]);
+          } else {
+            await _copy(bundle, File('${dir.path}/broomm'));
+          }
           await progressWrite(File('${dir.path}/manifest.json'), m);
           return ProgressSnapshot(dir, m);
         });
@@ -452,6 +456,8 @@ class ProgressStore {
           else if (rel.startsWith('SAVEDATA/'))
             rel = rel.substring(9);
         }
+        if (ordinaryOnly && progressStateArea(rel.split('/').first))
+          throw const FormatException('Select an in-game save archive.');
         var group = layout.format == 'dolphin-gci-v1' ? 'cardA' : 'save';
         final slash = rel.indexOf('/');
         if (slash > 0 &&
@@ -572,34 +578,26 @@ class ProgressStore {
     }
     return result;
   });
-  Future<int> restore(
+  Future<void> restore(
     ProgressSnapshot next,
-    Map<String, dynamic> nextState, {
-    Map<String, String>? knownStates,
-  }) async {
+    Map<String, dynamic> nextState,
+  ) async {
     final before = await capture();
-    final protected = [
-      if (knownStates != null)
-        for (final e in before.entries.entries)
-          if (e.key.startsWith('states-') &&
-              knownStates[e.key] != e.value['sha256'])
-            e.key,
-    ];
     await progressWrite(journal, {
+      'ordinaryOnly': ordinaryOnly,
       'before': storageId(before),
       'after': storageId(next),
       'state': nextState,
-      'protected': protected,
     });
     await recover();
-    return protected.length;
   }
 
   Future<void> recover() => Isolate.run(() async {
     if (!await progressExists(journal.path)) return;
     final j = await progressJson(journal);
-    final before = await load(j['before'] as String),
-        after = await load(j['after'] as String);
+    final saveOnly = j['ordinaryOnly'] as bool? ?? ordinaryOnly;
+    final before = await _load(j['before'] as String, verifyStates: !saveOnly),
+        after = await _load(j['after'] as String, verifyStates: !saveOnly);
     final keys = {...before.entries.keys, ...after.entries.keys};
     final protected = (j['protected'] as List? ?? []).cast<String>().toSet();
     if (protected.any(
@@ -607,7 +605,8 @@ class ProgressStore {
     ))
       throw const FormatException('Invalid protected state recovery inventory');
     for (final key in keys) {
-      if (protected.contains(key)) continue;
+      if (protected.contains(key) || saveOnly && key.startsWith('states-'))
+        continue;
       if (!layout.areas.any((a) => key.startsWith('${a.id}/'))) continue;
       final target = await layout.target(key);
       final current = await target.exists()

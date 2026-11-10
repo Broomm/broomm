@@ -333,11 +333,10 @@ void main() {
       'Home action returns to its selected tile, rail edges stop, and Back restores selection',
       (t) async {
         await open(t, size: const Size(390, 844));
-        await native(t, 'right');
-        expect(model.homeIndex, 2);
-        final tile = labelled('Emulator Settings');
-        await native(t, 'up');
+        final tile = labelled('Game Store');
         expect(buttonNode(t, tile).hasFocus, true);
+        await native(t, 'right');
+        expect(model.homeIndex, 0);
         await native(t, 'down');
         await native(t, 'down');
         expect(
@@ -359,17 +358,25 @@ void main() {
         );
         await arrow(t, LogicalKeyboardKey.arrowUp);
         expect(buttonNode(t, tile).hasFocus, true);
+        await native(t, 'up');
+        await native(t, 'left');
+        final settings = labelled('Broomm settings');
+        expect(buttonNode(t, settings).hasFocus, true);
         await native(t, 'right');
+        expect(buttonNode(t, labelled('Emulator Settings')).hasFocus, true);
+        expect(
+          t.getRect(labelled('Emulator Settings')).right,
+          lessThanOrEqualTo(390),
+        );
+        await native(t, 'down');
         expect(buttonNode(t, tile).hasFocus, true);
         expect(t.getRect(tile).right, lessThanOrEqualTo(390));
-        await arrow(t, LogicalKeyboardKey.arrowLeft);
-        await arrow(t, LogicalKeyboardKey.arrowLeft);
-        await arrow(t, LogicalKeyboardKey.arrowLeft);
-        expect(buttonNode(t, labelled('Broomm settings')).hasFocus, true);
+        await native(t, 'up');
+        await native(t, 'left');
         await native(t, 'accept');
         expect(model.screen, ShellScreen.settings);
         await native(t, 'back');
-        expect(buttonNode(t, labelled('Broomm settings')).hasFocus, true);
+        expect(buttonNode(t, settings).hasFocus, true);
         expect(t.takeException(), isNull);
         await t.pumpWidget(const SizedBox());
       },
@@ -522,7 +529,7 @@ void main() {
     );
 
     testWidgets(
-      'native controller activation operates standard password visibility controls and restores form focus',
+      'native controller activation operates password visibility controls and restores form focus',
       (t) async {
         model.switchAccount();
         await open(t);
@@ -533,9 +540,9 @@ void main() {
         final text = find.byKey(const ValueKey('field-Password'));
         expect(t.widget<TextField>(text).obscureText, true);
         final visibility = find.byWidgetPredicate(
-          (w) => w is IconButton && w.tooltip == 'Show password',
+          (w) => w is ConsoleButton && w.label == 'Show password',
         );
-        t.widget<IconButton>(visibility).focusNode!.requestFocus();
+        requestConsoleFocus(buttonNode(t, visibility));
         await t.pumpAndSettle();
         await native(t, 'accept');
         expect(t.widget<TextField>(text).obscureText, false);
@@ -570,6 +577,7 @@ void main() {
         expect(t.getRect(labelled('Game 12, GameCube')).bottom, lessThan(590));
         model.navigate(ShellScreen.home);
         await t.pumpAndSettle();
+        await arrow(t, LogicalKeyboardKey.arrowUp);
         await arrow(t, LogicalKeyboardKey.arrowLeft);
         await t.sendKeyDownEvent(LogicalKeyboardKey.enter);
         await t.pumpAndSettle();

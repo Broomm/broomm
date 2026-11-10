@@ -289,6 +289,7 @@ class AndroidGameSession extends ChangeNotifier {
     bool rooted = false,
     String? rootPlatform,
     bool emulatorClosed = true,
+    Future<void> Function()? onStarted,
   }) async {
     if (![
           server,
@@ -577,6 +578,7 @@ class AndroidGameSession extends ChangeNotifier {
           );
         }
       }
+      await onStarted?.call();
     } catch (e) {
       error = '$e';
       if (e is DownloadWriterUncertain) _lease?.retainForUncertainWriter();

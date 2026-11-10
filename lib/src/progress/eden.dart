@@ -127,9 +127,9 @@ class _EdenLayout extends ProgressLayout {
   }
 
   @override
-  Future<Map<String, File>> files() async {
+  Future<Map<String, File>> files({bool includeStates = true}) async {
     await _check();
-    return super.files();
+    return super.files(includeStates: includeStates);
   }
 
   @override

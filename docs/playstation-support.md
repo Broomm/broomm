@@ -1,5 +1,9 @@
 # PlayStation and PlayStation 2 integration
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 The managed macOS Apple Silicon pack adds **DuckStation** for PS1 and **ARMSX2** plus **PCSX2 through an already installed Rosetta** for PS2. Each uses the emulator's existing SDL3 runtime and native pause methods. This adds no Dart dependency, helper service or emulator source patch. Linux, Windows and Android packages/native acceptance remain outstanding; Android retains the simpler external-app scope.
 
 ## Use and storage

@@ -1,6 +1,17 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+Uint8List artworkIco(Uint8List png) {
+  final header = ByteData(22)
+    ..setUint16(2, 1, Endian.little)
+    ..setUint16(4, 1, Endian.little)
+    ..setUint16(10, 1, Endian.little)
+    ..setUint16(12, 32, Endian.little)
+    ..setUint32(14, png.length, Endian.little)
+    ..setUint32(18, 22, Endian.little);
+  return Uint8List.fromList([...header.buffer.asUint8List(), ...png]);
+}
+
 Uint8List artworkPng(int width, int height) {
   final out = BytesBuilder();
   out.add([137, 80, 78, 71, 13, 10, 26, 10]);

@@ -142,6 +142,20 @@ void main() {
     );
   });
 
+  test('download and play order is shared per server and survives reload without changing installation identity', () async {
+    final first = await install(fixture(id: 1));
+    await install(fixture(id: 2));
+    final rom = await library.contentFiles(first).then((files) => files.single);
+    final identity = await library.installationIdentity(first, rom);
+    expect((await library.load(serverId)).games.map((g) => g.game.id), [2, 1]);
+    final played = await library.recordPlay(serverId, 1);
+    final restarted = await GameLibrary(root).load(serverId);
+    expect(restarted.games.map((g) => g.game.id), [1, 2]);
+    expect(restarted.games.first.interactedAt, played);
+    expect(await library.installationIdentity(first, rom), identity);
+    expect((await library.load(otherServerId)).games, isEmpty);
+  });
+
   test('cancellation and a concurrent installer cannot expose a partial Home entry; retry starts cleanly', () async {
     final cancel = DownloadCancellation(),
         started = Completer<void>(),

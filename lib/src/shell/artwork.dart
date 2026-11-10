@@ -14,13 +14,9 @@ class HomeBackground extends StatelessWidget {
   final ShellModel model;
   @override
   Widget build(BuildContext context) {
-    final index = model.homeIndex - model.homeAppCount;
     final path =
-        model.screen == ShellScreen.home &&
-            model.preferences.showArtwork &&
-            index >= 0 &&
-            index < model.installed.length
-        ? model.installed[index].artwork?.hero
+        model.screen == ShellScreen.home && model.preferences.showArtwork
+        ? model.selectedHomeGame?.artwork?.hero
         : null;
     return IgnorePointer(
       child: SizedBox(

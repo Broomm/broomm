@@ -1,5 +1,9 @@
 # Android standalone root access
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 2026-11-08. RetroArch's eighteen platform routes/fifteen cores completed the
 Thor acceptance recorded in [the core evidence](android-retroarch-cores.md).
 PR #4 merged as `eb6fc60`. The owner authorized starting the standalone apps

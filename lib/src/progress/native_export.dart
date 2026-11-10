@@ -1,16 +1,10 @@
 part of 'store.dart';
 
 class NativeProgressExport {
-  const NativeProgressExport(
-    this.file,
-    this.extension, {
-    this.stage,
-    this.includesStates = false,
-  });
+  const NativeProgressExport(this.file, this.extension, {this.stage});
   final File file;
   final String extension;
   final Directory? stage;
-  final bool includesStates;
   Future<void> close() async {
     if (stage != null && await stage!.exists())
       await stage!.delete(recursive: true);
@@ -23,7 +17,7 @@ extension NativeProgressExportStore on ProgressStore {
   Future<NativeProgressExport> exportNative(
     ProgressSnapshot snapshot,
   ) => Isolate.run(() async {
-    await _verify(snapshot.directory, snapshot.manifest);
+    await _verify(snapshot.directory, snapshot.manifest, verifyStates: false);
     final ordinary =
         snapshot.entries.keys.where((k) => !k.startsWith('states-')).toList()
           ..sort();
@@ -36,9 +30,8 @@ extension NativeProgressExportStore on ProgressStore {
         ),
         raw.split('.').last,
       );
-    // A session can have states before its first ordinary in-game save.
     if (ordinary.isEmpty)
-      return NativeProgressExport(snapshot.bundle, 'zip', includesStates: true);
+      throw const FormatException('There is no in-game save to export.');
     final stage = await directory.createTemp('.native-export-');
     try {
       final root = Directory('${stage.path}/data');

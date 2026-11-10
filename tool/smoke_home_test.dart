@@ -89,7 +89,7 @@ void main() {
           await shell.downloadGame(await shell.client!.game(9001));
         }
         expect(shell.installation(9001), isNotNull);
-        shell.homeSelection(3);
+        shell.homeSelection(1);
       });
       await t.pumpWidget(
         BroommApp(

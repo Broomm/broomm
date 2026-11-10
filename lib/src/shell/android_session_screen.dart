@@ -312,7 +312,7 @@ class _AndroidSessionScreenState extends State<AndroidSessionScreen>
                       if (!widget.cloudReady && !widget.recovering) ...[
                         const SizedBox(height: 14),
                         const Text(
-                          'Cloud save access is not configured for this Android emulator/profile. Progress stays in the emulator; cloud saves and states will not be synchronized.',
+                          'Connect this emulator’s save folder to sync in-game saves with RomM. Progress stays in the emulator until a save folder is connected.',
                           style: TextStyle(color: muted, height: 1.6),
                         ),
                       ],

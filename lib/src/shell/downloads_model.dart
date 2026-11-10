@@ -1,8 +1,6 @@
 part of 'model.dart';
 
 extension DownloadsModel on ShellModel {
-  int get homeAppCount => homeApps.length;
-  int get lastHomeIndex => homeAppCount - 1 + installed.length;
   DownloadJob? queuedGame(int id) =>
       downloads.where((j) => j.game.id == id).firstOrNull;
 
@@ -35,26 +33,16 @@ extension DownloadsModel on ShellModel {
       downloadsReadOnly = false;
       downloadQueueNotice = null;
       downloadError = null;
-      final wasEmpty = downloads.isEmpty;
       downloads.clear();
       downloads.addAll(loaded);
-      if (wasEmpty && downloads.isNotEmpty && homeIndex >= downloadHomeIndex)
-        ++homeIndex;
-      if (!wasEmpty && downloads.isEmpty && homeIndex >= downloadHomeIndex)
-        --homeIndex;
       _emit();
     } on DownloadQueueInUse catch (e) {
       try {
         final snapshot = await store.readSnapshot();
         if (revision != _context || disposed) return;
-        final wasEmpty = downloads.isEmpty;
         downloads
           ..clear()
           ..addAll(snapshot);
-        if (wasEmpty && downloads.isNotEmpty && homeIndex >= downloadHomeIndex)
-          ++homeIndex;
-        if (!wasEmpty && downloads.isEmpty && homeIndex >= downloadHomeIndex)
-          --homeIndex;
         downloadsReadOnly = true;
         downloadQueueNotice = e.toString();
         downloadError = null;
@@ -116,11 +104,9 @@ extension DownloadsModel on ShellModel {
     final registered = queuedGame(game.id);
     if (registered != null && registered.state != DownloadState.failed)
       return registered.done.future;
-    final wasEmpty = downloads.isEmpty;
     if (registered != null) downloads.remove(registered);
     final job = DownloadJob(game, addons: addons);
     downloads.add(job);
-    if (wasEmpty && homeIndex >= downloadHomeIndex) ++homeIndex;
     try {
       await _saveDownloads();
     } catch (e) {
@@ -173,8 +159,6 @@ extension DownloadsModel on ShellModel {
             if (generation != _context || disposed) return;
             if (job.problem == null && !cancellation.cancelled) {
               downloads.remove(job);
-              if (downloads.isEmpty && homeIndex >= downloadHomeIndex)
-                --homeIndex;
             } else {
               job.state = DownloadState.failed;
               job.problem ??=
@@ -270,13 +254,13 @@ extension DownloadsModel on ShellModel {
               g.userId,
               problem: g.problem,
               removing: g.removing,
+              interactedAt: g.interactedAt,
             )
           else
             g,
       ];
     artworkRequests.removeWhere((g) => g.id == job.game.id);
     downloads.remove(job);
-    if (downloads.isEmpty && homeIndex >= downloadHomeIndex) --homeIndex;
     await _saveDownloads();
     if (!job.done.isCompleted) job.done.complete();
     _emit();

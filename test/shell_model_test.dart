@@ -61,6 +61,8 @@ class FixtureRomm extends RommClient {
   @override
   Future<Uint8List?> artwork(String path) async => null;
   @override
+  Future<Uint8List?> platformIcon(String slug) async => null;
+  @override
   void close() {
     isClosed = true;
     super.close();

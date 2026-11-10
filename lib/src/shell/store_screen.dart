@@ -880,28 +880,30 @@ class _GameSummaryState extends State<_GameSummary> {
       child: Semantics(
         label: 'Game description',
         focused: focused,
-        child: AnimatedContainer(
-          duration: motionDuration(context),
-          curve: consoleCurve,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            border: Border.all(color: focused ? ink : Colors.white10, width: 2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 190),
-            child: Scrollbar(
-              controller: scroll,
-              child: ConsoleScrollView(
-                key: const ValueKey('game-description-scroll'),
+        child: ConsoleFocusOutline(
+          focused: focused,
+          radius: 10,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white10, width: 2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 190),
+              child: Scrollbar(
                 controller: scroll,
-                padding: const EdgeInsets.only(right: 12),
-                child: Text(
-                  widget.text,
-                  style: const TextStyle(
-                    color: muted,
-                    fontSize: 14,
-                    height: 1.8,
+                child: ConsoleScrollView(
+                  key: const ValueKey('game-description-scroll'),
+                  controller: scroll,
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(
+                    widget.text,
+                    style: const TextStyle(
+                      color: muted,
+                      fontSize: 14,
+                      height: 1.8,
+                    ),
                   ),
                 ),
               ),

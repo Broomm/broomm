@@ -409,6 +409,25 @@ class RommClient with RommSaves {
     }
   }
 
+  static const platformIconByteLimit = 512 * 1024;
+  static bool isPlatformIconSlug(String slug) =>
+      RegExp(r'^[a-z0-9][a-z0-9_-]{0,95}$').hasMatch(slug);
+
+  Future<Uint8List?> platformIcon(String slug) async {
+    if (!isPlatformIconSlug(slug)) return null;
+    try {
+      return await _bytes(
+        'GET',
+        endpoint('assets/platforms/$slug.ico'),
+        auth: false,
+        limit: platformIconByteLimit,
+      );
+    } on RommFailure catch (error) {
+      if (error.status == 404) return null;
+      rethrow;
+    }
+  }
+
   Future<dynamic> _json(
     String method,
     String path, {

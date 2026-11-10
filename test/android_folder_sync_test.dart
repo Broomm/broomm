@@ -538,7 +538,7 @@ void main() {
     fixture.melonRunning = false;
     await session.finish(emulatorClosed: true, recovery: a);
     expect(first.contents[first.records.keys.single], List.filled(512, 1));
-    expect(first.stateRecords, isNotEmpty);
+    expect(first.stateRecords, isEmpty);
     expect(await standalone.readAsBytes(), [7, 7]);
     expect(await standaloneSlot.readAsBytes(), [8]);
     final b = await game('2' * 32, second, rom), other = await start(b, rom);
@@ -855,7 +855,7 @@ void main() {
     expect(androidIni(cfg)['savefile_directory'], '/owned/saves');
     expect(androidIni(cfg)['input_joypad_driver'], 'android');
   });
-  test('one folder serves two profiles; DS native .sav and Android states upload and standalone data is restored', () async {
+  test('one folder serves two profiles; DS native .sav uploads and states stay local and standalone data is restored', () async {
     final external = await connect('melonds'),
         rom = await ds(),
         first = api(),
@@ -870,7 +870,7 @@ void main() {
     expect(first.records.values.single.slot, 'BROOMM');
     expect(first.records.values.single.name, endsWith('.sav'));
     expect(first.contents[first.records.keys.single], List.filled(512, 1));
-    expect(first.stateRecords, isNotEmpty);
+    expect(first.stateRecords, isEmpty);
     expect(await File('${external.path}/Ranger.sav').readAsBytes(), [7, 7]);
     expect(await File('${external.path}/Another.sav').readAsBytes(), [99]);
     final b = await game('c123456789abcdef0123456789abcdef', second, rom),

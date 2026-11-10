@@ -6,6 +6,11 @@ Implementation follow-up, 2026-10-22; verification completed October 23 UTC. Win
 
 Downloads have a saved limit of 1–6 active game jobs, default 3, with independent progress, cancellation and failures. Per-game OS locks and private stages allow transfers to overlap; shared receipt publication and account queue checkpoints stay serialized. Recovery removes only abandoned stages for the game whose lock is held. Lowering the limit lets current transfers finish. Emulator add-on work remains serialized under its writer lease. Canceling an admitted operation waits for rollback; canceling a waiter cannot admit a later writer ahead of live work. Completed reservations are released.
 
+The Downloads shortcut appears in Home's top row while active, queued or failed
+jobs exist. Completed installations join the game rail in interaction order.
+Cloud-status badges report ordinary save sync. See the [current Home and
+save-sync walkthrough](../README.md#home-and-save-sync-preview).
+
 Normal game downloads no longer reread payloads for CRC32. **Verify game checksums** requests that optional scan. Complete HTTP/manifest sizes, file lengths, staged publication and receipt readback still apply; receipts distinguish `transfer-size` and `crc32`. Independent save, firmware, package and executable checks are unchanged. A warm 64 MiB local production-path fixture measured CRC phases of **226,896 µs** and **211,259 µs**, versus **128 µs** for size-only validation. Total copy/install times were 419/334 ms versus 141 ms. These are phase timings, not internet throughput or cold-disk benchmarks.
 
 Home tiles display active-profile cloud status without preparing emulators or reading native save payloads. Green cloud/check means a confirmed sync; amber cloud/sync means pending, active or awaiting first verification; red cloud/off means conflict, damaged/interrupted recovery or unsupported progress. Confirmed empty progress has an acknowledgment distinct from unknown first state. Tooltips explain each state. Refreshes follow library load, cloud actions, retries and session completion, with context/revision guards. A badge reflects the last known result rather than continuous remote freshness; its optional read cannot delay repeat launch.

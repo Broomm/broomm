@@ -1,5 +1,9 @@
 # RomM platform and emulator support matrix
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 **Checkpoint — 2026-11-05:** further Linux ARM64 work is deferred. The package,
 confinement and native-fixture results below remain scoped evidence. Thor
 gameplay still has unresolved Eden/Smash startup and paused-close failures,

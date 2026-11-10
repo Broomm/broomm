@@ -139,7 +139,7 @@ void main() {
     expect(api.readIds, isNot(contains(other.id)));
     expect(api.updatedIds, isEmpty);
   });
-  test('a lost state-upload reply resumes the same public native version without duplicating either asset or overwriting progress', () async {
+  test('a lost save readback resumes the same public native version without duplicate upload', () async {
     final raw = await layout.target('save/game.sav');
     await raw.writeAsBytes(Uint8List(8192));
     await cloud.idle(() => cloud.beforePlay(game));
@@ -148,7 +148,8 @@ void main() {
     );
     final state = await layout.target('${stateArea.id}/game1');
     await state.writeAsString('verified state');
-    api.loseStateReply = true;
+    await raw.writeAsBytes(Uint8List(8192)..[10] = 44);
+    api.loseSaveReadback = api.serial + 1;
     await cloud.idle(() => cloud.afterPlay(game, 0));
     expect(problemNotices.last, true);
     expect((await cloud.store(game).state())['pending'], true);
@@ -156,7 +157,7 @@ void main() {
     final uploaded = api.records.values.last;
     expect(uploaded.name, endsWith('.sav'));
     expect(api.contents[uploaded.id]!.length, 8192);
-    expect(api.stateRecords, hasLength(1));
+    expect(api.stateCalls, 0);
     await cloud.idle(
       () => cloud.retryPending(
         server: serverId,
@@ -167,7 +168,7 @@ void main() {
       ),
     );
     expect(api.records.values.where((s) => s.versioned), hasLength(2));
-    expect(api.stateRecords, hasLength(1));
+    expect(api.stateCalls, 0);
     expect((await cloud.store(game).state())['pending'], false);
     expect(await state.readAsString(), 'verified state');
   });
@@ -185,7 +186,7 @@ void main() {
     await expectLater(store.importNative(dsv), throwsA(isA<FormatException>()));
     expect(await nativeSave.readAsString(), 'keep');
   });
-  test('finishing an older pending state upload preserves newer crashed progress and still requires review', () async {
+  test('finishing an older pending save upload preserves newer crashed progress and still requires review', () async {
     final raw = await layout.target('save/game.sav');
     await raw.writeAsBytes(Uint8List(8192));
     await cloud.idle(() => cloud.beforePlay(game));
@@ -194,7 +195,8 @@ void main() {
     );
     await (await layout.target('${stateArea.id}/game1'))
         .writeAsString('state from normal session');
-    api.loseStateReply = true;
+    await raw.writeAsBytes(Uint8List(8192)..[10] = 44);
+    api.loseSaveReadback = api.serial + 1;
     await cloud.idle(() => cloud.afterPlay(game, 0));
     final st = cloud.store(game);
     final changed = Uint8List(8192)..[10] = 77;

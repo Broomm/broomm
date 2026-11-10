@@ -13,6 +13,93 @@ const ink = Color(0xffedf4fa),
     accent = Color(0xffbef1e0),
     surface = Color(0xff141e2b);
 
+double consoleSideInset(double width) => width > 350 ? 24 : 10;
+
+class ConsoleIconButton extends StatelessWidget {
+  const ConsoleIconButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.focusNode,
+    required this.onPressed,
+    this.autofocus = false,
+    this.fill = surface,
+    this.showLabel = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final FocusNode focusNode;
+  final VoidCallback onPressed;
+  final bool autofocus, showLabel;
+  final Color fill;
+
+  @override
+  Widget build(BuildContext context) => ConsoleButton(
+    focusNode: focusNode,
+    autofocus: autofocus,
+    label: label,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    fill: fill,
+    onPressed: onPressed,
+    child: showLabel
+        ? ExcludeSemantics(child: ActionLabel(label, icon: icon))
+        : Icon(icon, size: 20),
+  );
+}
+
+class ConsoleFocusOutline extends StatelessWidget {
+  const ConsoleFocusOutline({
+    super.key,
+    required this.focused,
+    required this.radius,
+    required this.child,
+  });
+  final bool focused;
+  final double radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    foregroundPainter: focused ? _FocusRingPainter(radius) : null,
+    child: child,
+  );
+}
+
+class _FocusRingPainter extends CustomPainter {
+  const _FocusRingPainter(this.radius);
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 3.5, gap = 3.0;
+    final bounds = (Offset.zero & size).inflate(gap + stroke / 2);
+    final shader = const SweepGradient(
+      colors: [
+        Color(0xffdef9ef),
+        Color(0xffa7e5d2),
+        Color(0xff75c8be),
+        Color(0xffa5ded8),
+        Color(0xffdef9ef),
+      ],
+    ).createShader(bounds);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        bounds,
+        Radius.circular(radius + gap + stroke / 2),
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..shader = shader,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_FocusRingPainter oldDelegate) =>
+      radius != oldDelegate.radius;
+}
+
 class ConsoleButton extends StatefulWidget {
   const ConsoleButton({
     super.key,
@@ -134,39 +221,35 @@ class _ConsoleButtonState extends State<ConsoleButton> {
       child: GestureDetector(
         onTap: widget.onPressed == null ? null : _press,
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: motionDuration(context, const Duration(milliseconds: 140)),
-          curve: consoleCurve,
-          padding: widget.padding,
-          decoration: BoxDecoration(
-            color: focused
-                ? Color.alphaBlend(
-                    Colors.white.withValues(alpha: .07),
-                    widget.fill,
-                  )
-                : widget.fill,
-            borderRadius: BorderRadius.circular(widget.radius),
-            border: Border.all(
-              color: focused
-                  ? ink
-                  : hovered
-                  ? Colors.white38
-                  : Colors.white.withValues(alpha: .09),
-              width: 2,
+        child: ConsoleFocusOutline(
+          focused: focused,
+          radius: widget.radius,
+          child: AnimatedContainer(
+            duration: motionDuration(
+              context,
+              const Duration(milliseconds: 140),
             ),
-            boxShadow: focused
-                ? [
-                    BoxShadow(
-                      color: accent.withValues(alpha: .12),
-                      blurRadius: 25,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Opacity(
-            opacity: widget.onPressed == null ? .45 : 1,
-            child: widget.child,
+            curve: consoleCurve,
+            padding: widget.padding,
+            decoration: BoxDecoration(
+              color: focused
+                  ? Color.alphaBlend(
+                      Colors.white.withValues(alpha: .07),
+                      widget.fill,
+                    )
+                  : widget.fill,
+              borderRadius: BorderRadius.circular(widget.radius),
+              border: Border.all(
+                color: hovered
+                    ? Colors.white38
+                    : Colors.white.withValues(alpha: .09),
+                width: 2,
+              ),
+            ),
+            child: Opacity(
+              opacity: widget.onPressed == null ? .45 : 1,
+              child: widget.child,
+            ),
           ),
         ),
       ),
@@ -270,7 +353,7 @@ class _ConsoleFieldState extends State<ConsoleField> {
   late final text = TextEditingController(text: widget.value);
   final navigation = FocusNode();
   final editor = FocusNode(skipTraversal: true);
-  bool opening = false, editing = false, focused = false;
+  bool opening = false, editing = false;
   bool revealed = false;
   final visibility = FocusNode(debugLabel: 'Password visibility');
   int _keyboardSerial = 0;
@@ -401,7 +484,6 @@ class _ConsoleFieldState extends State<ConsoleField> {
             autofocus: widget.autofocus,
             skipTraversal: editing,
             onFocusChange: (value) {
-              setState(() => focused = value);
               if (value) revealConsoleFocus(navigation);
             },
             child: DefaultTextEditingShortcuts(
@@ -414,62 +496,69 @@ class _ConsoleFieldState extends State<ConsoleField> {
                             const _FinishEditingIntent(),
                       }
                     : const {},
-                child: TextField(
-                  key: ValueKey('field-${widget.label}'),
-                  controller: text,
-                  focusNode: editor,
-                  canRequestFocus: editing || opening,
-                  readOnly: !editing,
-                  showCursor: editing || opening,
-                  enableInteractiveSelection: editing,
-                  obscureText: widget.secret && !revealed,
-                  autocorrect: false,
-                  enableSuggestions: !widget.secret,
-                  maxLength: widget.maxLength,
-                  onTap: beginEditing,
-                  onChanged: widget.onChanged,
-                  onSubmitted: (value) {
-                    widget.onSubmitted?.call(value);
-                    finishEditing();
-                  },
-                  decoration: InputDecoration(
-                    suffixIcon: widget.secret
-                        ? Actions(
-                            actions: {
-                              ControllerActivateIntent:
-                                  CallbackAction<ControllerActivateIntent>(
-                                    onInvoke: (_) {
-                                      setState(() => revealed = !revealed);
-                                      return null;
-                                    },
+                child: ListenableBuilder(
+                  listenable: Listenable.merge([
+                    navigation,
+                    editor,
+                    visibility,
+                  ]),
+                  builder: (context, child) => ConsoleFocusOutline(
+                    focused: navigation.hasPrimaryFocus || editor.hasFocus,
+                    radius: 4,
+                    child: child!,
+                  ),
+                  child: TextField(
+                    key: ValueKey('field-${widget.label}'),
+                    controller: text,
+                    focusNode: editor,
+                    canRequestFocus: editing || opening,
+                    readOnly: !editing,
+                    showCursor: editing || opening,
+                    enableInteractiveSelection: editing,
+                    obscureText: widget.secret && !revealed,
+                    autocorrect: false,
+                    enableSuggestions: !widget.secret,
+                    maxLength: widget.maxLength,
+                    onTap: beginEditing,
+                    onChanged: widget.onChanged,
+                    onSubmitted: (value) {
+                      widget.onSubmitted?.call(value);
+                      finishEditing();
+                    },
+                    decoration: InputDecoration(
+                      suffixIcon: widget.secret
+                          ? Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Tooltip(
+                                message: revealed
+                                    ? 'Hide password'
+                                    : 'Show password',
+                                excludeFromSemantics: true,
+                                child: ConsoleButton(
+                                  focusNode: visibility,
+                                  label: revealed
+                                      ? 'Hide password'
+                                      : 'Show password',
+                                  onPressed: () =>
+                                      setState(() => revealed = !revealed),
+                                  padding: const EdgeInsets.all(8),
+                                  radius: 8,
+                                  child: Icon(
+                                    revealed
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    size: 20,
                                   ),
-                            },
-                            child: IconButton(
-                              focusNode: visibility,
-                              tooltip: revealed
-                                  ? 'Hide password'
-                                  : 'Show password',
-                              onPressed: () =>
-                                  setState(() => revealed = !revealed),
-                              icon: Icon(
-                                revealed
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
+                                ),
                               ),
-                            ),
-                          )
-                        : null,
-                    hintText: widget.hint,
-                    counterText: '',
-                    enabledBorder: focused
-                        ? OutlineInputBorder(
-                            borderSide: const BorderSide(color: ink, width: 2),
-                            borderRadius: BorderRadius.circular(4),
-                          )
-                        : null,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 18,
+                            )
+                          : null,
+                      hintText: widget.hint,
+                      counterText: '',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 18,
+                      ),
                     ),
                   ),
                 ),

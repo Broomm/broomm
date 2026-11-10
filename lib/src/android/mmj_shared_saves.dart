@@ -40,7 +40,7 @@ class MmjSharedSaves {
     if (!layout.areas.any((a) => a.id == 'save'))
       throw const FormatException('Missing MMJ title save directory');
     // Hide standalone states while a profile is active. New MMJ states remain
-    // in its retained capture, but are not claimed as compatible cloud states.
+    // in its retained local capture.
     result.add({
       'path': 'states',
       'prefix': '${layout.game.toUpperCase()}.',
@@ -314,8 +314,8 @@ class MmjSharedSaves {
     final inventory = await _list(record['tree'] as String, game.layout);
     final capture = 'captures/${progressNonce()}';
     await _read(record, game.layout, inventory, '$capture/user');
-    // Reuse the ordinary cloud store's interruption-safe private restore. Native
-    // states stay in the retained capture and never enter the cloud manifest.
+    // Restore the private working snapshot, including local emulator states.
+    // The later cloud pass captures only in-game saves.
     final store = cloud.store(game);
     await store.recover();
     final snapshot = await ProgressStore(

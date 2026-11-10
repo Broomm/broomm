@@ -1,15 +1,24 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:broomm/src/romm/client.dart';
 import 'package:broomm/src/romm/transfer.dart';
+import 'package:broomm/src/shell/app.dart';
+import 'package:broomm/src/shell/controls.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'home_artwork_library_test.dart' show ArtworkFiles;
 import 'library_download_test.dart' show fixture;
 import 'remembered_signin_test.dart' show MemoryCredentials;
+
+// Use the real loopback transport even when the widget binding installs its
+// all-requests-return-400 override.
+class _FixtureHttp extends HttpOverrides {}
 
 void main() {
   late Directory data;
@@ -25,8 +34,11 @@ void main() {
   ShellModel create() => ShellModel(
     ShellStorage(data),
     credentials: credentials,
-    clientFactory: (uri) =>
-        RommClient(uri, deadline: const Duration(milliseconds: 500)),
+    clientFactory: (uri) => RommClient(
+      uri,
+      http: _FixtureHttp().createHttpClient(null),
+      deadline: const Duration(milliseconds: 500),
+    ),
   );
   Future<void> drop(HttpRequest request) async =>
       (await request.response.detachSocket(writeHeaders: false)).destroy();
@@ -167,6 +179,60 @@ void main() {
     expect(model.profile!.id, profile.id);
     expect(jsonDecode(credentials.values[profile.id]!)['secret'], refresh);
   });
+
+  testWidgets(
+    'the footer offline button retries the same profile from controller focus',
+    (t) async {
+      final profile = model.profile!;
+      unavailable = true;
+      await t.runAsync(() async {
+        await restart();
+        expect(await model.activateProfile(profile), true);
+      });
+      await t.pumpWidget(BroommApp(model: model));
+      await t.pumpAndSettle();
+      final button = find.byKey(const ValueKey('shell-reconnect'));
+      final profileButton = find.byKey(const ValueKey('shell-profile'));
+      expect(t.getRect(button).right, lessThan(t.getRect(profileButton).left));
+      expect(
+        find.textContaining('Your local games and progress are available'),
+        findsNothing,
+      );
+      t.widget<ConsoleButton>(profileButton).focusNode!.requestFocus();
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await t.pumpAndSettle();
+      expect(t.widget<ConsoleButton>(button).focusNode!.hasPrimaryFocus, true);
+      unavailable = false;
+      await t.runAsync(() async {
+        final reconnected = Completer<void>();
+        void listener() {
+          if (!model.offline &&
+              !model.storeBusy &&
+              model.page != null &&
+              !reconnected.isCompleted)
+            reconnected.complete();
+        }
+
+        model.addListener(listener);
+        try {
+          await t.sendKeyEvent(LogicalKeyboardKey.gameButtonA);
+          await reconnected.future.timeout(const Duration(seconds: 3));
+          await model.finishCloud();
+        } finally {
+          model.removeListener(listener);
+        }
+      });
+      await t.pumpAndSettle();
+      expect(button, findsNothing);
+      expect(model.profile!.id, profile.id);
+      expect(
+        t.widget<ConsoleButton>(profileButton).focusNode!.hasPrimaryFocus,
+        true,
+      );
+      await t.pumpWidget(const SizedBox());
+    },
+  );
 
   test('online denials remain denied offline and explicit sign-out removes deferred credentials', () async {
     final profile = model.profile!;

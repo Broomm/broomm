@@ -352,26 +352,19 @@ class _PairingScreenState extends State<PairingScreen> {
                   children: [
                     for (final mode in WiiMode.values)
                       Expanded(
-                        child: Semantics(
-                          selected: p.wiiMode == mode,
-                          child: InkWell(
-                            onTap: m.busy
-                                ? null
-                                : () => m.wiiMode(p.deviceId, mode),
-                            borderRadius: BorderRadius.circular(10),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              decoration: BoxDecoration(
-                                color: p.wiiMode == mode
-                                    ? const Color(0xff33534f)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: p.wiiMode == mode
-                                      ? const Color(0xff9bdfc0)
-                                      : Colors.white12,
-                                ),
-                              ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Semantics(
+                            selected: p.wiiMode == mode,
+                            child: ConsoleButton(
+                              onPressed: m.busy
+                                  ? null
+                                  : () => m.wiiMode(p.deviceId, mode),
+                              radius: 10,
+                              fill: p.wiiMode == mode
+                                  ? const Color(0xff33534f)
+                                  : Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 5),
                               child: Column(
                                 children: [
                                   SizedBox(
@@ -403,16 +396,21 @@ class _PairingScreenState extends State<PairingScreen> {
     );
   }
 
-  Widget _action(String label, IconData icon, VoidCallback action) =>
-      IconButton(
-        tooltip: label,
-        visualDensity: VisualDensity.compact,
-        constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+  Widget _action(String label, IconData icon, VoidCallback action) => Tooltip(
+    message: label,
+    excludeFromSemantics: true,
+    child: SizedBox.square(
+      dimension: 32,
+      child: ConsoleButton(
+        label: label,
+        radius: 8,
         padding: EdgeInsets.zero,
-        iconSize: 18,
+        fill: Colors.transparent,
         onPressed: model.busy ? null : action,
-        icon: Icon(icon),
-      );
+        child: Icon(icon, size: 18),
+      ),
+    ),
+  );
 
   Widget _hold(String label, double progress) => SizedBox(
     height: 20,

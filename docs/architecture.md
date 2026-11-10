@@ -130,7 +130,7 @@ Hashes rather than device clocks determine equality. Timestamps are presentation
 
 This implements the owner's offline policy: after offline play, **R = B** permits automatic replacement by **L**; divergent **L** and **R** with **R ≠ B** requires notification and a keep-local/keep-RomM decision. Fetch and validate the remote hash under the original server/account before making that decision. Do not advance B on a timeout or retry before the remote outcome is reconciled. A race after the comparison must preserve the competing remote revision rather than blindly overwrite it.
 
-Directory saves need an adapter-defined manifest/snapshot unit and a compatible RomM wire representation. File-by-file upload must not falsely claim atomic publication of an entire memory card/NAND. Preserve both save and state revisions when they form a resumable pair, but permit ordinary save progress to synchronize when a state is unavailable or unsupported.
+Directory saves need an adapter-defined manifest/snapshot unit and a compatible RomM wire representation. File-by-file upload must not falsely claim atomic publication of an entire memory card/NAND. Cloud sync and remote backups cover ordinary game saves. Build-specific save states stay in profile-private local storage and local recovery.
 
 Live synchronization requires a known flush/snapshot mechanism. A debounce or an unchanged file size does not prove a consistent emulator snapshot. Initially guarantee synchronization at safe session boundaries; add live snapshots per proven adapter. Incoming remote changes must never replace the files a running emulator is using.
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' show AppExitType, AppExitResponse;
+import 'dart:ui' show AppExitType, AppExitResponse, DisplayFeature;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -189,15 +189,24 @@ class _BroommAppState extends State<BroommApp> {
   );
   final homeFocus = FocusNode(debugLabel: 'Footer Home');
   final profileFocus = FocusNode(debugLabel: 'Footer profile');
+  final offlineFocus = FocusNode(debugLabel: 'Footer offline retry');
 
   bool footerDirection(TraversalDirection direction) {
     switch (direction) {
       case TraversalDirection.up:
         contentFocus.requestFocus();
       case TraversalDirection.left:
-        requestConsoleFocus(homeFocus);
+        if (profileFocus.hasFocus && m.offline) {
+          requestConsoleFocus(offlineFocus);
+        } else if (m.authenticated) {
+          requestConsoleFocus(homeFocus);
+        }
       case TraversalDirection.right:
-        requestConsoleFocus(profileFocus);
+        if (homeFocus.hasFocus && m.offline) {
+          requestConsoleFocus(offlineFocus);
+        } else if (m.authenticated) {
+          requestConsoleFocus(profileFocus);
+        }
       case TraversalDirection.down:
         break;
     }
@@ -206,24 +215,34 @@ class _BroommAppState extends State<BroommApp> {
 
   Widget _footer(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
+    if (!m.offline && offlineFocus.hasFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final current = FocusManager.instance.primaryFocus;
+        if (mounted &&
+            m.authenticated &&
+            (current == offlineFocus || current is FocusScopeNode))
+          requestConsoleFocus(profileFocus);
+      });
+    }
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 14, 24, 17),
+      padding: EdgeInsets.fromLTRB(
+        consoleSideInset(width),
+        8,
+        consoleSideInset(width),
+        12,
+      ),
       child: ConsoleDirections(
         onDirection: footerDirection,
         child: Row(
           children: [
             if (m.authenticated) ...[
-              ConsoleButton(
+              ConsoleIconButton(
                 focusNode: homeFocus,
                 label: 'Home',
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
                 onPressed: () => m.navigate(ShellScreen.home),
-                child: const Icon(Icons.home_outlined, size: 20),
+                icon: Icons.home_outlined,
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 12),
             ],
             if (width > 650) ...[
               const _Hint('A', 'Select'),
@@ -243,16 +262,24 @@ class _BroommAppState extends State<BroommApp> {
                 ),
               ),
             if (m.authenticated) ...[
-              if (width > 850) ...[
-                const Text(
-                  'YOUR GAMES, TOGETHER.',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 9,
-                    letterSpacing: 1.8,
+              if (m.offline) ...[
+                Tooltip(
+                  message: 'Offline · Retry connection',
+                  excludeFromSemantics: true,
+                  child: ConsoleButton(
+                    key: const ValueKey('shell-reconnect'),
+                    focusNode: offlineFocus,
+                    label: 'Offline. Retry connection',
+                    padding: const EdgeInsets.all(10),
+                    onPressed: m.reconnectProfile,
+                    child: const Icon(
+                      Icons.cloud_off_outlined,
+                      color: Color(0xffffceac),
+                      size: 21,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 22),
+                const SizedBox(width: 13),
               ],
               ConsoleButton(
                 key: const ValueKey('shell-profile'),
@@ -278,7 +305,7 @@ class _BroommAppState extends State<BroommApp> {
                     const SizedBox(width: 10),
                     ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxWidth: width > 650 ? 160 : 130,
+                        maxWidth: (width - 205).clamp(0.0, 160.0),
                       ),
                       child: Text(
                         m.profile!.name,
@@ -602,6 +629,7 @@ class _BroommAppState extends State<BroommApp> {
         }
       };
       session.cancelProgressTransfer = m.cloud.cancel;
+      session.onStarted = () => m.recordPlay(id);
       model = PrototypeModel(widget.project ?? '', gameSession: session)
         ..screen = Screen.loading
         ..loadingGame = game
@@ -696,6 +724,7 @@ class _BroommAppState extends State<BroommApp> {
               rooted: rooted,
               rootPlatform: platform.slug,
               emulatorClosed: emulatorClosed,
+              onStarted: () => m.recordPlay(entry.game.id),
               core:
                   platform.retroCore ??
                   (platform.slug == 'snes' ? 'snes9x' : null),
@@ -1012,9 +1041,9 @@ class _BroommAppState extends State<BroommApp> {
         m.screen != ShellScreen.home ||
         (navigator.currentState?.canPop() ?? true))
       return;
-    final index = m.homeIndex - m.homeAppCount;
-    if (index < 0 || index >= m.installed.length) return;
-    final game = m.installed[index].game, revision = m.contextRevision;
+    final game = m.selectedHomeGame?.game;
+    if (game == null) return;
+    final revision = m.contextRevision;
     showingOptions = true;
     try {
       homeScreen.currentState?.focusSelection();
@@ -1122,6 +1151,7 @@ class _BroommAppState extends State<BroommApp> {
     contentFocus.dispose();
     homeFocus.dispose();
     profileFocus.dispose();
+    offlineFocus.dispose();
     input.dispose();
     if (m.isAndroid) updateChannel.setMethodCallHandler(null);
     DesktopHost.channel.setMethodCallHandler(null);
@@ -1156,6 +1186,9 @@ class _BroommAppState extends State<BroommApp> {
         ),
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white24),
+          ),
           filled: true,
           fillColor: surface,
         ),
@@ -1167,12 +1200,9 @@ class _BroommAppState extends State<BroommApp> {
           },
         ),
       ),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          disableAnimations:
-              m.preferences.reduceMotion ||
-              MediaQuery.disableAnimationsOf(context),
-        ),
+      builder: (context, child) => _ScaledShell(
+        scale: m.preferences.uiScale / 100,
+        reduceMotion: m.preferences.reduceMotion,
         child: Shortcuts(
           shortcuts: consoleShortcuts,
           child: Actions(
@@ -1242,11 +1272,7 @@ class _BroommAppState extends State<BroommApp> {
               Positioned.fill(
                 child: IgnorePointer(
                   child: TweenAnimationBuilder<Color?>(
-                    tween: ColorTween(
-                      end:
-                          homeColors[(m.authenticated ? m.homeIndex : 1) %
-                              homeColors.length],
-                    ),
+                    tween: ColorTween(end: homeColors[1]),
                     duration: motionDuration(context),
                     curve: consoleCurve,
                     builder: (context, color, _) =>
@@ -1292,6 +1318,8 @@ class _BroommAppState extends State<BroommApp> {
                               ShellScreen.home => HomeScreen(
                                 key: homeScreen,
                                 model: m,
+                                focusFooter: () =>
+                                    requestConsoleFocus(homeFocus),
                               ),
                               ShellScreen.store => StoreScreen(model: m),
                               ShellScreen.downloads => DownloadsScreen(
@@ -1323,6 +1351,61 @@ class _BroommAppState extends State<BroommApp> {
       ),
     ),
   );
+}
+
+// Lay out the whole navigator in scaled logical units. This keeps controls,
+// route overlays, keyboard insets and responsive breakpoints in one space.
+class _ScaledShell extends StatelessWidget {
+  const _ScaledShell({
+    required this.scale,
+    required this.reduceMotion,
+    required this.child,
+  });
+  final double scale;
+  final bool reduceMotion;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final data = MediaQuery.of(context);
+    final inverse = 1 / scale;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.biggest * inverse;
+        return FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox.fromSize(
+            size: size,
+            child: MediaQuery(
+              data: data.copyWith(
+                size: size,
+                devicePixelRatio: data.devicePixelRatio * scale,
+                padding: data.padding * inverse,
+                viewPadding: data.viewPadding * inverse,
+                viewInsets: data.viewInsets * inverse,
+                systemGestureInsets: data.systemGestureInsets * inverse,
+                displayFeatures: [
+                  for (final feature in data.displayFeatures)
+                    DisplayFeature(
+                      bounds: Rect.fromLTRB(
+                        feature.bounds.left * inverse,
+                        feature.bounds.top * inverse,
+                        feature.bounds.right * inverse,
+                        feature.bounds.bottom * inverse,
+                      ),
+                      type: feature.type,
+                      state: feature.state,
+                    ),
+                ],
+                disableAnimations: reduceMotion || data.disableAnimations,
+              ),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _Hint extends StatelessWidget {

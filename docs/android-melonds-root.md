@@ -1,5 +1,9 @@
 # Rooted melonDS on Android
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 This increment uses the official [melonDS 2.0.1 release](https://github.com/rafaelvcaetano/melonDS-android/releases/tag/2.0.1),
 the GitHub APK with version code 40 on Android user 0 and ARM64. The pinned
 APK hash is `646eb4564c71b0817ace6474e92c169da16630d58826c43e0fe648896311ec94`.

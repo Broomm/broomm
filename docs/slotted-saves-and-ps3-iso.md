@@ -20,17 +20,33 @@ These directory ZIPs contain native files, not the internal `broomm.json` manife
 
 The reported Pokémon Ranger discrepancy was the old compressed wrapper: its remote `broomm` asset was 46,523 bytes, while the contained native save was 262,144 bytes. The new public `.sav` is exactly 262,144 bytes. The old asset is retained read-only. When no BROOMM history exists, a verified legacy asset can supply progress and migrate into a new native version; new writes never replace it.
 
-**Use existing save file** still requires explicit source selection and appends a fresh BROOMM version without modifying the source. **Backup savefile** creates an independent unslotted asset, adding the native extension; a full backup containing states uses `.zip`. Name collisions are refused and interrupted backups retain their original checkpoint. Automatic synchronization never adopts a named backup on its own.
+**Use existing save file** explicitly copies an ordinary save into a fresh
+BROOMM version. **Backup savefile** creates an independent unslotted ordinary
+save with the native extension. Existing names and source assets stay intact.
+Automatic synchronization uses the latest managed version.
 
-## States, retries and conflicts
+## Save states and recovery
 
-Supported states retain the existing verified emulator/core/build/host groups. With an ordinary native save, the full recovery/provenance bundle is published as a separate RomM **state** asset named with that version's same stem and timestamp and `.zip`. The ordinary `.sav`/`.srm` remains usable by native consumers. A state-only snapshot before the first ordinary save uses a correctly named `.zip` primary version. RPCS3 and Ryubing states remain unsupported.
+As of 2026-11-10, save states stay in their device-local, build-specific groups.
+Broomm uses only RomM's saves endpoints for gameplay synchronization, explicit
+import, backups and queued retries. A legacy mixed bundle retrieved through a
+saves endpoint is verified before retaining its ordinary entries. A legacy
+state-only version contributes no ordinary save. Older versions and separate
+state assets remain in RomM. An earlier ordinary version can be chosen
+explicitly through **Use existing save file**.
 
-Durable upload checkpoints resume a missing or unacknowledged state companion for the same primary version. Its contents, snapshot identity and ordinary save digest must match before acknowledgment. A lost companion response is reconciled without uploading either asset twice. A changed local snapshot is pinned before pruning for a subsequent version; completing an older upload preserves a newer crashed session's review flag. A newer remote head observed during finalization prevents acknowledgment of a stale head. Archive-only retry can export and verify retained progress after ROM/emulator uninstall without accessing native save paths.
+The ordinary digest preserves the common baseline of older mixed snapshots.
+Readback confirms the exact ordinary payload before acknowledgment. A lost
+reply can resume a published version without uploading it twice. Completing
+older work preserves newer pending or crashed progress. Archive-only retry
+can use an immutable ordinary snapshot after ROM/emulator removal. Local
+Android journal restores continue to preserve the emulator's supported states.
 
-Publication of a primary and its companion is not an atomic server transaction. Another device can observe the primary while the companion is pending; local recovery and incomplete-transfer errors remain important. A lost primary response with states, an intervening writer or an incompatible companion can require explicit conflict review. Do not claim that arbitrary simultaneous external writers or state loading on another device have been verified. Ordinary native files do not carry the old bundle's causal ancestry; conflict decisions use the acknowledged content baseline and retained append-only versions. Existing unknown local states remain protected by the preceding provenance rules.
-
-New sync never sends a PUT to an old save ID or automatically deletes remote saves. For a **slot POST**, `overwrite=true` disables RomM's content-hash deduplication after the server reserves a fresh timestamped filename. Without it, changing only a save state could reuse an older primary version with identical ordinary save bytes and collide with that version's state companion. This flag is confined to BROOMM slot creation; unslotted backups use `overwrite=false`. `autocleanup=false` prevents client-requested pruning; server administrator retention limits still apply.
+The BROOMM slot POST uses `overwrite=true` to disable content-hash deduplication
+after RomM reserves a timestamped name, and `autocleanup=false` to avoid
+client-requested pruning. Unslotted backups use `overwrite=false`. Server
+retention rules still apply. The earlier state-companion protocol and tests
+are recorded in the companion evidence file.
 
 The live RomM 5.4 instance exposed a separate precision issue: fresh POST returned `updated_at=...28.412392+00:00`, while GET returned `...28+00:00` for the same record. The transport now obtains the persisted record after upload and accepts only whole-second truncation of that timestamp with all identity, filename, size, checksum, location and missing-file fields unchanged. Actual timestamp/content/identity changes still fail. Subsequent transfer revision checks remain exact.
 

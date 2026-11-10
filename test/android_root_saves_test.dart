@@ -1317,7 +1317,7 @@ void main() {
     }
   });
 
-  test('N64 full native SRAM and uncompressed states survive cloud restore and standalone recovery', () async {
+  test('N64 full native SRAM survives cloud restore and uncompressed states stay local', () async {
     await manager.connectGbaRoot(emulator, platform: 'n64');
     final rom = await File('${temp.path}/Cartridge.z64')
         .writeAsBytes([0x80, 0x37, 0x12, 0x40]);
@@ -1361,12 +1361,9 @@ void main() {
       await progressFileHash(await next.target('save/game.srm')),
       await progressFileHash(await p.target('save/game.srm')),
     );
-    expect(
-      await progressFileHash(await next.target(stateKey)),
-      await progressFileHash(await p.target(stateKey)),
-    );
+    expect(await (await next.target(stateKey)).exists(), false);
     expect(await (await next.target('save/game.srm')).length(), sram.length);
-    expect(await (await next.target(stateKey)).length(), state.length);
+    expect(await (await p.target(stateKey)).length(), state.length);
     expect((await cloud.store(g).state())['pending'], false);
     expect(await saves.pending, false);
   });
@@ -2826,7 +2823,7 @@ void main() {
     expect(manager.settingsKnown, false);
   });
 
-  test('Lynx Play keeps firmware out of progress, synchronizes a state and restores native originals', () async {
+  test('Lynx Play keeps firmware out of progress, retains a local state and restores native originals', () async {
     await manager.connectGbaRoot(emulator, platform: 'lynx');
     final rom = await File('${temp.path}/Cartridge.lnx').writeAsBytes([5, 6]);
     final p = await lynxPlan(rom.path), g = game(p);
@@ -2867,8 +2864,8 @@ void main() {
     expect(await firmware.exists(), false);
     expect((await p.files()).keys, [key]);
     expect(await (await p.target(key)).readAsBytes(), [1, 2, 3]);
-    expect((await cloud.store(g).state())['stateKnown'], {key: isA<String>()});
-    expect(api.records, isNotEmpty);
+    expect((await cloud.store(g).state())['pending'], false);
+    expect(api.records, isEmpty);
     expect(await session.pending(), isNull);
   });
 
@@ -3059,7 +3056,7 @@ void main() {
     ('jaguar', 'virtualjaguar', 'j64', true),
   ]) {
     test(
-      '$slug keeps its native save contract, state round trip and cleanup',
+      '$slug keeps its native save contract, local states and cleanup',
       () async {
         final saveSize = slug == 'nes'
             ? 8192
@@ -3109,7 +3106,7 @@ void main() {
           false,
         );
         expect(await (await p.target(state)).readAsBytes(), [1, 4, 9]);
-        expect(api.stateRecords, hasLength(sram ? 1 : 0));
+        expect(api.stateRecords, isEmpty);
         expect((await cloud.store(g).state())['pending'], false);
         if (sram) {
           expect(
@@ -3141,7 +3138,7 @@ void main() {
           notice: (_, _) {},
         );
         await newCloud.beforePlay(nextGame);
-        expect(await (await restored.target(state)).readAsBytes(), [1, 4, 9]);
+        expect(await (await restored.target(state)).exists(), false);
         if (sram)
           expect(
             await (await restored.target('save/game.srm')).readAsBytes(),
@@ -3205,7 +3202,7 @@ void main() {
     final zip = await ProgressZip.read(archive);
     expect(zip.entries.map((e) => e.name).toSet(), {'game.srm', 'game.rtc'});
     expect(api.readIds, contains(primary.id));
-    expect(api.stateRecords, hasLength(1));
+    expect(api.stateRecords, isEmpty);
     expect((await cloud.store(g).state())['pending'], false);
   });
 

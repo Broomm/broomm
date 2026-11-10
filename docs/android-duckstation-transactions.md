@@ -1,5 +1,9 @@
 # Rooted DuckStation transactions
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 PR #6 contains this implementation and the Sega 32X acceptance work.
 Builds 1125–1126 exercised rooted PS1 saves on the Thor. Earlier build 1122
 establishes the document handoff separately from these save transactions.

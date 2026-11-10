@@ -230,34 +230,31 @@ void main() {
         final store = cloud.store(g),
             snap = await store.capture(),
             checkpoint = await store.state();
-        // N+ creates savedata during its initial setup and is the required
-        // ordinary-save fixture. Puzzle Bobble saves after gameplay results;
-        // its random bubbles/timing do not guarantee a cleared round here.
-        // With only states, the existing cloud protocol publishes the full
-        // state bundle as the BROOMM version, without inventing savedata or a
-        // separate ordinary-save/state companion pair.
-        final ordinary = snap.entries.keys.any((k) => k.startsWith('save/'));
+        // N+ creates ordinary savedata during initial setup. Puzzle Bobble may
+        // have only states depending on the round outcome.
+        final ordinary = !snap.ordinaryEmpty;
         if (fixture['rom'] == 5953)
           expect(ordinary, true, reason: 'N+ did not create native savedata');
         expect(snap.hasStates, true);
-        expect(api.records, isNotEmpty);
-        expect(api.stateRecords.isNotEmpty, ordinary);
-        expect(
-          api.readIds.toSet(),
-          containsAll({...api.records.keys, ...api.stateRecords.keys}),
-        );
+        expect(api.records.isNotEmpty, ordinary);
+        expect(api.stateRecords, isEmpty);
+        expect(api.readIds.toSet(), containsAll(api.records.keys));
         expect(checkpoint['pending'], false);
-        final exported = await store.exportNative(snap);
-        try {
-          final imported = exported.includesStates
-              ? await store.importBundle(exported.file)
-              : await store.importNative(exported.file);
-          for (final file in (await g.layout.files()).values)
-            await file.delete();
-          await store.restore(imported, checkpoint);
-          expect((await store.capture()).ordinaryDigest, snap.ordinaryDigest);
-        } finally {
-          await exported.close();
+        if (ordinary) {
+          final exported = await store.exportNative(snap);
+          try {
+            final imported = await store.importNative(exported.file);
+            for (final file in (await g.layout.files(
+              includeStates: false,
+            )).values)
+              await file.delete();
+            await cloud
+                .store(g, ordinaryOnly: true)
+                .restore(imported, checkpoint);
+            expect((await store.capture()).ordinaryDigest, snap.ordinaryDigest);
+          } finally {
+            await exported.close();
+          }
         }
         await store.restore(await store.importBundle(snap.bundle), checkpoint);
         expect((await store.capture()).digest, snap.digest);
@@ -267,7 +264,7 @@ void main() {
           'root': session.emulator!.root,
           'files': snap.entries,
           'ordinaryRoundTrip': ordinary,
-          'stateOnlyBundle': !ordinary,
+          'stateOnlyLocal': !ordinary,
           'stateSaveLoadAndRestore': true,
           'nativeButtonReadbackAndFaceSwap': true,
           'disconnectReassignment': true,

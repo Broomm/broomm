@@ -1,5 +1,45 @@
 # Broomm
 
+## Home and save-sync preview
+
+[Download the universal macOS preview](build/releases/Broomm-macOS-play-and-focus.zip).
+Quit Broomm and any running game normally, unzip the archive, then open
+`broomm.app`. The preview uses the existing Broomm Application Support folder
+and saved profiles. It is ad-hoc signed and uses a development update identity.
+Keep the data folder when removing the preview.
+
+1. On Home, use Left/Right to move along the game rail. Game Store stays first.
+   The selected tile grows gradually and settles near the left edge,
+   including at either end of the rail. The platform badge and title appear
+   to its right, wrapping below when needed. The game artwork sits beneath
+   the tile, aligned with Play and Options. When RomM supplies a supported
+   platform icon, it appears inside the Play button to the left of the label.
+   Game Store aligns its title and Open button with the tile. A completed download or
+   successful game launch moves that game to the front of the installed games.
+   Reopen Broomm to confirm the order persists. To verify icon caching, select
+   a playable game with **Show artwork** enabled, then reopen it on Home
+   while offline. The icon also appears for games without a Home logo.
+   If the illustration is unavailable, use the text badge
+   beside the game's name.
+2. Press Up from the rail for Settings, Emulator Settings, Downloads when a
+   queue exists, and Update Broomm when a release is offered. These shortcuts
+   start at the selected tile’s left edge. The two settings shortcuts
+   appear first and show their names beside their icons. Down returns to
+   the selected tile. The mint-to-teal focus ring follows controller and
+   keyboard focus across the UI, including on the profile picker.
+3. In **Broomm settings → Appearance → UI scale**, choose 75%, 90%, 100%,
+   110%, 125% or 150%. **Logo scale** offers the same choices for just the
+   Home game logo. The 100% logo fits within 780 × 192 logical pixels.
+   Both choices survive restart. Enable Reduce motion for instant tile changes.
+   On Android, swipe in from a screen edge to reveal the system bars.
+4. With a remembered profile offline, select the cloud-off icon beside the
+   profile to retry RomM. A successful retry removes the icon. Local games
+   and pending in-game saves remain available offline.
+5. Save in the game and close the emulator normally. Verify a new BROOMM
+   version in RomM when the ordinary save changed. A save-state-only change
+   stays on the device. See [the cloud-save walkthrough](#verify-managed-cloud-saves)
+   and [implementation and verification](IMPLEMENTATION.md#platform-icon-in-play-and-mint-focus-outline--2026-11-10).
+
 CI's pinned Devbox bootstrap, local regression commands and disposable-runner
 effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
 
@@ -59,7 +99,7 @@ removal backups. On a rooted Thor with the reviewed DuckStation beta, choose
 when prompted. If DuckStation has just been installed, open it once to let it
 initialize. Play a downloaded PS1 game, save in-game, then choose **Close Game**
 in DuckStation and return to Broomm. Broomm checks closure, syncs the private
-cards and compatible states to RomM, and restores standalone settings. See the
+cards to RomM, keeps compatible states on the device, and restores standalone settings. See the
 linked walkthrough for the tested build, recovery steps and remaining checks.
 
 The [rooted melonDS preview](docs/android-melonds-root.md) uses the reviewed
@@ -93,9 +133,8 @@ keep one console account with the default NAND and save locations. Then
 choose **Emulator Settings → Nintendo Switch → Eden → Set up**. Quit
 emulation before finishing sync in Broomm.
 
-The build-specific universal macOS preview is in `build/releases/`.
-It is `0.1.20-dev`, ad-hoc signed, uses normal application data and disables
-automatic updates for development builds. Archive and extracted signatures are verified.
+The earlier standalone Android milestone used a `0.1.20-dev` macOS preview.
+See [the current build](#home-and-save-sync-preview) for this workspace.
 
 Choose **Emulator Settings → PlayStation Portable → PPSSPP → Set up**. After
 Android installs it, open PPSSPP, choose **Skip for now / App Private Data**, wait
@@ -191,18 +230,15 @@ verified normal exit. Switching back while RetroArch is still running leaves
 the session active. If the exit cannot be verified, use **Review and finish
 session** after quitting RetroArch. Retain pending recovery data and follow the
 [full walkthrough and validation limits](docs/android-root-access.md#rooted-gba-route-implementation-and-validation-status).
-Rooted GBA and SNES sync in-game saves and manual states/thumbnails. Create or
-load a state from RetroArch's Quick Menu, then quit normally to sync. States
-require the same RetroArch APK, ABI and core; incompatible states remain kept
-in their original group. Legacy untracked states are not auto-imported. For a
-verified-archive mismatch, install a compatible platform core in RetroArch and
-retry **Set up**.
+Rooted GBA and SNES sync in-game saves. Create or load local states from
+RetroArch's Quick Menu. State files and thumbnails stay in the APK, ABI and
+core-specific group on this device. For a verified-archive mismatch, install
+a compatible platform core in RetroArch and retry **Set up**.
 
-After an offline restart, choose your saved server/profile normally. Home shows
-**Offline** and previously verified local games remain playable. Progress stays
-pending until that same account reconnects; use **Retry** on the offline notice
-or leave Broomm idle for its bounded retry. A revoked sign-in requires signing
-in again. This does not bypass a previously denied game's access.
+After an offline restart, choose your saved server and profile. Previously
+verified local games remain playable. Pending progress stays with that account
+until it reconnects. Select the **offline retry** icon beside the profile to
+retry immediately. A revoked sign-in requires signing in again.
 
 If the card says **Emulator app not installed**, first choose **Install** (or
 **Install APK…** for a file you already have). Broomm now checks its APK-install
@@ -616,9 +652,9 @@ devbox run app-check
 1. Select **Server address**, enter your RomM URL (for the supplied instance, `https://romm.docubi.casa`), then **Continue**. Click/touch a field to type directly. Tab/arrows focus a read-only field; **Enter** starts typing and **Escape** stops editing while keeping that field focused for navigation. Controller A opens the virtual keyboard; its Done/Cancel restores navigation focus. You can switch input devices at any time. HTTPS certificates are verified. HTTP requires an explicit choice on the server form; credentials are unencrypted on HTTP.
 2. Choose **Add profile**, enter the account's username/password and **Sign in**. A client token or eight-character RomM API key pairing code (letters and numbers) is also supported; lowercase and hyphen-separated codes are accepted. Token permissions need `me.read`, `roms.read`, `platforms.read` and `assets.read`, plus `assets.write` for cloud saves and `firmware.read` for automatic PS3 firmware retrieval. Broomm remembers a refresh/client token in the system secure store, separately for each server/account. On later starts, select the saved server and profile to continue without another password while the credential is accepted. Passwords are never saved. Accounts must already exist in RomM.
 3. Move left/right between Home tiles and press A to open one. D-pad/left stick moves focus; B/Esc goes back; controller X opens Store search with the virtual keyboard. The controller keyboard supports letters, Shift, symbols, spaces, backspace and Done. Physical arrows move the caret only while editing; Escape returns them to navigation. Tab moves between controls.
-4. Open **Game Store**, search/filter and choose **Download game** (choose a release if grouped). Downloads queue one at a time. Mapped artwork pickers appear immediately while transfer continues, with image dimensions. **Downloads**, beside Store on Home, shows active, queued and failed entries, with cancel/retry/remove. Completed games appear on Home. Closing Broomm cancels the active transfer and preserves unfinished queue records for explicit retry. Base-game downloading changes no remote ROM/save content; gameplay and explicit save actions use the cloud-save contract below.
+4. Open **Game Store**, search/filter and choose **Download game** (choose a release if grouped). Downloads queue with a configurable concurrency limit. Mapped artwork pickers appear immediately while transfer continues, with image dimensions. **Downloads**, above the Home rail, shows active, queued and failed entries, with cancel/retry/remove. Completed games appear on Home. Closing Broomm cancels the active transfer and preserves unfinished queue records for explicit retry. Base-game downloading changes no remote ROM/save content; gameplay and explicit save actions use the cloud-save contract below.
 5. Open **Broomm settings** to change reduced motion, artwork display or games per page. Settings save immediately. **Switch profile** or the footer profile button retains remembered sign-ins. **Sign out on this device** removes the current profile's local credential; its server, profile, ROMs and progress remain. This does not revoke the token in RomM. An unavailable/locked secure store produces a visible error; successful login can continue for that session without saving a plaintext fallback.
-6. Open **Emulator Settings**. Every RomM platform has a section, including unsupported platforms. Select a card's **Set up**/**Verify setup**, review the expansion in that card, then **Start setup**. Arrow/controller down visits card actions and the expanded confirmation before the next card. A supported platform always has an effective default for Home Play; **Set as default** selects another configured choice when available, including the two PS2 and PS3 choices. All twelve frontends and all fifteen RetroArch cores download their reviewed archives automatically. **Cancel setup** preserves existing installations and progress. For RetroArch, use the card's normal setup action; no external files or JSON import are needed. Already installed cores stay usable until setup; an explicit setup installs the new reviewed core versions alongside retained old files. Profile settings and ordinary saves remain shared across that upgrade, while incompatible states have separate native folders and exact-build cloud identities. Missing BIOS/firmware/keys still come from the existing RomM workflow before play. Optional offline/custom imports remain for users who choose them. See [delivery recipes and prerequisites](docs/managed-setup-downloads.md).
+6. Open **Emulator Settings**. Every RomM platform has a section, including unsupported platforms. Select a card's **Set up**/**Verify setup**, review the expansion in that card, then **Start setup**. Arrow/controller down visits card actions and the expanded confirmation before the next card. A supported platform always has an effective default for Home Play; **Set as default** selects another configured choice when available, including the two PS2 and PS3 choices. All twelve frontends and all fifteen RetroArch cores download their reviewed archives automatically. **Cancel setup** preserves existing installations and progress. For RetroArch, use the card's normal setup action; no external files or JSON import are needed. Already installed cores stay usable until setup; an explicit setup installs the new reviewed core versions alongside retained old files. Profile settings and ordinary saves remain shared across that upgrade, while incompatible states have separate local build-specific folders. Missing BIOS/firmware/keys still come from the existing RomM workflow before play. Optional offline/custom imports remain for users who choose them. See [delivery recipes and prerequisites](docs/managed-setup-downloads.md).
 7. Select a supported downloaded game on Home and choose **Play**. Missing emulator/resources lead to setup. Choose an entry file if the download has several. An explicit loading screen stays visible until native input/pause is ready. **L1+R1** joins; test buttons in the live diagram. **L3+R1** swaps both face pairs, **L1+R1** cycles Wii types after joining, **L3+R2** toggles gyro, hold **Select** removes a player, hold **Start** starts/resumes. Pointer/keyboard can use the visible controls. **R3+Select** opens the paused menu; its Controller pairing screen applies changes live. Disconnecting an assigned controller opens pairing. Close the emulator normally to return Home. A shutdown error retains the writer lock and progress; close the native window normally before another launch. PS3's first shader/PPU compilation can take several minutes.
 8. The local fixtures remain in **Broomm settings → Open local controller test games**. Press B/Esc from that lab's game list to return. Its original prototype progress stays separate from the new server/account profiles. Server/profile changes are blocked while a Home game is active.
 9. To uninstall a configured emulator, open its card and choose **Remove → Remove emulator**. Confirmation explains the shared effect (Dolphin serves both GameCube and Wii). Broomm removes only its managed app/core/installation resources; all profile settings, saves/states, source bundles and downloaded ROMs remain. Removal is unavailable during gameplay. If interrupted after withdrawal, **Finish removal** resumes cleanup; set up the emulator again to play. No remote file is deleted.
@@ -780,9 +816,15 @@ For Home artwork, configure **Broomm settings → SteamGridDB API key** with a k
 
 The Store groups related releases using RomM's metadata, including search, platform filters and recent picks. Open a game and choose **Download game**; if it has several versions, select a filename-tagged release in **Choose a version** using D-pad/arrows and A/Enter or a pointer. Only that ROM is downloaded. Already downloaded versions are marked; **Download another version** remains available in their details. Identical display names alone do not merge unrelated games, and no RomM metadata is changed.
 
-Downloading a game with an `sgdb_id` mapping opens **Choose a square icon**, **Choose a background**, then **Choose a logo**. These galleries contain square PNG grids, heroes, and static PNG/WebP logos respectively. Use arrows/D-pad and A/Enter or click an image. Previous/Next page keeps each gallery bounded. **Keep current…** advances without replacing that asset. Cancelling the first popup ends selection; cancelling a later step retains earlier choices and the other saved images. Missing images and failed requests keep the game and its fallback artwork. Chosen art is stored locally and shared with that downloaded game across profiles on the same server. The hero covers the top 75% of Home, preserves its aspect ratio and fades into Broomm's existing background. The selected logo replaces the large title; absent, unreadable or disabled artwork uses the typed title. Existing games can add a logo through Select Artwork without redownloading.
+Downloading a game with an `sgdb_id` mapping opens **Choose a square icon**, **Choose a background**, then **Choose a logo**. These galleries contain square PNG grids, heroes, and static PNG/WebP logos respectively. Use arrows/D-pad and A/Enter or click an image. Previous/Next page keeps each gallery bounded. **Keep current…** advances without replacing that asset. Cancelling the first popup ends selection; cancelling a later step retains earlier choices and the other saved images. Missing images and failed requests keep the game and its fallback artwork. Chosen art is stored locally and shared with that downloaded game across profiles on the same server. The hero covers the top 75% of Home, preserves its aspect ratio and fades into Broomm's existing background. The selected logo can appear with the Home actions. The platform badge and typed title appear to the right of the selected tile, with room to wrap below on narrower displays. Existing games can add a logo through Select Artwork without redownloading.
 
-Home uses larger icons without captions, with Play and Options side by side. The top branding is removed; the profile and tagline sit at the bottom right, over the base background. Home navigation is at the bottom left. D-pad/arrow Down reaches the actions; Left/Right moves between Play and Options, and Up returns to the selected game. From the footer, Up restores the remembered content selection. Transient notification cards appear at the top left for seven seconds (problems for twelve); new events restart the timer. They take no focus or page space. Ongoing download progress and Cancel stay available until the operation finishes; operation-specific errors remain in details/status.
+The Home rail shows Game Store followed by installed games, with the most recent
+download or play first. The enlarged selected game shows its platform and title.
+Use Up for the system shortcut row or Down for Play and Options. Up from the
+footer restores the last content focus. The profile and conditional offline
+retry sit at the bottom right. Transient notification cards appear at the top
+left without taking focus or page space. Ongoing transfers and their controls
+are available in Downloads.
 
 On Home, select/hover a title and press **Select / View / Back** on the controller to open **Select Artwork**, **Download Updates and DLC** (3DS and PS3) and **Delete**. Keyboard uses the context-menu key or Shift+F10; pointer uses right-click or **Options**, and touch can long-press. Select Artwork refreshes the RomM mapping and repeats the artwork pickers. **Delete → Delete game** removes the shared downloaded files, artwork and its owned installed updates/DLC from this device, **keeping saves and save states**. Add-ons still used by another installed version are retained. No RomM file or emulator application is deleted. A live Broomm game blocks deletion, including from another process. A pending deletion shows **Finish deleting**; choose Delete again to complete it before redownloading.
 
@@ -802,7 +844,10 @@ codesign --force --sign - --preserve-metadata=identifier,entitlements,flags,runt
 codesign --verify --deep --strict build/macos/Build/Products/Release/broomm.app
 ```
 
-The latest archive is [Broomm with the infinity app icon](build/releases/Broomm-macOS-infinity-icon.zip). Unzip it and open `broomm.app` after closing every previous Broomm game/app normally. A running older copy can still own the download queue. This is a development build tied to this checkout's data/setup paths, with the existing local emulator pack; it is not a notarized standalone emulator installer. The default `devbox run app-build` remains a debug build. See the [application updater](docs/application-updates.md), [RPCS3 installer notification fix](docs/rpcs3-installer-exit.md), [live platform/coverage matrix](docs/platform-support-matrix.md), [automatic first-sync/GT6 recovery checks](docs/cloud-initialization-and-ps3-recovery.md) and [download/status checks](docs/downloads-and-status.md).
+The [current macOS preview](build/releases/Broomm-macOS-home-anchor-left.zip) uses
+the normal Broomm Application Support folder. The default `devbox run app-build`
+remains a debug build. See the [application updater](docs/application-updates.md)
+and [live platform matrix](docs/platform-support-matrix.md).
 
 For the Intel PS3 option, open Emulator Settings → PlayStation 3 → RPCS3 Intel → Set up, confirm the reviewed download, then choose Set as default. Setup downloads the pinned official archive; Rosetta must already be installed. Both RPCS3 builds keep this profile’s existing PS3 saves, firmware and add-ons, with separate compilation caches. See [the Intel walkthrough and checks](docs/rpcs3-intel.md). The [Flutter capture-library comparison](docs/flutter-window-capture.md) is historical research; window capture has been canceled in favor of native loading counters.
 
@@ -865,7 +910,7 @@ The last command needs the supplied Smash Bros. CCI/DLC already downloaded in `b
 
 Use the current Apple Silicon build with this checkout's `prototype-data` pack and a RomM 5.4.0 account. In Emulator Settings, expand Nintendo DS, review melonDS and confirm Setup. Its official 1.1 source is `prototype-data/melonds/melonDS.app`; the pinned inventory is in setup assets. System emulator configuration is untouched. Linux/Windows/Android native verification of these additions remains pending.
 
-1. Queue two Store games. Choose mapped SteamGridDB icon/background/logo immediately, then open Downloads beside Store. Observe up to the configured number of transfers followed by the waiting queue, without a progress overlay. Cancel, then Retry or Remove downloaded data. Removal clears partial files and that transfer's artwork, retaining saved progress and any base game verified before an add-on failure.
+1. Queue two Store games. Choose mapped SteamGridDB icon/background/logo immediately, then open Downloads in the top Home row. Observe up to the configured number of transfers followed by the waiting queue, without a progress overlay. Cancel, then Retry or Remove downloaded data. Removal clears partial files and that transfer's artwork, retaining saved progress and any base game verified before an add-on failure.
 2. Traverse a long Home rail with left/right: selection stays nearer the middle, bounded by either end. Store Search matches adjacent button heights. Pointer selection edits the original input; keyboard Enter enables typing and Escape restores navigation. Controller X/search or A on a field opens the docked keyboard in the same window. A selects keys, X deletes backward, Shift/Caps changes case/symbols, Enter/Done submits and B dismisses without submission. Password visibility stays beside the original field.
 3. Download a DS `.nds` game and Play from Home. Wait for loading, join with L1+R1, test mappings and hold Start to play. The established R3+Select menu pauses/remaps. Save in-game and close normally. **Use existing save file** accepts an ordinary raw `.sav` or ZIP containing one, copies it into private melonDS storage and appends a native `.sav` version to this profile/game's `BROOMM` slot. DSV containers require external conversion. States retain their verified build/host group.
 4. Put one PS3 PUP in that platform's RomM BIOS/firmware catalogue and rescan. Grants/client tokens need `firmware.read`; old remembered grants may need one new sign-in. Play a PS3 game without configured firmware: expect checking/downloading/verifying/installing before pairing. A second launch reuses firmware. Existing configured firmware is retained. Missing/ambiguous PUPs or bad checksums produce errors without selecting arbitrary resources.
@@ -891,13 +936,15 @@ Native checks require the existing supplied firmware/ROMs and pinned pack. Isola
 Use RomM **5.4.0**, the configured macOS native pack and an account/token with `assets.read` and `assets.write`. Old remembered read-only grants need one new sign-in, available after a permission failure in the save dialog. No password is retained. Close other Broomm game/setup operations before testing.
 
 1. Launch an installed SNES, 3DS, DS, GameCube, Wii, PS3 or Switch game from Home. Broomm checks only this account/game's latest `BROOMM` slot version in the **Broomm** emulator namespace before pairing. Existing local and remote progress require a choice when there is no common baseline. First play without progress creates no empty remote save. The first Switch launch initializes/binds native save storage, closes its writer, then restores cloud progress before the gameplay launch. With no BROOMM history, a legacy unslotted `broomm` bundle can migrate once; its source stays unchanged.
-2. Save inside the game, then close the emulator normally. Broomm returns with a sync screen. Wait for completion or choose **Keep local save and finish later**. RomM should show a new `Broomm [yyyy-mm-dd_hh-mm-ss]` version in slot `BROOMM`, retaining earlier versions. DS uses raw `.sav`, SNES raw `.srm`, and native directory/multifile saves use `.zip`. The smaller old DS `broomm` file was a compressed bundle; its replacement exposes the original native bytes. Compatible states are kept in a matching timestamped state archive, without wrapping the ordinary `.sav`. Routine sync leaves unrelated named saves and slots unchanged.
+2. Save inside the game, then close the emulator normally. Broomm returns with a sync screen. Wait for completion or choose **Keep local save and finish later**. RomM should show a new `Broomm [yyyy-mm-dd_hh-mm-ss]` version in slot `BROOMM`, retaining earlier versions. DS uses raw `.sav`, SNES raw `.srm`, and native directory/multifile saves use `.zip`. The smaller old DS `broomm` file was a compressed bundle; its replacement exposes the original native bytes. Save states stay on the device. Routine sync leaves prior versions, state assets and unrelated slots unchanged.
 3. From that game's Select/Options menu, choose **Use existing save file**, select an available source (20 entries per page), and confirm. The selected source remains unchanged; local progress adopts its contents and Broomm appends a new BROOMM version. Supported sources are Broomm backups or the documented native exports; for Azahar, ZIP the complete `data` directory including `00000001.metadata` and `00000001/`. Raw console `.sav` conversions are not guessed.
-4. Choose **Backup savefile**, enter a name such as `Before the final boss`, then **Create backup in RomM**. It creates a separate backup with the appropriate extension; backups containing states use `.zip`. An existing filename is refused. An interrupted retry resumes its original recovery snapshot; the dialog explains this. Later automatic sync still uses only BROOMM history.
-5. **Cloud saves → Sync / resolve conflict** retries explicitly or offers device/cloud progress when both changed. Both copies are retained locally until a choice succeeds. On a second device with the same account, the same-ROM/native-format save should pull before play; this gameplay check still needs owner verification. State loading requires a compatible emulator/core build and host. Create a fresh state during a Broomm session to establish its build provenance; unverified existing states stay local and are never relabelled during an emulator/core update. Automatic pulls preserve an unverified local state even when a cloud state occupies the same slot; **Use existing save file** can explicitly apply the cloud copy.
+4. Choose **Backup savefile**, enter a name such as `Before the final boss`, then **Create backup in RomM**. It creates a separate ordinary-save backup with the appropriate extension. An existing filename is refused. An interrupted retry resumes its original recovery snapshot; the dialog explains this. Later automatic sync still uses only BROOMM history.
+5. **Cloud saves → Sync / resolve conflict** retries explicitly or offers device/cloud progress when both changed. Both copies are retained locally until a choice succeeds. On a second device with the same account, the same-ROM/native-format save should pull before play; this gameplay check still needs owner verification. Old mixed save bundles can supply their ordinary save while preserving local
+   states. If the newest historical version contains only states, use **Use
+   existing save file** to explicitly select an earlier ordinary save.
 6. Play offline, save and close normally. Keep the local-pending notice. When the same account/server is active again, idle retry runs one pending game every 45 seconds. If the managed remote is unchanged from its baseline, pending progress uploads; otherwise choose a version through Cloud saves. Changing profile/server cancels and drains the prior operation. Deleting the game preserves progress and pending snapshots; retry does not need the ROM installed.
 
-Ryubing synchronizes only the verified current program/account's committed save directory and matching device save, excluding account/index/system metadata. RPCS3 has a title-prefixed savedata adapter but no real gameplay-progress fixture; PS3/Switch states are unsupported here. Raw Dolphin memory cards, unsupported imports and other native hosts remain gated or unverified in [the current version-history record](docs/slotted-saves-and-ps3-iso.md). Appending versions preserves concurrent uploads; main-save/state publication is not a server-side atomic transaction and conflicts still require review.
+Ryubing synchronizes only the verified current program/account's committed save directory and matching device save, excluding account/index/system metadata. RPCS3 has a title-prefixed savedata adapter but no real gameplay-progress fixture; PS3/Switch states are unsupported here. Raw Dolphin memory cards, unsupported imports and other native hosts remain gated or unverified in [the current version-history record](docs/slotted-saves-and-ps3-iso.md). Appending versions preserves concurrent uploads. Divergent ordinary saves still require review.
 
 Run checks serially:
 

@@ -1,5 +1,215 @@
 # Implementation plan
 
+## Platform icon in Play and mint focus outline — 2026-11-10
+
+Home puts the cached RomM illustration inside Play, to the left of the
+label. It can appear for games without SteamGridDB logos. The platform
+icon follows **Show artwork**. The logo, when available, shares the
+selected tile's left edge with Play and Options.
+
+The shared outline uses a mint-to-teal gradient. Three candidate palettes
+were compared against the dark profile treatment and a mixed-color tile
+background. The selected palette uses pale mint, seafoam, and teal while
+retaining the 3.5-point stroke and 3-point gap.
+
+Static analysis, 778 Flutter tests and two offscreen renderers passed on
+macOS 27.0.1, with one existing host-gated skip. The widget checks include
+Play with a logo, Play without a logo at 150% UI scale in a compact
+window, and controller focus on the Play button. The rendered profile
+picker and Home were inspected. Native Windows, Linux and Android
+interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-play-and-focus.zip)
+is **24,371,882 bytes**, SHA-256
+`734960fbe7ba4a612834d830531e654e08aa20390fede7cc3b39dd63a48f3dc9`.
+It is `0.1.25-dev` (1189), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## RomM platform icons on Home — 2026-11-10
+
+Build 1188 placed the icon beside the game logo. The current Home layout
+is documented above.
+
+Verified game downloads schedule an optional background icon fetch from the
+configured RomM server. Existing games with logos can fill the cache on
+selection. Home puts the icon to the left of the game logo and aligns the
+combined row with the selected tile and Play button. The server-scoped cache
+works offline. The text badge covers missing, invalid and SVG-only assets.
+The public PlayStation icon from the configured RomM instance matched the
+tagged 5.4.0 asset byte for byte. See [the asset and cache contract](docs/home-artwork-and-deletion.md#romm-platform-illustrations).
+
+Static analysis, 777 Flutter tests and the offscreen Home renderer passed on
+macOS 27.0.1, with one existing host-gated skip. Regressions cover the public
+asset request, malformed assets, offline cache reuse, server isolation, and
+the icon's alignment beside the logo at desktop and compact widths. Native
+Windows, Linux and Android rendering and the owner's Home walkthrough remain
+to be verified.
+
+The [universal macOS preview](build/releases/Broomm-macOS-platform-icons.zip)
+is **24,368,398 bytes**, SHA-256
+`9c9b782fdbb660cd4ec5bed031d15bde82efe53b3d8e7bbf1f481d8ace7f342e`.
+It is `0.1.25-dev` (1188), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Leftward Home anchor and labeled shortcuts — 2026-11-10
+
+Home halves the selected tile’s left gap from build 1186, with a minimum
+inset for the focus outline on compact windows. The shortcut row, logo and
+actions use that same left edge. The game logo has at least 72 logical pixels
+of separation from the tile’s bottom edge. Broomm settings and Emulator
+Settings show their names beside their icons, and the shortcut row scrolls
+when space is tight. See the [Home walkthrough](README.md#home-and-save-sync-preview).
+
+Analysis, 774 Flutter tests and one offscreen renderer passed on macOS
+27.0.1, with one existing host-gated skip. The tests cover the new anchor
+through the ends of the rail, logo spacing, visible labels and controller
+access to shortcuts in compact windows. Desktop and compact fixtures were
+inspected. Native Windows, Linux and Android interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-home-anchor-left.zip)
+is **24,357,153 bytes**, SHA-256
+`616e33feb9c781abc59f8ca9eed2d7fb624e363f1dbc5e73b590b101df08d018`.
+It is `0.1.25-dev` (1187), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Home shortcut alignment and logo spacing — 2026-11-10
+
+The shortcut row starts at the fixed selected tile’s left edge, above the tile.
+Broomm settings and Emulator Settings occupy the first two slots. Update and
+Downloads follow when available. Home adds 28 logical pixels above the logo
+for at least 48 pixels between the tile’s bottom edge and the logo frame.
+
+Analysis and the 38 affected Flutter cases passed on macOS 27.0.1. The initial
+full run passed 773 Flutter cases and the offscreen renderer, with one existing
+host-gated skip. Its only failing assertion measured the spacer together with
+the Emulator Settings button. Measuring the button itself passed in the focused
+run. Desktop and compact previews were inspected. Native Windows, Linux and
+Android interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-home-alignment.zip)
+is **24,357,669 bytes**, SHA-256
+`d306f1bd578c3dfc513c21164fdfd939b460ebf89937be5ab100a179d160e156`.
+It is `0.1.25-dev` (1186), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Home logo scale and Store alignment — 2026-11-10
+
+Game Store’s title and Open button share the selected tile’s left edge on Home.
+The default logo limits are 780 × 192 logical pixels, one-third smaller than
+build 1184. **Broomm settings → Appearance → Logo scale** persists an independent
+75–150% multiplier and combines it with UI scale. At 150%, the logo uses the
+previous preview’s limits at the same UI scale. Compact layouts still fit
+the available width. See the [Home walkthrough](README.md#home-and-save-sync-preview).
+
+Analysis, 774 Flutter tests and one offscreen renderer passed on macOS
+27.0.1, with one existing host-gated skip. Regressions cover Store alignment
+in desktop and compact windows, preference reload and combined logo/UI scaling.
+Native Windows, Linux and Android interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-logo-scale.zip)
+is **24,358,700 bytes**, SHA-256
+`95f78c6fdb7be99afbb2d681c8e8bd87aa7c09ce625ba86df144fb2dad669178`.
+It is `0.1.25-dev` (1185), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Larger Home game logos — 2026-11-10
+
+Home raises the logo’s display limits from 390 × 96 to 1170 × 288 logical
+pixels. The logo fits the available width and keeps its aspect ratio.
+The logo and the Play/Options row share the selected tile’s left edge at every
+UI scale. The artwork fixture checks the displayed dimensions at 75%, 100%
+and 150%, plus compact fitting and keyboard access to Play.
+
+Analysis, 774 Flutter tests and one offscreen renderer passed on macOS
+27.0.1, with one existing host-gated skip. Desktop and compact renders were
+inspected. Native Windows, Linux and Android interaction checks remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-home-large-logo.zip)
+is **24,353,856 bytes**, SHA-256
+`f65e910f1b2a825b3778c0b9bfbaf92290e404fcf04c1c94ed0e2fb6b3e86f41`.
+It is `0.1.25-dev` (1184), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
+## Home rail position and caption corrections — 2026-11-10
+
+The selected Home tile settles at 27% of the rail viewport from its left edge,
+slightly left of one-third across the window. End padding gives both the first
+and last tile the same position. Dragging snaps to the nearest tile. Scroll
+and growth ease together over 340 ms and honor reduced motion. The caption
+uses the viewport width, so it stays readable even for the last tile. Long
+titles wrap and move below the rail when they need more space.
+
+The top-left shortcuts use the same control dimensions as the footer Home
+button. Game logos use a single logical size limit, allowing the global
+UI scale to resize the artwork across the former compact layout breakpoint.
+See the [Home walkthrough](README.md#home-and-save-sync-preview).
+
+Analysis, **774 Flutter tests** and **one offscreen renderer** passed on
+macOS 27.0.1 with one existing host-gated skip. Regressions cover the first
+and last tile positions, long titles on narrow layouts, rapid reversal,
+reduced motion, drag snapping, shortcut alignment and logo scaling across
+75%, 100% and 150%. Desktop and compact fixtures were inspected offscreen.
+Native Windows, Linux and Android interaction checks remain pending.
+
+The [universal macOS archive](build/releases/Broomm-macOS-home-anchor.zip)
+is **24,355,690 bytes**, SHA-256
+`7c980671dc0a577d24a75447c3344a30236dc760bfba436620d83d412083b4c7`.
+It is `0.1.25-dev` (1183), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction deep/strict signatures,
+all seven ARM64/x86_64 binaries, setup assets and exact bridge readbacks passed.
+
+## Home refresh and ordinary game saves — 2026-11-10
+
+The shared Flutter Home uses a compact system shortcut row above Game Store
+and installed games. The selected tile grows by 38% and shows the platform
+badge and game title beside its lower edge, moving the caption below on compact
+layouts. Broomm's gradient focus outline is shared by the shell and pairing
+controls. The profile footer exposes the offline retry and restores profile
+focus on successful reconnection. The persisted 75–150% UI scale changes the
+logical viewport for screens, overlays and keyboard while preserving platform
+text sizing. Android uses native window insets for immersive system bars,
+including a delayed restore after the system keyboard closes. See the
+[walkthrough](README.md#home-and-save-sync-preview) and
+[Android immersive mode documentation](https://developer.android.com/develop/ui/views/layout/immersive).
+
+Install publication and successful emulator starts update recency under the
+existing library metadata lock. Older receipts use their completion date.
+The selected ROM retains its identity while reordered, and the additional
+timestamp leaves its installation identity intact. Recency is device-local
+and shared per server installation.
+
+RomM sync, imports, backups and queued retries transfer ordinary saves.
+The save-only store excludes state directories from native capture and restore.
+It compares ordinary digests when resuming old pending snapshots and strips
+state entries from validated legacy mixed saves. An older state-only head
+contributes no ordinary save. Existing local files, old mixed recovery copies
+and remote history are retained. Android's full local transactions still
+handle supported save states and replay their own journals.
+
+Verification on macOS 27.0.1 / Xcode 27.2, based on `e27cb08` plus this
+workspace change, passed analysis, **771 automated Flutter cases** and
+**one offscreen renderer**. One existing native-host-gated case was skipped.
+The regressions cover selection and controller traversal, compact caption
+layout, UI scale persistence and hit testing, offline retry and focus recovery,
+receipt ordering and identity, ordinary-save readback, legacy migration,
+missing working data and state-only sessions. The Android Kotlin bridge
+compiled against the pinned SDK. Android immersive behavior on a device,
+physical-controller/owner visual acceptance and Linux/Windows runtime
+verification remain pending. Verification used disposable fixtures.
+
+The [universal macOS archive](build/releases/Broomm-macOS-home-refresh.zip)
+is **24,337,018 bytes**, SHA-256
+`5f8980b37fdbfedf9fa581b39d34b044f6342b34f30c1e8fdc986836a9df8f04`.
+It is `0.1.25-dev` (1182), ad-hoc signed and uses normal Application Support
+storage. ZIP integrity, source and fresh-extraction deep/strict signatures,
+all seven ARM64/x86_64 binaries, setup assets and exact bridge readbacks passed.
+
 ## Android confirmed stop and sync
 
 All Android save routes use normal sync after an explicitly confirmed Force

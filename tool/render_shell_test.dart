@@ -90,7 +90,7 @@ void main() {
       summary: 'Downloaded game fixture for visual inspection.',
     );
     model.installed = [InstalledGame(previewGame, directory, 7)];
-    model.homeSelection(3);
+    model.homeSelection(1);
     await t.pumpAndSettle();
     final tile = find.byWidgetPredicate(
       (w) => w is ConsoleButton && w.label == previewGame.name,
@@ -116,8 +116,8 @@ void main() {
       524288000,
       1073741824,
     );
-    model.homeSelection(2);
-    model.homeSelection(3);
+    model.homeSelection(0);
+    model.homeSelection(1);
     await save('download-progress');
     model.download = null;
     model.homeSelection(1);

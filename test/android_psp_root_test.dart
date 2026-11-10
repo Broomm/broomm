@@ -347,7 +347,7 @@ void main() {
     await temp.delete(recursive: true);
   });
 
-  test('PSP play isolates accounts, uploads native savedata/state, restores standalone pointer and native preferences', () async {
+  test('PSP play isolates accounts, uploads native savedata and keeps states local, restores standalone pointer and native preferences', () async {
     final p = await plan(), session = await start();
     expect(native.launches.single['rootedPsp'], isTrue);
     // Native root storage has no document-provider root marker. Task handoff
@@ -375,7 +375,7 @@ void main() {
       [1, 2, 3],
     );
     expect(api.records, isNotEmpty);
-    expect(api.stateRecords, isNotEmpty);
+    expect(api.stateRecords, isEmpty);
     const other = 'd123456789abcdef0123456789abcdef';
     api.user = 4;
     final second = await start(other),
@@ -712,7 +712,7 @@ void main() {
       [3, 4],
     );
     expect(api.records, hasLength(2));
-    expect(api.stateRecords, isNotEmpty);
+    expect(api.stateRecords, isEmpty);
     expect(native.selected, 'native');
   });
 

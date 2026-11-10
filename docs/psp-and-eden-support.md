@@ -1,5 +1,9 @@
 # PPSSPP and Eden integration
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 This milestone adds PSP through **PPSSPP 1.20.4** and **Eden 0.2.1** as a second Switch choice, retaining Ryubing as the existing default. The reviewed native runtime is macOS ARM64. Eden's upstream macOS build is explicitly experimental. Linux, Windows, Android, physical controllers and cross-device gameplay require separate native acceptance. Other platforms remain visible/downloadable; no PS4 emulator is added.
 
 ## Installation and owner walkthrough

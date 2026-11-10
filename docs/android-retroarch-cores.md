@@ -1,5 +1,9 @@
 # Remaining rooted Android RetroArch cores
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 The owner approved this milestone after two-account GBA/SNES acceptance and
 PR #3's merge. The existing Dart supervisor, libsu connection, native ownership,
 OS locks, recovery and RomM contracts remain. No new runtime library is added.

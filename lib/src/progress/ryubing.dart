@@ -121,9 +121,9 @@ class _RyubingLayout extends ProgressLayout {
   }
 
   @override
-  Future<Map<String, File>> files() async {
+  Future<Map<String, File>> files({bool includeStates = true}) async {
     await _checkBinding();
-    return super.files();
+    return super.files(includeStates: includeStates);
   }
 
   @override

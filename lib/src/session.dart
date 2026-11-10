@@ -205,6 +205,7 @@ class GameSession {
 
   /// Runs after the native writer exits and before releasing SessionLease.
   Future<void> Function(int)? finalizeProgress;
+  Future<void> Function()? onStarted;
   void Function()? onFinalizingProgress;
   void Function()? cancelProgressTransfer;
   bool finalizingProgress = false;
@@ -657,6 +658,7 @@ class GameSession {
         const Duration(milliseconds: 32),
         (_) => unawaited(_poll(generation)),
       );
+      await onStarted?.call();
     } catch (_) {
       final child = _preparation;
       if (child != null && child.running) {

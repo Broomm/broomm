@@ -23,6 +23,19 @@ void main() {
     expect(restored.copy(reduceMotion: true).linuxUseKeyring, isTrue);
   });
 
+  test('legacy and out-of-range scale values preserve readable settings', () {
+    for (final record in [
+      {'showArtwork': false},
+      {'uiScale': 800, 'logoScale': 20, 'showArtwork': false},
+      {'uiScale': '125', 'logoScale': '125', 'showArtwork': false},
+    ]) {
+      final preferences = ShellPreferences.fromJson(record);
+      expect(preferences.uiScale, 100);
+      expect(preferences.logoScale, 100);
+      expect(preferences.showArtwork, false);
+    }
+  });
+
   test('emulator removal clears its defaults across servers and keeps other preferences', () async {
     final first = (await storage.saveServer(
       normalizeServer('https://first.example'),

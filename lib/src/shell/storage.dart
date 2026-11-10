@@ -49,8 +49,13 @@ class SavedProfile {
 }
 
 class ShellPreferences {
+  static const scaleOptions = [75, 90, 100, 110, 125, 150];
+  static int _readScale(Object? value) =>
+      value is int && scaleOptions.contains(value) ? value : 100;
   const ShellPreferences({
     this.reduceMotion = false,
+    this.uiScale = 100,
+    this.logoScale = 100,
     this.showArtwork = true,
     this.pageSize = 24,
     this.maxDownloads = 3,
@@ -69,6 +74,8 @@ class ShellPreferences {
     if (!{'auto', 'stable', 'rc'}.contains(channel))
       throw const FormatException('Invalid application update channel');
     return ShellPreferences(
+      uiScale: _readScale(j['uiScale']),
+      logoScale: _readScale(j['logoScale']),
       reduceMotion: j['reduceMotion'] as bool? ?? false,
       showArtwork: j['showArtwork'] as bool? ?? true,
       pageSize: size,
@@ -79,10 +86,12 @@ class ShellPreferences {
     );
   }
   final bool reduceMotion, showArtwork, verifyDownloads, linuxUseKeyring;
-  final int pageSize, maxDownloads;
+  final int pageSize, maxDownloads, uiScale, logoScale;
   final String updateChannel;
   ShellPreferences copy({
     bool? reduceMotion,
+    int? uiScale,
+    int? logoScale,
     bool? showArtwork,
     int? pageSize,
     int? maxDownloads,
@@ -91,6 +100,8 @@ class ShellPreferences {
     bool? linuxUseKeyring,
   }) => ShellPreferences(
     reduceMotion: reduceMotion ?? this.reduceMotion,
+    uiScale: uiScale ?? this.uiScale,
+    logoScale: logoScale ?? this.logoScale,
     showArtwork: showArtwork ?? this.showArtwork,
     pageSize: pageSize ?? this.pageSize,
     maxDownloads: maxDownloads ?? this.maxDownloads,
@@ -100,6 +111,8 @@ class ShellPreferences {
   );
   Map<String, dynamic> toJson() => {
     'reduceMotion': reduceMotion,
+    'uiScale': uiScale,
+    'logoScale': logoScale,
     'showArtwork': showArtwork,
     'pageSize': pageSize,
     'maxDownloads': maxDownloads,

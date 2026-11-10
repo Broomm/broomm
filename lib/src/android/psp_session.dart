@@ -329,18 +329,7 @@ class AndroidPspSession {
         adopt = choice == ProgressChoice.cloud;
       }
       if (adopt) {
-        final state = await store.state(),
-            knownStates = (state['stateKnown'] as Map? ?? {})
-                .cast<String, String>();
-        for (final e in held.entries.entries) {
-          if (e.key.startsWith('${plan.stateGroup}/'))
-            knownStates[e.key] = e.value['sha256'] as String;
-        }
-        await store.restore(held, {
-          ...state,
-          'stateKnown': knownStates,
-          'pending': true,
-        });
+        await store.restore(held, {...await store.state(), 'pending': true});
       }
     }
     r['phase'] = 'reconciled';
@@ -630,12 +619,7 @@ class AndroidPspSession {
           snapshot = await seal(game, plan, r, files, capture);
       final store = cloud.store(game);
       var state = await store.state();
-      if (state['active'] != true)
-        state = {
-          ...state,
-          'active': true,
-          'stateBefore': await store.stateFiles(),
-        };
+      if (state['active'] != true) state = {...state, 'active': true};
       await store.restore(snapshot, state);
       r.addAll({'phase': 'captured', 'captured': files});
       await progressWrite(journal, r);

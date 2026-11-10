@@ -1212,7 +1212,7 @@ void main() {
       expect(find.byType(PairingScreen), findsNothing);
       expect(launches, 1);
       expect(
-        find.textContaining('Cloud save access is not configured'),
+        find.textContaining('Connect this emulator’s save folder'),
         findsOneWidget,
       );
       await t.pumpWidget(const SizedBox());

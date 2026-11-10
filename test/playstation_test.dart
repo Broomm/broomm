@@ -399,7 +399,7 @@ void main() {
   // durable full-card copies and upload readback. Keep the real card/workflow;
   // its cumulative integration budget is distinct from a unit-test deadline.
   test(
-    'switching PS2 engines retains one cloud card and each engine’s matching states',
+    'switching PS2 engines retains one cloud card and each engine’s local states',
     () async {
       final pcs = await emulator('PCSX2'), arms = await emulator('ARMSX2');
       final first = await gameProgressLayout(resolved(pcs), 'ps2');
@@ -460,23 +460,12 @@ void main() {
           'ARMSX2 after play',
           () => cloud.afterPlay(game(second), 0),
         );
-        final afterSwitch = await cloud
-            .store(game(second))
-            .capture(
-              retained: await cloud
-                  .store(game(second))
-                  .load(
-                    (await cloud.store(game(second)).state())['snapshot']
-                        as String,
-                  ),
-            );
         expect(
-          afterSwitch.entries.keys.where((k) => k.startsWith('states-')),
-          containsAll([
-            '${first.areas.last.id}/slot.p2s',
-            '${second.areas.last.id}/slot.p2s',
-          ]),
+          await (await second.target('${second.areas.last.id}/slot.p2s'))
+              .readAsBytes(),
+          [4, 5, 6],
         );
+        expect(api.stateCalls, 0);
         final versions = api.records.length;
         await runPhase(
           'PCSX2 sync after switch',

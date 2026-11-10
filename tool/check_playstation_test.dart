@@ -280,16 +280,20 @@ void main() {
           reason: '$engine produced no native state',
         );
         expect(api.records, isNotEmpty);
-        expect(api.stateRecords, isNotEmpty);
+        expect(api.stateRecords, isEmpty);
         expect((await store.state())['pending'], false);
         final checkpoint = await store.state();
         final exported = await store.exportNative(snapshot);
         try {
           final imported = await store.importNative(exported.file);
           expect(imported.ordinaryDigest, snapshot.ordinaryDigest);
-          for (final f in (await cloudGame.layout.files()).values)
+          for (final f in (await cloudGame.layout.files(
+            includeStates: false,
+          )).values)
             await f.delete();
-          await store.restore(imported, checkpoint);
+          await cloud
+              .store(cloudGame, ordinaryOnly: true)
+              .restore(imported, checkpoint);
           expect(
             (await store.capture()).ordinaryDigest,
             snapshot.ordinaryDigest,

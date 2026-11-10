@@ -112,7 +112,7 @@ class ProgressLayout {
     );
   }
 
-  Future<Map<String, File>> files() async {
+  Future<Map<String, File>> files({bool includeStates = true}) async {
     if (archiveOnly)
       throw StateError(
         'A retained snapshot cannot inspect native emulator files',
@@ -120,6 +120,7 @@ class ProgressLayout {
     final result = <String, File>{};
     var total = 0;
     for (final a in areas) {
+      if (!includeStates && a.id.startsWith('states-')) continue;
       final path = await progressFile(
         Directory(root),
         '${a.path}/.probe',

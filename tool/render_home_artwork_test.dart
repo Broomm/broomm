@@ -173,7 +173,7 @@ void main() {
       await save('logo-picker');
       await t.tap(find.byKey(const ValueKey('artwork-logo-203')));
       await driveArtwork(t, () => model.installed.single.artwork?.hero != null);
-      model.homeSelection(3);
+      model.homeSelection(1);
       t.state<HomeScreenState>(find.byType(HomeScreen)).focusSelection();
       await t.pump(const Duration(seconds: 8));
       await save('home-hero');
@@ -209,6 +209,17 @@ void main() {
       expect(find.byTooltip('Cloud saves waiting to sync'), findsOneWidget);
       expect(find.byTooltip('Cloud saves need attention'), findsOneWidget);
       await save('home-cloud-status');
+      model.homeSelection(3);
+      t.state<HomeScreenState>(find.byType(HomeScreen)).focusSelection();
+      await save('home-last-game');
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('home-selected-caption')),
+          matching: find.text(model.installed.last.game.name),
+        ),
+        findsOneWidget,
+      );
+      model.homeSelection(1);
       model.installed = [original];
       await t.runAsync(model.refreshCloudStatus);
       await t.pumpAndSettle();

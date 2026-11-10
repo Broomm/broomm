@@ -3,7 +3,14 @@ package app.broomm.broomm
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import android.graphics.Rect
+import android.os.Build
+import android.os.Bundle
 import android.view.InputDevice
+import android.view.View
+import android.view.ViewTreeObserver
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.os.Handler
@@ -18,6 +25,56 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     private var rootInspection: RootInspection? = null
     private var updates: BroommUpdates? = null
     private val handler = Handler(Looper.getMainLooper())
+    private var keyboardWasVisible = false
+    private val restoreFullscreen = Runnable {
+        if (hasWindowFocus() && !keyboardVisible()) hideSystemBars()
+    }
+    private val layoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+        val visible = keyboardVisible()
+        if (keyboardWasVisible && !visible) {
+            handler.removeCallbacks(restoreFullscreen)
+            handler.postDelayed(restoreFullscreen, 1100)
+        }
+        keyboardWasVisible = visible
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.decorView.viewTreeObserver.addOnGlobalLayoutListener(layoutListener)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        handler.removeCallbacks(restoreFullscreen)
+        if (hasFocus) handler.post(restoreFullscreen)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun hideSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.apply {
+                systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+            }
+        } else {
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        }
+    }
+
+    private fun keyboardVisible(): Boolean {
+        val decor = window.decorView
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return decor.rootWindowInsets?.isVisible(WindowInsets.Type.ime()) == true
+        }
+        val visible = Rect()
+        decor.getWindowVisibleDisplayFrame(visible)
+        return decor.height - visible.height() > decor.height / 5
+    }
+
     private var held: String? = null
     private val shifts = mutableSetOf<String>()
     private val enters = mutableSetOf<String>()
@@ -121,5 +178,21 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         enters.removeAll { it.startsWith("$deviceId-") }
     }
     override fun onPause() { held = null; handler.removeCallbacks(repeat); for (key in shifts.toList()) shift(key, false); enters.clear(); super.onPause() }
-    override fun onDestroy() { inputs?.unregisterInputDeviceListener(this); inputs = null; handler.removeCallbacks(repeat); credentials?.close(); credentials = null; emulators?.close(); emulators = null; rootInspection?.close(); rootInspection = null; updates?.close(); updates = null; controls = null; super.onDestroy() }
+    override fun onDestroy() {
+        window.decorView.viewTreeObserver.removeOnGlobalLayoutListener(layoutListener)
+        handler.removeCallbacks(restoreFullscreen)
+        inputs?.unregisterInputDeviceListener(this)
+        inputs = null
+        handler.removeCallbacks(repeat)
+        credentials?.close()
+        credentials = null
+        emulators?.close()
+        emulators = null
+        rootInspection?.close()
+        rootInspection = null
+        updates?.close()
+        updates = null
+        controls = null
+        super.onDestroy()
+    }
 }

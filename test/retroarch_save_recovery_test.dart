@@ -104,7 +104,7 @@ void main() {
     ('lynx', 'mednafen_lynx', true),
   ]) {
     test(
-      '$core retries retained offline progress after native removal using its real core identity',
+      '$core retries only ordinary offline saves after native removal',
       () async {
         final l = await layout(slug, core), g = game(l), c = cloud();
         final key = statesOnly ? '${l.areas.last.id}/game' : 'save/game.srm';
@@ -119,12 +119,14 @@ void main() {
           rom: 42,
           client: api,
         );
-        expect(api.records, hasLength(1));
+        expect(api.records, hasLength(statesOnly ? 0 : 1));
         expect((await store.state())['pending'], false);
         expect(
-          api.records.values.single.name,
-          endsWith(statesOnly ? '.zip' : '.srm'),
+          (await store.load(store.storageId(snapshot))).digest,
+          snapshot.digest,
         );
+        if (!statesOnly)
+          expect(api.records.values.single.name, endsWith('.srm'));
       },
     );
   }

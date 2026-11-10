@@ -1,5 +1,9 @@
 # Rooted Dolphin on Android
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 The root route is pinned to [Dolphin 2609a](https://dolphin-emu.org/download/),
 version code 43114 on Android 11 or newer, user 0 and ARM64. Broomm checks the
 [official APK](https://dl.dolphin-emu.org/releases/2609a/dolphin-2609a.apk)

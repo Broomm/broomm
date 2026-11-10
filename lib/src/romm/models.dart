@@ -114,6 +114,7 @@ class RommGame {
     this.fullPath = '',
     this.files = const [],
     this.platformSlug = '',
+    this.platformFsSlug = '',
     this.sgdbId,
     this.siblings = const [],
     this.regions = const [],
@@ -134,6 +135,7 @@ class RommGame {
           ? j['sgdb_id'] as int
           : null,
       platformSlug: j['platform_slug'] as String? ?? '',
+      platformFsSlug: j['platform_fs_slug'] as String? ?? '',
       siblings: (j['sibling_roms'] as List? ?? const [])
           .map((v) => RommVariant.fromJson((v as Map).cast<String, dynamic>()))
           .toList(),
@@ -184,7 +186,7 @@ class RommGame {
   final double? rating;
   final String fsName, fullPath;
   final List<RommFile> files;
-  final String platformSlug;
+  final String platformSlug, platformFsSlug;
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -192,6 +194,7 @@ class RommGame {
     'sgdb_id': sgdbId,
     'platform_display_name': platform,
     'platform_slug': platformSlug,
+    'platform_fs_slug': platformFsSlug,
     'sibling_roms': siblings.map((v) => v.toJson()).toList(),
     'regions': regions,
     'languages': languages,

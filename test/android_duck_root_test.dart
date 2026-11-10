@@ -302,7 +302,7 @@ void main() {
     expect(await native.settings.readAsString(), original);
     expect(await (await p.target('save/card1.mcd')).readAsBytes(), card(3));
     expect(api.records, isNotEmpty);
-    expect(api.stateRecords, isNotEmpty);
+    expect(api.stateRecords, isEmpty);
     const other = 'd123456789abcdef0123456789abcdef';
     api.user = 4;
     final second = await plan(other);

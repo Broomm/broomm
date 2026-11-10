@@ -109,18 +109,28 @@ class ConsoleScrollView extends SingleChildScrollView {
     super.physics,
     super.controller,
     this.centerZone,
+    this.revealFocus = true,
     required super.child,
   });
   final double? centerZone;
+  final bool revealFocus;
 
   @override
-  Widget build(BuildContext context) =>
-      _ConsoleScrollEdges(centerZone: centerZone, child: super.build(context));
+  Widget build(BuildContext context) => _ConsoleScrollEdges(
+    centerZone: centerZone,
+    revealFocus: revealFocus,
+    child: super.build(context),
+  );
 }
 
 class _ConsoleScrollEdges extends StatefulWidget {
-  const _ConsoleScrollEdges({required this.child, this.centerZone});
+  const _ConsoleScrollEdges({
+    required this.child,
+    required this.revealFocus,
+    this.centerZone,
+  });
   final Widget child;
+  final bool revealFocus;
   final double? centerZone;
   @override
   State<_ConsoleScrollEdges> createState() => _ConsoleScrollEdgesState();
@@ -172,7 +182,9 @@ void revealConsoleFocus(FocusNode node) {
     var scrollable = Scrollable.maybeOf(context);
     while (scrollable != null) {
       final position = scrollable.position;
-      if (position.hasPixels && position.isScrollingNotifier.value)
+      if (_edgesFor(scrollable)?.widget.revealFocus != false &&
+          position.hasPixels &&
+          position.isScrollingNotifier.value)
         position.jumpTo(position.pixels);
       scrollable = Scrollable.maybeOf(scrollable.context);
     }
@@ -190,7 +202,9 @@ void revealConsoleFocus(FocusNode node) {
       final object = currentContext.findRenderObject()!;
       final viewport = RenderAbstractViewport.maybeOf(object);
       final position = scrollable.position;
-      if (viewport != null && position.hasContentDimensions) {
+      if (viewport != null &&
+          position.hasContentDimensions &&
+          _edgesFor(scrollable)?.widget.revealFocus != false) {
         var rect = MatrixUtils.transformRect(
           target.getTransformTo(object),
           target.paintBounds,

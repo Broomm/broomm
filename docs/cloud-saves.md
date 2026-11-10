@@ -2,6 +2,10 @@
 
 Historical single-file slice, 2026-10-22. The owner subsequently replaced its public save contract: see [BROOMM version history and PS3 ISO support](slotted-saves-and-ps3-iso.md) for the current implementation. The old unslotted asset remains readable for migration and is never overwritten by new sync. The [library/progress follow-up](library-and-progress-followup.md) added DS and Switch save boundaries; counts and release metadata below describe the preceding cloud-save milestone. Product rules are in [PROJECT.md](../PROJECT.md); verification scope and remaining acceptance are in [IMPLEMENTATION.md](../IMPLEMENTATION.md).
 
+The current client syncs only in-game saves. See the [updated contract and
+legacy handling](slotted-saves-and-ps3-iso.md#save-states-and-recovery). The
+single-file implementation below is historical.
+
 ## Managed asset and explicit actions
 
 The automatic target is one current-account/current-ROM save with exact `file_name=broomm`, `emulator=Broomm`, and no slot. The filename has no extension; its contents are a ZIP bundle. Account identity comes from authenticated RomM responses, not a display name. Multiple matching assets block synchronization; a renamed asset is no longer followed by its old ID. The save list is inspected to find this identity, but automatic work never downloads, replaces or deletes other save contents.

@@ -160,7 +160,7 @@ void main() {
       addTearDown(t.view.resetPhysicalSize);
       addTearDown(t.view.resetDevicePixelRatio);
       await t.runAsync(() => model.downloadGame(game));
-      model.homeIndex = 3;
+      model.homeIndex = 1;
       await t.pumpWidget(BroommApp(model: model));
       await t.pumpAndSettle();
       await t.binding.defaultBinaryMessenger.handlePlatformMessage(

@@ -281,15 +281,18 @@ void main() {
         ),
         isTrue,
       );
-      expect(client.stateRecords.length, 1);
+      expect(client.stateRecords, isEmpty);
+      final localState = await cloud.store(cloudGame).stateFiles();
+      expect(localState, isNotEmpty);
       checks.add(
-        'native NES .srm and matching save state uploaded through production cloud workflow',
+        'native NES .srm uploaded and matching save state kept locally',
       );
       await saveFile.writeAsBytes(List<int>.filled(8192, 0));
       await cloud.idle(
         () => cloud.useExisting(cloudGame, client.records.values.single),
       );
       expect(await saveFile.readAsBytes(), save);
+      expect(await cloud.store(cloudGame).stateFiles(), localState);
       checks.add(
         'explicit cloud restore preserves native save bytes and matching state',
       );

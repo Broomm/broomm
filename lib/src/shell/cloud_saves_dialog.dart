@@ -35,10 +35,11 @@ Future<ProgressChoice> resolveCloudConflict(
               onPressed: () => Navigator.pop(c, ProgressChoice.cloud),
               child: Text('Use ${conflict.remoteLabel.toLowerCase()} progress'),
             ),
-          ConsoleButton(
-            onPressed: () => Navigator.pop(c, ProgressChoice.device),
-            child: Text('Use ${conflict.localLabel.toLowerCase()} progress'),
-          ),
+          if (conflict.canUseDevice)
+            ConsoleButton(
+              onPressed: () => Navigator.pop(c, ProgressChoice.device),
+              child: Text('Use ${conflict.localLabel.toLowerCase()} progress'),
+            ),
         ],
       ),
     ) ??
@@ -309,7 +310,7 @@ class _SaveDialogState extends State<_SaveDialog> {
                 ],
                 if (widget.action == 'save-backup') ...[
                   const Text(
-                    'The correct file extension is added automatically. An interrupted backup resumes its original snapshot when retried. Existing named saves are never overwritten.',
+                    'Back up the in-game save with its native extension. Retrying an interrupted backup reuses its saved copy. Existing named saves are kept.',
                   ),
                   const SizedBox(height: 12),
                   ConsoleField(
@@ -328,7 +329,7 @@ class _SaveDialogState extends State<_SaveDialog> {
                 ],
                 if (widget.action == 'save-sync') ...[
                   const Text(
-                    'Sync ordinary saves and supported states. Incompatible states are kept separately by emulator build and host. An unexpected emulator exit requires a progress choice.',
+                    'Sync in-game saves with RomM. Emulator save states stay on this device. A save from an unexpected emulator exit may need review.',
                   ),
                   const SizedBox(height: 12),
                   ConsoleButton(

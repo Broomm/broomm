@@ -1,5 +1,9 @@
 # Linux x64 RetroArch milestone — 2026-11-02
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 The owner selected RetroArch first, then standalone Linux emulators. This adds
 the first managed Linux runtime; it does not enable macOS recipes on Linux.
 The earlier [audit](linux-managed-setup-audit.md) records the original gap.

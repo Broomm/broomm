@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'controls.dart';
 import 'navigation.dart';
 import 'model.dart';
+import 'storage.dart';
 import 'artwork_picker.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -155,6 +156,23 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 30),
             const Eyebrow('Appearance', color: muted),
             const SizedBox(height: 12),
+            _scale(
+              'UI scale',
+              'ui-scale',
+              model.preferences.uiScale,
+              (value) =>
+                  model.savePreferences(model.preferences.copy(uiScale: value)),
+            ),
+            const SizedBox(height: 18),
+            _scale(
+              'Logo scale',
+              'logo-scale',
+              model.preferences.logoScale,
+              (value) => model.savePreferences(
+                model.preferences.copy(logoScale: value),
+              ),
+            ),
+            const SizedBox(height: 18),
             _toggle(
               context,
               'Reduce motion',
@@ -372,6 +390,40 @@ class SettingsScreen extends StatelessWidget {
       ),
     ),
   );
+  Widget _scale(
+    String title,
+    String keyPrefix,
+    int selected,
+    Future<void> Function(int) save,
+  ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: const TextStyle(fontSize: 16)),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          for (final scale in ShellPreferences.scaleOptions)
+            Semantics(
+              selected: scale == selected,
+              child: ConsoleButton(
+                key: ValueKey('$keyPrefix-$scale'),
+                label: '$title $scale%',
+                fill: scale == selected ? const Color(0xff355650) : surface,
+                onPressed: model.busy ? null : () => save(scale),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Text('$scale%'),
+              ),
+            ),
+        ],
+      ),
+    ],
+  );
+
   Widget _toggle(
     BuildContext context,
     String title,

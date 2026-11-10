@@ -255,7 +255,7 @@ void main() {
     },
   );
   testWidgets(
-    'three home apps, settings and back work with controller navigation',
+    'system shortcuts, settings and back work with controller navigation',
     (t) async {
       await openHome(t);
       expect(
@@ -271,6 +271,30 @@ void main() {
         ),
         findsOneWidget,
       );
+      final homeButton = find.byWidgetPredicate(
+        (w) => w is ConsoleButton && w.label == 'Home',
+      );
+      final tile = find.byKey(const ValueKey('home-app-1'));
+      final settings = find.byWidgetPredicate(
+        (w) => w is ConsoleButton && w.label == 'Broomm settings',
+      );
+      final emulators = find.byWidgetPredicate(
+        (w) => w is ConsoleButton && w.label == 'Emulator Settings',
+      );
+      expect(t.getRect(settings).height, t.getRect(homeButton).height);
+      expect(t.getRect(emulators).height, t.getRect(homeButton).height);
+      expect(
+        find.widgetWithText(ConsoleButton, 'Broomm settings'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(ConsoleButton, 'Emulator Settings'),
+        findsOneWidget,
+      );
+      expect(t.getRect(settings).left, closeTo(t.getRect(tile).left, 1));
+      expect(t.getRect(emulators).left, greaterThan(t.getRect(settings).right));
+      expect(t.getRect(emulators).top, t.getRect(settings).top);
+      await press(t, LogicalKeyboardKey.arrowUp);
       await press(t, LogicalKeyboardKey.arrowLeft);
       expect(model.homeIndex, 0);
       await press(t, LogicalKeyboardKey.gameButtonA);
@@ -287,6 +311,55 @@ void main() {
       await t.pumpWidget(const SizedBox());
     },
   );
+  testWidgets(
+    'UI and logo scale are independently adjustable and persist through reload',
+    (t) async {
+      await openHome(t, size: const Size(640, 400));
+      final profile = find.byKey(const ValueKey('shell-profile'));
+      final height = t.getRect(profile).height;
+      await press(t, LogicalKeyboardKey.arrowUp);
+      await press(t, LogicalKeyboardKey.arrowLeft);
+      await press(t, LogicalKeyboardKey.gameButtonA);
+      expect(model.screen, ShellScreen.settings);
+      Future<void> chooseScale(String key, bool Function() applied) async {
+        final button = find.byKey(ValueKey(key));
+        await Scrollable.ensureVisible(t.element(button));
+        await t.pumpAndSettle();
+        await t.runAsync(() async {
+          final saved = Completer<void>();
+          void listener() {
+            if (!model.busy && applied() && !saved.isCompleted)
+              saved.complete();
+          }
+
+          model.addListener(listener);
+          try {
+            await t.tap(button);
+            await saved.future.timeout(const Duration(seconds: 3));
+          } finally {
+            model.removeListener(listener);
+          }
+        });
+        await t.pumpAndSettle();
+      }
+
+      await chooseScale('ui-scale-125', () => model.preferences.uiScale == 125);
+      expect(t.getRect(profile).height, closeTo(height * 1.25, 1));
+      await chooseScale(
+        'logo-scale-150',
+        () => model.preferences.logoScale == 150,
+      );
+      expect(t.getRect(profile).height, closeTo(height * 1.25, 1));
+      final restored = await t.runAsync(
+        () async => (await ShellStorage(root).load()).preferences,
+      );
+      expect(restored!.uiScale, 125);
+      expect(restored.logoScale, 150);
+      expect(t.takeException(), isNull);
+      await t.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets(
     'controller onboarding submits a server and account, closes login and opens Home',
     (t) async {
@@ -337,11 +410,15 @@ void main() {
       }
 
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      await input('right');
-      expect(model.homeIndex, 1);
+      await input('up');
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'Home tile 0');
       t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await input('up');
       await input('right');
-      expect(model.homeIndex, 2);
+      expect(
+        FocusManager.instance.primaryFocus?.debugLabel,
+        'Emulator Settings',
+      );
       await input('accept');
       expect(model.screen, ShellScreen.emulators);
       await input('back');
@@ -425,7 +502,7 @@ void main() {
       await press(t, LogicalKeyboardKey.gameButtonB);
       model.navigate(ShellScreen.home);
       await t.pumpAndSettle();
-      model.homeSelection(2);
+      model.homeSelection(1);
       await t.pumpAndSettle();
       final gameTile = find.byWidgetPredicate(
         (w) => w is ConsoleButton && w.label == 'Game 1',

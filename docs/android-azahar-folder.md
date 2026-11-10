@@ -1,5 +1,9 @@
 # Azahar scoped storage on Android
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 Broomm’s installer uses the official
 [Azahar 2126.2 scoped-storage APK](https://github.com/azahar-emu/azahar/releases/tag/2126.2).
 Its package is `io.github.lime3ds.android` and its version code is 33989152.

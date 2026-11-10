@@ -1,5 +1,35 @@
 # Home artwork and local game deletion
 
+## RomM platform illustrations
+
+RomM 5.4.0 serves platform artwork from its frontend's
+`/assets/platforms/` directory. Broomm requests the PNG-backed ICO version
+from the configured server, using `platform_slug` first and
+`platform_fs_slug` as a fallback when available. The request stays under the
+server's configured base path, carries no RomM token, rejects redirects and
+is capped at 512 KiB. The ICO directory is bounds-checked and Broomm decodes
+a single PNG frame of at most 256 × 256 before atomically caching it. The
+tagged RomM web frontend also supports SVG, which Broomm leaves to the
+existing text badge when a usable ICO is absent.
+[RomM 5.4.0 frontend lookup](https://raw.githubusercontent.com/rommapp/romm/5.4.0/frontend/src/v2/utils/platformIcons.ts)
+[RomM 5.4.0 icon directory](https://github.com/rommapp/romm/tree/5.4.0/frontend/assets/platforms).
+
+After an installation publishes, Broomm caches the icon in the background
+under its application data directory at `platform-icons/<server-id>/`.
+Existing playable games can fill the cache on selection. Cache hits
+work offline and are shared among games for that server. A failed icon
+fetch leaves the game playable, and uninstalling one game leaves its
+shared platform image available to others. The icon follows **Show
+artwork** and sits inside Play, to the left of the label, even for games
+without logos. The platform name is available as a tooltip and an
+accessibility label. The abbreviated text badge remains next to the game title.
+
+## Earlier artwork behavior and verification
+
+Home placement, focus styling and controls have since changed. See the
+[current Home walkthrough](../README.md#home-and-save-sync-preview). Earlier
+observations below describe their tested builds.
+
 Updated 2026-10-19. This implements the owner's sequential SteamGridDB artwork pickers, layered Home backgrounds and title options. The owner explicitly selected **remove downloaded files/artwork while keeping saves and save states**. Earlier navigation, managed-emulator and authentication evidence remains separate. Exact tested source/build fingerprints and command outcomes are in [the evidence record](home-artwork-and-deletion.json).
 
 The subsequent [catalogue/Home follow-up](catalogue-and-home-refresh.md) adds the optional third logo step, larger uncaptioned Home icons, footer profile controls and timed top-left notification cards. It supersedes the corresponding two-step layout descriptions in this historical record; deletion and credential ownership are unchanged.

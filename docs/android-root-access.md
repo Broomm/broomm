@@ -1,5 +1,9 @@
 # Android root inspection and first save target
 
+Current Broomm syncs only ordinary in-game saves. Save states remain local.
+Earlier state-transfer observations describe their tested builds. See the
+[current save contract](slotted-saves-and-ps3-iso.md#save-states-and-recovery).
+
 ## Rooted GBA route: implementation and validation status
 
 Current source also adds rooted SNES/Snes9x and save states for both systems.
@@ -612,7 +616,7 @@ Online rejection, TLS problems and invalid responses do not become offline
 permission. While an offline game is active, reconnection waits for closure.
 
 Walkthrough: choose the saved profile while disconnected, play and quit normally,
-then reconnect from Home's offline notice. For each rooted platform choose
+then reconnect using the offline icon beside the Home profile. For each rooted platform choose
 **Emulator Settings → platform → RetroArch → Set up**, then **Play**. Use
 RetroArch's Quick Menu to save a manual state; quit RetroArch and wait for Broomm's
 confirmed sync. Launch again and load the same slot. Test restoration through

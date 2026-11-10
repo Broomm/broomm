@@ -113,7 +113,7 @@ void main() {
     await until(() => model.artworkRequests.length == 2);
     expect(model.artworkRequests.map((g) => g.id), [1, 2]);
     expect(model.installed, isEmpty);
-    expect(model.homeAppCount, 4);
+    expect(model.systemApps, contains(3));
     final duplicate = model.downloadGame(queuedFixture(2));
     await model.saveGameArtwork(1, icon: icon());
     final early = await model.library.artworkFor(model.server!.id, 1);
@@ -123,10 +123,10 @@ void main() {
     expect(api.order, [1, 2]);
     expect(model.downloads, isEmpty);
     expect(model.downloading, false);
-    expect(model.installed.map((g) => g.game.id), [1, 2]);
+    expect(model.installed.map((g) => g.game.id), [2, 1]);
     expect(await File(model.installation(1)!.artwork!.icon!).exists(), true);
     expect(model.installation(1)!.artwork!.icon, early.icon);
-    expect(model.homeAppCount, 3);
+    expect(model.systemApps, isNot(contains(3)));
   });
   test('bounded simultaneous transfers keep independent progress, stages and cancellation while a queued game waits for capacity', () async {
     await model.savePreferences(model.preferences.copy(maxDownloads: 2));

@@ -1,5 +1,23 @@
 # Keyboard/controller navigation and motion
 
+The current UI uses a shared 3.5-point mint-to-teal stroke with a 3-point gap
+around focused buttons, text fields, scrollable descriptions and pairing
+controls. Home's shortcuts, game rail, actions and footer form separate
+directional rows. The two labeled settings shortcuts start above the
+selected tile, with the first button aligned to its left edge. Home reserves
+space at both ends of the rail so selections settle near the left edge of the
+window. Tile size and scroll offset ease over 340 ms, or settle immediately
+with reduced motion.
+Titles wrap within the space beside the selection or move below the rail.
+The artwork and Play/Options rows share the selected tile’s left edge, as do
+the Game Store title and Open button. A game logo has at least 72 logical
+pixels of separation from the tile’s bottom edge. A cached RomM platform
+illustration, when available, appears inside Play to the left of the label.
+Logo scale and UI scale combine to
+size the logo while preserving its aspect ratio and fitting the available
+width. See the [current Home walkthrough](../README.md#home-and-save-sync-preview).
+Earlier observations below describe their tested builds.
+
 Updated 2026-10-18. This review covered the product, implementation, decisions, architecture, profile/authentication, download/setup and controller research Markdown documents, then every implemented Flutter screen: server/profile selection and login, Home/header, Store/search/filters/details/download feedback, preferences, emulator setup/removal, game loading/pairing/paused/playing states and the local controller lab. Save conflict and Android emulator handoff screens are still future work, not reviewed implemented features.
 
 ## Changes

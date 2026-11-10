@@ -1,5 +1,9 @@
 # Grouped catalogue, logos and Home refresh
 
+Home placement, focus styling and controls have since changed. See the
+[current Home walkthrough](../README.md#home-and-save-sync-preview). Earlier
+observations below describe their tested builds.
+
 Updated 2026-10-19 in response to the owner's two screenshots. This follow-up changes catalogue presentation and Home feedback; [artwork ownership and game deletion](home-artwork-and-deletion.md), managed-emulator configuration and profile-private progress retain their existing boundaries. [Exact fingerprints, logs and build details](catalogue-and-home-refresh.json) identify this uncommitted workspace independently of earlier milestones.
 
 ## Catalogue and version choice

@@ -11,6 +11,7 @@ import '../steamgrid.dart';
 import '../session_lease.dart';
 
 part 'library_management.dart';
+part 'platform_icons.dart';
 
 class InstalledGame {
   const InstalledGame(
@@ -20,6 +21,7 @@ class InstalledGame {
     this.problem,
     this.artwork,
     this.removing = false,
+    this.interactedAt,
   });
   final RommGame game;
   final Directory directory;
@@ -27,6 +29,16 @@ class InstalledGame {
   final String? problem;
   final HomeArtwork? artwork;
   final bool removing;
+  final DateTime? interactedAt;
+
+  static int recentFirst(InstalledGame a, InstalledGame b) {
+    final time = (b.interactedAt?.microsecondsSinceEpoch ?? 0).compareTo(
+      a.interactedAt?.microsecondsSinceEpoch ?? 0,
+    );
+    if (time != 0) return time;
+    final name = a.game.name.toLowerCase().compareTo(b.game.name.toLowerCase());
+    return name != 0 ? name : a.game.id.compareTo(b.game.id);
+  }
 }
 
 class LibrarySnapshot {
@@ -218,6 +230,36 @@ class GameLibrary {
     return dir;
   }
 
+  Future<void> _writeReceipt(File file, Map record) async {
+    final encoded = jsonEncode(record);
+    if (utf8.encode(encoded).length > 12 * 1024 * 1024)
+      throw const RommFailure(
+        'The game installation record exceeds the supported size.',
+      );
+    await file.writeAsString(encoded, flush: true);
+    if (await file.readAsString() != encoded)
+      throw const FileSystemException('Receipt verification failed');
+  }
+
+  Future<DateTime> recordPlay(String serverId, int id) => _locked(() async {
+    final game = await _ownedGame(serverId, id);
+    final receipt = File('${game.path}/receipt.json');
+    final record = jsonDecode(await receipt.readAsString()) as Map;
+    final time = DateTime.now().toUtc();
+    final stage = await game.parent.createTemp('.interaction-');
+    try {
+      final pending = File('${stage.path}/receipt.json');
+      await _writeReceipt(pending, {
+        ...record,
+        'lastPlayedAt': time.toIso8601String(),
+      });
+      await pending.rename(receipt.path);
+      return time;
+    } finally {
+      await stage.delete(recursive: true);
+    }
+  });
+
   Future<LibrarySnapshot> load(String serverId) => _locked(() async {
     final directory = await _server(serverId);
     final games = <InstalledGame>[];
@@ -317,15 +359,16 @@ class GameLibrary {
             problem: damaged,
             artwork: artwork,
             removing: removing,
+            interactedAt: DateTime.tryParse(
+              (j['lastPlayedAt'] ?? j['completedAt'] ?? '') as String,
+            ),
           ),
         );
       } catch (_) {
         problem = 'Some local game records could not be read. Existing files have been kept; check the library folder and retry.';
       }
     }
-    games.sort(
-      (a, b) => a.game.name.toLowerCase().compareTo(b.game.name.toLowerCase()),
-    );
+    games.sort(InstalledGame.recentFirst);
     return LibrarySnapshot(games, problem);
   });
 
@@ -444,24 +487,7 @@ class GameLibrary {
       }
       cancellation.check();
       progress(DownloadProgress(game, 'Finishing download', total, total));
-      final receipt = File('${staging.path}/receipt.json');
-      final encoded = jsonEncode({
-        'version': 1,
-        'serverId': serverId,
-        'userId': userId,
-        'game': game.toJson(),
-        'files': receipts,
-        'completedAt': DateTime.now().toUtc().toIso8601String(),
-      });
-      if (utf8.encode(encoded).length > 12 * 1024 * 1024)
-        throw const RommFailure(
-          'The game installation record exceeds the supported size.',
-        );
-      await receipt.writeAsString(encoded, flush: true);
-      if (await receipt.readAsString() != encoded)
-        throw const FileSystemException('Receipt verification failed');
-      cancellation.check();
-      await _locked(() async {
+      final publishedAt = await _locked(() async {
         cancellation.check();
         if (await FileSystemEntity.type(destination.path, followLinks: false) !=
                 FileSystemEntityType.notFound ||
@@ -473,10 +499,26 @@ class GameLibrary {
           throw const RommFailure(
             'The game installation changed during download. Existing files were kept.',
           );
+        final time = DateTime.now().toUtc();
+        await _writeReceipt(File('${staging.path}/receipt.json'), {
+          'version': 1,
+          'serverId': serverId,
+          'userId': userId,
+          'game': game.toJson(),
+          'files': receipts,
+          'completedAt': time.toIso8601String(),
+        });
+        cancellation.check();
         await staging.rename(destination.path);
+        return time;
       });
       published = true;
-      return InstalledGame(game, destination, userId);
+      return InstalledGame(
+        game,
+        destination,
+        userId,
+        interactedAt: publishedAt,
+      );
     } on DownloadWriterUncertain {
       uncertainWriter = true;
       rethrow;

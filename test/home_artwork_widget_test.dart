@@ -11,6 +11,7 @@ import 'package:broomm/src/steamgrid.dart';
 import 'package:broomm/src/shell/app.dart';
 import 'package:broomm/src/shell/artwork.dart';
 import 'package:broomm/src/shell/model.dart';
+import 'package:broomm/src/shell/library.dart';
 import 'package:broomm/src/shell/storage.dart';
 import 'package:broomm/src/shell/home_screen.dart';
 import 'package:broomm/src/shell/controls.dart';
@@ -23,6 +24,17 @@ import 'support/artwork_fixtures.dart';
 class ArtworkCatalogue extends FixtureRomm {
   ArtworkCatalogue(super.server);
   bool mapped = true;
+  bool hasPlatformIcon = false;
+  final platformIconRequests = <String>[];
+
+  @override
+  Future<Uint8List?> platformIcon(String slug) async {
+    platformIconRequests.add(slug);
+    return hasPlatformIcon && slug == 'ngc'
+        ? artworkIco(artworkPng(64, 64))
+        : null;
+  }
+
   @override
   Future<RommGame> game(int id) async {
     final g = fixture(id: id);
@@ -31,6 +43,7 @@ class ArtworkCatalogue extends FixtureRomm {
       name: 'Artwork Adventure',
       platformId: g.platformId,
       platform: g.platform,
+      platformSlug: 'ngc',
       bytes: g.bytes,
       fsName: g.fsName,
       fullPath: g.fullPath,
@@ -285,9 +298,146 @@ void main() {
     );
   }
 
+  void addRailGames(List<String> names) {
+    model.installed = [
+      for (final (index, name) in names.indexed)
+        InstalledGame(
+          RommGame(
+            id: index + 1,
+            name: name,
+            platformId: 4,
+            platform: 'PlayStation 2',
+          ),
+          root,
+          7,
+        ),
+    ];
+  }
+
+  testWidgets(
+    'first and last tiles settle at the same left-side anchor with complete captions',
+    (t) async {
+      const names = [
+        'First game',
+        'Second game',
+        'Third game',
+        'Super Smash Bros. Ultimate',
+        'Shadow of the Colossus Special Edition',
+      ];
+      addRailGames(names);
+      await open(t, size: const Size(960, 600));
+      final store = find.byKey(const ValueKey('home-app-1'));
+      void expectStoreDetailsAligned() {
+        final storeLeft = t.getRect(store).left;
+        expect(t.getRect(find.text('Game Store')).left, closeTo(storeLeft, 1));
+        expect(
+          t.getRect(find.widgetWithText(ConsoleButton, 'Open')).left,
+          closeTo(storeLeft, 1),
+        );
+      }
+
+      expectStoreDetailsAligned();
+      expect(t.getRect(store).left, closeTo(100, 1));
+      final anchor = t.getCenter(store).dx;
+      final caption = find.byKey(const ValueKey('home-selected-caption'));
+      final title = find.byKey(const ValueKey('home-game-title'));
+      for (final (i, name) in names.indexed) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await t.pumpAndSettle();
+        final tile = find.byKey(ValueKey(i + 1));
+        expect(model.selectedHomeGame?.game.name, name);
+        expect(t.getCenter(tile).dx, closeTo(anchor, 1));
+        expect(
+          find.descendant(of: caption, matching: find.text('PS2')),
+          findsOneWidget,
+        );
+        expect(t.getRect(caption).right, lessThanOrEqualTo(960));
+        expect(t.renderObject<RenderParagraph>(title).didExceedMaxLines, false);
+      }
+      // The last title can wrap below the tile on a narrow display.
+      t.view.physicalSize = const Size(320, 600);
+      await t.binding.setSurfaceSize(const Size(320, 600));
+      await t.pumpAndSettle();
+      final paragraph = t.renderObject<RenderParagraph>(title);
+      final lastGlyph = paragraph
+          .getBoxesForSelection(
+            TextSelection(
+              baseOffset: names.last.length - 1,
+              extentOffset: names.last.length,
+            ),
+          )
+          .single
+          .toRect();
+      expect(t.getRect(title).left + lastGlyph.right, lessThan(320));
+      expect(lastGlyph.bottom, lessThanOrEqualTo(paragraph.size.height));
+      expect(
+        t.getRect(caption).top,
+        greaterThan(t.getRect(find.byKey(const ValueKey(5))).bottom),
+      );
+      for (final _ in names) {
+        await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+        await t.pumpAndSettle();
+      }
+      expectStoreDetailsAligned();
+      await finish(t);
+    },
+  );
+
+  testWidgets(
+    'tile growth is gradual, can reverse, and honors reduced motion',
+    (t) async {
+      addRailGames(['First game', 'Second game']);
+      await open(t);
+      final store = find.byKey(const ValueKey('home-app-1'));
+      final first = find.byKey(const ValueKey(1));
+      final base = t.getRect(first).width;
+      final enlarged = t.getRect(store).width;
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+      await t.pump(const Duration(milliseconds: 160));
+      final growing = t.getRect(first).width;
+      expect(growing, greaterThan(base));
+      expect(growing, lessThan(enlarged));
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await t.pump();
+      expect(t.getRect(first).width, closeTo(growing, 1));
+      await t.pumpAndSettle();
+      expect(t.getRect(first).width, closeTo(base, 1));
+
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(reduceMotion: true)),
+      );
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await t.pump();
+      expect(t.getRect(first).width, closeTo(enlarged, 1));
+      await t.pumpAndSettle();
+      await finish(t);
+    },
+  );
+
+  testWidgets(
+    'a horizontal drag snaps the closest game to the selection anchor',
+    (t) async {
+      addRailGames(['First game', 'Second game', 'Third game']);
+      await open(t);
+      final anchor = t.getCenter(find.byKey(const ValueKey('home-app-1')));
+      await t.dragFrom(anchor, const Offset(-180, 0));
+      await t.pumpAndSettle();
+      expect(model.selectedHomeGame?.game.name, 'First game');
+      expect(
+        t.getCenter(find.byKey(const ValueKey(1))).dx,
+        closeTo(anchor.dx, 1),
+      );
+      await finish(t);
+    },
+  );
+
   testWidgets(
     'a mapped download opens square then hero pickers and persists a top-aligned, fading Home image with cropped-poster fallback',
     (t) async {
+      final client = model.client! as ArtworkCatalogue;
+      client.hasPlatformIcon = true;
       await open(t);
       await download(t);
       await driveArtwork(
@@ -318,18 +468,37 @@ void main() {
       );
       await t.tap(find.byKey(const ValueKey('artwork-logo-203')));
       await driveArtwork(t, () => model.installed.single.artwork?.hero != null);
-      model.homeSelection(3);
+      final cached = File(
+        '${root.path}/platform-icons/${model.server!.id}/icon-ngc.png',
+      );
+      await driveArtwork(t, cached.existsSync);
+      model.homeSelection(1);
       await t.pumpAndSettle();
+      final platformIcon = find.byKey(const ValueKey('home-platform-icon'));
+      await driveArtwork(t, () => platformIcon.evaluate().isNotEmpty);
       await decodeArtworkImages(t);
+      expect(client.platformIconRequests, ['ngc']);
       expect(model.installed.single.artwork!.logo, endsWith('/logo.png'));
       expect(find.byKey(const ValueKey('home-game-logo')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-game-title')), findsNothing);
+      expect(find.byKey(const ValueKey('home-game-title')), findsOneWidget);
       final play = find.byWidgetPredicate(
         (w) =>
             w is ConsoleButton &&
             w.focusNode?.debugLabel == 'Home primary action',
       );
+      final playText = find.descendant(of: play, matching: find.text('Play'));
+      expect(find.descendant(of: play, matching: platformIcon), findsOneWidget);
       final options = find.widgetWithText(ConsoleButton, 'Options');
+      final store = find.byKey(const ValueKey('home-app-1'));
+      final gameTile = find.byKey(const ValueKey(1));
+      final caption = find.byKey(const ValueKey('home-selected-caption'));
+      expect(t.getRect(gameTile).width, greaterThan(t.getRect(store).width));
+      expect(t.getRect(caption).left, greaterThan(t.getRect(gameTile).right));
+      expect(t.getRect(caption).bottom, closeTo(t.getRect(gameTile).bottom, 4));
+      expect(
+        find.descendant(of: caption, matching: find.text('GC')),
+        findsOneWidget,
+      );
       expect(t.getCenter(play).dy, closeTo(t.getCenter(options).dy, 1));
       expect(t.getRect(options).left, greaterThan(t.getRect(play).right));
       final hero = t.widget<Image>(
@@ -349,12 +518,89 @@ void main() {
             .image,
         isNotNull,
       );
+      final logo = find.byKey(const ValueKey('home-game-logo'));
+      void expectDetailsAligned() {
+        final tile = t.getRect(gameTile);
+        final artwork = t.getRect(logo);
+        expect(
+          t.getRect(find.byKey(const ValueKey('system-app-0'))).left,
+          closeTo(tile.left, 1),
+        );
+        expect(artwork.left, closeTo(tile.left, 1));
+        expect(
+          t.getRect(platformIcon).right,
+          lessThan(t.getRect(playText).left),
+        );
+        expect(
+          t.getCenter(platformIcon).dy,
+          closeTo(t.getCenter(playText).dy, 1),
+        );
+        expect(artwork.top - tile.bottom, greaterThanOrEqualTo(71));
+        expect(t.getRect(play).left, closeTo(tile.left, 1));
+        expect(t.getCenter(play).dy, closeTo(t.getCenter(options).dy, 1));
+      }
+
+      expectDetailsAligned();
+      t.view.physicalSize = const Size(1900, 900);
+      await t.binding.setSurfaceSize(const Size(1900, 900));
+      await t.pumpAndSettle();
+      final logoAtDefaultScale = t.getRect(logo).height;
+      expect(logoAtDefaultScale, closeTo(192, 1));
+      expect(
+        t.getRect(logo).width / logoAtDefaultScale,
+        closeTo(640 / 200, .01),
+      );
+      expectDetailsAligned();
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 150)),
+      );
+      await t.pumpAndSettle();
+      expect(t.getRect(logo).height, closeTo(logoAtDefaultScale * 1.5, 1));
+      expectDetailsAligned();
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 75)),
+      );
+      await t.pumpAndSettle();
+      expect(t.getRect(logo).height, closeTo(logoAtDefaultScale * .75, 1));
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 125)),
+      );
+      await t.pumpAndSettle();
+      final playHeight = t.getRect(play).height;
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(logoScale: 150)),
+      );
+      await t.pumpAndSettle();
+      expect(
+        t.getRect(logo).height,
+        closeTo(logoAtDefaultScale * 1.25 * 1.5, 1),
+      );
+      expect(t.getRect(play).height, closeTo(playHeight, 1));
+      expectDetailsAligned();
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 100)),
+      );
+      t.view.physicalSize = const Size(320, 600);
+      await t.binding.setSurfaceSize(const Size(320, 600));
+      await t.pumpAndSettle();
+      expectDetailsAligned();
+      final narrowLogo = t.getRect(logo);
+      expect(narrowLogo.right, lessThanOrEqualTo(320));
+      expect(narrowLogo.height, lessThan(logoAtDefaultScale));
+      expect(narrowLogo.width / narrowLogo.height, closeTo(640 / 200, .01));
+      t.state<HomeScreenState>(find.byType(HomeScreen)).focusSelection();
+      await t.pumpAndSettle();
+      await t.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await t.pumpAndSettle();
+      expect(t.widget<ConsoleButton>(play).focusNode!.hasPrimaryFocus, true);
+      expect(t.getRect(play).bottom, lessThan(600));
       await t.runAsync(
         () => model.savePreferences(model.preferences.copy(showArtwork: false)),
       );
       await t.pumpAndSettle();
       expect(find.byKey(const ValueKey('home-hero-image')), findsNothing);
       expect(find.byKey(const ValueKey('home-game-logo')), findsNothing);
+      expect(platformIcon, findsNothing);
       expect(find.byKey(const ValueKey('home-game-title')), findsOneWidget);
       t.view.physicalSize = const Size(320, 844);
       await t.binding.setSurfaceSize(const Size(320, 844));
@@ -363,6 +609,43 @@ void main() {
       expect(t.getRect(options).left, greaterThan(t.getRect(play).right));
       expect(t.getRect(options).right, lessThanOrEqualTo(320));
       expect(find.byType(GameArtwork), findsOneWidget);
+      expect(t.takeException(), isNull);
+      await finish(t);
+    },
+  );
+  testWidgets(
+    'Play shows the platform icon for a game without a logo at compact UI scale',
+    (t) async {
+      final client = model.client! as ArtworkCatalogue;
+      client
+        ..mapped = false
+        ..hasPlatformIcon = true;
+      await t.runAsync(
+        () => model.savePreferences(model.preferences.copy(uiScale: 150)),
+      );
+      await open(t, size: const Size(320, 600));
+      await download(t);
+      await driveArtwork(t, () => model.installed.isNotEmpty);
+      model.homeSelection(1);
+      final icon = find.byKey(const ValueKey('home-platform-icon'));
+      await driveArtwork(t, () => icon.evaluate().isNotEmpty);
+      await t.pumpAndSettle();
+      final play = find.widgetWithText(ConsoleButton, 'Play');
+      expect(find.byKey(const ValueKey('home-game-logo')), findsNothing);
+      expect(find.descendant(of: play, matching: icon), findsOneWidget);
+      expect(t.getRect(icon).left, greaterThan(t.getRect(play).left));
+      expect(
+        t.getRect(icon).right,
+        lessThan(t.getRect(find.text('Play')).left),
+      );
+      expect(
+        t.getRect(find.text('Play')).right,
+        lessThan(t.getRect(play).right),
+      );
+      model.homeSelection(0);
+      await t.pumpAndSettle();
+      expect(find.widgetWithText(ConsoleButton, 'Open'), findsOneWidget);
+      expect(icon, findsNothing);
       expect(t.takeException(), isNull);
       await finish(t);
     },
@@ -450,7 +733,7 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(model.homeIndex, 3);
+      expect(model.homeIndex, 1);
       await t.binding.defaultBinaryMessenger.handlePlatformMessage(
         'app.broomm/prototype',
         const StandardMethodCodec().encodeMethodCall(
@@ -470,7 +753,7 @@ void main() {
       expect(await t.runAsync(() => directory.exists()), true);
       expect(
         model.homeIndex,
-        3,
+        1,
         reason: 'Closing options must retain the hovered title',
       );
       await t.sendKeyEvent(LogicalKeyboardKey.contextMenu);

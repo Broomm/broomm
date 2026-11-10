@@ -30,6 +30,7 @@ The [captured 5.4.0 OpenAPI schema](reference/romm-5.4.0-openapi.json) is the wi
 | Picks | Most recently added IDs descending, first result featured; this is a collection pick, not a personalization engine |
 | Detail | `GET /api/roms/{id}`; summary, platform, genres, year, rating and size when available |
 | Artwork | Returned server-local cover/screenshot paths, resolved under the configured base prefix |
+| Platform icons | Same-server frontend assets at `assets/platforms/{slug}.ico`, fetched without a bearer token and cached offline per saved server |
 | Downloads | Detail `files` manifest plus `GET /api/roms/{file-id}/files/content/{encoded-file-name}`; the path ID is a file ID, not the parent ROM ID |
 
 The client rejects redirects instead of forwarding authentication, confines authenticated artwork to the selected origin/base path, validates URL structure before normalization, keeps TLS certificate verification, requires an explicit opt-in for HTTP, bounds responses (12 MiB JSON / 8 MiB artwork) and uses a 20-second operation deadline. Four connections per host and a client-scoped bounded artwork cache limit work. HTTP errors expose fixed actionable messages; server bodies, passwords, tokens and authorization headers are never printed. Expired/forbidden sessions remain distinct from a confirmed-empty catalogue. Retry is user initiated; the client does not retry a consumed refresh token automatically.

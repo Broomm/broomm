@@ -39,7 +39,7 @@ class BlockingUpdateInstaller extends ApplicationInstaller {
 
 void main() {
   testWidgets(
-    'automatic offer is first on Home, preserves selection, and opens a cancellable controller update flow',
+    'automatic offer joins Home shortcuts, preserves selection, and opens a cancellable controller update flow',
     (t) async {
       late Directory root;
       late ShellModel model;
@@ -72,19 +72,22 @@ void main() {
       await t.pumpWidget(BroommApp(model: model));
       printOnFailure('Updater UI: model ready');
       await t.pumpAndSettle();
-      expect(model.homeApps, [0, 1, 2]);
-      final selected = model.homeApps[model.homeIndex];
+      expect(model.systemApps, [0, 2]);
+      final selected = model.homeIndex;
+      final settings = find.byKey(const ValueKey('system-app-0'));
+      final emulators = find.byKey(const ValueKey('system-app-2'));
+      final settingsLeft = t.getTopLeft(settings).dx;
+      final emulatorsLeft = t.getTopLeft(emulators).dx;
       offer.complete(
         selectUpdate([updateRelease('0.1.1')], '0.1.0', false, 'windows-x64'),
       );
       await t.pumpAndSettle();
-      expect(model.homeApps, [4, 0, 1, 2]);
-      expect(model.homeApps[model.homeIndex], selected);
-      final update = find.byKey(const ValueKey('home-app-4'));
-      expect(
-        t.getTopLeft(update).dx,
-        lessThan(t.getTopLeft(find.byKey(const ValueKey('home-app-0'))).dx),
-      );
+      expect(model.systemApps, [0, 2, 4]);
+      expect(model.homeIndex, selected);
+      final update = find.byKey(const ValueKey('system-app-4'));
+      expect(t.getTopLeft(settings).dx, settingsLeft);
+      expect(t.getTopLeft(emulators).dx, emulatorsLeft);
+      expect(t.getTopLeft(update).dx, greaterThan(emulatorsLeft));
       Future<void> controller(String action) async {
         await t.binding.defaultBinaryMessenger.handlePlatformMessage(
           'app.broomm/prototype',
@@ -96,11 +99,12 @@ void main() {
         await t.pump();
       }
 
-      await controller('left');
-      printOnFailure('Updater UI: first left dispatched');
+      await controller('up');
+      printOnFailure('Updater UI: system row reached');
       await t.pumpAndSettle();
-      await controller('left');
-      printOnFailure('Updater UI: second left dispatched');
+      await controller('right');
+      await controller('right');
+      printOnFailure('Updater UI: update focused');
       await t.pumpAndSettle();
       expect(model.homeIndex, 0);
       await controller('accept');

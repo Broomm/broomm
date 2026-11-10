@@ -210,9 +210,9 @@ RetroArch core bytes when applicable. Installation timestamps invalidate caches
 and launch observations, but do not split identical APKs into different state
 groups across devices. Hashes are cached against fresh package/file metadata;
 unchanged executables are not fully hashed on each launch. State groups have
-**separate physical directories and cloud identities**, so a changed core/APK
+**separate physical directories on the device**, so a changed core/APK
 cannot relabel old files as current. Eden has no states. Matching Android state
-groups do not establish Android-to-desktop state portability.
+groups stay local. RomM synchronization and named backups contain only in-game saves.
 
 Eden reads, rather than replaces, native account metadata. A bounded Android OS
 AES primitive supports Dart identification of encrypted NSP/XCI headers with
@@ -242,7 +242,7 @@ without reading a live external writer.
 Do not delete an unfinished session's marker/journal, snapshots, stable locks or
 cloud pending data. Completed private recovery directories may be archived or
 removed only after checking that normal restoration completed and all desired
-progress/states are retained/synchronized. Clearing Android app data or
+ordinary saves have synchronized and any desired local state files are backed up separately. Clearing Android app data or
 uninstalling Broomm deletes its private working/recovery copies; export/sync
 first. Removing a game preserves these progress roots. **Remove** now requests Android's user-confirmed uninstall of the selected
 external package. This deletes that app's private cores, settings and standalone
