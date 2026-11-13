@@ -44,8 +44,10 @@ For an unfinished shared-folder session, keep the existing Broomm installation,
 folder grant and ARMSX2 memory cards. After updating Broomm, close ARMSX2 and
 choose **Finish previous game session** to retry capture. Broomm uses the
 filename reported by Android when both capitalizations of a configured card
-resolve to the same file. If the two slots resolve to one card, fix the card
-assignments before retrying.
+resolve to the same regular file. Android can normalize the capitalization
+on the rooted shared-folder route, too. Broomm checks each path component for
+actual symlinks and checks the file identity before accepting the listed name.
+If the two slots resolve to one card, fix the card assignments before retrying.
 
 Play a downloaded self-contained CHD, ISO or raw BIN with standard PS2 disc
 metadata. Save in the game, or use ARMSX2’s **Save State** menu, then choose
@@ -68,3 +70,23 @@ reads CHD sectors on the ordinary Android app worker. Broomm owns the
 bounded ISO9660 boot metadata reader, save scope, and journal. The root
 service verifies the same library file identity in its own mount view.
 The decoder is bundled for Android, with [pinned source and notices](../vendor/libchdr/SOURCES.md).
+
+## Shared path regression check
+
+Compile with the project toolchain:
+
+```sh
+devbox --config tool/android run -- bash check_bridge.sh
+devbox --config tool/android run -- bash build_prepared_shared_folder_test.sh
+```
+
+Push `.tool-cache/research/android/prepared-shared-folder-test-dex.zip` to
+`/data/local/tmp` on a rooted Android user 0 device. Run
+`app.broomm.broomm.Check_prepared_shared_folderKt` with root through
+`app_process /system/bin`, using the pushed ZIP as `CLASSPATH`. Pass a fresh
+`Broomm/.shared-path-test-<32 lowercase hexadecimal digits>` as the sole
+argument. On casefolded storage, it verifies that a differently capitalized
+card resolves to the listed name and remains readable. On case-sensitive
+storage, the other spelling remains missing. Both checks exercise refusal of
+linked files and directories. The fixture removes its own files. Remove the
+pushed ZIP afterward.

@@ -1,5 +1,27 @@
 # Implementation plan
 
+## Rooted shared ARMSX2 path correction
+
+On GammaOS Android 14, build 1189 completed ARMSX2's first-run setup and
+installed a PS2 session. On return, the rooted shared-folder adapter rejected
+the configured `mcd001.ps2` spelling. Android canonicalized it to the listed
+`Mcd001.ps2`, and both resolved to the same regular file and inode. The
+installed session journal and both cards remained present.
+
+The adapter checks each path component with `lstat` and retains its existing
+regular-file and inode checks for card name resolution. The Kotlin bridge and
+115 focused Flutter tests passed. On the same device, the native regression
+fixture passed casefolded name and file reads, missing-file handling, and
+symlink refusal. A read-only check through the corrected adapter resolved the
+actual pending session's card. Packaged save recovery remains unverified.
+See the [recovery walkthrough](docs/android-armsx2-root.md#play-and-recovery).
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-shared-path.zip)
+is `0.1.27-dev` (1206), **24,417,968 bytes**, with SHA-256
+`82b085a5db0222144e03934f59c2fa1a6d4077a30329a58911ea55240823ab83`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Android emulator preparation before installation
 
 Setup checks Android APK-install permission, prepares supported shared folders,

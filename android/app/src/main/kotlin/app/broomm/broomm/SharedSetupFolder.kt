@@ -115,19 +115,22 @@ internal class RootPreparedFolder(
             Os.lstat(visible.path).st_ino == current.st_ino) { "The prepared emulator folder changed." }
     }
 
-    private fun path(value: String): File {
+    private fun path(parts: List<String>): File {
         live()
         var file = root
-        for (part in sharedSavePath(value)) {
+        for (part in parts) {
             file = File(file, part)
-            require(file.canonicalPath == file.path) { "Linked emulator paths are unsupported." }
+            // Android can canonicalize the spelling of a regular file on
+            // casefolded storage. Check the entry type without following links.
+            statIfPresent(file)
         }
         return file
     }
 
     private fun entries(folder: File): List<File> {
-        live()
-        require(folder.canonicalPath == folder.path && folder.isDirectory)
+        val relative = folder.toRelativeString(root)
+        val checked = path(if (relative.isEmpty()) emptyList() else relative.split('/'))
+        require(statIfPresent(checked)?.let { OsConstants.S_ISDIR(it.st_mode) } == true)
         val names = folder.list() ?: error("The prepared emulator folder could not be read.")
         require(names.size <= 10000)
         return names.map { name ->
@@ -154,13 +157,16 @@ internal class RootPreparedFolder(
     private fun bytes(file: File, limit: Int) =
         inspect(file, limit) { input, size -> RootSaveTransfer.readExact(input, size, ::live) }
 
-    private fun present(file: File): Boolean = try {
-        Os.lstat(file.path)
-        true
+    private fun statIfPresent(file: File) = try {
+        Os.lstat(file.path).also {
+            require(!OsConstants.S_ISLNK(it.st_mode)) { "Linked emulator paths are unsupported." }
+        }
     } catch (error: ErrnoException) {
         if (error.errno != OsConstants.ENOENT) throw error
-        false
+        null
     }
+
+    private fun present(file: File) = statIfPresent(file) != null
 
     private fun cardName(file: File): String {
         if (!present(file.parentFile!!)) return file.name
@@ -182,7 +188,7 @@ internal class RootPreparedFolder(
         for (area in areas) {
             require(area.keys.all { it in setOf("path", "prefix", "suffix", "exact", "pattern", "folderPrefix", "gciId", "excluded") })
             val base = area.getValue("path")
-            val directory = path(base)
+            val directory = path(sharedSavePath(base))
             if (!present(directory)) continue
             val pattern = area["pattern"]?.toRegex()
             val excluded = area["excluded"]?.let { org.json.JSONArray(it) }
@@ -220,7 +226,7 @@ internal class RootPreparedFolder(
     fun operation(request: Bundle, caller: Int): Bundle {
         val operation = request.getString("operation")!!
         val value = request.getString("path")
-        val file = value?.takeIf(String::isNotEmpty)?.let(::path)
+        val file = value?.takeIf(String::isNotEmpty)?.let { path(sharedSavePath(it)) }
         return Bundle().apply {
             when (operation) {
                 "preparedsharedcheck" -> live()
