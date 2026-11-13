@@ -1,5 +1,33 @@
 # Implementation plan
 
+## Shared ARMSX2 card filename recovery — 2026-11-13
+
+The owner confirmed that PR #19 build 1187 completed ARMSX2 setup and launched
+a PS2 game on GammaOS Android 14. After exit, Broomm rejected its installed
+save journal. ARMSX2 had changed the INI slot names from `Mcd001.ps2` and
+`Mcd002.ps2` to lowercase. Android still enumerated the original filenames,
+and both spellings opened the same files on the device. The journal and both
+working cards remained present.
+
+Shared ARMSX2 plans use the provider's listed spelling after checking both
+spellings refer to the same file. The check leaves unrelated case variants on
+case-sensitive storage outside the plan and rejects ambiguous slots. Existing
+transactions can retain their exact journal keys. Recovery still requires the
+original profile and folder grant, and the emulator must be closed.
+
+Static analysis, 37 focused Flutter tests and the Android Kotlin bridge
+compile passed. The regressions cover finishing an installed transaction
+after a case change, refusing slots that alias one card, and excluding a
+separate case variant. The running device's provider and backing filesystem
+were checked read-only. A new APK and an on-device sync of the pending session
+remain unverified.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-card-recovery.zip)
+is `0.1.27-dev` (1204), **24,417,940 bytes**, with SHA-256
+`5216356daa601284ab75d2c6d28cd2375e91c822065ec6c66f11f7ef1447b6a9`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Android ARMSX2 first-run BIOS import — 2026-11-13
 
 Read-only inspection of the GammaOS Android 14 device found Broomm build 1185,

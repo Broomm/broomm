@@ -335,7 +335,7 @@ class BroommEmulators(private val activity: Activity) {
                         "writers" -> result.success(EmulatorDocumentsProvider.writers.get() + if (sharedFolder.busy()) 1 else 0)
                         "ioBusy" -> result.success(rootSaves.busy() || sharedFolder.busy())
                         "sharedPick" -> sharedFolder.pick(result, call.argument<String>("emulator"), call.argument<String>("package"), call.argument<Boolean>("prepared") == true)
-                        "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat" ->
+                        "sharedCheck", "sharedList", "sharedRead", "sharedReplace", "sharedBytes", "sharedChildren", "sharedStat", "sharedArmsx2CardName" ->
                             sharedOperation(call, result)
                         else -> result.notImplemented()
                     }

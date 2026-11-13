@@ -40,6 +40,13 @@ from shared storage. Leave ARMSX2’s own BIOS and save files in place.
 
 ## Play and recovery
 
+For an unfinished shared-folder session, keep the existing Broomm installation,
+folder grant and ARMSX2 memory cards. After updating Broomm, close ARMSX2 and
+choose **Finish previous game session** to retry capture. Broomm uses the
+filename reported by Android when both capitalizations of a configured card
+resolve to the same file. If the two slots resolve to one card, fix the card
+assignments before retrying.
+
 Play a downloaded self-contained CHD, ISO or raw BIN with standard PS2 disc
 metadata. Save in the game, or use ARMSX2’s **Save State** menu, then choose
 **Close Game** and finish sync in Broomm. If ARMSX2 retains its library

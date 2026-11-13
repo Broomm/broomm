@@ -659,6 +659,10 @@ needs accessible memcards/states and Shared cards. The
 has exact settings, prerequisites and limits. A folder connection serves all
 Broomm profiles. Missing setup leads to Emulator Settings before Play.
 
+If a shared ARMSX2 session is interrupted during save capture, close ARMSX2 and
+use **Finish previous game session** after updating Broomm. Keep the existing
+app data, folder grant and cards in place until the session finishes.
+
 On rooted Android, **Emulator Settings → Nintendo Switch → Eden → Set up**
 can provision missing Switch firmware, `prod.keys` and `title.keys` from
 the active profile’s RomM firmware catalogue. Open and close Eden once
