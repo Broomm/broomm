@@ -94,6 +94,7 @@ Future<void> provisionAndroidEden(
 }
 
 const _armsFirmwareAccess = 'armsx2-firmware-v1';
+const androidArmsx2ImportBios = 'Broomm BIOS/broomm-ps2-bios.bin';
 
 bool canProvisionArmsx2Bios(AndroidApp app) =>
     app.package == androidArmsx2RootPackage &&
@@ -101,25 +102,27 @@ bool canProvisionArmsx2Bios(AndroidApp app) =>
 
 Future<void> prepareSharedArmsx2Bios(
   AndroidEmulators manager,
-  AndroidApp app,
+  String package,
   String tree,
   int platformId,
   RommClient client,
   DownloadCancellation cancellation,
-  void Function(String) phase,
-) async {
+  void Function(String) phase, {
+  AndroidApp? app,
+}) async {
   final destination = {
     'emulator': 'armsx2',
-    'package': app.package,
+    'package': package,
     'tree': tree,
-    'path': 'Broomm BIOS/broomm-ps2-bios.bin',
+    'path': androidArmsx2ImportBios,
   };
   await _withAndroidPs2Bios(manager, platformId, client, cancellation, phase, (
     bios,
     sha,
   ) async {
-    final current = manager.installed[app.package];
-    if (current?.build != app.build || current?.enabled != true)
+    final current = manager.installed[package];
+    if (app != null &&
+        (current?.build != app.build || current?.enabled != true))
       throw StateError('ARMSX2 changed during setup. Refresh and retry.');
     phase('Preparing the ARMSX2 BIOS import folder');
     await manager.channel.invokeMethod<void>('sharedReplace', {
@@ -130,6 +133,25 @@ Future<void> prepareSharedArmsx2Bios(
     });
   });
 }
+
+Future<void> prepareRootArmsx2ImportBios(
+  AndroidEmulators manager,
+  int platformId,
+  RommClient client,
+  DownloadCancellation cancellation,
+  void Function(String) phase,
+) => _withAndroidPs2Bios(manager, platformId, client, cancellation, phase, (
+  bios,
+  sha,
+) async {
+  phase('Preparing the ARMSX2 App Data Folder and BIOS');
+  final prepared = await manager.channel.invokeMethod<bool>(
+    'rootPrepareEmulatorInstall',
+    {'package': androidArmsx2RootPackage, 'source': bios.path, 'after': sha},
+  );
+  if (prepared != true)
+    throw StateError('Android did not confirm BIOS preparation.');
+});
 
 Future<void> provisionAndroidArmsx2Bios(
   AndroidEmulators manager,

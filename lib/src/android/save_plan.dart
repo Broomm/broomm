@@ -152,7 +152,10 @@ class AndroidSavePlan extends ProgressLayout {
       'mediaStamp': launch['mediaStamp']!,
     },
   };
-  bool get mmjRooted => binding['access'] == androidMmjRootFolderAccess;
+  bool get mmjRooted =>
+      binding['access'] == androidMmjRootFolderAccess ||
+      emulator.id == 'citra-mmj' &&
+          binding['access'] == androidPreparedFolderAccess;
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
   bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
@@ -393,8 +396,11 @@ Future<AndroidSavePlan> connectedAndroidProgress(
     case 'azahar':
     case 'citra-mmj':
       final verifiedMmj =
-          manager.folder(emulator, package: app.package)?['access'] ==
-          androidMmjRootFolderAccess;
+          emulator.id == 'citra-mmj' &&
+          {
+            androidMmjRootFolderAccess,
+            androidPreparedFolderAccess,
+          }.contains(manager.folder(emulator, package: app.package)?['access']);
       layout = await threeDsProgressLayout(
         root.path,
         'user',

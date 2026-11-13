@@ -20,7 +20,12 @@ class InstallManager extends AndroidEmulators {
   Future<void> ensureSetupAllowed() async {}
 
   @override
-  Future<void> install(AndroidEmulator emulator, {String? server}) async {
+  Future<void> install(
+    AndroidEmulator emulator, {
+    String? server,
+    Future<void> Function()? prepare,
+  }) async {
+    await prepare?.call();
     attempts++;
     pending = Completer<void>();
     try {
@@ -33,9 +38,13 @@ class InstallManager extends AndroidEmulators {
   }
 
   @override
-  Future<void> installApk(AndroidEmulator emulator, {String? server}) {
+  Future<void> installApk(
+    AndroidEmulator emulator, {
+    String? server,
+    Future<void> Function()? prepare,
+  }) {
     imported = true;
-    return install(emulator, server: server);
+    return install(emulator, server: server, prepare: prepare);
   }
 
   void permission() {

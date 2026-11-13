@@ -46,7 +46,19 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   String? problem;
   String? folderProblem;
   bool _sharedBiosPrepared = false;
+  bool _preparedBeforeInstall = false;
+  bool _rootPreparationUnavailable = false;
+  String? _installTree;
+  bool get requiresInstallFolder =>
+      manager.app(emulator) == null &&
+      androidDefaultSharedFolder(emulator) != null;
+  bool get hasInstallFolder => _installTree != null && hasPendingFolder;
+  bool get canInstallWithFolderPicker =>
+      requiresInstallFolder && _rootPreparationUnavailable;
   bool get sharedBiosPrepared => hasPendingFolder && _sharedBiosPrepared;
+  bool get armsx2ImportReady =>
+      _preparedBeforeInstall && emulator.id == 'armsx2';
+  bool checkingPreparedFolder = false;
   bool get armsx2SharedSetup =>
       emulator.id == 'armsx2' && step == AndroidSetupStep.folder;
   bool get canPrepareSharedBios =>
@@ -56,9 +68,10 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       platformId != null;
   AndroidApp? _preparedApp;
   bool get preparedFolder =>
+      _preparedBeforeInstall && _installTree == null ||
       _preparedApp != null &&
-      _preparedApp!.package == manager.app(emulator)?.package &&
-      _preparedApp!.build == manager.app(emulator)?.build;
+          _preparedApp!.package == manager.app(emulator)?.package &&
+          _preparedApp!.build == manager.app(emulator)?.build;
   Map<String, String> _previousBuilds = {};
   ({String uri, String package, String build})? _pendingFolder;
 
@@ -189,6 +202,26 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
     if (!app.enabled)
       throw StateError('Enable ${emulator.name} in Android settings first.');
+    checkingPreparedFolder = false;
+    final binding = manager.folder(emulator);
+    if (_installTree case final String tree when binding == null && !_shared) {
+      _shared = true;
+      step = AndroidSetupStep.folder;
+      _pendingFolder = (uri: tree, package: app.package, build: app.build);
+      _sharedBiosPrepared = armsx2ImportReady;
+      return;
+    }
+    if (_preparedBeforeInstall &&
+        binding == null &&
+        !_shared &&
+        !manager.canVerifyPreparedStorage(emulator, app) &&
+        !{'ppsspp', 'duckstation'}.contains(emulator.id)) {
+      _shared = true;
+    }
+    if (await _verifyPreparedFolder(app, binding)) {
+      step = AndroidSetupStep.ready;
+      return;
+    }
     final source = client, id = platformId;
     if (_rooted &&
         emulator.id == 'armsx2' &&
@@ -306,20 +339,137 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     }
   });
 
-  Future<void> install({bool imported = false}) => _run(() async {
-    _pendingFolder = null;
-    _sharedBiosPrepared = false;
-    _previousBuilds = {
-      for (final package in emulator.packages)
-        if (manager.installed[package] case final app?) package: app.build,
-    };
-    step = AndroidSetupStep.waitingInstall;
-    if (imported) {
-      await manager.installApk(emulator);
-    } else {
-      await manager.install(emulator);
+  Future<bool> _verifyPreparedFolder(
+    AndroidApp app,
+    Map<String, String>? binding,
+  ) async {
+    if (_shared ||
+        !manager.canVerifyPreparedStorage(emulator, app) ||
+        (binding != null && binding['access'] != androidPreparedFolderAccess) ||
+        !await manager.hasRootTools())
+      return false;
+    if (binding == null && !_preparedBeforeInstall && emulator.id != 'armsx2')
+      return false;
+    if (emulator.id == 'melonds' &&
+        binding == null &&
+        manager.rootConnection(emulator, platform) != null)
+      return false;
+    checkingPreparedFolder = true;
+    step = AndroidSetupStep.initialize;
+    final lease = await SessionLease.acquire(manager.data);
+    try {
+      await manager.ensureSetupAllowed();
+      if (emulator.id == 'armsx2' && !armsx2ImportReady && binding == null) {
+        final ready = await manager.channel.invokeMethod<bool>(
+          'rootPreparedArmsx2ImportReady',
+          {'package': app.package, 'build': app.build},
+        );
+        if (ready != true) {
+          checkingPreparedFolder = false;
+          return false;
+        }
+      }
+      await manager.confirmPreparedStorage(emulator, app);
+      return true;
+    } finally {
+      await lease.release();
     }
-  });
+  }
+
+  Future<void> _grantBeforeInstall() async {
+    if (_installTree != null) return;
+    _installTree = await manager.chooseFolder(emulator, beforeInstall: true);
+    if (_installTree == null)
+      throw StateError('Choose ${emulator.name}’s shared folder to continue.');
+  }
+
+  Future<void> install({bool imported = false, bool useFolderPicker = false}) =>
+      _run(() async {
+        _pendingFolder = null;
+        _sharedBiosPrepared = false;
+        _previousBuilds = {
+          for (final package in emulator.packages)
+            if (manager.installed[package] case final app?) package: app.build,
+        };
+        Future<void> prepare() async {
+          if (manager.app(emulator) == null &&
+              androidDefaultSharedFolder(emulator) != null) {
+            step = AndroidSetupStep.install;
+            try {
+              await _prepareBeforeInstall(useFolderPicker: useFolderPicker);
+            } on PlatformException catch (error) {
+              _rootPreparationUnavailable = error.code == 'android-root-save';
+              rethrow;
+            }
+          }
+          step = AndroidSetupStep.waitingInstall;
+        }
+
+        if (imported) {
+          await manager.installApk(emulator, prepare: prepare);
+        } else {
+          await manager.install(emulator, prepare: prepare);
+        }
+      });
+
+  Future<void> _prepareBeforeInstall({required bool useFolderPicker}) async {
+    _preparedBeforeInstall = false;
+    final lease = await SessionLease.acquire(manager.data);
+    try {
+      await manager.ensureSetupAllowed();
+      final root = !useFolderPicker && await manager.hasRootTools();
+      if (root) _installTree = null;
+      final package = emulator.packages.first;
+      if (emulator.id == 'armsx2') {
+        final source = client, id = platformId;
+        if (source == null || id == null)
+          throw StateError(
+            'Connect to RomM to prepare the PS2 BIOS before installing ARMSX2.',
+          );
+        if (root) {
+          await _prepareFirmware(
+            (cancellation, phase) => prepareRootArmsx2ImportBios(
+              manager,
+              id,
+              source,
+              cancellation,
+              phase,
+            ),
+          );
+        } else {
+          await _grantBeforeInstall();
+          final tree = _installTree!;
+          await _prepareFirmware(
+            (cancellation, phase) => prepareSharedArmsx2Bios(
+              manager,
+              package,
+              tree,
+              id,
+              source,
+              cancellation,
+              phase,
+            ),
+          );
+        }
+        _preparedBeforeInstall = true;
+      } else if (root) {
+        _preparedBeforeInstall =
+            await manager.channel.invokeMethod<bool>(
+              'rootPrepareEmulatorInstall',
+              {'package': package},
+            ) ==
+            true;
+        if (!_preparedBeforeInstall)
+          throw StateError(
+            'Android did not confirm the ${emulator.name} folder was prepared.',
+          );
+      } else if (emulator.id != 'ppsspp' || useFolderPicker) {
+        await _grantBeforeInstall();
+      }
+    } finally {
+      await lease.release();
+    }
+  }
 
   Future<void> refresh() async {
     if (busy) return;
@@ -342,9 +492,13 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     if (busy) return;
     if (step == AndroidSetupStep.waitingInstall) {
       await refresh();
-    } else if (step == AndroidSetupStep.initialize && _opened) {
+    } else if (_opened && step == AndroidSetupStep.initialize) {
+      await manager.load();
       _opened = false;
       await verify();
+    } else if (_opened && step == AndroidSetupStep.folder && hasPendingFolder) {
+      _opened = false;
+      await selectFolder();
     }
   }
 
@@ -361,11 +515,19 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     _pendingFolder = null;
     _sharedBiosPrepared = false;
     _shared = true;
+    checkingPreparedFolder = false;
+    _installTree = null;
     step = AndroidSetupStep.folder;
     final app = manager.app(emulator);
     if (app != null && manager.folder(emulator)?['tree'] == null)
       await _prepareDefaultFolder(app);
   });
+
+  Future<void> usePrivateMelonStorage() async {
+    if (emulator.id != 'melonds' || !checkingPreparedFolder) return;
+    _preparedBeforeInstall = false;
+    await verify();
+  }
 
   Future<bool> _armsx2Initialized(AndroidApp app, String tree) async {
     final config = await manager.channel.invokeMapMethod<String, Object?>(
@@ -390,12 +552,13 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       await _prepareFirmware(
         (cancellation, phase) => prepareSharedArmsx2Bios(
           manager,
-          app,
+          app.package,
           tree,
           platformId!,
           client!,
           cancellation,
           phase,
+          app: app,
         ),
       );
       _sharedBiosPrepared = true;
@@ -431,7 +594,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         throw StateError('The emulator changed. Select its save folder again.');
       }
       final verifyAzahar = azaharRootSetup, verifyMmj = mmjRootSetup;
-      if (verifyAzahar || verifyMmj || armsx2SharedSetup) {
+      if (verifyAzahar || verifyMmj || armsx2SharedSetup || hasInstallFolder) {
         if (uri != _pendingFolder?.uri) _sharedBiosPrepared = false;
         _pendingFolder = (uri: uri, package: app.package, build: app.build);
       }
@@ -465,15 +628,6 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 String androidCloseInstructions(String emulator) =>
     'Use $emulator’s Quit or Exit command if available. Open Android Recents and swipe away its card before returning to Broomm. Switching apps can leave it running.';
 
-String? androidDefaultSharedFolder(AndroidEmulator emulator) =>
-    switch (emulator.id) {
-      'azahar' => 'Broomm/Azahar',
-      'citra-mmj' => 'citra-emu',
-      'ppsspp' => 'Broomm/PPSSPP',
-      'armsx2' => 'Broomm/ARMSX2',
-      _ => null,
-    };
-
 String androidSetupInstructions(
   AndroidEmulator emulator, {
   required bool prepared,
@@ -482,7 +636,10 @@ String androidSetupInstructions(
     prepared
         ? 'In PPSSPP, choose Internal storage → Broomm → PPSSPP as the Memory Stick folder. If you already configured one, keep it. Select the same folder in Broomm.'
         : 'In PPSSPP, choose a shared Memory Stick folder. Use New folder in Android’s picker if needed, then select the same folder in Broomm.',
-  'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
+  'melonds' =>
+    prepared
+        ? 'In melonDS, disable saving next to the ROM and choose Internal storage → Broomm → melonDS as the custom save folder. Set Save state location to Save directory.'
+        : 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
   'azahar' =>
     prepared
         ? 'In Azahar, choose Internal storage → Broomm → Azahar as the user-data folder. If you already configured one, keep it. Select the same folder in Broomm.'
@@ -494,7 +651,10 @@ String androidSetupInstructions(
     prepared
         ? 'Select the shared App Data Folder you chose in ARMSX2. For a new setup, use Internal storage → Broomm → ARMSX2 in both apps.'
         : 'Select the shared App Data Folder you chose in ARMSX2. For a new setup, create a folder in Android’s picker and use it in both apps.',
-  'duckstation' => 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
+  'duckstation' =>
+    prepared
+        ? 'If using shared saves, choose the memcards and savestates subfolders of Internal storage → Broomm → DuckStation in DuckStation. Set both cards to Shared Between All Games.'
+        : 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
   'eden' => 'Initialize its console account and configure keys and firmware in Eden. Select Eden from the picker sidebar and grant its full user-data root.',
   _ => throw UnsupportedError(
     'No Android setup instructions for ${emulator.name}.',

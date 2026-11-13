@@ -205,14 +205,16 @@ stop reply keeps recovery. Android App info remains available for manual
 recovery. Returning to Broomm must never force-stop a potentially live
 writer.
 
-For new shared-folder setups on rooted Android, prepare the default selectable
-folders under `Broomm/` for Azahar, ARMSX2 and shared PPSSPP, and prepare
-Citra MMJ's fixed `citra-emu` folder at the storage root. Tell the player exactly
-which folder to select and preserve any existing emulator folder choice.
-Rooted PPSSPP keeps its App Private Data workflow. ARMSX2 shared setup accepts
-its App Data Folder grant before first-run setup is complete, and lets the
-player prepare a verified RomM PS2 BIOS there for import in ARMSX2. Verify
-the initialized save folder before marking it ready.
+For Android emulator setup, prepare known shared folders and any importable
+firmware before opening the APK installer. Once installation is confirmed,
+offer to open the emulator with instructions for its own first-run choices.
+Automatically connect initialized storage when Broomm can verify the emulator's
+settings and access the folder through its root helper or a prior grant. Use
+Android's folder picker when a compatible access route requires it. Preserve
+existing emulator folder choices and verify the initialized storage before
+marking setup ready. PPSSPP's reviewed private route still uses App Private Data.
+ARMSX2's shared first-run flow prepares the PS2 BIOS from the active RomM
+profile for import in the emulator's wizard.
 
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 

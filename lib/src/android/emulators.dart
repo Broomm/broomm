@@ -26,6 +26,19 @@ import 'duck_root_store.dart';
 import 'melon_root.dart';
 import 'dolphin_root.dart';
 
+const androidPreparedFolderAccess = 'root-prepared-folder-v1';
+
+String? androidDefaultSharedFolder(AndroidEmulator emulator) =>
+    switch (emulator.id) {
+      'azahar' => 'Broomm/Azahar',
+      'citra-mmj' => 'citra-emu',
+      'ppsspp' => 'Broomm/PPSSPP',
+      'melonds' => 'Broomm/melonDS',
+      'duckstation' => 'Broomm/DuckStation',
+      'armsx2' => 'Broomm/ARMSX2',
+      _ => null,
+    };
+
 /// Android applications, not desktop bundles. These are concrete, researched
 /// launch contracts; metadata and imported setup files cannot supply intents.
 class AndroidEmulator {
@@ -963,7 +976,58 @@ class AndroidEmulators extends ChangeNotifier {
       throw StateError(
         'Connect ${emulator.name}’s save folder in Emulator Settings first.',
       );
+    final selected = app(emulator, package: package);
+    if (value['access'] == androidPreparedFolderAccess &&
+        value['build'] != selected?.build)
+      throw StateError(
+        'Verify ${emulator.name}’s changed installation in Emulator Settings.',
+      );
     return {...value, 'emulator': emulator.id};
+  }
+
+  static String preparedTree(AndroidEmulator emulator) =>
+      'content://com.android.externalstorage.documents/tree/${Uri.encodeComponent('primary:${androidDefaultSharedFolder(emulator)!}')}';
+
+  bool canVerifyPreparedStorage(AndroidEmulator emulator, AndroidApp app) =>
+      switch (emulator.id) {
+        'armsx2' =>
+          app.package == androidArmsx2RootPackage &&
+              app.version == androidArmsx2RootVersion,
+        'azahar' =>
+          app.package == androidAzaharScopedPackage &&
+              app.version == androidAzaharScopedVersion,
+        'citra-mmj' =>
+          app.package == androidMmjSharedPackage &&
+              app.version == androidMmjSharedVersion,
+        'melonds' =>
+          app.package == androidMelonRootPackage &&
+              app.version == androidMelonRootVersion,
+        _ => false,
+      };
+
+  Future<void> confirmPreparedStorage(
+    AndroidEmulator emulator,
+    AndroidApp app,
+  ) async {
+    if (!settingsKnown) throw StateError('Refresh emulator settings first.');
+    if (!canVerifyPreparedStorage(emulator, app))
+      throw StateError(
+        'This ${emulator.name} installation needs a shared-folder grant.',
+      );
+    final binding = {
+      'tree': preparedTree(emulator),
+      'package': app.package,
+      'access': androidPreparedFolderAccess,
+      'build': app.build,
+      if (emulator.id == 'citra-mmj') 'mmjBuild': app.build,
+    };
+    await channel.invokeMethod<void>('sharedCheck', {
+      ...binding,
+      'emulator': emulator.id,
+    });
+    if (this.app(emulator)?.build != app.build)
+      throw StateError('The emulator changed during setup. Refresh and retry.');
+    await _saveSharedBinding(emulator, app, binding);
   }
 
   static bool sharedTree(
@@ -1018,15 +1082,18 @@ class AndroidEmulators extends ChangeNotifier {
     AndroidEmulator emulator, {
     String? package,
     bool prepared = false,
+    bool beforeInstall = false,
   }) async {
-    final selected = app(emulator, package: package);
+    final selected = beforeInstall
+        ? emulator.packages.first
+        : app(emulator, package: package)?.package;
     if (selected == null) throw StateError('Install ${emulator.name} first.');
     final uri = await channel.invokeMethod<String>('sharedPick', {
       if (prepared) 'prepared': true,
       'emulator': emulator.id,
-      'package': selected.package,
+      'package': selected,
     });
-    if (uri != null && !sharedTree(emulator, selected.package, uri))
+    if (uri != null && !sharedTree(emulator, selected, uri))
       throw StateError(
         'Choose ${emulator.name}’s own provider or a shared data folder. Private Android/data folders are unsupported.',
       );
@@ -1068,7 +1135,15 @@ class AndroidEmulators extends ChangeNotifier {
       'emulator': emulator.id,
       'probe': true,
     });
-    final next = {..._folders, '${emulator.id}:${selected.package}': binding};
+    await _saveSharedBinding(emulator, selected, binding);
+  }
+
+  Future<void> _saveSharedBinding(
+    AndroidEmulator emulator,
+    AndroidApp app,
+    Map<String, String> binding,
+  ) async {
+    final next = {..._folders, '${emulator.id}:${app.package}': binding};
     await _save(folders: next);
     _folders
       ..clear()
@@ -1217,6 +1292,19 @@ class AndroidEmulators extends ChangeNotifier {
               record['version'] >= 22 &&
               emulator?.id == 'armsx2' &&
               androidArmsx2RootBinding(binding);
+          if (binding['access'] == androidPreparedFolderAccess &&
+              (emulator == null ||
+                  !{
+                    androidArmsx2RootPackage,
+                    androidAzaharScopedPackage,
+                    androidMmjSharedPackage,
+                    androidMelonRootPackage,
+                  }.contains(binding['package']) ||
+                  binding['tree'] != preparedTree(emulator) ||
+                  (emulator.id == 'citra-mmj' &&
+                      binding['mmjBuild'] != binding['build']) ||
+                  !RegExp(r'^[a-f0-9]{64}$').hasMatch(binding['build'] ?? '')))
+            throw const FormatException('Invalid automatic emulator folder');
           if (binding['access'] == androidAzaharRootFolderAccess &&
               (emulator?.id != 'azahar' ||
                   binding['package'] != androidAzaharScopedPackage ||
@@ -1565,11 +1653,14 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> install(AndroidEmulator emulator, {String? server}) =>
-      _withInstallPermission(
-        () => _install(emulator, server: server),
-        requiresApkPermission: emulator.id != 'duckstation',
-      );
+  Future<void> install(
+    AndroidEmulator emulator, {
+    String? server,
+    Future<void> Function()? prepare,
+  }) => _withInstallPermission(() async {
+    await prepare?.call();
+    await _install(emulator, server: server);
+  }, requiresApkPermission: emulator.id != 'duckstation');
 
   Future<void> _install(AndroidEmulator emulator, {String? server}) async {
     if (installing != null)
@@ -1649,8 +1740,14 @@ class AndroidEmulators extends ChangeNotifier {
     }
   }
 
-  Future<void> installApk(AndroidEmulator emulator, {String? server}) =>
-      _withInstallPermission(() => _installApk(emulator, server: server));
+  Future<void> installApk(
+    AndroidEmulator emulator, {
+    String? server,
+    Future<void> Function()? prepare,
+  }) => _withInstallPermission(() async {
+    await prepare?.call();
+    await _installApk(emulator, server: server);
+  });
 
   Future<void> _installApk(AndroidEmulator emulator, {String? server}) async {
     await _requestInstallation(emulator, server);

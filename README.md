@@ -645,16 +645,14 @@ as supplied; changing them during play blocks sync and preserves game/fallback
 copies for manual recovery. CUE/GDI/M3U/CDI media and packaged Thor acceptance
 remain pending. See the [scope and walkthrough](docs/android-retroarch-cores.md#flycast-source-increment).
 
-The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
-melonDS a custom save folder with states in the save directory, and Azahar a
-user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker
-sidebar. ARMSX2’s shared-folder route uses a custom data root and global cards.
-If the wizard requires a BIOS, choose **Use shared folder** in Broomm if
-offered, grant the same **App Data Folder** you chose in ARMSX2, and select
-**Prepare BIOS from RomM**. In ARMSX2’s BIOS step, select the **Broomm BIOS**
-subfolder that Broomm created. Finish ARMSX2 setup, quit it, and choose
-**Verify selected folder** in Broomm. DuckStation
-needs accessible memcards/states and Shared cards. The
+For a new ARMSX2 installation, choose **Emulator Settings → PlayStation 2 →
+ARMSX2 → Set up → Install** while connected to RomM. Broomm prepares the
+shared folder and the PS2 BIOS before opening Android’s installer. On a
+rooted device, open ARMSX2 and choose **Internal storage → Broomm → ARMSX2**
+as the App Data Folder and **Broomm BIOS** inside it as the import folder.
+Finish the wizard, quit ARMSX2, and return to Broomm so it can verify the
+folder. Android’s picker is available for devices without root, custom
+locations, and emulator builds that need a folder grant. The
 [per-app checklist](docs/android-installation-and-saves.md#connect-once-use-every-broomm-profile)
 has exact settings, prerequisites and limits. A folder connection serves all
 Broomm profiles. Missing setup leads to Emulator Settings before Play.
@@ -666,9 +664,9 @@ app data, folder grant and cards in place until the session finishes.
 On rooted Android, **Emulator Settings → Nintendo Switch → Eden → Set up**
 can provision missing Switch firmware, `prod.keys` and `title.keys` from
 the active profile’s RomM firmware catalogue. Open and close Eden once
-first. **PlayStation 2 → ARMSX2 → Set up** can import a missing `bios.bin`
-from RomM and connect the reviewed ARM64 2.9.2 app’s default storage. Open
-ARMSX2 once and close it before setup. After playing, choose **Close Game**
+first so it can initialize its app-owned storage. An existing reviewed
+ARMSX2 installation using its default app-owned storage can also import a
+missing `bios.bin` from RomM. After playing, choose **Close Game**
 in ARMSX2 and finish sync in Broomm to capture the two whole memory cards
 and matching native states. See the [ARMSX2 setup and recovery walkthrough](docs/android-armsx2-root.md).
 

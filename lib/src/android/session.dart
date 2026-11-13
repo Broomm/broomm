@@ -1117,6 +1117,16 @@ class AndroidGameSession extends ChangeNotifier {
           : manager.tree(record['profile'] as String, emulator);
       if (expected == null)
         throw StateError('This session has no external folder to reconnect.');
+      final binding = manager.folder(emulator, package: package);
+      if (binding?['access'] == androidPreparedFolderAccess) {
+        await manager.channel.invokeMethod<void>('sharedCheck', {
+          ...binding!,
+          'emulator': emulator.id,
+          'tree': expected,
+        });
+        phase = 'Emulator folder verified. Close the emulator, then finish and sync progress.';
+        return;
+      }
       final selected = await manager.chooseFolder(emulator, package: package);
       if (selected == null) return;
       if (selected != expected)

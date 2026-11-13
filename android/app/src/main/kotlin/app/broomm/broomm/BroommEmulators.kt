@@ -47,7 +47,8 @@ class BroommEmulators(private val activity: Activity) {
                     when (call.method) {
                         "rootInspect", "rootCheck", "rootList", "rootRead", "rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastList", "rootFlycastRead", "rootFlycastReplace", "rootOptions", "rootStageRom", "rootRemoveRom", "rootLifecycle", "rootMgbaSetup", "rootInstallMgba", "rootCoreSetup", "rootInstallCore", "rootControllerProfiles",
                         "rootPspInspect", "rootPspLifecycle", "rootPspSharedLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspList", "rootPspRead", "rootPspReplace", "rootPspProfileList", "rootPspProfileRead", "rootPspProfileReplace",
-                        "rootMmjStageRom", "rootMmjRemoveRom", "rootPrepareSharedFolder",
+                        "rootMmjStageRom", "rootMmjRemoveRom", "rootPrepareSharedFolder", "rootPrepareEmulatorInstall",
+                        "rootPreparedArmsx2ImportReady",
                         "rootEmulatorLifecycle", "rootEmulatorStop", "rootDuckResume",
                         "rootMelonInspect", "rootMelonCheck", "rootMelonList", "rootMelonRead", "rootMelonReplace",
                         "rootDolphinInspect", "rootDolphinCheck", "rootDolphinList", "rootDolphinRead", "rootDolphinReplace",
@@ -411,6 +412,20 @@ class BroommEmulators(private val activity: Activity) {
         } catch (e: Exception) { main.post { result.error("android-emulator", e.message ?: "Android operation failed", null) } } }
     }
     private fun sharedOperation(call: MethodCall, result: MethodChannel.Result) {
+        if (call.argument<String>("access") == "root-prepared-folder-v1") {
+            val pkg = packageName(call.argument<String>("package"))
+            val expected = when (call.argument<String>("emulator")) {
+                "armsx2" -> ARMSX2_PACKAGE
+                "azahar" -> AZAHAR_SCOPED_PACKAGE
+                "citra-mmj" -> CITRA_SHARED_PACKAGE
+                "melonds" -> MELON_PACKAGE
+                else -> error("This emulator has no automatic shared-folder adapter.")
+            }
+            require(pkg == expected)
+            val arguments = (call.arguments as Map<*, *>).entries.associate { (key, value) -> key as String to value }
+            rootSaves.operation(MethodCall("rootPrepared" + call.method.replaceFirstChar { it.uppercase() }, arguments), result)
+            return
+        }
         val (emulator, pkg, method) = when (call.argument<String>("access")) {
             AZAHAR_ROOT_FOLDER -> Triple("azahar", AZAHAR_SCOPED_PACKAGE, "rootAzaharFolder")
             CITRA_ROOT_FOLDER -> Triple("citra-mmj", CITRA_SHARED_PACKAGE, "rootMmjFolder")

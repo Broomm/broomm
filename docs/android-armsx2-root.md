@@ -15,24 +15,24 @@ its private storage cannot be verified.
 
 ## Shared folder and BIOS import
 
-1. In Broomm, open **Emulator Settings → PlayStation 2 → ARMSX2 → Set up**
-   and choose **Use shared folder** if offered. On rooted devices Broomm
-   can prepare `Internal storage/Broomm/ARMSX2` for a fresh setup. Keep any
-   custom **App Data Folder** you already chose in ARMSX2. For a new setup
-   without root, create the folder using Android’s picker.
-2. Choose **Select App Data Folder** in Broomm and grant that same folder.
-   You can do this while ARMSX2 still needs a BIOS. For a new setup select
-   the same folder as **App Data Folder** in ARMSX2 and allow the permission
-   ARMSX2 requests.
-3. If the wizard needs a BIOS, choose **Prepare BIOS from RomM** in Broomm.
-   The current profile needs access to the PS2 firmware catalogue and a
-   verified 4 MiB PS2 BIOS. In ARMSX2, choose the **Broomm BIOS** subfolder
-   inside the App Data Folder as the BIOS import source. You can also import
-   your own BIOS using ARMSX2’s picker.
-4. Finish ARMSX2 setup, including the games folder it requests. Keep standard
-   global memory cards and turn off per-game cards. Quit ARMSX2 and choose
-   **Verify selected folder** in Broomm. If ARMSX2 is still initializing its
-   data, wait for its main screen before quitting and verifying again.
+1. In Broomm, open **Emulator Settings → PlayStation 2 → ARMSX2 → Set up →
+   Install**. Sign in to a RomM profile with access to a verified 4 MiB PS2
+   BIOS in the PS2 firmware catalogue. On rooted devices, Broomm creates
+   `Internal storage/Broomm/ARMSX2` and publishes the BIOS before Android’s
+   APK installer opens. Without root, choose or create the App Data Folder
+   in Android’s picker before installing.
+2. Choose **Open ARMSX2** after installation. In ARMSX2, choose the prepared
+   folder as **App Data Folder**, allow the file access ARMSX2 requests, and
+   select its **Broomm BIOS** subfolder as the BIOS import source.
+3. Finish the wizard, including the games folder it requests. Keep standard
+   global memory cards and turn off per-game cards. Quit ARMSX2 and return to
+   Broomm. Broomm verifies the default folder through root access or checks
+   the folder granted before installation. If ARMSX2 is still open, close it
+   and choose **Check setup**.
+
+For an existing custom **App Data Folder**, choose **Use shared folder** if
+offered and grant the folder already configured in ARMSX2. You can still choose
+**Prepare BIOS from RomM** for an unfinished wizard.
 
 ARMSX2 imports the BIOS into its own storage. After confirming that the
 import works, you can remove the extra `Broomm BIOS/broomm-ps2-bios.bin` copy

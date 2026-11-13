@@ -1,5 +1,30 @@
 # Implementation plan
 
+## Android emulator preparation before installation
+
+Setup checks Android APK-install permission, prepares supported shared folders,
+then hands off to Android’s installer. ARMSX2 gets a checksum-verified RomM BIOS
+in `Broomm/ARMSX2/Broomm BIOS` before handoff. Azahar, Citra MMJ, melonDS,
+PPSSPP and DuckStation prepare their known shared directories with root.
+The reviewed ARMSX2, Azahar, Citra MMJ and melonDS builds can verify and use
+the prepared directory via Broomm’s root service when the emulator is closed.
+Their native first-run choices remain in each emulator. PPSSPP, DuckStation,
+Dolphin, Eden and RetroArch retain their existing package-specific paths.
+Custom folders and unsupported builds use Android’s folder grant. Without
+root, setup can reuse a grant made before installation.
+
+Static analysis, 76 focused Flutter tests and Android Kotlin compilation
+passed. On GammaOS Android 14, a disposable fixture exercised the production
+folder creation, exclusive BIOS publication, repeat protection, and save
+publication, listing, capture and removal. It used synthetic bytes and
+removed its test files. A packaged Android first-run test is pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-preinstall.zip)
+is `0.1.27-dev` (1205), **24,417,939 bytes**, with SHA-256
+`78464112f013ae14d437c1480b50e44c36b64fbd44d9b5bb247c5eacc855cc45`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Shared ARMSX2 card filename recovery — 2026-11-13
 
 The owner confirmed that PR #19 build 1187 completed ARMSX2 setup and launched
