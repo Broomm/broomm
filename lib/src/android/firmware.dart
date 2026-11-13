@@ -99,6 +99,38 @@ bool canProvisionArmsx2Bios(AndroidApp app) =>
     app.package == androidArmsx2RootPackage &&
     app.version == androidArmsx2RootVersion;
 
+Future<void> prepareSharedArmsx2Bios(
+  AndroidEmulators manager,
+  AndroidApp app,
+  String tree,
+  int platformId,
+  RommClient client,
+  DownloadCancellation cancellation,
+  void Function(String) phase,
+) async {
+  final destination = {
+    'emulator': 'armsx2',
+    'package': app.package,
+    'tree': tree,
+    'path': 'Broomm BIOS/broomm-ps2-bios.bin',
+  };
+  await _withAndroidPs2Bios(manager, platformId, client, cancellation, phase, (
+    bios,
+    sha,
+  ) async {
+    final current = manager.installed[app.package];
+    if (current?.build != app.build || current?.enabled != true)
+      throw StateError('ARMSX2 changed during setup. Refresh and retry.');
+    phase('Preparing the ARMSX2 BIOS import folder');
+    await manager.channel.invokeMethod<void>('sharedReplace', {
+      ...destination,
+      'after': sha,
+      'source': bios.path,
+      'token': '${sha.substring(0, 32)}-in',
+    });
+  });
+}
+
 Future<void> provisionAndroidArmsx2Bios(
   AndroidEmulators manager,
   AndroidApp app,
@@ -126,6 +158,27 @@ Future<void> provisionAndroidArmsx2Bios(
       !{'true', 'false'}.contains(missing))
     throw StateError('ARMSX2’s firmware destination could not be verified.');
   if (missing == 'false') return;
+  await _withAndroidPs2Bios(manager, platformId, client, cancellation, phase, (
+    bios,
+    sha,
+  ) async {
+    phase('Installing the PS2 BIOS in ARMSX2');
+    await manager.channel.invokeMethod<void>('rootArmsx2BiosProvision', {
+      ...binding,
+      'after': sha,
+      'source': bios.path,
+    });
+  });
+}
+
+Future<void> _withAndroidPs2Bios(
+  AndroidEmulators manager,
+  int platformId,
+  RommClient client,
+  DownloadCancellation cancellation,
+  void Function(String) phase,
+  Future<void> Function(File, String) install,
+) async {
   final stage = (await progressFile(
     manager.data,
     'android/shared-session/${progressNonce()}/.probe',
@@ -144,12 +197,7 @@ Future<void> provisionAndroidArmsx2Bios(
     final bios = await progressFile(stage, 'bios.bin');
     final sha = await Isolate.run(() => progressFileHash(bios));
     cancellation.check();
-    phase('Installing the PS2 BIOS in ARMSX2');
-    await manager.channel.invokeMethod<void>('rootArmsx2BiosProvision', {
-      ...binding,
-      'after': sha,
-      'source': bios.path,
-    });
+    await install(bios, sha);
     cancellation.check();
   } finally {
     await stage.delete(recursive: true);

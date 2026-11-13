@@ -45,6 +45,15 @@ class AndroidEmulatorSetup extends ChangeNotifier {
   bool busy = false, _disposed = false, _shared = false, _opened = false;
   String? problem;
   String? folderProblem;
+  bool _sharedBiosPrepared = false;
+  bool get sharedBiosPrepared => hasPendingFolder && _sharedBiosPrepared;
+  bool get armsx2SharedSetup =>
+      emulator.id == 'armsx2' && step == AndroidSetupStep.folder;
+  bool get canPrepareSharedBios =>
+      armsx2SharedSetup &&
+      hasPendingFolder &&
+      client != null &&
+      platformId != null;
   AndroidApp? _preparedApp;
   bool get preparedFolder =>
       _preparedApp != null &&
@@ -181,7 +190,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
     if (!app.enabled)
       throw StateError('Enable ${emulator.name} in Android settings first.');
     final source = client, id = platformId;
-    if (!_shared &&
+    if (_rooted &&
         emulator.id == 'armsx2' &&
         platform == 'ps2' &&
         source != null &&
@@ -264,9 +273,18 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         step = AndroidSetupStep.folder;
         await _prepareDefaultFolder(app);
       } else {
+        if (emulator.id == 'armsx2') step = AndroidSetupStep.folder;
         final lease = await SessionLease.acquire(manager.data);
         try {
           await manager.ensureSetupAllowed();
+          if (armsx2SharedSetup) {
+            _pendingFolder = (
+              uri: tree,
+              package: app.package,
+              build: app.build,
+            );
+            if (!await _armsx2Initialized(app, tree)) return;
+          }
           await manager.confirmSharedStorage(
             emulator,
             tree,
@@ -279,6 +297,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
                 manager.folder(emulator)?['access'] ==
                     androidMmjRootFolderAccess,
           );
+          _pendingFolder = null;
           step = AndroidSetupStep.ready;
         } finally {
           await lease.release();
@@ -289,6 +308,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   Future<void> install({bool imported = false}) => _run(() async {
     _pendingFolder = null;
+    _sharedBiosPrepared = false;
     _previousBuilds = {
       for (final package in emulator.packages)
         if (manager.installed[package] case final app?) package: app.build,
@@ -330,7 +350,7 @@ class AndroidEmulatorSetup extends ChangeNotifier {
 
   Future<void> useSharedFolder() => _run(() async {
     // A verified shared grant replaces a native media connection.
-    if (!{'melonds', 'dolphin', 'eden'}.contains(emulator.id) &&
+    if (!{'melonds', 'dolphin', 'eden', 'armsx2'}.contains(emulator.id) &&
         manager.rootConnection(emulator, platform) != null)
       if (emulator.id == 'duckstation')
         await manager.disconnectDuckRoot();
@@ -339,11 +359,49 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       else
         await manager.disconnectGbaRoot(emulator, platform: platform);
     _pendingFolder = null;
+    _sharedBiosPrepared = false;
     _shared = true;
     step = AndroidSetupStep.folder;
     final app = manager.app(emulator);
-    if (app != null && manager.folder(emulator) == null)
+    if (app != null && manager.folder(emulator)?['tree'] == null)
       await _prepareDefaultFolder(app);
+  });
+
+  Future<bool> _armsx2Initialized(AndroidApp app, String tree) async {
+    final config = await manager.channel.invokeMapMethod<String, Object?>(
+      'sharedStat',
+      {
+        'tree': tree,
+        'emulator': emulator.id,
+        'package': app.package,
+        'path': 'PCSX2-Android.ini',
+      },
+    );
+    return config != null && (config['bytes'] as num? ?? 0) > 0;
+  }
+
+  Future<void> prepareSharedBios() => _run(() async {
+    if (!canPrepareSharedBios) return;
+    final app = manager.app(emulator)!;
+    final tree = _pendingFolder!.uri;
+    final lease = await SessionLease.acquire(manager.data);
+    try {
+      await manager.ensureSetupAllowed();
+      await _prepareFirmware(
+        (cancellation, phase) => prepareSharedArmsx2Bios(
+          manager,
+          app,
+          tree,
+          platformId!,
+          client!,
+          cancellation,
+          phase,
+        ),
+      );
+      _sharedBiosPrepared = true;
+    } finally {
+      await lease.release();
+    }
   });
 
   Future<void> selectFolder({bool change = false}) => _run(() async {
@@ -352,11 +410,15 @@ class AndroidEmulatorSetup extends ChangeNotifier {
       await manager.ensureSetupAllowed();
       final app = manager.app(emulator);
       if (app == null) throw StateError('Install ${emulator.name} first.');
-      if (!hasPendingFolder) _pendingFolder = null;
+      if (!hasPendingFolder) {
+        _pendingFolder = null;
+        _sharedBiosPrepared = false;
+      }
       // The picker can wake a cached emulator process. Keep the grant after
       // a failed check so retrying can verify it with the emulator stopped.
-      final uri = !change && _pendingFolder != null
-          ? _pendingFolder!.uri
+      final previousFolder = _pendingFolder?.uri;
+      final uri = !change && previousFolder != null
+          ? previousFolder
           : await manager.chooseFolder(
               emulator,
               package: app.package,
@@ -369,8 +431,14 @@ class AndroidEmulatorSetup extends ChangeNotifier {
         throw StateError('The emulator changed. Select its save folder again.');
       }
       final verifyAzahar = azaharRootSetup, verifyMmj = mmjRootSetup;
-      if (verifyAzahar || verifyMmj)
+      if (verifyAzahar || verifyMmj || armsx2SharedSetup) {
+        if (uri != _pendingFolder?.uri) _sharedBiosPrepared = false;
         _pendingFolder = (uri: uri, package: app.package, build: app.build);
+      }
+      if (armsx2SharedSetup && !await _armsx2Initialized(app, uri)) {
+        if (!change && uri == previousFolder) problem = 'ARMSX2 has not initialized this folder yet. Finish its setup and check that both apps use the same App Data Folder.';
+        return;
+      }
       await manager.confirmSharedStorage(
         emulator,
         uri,
@@ -402,6 +470,7 @@ String? androidDefaultSharedFolder(AndroidEmulator emulator) =>
       'azahar' => 'Broomm/Azahar',
       'citra-mmj' => 'citra-emu',
       'ppsspp' => 'Broomm/PPSSPP',
+      'armsx2' => 'Broomm/ARMSX2',
       _ => null,
     };
 
@@ -412,7 +481,7 @@ String androidSetupInstructions(
   'ppsspp' =>
     prepared
         ? 'In PPSSPP, choose Internal storage → Broomm → PPSSPP as the Memory Stick folder. If you already configured one, keep it. Select the same folder in Broomm.'
-        : 'In PPSSPP, choose a shared Memory Stick folder, then select that same folder in Broomm.',
+        : 'In PPSSPP, choose a shared Memory Stick folder. Use New folder in Android’s picker if needed, then select the same folder in Broomm.',
   'melonds' => 'In melonDS, disable saving next to the ROM and select a custom save folder. Set Save state location to Save directory. Select that exact custom save folder here.',
   'azahar' =>
     prepared
@@ -421,7 +490,10 @@ String androidSetupInstructions(
   'citra-mmj' => 'Allow Citra MMJ’s storage permission and wait for its main menu. Then select Internal storage → citra-emu in Broomm.',
   'dolphin' => 'Initialize Dolphin, then select Dolphin from the Android picker’s sidebar and grant its full user-data root. For GameCube, set both memory-card slots to GCI Folder.',
   'retroarch' => 'Install the required core in RetroArch and save its configuration. Select RetroArch from the picker’s sidebar and grant its Core Data/app-data root containing cores and files.',
-  'armsx2' => 'In ARMSX2, select a shared custom App Data Folder and enable its requested all-files permission. Use standard global memory cards and disable per-game cards. Select the full folder containing PCSX2-Android.ini, memcards and sstates.',
+  'armsx2' =>
+    prepared
+        ? 'Select the shared App Data Folder you chose in ARMSX2. For a new setup, use Internal storage → Broomm → ARMSX2 in both apps.'
+        : 'Select the shared App Data Folder you chose in ARMSX2. For a new setup, create a folder in Android’s picker and use it in both apps.',
   'duckstation' => 'Use a DuckStation version with selectable data locations. Set both memory cards to Shared Between All Games, using shared_card_1.mcd and shared_card_2.mcd. Select the parent folder containing memcards and states.',
   'eden' => 'Initialize its console account and configure keys and firmware in Eden. Select Eden from the picker sidebar and grant its full user-data root.',
   _ => throw UnsupportedError(

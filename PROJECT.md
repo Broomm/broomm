@@ -206,10 +206,13 @@ recovery. Returning to Broomm must never force-stop a potentially live
 writer.
 
 For new shared-folder setups on rooted Android, prepare the default selectable
-folders under `Broomm/` for Azahar and shared PPSSPP, and prepare Citra MMJ's
-fixed `citra-emu` folder at the storage root. Tell the player exactly which
-folder to select and preserve any existing emulator folder choice. Rooted
-PPSSPP keeps its App Private Data workflow.
+folders under `Broomm/` for Azahar, ARMSX2 and shared PPSSPP, and prepare
+Citra MMJ's fixed `citra-emu` folder at the storage root. Tell the player exactly
+which folder to select and preserve any existing emulator folder choice.
+Rooted PPSSPP keeps its App Private Data workflow. ARMSX2 shared setup accepts
+its App Data Folder grant before first-run setup is complete, and lets the
+player prepare a verified RomM PS2 BIOS there for import in ARMSX2. Verify
+the initialized save folder before marking it ready.
 
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 
@@ -235,8 +238,8 @@ standalone saves through journaled swaps. On return, show **Finished? Sync
 progress** when native exit proof is unavailable, and explain that the player
 must save and close the emulator first. Shared-folder play without an authorized
 root connection uses explicit closure confirmation. Broomm's transfer and
-session locks still apply. BIOS/firmware
-and new content installers are later work. No additional Wii update support is
+session locks still apply. Additional BIOS/firmware and new content installers
+are later work. No additional Wii update support is
 required for the owner's library; preserve existing desktop WAD/DLC behavior.
 
 The owner selected a **root-backed Android route** as the next milestone on

@@ -1,5 +1,33 @@
 # Implementation plan
 
+## Android ARMSX2 first-run BIOS import — 2026-11-13
+
+Read-only inspection of the GammaOS Android 14 device found Broomm build 1185,
+the pinned ARMSX2 2.9.2 legacy ARM64 APK, and an empty custom `Broom/ARMSX2`
+data folder. The private ARMSX2 media directory carried a generic SELinux
+label, which fails the existing rooted firmware destination check. ARMSX2's
+wizard imports a BIOS before completing setup. PPSSPP's log and private
+`PSP/SAVEDATA` directory confirmed that it had connected through App Private
+Data, which does not use `Broomm/PPSSPP`.
+
+Shared ARMSX2 setup now prepares the default folder when root access can
+create it. Players can keep an existing folder and grant it before ARMSX2
+finishes setup. **Prepare BIOS from RomM** stages the verified firmware in
+its `Broomm BIOS` subfolder for ARMSX2 to import. The grant stays available
+in the dialog until ARMSX2 has written its native configuration and the
+writability check succeeds. See the [setup walkthrough](docs/android-armsx2-root.md#shared-folder-and-bios-import).
+
+Static analysis, 75 focused Flutter tests, and the Android Kotlin bridge
+compile passed. The new setup regressions cover root-verification failure,
+shared setup without root, and retry after a rejected BIOS checksum. Native
+first-run BIOS import and a PS2 boot on GammaOS remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-emulator-setup.zip)
+is `0.1.27-dev` (1203), **24,417,941 bytes**, with SHA-256
+`c65e3e777d6ac53d648a0a78752bd481db71f0716bf4008d81cbed2ec239b23e`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Pairing spacing and save-picker focus — 2026-11-13
 
 Added space above and below the pairing cards, with smaller margins on

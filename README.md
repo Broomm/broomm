@@ -648,7 +648,12 @@ remain pending. See the [scope and walkthrough](docs/android-retroarch-cores.md#
 The shared-folder steps appear inside Setup. PPSSPP uses a Memory Stick root,
 melonDS a custom save folder with states in the save directory, and Azahar a
 user-data root. Dolphin/Eden/RetroArch expose their own provider in the picker
-sidebar. ARMSX2’s shared-folder route uses a custom data root and global cards. DuckStation
+sidebar. ARMSX2’s shared-folder route uses a custom data root and global cards.
+If the wizard requires a BIOS, choose **Use shared folder** in Broomm if
+offered, grant the same **App Data Folder** you chose in ARMSX2, and select
+**Prepare BIOS from RomM**. In ARMSX2’s BIOS step, select the **Broomm BIOS**
+subfolder that Broomm created. Finish ARMSX2 setup, quit it, and choose
+**Verify selected folder** in Broomm. DuckStation
 needs accessible memcards/states and Shared cards. The
 [per-app checklist](docs/android-installation-and-saves.md#connect-once-use-every-broomm-profile)
 has exact settings, prerequisites and limits. A folder connection serves all

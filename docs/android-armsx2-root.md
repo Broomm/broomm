@@ -10,7 +10,35 @@ catalogue. It preserves existing BIOS files.
 
 Use the default app data folder, two standard enabled memory cards and
 the default save-state directory. Disable per-game memory cards in ARMSX2.
-The existing shared-folder setup remains available for other installations.
+Shared-folder setup also works when the app uses a custom data location or
+its private storage cannot be verified.
+
+## Shared folder and BIOS import
+
+1. In Broomm, open **Emulator Settings → PlayStation 2 → ARMSX2 → Set up**
+   and choose **Use shared folder** if offered. On rooted devices Broomm
+   can prepare `Internal storage/Broomm/ARMSX2` for a fresh setup. Keep any
+   custom **App Data Folder** you already chose in ARMSX2. For a new setup
+   without root, create the folder using Android’s picker.
+2. Choose **Select App Data Folder** in Broomm and grant that same folder.
+   You can do this while ARMSX2 still needs a BIOS. For a new setup select
+   the same folder as **App Data Folder** in ARMSX2 and allow the permission
+   ARMSX2 requests.
+3. If the wizard needs a BIOS, choose **Prepare BIOS from RomM** in Broomm.
+   The current profile needs access to the PS2 firmware catalogue and a
+   verified 4 MiB PS2 BIOS. In ARMSX2, choose the **Broomm BIOS** subfolder
+   inside the App Data Folder as the BIOS import source. You can also import
+   your own BIOS using ARMSX2’s picker.
+4. Finish ARMSX2 setup, including the games folder it requests. Keep standard
+   global memory cards and turn off per-game cards. Quit ARMSX2 and choose
+   **Verify selected folder** in Broomm. If ARMSX2 is still initializing its
+   data, wait for its main screen before quitting and verifying again.
+
+ARMSX2 imports the BIOS into its own storage. After confirming that the
+import works, you can remove the extra `Broomm BIOS/broomm-ps2-bios.bin` copy
+from shared storage. Leave ARMSX2’s own BIOS and save files in place.
+
+## Play and recovery
 
 Play a downloaded self-contained CHD, ISO or raw BIN with standard PS2 disc
 metadata. Save in the game, or use ARMSX2’s **Save State** menu, then choose

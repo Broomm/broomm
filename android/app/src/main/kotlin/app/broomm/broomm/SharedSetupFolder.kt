@@ -9,6 +9,7 @@ internal fun defaultSharedSetupFolder(pkg: String?): String? = when (pkg) {
     "org.azahar_emu.azahar", "io.github.lime3ds.android" -> "Broomm/Azahar"
     "org.citra.emu", "com.antutu.ABenchMark" -> "citra-emu"
     "org.ppsspp.ppsspp", "org.ppsspp.ppssppgold" -> "Broomm/PPSSPP"
+    "com.armsx2", "com.armsx2.nightly" -> "Broomm/ARMSX2"
     else -> null
 }
 

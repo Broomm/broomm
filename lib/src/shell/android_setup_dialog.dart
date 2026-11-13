@@ -79,6 +79,8 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
       final manager = widget.manager, emulator = widget.emulator;
       final duck = emulator.id == 'duckstation';
       final close = androidCloseInstructions(emulator.name);
+      final sharedPs2 = setup.armsx2SharedSetup;
+      final pendingPs2 = sharedPs2 && setup.hasPendingFolder;
       final initialize = emulator.id == 'ppsspp'
           ? 'Open PPSSPP once, choose Skip for now / App Private Data and wait for the main menu.'
           : 'Open ${emulator.name} once and finish its first-run setup and permissions.';
@@ -122,7 +124,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                         : 'Finish installing ${emulator.name} in Android, then return here to continue setup.',
                   AndroidSetupStep.initialize => '$initialize\n\n$close',
                   AndroidSetupStep.folder =>
-                    'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator, prepared: setup.preparedFolder)}\n\n$close',
+                    pendingPs2
+                        ? '${setup.sharedBiosPrepared ? 'In ARMSX2’s BIOS step, select the Broomm BIOS subfolder inside the App Data Folder you just granted.' : 'If ARMSX2 needs a BIOS, choose Prepare BIOS from RomM below or import your own BIOS in ARMSX2.'}\n\nFinish ARMSX2’s setup, use its standard global memory cards and turn off per-game cards.\n\n$close'
+                        : sharedPs2
+                        ? '${androidSetupInstructions(emulator, prepared: setup.preparedFolder)} You can grant it now, before finishing ARMSX2’s setup.'
+                        : 'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator, prepared: setup.preparedFolder)}\n\n$close',
                   AndroidSetupStep.ready => 'Ready to play',
                 }),
               if (setup.folderProblem case final problem?)
@@ -214,11 +220,16 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   ConsoleButton(
                     onPressed: () => setup.selectFolder(change: true),
                     child: const Text('Choose another folder'),
-                  )
-                else
+                  ),
+                if (!setup.hasPendingFolder || pendingPs2)
                   ConsoleButton(
                     onPressed: setup.open,
                     child: const Text('Open emulator'),
+                  ),
+                if (setup.canPrepareSharedBios && !setup.sharedBiosPrepared)
+                  ConsoleButton(
+                    onPressed: setup.prepareSharedBios,
+                    child: const Text('Prepare BIOS from RomM'),
                   ),
                 ConsoleButton(
                   autofocus: true,
@@ -228,6 +239,8 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   child: Text(
                     setup.hasPendingFolder
                         ? 'Verify selected folder'
+                        : sharedPs2
+                        ? 'Select App Data Folder'
                         : setup.step == AndroidSetupStep.folder
                         ? 'Emulator closed · Select folder'
                         : 'Check setup',
