@@ -580,21 +580,38 @@ class ProgressStore {
   });
   Future<void> restore(
     ProgressSnapshot next,
-    Map<String, dynamic> nextState,
-  ) async {
+    Map<String, dynamic> nextState, {
+    bool requireEmpty = false,
+  }) async {
     final before = await capture();
+    if (requireEmpty && !before.ordinaryEmpty)
+      throw const FileSystemException(
+        'Game saves appeared before recovery could start. They were kept. Retry to review the working save.',
+      );
     await progressWrite(journal, {
       'ordinaryOnly': ordinaryOnly,
       'before': storageId(before),
       'after': storageId(next),
       'state': nextState,
+      if (requireEmpty) 'recoveryDestination': _recoveryDestination,
     });
     await recover();
   }
 
+  String get _recoveryDestination => jsonEncode([
+    layout.root,
+    for (final area in layout.areas)
+      if (!progressStateArea(area.id)) [area.id, area.path],
+  ]);
+
   Future<void> recover() => Isolate.run(() async {
     if (!await progressExists(journal.path)) return;
     final j = await progressJson(journal);
+    if (j.containsKey('recoveryDestination') &&
+        j['recoveryDestination'] != _recoveryDestination)
+      throw const FileSystemException(
+        'An interrupted save recovery belongs to a different emulator save folder. Switch back to that emulator to finish recovery.',
+      );
     final saveOnly = j['ordinaryOnly'] as bool? ?? ordinaryOnly;
     final before = await _load(j['before'] as String, verifyStates: !saveOnly),
         after = await _load(j['after'] as String, verifyStates: !saveOnly);

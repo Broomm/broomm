@@ -235,6 +235,30 @@ class Device {
       cloud.idle(() => cloud.sync(game, resolve: resolve));
 }
 
+CloudGame switchGame(Device device, String emulator) => CloudGame(
+  server: serverId,
+  profile: profileId,
+  user: 3,
+  rom: 42,
+  client: device.api,
+  layout: ProgressLayout(
+    '${device.root.path}/profiles/$profileId/emulators/$emulator',
+    'ryubing-directory-v1',
+    '01006a800016e000',
+    [const ProgressArea('save', 'user/bis/user/save/0000000000000001/0')],
+  ),
+);
+
+class UnavailableRestoreDestination extends ProgressLayout {
+  UnavailableRestoreDestination(ProgressLayout layout)
+    : super(layout.root, layout.format, layout.game, layout.areas);
+
+  @override
+  Future<File> target(String key) async => throw const FileSystemException(
+    'Simulated failure opening the destination',
+  );
+}
+
 void main() {
   late Directory tmp;
   late SaveServer api;
@@ -249,6 +273,43 @@ void main() {
     api.close();
     await tmp.delete(recursive: true);
   });
+
+  test(
+    'existing saves are listed newest first using the modification instant',
+    () async {
+      void add(int id, {String updated = '', String created = ''}) {
+        api.records[id] = RommSave(
+          id: id,
+          romId: 42,
+          userId: api.user,
+          name: 'Save $id',
+          bytes: 1,
+          updated: updated,
+          created: created,
+        );
+      }
+
+      add(99);
+      add(
+        23,
+        updated: '2026-11-13T15:00:00+02:00',
+        created: '2026-11-13T11:00:00Z',
+      );
+      add(12, updated: '2026-11-13T13:30:00Z');
+      add(45, updated: 'unavailable', created: '2026-11-13T12:00:00Z');
+      add(31, updated: '2026-11-13T13:00:00Z');
+      add(20, created: '2026-11-13T14:00:00Z');
+
+      expect((await a.cloud.list(a.game)).map((save) => save.id), [
+        20,
+        12,
+        31,
+        23,
+        45,
+        99,
+      ]);
+    },
+  );
 
   test('automatic sync writes only the exact account/game Broomm asset and pulls it on another device', () async {
     final other = api.add([1, 2, 3], name: 'Manual backup');
@@ -390,6 +451,97 @@ void main() {
     expect(api.contents.values.first, initial);
   });
 
+  test('launching an empty Switch backend can restore the existing verified save after confirmation', () async {
+    final ryubing = switchGame(a, 'ryubing'), astris = switchGame(a, 'astris');
+    final source = await ryubing.layout.target('save/system_data.bin');
+    final target = await astris.layout.target('save/system_data.bin');
+    await source.writeAsString('saved in Ryubing');
+    await a.cloud.idle(() => a.cloud.sync(ryubing));
+    final state = a.cloud.store(astris);
+    final old = await state.state();
+    // A legacy state record from before the ordinary-only flag was introduced.
+    await state.save(old..remove('ordinaryOnly'));
+    final remoteBefore = List<int>.of(api.contents.values.single);
+    await expectLater(
+      a.cloud.idle(
+        () => a.cloud.beforePlay(
+          astris,
+          resolve: (_) async => ProgressChoice.cancel,
+        ),
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await target.exists(), false);
+    expect(await state.state(), old);
+    await a.cloud.idle(
+      () => a.cloud.beforePlay(
+        astris,
+        resolve: (choice) async {
+          expect(choice.remote, isNull);
+          expect(choice.local.entries.keys, ['save/system_data.bin']);
+          return ProgressChoice.device;
+        },
+      ),
+    );
+    expect(await target.readAsString(), 'saved in Ryubing');
+    expect(await source.readAsString(), 'saved in Ryubing');
+    expect((await state.state())['active'], true);
+    expect(api.contents.values.single, remoteBefore);
+    expect(api.updatedIds, hasLength(1));
+  });
+
+  test('recovery offers the pending working copy ahead of the common save while offline', () async {
+    final ryubing = switchGame(a, 'ryubing'), astris = switchGame(a, 'astris');
+    final source = await ryubing.layout.target('save/system_data.bin');
+    final target = await astris.layout.target('save/system_data.bin');
+    await source.writeAsString('common save');
+    await a.cloud.idle(() => a.cloud.sync(ryubing));
+    await source.writeAsString('pending save');
+    api.offline = true;
+    await a.cloud.idle(() => a.cloud.afterPlay(ryubing, 0));
+    final store = a.cloud.store(astris);
+    final pending = (await store.state())['local'] as String;
+    await a.cloud.idle(
+      () => a.cloud.beforePlay(
+        astris,
+        resolve: (choice) async {
+          expect(store.storageId(choice.local), pending);
+          return ProgressChoice.device;
+        },
+      ),
+    );
+    expect(await target.readAsString(), 'pending save');
+    expect(await source.readAsString(), 'pending save');
+    expect((await store.state())['pending'], true);
+    expect(api.updatedIds, hasLength(1));
+  });
+
+  test('accepting recovery cannot overwrite working progress that appeared while the choice was open', () async {
+    final ryubing = switchGame(a, 'ryubing'), astris = switchGame(a, 'astris');
+    final source = await ryubing.layout.target('save/system_data.bin');
+    final target = await astris.layout.target('save/system_data.bin');
+    await source.writeAsString('saved in Ryubing');
+    await a.cloud.idle(() => a.cloud.sync(ryubing));
+    final st = a.cloud.store(astris);
+    final old = await st.state();
+    await expectLater(
+      a.cloud.idle(
+        () => a.cloud.beforePlay(
+          astris,
+          resolve: (_) async {
+            await target.writeAsString('new Astris progress');
+            return ProgressChoice.device;
+          },
+        ),
+      ),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(await target.readAsString(), 'new Astris progress');
+    expect(await st.state(), old);
+    expect(await st.journal.exists(), false);
+    expect(api.updatedIds, hasLength(1));
+  });
+
   test('a held production session lease prevents manual save effects and abnormal exits retain progress', () async {
     await a.write('good');
     await a.sync();
@@ -499,6 +651,48 @@ void main() {
     expect(await after.bundle.exists(), true);
     expect(await before.bundle.exists(), true);
   });
+
+  test(
+    'an interrupted recovery can resume only in the confirmed emulator folder',
+    () async {
+      final ryubing = switchGame(a, 'ryubing'),
+          astris = switchGame(a, 'astris');
+      final source = await ryubing.layout.target('save/system_data.bin');
+      final target = await astris.layout.target('save/system_data.bin');
+      await source.writeAsString('verified recovery');
+      final sourceStore = a.cloud.store(ryubing, ordinaryOnly: true);
+      final selectedStore = a.cloud.store(astris, ordinaryOnly: true);
+      final recovery = await sourceStore.capture();
+      final interrupted = ProgressStore(
+        selectedStore.directory,
+        UnavailableRestoreDestination(astris.layout),
+        astris.rom,
+        astris.user,
+        ownerRoot: a.root,
+        ordinaryOnly: true,
+      );
+      await a.cloud.idle(() async {
+        await expectLater(
+          interrupted.restore(recovery, {}, requireEmpty: true),
+          throwsA(isA<FileSystemException>()),
+        );
+        expect(await interrupted.journal.exists(), true);
+        await source.writeAsString('new progress in the other emulator');
+        await expectLater(
+          sourceStore.recover(),
+          throwsA(isA<FileSystemException>()),
+        );
+        expect(
+          await source.readAsString(),
+          'new progress in the other emulator',
+        );
+        expect(await target.exists(), false);
+        await selectedStore.recover();
+      });
+      expect(await target.readAsString(), 'verified recovery');
+      expect(await selectedStore.journal.exists(), false);
+    },
+  );
 
   test('a competing Broomm lineage cannot silently replace the last acknowledged device version', () async {
     await a.write('common');

@@ -604,8 +604,11 @@ class _BroommAppState extends State<BroommApp> {
           model.notifyListeners();
           await m.cloud.beforePlay(
             cloudGame!,
-            resolve: (conflict) =>
-                resolveCloudConflict(navigator.currentContext!, conflict),
+            resolve: (conflict) async {
+              if (conflict.recoveringMissing) await model.host.show();
+              cancellation.check();
+              return resolveCloudConflict(navigator.currentContext!, conflict);
+            },
           );
         }
         return resolved;

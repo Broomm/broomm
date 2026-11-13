@@ -20,12 +20,13 @@ class ProgressConflict {
     this.localLabel = 'Device',
     this.remoteLabel = 'Cloud',
     this.canUseDevice = true,
+    this.recoveringMissing = false,
   });
   final String reason;
   final ProgressSnapshot local;
   final ProgressSnapshot? remote;
   final String localLabel, remoteLabel;
-  final bool canUseDevice;
+  final bool canUseDevice, recoveringMissing;
 }
 
 typedef ProgressResolver = Future<ProgressChoice> Function(ProgressConflict);
@@ -116,6 +117,20 @@ class CloudSaves {
   void cancel() => _transfer?.cancel();
   DownloadCancellation? get cancellation => _transfer;
   Future<List<RommSave>> list(CloudGame g) async {
+    final dated = [
+      for (final save in await _ownedSaves(g)) (save, save.modifiedAt),
+    ];
+    dated.sort((a, b) {
+      final first = a.$2, second = b.$2;
+      final order = first == null
+          ? (second == null ? 0 : 1)
+          : (second == null ? -1 : second.compareTo(first));
+      return order == 0 ? b.$1.id.compareTo(a.$1.id) : order;
+    });
+    return [for (final (save, _) in dated) save];
+  }
+
+  Future<List<RommSave>> _ownedSaves(CloudGame g) async {
     _transfer?.check();
     if ((await g.client.currentUser()).id != g.user)
       throw const RommFailure(
@@ -131,7 +146,7 @@ class CloudSaves {
   }
 
   Future<RommSave?> _managed(CloudGame g) async {
-    final all = await list(g);
+    final all = await _ownedSaves(g);
     final versions = all.where((s) => s.versioned).toList();
     if (versions.map((s) => s.name).toSet().length != versions.length)
       throw const RommFailure(
@@ -337,15 +352,16 @@ class CloudSaves {
 
   Future<ProgressSnapshot> _local(
     ProgressStore st,
-    Map<String, dynamic> state,
-  ) async {
+    Map<String, dynamic> state, {
+    ProgressResolver? resolve,
+  }) async {
     final retained = state['snapshot'] is String
         ? await st.load(state['snapshot'] as String)
         : null;
     final snap = await st.capture(
       parents: retained == null ? [] : [retained.id, ...retained.parents],
     );
-    ProgressSnapshot? match;
+    ProgressSnapshot? match, recovery;
     for (final key in ['snapshot', 'local']) {
       if (state[key] is! String) continue;
       final existing = state[key] == state['snapshot'] && retained != null
@@ -353,14 +369,39 @@ class CloudSaves {
           : await st.load(state[key] as String);
       if (snap.ordinaryEmpty &&
           !existing.ordinaryEmpty &&
-          (key == 'snapshot' || state['pending'] == true))
-        throw const FileSystemException(
-          'Previously recorded game saves are missing. Recovery copies were kept. Use an existing save explicitly to restore them.',
-        );
+          (key == 'snapshot' || state['pending'] == true)) {
+        // A pending local snapshot takes priority over the common baseline.
+        recovery = existing;
+      }
       if (!existing.hasStates &&
           existing.ordinaryDigest == snap.ordinaryDigest) {
         match = existing;
       }
+    }
+    if (recovery != null) {
+      final choice = await resolve?.call(
+        ProgressConflict(
+          'This emulator has no working save for this game. Restore the verified recovery copy for this profile?',
+          recovery,
+          null,
+          recoveringMissing: true,
+        ),
+      );
+      if (choice != ProgressChoice.device)
+        throw const FileSystemException(
+          'Previously recorded game saves are missing. Recovery copies were kept. Open Cloud saves or start the game to review the recovery copy.',
+        );
+      _transfer?.check();
+      await st.restore(recovery, state, requireEmpty: true);
+      final restored = await st.capture(
+        parents: [recovery.id, ...recovery.parents],
+      );
+      if (restored.ordinaryDigest != recovery.ordinaryDigest)
+        throw const FileSystemException(
+          'The restored game save could not be verified. Recovery copies were kept.',
+        );
+      notice('Game save restored from the local recovery copy.', false);
+      return restored;
     }
     if (match == null) return snap;
     await snap.directory.delete(recursive: true);
@@ -375,7 +416,7 @@ class CloudSaves {
     await st.recover();
     final state = await st.state();
     final baseline = await _baseline(st, state);
-    final local = await _local(st, state);
+    final local = await _local(st, state, resolve: resolve);
     phase?.call(
       'ROM ${g.rom}: local snapshot verified in ${clock.elapsedMilliseconds} ms; checking managed remote progress.',
     );

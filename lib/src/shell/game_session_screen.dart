@@ -129,6 +129,8 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     return KeyEventResult.ignored;
   }
 
+  bool _short(BuildContext context) => MediaQuery.sizeOf(context).height < 460;
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: m,
@@ -154,9 +156,9 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   MediaQuery.sizeOf(context).width > 850 ? 48 : 24,
-                  24,
+                  _short(context) ? 10 : 24,
                   MediaQuery.sizeOf(context).width > 850 ? 48 : 24,
-                  22,
+                  _short(context) ? 10 : 22,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,14 +188,14 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: _short(context) ? 4 : 18),
                     Text(
                       widget.game.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 17, color: muted),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: _short(context) ? 4 : 14),
                     if (m.error != null) ProblemNotice(m.error!),
                     Expanded(
                       child: ConsoleScreenTransition(
@@ -329,12 +331,14 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Progress stays private to this profile · Cloud sync uses its BROOMM save history',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: muted, fontSize: 10),
-                    ),
+                    if (!_short(context) || m.screen != Screen.pairing) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Progress stays private to this profile · Cloud sync uses its BROOMM save history',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: muted, fontSize: 10),
+                      ),
+                    ],
                   ],
                 ),
               ),

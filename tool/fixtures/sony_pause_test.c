@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../native/pause_transition.h"
+#include "../../native/ryubing_pause.h"
 
 static void expect(int got,int wanted,const char *context) {
     if(got!=wanted){fprintf(stderr,"%s: expected %d, got %d\n",context,wanted,got);exit(1);}
@@ -41,5 +42,28 @@ int main(void) {
     expect(pause_transition(&control,0,0,2),-1,"quick release acknowledged");
     expect(pause_transition(&control,0,1,2),-1,"native pause after quick release remains paused");
     puts("PASS pending and unknown native state retain bounded commands");
+
+    struct RyubingPause ryubing=RYUBING_PAUSE_INIT;
+    expect(ryubing_pause_command(&ryubing,1,0,0,1000),1,"startup requests pause");
+    ryubing.last_delivery_ms=1000;
+    expect(ryubing_pause_command(&ryubing,1,0,0,3999),-1,"wait for the hotkey to take effect");
+    expect(ryubing_pause_command(&ryubing,1,-1,0,4000),-1,"unknown native state cannot retry a toggle");
+    expect(ryubing_pause_command(&ryubing,1,0,0,4001),1,"confirmed running after a lost hotkey retries pause");
+    ryubing.last_delivery_ms=4001;
+    expect(ryubing_pause_command(&ryubing,1,1,0,8000),-1,"late acknowledgement stops the pause retry");
+    expect(ryubing_pause_command(&ryubing,0,1,1,8001),0,"explicit play requests resume");
+    expect(ryubing_pause_command(&ryubing,0,1,1,12000),-1,"resume toggle is never repeated");
+    expect(ryubing_pause_command(&ryubing,0,0,1,12001),-1,"resume acknowledged");
+    expect(ryubing_pause_command(&ryubing,0,1,1,12002),-1,"independent gameplay pause is preserved");
+    puts("PASS Ryubing retries a missed pause only while the game is running");
+
+    ryubing=(struct RyubingPause)RYUBING_PAUSE_INIT;
+    expect(ryubing_pause_command(&ryubing,1,0,0,1000),1,"begin bounded Ryubing pause");
+    ryubing.last_delivery_ms=1000;
+    expect(ryubing_pause_command(&ryubing,1,0,0,181000),-1,"retry deadline stops hotkey delivery");
+    expect(ryubing.timed_out,true,"publish pause timeout");
+    expect(ryubing_pause_command(&ryubing,1,1,0,182000),-1,"manual pause recovers after timeout");
+    expect(ryubing.timed_out,false,"confirmed pause clears timeout");
+    puts("PASS Ryubing pause timeout is bounded and can recover");
     return 0;
 }

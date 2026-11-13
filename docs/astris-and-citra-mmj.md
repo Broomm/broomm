@@ -8,6 +8,12 @@ On Apple Silicon with macOS 15+, choose **Emulator Settings → Nintendo Switch 
 
 Play uses Broomm's loading/pairing screens: L1+R1 joins, L3+R1 changes face orientation, hold Start to play, and R3+Select opens the paused menu. Disconnecting a paired source returns to pairing. Physical controller/gyro acceptance remains an owner check. Open emulator retains the existing independent OS handoff without hiding or blocking Broomm.
 
+Astris uses the shared macOS window handoff. It temporarily leaves native
+fullscreen and hides when Broomm shows pairing or the pause menu. Resume
+reactivates Astris and restores fullscreen before releasing the gameplay
+input gate. See the
+[fullscreen overlay preview and walkthrough](../README.md#macos-fullscreen-overlay-check).
+
 Astris keeps separate private settings, console accounts, save indexes and content selections. Ordinary saves use Broomm's logical Switch save format/history; native identities remain private to the backend. Save states are unavailable. Download Updates and DLC invokes Astris's own content API in private staging, verifies application identity and native records, then publishes through journaled ownership. Repeated checks reuse content. Deletion removes owned selections and unreferenced NSPs, preserving progress and unrelated native records. It does not operate on Ryubing's configuration.
 
 On Android, **Nintendo 3DS → Citra MMJ** detects `org.citra.emu` and performance variant `com.antutu.ABenchMark`. Discovery and APK selection require its exported `org.citra.emu.ui.EmulationActivity`, preventing the unrelated benchmark from matching. Install opens the official releases; Install APK uses Android's confirmation. Actual installation readback updates the requesting server's default and survives restart.
@@ -26,9 +32,22 @@ The owner then selected shared storage as the supported assumption. That [adapte
 
 Astris uses SwiftUI/GameController and a NativeAOT backend. Its maintainer documents [Launch Services document launch](https://github.com/V380-Ori/Astris.Binaries/issues/54); direct binary launch was unreliable in disposable checks. Original Broomm Objective-C interop calls the frontend's actual controller API and observes backend button/pause state. Virtual source identities stay alive because native input readers retain them; unpairing disables player mappings. Broomm does not fabricate console-port readback.
 
+Astris matches each virtual pad through `controller_id` in the native player
+options. The bridge translates Broomm's positional face buttons to Astris's
+Nintendo button order. The native smoke test checks Npad registration and the
+A, B, X and Y bits in guest HID memory in both pairing orientations. See the
+[face-button correction](../IMPLEMENTATION.md#astris-face-button-mapping--2026-11-12)
+and [controller binding correction](../IMPLEMENTATION.md#astris-gameplay-controller-binding--2026-11-12).
+
 Dart owns session supervision and progress. The `open -W` helper is separate from the emulator: kernel writer ownership, executable path, process birth and retained AppKit application identity identify the writer. A native receipt distinguishes normal shutdown from a crash. Losing the helper cannot release the writer or finalize progress. Failed/late launches revoke a random admission ticket; the bridge checks it and the original launcher's birth before settings/save initialization. FIFO keepers release pending log readers after failed requests. Scoped inspector cancellation targets the retained application identity and waits for the native writer to exit.
 
 Private frontend preferences use a local plist and an isolated defaults suite, without reading/writing Astris's system preference domain. The child write policy allows its private root and the macOS temporary directory required for Cocoa atomic publication, as existing gameplay does. System emulator installations remain untouched.
+
+Launch Services updates the selected ROM's last-opened metadata during the
+first launch. The Astris save binding uses the installation receipt and stable
+file identity across that update. Existing games can reinitialize the binding
+once when switching to this version. See the
+[launch fix and verification](../IMPLEMENTATION.md#astris-switch-save-initialization--2026-11-11).
 
 The official DMG is pinned to SHA-256 `661f01a47816b3baeda5c6c924f92d32e7a2bf42db98483c259207f0eb5feb6f`, 12,924,928 bytes; unchanged `libryujinx.dylib` is `dc0d0e6c9fc6664897cbdb21f82a5987dceac5ff1bb926b3bbefb06266532088`. The upstream repository is binary-only; matching implementation source is unavailable there. No emulator implementation is copied. `tool/capture_astris_setup.dart` explicitly captures reviewed inputs; imported manifests cannot supply hook addresses/commands. Four precompiled universal bridges use the existing Apple SDK. No new runtime package, emulator, APK, firmware, key or ROM is bundled.
 

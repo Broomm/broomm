@@ -19,6 +19,13 @@ Eden, both RPCS3 choices and Astris. RPCS3 already avoided steady Resume;
 it now uses the same explicit-release and gate-reassertion rules. Each concrete
 adapter retains its existing native API, readiness checks and actual readback.
 Ryubing defers its F5 command until the owning window can receive it.
+Its pause readback follows the live game window's title while AppKit hides
+that window for pairing or the pause menu. The normal close path can resolve
+the hidden game window and ask Ryubing to finish its own shutdown.
+While the input gate requests Pause and the native title still reports
+Running, the macOS bridge retries the hotkey at three-second intervals for
+up to three minutes. Acknowledged Pause stops the retry. Explicit Resume
+keeps its existing one-shot behavior.
 
 Eden also pauses temporarily to apply controller socket changes. It resumes
 after those changes only if it paused a running CPU itself. A socket change in

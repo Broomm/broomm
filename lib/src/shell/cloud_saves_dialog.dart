@@ -17,11 +17,17 @@ Future<ProgressChoice> resolveCloudConflict(
       barrierDismissible: false,
       builder: (c) => AlertDialog(
         scrollable: true,
-        title: const Text('Choose your progress'),
+        title: Text(
+          conflict.recoveringMissing
+              ? 'Restore game save?'
+              : 'Choose your progress',
+        ),
         content: SizedBox(
           width: 540,
           child: Text(
-            '${conflict.reason}\n\n${conflict.localLabel} copy: ${conflict.local.manifest['created']}\n${conflict.remoteLabel} copy: ${conflict.remote?.manifest['created'] ?? 'unavailable'}\n\nThe unselected copy stays in local recovery storage. Other RomM save files are not changed.',
+            conflict.recoveringMissing
+                ? '${conflict.reason}\n\nRecovery copy created ${conflict.local.manifest['created']}.'
+                : '${conflict.reason}\n\n${conflict.localLabel} copy: ${conflict.local.manifest['created']}\n${conflict.remoteLabel} copy: ${conflict.remote?.manifest['created'] ?? 'unavailable'}\n\nThe unselected copy stays in local recovery storage. Other RomM save files are not changed.',
           ),
         ),
         actions: [
@@ -38,7 +44,11 @@ Future<ProgressChoice> resolveCloudConflict(
           if (conflict.canUseDevice)
             ConsoleButton(
               onPressed: () => Navigator.pop(c, ProgressChoice.device),
-              child: Text('Use ${conflict.localLabel.toLowerCase()} progress'),
+              child: Text(
+                conflict.recoveringMissing
+                    ? 'Restore recovery copy'
+                    : 'Use ${conflict.localLabel.toLowerCase()} progress',
+              ),
             ),
         ],
       ),
@@ -96,6 +106,7 @@ class _SaveDialog extends StatefulWidget {
 }
 
 class _SaveDialogState extends State<_SaveDialog> {
+  final _firstSaveFocus = FocusNode(debugLabel: 'First existing save');
   bool working = false, authorize = false;
   String? message;
   String name = '';
@@ -108,7 +119,13 @@ class _SaveDialogState extends State<_SaveDialog> {
     if (widget.action == 'save-use') load();
   }
 
-  Future<void> run(Future<void> Function() action) async {
+  @override
+  void dispose() {
+    _firstSaveFocus.dispose();
+    super.dispose();
+  }
+
+  Future<bool> run(Future<void> Function() action) async {
     setState(() {
       working = true;
       message = null;
@@ -116,28 +133,43 @@ class _SaveDialogState extends State<_SaveDialog> {
     });
     try {
       await m.cloudAction(action);
+      return true;
     } catch (e) {
       if (mounted)
         setState(() {
           message = progressFailure(e);
           authorize = e is RommFailure && [401, 403].contains(e.status);
         });
+      return false;
     } finally {
       if (mounted) setState(() => working = false);
     }
   }
 
-  Future<void> load() => run(() async {
-    final g = await m.cloudGame(widget.game.id);
-    final list = await m.cloud.list(g);
-    if (mounted)
-      setState(() {
-        savePage = 0;
-        saves = list
-            .where((s) => !s.missing && !s.name.startsWith('.broomm-backup-'))
-            .toList();
-      });
-  });
+  Future<void> load() async {
+    final loaded = await run(() async {
+      final g = await m.cloudGame(widget.game.id);
+      final list = await m.cloud.list(g);
+      if (mounted)
+        setState(() {
+          savePage = 0;
+          saves = list
+              .where((s) => !s.missing && !s.name.startsWith('.broomm-backup-'))
+              .toList();
+        });
+    });
+    if (!mounted || !loaded || saves?.isNotEmpty != true) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          !working &&
+          savePage == 0 &&
+          ModalRoute.of(context)?.isCurrent == true &&
+          _firstSaveFocus.context != null) {
+        requestConsoleFocus(_firstSaveFocus);
+      }
+    });
+  }
+
   Future<void> choose(RommSave save) async {
     final yes = await showConsoleDialog<bool>(
       context: context,
@@ -171,26 +203,40 @@ class _SaveDialogState extends State<_SaveDialog> {
     });
   }
 
-  Future<void> backup() => run(() async {
-    final g = await m.cloudGame(widget.game.id);
-    await m.cloud.backup(g, name);
-    if (mounted)
-      setState(
-        () => message = 'Backup created. Automatic sync uses the BROOMM slot.',
+  Future<void> backup() async {
+    await run(() async {
+      final g = await m.cloudGame(widget.game.id);
+      await m.cloud.backup(g, name);
+      if (mounted)
+        setState(
+          () =>
+              message = 'Backup created. Automatic sync uses the BROOMM slot.',
+        );
+    });
+  }
+
+  Future<void> sync() async {
+    await run(() async {
+      final g = await m.cloudGame(widget.game.id);
+      await m.cloud.sync(
+        g,
+        resolve: (conflict) => resolveCloudConflict(context, conflict),
       );
-  });
-  Future<void> sync() => run(() async {
-    final g = await m.cloudGame(widget.game.id);
-    await m.cloud.sync(
-      g,
-      resolve: (conflict) => resolveCloudConflict(context, conflict),
-    );
-    if (mounted)
-      setState(
-        () => message =
-            'Cloud save check completed. Only BROOMM history was synced.',
-      );
-  });
+      if (mounted)
+        setState(
+          () => message =
+              'Cloud save check completed. Only BROOMM history was synced.',
+        );
+    });
+  }
+
+  String _saveDate(BuildContext context, RommSave save) {
+    final date = save.modifiedAt?.toLocal();
+    if (date == null) return 'Date unavailable';
+    final locale = MaterialLocalizations.of(context);
+    return '${locale.formatMediumDate(date)} ${locale.formatTimeOfDay(TimeOfDay.fromDateTime(date))}';
+  }
+
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !working,
@@ -266,13 +312,16 @@ class _SaveDialogState extends State<_SaveDialog> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: ConsoleButton(
+                        focusNode: savePage == 0 && save.id == saves!.first.id
+                            ? _firstSaveFocus
+                            : null,
                         onPressed: () => choose(save),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(save.name),
                             Text(
-                              '${save.emulator ?? 'Emulator not specified'}${save.slot == null ? '' : ' · ${save.slot}'} · ${save.bytes} bytes · ${save.updated}',
+                              '${save.emulator ?? 'Emulator not specified'}${save.slot == null ? '' : ' · ${save.slot}'} · ${save.bytes} bytes · ${_saveDate(context, save)}',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ],

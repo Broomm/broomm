@@ -158,9 +158,18 @@ The original Flutter prototype uses the six supplied test ROMs as a static libra
 
 The pairing screen uses large live diagrams of the target platform's controller, illuminating the controls to which the joined source is mapped. L1 + R1 joins; after joining it cycles controller types on systems with multiple types (currently Wii). L3 + R1 swaps both A/B and X/Y together, independently of controller type. L3 + R2 toggles gyro for the joined player, including during gameplay, without disabling accelerometer input. Upright Remote and Remote + Nunchuk use relative right-stick pointing when gyro pointing is disabled or the source lacks the necessary sensors. Broomm guesses the initial orientation from the source controller family. Holding Select removes a controller; holding Start applies/starts or resumes. Short button presses, including Start/Select, remain available for testing. Initially show only Player 1; each join adds its tester and the next join card, bounded by the platform's player limit. Wii supports upright Remote, Classic, Remote + Nunchuk and horizontal Remote with one large active tester, all four illustrated choices along the bottom, and live configuration changes. Supported source controllers also provide accelerometer/gyro input to motion-capable targets, scoped by what the emulator runtime actually exposes. Motion follows player assignment independently of face orientation and becomes neutral during pairing, disconnection or failed readings.
 
-The pairing UI must stay responsive during emulator output and live controller updates. Hide motion bars when gyro is inactive, including disabled, unavailable or unreadable gyro and target types that do not use it. Accelerometer routing remains independent of that display rule.
+The pairing UI must stay responsive during emulator output and live controller updates. Fit the player cards, live diagrams, and actions to the available screen space without scrolling the pairing screen. Hide motion bars when gyro is inactive, including disabled, unavailable or unreadable gyro and target types that do not use it. Accelerometer routing remains independent of that display rule.
 
 The desktop prototype keeps ordinary window decorations and the user's chosen window size across its screens. Returning from gameplay must restore Broomm after either normal emulator exit or failure. Unknown controller/pause state must remain visible and recoverable. Console controller sockets must reflect paired players; exposing stable host input routes must not create extra connected players in a game.
+
+On macOS, detect the game window's fullscreen mode whenever Broomm opens
+controller pairing or the paused menu, including when the player entered
+fullscreen during gameplay. Hide the fullscreen emulator to show Broomm.
+Leave a native fullscreen Space as needed and restore the same window to
+fullscreen on resume. Preserve the user's fullscreen preference and keep
+the game paused until its presentation mode and activation are confirmed.
+Log failures to confirm launcher visibility while presenting a menu and try
+the overlay fallback. Keep the menu free of window visibility diagnostics.
 
 For supported pinned RPCS3 builds, show the native loading dialog's file/module counters and current-phase progress in Broomm. Use an indeterminate bar when counters are absent or between phases; readiness still requires the existing input/pause acknowledgment. Do not capture emulator windows: the owner canceled the live-preview direction. Preserve the owner's RPCS3 performance settings.
 
@@ -336,7 +345,7 @@ version. Previously uploaded state assets and historical versions are retained.
 
 Maintain a `BROOMM` save slot per game and RomM account in Broomm's emulator namespace. Append versions named `Broomm [yyyy-mm-dd_hh-mm-ss]` with the correct native extension: ordinary DS saves remain raw `.sav`, SNES SRAM remains `.srm`, and directory/multifile exports use `.zip`. Let RomM assign the timestamp before the extension, following its autosave format. Automatically synchronize only the latest version in this slot; preserve earlier versions and unrelated slots. New writes must not overwrite the old unslotted `broomm` asset; it may be read once for migration when no BROOMM history exists.
 
-The game's Select/Options menu provides **Use existing save file**, which explicitly copies a selected account-owned RomM save into local working progress and a new BROOMM version while leaving its source unchanged, and **Backup savefile**, which explicitly creates an independent remote save under a user-supplied name with the appropriate extension without replacing an existing filename. Backups never become automatic synchronization targets. Imports, backups and retries use ordinary saves only. An older mixed save bundle can supply its validated in-game save without restoring the bundled states. Native `.sav` files carry their original bytes.
+The game's Select/Options menu provides **Use existing save file**, which lists account-owned RomM saves newest first by last modification and explicitly copies the selected save into local working progress and a new BROOMM version while leaving its source unchanged. **Backup savefile** explicitly creates an independent remote save under a user-supplied name with the appropriate extension without replacing an existing filename. Backups never become automatic synchronization targets. Imports, backups and retries use ordinary saves only. An older mixed save bundle can supply its validated in-game save without restoring the bundled states. Native `.sav` files carry their original bytes.
 
 Offline play retains progress locally. When the originating server/account is active and connectivity returns, compare the remote save's hash with the last acknowledged common baseline. If the remote hash still matches that baseline, upload the new local progress without a conflict prompt. If local and remote have both changed and differ, notify the user and let them choose which to keep, preserving both until resolution succeeds. Equal local/remote content needs no prompt; a remote-only change can be downloaded safely.
 
@@ -347,6 +356,11 @@ Do not checksum ROM contents during launch or ordinary cloud-save discovery. Use
 Launch preparation must remain cancellable. Quit must acknowledge the request promptly, show the phase being stopped and offer a visible way to leave if graceful shutdown stalls. Retain unfinished progress and recovery records. A surviving emulator must keep writer exclusion until its exit is confirmed; any force-quit recovery action requires explicit confirmation and verified process identity, never a PID alone or deletion of a live lock.
 
 Initialize cloud synchronization automatically after installation and profile activation, including existing installed games without a first-sync record. Verify the current account's managed remote history before acknowledging an empty save. Restore existing BROOMM progress automatically when the device has no progress, and retain the normal conflict rules when both sides have progress. A missing emulator or an unresolved native save identity can defer initialization until the adapter is ready; it must never produce a false successful sync. Do not require the user to open a cloud menu or create a dummy remote save to initialize an empty game.
+
+When expected working files are missing, offer the current profile's verified
+local recovery copy during launch or an explicit save check. Restoring it
+requires confirmation and an empty destination. Keep normal cloud conflict
+checks after restoring the working copy.
 
 Each Home game tile has a top-right cloud-status badge for the active profile: green cloud/check for the last confirmed sync, amber cloud/sync while waiting to sync, and red cloud/off when attention is needed (including conflicts or damaged/interrupted recovery). A badge is a cached observation of durable sync state, not a claim of continuous remote freshness. Tooltips and accessible labels explain its state. Badge rendering must not prepare emulators or scan save payloads.
 

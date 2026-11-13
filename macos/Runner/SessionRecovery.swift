@@ -71,6 +71,29 @@ final class BroommSessionRecovery {
     return Owner(pid: query.l_pid, device: info.st_dev, inode: info.st_ino)
   }
 
+  func emulatorWindowTarget(_ args: [String: Any]) throws -> NSRunningApplication {
+    guard let pid = (args["pid"] as? NSNumber)?.int32Value, pid > 0,
+          let seconds = (args["seconds"] as? NSNumber)?.uint64Value, seconds > 0,
+          let microseconds = (args["microseconds"] as? NSNumber)?.uint64Value, microseconds < 1_000_000,
+          let path = args["executable"] as? String, path.hasPrefix("/"),
+          let lock = args["writer"] as? String, lock.hasPrefix("/"),
+          !path.contains("\0"), !lock.contains("\0"),
+          path.utf8.count < 4096, lock.utf8.count < 4096,
+          URL(fileURLWithPath: lock).lastPathComponent == "writer.lock" else {
+      throw failure("Invalid emulator window target.")
+    }
+    let expected = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+    let processBirth = Birth(seconds: seconds, microseconds: microseconds, uid: getuid())
+    guard let writer = try owner(lock), writer.pid == pid,
+          try birth(pid) == processBirth,
+          let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated,
+          try executable(pid) == expected, try birth(pid) == processBirth,
+          try owner(lock) == writer else {
+      throw failure("The emulator session changed before its window could be switched.")
+    }
+    return app
+  }
+
   func inspect(root: String) throws -> [String: Any]? {
     guard root.hasPrefix("/"), !root.contains("\0"), root.utf8.count < 4096 else {
       throw failure("Invalid Broomm storage location.")

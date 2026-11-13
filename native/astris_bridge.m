@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include "ownership.inc"
 #include "pause_transition.h"
+#include "macos_window.h"
 
 static NSString *as_root, *as_user;
 static NSUserDefaults *as_defaults;
@@ -37,7 +38,6 @@ static void as_set_wanted(BOOL wanted) {
     as_wanted=wanted;
 }
 static void (*as_first_callback)(void);
-
 static void *as_native(size_t offset) {
     if(!as_library)for(uint32_t i=0;i<_dyld_image_count();i++)
         if([@(_dyld_get_image_name(i)) hasSuffix:@"/libryujinx.dylib"])
@@ -218,6 +218,44 @@ static int as_pause_state(void) {
     uintptr_t device=context?*(uintptr_t *)(context+0x30):0;
     return device?*(uint8_t *)(device+0x11a):-1;
 }
+
+// Test-only readback from the HID shared memory the game actually reads.
+// Resolve the pinned backend's contiguous HID allocation, then read the
+// latest published Player 1 FullKey sample (Switch Pro Controller).
+static int64_t as_test_npad_buttons(void) {
+    uintptr_t api=*(uintptr_t *)as_native(0x14a1398);
+    uintptr_t host=api?*(uintptr_t *)(api+0xe0):0;
+    uintptr_t manager=host?*(uintptr_t *)(host+0x38):0;
+    uintptr_t device=manager?*(uintptr_t *)(manager+0x48):0;
+    uintptr_t hid=device?*(uintptr_t *)(device+0x48):0;
+    uintptr_t storage=hid?*(uintptr_t *)(hid+0x10):0;
+    uintptr_t page_list=storage?*(uintptr_t *)(storage+0x10):0;
+    uintptr_t range=page_list?*(uintptr_t *)(page_list+8):0;
+    uintptr_t page=range&&*(uint32_t *)(range+0x18)==1?*(uintptr_t *)(range+8):0;
+    uintptr_t memory=storage?*(uintptr_t *)(storage+8):0;
+    uintptr_t allocation=memory?*(uintptr_t *)(memory+0x10):0;
+    if(!page||!allocation)return -1;
+
+    uint64_t address=*(uint64_t *)(page+0x20);
+    uint64_t length=*(uint64_t *)(allocation+0x18);
+    uintptr_t base=*(uintptr_t *)(allocation+0x10);
+    if(!base||address<0x80000000||length<0x40000||address-0x80000000>length-0x40000)return -1;
+
+    uintptr_t npad=base+(address-0x80000000)+0x9a00;
+    const uint64_t *full_key=(const uint64_t *)(npad+0x28);
+    uint64_t tail=__atomic_load_n(&full_key[2],__ATOMIC_ACQUIRE);
+    if(!__atomic_load_n(&full_key[3],__ATOMIC_ACQUIRE)||tail>=17)return -1;
+    const uint64_t *sample=&full_key[4+tail*6];
+    uint64_t sequence=__atomic_load_n(&sample[0],__ATOMIC_ACQUIRE);
+    uint64_t buttons=__atomic_load_n(&sample[2],__ATOMIC_RELAXED);
+    uint64_t attributes=__atomic_load_n(&sample[5],__ATOMIC_RELAXED);
+    // The pinned writer stores twice the sample number, with bit 0 set
+    // while the slot is being overwritten.
+    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    if(!(attributes&1)||(sequence&1)||sequence!=__atomic_load_n(&sample[0],__ATOMIC_RELAXED)||
+       tail!=__atomic_load_n(&full_key[2],__ATOMIC_RELAXED))return -1;
+    return (int64_t)buttons;
+}
 static NSArray *as_vector(double x,double y,double z) {
     return @[@(isfinite(x)?x:0),@(isfinite(y)?y:0),@(isfinite(z)?z:0)];
 }
@@ -255,6 +293,7 @@ static void as_read_command(NSDictionary<NSNumber *,NSDictionary *> *sources) {
         [NSApp terminate:nil];
     }
 }
+
 static void as_tick(void) {
     static NSMutableDictionary<NSNumber *,NSNumber *> *held;
     static pid_t owner;
@@ -265,8 +304,9 @@ static void as_tick(void) {
         if(owner<=1||proc_pidinfo(owner,PROC_PIDTBSDINFO,0,&launcher,sizeof(launcher))!=sizeof(launcher))_exit(73);
         seconds=launcher.pbi_start_tvsec;microseconds=launcher.pbi_start_tvusec;
     }
-    if((proc_pidinfo(owner,PROC_PIDTBSDINFO,0,&launcher,sizeof(launcher))!=sizeof(launcher)||
-        launcher.pbi_start_tvsec!=seconds||launcher.pbi_start_tvusec!=microseconds)&&!as_gate)
+    BOOL owner_alive=proc_pidinfo(owner,PROC_PIDTBSDINFO,0,&launcher,sizeof(launcher))==sizeof(launcher)&&
+        launcher.pbi_start_tvsec==seconds&&launcher.pbi_start_tvusec==microseconds;
+    if(!owner_alive&&!as_gate)
         as_request_menu(@"launcher-exit",UINT32_MAX);
     GCController.shouldMonitorBackgroundEvents=YES;
     NSArray<GCController *> *current=GCController.controllers;
@@ -333,9 +373,9 @@ static void as_tick(void) {
             ((void(*)(bool))as_native(0x958540))(as_test_pause_action==4);
             as_test_pause_action=0;as_paused=as_pause_state();
         }
-        // The exported frontend API uses the same first 15 button indices
-        // as Broomm; the backend maps these to GamepadButtonInputId values.
-        const int buttonIds[]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+        // Broomm's face positions are south/east/west/north. Astris delivers
+        // API indices 0–3 to the game as Nintendo A/B/X/Y (east/south/north/west).
+        const int buttonIds[]={1,0,3,2,4,5,6,7,8,9,10,11,12,13,14};
         for(int p=0;p<4;p++)if(as_handles[p]>=0) {
             NSDictionary *source=sources[@(as_routes[p])];BOOL live=source&&!as_gate&&as_paused==0;
             uint32_t bits=live?[source[@"buttons"] unsignedIntValue]:0;
@@ -351,17 +391,20 @@ static void as_tick(void) {
         }
     }
     NSWindow *window=NSApp.keyWindow?:NSApp.mainWindow;NSRect frame=window.frame;
+    if(owner_alive&&as_gate&&as_paused==1&&!atomic_load(&as_ended))
+        broomm_macos_window_tick((__bridge void *)window,owner,true);
     if(window)frame.origin.y=NSScreen.screens.firstObject.frame.size.height-frame.origin.y-frame.size.height;
-    uint64_t native_buttons=0;
-    if(getenv("BROOMM_SESSION_TEST")&&as_handles[0]>=0) {
-        uintptr_t slot=*(uintptr_t *)as_native(0x14a0a28);
-        uintptr_t driver=slot?*(uintptr_t *)(slot+8):0;
-        uintptr_t list=driver?*(uintptr_t *)(driver+0x10):0;
-        uintptr_t pad=list&&as_handles[0]<*(int *)(list+8)?*(uintptr_t *)(list+0x10+as_handles[0]*8):0;
-        uintptr_t buttons=pad?*(uintptr_t *)(pad+0x10):0;
-        if(buttons)for(int b=0;b<MIN(*(int *)(buttons+8),64);b++)if(*(uint8_t *)(buttons+0x10+b))native_buttons|=1ull<<b;
+    int64_t native_buttons=0;
+    if(getenv("BROOMM_SESSION_TEST")) {
+        native_buttons=-1;
+        if(as_paused==0&&(as_ports&1)&&atomic_load(&as_ready)&&!atomic_load(&as_ended))
+            native_buttons=as_test_npad_buttons();
     }
     NSMutableDictionary *status=[@{@"protocol":@4,@"pid":@(getpid()),@"sample":@(++as_sample),@"ack":@(as_revision),@"requestSerial":@(as_serial),@"request":as_request,@"requestDevice":as_device==UINT32_MAX?NSNull.null:@(as_device),@"blocked":@(as_gate),@"paused":@(as_paused),@"window":@[@(frame.origin.x),@(frame.origin.y),@(frame.size.width),@(frame.size.height)],@"devices":devices,@"connectedPorts":@(as_ports),@"consolePorts":@(-1),@"switchButtons":@(native_buttons),@"appActive":@(NSApp.isActive),@"inputReady":@((BOOL)(as_initialized&&atomic_load(&as_ready))),@"gyroEnabled":@[@(as_gyro[0]),@(as_gyro[1]),@(as_gyro[2]),@(as_gyro[3])]} mutableCopy];
+    struct MacWindowStatus window_status=broomm_macos_window_status();
+    status[@"macWindowAck"]=@(window_status.revision);
+    status[@"macWindowHidden"]=@(window_status.hidden);
+    status[@"macWindowBirth"]=@[@(window_status.seconds),@(window_status.microseconds)];
     if(getenv("BROOMM_SESSION_TEST")) {
         NSMutableArray *ids=[NSMutableArray array];for(NSDictionary *source in devices)if([source[@"id"] unsignedIntValue]>=0x70000001u)[ids addObject:source[@"id"]];
         status[@"testSourceIds"]=ids;
@@ -417,6 +460,7 @@ __attribute__((constructor)) static void as_startup(void) {
     }
     as_private_urls();
     as_private_preferences();
+    if(as_session)broomm_macos_window_observe();
     if(as_session||getenv("BROOMM_ASTRIS_INSPECT")) {
         atexit(as_normal_exit);
         as_controllers=[NSMutableArray array];as_ids=[NSMutableArray array];

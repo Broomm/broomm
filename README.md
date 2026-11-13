@@ -2,7 +2,7 @@
 
 ## Home and save-sync preview
 
-[Download the universal macOS preview](build/releases/Broomm-macOS-home-bottom-actions.zip).
+[Download the universal macOS preview](build/releases/Broomm-macOS-pairing-picker-focus.zip).
 Quit Broomm and any running game normally, unzip the archive, then open
 `broomm.app`. The preview uses the existing Broomm Application Support folder
 and saved profiles. It is ad-hoc signed and uses a development update identity.
@@ -43,6 +43,37 @@ Keep the data folder when removing the preview.
    version in RomM when the ordinary save changed. A save-state-only change
    stays on the device. See [the cloud-save walkthrough](#verify-managed-cloud-saves)
    and [implementation and verification](IMPLEMENTATION.md#bottom-aligned-home-actions--2026-11-10).
+
+### macOS fullscreen overlay check
+
+Start a downloaded game in a configured macOS emulator. Try one launch with
+fullscreen enabled in the emulator settings, and another where you launch
+windowed and enter fullscreen during gameplay.
+
+For Ryubing, keep **Start Fullscreen** enabled and check that the pairing
+screen becomes usable after Ryubing hides. Hold **Start** after pairing to
+return to fullscreen, then use the in-game shortcut below.
+Broomm retries a missed startup pause while Ryubing reports that it is
+running. If the retry window expires, press **F5** in Ryubing to continue
+to pairing or close the game from Ryubing.
+
+1. Join your controller with **L1 + R1** and hold **Start** to play. On a short
+   display, the controller diagrams resize and the pairing actions stay on screen.
+2. In fullscreen, press **R3 + Select/Back**. The emulator should hide and
+   Broomm's paused menu should become active.
+3. Press **Start** to resume. Check that the same game window returns to
+   fullscreen and accepts gameplay input. Open the menu again and select
+   **Close game** to exit normally and keep your progress.
+
+For Astris, use Apple Silicon with macOS 15 or later and select Astris in
+**Emulator Settings → Nintendo Switch**.
+The first launch after updating can briefly open and close Astris while
+Broomm verifies which private in-game save belongs to the selected game.
+If **Restore game save?** appears, choose **Restore recovery copy** to copy the
+verified local save into Astris and continue through the usual cloud save check.
+Press A, B, X and Y in pairing and check that the same labels register in-game.
+See the [fullscreen verification](IMPLEMENTATION.md#macos-emulator-fullscreen-handoff--2026-11-12)
+and [Astris controller status](IMPLEMENTATION.md#astris-face-button-mapping--2026-11-12).
 
 CI's pinned Devbox bootstrap, local regression commands and disposable-runner
 effects are documented in [the bootstrap walkthrough](docs/ci-devbox-bootstrap.md).
@@ -941,7 +972,7 @@ Use RomM **5.4.0**, the configured macOS native pack and an account/token with `
 
 1. Launch an installed SNES, 3DS, DS, GameCube, Wii, PS3 or Switch game from Home. Broomm checks only this account/game's latest `BROOMM` slot version in the **Broomm** emulator namespace before pairing. Existing local and remote progress require a choice when there is no common baseline. First play without progress creates no empty remote save. The first Switch launch initializes/binds native save storage, closes its writer, then restores cloud progress before the gameplay launch. With no BROOMM history, a legacy unslotted `broomm` bundle can migrate once; its source stays unchanged.
 2. Save inside the game, then close the emulator normally. Broomm returns with a sync screen. Wait for completion or choose **Keep local save and finish later**. RomM should show a new `Broomm [yyyy-mm-dd_hh-mm-ss]` version in slot `BROOMM`, retaining earlier versions. DS uses raw `.sav`, SNES raw `.srm`, and native directory/multifile saves use `.zip`. The smaller old DS `broomm` file was a compressed bundle; its replacement exposes the original native bytes. Save states stay on the device. Routine sync leaves prior versions, state assets and unrelated slots unchanged.
-3. From that game's Select/Options menu, choose **Use existing save file**, select an available source (20 entries per page), and confirm. The selected source remains unchanged; local progress adopts its contents and Broomm appends a new BROOMM version. Supported sources are Broomm backups or the documented native exports; for Azahar, ZIP the complete `data` directory including `00000001.metadata` and `00000001/`. Raw console `.sav` conversions are not guessed.
+3. From that game's Select/Options menu, choose **Use existing save file**. The picker focuses the newest available save when the list loads. Select a source (20 entries per page) and confirm. The selected source remains unchanged; local progress adopts its contents and Broomm appends a new BROOMM version. Supported sources are Broomm backups or the documented native exports; for Azahar, ZIP the complete `data` directory including `00000001.metadata` and `00000001/`. Raw console `.sav` conversions are not guessed.
 4. Choose **Backup savefile**, enter a name such as `Before the final boss`, then **Create backup in RomM**. It creates a separate ordinary-save backup with the appropriate extension. An existing filename is refused. An interrupted retry resumes its original recovery snapshot; the dialog explains this. Later automatic sync still uses only BROOMM history.
 5. **Cloud saves → Sync / resolve conflict** retries explicitly or offers device/cloud progress when both changed. Both copies are retained locally until a choice succeeds. On a second device with the same account, the same-ROM/native-format save should pull before play; this gameplay check still needs owner verification. Old mixed save bundles can supply their ordinary save while preserving local
    states. If the newest historical version contains only states, use **Use

@@ -248,6 +248,14 @@ class RunnerTests: XCTestCase {
       XCTAssertTrue(window.styleMask.contains([.titled, .closable, .miniaturizable, .resizable]))
       XCTAssertFalse(window.styleMask.contains(.fullSizeContentView))
       XCTAssertEqual(window.level, overlay ? .statusBar : .normal)
+      if overlay {
+        XCTAssertTrue(window.collectionBehavior.contains([.canJoinAllSpaces, .fullScreenAuxiliary]))
+        if #available(macOS 13.0, *) {
+          XCTAssertTrue(window.collectionBehavior.contains(.canJoinAllApplications))
+        }
+      } else {
+        XCTAssertEqual(window.collectionBehavior, [.managed])
+      }
     }
   }
   @MainActor

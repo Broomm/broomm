@@ -1,5 +1,295 @@
 # Implementation plan
 
+## Pairing spacing and save-picker focus — 2026-11-13
+
+Added space above and below the pairing cards, with smaller margins on
+compact displays. The diagrams still fit within the available space.
+When **Use existing save file** loads or refreshes a nonempty list, focus
+moves to the newest available save and reveals it using the dialog's normal
+focus scrolling. The existing loading and empty-list controls remain usable.
+
+Static analysis and 42 focused tests passed. A delayed 24-save fixture in a
+640×360 viewport verified that Enter opens the newest save's confirmation
+after the list loads. The compact pairing tests passed with four Wii players.
+
+The [universal macOS preview](build/releases/Broomm-macOS-pairing-picker-focus.zip)
+is `0.1.27-dev` (1202), **24,417,937 bytes**, with SHA-256
+`be9caf94b16684bebb82623b56f3f07938660bddd577857fabeb2514e05ef1cd`.
+ZIP integrity, source and extracted signatures, both architectures,
+setup assets, and bundled bridges passed verification.
+
+## Pairing and existing-save picker usability — 2026-11-13
+
+Fullscreen window-presentation failures are logged in the session log. Broomm
+tries the overlay fallback without showing a visibility notice. Pause and
+resume still use their existing acknowledgements.
+
+The pairing screen fits the visible player cards and actions without
+scrolling. It chooses rows and columns based on the available width and height.
+Each controller diagram uses the space left by its card controls. When more
+than one unassigned controller is available, **Choose a controller** opens a
+separate device picker.
+
+**Use existing save file** sorts all saves before pagination. It uses the
+RomM modification time, then the creation time when the modification date is
+missing or invalid. Undated saves go last and equal timestamps use descending
+save IDs. The picker displays dates in the device's local time. Automatic
+sync still selects BROOMM history by its existing version order.
+
+Static analysis and 63 focused Flutter tests passed. The layout checks
+included a 600×340 viewport, a 573×413 viewport with four Wii motion
+controllers, and the controller lab. Save ordering covered mixed offsets,
+missing and invalid timestamps, and equal timestamps. The overlay regression
+forced a macOS visibility acknowledgement failure and checked the fallback.
+
+The [universal macOS preview](build/releases/Broomm-macOS-pairing-save-picker.zip)
+is `0.1.27-dev` (1201), **24,420,248 bytes**, with SHA-256
+`30a322d18ade9023d660d6d7004d30b8ce5b32698f62211fc754d7310595b8b5`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets, and bundled bridges passed verification.
+
+## Ryubing startup pause acknowledgement — 2026-11-13
+
+Build 1199 sent one F5 press and release on fullscreen startup while Smash
+Ultimate was loading shaders. The owner session kept reporting Running with
+the input gate closed. The shader-cache load completed about 96 seconds after
+the first F5 event, and no pause acknowledgement arrived.
+
+The macOS bridge waits for the game window to be on the active Space and
+ready for key input. If Ryubing still reports Running after an F5 press, the
+bridge retries every three seconds for up to three minutes. A confirmed
+pause stops retries and allows fullscreen handoff. At the startup deadline,
+Broomm displays the recovery action and keeps controller input gated.
+
+A disposable Ryubing 1.3.3 run on macOS 27.0.1 ARM64 missed the first F5
+event, paused after the automatic retry, opened pairing, restored fullscreen,
+and passed synthetic R3 + Select and normal close from the hidden menu.
+Five AppKit fixtures, 44 focused Flutter tests, static analysis, and the
+native pause tests under ASan/UBSan passed.
+
+The [universal macOS preview](build/releases/Broomm-macOS-ryubing-startup-pause.zip)
+is `0.1.27-dev` (1200), **24,454,861 bytes**, with SHA-256
+`7dd0ae07c1dae4fa6be7e1e2a847121b6b71441876e0684ad87172b2bec8953b`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets, and the four bundled bridges passed verification.
+The packaged SDL2 bridge passed the same native Ryubing round trip.
+
+## Ryubing hidden-window pause readback — 2026-11-13
+
+The owner reported a menu acknowledgement timeout on build 1198 after
+Ryubing hid successfully. A pinned Ryubing 1.3.3 run with Super Smash Bros.
+Ultimate reproduced the failure on macOS 27.0.1 ARM64. The game window's
+title still showed `(Paused)` while hidden, but the bridge observed only
+visible windows and stopped advancing the handoff when pause became unknown.
+
+The bridge now reads pause state from the current Ryubing game window while
+hidden, prefers that window over fullscreen auxiliary surfaces, and waits for
+the pause hotkey to be released before changing Spaces. Close game resolves
+the same hidden game window so Ryubing can shut down normally.
+
+The isolated real-emulator check covered fullscreen startup pairing,
+synthetic R3 + Select, return to fullscreen before enabling controller input,
+and normal close from the hidden pause menu. The fixture needed a second
+explicit startup pause request after the first F5 event went unacknowledged.
+All five AppKit fixtures passed, including a handoff gated on the title of
+the hidden game window. Static analysis and 40 focused Flutter tests passed.
+
+The [universal macOS preview](build/releases/Broomm-macOS-ryubing-fullscreen.zip)
+is `0.1.27-dev` (1199), **24,453,039 bytes**, with SHA-256
+`8f87e334f48804d17f509b55043a1c44abe0cf22a085cff1bfa591a3bb56cd67`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets and the four bundled bridges passed verification.
+
+## macOS emulator fullscreen handoff — 2026-11-12
+
+The SDL2, SDL3 and Astris bridges share AppKit window detection and handoff.
+On each confirmed pause, the bridge checks the current emulator window.
+It leaves a native fullscreen Space before hiding the emulator. Borderless
+fullscreen windows retain their display-sized geometry while hidden. Resume
+restores and verifies the window's mode and activation before releasing the
+controller gate. The launcher checks the executable, process birth and writer
+lock before transferring activation. Ordinary windowed SDL sessions use the
+shared overlay. Astris also hides its windowed presentation.
+
+Native AppKit fixtures on macOS 27.0.1 ARM64 passed two fullscreen round
+trips, a windowed launch followed by fullscreen during play, a borderless
+round trip, and a round trip with a recreated AppKit window. They checked the
+launcher window was key and rejected a stale process birth. DuckStation
+0.1-12083-g00e299795 with Mega Man X4 passed startup pairing and synthetic
+R3 + Select in a disposable profile. Its launcher regained focus and the
+game returned to its original fullscreen display before the controller gate
+reopened. Astris passed its Npad, face mapping and save round-trip regression.
+Static analysis and 43 focused Flutter tests passed.
+
+The local RetroArch and Ryubing fixtures stalled at their initial pause
+acknowledgement, before the window switch. Physical input and the remaining
+emulator and display combinations still need native acceptance.
+
+The [universal macOS preview](build/releases/Broomm-macOS-fullscreen-handoff.zip)
+is `0.1.27-dev` (1198), **24,450,197 bytes**, with SHA-256
+`81a58259a7cacd3dce3bb161e995f89bf6e4f71c4dfde204ff41b77bceeb22c2`.
+ZIP integrity, both signatures, all seven ARM64/x86_64 binaries, setup
+assets and the four bundled bridges passed verification.
+
+## Astris face button mapping — 2026-11-12
+
+On build 1196, the owner reported that A in Broomm's pairing diagram registered
+as B in Astris. The pinned Astris 1.0.32+2398e7c80 bridge passed positional
+face indices straight through to an API that delivers Nintendo A/B/X/Y order
+to the game. The bridge now translates all four face positions after applying
+the player's selected orientation.
+
+The native regression reads Player 1's FullKey samples in Astris's guest HID
+memory. On macOS 27.0.1 ARM64, it reproduced the report with synthetic input in
+a disposable Smash Ultimate profile. After the fix, A, B, X and Y matched the
+pairing diagram in both orientations and each release returned to neutral.
+Player attachment, disconnect and the save ZIP round trip also passed.
+Static analysis and 39 focused tests passed. Physical 8BitDo input remains an
+owner check in the [macOS walkthrough](README.md#macos-fullscreen-overlay-check).
+
+The [universal macOS preview](build/releases/Broomm-macOS-astris-face-mapping.zip)
+is `0.1.27-dev` (1197), **24,425,538 bytes**, with SHA-256
+`aedaf6fcc9bc4b5d3da20fa909763e3e81665f61cab255ab15ccd4fad2fe5e95`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets and the bundled Astris bridge passed verification.
+
+## Astris gameplay controller binding — 2026-11-12
+
+On build 1195, the owner could pair an 8BitDo and resume into Smash Ultimate.
+The bridge had a Player 1 route and the game repeatedly logged that no
+compatible controllers were connected. Broomm supplied the virtual pad ID
+under `id`. The pinned Astris options schema uses `controller_id` to match
+the controller in emulated Npad. The private session configuration now uses
+that field for each of its four routes.
+
+The previous native button check read the virtual driver state. The native
+smoke test now also checks the emulator's Npad attachment events for Player 1
+alone, both assigned players, and Player 1 disconnect while Player 2 remains.
+All three checks passed with Smash Ultimate in a disposable Astris profile,
+alongside virtual button readback and the existing save ZIP round trip.
+Static analysis and 37 focused tests passed. Physical controller gameplay
+remains an on-screen check in the [macOS walkthrough](README.md#macos-fullscreen-overlay-check).
+
+The [universal macOS preview](build/releases/Broomm-macOS-astris-controller-binding.zip)
+is `0.1.27-dev` (1196), **24,425,360 bytes**, SHA-256
+`e0d6fcb19f7aa5484aa83f06dd1e6d83f1ef9f6d5c45668f3777c6ab3aff6855`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets, and the bundled Astris bridge passed verification.
+
+## Astris fullscreen window handoff — 2026-11-11
+
+The owner confirmed that Astris launches after save recovery but build 1194
+still leaves Broomm's pairing window out of view. The bridge reported ready
+controller input and a paused game. A native fullscreen fixture reproduced
+the failed application hide and failed cross-Space launcher activation.
+
+The Astris bridge now temporarily exits native fullscreen, yields activation
+and hides Astris after pause. Broomm verifies the native process and writer,
+then presents its normal window on the active Space. Resume yields activation
+back to the same verified process. Astris unhides, activates and restores the
+same window to fullscreen if Broomm moved it out. The bridge acknowledges this
+before the gameplay input gate opens. The transition uses runtime window APIs.
+See [Apple's cooperative activation documentation](https://developer.apple.com/documentation/appkit/passing-control-from-one-app-to-another-with-cooperative-activation).
+
+The production bridge window handlers passed two fullscreen round trips in
+a native AppKit fixture on macOS 27.0.1. The launcher held its key window on
+the active Space, and the fixture returned to native fullscreen each time.
+Static analysis and 37 focused Dart/Flutter tests passed. The owner's paused Astris session
+was left open. Real Astris on-screen and controller checks remain in the
+[macOS walkthrough](README.md#macos-fullscreen-overlay-check).
+
+The [universal macOS preview](build/releases/Broomm-macOS-astris-fullscreen-handoff.zip)
+is `0.1.27-dev` (1195), **24,425,285 bytes**, SHA-256
+`d7cfefd3dc3aa6ab61d1de1dcf25cb4005f67b3e283aeeb6f73cad2dcb099d00`.
+ZIP integrity, source and extracted signatures, all seven ARM64/x86_64
+binaries, setup assets and the rebuilt Astris bridge passed verification.
+
+## Astris save recovery — 2026-11-11
+
+Build 1193 finished Smash Ultimate's Astris initialization. The selected
+emulator's private save directory had no payload files, while the shared
+account/game record expected a nonempty save. All five files in the referenced
+local recovery copy passed SHA-256 verification and matched the same profile's
+working Ryubing files.
+
+Launch and explicit sync now offer **Restore recovery copy** for the selected
+emulator when working progress is missing. A verified pending local save takes
+precedence over the last common copy. The journal rechecks that the destination
+is empty, binds recovery to that emulator's save directories, and verifies
+ordinary files after restore. Existing conflict and offline rules apply once the
+working files are available. Background sync keeps the missing-save guard.
+
+Static analysis and 33 focused tests passed, covering restoration after consent,
+cancellation, offline pending progress, files that appear during confirmation,
+and interrupted recovery followed by an emulator switch.
+
+An isolated macOS run restored all five files byte for byte into an initialized
+Astris profile, launched Smash Ultimate, resumed through the bridge and closed
+normally. The cold-start fixture timed out before reaching recovery. The
+successful run matches the owner's already-initialized profile. Fullscreen
+overlay visibility still needs the [interactive check](README.md#macos-fullscreen-overlay-check).
+
+The [universal macOS preview](build/releases/Broomm-macOS-astris-save-recovery.zip)
+is `0.1.27-dev` (1194), **24,401,080 bytes**, SHA-256
+`ce9c2fbd30c4e4aa7bc5cecbc15c74dc34948413e6c2eae6f0285af1b1f8dcfc`.
+ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, and bundled setup assets passed verification.
+
+## Astris Switch save initialization — 2026-11-11
+
+The owner saw `FormatException: The Switch ROM changed during initialization`
+on build 1192. Astris loaded the game, paused, and closed normally in the
+private save initialization pass. Launch Services updated the ROM's last-opened
+extended attribute and metadata change time during that pass. The payload
+length and modification time stayed stable. Broomm had included the metadata
+change time in its save binding and stopped before the gameplay launch.
+
+Astris now binds the existing installation receipt to the file's device, inode,
+creation time, size and nanosecond modification time. A same-size atomic
+replacement with the same modification time still changes the binding. Older
+Astris bindings are retained and a native initialization can establish the new
+binding for existing games and saves. Ryubing and Eden keep their existing
+binding format.
+
+The macOS regression reproduced the exception with only the last-opened
+attribute changed. Static analysis and 27 focused tests passed. A real Astris launch
+with a disposable APFS clone of Smash Ultimate showed the same metadata change
+and successfully published the title binding and round-tripped its native save
+ZIP. This test exercised the emulator and bridge. Fullscreen overlay visibility
+and input still need the [interactive check](README.md#macos-fullscreen-overlay-check).
+
+The [universal macOS preview](build/releases/Broomm-macOS-astris-launch.zip)
+is `0.1.27-dev` (1193), **24,396,992 bytes**, SHA-256
+`7f88d1d1677e531e87a18707c0087ee6d0722993267169028ef11f9be6f22f20`.
+ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, and bundled setup assets passed verification.
+
+## macOS fullscreen overlay — 2026-11-11
+
+On macOS 13 and later, the native runner applies AppKit's
+`canJoinAllApplications` behavior while presenting Broomm's desktop game overlay.
+AppKit can place an eligible overlay in another application's fullscreen Space.
+The runner restores the normal managed window behavior on return to Home.
+macOS 12 retains the existing overlay behavior. See
+[Apple's window collection behavior documentation](https://developer.apple.com/documentation/appkit/nswindow/collectionbehavior-swift.struct/canjoinallapplications).
+
+Two native window tests passed on macOS 27.0.1 ARM64. They verify the
+collection behavior during overlay presentation and after return, preservation
+of the window frame and decorations, and repeated foreground rendering.
+
+Astris was set and confirmed as the Switch default for the active RomM server.
+The automated preview reached the saved server and then timed out accessing
+sign-in storage. The owner later reached Astris, where save initialization
+stopped the launch as described above. Once the save issues were resolved, the
+owner confirmed this AppKit collection behavior still left the menu out of view
+with Astris. The Astris-specific handoff is described above.
+
+The [universal macOS preview](build/releases/Broomm-macOS-fullscreen-overlay.zip)
+is `0.1.27-dev` (1192), **24,385,859 bytes**, SHA-256
+`6ec6284ffe0340f3e9e47d7bbe2bace4449b1d6576ee5991ca8ac46a404a2dbb`.
+ZIP integrity, source and fresh-extraction signatures, all seven
+ARM64/x86_64 binaries, setup assets and bridge readbacks passed.
+
 ## Bottom-aligned Home actions — 2026-11-10
 
 Play and Options align with the bottom of the game logo when Home places

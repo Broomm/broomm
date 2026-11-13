@@ -794,7 +794,11 @@ class AstrisAdapter extends EmulatorAdapter {
       '${e.root}/controller-config.json',
       jsonEncode([
         for (var p = 0; p < 4; p++)
-          {...seed, 'id': 'broomm-$p', 'player_index': 'Player${p + 1}'},
+          {
+            ...seed,
+            'controller_id': 'broomm-$p',
+            'player_index': 'Player${p + 1}',
+          },
       ]),
     );
     // The native adapter sends this process a normal open-document event.
@@ -805,7 +809,6 @@ class AstrisAdapter extends EmulatorAdapter {
 const astrisInputTemplate = {
   'input': {
     'backend': 'Gamepad',
-    'id': '',
     'controller_type': 'ProController',
     'player_index': 'Player1',
     'enable_motion': true,

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:broomm/src/emulators.dart';
 import 'package:broomm/src/catalogue.dart';
@@ -12,8 +11,11 @@ import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/romm/transfer.dart';
 import 'package:broomm/src/session.dart';
 import 'package:broomm/src/session_lease.dart';
+import 'package:broomm/src/shell/cloud_saves_dialog.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'cloud_saves_test.dart' show SaveServer, serverId, profileId;
@@ -132,6 +134,66 @@ void main() {
     final area = game.layout.areas.first;
     return File('${game.layout.root}/${area.path}/${area.exact}');
   }
+
+  testWidgets('a loaded save picker focuses and reveals the newest save', (
+    t,
+  ) async {
+    await t.binding.setSurfaceSize(const Size(640, 360));
+    addTearDown(() => t.binding.setSurfaceSize(null));
+    await t.runAsync(() async {
+      await model.downloadGame(api.detail).timeout(const Duration(seconds: 5));
+      await drainCloud();
+    });
+    final detail = api.detail;
+    for (var id = 1; id <= 24; id++) {
+      api.records[id] = RommSave(
+        id: id,
+        romId: detail.id,
+        userId: api.user,
+        name: 'Save $id',
+        bytes: 64,
+        updated: DateTime.utc(2026, 11, 13, 0, id).toIso8601String(),
+      );
+    }
+    api.savesHeld = Completer<void>();
+    api.savesEntered = Completer<void>();
+    await t.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () =>
+                  manageCloudSaves(context, model, detail, 'save-use'),
+              child: const Text('Open save picker'),
+            ),
+          ),
+        ),
+      ),
+    );
+    Future<void> pumpUntil(bool Function() ready) async {
+      for (var i = 0; i < 100 && !ready(); i++) {
+        await t.pump(const Duration(milliseconds: 20));
+        await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+      }
+      expect(ready(), true);
+    }
+
+    await t.tap(find.text('Open save picker'));
+    await pumpUntil(() => api.savesEntered!.isCompleted);
+    expect(find.text('Cancel transfer'), findsOneWidget);
+    expect(find.text('Save 24'), findsNothing);
+
+    api.savesHeld!.complete();
+    await pumpUntil(() => find.text('Save 24').evaluate().isNotEmpty);
+    await t.pumpAndSettle();
+    expect(find.text('Save 24').hitTestable(), findsOneWidget);
+    await t.sendKeyEvent(LogicalKeyboardKey.enter);
+    await t.pumpAndSettle();
+    expect(find.text('Use Save 24?'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
 
   test('a new installation automatically verifies an empty BROOMM history and is synced without uploading a dummy save', () async {
     await model.downloadGame(api.detail);

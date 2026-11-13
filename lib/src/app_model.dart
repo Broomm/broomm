@@ -39,6 +39,7 @@ class PrototypeModel extends ChangeNotifier {
       gestures.progress(id, action, _clock.elapsed);
   bool _opening = false;
   bool _initialPresentation = false;
+  bool _startupPauseTimedOut = false;
   bool _gyroPending = false;
   bool _disposed = false;
   Future<void>? _stopWork;
@@ -80,6 +81,7 @@ class PrototypeModel extends ChangeNotifier {
     pairing = Pairing(game.players, target: game.controllerTarget);
     gestures.reset();
     _initialPresentation = true;
+    _startupPauseTimedOut = false;
     screen = Screen.loading;
     _request = 0;
     _buttons.clear();
@@ -107,6 +109,16 @@ class PrototypeModel extends ChangeNotifier {
 
   void _status(BridgeStatus status) {
     devices = status.devices;
+    if (_initialPresentation &&
+        screen == Screen.loading &&
+        status.pauseRequestTimedOut &&
+        !_startupPauseTimedOut) {
+      _startupPauseTimedOut = true;
+      error =
+          'Ryubing did not pause. Press F5 in Ryubing to continue to pairing, '
+          'or close the game from Ryubing.';
+      unawaited(_show(overlay: true));
+    }
     if (_initialPresentation && !busy && _startupReady)
       unawaited(_finishLoading());
     if (status.requestSerial > _request) {
@@ -171,6 +183,10 @@ class PrototypeModel extends ChangeNotifier {
     _initialPresentation = false;
     busy = true;
     try {
+      if (_startupPauseTimedOut) {
+        _startupPauseTimedOut = false;
+        error = null;
+      }
       await _show(overlay: true);
       if (lifetime != _lifetime || !_startupReady) return;
       gestures.reset();
@@ -355,6 +371,19 @@ class PrototypeModel extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
+      final restoreWindow = session.macWindowResumePending;
+      if (restoreWindow) {
+        final target =
+            session.macWindowTarget ??
+            (throw StateError('The emulator window identity is unavailable'));
+        // The paused emulator activates its own window after Broomm yields.
+        await host.yieldToEmulator(target);
+        if (current()) await session.switchMacWindow(menu: false);
+        if (!current()) {
+          if (lifetime == _lifetime && !_opening) await _show(overlay: true);
+          return;
+        }
+      }
       final revision = await session.command(players, active: true);
       if (lifetime != _lifetime) return;
       await session.waitFor(
@@ -365,7 +394,11 @@ class PrototypeModel extends ChangeNotifier {
             (!session.gamescopeHandoff || s.gameWindowVisible),
       );
       if (!current()) return;
-      await host.hide(session.status!.pid);
+      if (!restoreWindow) {
+        await host.hide(session.status!.pid);
+      } else {
+        await host.hideLauncher();
+      }
       if (!current()) {
         if (lifetime == _lifetime &&
             (screen == Screen.pairing || screen == Screen.menu))
@@ -476,11 +509,40 @@ class PrototypeModel extends ChangeNotifier {
   }
 
   Future<void> _show({bool overlay = false}) async {
+    final lifetime = _lifetime;
     try {
-      await host.show(overlay: overlay);
-      if (overlay) await session.launcherMapped();
+      final target = overlay && paused && session.status?.blocked == true
+          ? session.macWindowTarget
+          : null;
+      final hidden =
+          target != null && await session.switchMacWindow(menu: true);
+      if (lifetime != _lifetime) return;
+      if (hidden) {
+        await host.showEmulatorMenu(target);
+      } else {
+        await host.show(overlay: overlay);
+      }
     } catch (e) {
-      _problem('Could not bring Broomm back to the foreground: $e');
+      if (lifetime != _lifetime) return;
+      session.log?.write('Launcher window presentation: $e', level: 'warning');
+      if (!overlay) return;
+      try {
+        await host.show(overlay: true);
+      } catch (fallbackError) {
+        session.log?.write(
+          'Launcher overlay fallback: $fallbackError',
+          level: 'warning',
+        );
+        return;
+      }
+    }
+    if (overlay && lifetime == _lifetime) {
+      try {
+        await session.launcherMapped();
+      } catch (e) {
+        if (lifetime == _lifetime)
+          _problem('Could not complete the game menu handoff: $e');
+      }
     }
   }
 

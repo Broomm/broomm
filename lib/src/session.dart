@@ -155,6 +155,10 @@ class BridgeStatus {
       appActive = j['appActive'] as bool? ?? false,
       inputReady = j['inputReady'] as bool? ?? false,
       gameWindowVisible = j['gameWindowVisible'] as bool? ?? false,
+      pauseRequestTimedOut = j['pauseRequestTimedOut'] as bool? ?? false,
+      macWindowAck = j['macWindowAck'] as int? ?? 0,
+      macWindowHidden = j['macWindowHidden'] as bool? ?? false,
+      macWindowBirth = (j['macWindowBirth'] as List? ?? []).cast<int>(),
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -170,7 +174,10 @@ class BridgeStatus {
   final List<int> testSourceIds;
   final int connectedPorts, consolePorts, pspButtons, switchButtons;
   final String? nativeProgram;
-  final bool appActive, inputReady, gameWindowVisible;
+  final bool appActive, inputReady, gameWindowVisible, pauseRequestTimedOut;
+  final int macWindowAck;
+  final bool macWindowHidden;
+  final List<int> macWindowBirth;
   final Rpcs3Loading? loading;
 }
 
@@ -222,6 +229,8 @@ class GameSession {
   bool _bridgeLost = false;
   bool _nativeGameReady = false;
   int _revision = 0, _sample = -1, _generation = 0;
+  int _macWindowRevision = 0;
+  bool _macWindowResumePending = false;
   DateTime _lastUpdate = DateTime.now();
   PreparedEmulator? emulator;
   TestGame? game;
@@ -255,6 +264,64 @@ class GameSession {
       _guard ?? (throw StateError('No active game session owner'));
   bool get running => _process != null || (_preparation?.running ?? false);
   int? get processId => _process?.pid ?? _preparation?.processId;
+  bool get macWindowResumePending => _macWindowResumePending;
+
+  Map<String, Object>? get macWindowTarget {
+    final process = _process;
+    final bridge = status;
+    final prepared = emulator;
+    if (!Platform.isMacOS ||
+        process == null ||
+        prepared == null ||
+        bridge == null ||
+        bridge.pid != process.pid ||
+        bridge.macWindowBirth.length != 2 ||
+        bridge.macWindowBirth.first <= 0) {
+      return null;
+    }
+    return {
+      'pid': process.pid,
+      'seconds': bridge.macWindowBirth[0],
+      'microseconds': bridge.macWindowBirth[1],
+      'executable': File(prepared.executable).absolute.path,
+      'writer': File('$dataRoot/writer.lock').absolute.path,
+    };
+  }
+
+  Future<bool> switchMacWindow({required bool menu}) async {
+    final process = _process;
+    if (process == null || _stopping)
+      throw StateError('The game session ended');
+    final path = '${emulator!.root}/mac-window-command.txt';
+    final revision = ++_macWindowRevision;
+    // A timed-out menu command may still have hidden the emulator. Resume
+    // must obtain a fresh acknowledgement before opening the gameplay gate.
+    _macWindowResumePending = true;
+    final write = _commands.then((_) async {
+      cancellation.check();
+      if (!identical(process, _process) || _stopping)
+        throw StateError('The game session ended');
+      await atomicText(path, '${process.pid} $revision ${menu ? 1 : 0}\n');
+    });
+    _commands = write.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    await write;
+    try {
+      await waitFor(
+        (s) => s.macWindowAck >= revision && (menu || !s.macWindowHidden),
+        timeout: const Duration(seconds: 6),
+      );
+    } on StateError {
+      if (!identical(process, _process)) rethrow;
+      throw StateError(
+        menu
+            ? 'macOS did not confirm the emulator window was ready for the menu'
+            : 'macOS did not confirm the emulator window was restored',
+      );
+    }
+    final hidden = status!.macWindowHidden;
+    if (revision == _macWindowRevision) _macWindowResumePending = hidden;
+    return hidden;
+  }
 
   void cancelPreparation() {
     _cancellation.cancel();
@@ -419,12 +486,18 @@ class GameSession {
           .prepare(e, selected, rom.path, _retroPort);
       cancellation.check();
       _revision = 0;
+      _macWindowRevision = 0;
+      _macWindowResumePending = false;
       _sample = -1;
       status = null;
       _stopping = false;
       await command([], active: false);
       final snapshot = File('${e.root}/bridge-status.json');
       if (await snapshot.exists()) await snapshot.delete();
+      if (Platform.isMacOS) {
+        final windowCommand = File('${e.root}/mac-window-command.txt');
+        if (await windowCommand.exists()) await windowCommand.delete();
+      }
       if (Platform.isLinux) {
         final ready = File('${e.root}/bridge-window-ready.txt');
         if (await ready.exists()) await ready.delete();
@@ -476,6 +549,8 @@ class GameSession {
           'BROOMM_ASTRIS_ROM': rom.path,
           'BROOMM_LAUNCHER_PID': '$pid',
         },
+        if (Platform.isMacOS)
+          'BROOMM_MAC_WINDOW_COMMAND': '${e.root}/mac-window-command.txt',
         'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
         'BROOMM_SESSION': '1',
         if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP'))

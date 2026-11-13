@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:broomm/src/catalogue.dart';
+import 'package:broomm/src/controller_mapping.dart';
 import 'package:broomm/src/emulators.dart' show atomicText;
 import 'package:broomm/src/managed_emulators.dart';
 import 'package:broomm/src/session.dart';
@@ -13,6 +14,66 @@ import 'package:broomm/src/session_lease.dart';
 import 'package:broomm/src/progress/ryubing.dart';
 import 'package:broomm/src/progress/layout.dart';
 import 'package:broomm/src/progress/store.dart';
+
+Future<void> waitForNpadPlayers(SessionLog log, Set<int> expected) async {
+  final clock = Stopwatch()..start();
+  var connected = <int>{};
+  final event = RegExp(
+    r'Hid SetupNpad: (Connected|Disconnected) Controller ProController (?:to|from) Player([1-4])',
+  );
+  while (clock.elapsed < const Duration(seconds: 5)) {
+    await log.flush().timeout(const Duration(seconds: 2));
+    final current = await File(log.path).readAsString();
+    final older = File('${log.path}.1');
+    final transcript =
+        '${await older.exists() ? await older.readAsString() : ''}$current';
+    final start = transcript.lastIndexOf('Launching astris-check with Astris');
+    connected = <int>{};
+    if (start >= 0) {
+      for (final match in event.allMatches(transcript, start)) {
+        final player = int.parse(match[2]!);
+        if (match[1] == 'Connected') {
+          connected.add(player);
+        } else {
+          connected.remove(player);
+        }
+      }
+    }
+    if (connected.length == expected.length && connected.containsAll(expected))
+      return;
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+  }
+  expect(
+    connected,
+    expected,
+    reason:
+        'Astris must attach the configured controllers to emulated Npad slots',
+  );
+}
+
+Future<void> checkFaceButtons(
+  GameSession session,
+  PlayerAssignment player,
+) async {
+  final inputPath = '${session.emulator!.root}/test-input.txt';
+  final bindings = targetBindings(ControllerTarget.switchPro, player.wiiMode);
+  const labels = ['A', 'B', 'X', 'Y'];
+  for (var index = 0; index < labels.length; index++) {
+    final label = labels[index];
+    final source = player.sourceButton(bindings[label]!.button!);
+    await atomicText(inputPath, '${1 << source} 0 3');
+    await session.waitFor((s) => s.switchButtons > 0);
+    expect(
+      session.status!.switchButtons,
+      1 << index,
+      reason:
+          'The button shown as $label in pairing must reach the game as $label '
+          '(face swap: ${player.swapFaces})',
+    );
+    await atomicText(inputPath, '0 0 3');
+    await session.waitFor((s) => s.switchButtons == 0);
+  }
+}
 
 void main() {
   test('Astris pinned installation boots supplied Switch game in private storage', () async {
@@ -63,6 +124,8 @@ void main() {
       0xff304858,
       target: ControllerTarget.switchPro,
     );
+    final resolved = await manager.resolveProgress(game, profile);
+    final identity = (await switchSourceIdentity(resolved)).$1;
     final session = GameSession(
       Directory.current.path,
       managedRoot: data.path,
@@ -80,27 +143,30 @@ void main() {
         'Astris ready, paused, program=${session.nativeProgramId}, root=${session.emulator!.root}',
       );
       expect(session.nativeProgramId, isNotNull);
+      final first = session.status!.testSourceIds.first;
+      final second = session.status!.testSourceIds.last;
       final pairing = Pairing(4, target: ControllerTarget.switchPro)
-        ..join(session.status!.testSourceIds.first)
-        ..join(session.status!.testSourceIds.last);
+        ..join(first);
       await session.command(pairing.players, active: true);
       await session.waitFor(
-        (s) => s.paused == 0 && !s.blocked && s.connectedPorts == 3,
+        (s) => s.paused == 0 && !s.blocked && s.connectedPorts == 1,
       );
-      await atomicText('${session.emulator!.root}/test-input.txt', '1 0 3');
-      await session.waitFor((s) => s.switchButtons != 0);
-      stdout.writeln('native pressed bits=${session.status!.switchButtons}');
-      await atomicText('${session.emulator!.root}/test-input.txt', '0 0 3');
-      await session.waitFor((s) => s.switchButtons == 0);
+      await waitForNpadPlayers(session.log!, {1});
+      stdout.writeln('Emulated Npad connected Player 1 only.');
+      await checkFaceButtons(session, pairing.players.first);
+      stdout.writeln('Emulated Npad matches all four pairing labels.');
       await session.command(pairing.players, active: false);
       await session.waitFor((s) => s.paused == 1 && s.blocked);
       pairing.toggleLayout(pairing.players.first.deviceId);
+      pairing.join(second);
       await session.command(pairing.players, active: true);
       await session.waitFor((s) => s.paused == 0 && !s.blocked);
-      await atomicText('${session.emulator!.root}/test-input.txt', '1 0 3');
-      await session.waitFor((s) => s.switchButtons == 4);
-      await atomicText('${session.emulator!.root}/test-input.txt', '0 0 3');
-      await session.waitFor((s) => s.switchButtons == 0);
+      await waitForNpadPlayers(session.log!, {1, 2});
+      stdout.writeln('Emulated Npad connected both assigned players.');
+      await checkFaceButtons(session, pairing.players.first);
+      stdout.writeln(
+        'Emulated Npad matches all four labels after a face swap.',
+      );
       await atomicText(
         '${session.emulator!.root}/test-input.txt',
         '${(1 << 4) | (1 << 8)} 0 3',
@@ -111,8 +177,8 @@ void main() {
       await session.waitFor((s) => s.paused == 0 && !s.blocked);
       await atomicText('${session.emulator!.root}/test-input.txt', '0 1 3');
       await session.waitFor((s) => s.paused == 1 && s.request == 'disconnect');
-      final resolved = await manager.resolveProgress(game, profile);
-      final identity = (await switchSourceIdentity(resolved)).$1;
+      await waitForNpadPlayers(session.log!, {2});
+      stdout.writeln('Emulated Npad disconnected Player 1 and kept Player 2.');
       final program = session.nativeProgramId!;
       await session.stop();
       final lease = await SessionLease.acquire(data);

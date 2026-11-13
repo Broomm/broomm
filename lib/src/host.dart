@@ -27,6 +27,14 @@ class DesktopHost {
     } on MissingPluginException {}
   }
 
+  Future<void> showEmulatorMenu(Map<String, Object> target) =>
+      channel.invokeMethod<void>('showEmulatorMenu', target);
+
+  Future<void> yieldToEmulator(Map<String, Object> target) =>
+      channel.invokeMethod<void>('yieldToEmulator', target);
+
+  Future<void> hideLauncher() => channel.invokeMethod<void>('hide');
+
   Future<void> close() async {
     try {
       await channel.invokeMethod<void>('close');

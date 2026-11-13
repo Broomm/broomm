@@ -50,6 +50,8 @@ class RommSave {
   final String? emulator, slot, hash;
   final bool missing;
   final bool stateAsset;
+  DateTime? get modifiedAt =>
+      DateTime.tryParse(updated) ?? DateTime.tryParse(created);
   String get folder => directory.replaceAll('\\', '/').split('/').last;
   bool get legacyManaged =>
       !stateAsset &&

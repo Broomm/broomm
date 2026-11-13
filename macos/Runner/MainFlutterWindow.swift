@@ -5,6 +5,7 @@ import Security
 import LocalAuthentication
 
 class MainFlutterWindow: NSWindow, NSWindowDelegate {
+  private var presentationRevision: UInt64 = 0
   var channel: FlutterMethodChannel!
   private var credentialChannel: FlutterMethodChannel!
   private let credentialQueue = DispatchQueue(label: "app.broomm.credentials")
@@ -57,12 +58,33 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
         self.present(overlay: overlay)
         reply(nil)
       case "hide":
+        self.presentationRevision &+= 1
         self.orderOut(nil)
         if let number = args["pid"] as? NSNumber,
            let app = NSRunningApplication(processIdentifier: pid_t(number.int32Value)) {
           app.activate(options: [.activateIgnoringOtherApps])
         }
         reply(nil)
+      case "showEmulatorMenu":
+        self.presentationRevision &+= 1
+        let revision = self.presentationRevision
+        Task { @MainActor in
+          do {
+            try await self.presentEmulatorMenu(args, revision: revision)
+            reply(nil)
+          } catch {
+            reply(FlutterError(code: "emulator_window", message: error.localizedDescription, details: nil))
+          }
+        }
+      case "yieldToEmulator":
+        self.presentationRevision &+= 1
+        do {
+          let app = try self.sessionRecovery.emulatorWindowTarget(args)
+          if #available(macOS 14.0, *) { NSApp.yieldActivation(to: app) }
+          reply(nil)
+        } catch {
+          reply(FlutterError(code: "emulator_window", message: error.localizedDescription, details: nil))
+        }
       case "close":
         self.permitClose = true
         reply(nil)
@@ -105,15 +127,55 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     super.awakeFromNib()
   }
   func present(overlay: Bool) {
+    presentationRevision &+= 1
     // Keep decorations and the user's frame across every screen. Recreating the
     // title bar and following the emulator's changing frame also resizes Metal
     // backing surfaces while the Flutter window is hidden.
     let nextLevel: NSWindow.Level = overlay ? .statusBar : .normal
-    let behavior: NSWindow.CollectionBehavior = overlay ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
+    var behavior: NSWindow.CollectionBehavior = overlay ? [.canJoinAllSpaces, .fullScreenAuxiliary] : [.managed]
+    if overlay, #available(macOS 13.0, *) {
+      // Allow pairing and pause menus to join another app's fullscreen Space.
+      behavior.insert(.canJoinAllApplications)
+    }
     if level != nextLevel { level = nextLevel }
     if collectionBehavior != behavior { collectionBehavior = behavior }
     makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
+  }
+
+  private func presentEmulatorMenu(_ args: [String: Any], revision: UInt64) async throws {
+    guard revision == presentationRevision else { return }
+    // Keep Broomm reachable when the emulator exits or rejects its window request.
+    defer {
+      if revision == presentationRevision {
+        present(overlay: false)
+      }
+    }
+    let app = try sessionRecovery.emulatorWindowTarget(args)
+    try await waitForEmulatorWindow(app, revision: revision) { app.isHidden }
+    if revision == presentationRevision {
+      if #available(macOS 14.0, *) { NSApp.activate() }
+      present(overlay: false)
+      try await waitForEmulatorWindow(app, revision: presentationRevision) {
+        NSApp.isActive && self.isKeyWindow && self.isOnActiveSpace
+      }
+    }
+  }
+
+  private func waitForEmulatorWindow(_ app: NSRunningApplication, revision: UInt64, ready: () -> Bool) async throws {
+    let deadline = ProcessInfo.processInfo.systemUptime + 3
+    while revision == presentationRevision && !app.isTerminated {
+      if ready() { return }
+      if ProcessInfo.processInfo.systemUptime >= deadline { break }
+      try await Task.sleep(nanoseconds: 25_000_000)
+    }
+    if revision == presentationRevision {
+      throw emulatorWindowError("macOS did not confirm the emulator window switch.")
+    }
+  }
+
+  private func emulatorWindowError(_ message: String) -> NSError {
+    NSError(domain: "app.broomm.emulator-window", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
   }
   func observe(_ controller: GCController) {
     guard let pad = controller.extendedGamepad else { return }

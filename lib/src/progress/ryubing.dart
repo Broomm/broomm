@@ -20,21 +20,59 @@ class SwitchNeedsInitialization extends UnsupportedError {
 /// RomM installation identity includes server, ROM, selected file and publication
 /// generation. Native/prototype inputs additionally use their canonical path.
 Future<(String, String)> switchSourceIdentity(ResolvedSession session) async {
-  final file = File(session.rom), stat = await File(session.rom).stat();
-  if (stat.type != FileSystemEntityType.file)
-    throw const FileSystemException(
-      'The selected Switch game file is missing.',
-    );
+  final file = File(session.rom);
+  final stamp = Platform.isMacOS && session.emulator.name == 'Astris'
+      ? await _astrisMediaStamp(file)
+      : await _switchMediaStamp(file);
   final source = jsonEncode({
     'installation': session.installationIdentity,
     if (session.installationIdentity == null)
       'path': await file.resolveSymbolicLinks(),
-    'bytes': stat.size,
-    'modified': stat.modified.toUtc().toIso8601String(),
-    'changed': stat.changed.toUtc().toIso8601String(),
+    ...stamp,
   });
   final key = ProgressDigest.sha256()..add(utf8.encode(source));
   return (key.finish(), source);
+}
+
+Future<Map<String, Object>> _switchMediaStamp(File file) async {
+  final stat = await file.stat();
+  if (stat.type != FileSystemEntityType.file)
+    throw const FileSystemException(
+      'The selected Switch game file is missing.',
+    );
+  return {
+    'bytes': stat.size,
+    'modified': stat.modified.toUtc().toIso8601String(),
+    'changed': stat.changed.toUtc().toIso8601String(),
+  };
+}
+
+Future<Map<String, Object>> _astrisMediaStamp(File file) async {
+  // Launch Services updates the document's last-opened xattr and ctime.
+  // Use the filesystem's object identity and precise content mtime instead.
+  // Dart FileStat does not expose the device, inode or creation time.
+  final result = await Process.run(
+    '/usr/bin/stat',
+    ['-L', '-f', '%d %i %z %p %.9Fm %.9FB', '--', file.absolute.path],
+    environment: {'LC_ALL': 'C'},
+  ).timeout(const Duration(seconds: 3));
+  final fields = (result.stdout as String).trim().split(' ');
+  if (result.exitCode != 0 || fields.length != 6)
+    throw const FileSystemException(
+      'Could not verify the selected Switch game file.',
+    );
+  final mode = int.tryParse(fields[3], radix: 8);
+  if (mode == null || (mode & 0xf000) != 0x8000)
+    throw const FileSystemException(
+      'The selected Switch game file is missing.',
+    );
+  return {
+    'device': fields[0],
+    'inode': fields[1],
+    'bytes': int.parse(fields[2]),
+    'modified': fields[4],
+    'created': fields[5],
+  };
 }
 
 /// Bind a native Loader Start observation to the selected installed media.
@@ -50,6 +88,7 @@ Future<void> recordRyubingGame(
     throw const FormatException('Invalid native Switch program identity');
   cancellation?.check();
   final identity = await switchSourceIdentity(session);
+  cancellation?.check();
   if (identity.$1 != expectedIdentity)
     throw const FormatException('The Switch ROM changed during initialization');
   final root = Directory(session.emulator.root);

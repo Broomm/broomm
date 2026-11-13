@@ -6,11 +6,24 @@ The current client syncs only in-game saves. See the [updated contract and
 legacy handling](slotted-saves-and-ps3-iso.md#save-states-and-recovery). The
 single-file implementation below is historical.
 
+If working files are missing and this profile has a verified local recovery
+copy, launch and the manual Cloud saves check offer **Restore recovery copy**.
+The restore uses the selected emulator's empty save directory, then continues
+the ordinary cloud comparison. See the
+[Astris recovery walkthrough](../README.md#macos-fullscreen-overlay-check).
+
 ## Managed asset and explicit actions
 
 The automatic target is one current-account/current-ROM save with exact `file_name=broomm`, `emulator=Broomm`, and no slot. The filename has no extension; its contents are a ZIP bundle. Account identity comes from authenticated RomM responses, not a display name. Multiple matching assets block synchronization; a renamed asset is no longer followed by its old ID. The save list is inspected to find this identity, but automatic work never downloads, replaces or deletes other save contents.
 
 Home Select/Options adds **Use existing save file**, **Backup savefile** and **Cloud saves**. The first explicitly lists this account's available saves, confirms replacement, imports the selected file into local progress and uploads a freshly sealed `broomm` version. The source is unchanged. The second uploads local progress under a unique temporary backup name, verifies readback and renames it to the requested name. A filename collision never replaces another save. A durable backup checkpoint resumes the original snapshot after a lost response; retries can finish its rename without uploading a duplicate. Only explicit backup retry inspects its temporary asset. A failed backup can leave that temporary asset visible in RomM until retried; it is never an automatic sync target.
+
+The existing-save picker orders the entire list newest first before pagination.
+It uses RomM's last-modified timestamp, falling back to the creation timestamp.
+Entries without a usable date appear last. Equal timestamps use descending
+save ID for a stable order.
+When the list loads or refreshes, the picker focuses and reveals the first
+available save.
 
 New password logins request `assets.write` alongside the existing read scopes. A role that cannot grant it can still sign in for browsing with read scopes. Old refresh tokens retain their original scopes: after a write permission failure, **Sign in to authorize cloud saves** requests the new scope once; an opaque client token must itself grant it. No password is saved and refresh cannot silently upgrade a grant. Read-only accounts retain local progress.
 

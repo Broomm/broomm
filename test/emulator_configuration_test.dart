@@ -1,6 +1,7 @@
 @TestOn('mac-os')
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:broomm/src/emulator_configuration.dart';
@@ -85,6 +86,34 @@ void main() {
         await EmulatorAdapter.forName(name).configurationArguments(e),
         isEmpty,
       );
+  });
+
+  test('Astris assigns distinct virtual controller IDs using its native options schema', () async {
+    final emulator = PreparedEmulator(
+      'Astris',
+      root.path,
+      '/not-launched',
+      0,
+      null,
+      null,
+    );
+    final game = testGames.firstWhere((game) => game.emulator == 'Ryubing');
+    await const AstrisAdapter().prepare(emulator, game, game.rom, 0);
+    final players = (jsonDecode(
+      await File('${root.path}/controller-config.json').readAsString(),
+    ) as List).cast<Map<String, dynamic>>();
+    expect(players.map((player) => player['controller_id']), [
+      'broomm-0',
+      'broomm-1',
+      'broomm-2',
+      'broomm-3',
+    ]);
+    expect(players.map((player) => player['player_index']), [
+      'Player1',
+      'Player2',
+      'Player3',
+      'Player4',
+    ]);
   });
   test('subsequent game preparation preserves private graphics and unrelated preferences while refreshing owned controller routing', () async {
     final config = File('${root.path}/retroarch.cfg');

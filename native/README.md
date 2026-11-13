@@ -21,6 +21,31 @@ Eden separately records temporary controller-socket pause ownership, so socket
 changes do not resume an already paused game. The linked record distinguishes
 real native checks from compilation and remaining gameplay/host acceptance.
 
+`macos_window.m` runs on AppKit's main queue inside the SDL2, SDL3 and Astris
+bridges. A revisioned request uses the current paused game window. Native
+fullscreen Spaces are exited and restored. A display-sized borderless window
+is hidden and revealed in its existing mode. The bridge publishes an
+acknowledgement and its process birth. Broomm verifies the executable and
+writer lock before transferring activation. The runtime keeps its own
+fullscreen preferences.
+
+Run `devbox run -- bash tool/check_macos_fullscreen.sh` on a logged-in macOS
+desktop. It opens disposable fixture windows and writes observations under
+`.tool-cache/macos-fullscreen/`. The check exercises fullscreen at launch,
+fullscreen entered later, borderless fullscreen, and native window replacement.
+The Ryubing case gates handoff on the live pause readback before and after
+AppKit hides the game window.
+The fixture processes quit on completion. The fixture directory can be
+removed after review.
+
+The pinned Astris bridge translates positional face buttons to Nintendo
+A/B/X/Y after applying the player's pairing orientation. In test sessions,
+`switchButtons` reads the latest stable Player 1 FullKey sample in the guest
+HID allocation. A value of `-1` means that the sample is unavailable.
+The regression presses and releases all four buttons before and after a live
+face swap. See the [Astris evidence](../IMPLEMENTATION.md#astris-face-button-mapping--2026-11-12)
+and [libnx's guest button and FullKey definitions](https://github.com/switchbrew/libnx/blob/master/nx/include/switch/services/hid.h).
+
 The [native pause correction](../docs/duckstation-pause.md) gives Sony adapters
 an explicit pending Resume transition instead of continually enforcing Running.
 Emulator-native pause/resume survives ordinary polling and active routing

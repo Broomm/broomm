@@ -6,6 +6,7 @@ import 'package:broomm/src/pairing.dart';
 import 'package:broomm/src/shell/game_session_screen.dart';
 import 'package:broomm/src/shell/controls.dart';
 import 'package:broomm/src/shell/quit_dialog.dart';
+import 'package:broomm/src/widgets/pairing_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -476,6 +477,7 @@ void main() {
       model.join(10);
       for (final size in [
         const Size(390, 844),
+        const Size(600, 340),
         const Size(1180, 800),
         const Size(1600, 900),
       ]) {
@@ -484,8 +486,41 @@ void main() {
         expect(find.text('PLAYER 1'), findsOneWidget);
         expect(find.text('PLAYER 2'), findsOneWidget);
         expect(find.text('PLAYER 3'), findsNothing);
+        expect(
+          find.descendant(
+            of: find.byType(PairingScreen),
+            matching: find.byType(Scrollable),
+          ),
+          findsNothing,
+        );
+        expect(find.text('Apply & play').hitTestable(), findsOneWidget);
+        expect(find.text('Cancel game').hitTestable(), findsOneWidget);
         expect(t.takeException(), isNull, reason: 'pairing $size');
       }
+      await t.binding.setSurfaceSize(const Size(573, 413));
+      session.emit(
+        devices: [
+          for (var id = 10; id < 14; id++)
+            {
+              'id': id,
+              'name': 'Controller with a long name $id',
+              'buttons': 0,
+              'x': 0,
+              'y': 0,
+              'sensors': 3,
+              'sensorReady': 3,
+            },
+        ],
+      );
+      for (var id = 11; id < 14; id++) {
+        model.join(id);
+      }
+      await t.pumpAndSettle();
+      for (var player = 1; player <= 4; player++) {
+        expect(find.text('PLAYER $player'), findsOneWidget);
+      }
+      expect(find.text('Apply & play').hitTestable(), findsOneWidget);
+      expect(t.takeException(), isNull, reason: 'four Wii motion controllers');
       session.exit(17);
       await t.pumpAndSettle();
       expect(model.error, contains('17'));

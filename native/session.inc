@@ -3,6 +3,8 @@
 // pairing decisions; this bridge owns same-runtime SDL sampling and virtual ports.
 #include <sys/stat.h>
 #include <signal.h>
+#include "macos_window.h"
+#include "ryubing_pause.h"
 
 struct Source { uint32_t id; void *handle; char name[256]; uint32_t buttons; int16_t axes[6]; int family;
     int sensors,sensor_ready,sensor_owned; float motion[2][3]; uint64_t motion_time;
@@ -41,6 +43,7 @@ static _Atomic int console_ports=-1;
 static _Atomic bool app_active;
 static _Atomic bool game_ended;
 static _Atomic bool f5_down;
+static _Atomic bool ryubing_pause_timed_out;
 static _Atomic bool appkit_game_seen;
 static double appkit_missing_since;
 static uint32_t retro_driver_buttons[4];
@@ -98,6 +101,11 @@ static void session_request(const char *kind) {
     request_device=UINT32_MAX;
     record("SESSION_REQUEST serial=%llu kind=%s",request_serial,kind);
 }
+
+static const char *appkit_window_title(id window) {
+    return ((const char *(*)(id,SEL))objc_msgSend)(send0(window,"title"),sel_registerName("UTF8String"));
+}
+
 static void finish_session_close(void *window) {
     if(!atomic_load(&session_worker_stopped)) {
         dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,50*NSEC_PER_MSEC),dispatch_get_main_queue(),window,finish_session_close);
@@ -114,19 +122,22 @@ static void finish_session_close(void *window) {
         else dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,200*NSEC_PER_MSEC),dispatch_get_main_queue(),window,finish_session_close);
     } else {
         // Avalonia's native window may outlive its managed delegate after a
-        // game closes. Resolve a CURRENT visible window at delivery time.
+        // game closes. Resolve a current game window at delivery time.
         // NSApplication::terminate skips Avalonia's window-lifetime teardown.
         id app=send0((id)objc_getClass("NSApplication"),"sharedApplication");
         id windows=send0(app,"windows"),current=NULL;
         unsigned long count=((unsigned long(*)(id,SEL))objc_msgSend)(windows,sel_registerName("count"));
-        double area=0;
-        for(unsigned long i=0;i<count;++i) {
-            id candidate=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
-            if(!((bool(*)(id,SEL))objc_msgSend)(candidate,sel_registerName("isVisible")))continue;
-            const char *title=((const char *(*)(id,SEL))objc_msgSend)(send0(candidate,"title"),sel_registerName("UTF8String"));
-            if(title&&strstr(title,"ContentDialogOverlay"))continue;
-            CGRect frame=objc_rect(candidate,sel_registerName("frame"));
-            if(frame.size.width*frame.size.height>area){area=frame.size.width*frame.size.height;current=candidate;}
+        if(getenv("BROOMM_PAUSE_APPKIT_F5"))current=(id)broomm_macos_ryubing_window(NULL);
+        if(!current) {
+            double area=0;
+            for(unsigned long i=0;i<count;++i) {
+                id candidate=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
+                if(!((bool(*)(id,SEL))objc_msgSend)(candidate,sel_registerName("isVisible")))continue;
+                const char *title=appkit_window_title(candidate);
+                if(title&&strstr(title,"ContentDialogOverlay"))continue;
+                CGRect frame=objc_rect(candidate,sel_registerName("frame"));
+                if(frame.size.width*frame.size.height>area){area=frame.size.width*frame.size.height;current=candidate;}
+            }
         }
         if(current) {
             record("APPKIT_QUIT_CURRENT_WINDOW");
@@ -188,6 +199,7 @@ static void native_pause_fixture(int actual,id window) {
 static void session_ui(void *unused) {
     (void)unused;
     if(atomic_load(&session_finishing)){atomic_store(&ui_pending,false);return;}
+    broomm_macos_window_observe();
     atomic_store(&pause_requested,atomic_load(&session_wanted));
     static uint32_t *azahar_pause;
     static bool symbols_resolved;
@@ -264,12 +276,12 @@ static void session_ui(void *unused) {
     atomic_store(&app_active,((bool(*)(id,SEL))objc_msgSend)(app,sel_registerName("isActive")));
     id windows=send0(app,"windows"),window=NULL;
     unsigned long count=((unsigned long(*)(id,SEL))objc_msgSend)(windows,sel_registerName("count"));
-    double largest=0;bool appkit_content_exists=false;
+    bool appkit_pause=getenv("BROOMM_PAUSE_APPKIT_F5")!=NULL;
+    id game_window=appkit_pause?(id)broomm_macos_ryubing_window(&actual):NULL;
+    double largest=0;
     for(unsigned long i=0;i<count;++i) {
         id candidate=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
-        const char *title=((const char *(*)(id,SEL))objc_msgSend)(send0(candidate,"title"),sel_registerName("UTF8String"));
-        bool game_title=title&&(strstr(title,"(64-bit)")||strstr(title,"(32-bit)")||strstr(title,"Paused"));
-        if(game_title)appkit_content_exists=true;
+        const char *title=appkit_window_title(candidate);
         if(!((bool(*)(id,SEL))objc_msgSend)(candidate,sel_registerName("isVisible"))&&
            !((bool(*)(id,SEL))objc_msgSend)(candidate,sel_registerName("isMiniaturized")))continue;
         if(title&&(strstr(title,"ContentDialogOverlay")||strstr(title,"Broomm")))continue;
@@ -277,14 +289,13 @@ static void session_ui(void *unused) {
         double area=frame.size.width*frame.size.height;
         if(area>largest){window=candidate;largest=area;}
     }
+    if(game_window)window=game_window;
     if(window) {
         CGRect frame=objc_rect(window,sel_registerName("frame"));
         window_rect[0]=frame.origin.x;window_rect[1]=frame.origin.y;
         window_rect[2]=frame.size.width;window_rect[3]=frame.size.height;
-        if(getenv("BROOMM_PAUSE_APPKIT_F5")) {
-            const char *title=((const char *(*)(id,SEL))objc_msgSend)(send0(window,"title"),sel_registerName("UTF8String"));
-            bool ready=title&&(strstr(title,"(64-bit)")||strstr(title,"(32-bit)")||strstr(title,"Paused"));
-            if(ready&&atomic_exchange(&test_close_window,false)) {
+        if(game_window) {
+            if(atomic_exchange(&test_close_window,false)) {
                 record("SESSION_TEST_CLOSE_GAME_WINDOW");
                 send0(window,"retain");
                 ((void(*)(id,SEL,id))objc_msgSend)(window,sel_registerName("performClose:"),NULL);
@@ -293,26 +304,28 @@ static void session_ui(void *unused) {
                 atomic_store(&ui_pending,false);
                 return;
             }
-            if(ready) {
-                actual=strstr(title,"Paused")!=NULL;
-                static struct PauseTransition control=PAUSE_TRANSITION_INIT;
-                int command=atomic_load(&f5_down)?-1:
-                    session_pause_command(&control,atomic_load(&session_wanted),actual);
-                if(command>=0) {
-                    // Avalonia polls its keyboard hotkeys only while active.
-                    // A sendEvent into a background app was silently ignored
-                    // when Broomm owned focus on Apply. Wait for activation.
-                    if(!((bool(*)(id,SEL))objc_msgSend)(app,sel_registerName("isActive"))||
-                       !((bool(*)(id,SEL))objc_msgSend)(window,sel_registerName("isKeyWindow"))) {
-                        record("APPKIT_ACTIVATE wanted_pause=%d",atomic_load(&session_wanted));
+            static struct RyubingPause control=RYUBING_PAUSE_INIT;
+            struct timespec clock;
+            clock_gettime(CLOCK_MONOTONIC,&clock);
+            uint64_t now_ms=(uint64_t)clock.tv_sec*1000+clock.tv_nsec/1000000;
+            int command=atomic_load(&f5_down)?-1:
+                ryubing_pause_command(&control,atomic_load(&session_wanted),actual,
+                    atomic_load(&session_resume_serial),now_ms);
+            if(atomic_exchange(&ryubing_pause_timed_out,control.timed_out)!=control.timed_out&&control.timed_out)
+                record("APPKIT_PAUSE_TIMEOUT");
+            if(command>=0) {
+                // Avalonia polls its keyboard hotkeys only while active.
+                if(!broomm_macos_window_accepts_keys(window)) {
+                    if(!atomic_load(&app_active)) {
                         ((void(*)(id,SEL,bool))objc_msgSend)(app,sel_registerName("activateIgnoringOtherApps:"),true);
-                        ((void(*)(id,SEL,id))objc_msgSend)(window,sel_registerName("makeKeyAndOrderFront:"),NULL);
-                        atomic_store(&session_paused,actual);
-                        atomic_store(&ui_pending,false);
-                        pause_transition_defer(&control); // No key delivered yet.
-                        return;
                     }
-                    ((void(*)(id,SEL))objc_msgSend)(window,sel_registerName("makeKeyWindow"));
+                    if(!((bool(*)(id,SEL))objc_msgSend)(window,sel_registerName("isKeyWindow"))) {
+                        ((void(*)(id,SEL,id))objc_msgSend)(window,sel_registerName("makeKeyAndOrderFront:"),NULL);
+                    }
+                    pause_transition_defer(&control.transition);
+                } else {
+                    if(command==1&&control.last_delivery_ms)record("APPKIT_PAUSE_RETRY");
+                    if(command==1)control.last_delivery_ms=now_ms;
                     atomic_store(&f5_down,true);
                     send_f5(window,10);
                     dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,100*NSEC_PER_MSEC),dispatch_get_main_queue(),(void *)send0(window,"retain"),session_release_f5);
@@ -320,8 +333,13 @@ static void session_ui(void *unused) {
             }
         }
     }
-    if(getenv("BROOMM_PAUSE_APPKIT_F5"))appkit_observe_content(appkit_content_exists);
+    if(appkit_pause)appkit_observe_content(game_window!=NULL);
     native_pause_fixture(actual,window);
+    // RetroArch's native pause is confirmed by Dart's network readback before
+    // it issues a window command. Other adapters acknowledge pause here.
+    if(atomic_load(&session_gate)&&!atomic_load(&session_quit)&&!atomic_load(&f5_down)&&
+       (actual==1||getenv("BROOMM_RETROARCH")))
+        broomm_macos_window_tick(window,getppid(),false);
     // Azahar runs a modal direct-launch warning before BootGame and app.exec.
     // Closing there can return successfully, then BootGame starts behind the
     // closed window and QCoreApplication::quit has no running loop to stop.
@@ -488,6 +506,11 @@ static void write_status(void) {
     }
     motion_write_status(out);
     loading_status(out);
+    struct MacWindowStatus window_status=broomm_macos_window_status();
+    if(atomic_load(&ryubing_pause_timed_out))fputs(",\"pauseRequestTimedOut\":true",out);
+    fprintf(out,",\"macWindowAck\":%llu,\"macWindowHidden\":%s,\"macWindowBirth\":[%llu,%llu]",
+        (unsigned long long)window_status.revision,window_status.hidden?"true":"false",
+        (unsigned long long)window_status.seconds,(unsigned long long)window_status.microseconds);
     fprintf(out,",\"inputReady\":%s",atomic_load(&input_ready)?"true":"false");
     fprintf(out,",\"queries\":%llu,\"consumedPorts\":%u}\n",(unsigned long long)atomic_load(&queries),atomic_load(&consumed_ports));fclose(out);rename(temp,path);
 }
