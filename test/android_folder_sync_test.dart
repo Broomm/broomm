@@ -42,6 +42,7 @@ class AndroidFolderFixture {
   Directory? armsRoot;
   String armsMedia = '28:29:1048576:1';
   bool armsRunning = false;
+  bool armsCardAliases = true;
   bool melonRunning = false;
   bool edenRunning = false;
   String edenAccount = '2F29316245B7594BEC4EA86C0C27E3CD';
@@ -244,6 +245,27 @@ class AndroidFolderFixture {
         p == '@root' ? '' : p.replaceFirst(RegExp(r'^@root/'), '');
     File file(String p) => File('${tree.path}/${clean(p)}');
     if (call.method == 'sharedCheck') return null;
+    if (call.method == 'sharedArmsx2CardName') {
+      final path = file(args['path']);
+      final name = path.uri.pathSegments.last;
+      if (!await path.parent.exists()) return name;
+      final matches = await path.parent
+          .list()
+          .where(
+            (entry) =>
+                entry.uri.pathSegments
+                    .where((part) => part.isNotEmpty)
+                    .last
+                    .toLowerCase() ==
+                name.toLowerCase(),
+          )
+          .toList();
+      if (matches.length > 1 || matches.any((entry) => entry is! File))
+        throw PlatformException(code: 'ambiguous-card-name');
+      return armsCardAliases && matches.isNotEmpty
+          ? matches.single.uri.pathSegments.last
+          : name;
+    }
     if (call.method == 'sharedStat') {
       final f = file(args['path']);
       if (!await f.exists()) return null;
@@ -721,6 +743,128 @@ void main() {
     expect(manager.app(e)!.package, 'com.armsx2');
     expect(manager.folder(e), isNotNull);
   });
+  test('shared ARMSX2 recovers and syncs cards after it lowercases their configured names', () async {
+    final external = await connect('armsx2');
+    final e = emulator('armsx2'), rom = await put(temp, 'Katamari.chd', [42]);
+    final remote = api();
+    Future<CloudGame> gameFor() async => CloudGame(
+      server: serverId,
+      profile: profileId,
+      user: remote.user,
+      rom: 42,
+      client: remote,
+      layout: await androidProgressLayout(
+        manager,
+        profileId,
+        e,
+        playablePlatforms.firstWhere((p) => p.slug == 'ps2'),
+        rom.path,
+        contentId: '42',
+      ),
+    );
+    final ini = await put(
+      external,
+      'PCSX2-Android.ini',
+      utf8.encode(
+        '[MemoryCards]\nSlot1_Filename=Mcd001.ps2\nSlot2_Filename=Mcd002.ps2\n',
+      ),
+    );
+    Uint8List cardBytes(int value) => Uint8List(8650752)
+      ..setAll(0, ascii.encode('Sony PS2 Memory Card Format '))
+      ..[42] = value;
+    final game = await gameFor();
+    final original = await put(external, 'memcards/Mcd001.ps2', cardBytes(1));
+    final unrelated = await put(external, 'memcards/Other.ps2', [2]);
+    final slot = await game.layout.target('save/slot1.ps2');
+    await put(
+      Directory(game.layout.root),
+      'user/cards/slot1.ps2',
+      cardBytes(3),
+    );
+    final session = AndroidGameSession(manager, cloud);
+    sessions.add(session);
+    await session.start(
+      server: serverId,
+      profile: profileId,
+      rom: game.rom,
+      emulator: e,
+      app: manager.app(e)!,
+      files: [rom.path],
+      selected: rom.path,
+      game: game,
+    );
+    expect(await original.readAsBytes(), cardBytes(3));
+    await original.writeAsBytes(cardBytes(4));
+    await ini.writeAsString(
+      '[MemoryCards]\nSlot1_Filename=mcd001.ps2\nSlot2_Filename=mcd002.ps2\n',
+    );
+
+    await session.finish(emulatorClosed: true, recovery: await gameFor());
+
+    expect(await slot.readAsBytes(), cardBytes(4));
+    expect(remote.records.values, hasLength(2));
+    expect(
+      remote.records.values.every((save) => save.slot == 'BROOMM'),
+      isTrue,
+    );
+    expect(await original.readAsBytes(), cardBytes(1));
+    expect(await unrelated.readAsBytes(), [2]);
+    expect(await SharedAndroidSaves(manager).pending, isFalse);
+  }, tags: ['full-size-save']);
+
+  test('shared ARMSX2 rejects two slots that alias one card', () async {
+    final external = await connect('armsx2');
+    final rom = await put(temp, 'Katamari.chd', [42]);
+    await put(
+      external,
+      'PCSX2-Android.ini',
+      utf8.encode(
+        '[MemoryCards]\nSlot1_Filename=Mcd001.ps2\nSlot2_Filename=mcd001.ps2\n',
+      ),
+    );
+    final card = await put(external, 'memcards/Mcd001.ps2', [6]);
+    final before = fixture.replacements;
+    await expectLater(
+      androidProgressLayout(
+        manager,
+        profileId,
+        emulator('armsx2'),
+        playablePlatforms.firstWhere((p) => p.slug == 'ps2'),
+        rom.path,
+        contentId: '42',
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(fixture.replacements, before);
+    expect(await card.readAsBytes(), [6]);
+  });
+
+  test(
+    'shared ARMSX2 leaves an unrelated case variant outside the save plan',
+    () async {
+      fixture.armsCardAliases = false;
+      final external = await connect('armsx2');
+      final rom = await put(temp, 'Katamari.chd', [42]);
+      await put(
+        external,
+        'PCSX2-Android.ini',
+        utf8.encode('[MemoryCards]\nSlot1_Filename=mcd001.ps2\n'),
+      );
+      final unrelated = await put(external, 'memcards/Mcd001.ps2', [7]);
+      final plan = await androidProgressLayout(
+        manager,
+        profileId,
+        emulator('armsx2'),
+        playablePlatforms.firstWhere((p) => p.slug == 'ps2'),
+        rom.path,
+        contentId: '42',
+      ) as AndroidSavePlan;
+      expect(await SharedAndroidSaves(manager).list(plan), isEmpty);
+      expect(plan.remotePath('save/slot1.ps2'), 'memcards/mcd001.ps2');
+      expect(await unrelated.readAsBytes(), [7]);
+    },
+  );
+
   test('rooted ARMSX2 round trips both native progress types and isolates accounts', () async {
     final notices = <String>[];
     cloud = CloudSaves(data, notice: (message, _) => notices.add(message));

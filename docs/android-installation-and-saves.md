@@ -155,22 +155,29 @@ to the official delivery services. No runtime plugin or emulator APK is bundled.
 
 ## Connect once, use every Broomm profile
 
-Close the emulator, then choose **Save folder…** on its card. Read its
-instructions, configure the emulator's location and grant Broomm the same root.
-The picker needs a shared folder or the emulator's own provider, not another
-app's private `Android/data` directory through the system storage provider.
-Setup probes create/write/readback/rename/delete using a random disposable file;
-it does not overwrite an existing save or import standalone progress.
+Choose **Set up** on the emulator card. With root available, Broomm prepares
+the known shared folders for ARMSX2, Azahar, Citra MMJ, melonDS, PPSSPP and
+DuckStation before opening their APK installer or download page. ARMSX2 also
+gets a verified BIOS from the active RomM catalogue. Open the emulator when
+prompted, follow its instructions, close it, then return to Broomm.
+
+The reviewed ARMSX2, Azahar, Citra MMJ and melonDS builds can use the
+prepared default folder through Broomm’s root helper once the native
+configuration is verified. PPSSPP, DuckStation, Dolphin, Eden and RetroArch
+also have existing package-specific root routes. Other shared connections
+use a folder grant. Android’s picker accepts a shared folder or the
+emulator’s own provider. The grant route verifies writability with a
+temporary probe and keeps standalone progress.
 
 | App | Exact setup contract |
 | --- | --- |
-| PPSSPP / Gold | Select a shared **Memory Stick root** in PPSSPP, then grant that root in Broomm. It contains `PSP/SAVEDATA` and `PSP/PPSSPP_STATE`. |
-| melonDS | Turn off saving beside the ROM. Select a custom save directory and set **Save state location → Save directory**. Grant that exact directory. Native `.sav` and `.ml0`–`.ml8` files are handled separately. |
-| Azahar | Select a shared user-data root in Azahar, then grant it in Broomm. It contains `sdmc` and `states`. |
-| Citra MMJ | Use the normal shared **Internal storage/citra-emu** folder and grant it. Private Storage Access builds remain unsupported. Verify MMJ's actual setting; Broomm cannot read that private preference. |
+| PPSSPP / Gold | Select a shared **Memory Stick root** in PPSSPP, then grant that root in Broomm. It contains `PSP/SAVEDATA` and `PSP/PPSSPP_STATE`. Broomm prepares `Broomm/PPSSPP` when using shared setup with root access. The rooted App Private Data workflow uses PPSSPP’s own directories. |
+| melonDS | Turn off saving beside the ROM. Select **Broomm/melonDS** and set **Save state location → Save directory** for the prepared route. Custom folders use the picker. Native `.sav` and `.ml0`–`.ml8` files are handled separately. |
+| Azahar | Select **Broomm/Azahar** as the user-data folder for the prepared route. It contains `sdmc` and `states`. Custom folders use the picker. |
+| Citra MMJ | Let the standard APK initialize **Internal storage/citra-emu** and accept its media permission. Private Storage Access builds remain unsupported. |
 | Dolphin | Initialize it, then choose **Dolphin** from the picker's sidebar and grant the full user-data root. For GameCube set **both slots to GCI Folder**. Other games' GCI headers are excluded; Wii title saves are separate from NAND contents. |
 | RetroArch | Install the required core and save its config. Choose **RetroArch → Core Data/app data**, containing `cores` and `files`. Broomm writes an independent configuration for the session with private save/state paths. It preserves global frontend settings and prevents automatic overrides from redirecting progress. Flycast/Opera use explicit per-game VMU/NVRAM options; accessible existing core options are retained, otherwise these two use core defaults with those required save options. Other cores retain their configured option path. |
-| ARMSX2 | Use the GitHub build's shared custom **App Data Folder** and its requested all-files permission. Use standard global memory cards; disable per-game cards. Grant the complete root containing `PCSX2-Android.ini`, `memcards` and `sstates`. Configured card/state paths must remain within that grant. |
+| ARMSX2 | Choose **Broomm/ARMSX2** as the App Data Folder and its **Broomm BIOS** child for BIOS import. Allow the requested file access. Use standard global memory cards and disable per-game cards. The [shared BIOS walkthrough](android-armsx2-root.md#shared-folder-and-bios-import) covers the first-run wizard. |
 | DuckStation | Use a version with selectable locations. Under one shared parent put memory cards in `memcards` and states in `savestates`; use **Shared Between All Games**, with `shared_card_1.mcd` and `shared_card_2.mcd`. Grant the parent. Where accessible, settings are checked; private settings require the player's confirmation of this contract. Older private-only versions need migration first. |
 | Eden | Initialize its console account and configure keys/firmware in Eden itself. Grant **Eden** from the picker sidebar. This adapter currently requires one unambiguous native console account; multiple Broomm profiles share it through isolated title-save swaps. Missing/ambiguous native accounts fail without replacement. |
 
