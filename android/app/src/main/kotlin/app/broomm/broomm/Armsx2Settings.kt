@@ -4,6 +4,45 @@ import android.util.Xml
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
+import java.io.File
+
+internal fun requireArmsx2SharedSetup(internal: RootSaveFiles, folder: File, visible: String) {
+    val config = File(folder, "PCSX2-Android.ini")
+    require(config.canonicalPath == config.path && config.isFile && config.length() in 1..1024L * 1024) {
+        "Finish ARMSX2’s first-run setup in $visible and close it."
+    }
+    val relative = "shared_prefs/ARMSX2.xml"
+    require(!internal.present(internal.path("$relative.bak"))) {
+        "Open ARMSX2 once to finish recovering its settings."
+    }
+    val prefs = internal.bytes(internal.existing(relative), 256 * 1024)
+    val parser = Xml.newPullParser()
+    parser.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false)
+    parser.setInput(prefs.inputStream(), "UTF-8")
+    require(parser.nextTag() == XmlPullParser.START_TAG && parser.name == "map")
+    var configured: String? = null
+    var complete = false
+    val seen = mutableSetOf<String>()
+    while (parser.next() != XmlPullParser.END_DOCUMENT) {
+        if (parser.eventType != XmlPullParser.START_TAG || parser.depth != 2) continue
+        val key = parser.getAttributeValue(null, "name") ?: continue
+        if (key !in setOf("systemDir", "setupComplete", "memcard.perGame")) continue
+        require(seen.add(key)) { "ARMSX2 has conflicting preferences." }
+        when (key) {
+            "systemDir" -> {
+                require(configured == null && parser.name == "string")
+                configured = parser.nextText()
+            }
+            "setupComplete" -> complete = parser.name == "boolean" && parser.getAttributeValue(null, "value") == "true"
+            "memcard.perGame" -> require(parser.name == "boolean" && parser.getAttributeValue(null, "value") == "false") {
+                "Turn off per-game memory cards in ARMSX2 before continuing."
+            }
+        }
+    }
+    require(complete && configured == visible) {
+        "Finish ARMSX2’s first-run setup using $visible as its App Data Folder."
+    }
+}
 
 private const val DEFAULTS = "Use ARMSX2’s default app data folder, both standard memory cards, and turn off per-game memory cards. Existing files were kept."
 

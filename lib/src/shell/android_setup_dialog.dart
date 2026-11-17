@@ -79,9 +79,23 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
       final manager = widget.manager, emulator = widget.emulator;
       final duck = emulator.id == 'duckstation';
       final close = androidCloseInstructions(emulator.name);
-      final initialize = emulator.id == 'ppsspp'
-          ? 'Open PPSSPP once, choose Skip for now / App Private Data and wait for the main menu.'
-          : 'Open ${emulator.name} once and finish its first-run setup and permissions.';
+      final sharedPs2 = setup.armsx2SharedSetup;
+      final pendingPs2 = sharedPs2 && setup.hasPendingFolder;
+      final initialize = setup.checkingPreparedFolder
+          ? switch (emulator.id) {
+              'armsx2' => 'In ARMSX2, choose Internal storage → Broomm → ARMSX2 as the App Data Folder and its Broomm BIOS subfolder as the BIOS source. Finish the wizard with standard memory cards and per-game cards off.',
+              'azahar' => 'In Azahar, choose Internal storage → Broomm → Azahar as the user-data folder and finish setup.',
+              'citra-mmj' => 'Allow Citra MMJ’s storage permission and wait for its main menu to initialize Internal storage → citra-emu.',
+              'melonds' => androidSetupInstructions(emulator, prepared: true),
+              _ => throw StateError('Unknown prepared emulator'),
+            }
+          : switch (emulator.id) {
+              'ppsspp' => 'Open PPSSPP once, choose Skip for now / App Private Data and wait for the main menu.',
+              'dolphin' => 'Open Dolphin and finish first-run setup. For GameCube, set both memory-card slots to GCI Folder.',
+              'eden' => 'Open Eden once and finish its first-run setup so it can create its data and console account.',
+              _ =>
+                'Open ${emulator.name} once and finish its first-run setup and permissions.',
+            };
       final downloading = manager.installing != null;
       return PopScope(
         canPop: !setup.busy,
@@ -113,16 +127,26 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
               ] else
                 Text(switch (setup.step) {
                   AndroidSetupStep.install =>
-                    duck
+                    setup.requiresInstallFolder
+                        ? 'Broomm prepares ${emulator.name}’s shared folder before installation.${emulator.id == 'armsx2' ? ' It also prepares the PS2 BIOS from RomM.' : ''} If Android opens a folder picker, choose or create the folder you’ll use in the emulator.'
+                        : duck
                         ? 'Open DuckStation’s official beta page to download the APK, then open the downloaded file and confirm Android’s installation prompt.'
                         : 'Install ${emulator.name} and confirm Android’s installation prompt. Setup continues when Android confirms the app is installed.',
                   AndroidSetupStep.waitingInstall =>
-                    duck
+                    setup.armsx2ImportReady && setup.preparedFolder
+                        ? 'After installing ARMSX2, choose Internal storage → Broomm → ARMSX2 as App Data Folder and its Broomm BIOS subfolder as the BIOS source.'
+                        : setup.armsx2ImportReady
+                        ? 'After installing ARMSX2, choose the shared folder you selected in Broomm as App Data Folder and its Broomm BIOS subfolder as the BIOS source.'
+                        : duck
                         ? 'Install the APK from DuckStation’s official beta page, then return here to continue setup.'
                         : 'Finish installing ${emulator.name} in Android, then return here to continue setup.',
                   AndroidSetupStep.initialize => '$initialize\n\n$close',
                   AndroidSetupStep.folder =>
-                    'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator, prepared: setup.preparedFolder)}\n\n$close',
+                    pendingPs2
+                        ? '${setup.sharedBiosPrepared ? 'In ARMSX2’s BIOS step, select the Broomm BIOS subfolder inside the App Data Folder you just granted.' : 'If ARMSX2 needs a BIOS, choose Prepare BIOS from RomM below or import your own BIOS in ARMSX2.'}\n\nFinish ARMSX2’s setup, use its standard global memory cards and turn off per-game cards.\n\n$close'
+                        : sharedPs2
+                        ? '${androidSetupInstructions(emulator, prepared: setup.preparedFolder)} You can grant it now, before finishing ARMSX2’s setup.'
+                        : 'Open ${emulator.name} once and finish its first-run setup and permissions.\n\n${androidSetupInstructions(emulator, prepared: setup.preparedFolder)}\n\n$close',
                   AndroidSetupStep.ready => 'Ready to play',
                 }),
               if (setup.folderProblem case final problem?)
@@ -170,6 +194,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                 ),
               ] else if (setup.step == AndroidSetupStep.install ||
                   setup.step == AndroidSetupStep.waitingInstall) ...[
+                if (setup.canInstallWithFolderPicker)
+                  ConsoleButton(
+                    onPressed: () => setup.install(useFolderPicker: true),
+                    child: const Text('Choose folder and install'),
+                  ),
                 ConsoleButton(
                   onPressed: () => setup.install(imported: true),
                   child: const Text('Install APK…'),
@@ -187,6 +216,11 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   ),
                 ),
               ] else ...[
+                if (emulator.id == 'melonds' && setup.checkingPreparedFolder)
+                  ConsoleButton(
+                    onPressed: setup.usePrivateMelonStorage,
+                    child: const Text('Use melonDS’s private storage'),
+                  ),
                 if (setup.problem != null &&
                     (setup.canUseShared3dsFolder ||
                         (emulator.id == 'retroarch' &&
@@ -214,11 +248,18 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   ConsoleButton(
                     onPressed: () => setup.selectFolder(change: true),
                     child: const Text('Choose another folder'),
-                  )
-                else
+                  ),
+                if (!setup.hasPendingFolder ||
+                    pendingPs2 ||
+                    setup.hasInstallFolder)
                   ConsoleButton(
                     onPressed: setup.open,
-                    child: const Text('Open emulator'),
+                    child: Text('Open ${emulator.name}'),
+                  ),
+                if (setup.canPrepareSharedBios && !setup.sharedBiosPrepared)
+                  ConsoleButton(
+                    onPressed: setup.prepareSharedBios,
+                    child: const Text('Prepare BIOS from RomM'),
                   ),
                 ConsoleButton(
                   autofocus: true,
@@ -228,6 +269,8 @@ class _AndroidSetupDialogState extends State<AndroidSetupDialog>
                   child: Text(
                     setup.hasPendingFolder
                         ? 'Verify selected folder'
+                        : sharedPs2
+                        ? 'Select App Data Folder'
                         : setup.step == AndroidSetupStep.folder
                         ? 'Emulator closed · Select folder'
                         : 'Check setup',

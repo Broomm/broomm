@@ -152,7 +152,10 @@ class AndroidSavePlan extends ProgressLayout {
       'mediaStamp': launch['mediaStamp']!,
     },
   };
-  bool get mmjRooted => binding['access'] == androidMmjRootFolderAccess;
+  bool get mmjRooted =>
+      binding['access'] == androidMmjRootFolderAccess ||
+      emulator.id == 'citra-mmj' &&
+          binding['access'] == androidPreparedFolderAccess;
   bool get rooted => androidRootAccessModes.contains(binding['access']);
   bool get melonRooted => binding['access'] == androidMelonRootAccess;
   bool get dolphinRooted => binding['access'] == androidDolphinRootAccess;
@@ -393,8 +396,11 @@ Future<AndroidSavePlan> connectedAndroidProgress(
     case 'azahar':
     case 'citra-mmj':
       final verifiedMmj =
-          manager.folder(emulator, package: app.package)?['access'] ==
-          androidMmjRootFolderAccess;
+          emulator.id == 'citra-mmj' &&
+          {
+            androidMmjRootFolderAccess,
+            androidPreparedFolderAccess,
+          }.contains(manager.folder(emulator, package: app.package)?['access']);
       layout = await threeDsProgressLayout(
         root.path,
         'user',
@@ -593,6 +599,7 @@ Future<AndroidSavePlan> connectedAndroidProgress(
       final stateDir = reader.relative(
         config[ps2 ? 'Folders/Savestates' : 'Folders/SaveStates'] ?? states,
       );
+      final cardPaths = <String>{};
       for (var slot = 1; slot <= 2; slot++) {
         if (!ps2 &&
             (config['MemoryCards/Card${slot}Type'] ?? 'Shared') != 'Shared')
@@ -603,24 +610,35 @@ Future<AndroidSavePlan> connectedAndroidProgress(
             config[ps2
                 ? 'MemoryCards/Slot${slot}_Filename'
                 : 'MemoryCards/Card${slot}Path'] ??
-            (ps2 ? 'Mcd00$slot.ps2' : 'shared_card_$slot.mcd');
+            (ps2 ? 'mcd00$slot.ps2' : 'shared_card_$slot.mcd');
         final path = native.contains('/')
             ? reader.relative(native)
             : '$cardDir/$native';
         progressRelative(path);
+        final parent = path.substring(0, path.lastIndexOf('/'));
+        final configured = path.split('/').last;
+        var name = configured;
+        if (ps2) {
+          final observed = await manager.channel.invokeMethod<String>(
+            'sharedArmsx2CardName',
+            {...reader.arguments, 'path': path},
+          );
+          if (observed == null ||
+              observed.toLowerCase() != configured.toLowerCase())
+            throw const FormatException('Invalid ARMSX2 memory card identity.');
+          name = observed;
+          if (!cardPaths.add('$parent/${name.toLowerCase()}'))
+            throw StateError(
+              'ARMSX2’s two slots must use distinct memory cards. Existing files were kept.',
+            );
+        }
         final a = ProgressArea(
           'save',
           'user/cards',
           exact: ps2 ? 'slot$slot.ps2' : 'card$slot.mcd',
         );
         // Separate selectors share the public ordinary-save area.
-        remote.add(
-          AndroidSaveArea(
-            a,
-            path.substring(0, path.lastIndexOf('/')),
-            rename: path.split('/').last,
-          ),
-        );
+        remote.add(AndroidSaveArea(a, parent, rename: name));
       }
       final cardArea = ProgressArea(
         'save',

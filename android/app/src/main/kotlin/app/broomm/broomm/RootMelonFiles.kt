@@ -13,6 +13,49 @@ internal const val MELON_PACKAGE = "me.magnum.melonds"
 internal const val MELON_SIGNER = "0493bb8749289f0304cc868489dd68b930c19ccc4dce2da876bfe6b9bdbabebc"
 internal const val MELON_VERSION = "2.0.1 GH"
 
+internal fun requireMelonSharedFolder(internal: RootSaveFiles, expected: String) {
+    val relative = "shared_prefs/${MELON_PACKAGE}_preferences.xml"
+    require(!internal.present(internal.path("$relative.bak"))) { "Open melonDS once to finish recovering its settings." }
+    val prefs = internal.bytes(internal.existing(relative), 256 * 1024)
+    val parser = Xml.newPullParser()
+    parser.setFeature(XmlPullParser.FEATURE_PROCESS_DOCDECL, false)
+    parser.setInput(prefs.inputStream(), "UTF-8")
+    require(parser.nextTag() == XmlPullParser.START_TAG && parser.name == "map")
+    var useRomDirectory = true
+    var stateLocation = "save_dir"
+    val selected = mutableListOf<String>()
+    val seen = mutableSetOf<String>()
+    while (parser.next() != XmlPullParser.END_DOCUMENT) {
+        if (parser.eventType != XmlPullParser.START_TAG || parser.depth != 2) continue
+        val key = parser.getAttributeValue(null, "name") ?: continue
+        if (key !in setOf("use_rom_dir", "save_state_location", "sram_dir")) continue
+        require(seen.add(key))
+        when (key) {
+            "use_rom_dir" -> {
+                require(parser.name == "boolean")
+                useRomDirectory = parser.getAttributeValue(null, "value").toBooleanStrict()
+            }
+            "save_state_location" -> {
+                require(parser.name == "string")
+                stateLocation = parser.nextText()
+            }
+            "sram_dir" -> {
+                require(parser.name == "set")
+                while (parser.nextTag() == XmlPullParser.START_TAG) {
+                    require(parser.name == "string" && selected.isEmpty())
+                    selected.add(parser.nextText())
+                }
+            }
+        }
+    }
+    val uri = selected.singleOrNull()?.let(android.net.Uri::parse)
+    require(!useRomDirectory && stateLocation.equals("save_dir", ignoreCase = true) &&
+        uri?.scheme == "content" && uri.authority == "com.android.externalstorage.documents" &&
+        uri.pathSegments == listOf("tree", expected) && uri.query == null && uri.fragment == null) {
+        "Choose Internal storage/Broomm/melonDS as the save folder in melonDS and set Save state location to Save directory."
+    }
+}
+
 /** File effects for the reviewed release's default DS cartridge paths. */
 internal class RootMelonFiles(
     private val identity: Map<String, Any>, private val live: () -> Unit,

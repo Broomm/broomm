@@ -1,5 +1,108 @@
 # Implementation plan
 
+## Rooted shared ARMSX2 path correction
+
+On GammaOS Android 14, build 1189 completed ARMSX2's first-run setup and
+installed a PS2 session. On return, the rooted shared-folder adapter rejected
+the configured `mcd001.ps2` spelling. Android canonicalized it to the listed
+`Mcd001.ps2`, and both resolved to the same regular file and inode. The
+installed session journal and both cards remained present.
+
+The adapter checks each path component with `lstat` and retains its existing
+regular-file and inode checks for card name resolution. The Kotlin bridge and
+115 focused Flutter tests passed. On the same device, the native regression
+fixture passed casefolded name and file reads, missing-file handling, and
+symlink refusal. A read-only check through the corrected adapter resolved the
+actual pending session's card. Packaged save recovery remains unverified.
+See the [recovery walkthrough](docs/android-armsx2-root.md#play-and-recovery).
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-shared-path.zip)
+is `0.1.27-dev` (1206), **24,417,968 bytes**, with SHA-256
+`82b085a5db0222144e03934f59c2fa1a6d4077a30329a58911ea55240823ab83`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
+## Android emulator preparation before installation
+
+Setup checks Android APK-install permission, prepares supported shared folders,
+then hands off to Android’s installer. ARMSX2 gets a checksum-verified RomM BIOS
+in `Broomm/ARMSX2/Broomm BIOS` before handoff. Azahar, Citra MMJ, melonDS,
+PPSSPP and DuckStation prepare their known shared directories with root.
+The reviewed ARMSX2, Azahar, Citra MMJ and melonDS builds can verify and use
+the prepared directory via Broomm’s root service when the emulator is closed.
+Their native first-run choices remain in each emulator. PPSSPP, DuckStation,
+Dolphin, Eden and RetroArch retain their existing package-specific paths.
+Custom folders and unsupported builds use Android’s folder grant. Without
+root, setup can reuse a grant made before installation.
+
+Static analysis, 76 focused Flutter tests and Android Kotlin compilation
+passed. On GammaOS Android 14, a disposable fixture exercised the production
+folder creation, exclusive BIOS publication, repeat protection, and save
+publication, listing, capture and removal. It used synthetic bytes and
+removed its test files. A packaged Android first-run test is pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-preinstall.zip)
+is `0.1.27-dev` (1205), **24,417,939 bytes**, with SHA-256
+`78464112f013ae14d437c1480b50e44c36b64fbd44d9b5bb247c5eacc855cc45`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
+## Shared ARMSX2 card filename recovery — 2026-11-13
+
+The owner confirmed that PR #19 build 1187 completed ARMSX2 setup and launched
+a PS2 game on GammaOS Android 14. After exit, Broomm rejected its installed
+save journal. ARMSX2 had changed the INI slot names from `Mcd001.ps2` and
+`Mcd002.ps2` to lowercase. Android still enumerated the original filenames,
+and both spellings opened the same files on the device. The journal and both
+working cards remained present.
+
+Shared ARMSX2 plans use the provider's listed spelling after checking both
+spellings refer to the same file. The check leaves unrelated case variants on
+case-sensitive storage outside the plan and rejects ambiguous slots. Existing
+transactions can retain their exact journal keys. Recovery still requires the
+original profile and folder grant, and the emulator must be closed.
+
+Static analysis, 37 focused Flutter tests and the Android Kotlin bridge
+compile passed. The regressions cover finishing an installed transaction
+after a case change, refusing slots that alias one card, and excluding a
+separate case variant. The running device's provider and backing filesystem
+were checked read-only. A new APK and an on-device sync of the pending session
+remain unverified.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-card-recovery.zip)
+is `0.1.27-dev` (1204), **24,417,940 bytes**, with SHA-256
+`5216356daa601284ab75d2c6d28cd2375e91c822065ec6c66f11f7ef1447b6a9`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
+## Android ARMSX2 first-run BIOS import — 2026-11-13
+
+Read-only inspection of the GammaOS Android 14 device found Broomm build 1185,
+the pinned ARMSX2 2.9.2 legacy ARM64 APK, and an empty custom `Broom/ARMSX2`
+data folder. The private ARMSX2 media directory carried a generic SELinux
+label, which fails the existing rooted firmware destination check. ARMSX2's
+wizard imports a BIOS before completing setup. PPSSPP's log and private
+`PSP/SAVEDATA` directory confirmed that it had connected through App Private
+Data, which does not use `Broomm/PPSSPP`.
+
+Shared ARMSX2 setup now prepares the default folder when root access can
+create it. Players can keep an existing folder and grant it before ARMSX2
+finishes setup. **Prepare BIOS from RomM** stages the verified firmware in
+its `Broomm BIOS` subfolder for ARMSX2 to import. The grant stays available
+in the dialog until ARMSX2 has written its native configuration and the
+writability check succeeds. See the [setup walkthrough](docs/android-armsx2-root.md#shared-folder-and-bios-import).
+
+Static analysis, 75 focused Flutter tests, and the Android Kotlin bridge
+compile passed. The new setup regressions cover root-verification failure,
+shared setup without root, and retry after a rejected BIOS checksum. Native
+first-run BIOS import and a PS2 boot on GammaOS remain pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-emulator-setup.zip)
+is `0.1.27-dev` (1203), **24,417,941 bytes**, with SHA-256
+`c65e3e777d6ac53d648a0a78752bd481db71f0716bf4008d81cbed2ec239b23e`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Pairing spacing and save-picker focus — 2026-11-13
 
 Added space above and below the pairing cards, with smaller margins on

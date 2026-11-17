@@ -42,6 +42,26 @@ class RootSaveService : RootService() {
             identity["signer"] == ARMSX2_SIGNER && identity["version"] == ARMSX2_VERSION
     }
 
+    private fun requireReviewedMmj(pkg: String, identity: Map<String, Any>) {
+        val app = packageManager.getApplicationInfo(pkg, 0)
+        require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
+            File(app.nativeLibraryDir).name == "arm64" && app.targetSdkVersion == 29 &&
+            packageManager.getPackageInfo(pkg, 0).longVersionCode == 3932L &&
+            identity["signer"] == CITRA_SHARED_SIGNER && identity["version"] == CITRA_SHARED_VERSION) {
+            "Root verification supports the reviewed standard Citra MMJ APK."
+        }
+    }
+
+    private fun requireReviewedAzahar(pkg: String, identity: Map<String, Any>) {
+        val app = packageManager.getApplicationInfo(pkg, 0)
+        require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
+            File(app.nativeLibraryDir).name == "arm64" &&
+            packageManager.getPackageInfo(pkg, 0).longVersionCode == 33989152L &&
+            identity["signer"] == AZAHAR_SCOPED_SIGNER && identity["version"] == "2126.2-googleplay") {
+            "Root verification supports the reviewed Azahar APK. Use shared-folder setup for other builds."
+        }
+    }
+
     private fun operation(request: Bundle, caller: Int, callerPid: Int): Bundle {
         require(Process.myUid() == 0 && caller / 100000 == 0) { "The first root save route requires Android user 0." }
         val deadline = request.getLong("deadline")
@@ -49,6 +69,30 @@ class RootSaveService : RootService() {
         live()
         val operation = request.getString("operation") ?: error("Missing root operation.")
         val pkg = request.getString("package")!!
+        val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
+        require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (operation == "prepareemulatorinstall") return SharedDocumentLock.acquire(storage).use {
+            require(defaultSharedSetupFolder(pkg) != null)
+            fun requireAbsent() {
+                live()
+                val installed = try {
+                    packageManager.getApplicationInfo(pkg, 0)
+                    true
+                } catch (_: android.content.pm.PackageManager.NameNotFoundException) { false }
+                require(!installed) { "The emulator is already installed. Refresh setup." }
+            }
+            requireAbsent()
+            val source = request.getParcelable<ParcelFileDescriptor>("transfer")
+            val expected = request.getString("after")
+            require((source == null) == (expected == null) && (source == null || pkg == ARMSX2_PACKAGE))
+            if (source == null) prepareSharedSetupFolder(pkg)
+            else {
+                val payload = RootSaveTransfer.read(source, caller, 4 * 1024 * 1024, ::live)
+                publishArmsx2ImportBios(payload, expected!!, ::requireAbsent)
+            }
+            requireAbsent()
+            Bundle()
+        }
         val psp = request.getString("operation")?.startsWith("psp") == true
         val duck = operation.startsWith("duck")
         val sessionOperation = operation in setOf("emulatorlifecycle", "emulatorstop")
@@ -59,7 +103,17 @@ class RootSaveService : RootService() {
         val eden = request.getString("operation")?.startsWith("eden") == true
         val arms = operation.startsWith("armsx2")
         val prepareFolder = operation == "preparesharedfolder"
+        if (operation == "preparedarmsx2importready") return SharedDocumentLock.acquire(storage).use {
+            require(pkg == ARMSX2_PACKAGE)
+            val identity = RootInspection.identity(this, pkg, 0)
+            require(identity["build"] == request.getString("build") && reviewedArmsx2(pkg, identity))
+            val bios = File("/data/media/0/${defaultSharedSetupFolder(pkg)}", ARMSX2_IMPORT_BIOS)
+            val ready = bios.canonicalPath == bios.path && bios.isFile && bios.length() == 4L * 1024 * 1024
+            Bundle().apply { putBoolean("ready", ready) }
+        }
+        val preparedShared = operation.startsWith("preparedshared")
         require(if (sessionOperation) RootInspection.supports(pkg)
+            else if (preparedShared) pkg in setOf(ARMSX2_PACKAGE, AZAHAR_SCOPED_PACKAGE, CITRA_SHARED_PACKAGE, MELON_PACKAGE)
             else if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
         val before = RootInspection.identity(this, pkg, 0)
         for (key in listOf("build", "signer", "uid", "user", "dataDir"))
@@ -71,9 +125,40 @@ class RootSaveService : RootService() {
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
         require(String(label).trimEnd('\u0000').startsWith("u:object_r:app_data_file:s0"))
-        if (!sessionOperation && !prepareFolder && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "pspsharedlifecycle", "duckinspect", "ducklifecycle", "duckstop", "duckresume", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
-        val storage = SharedDocumentLock.appDirectory(File(applicationInfo.dataDir, "files"))
-        require(storage.canonicalPath == storage.path && storage.isDirectory && Os.lstat(storage.path).st_uid == caller)
+        if (!sessionOperation && !prepareFolder && !preparedShared && operation !in setOf("inspect", "mgbasetup", "coresetup", "pspinspect", "pspsharedlifecycle", "duckinspect", "ducklifecycle", "duckstop", "duckresume", "meloninspect", "dolphininspect", "azaharfolder", "mmjfolder", "mmjstagerom", "mmjremoverom", "edeninspect", "edenfirmwarestatus", "armsx2biosstatus", "armsx2inspect")) require(request.getString("label") == String(label).trimEnd('\u0000')) { "Emulator security label changed." }
+        if (preparedShared) return SharedDocumentLock.acquire(storage).use {
+            val relative = requireNotNull(defaultSharedSetupFolder(pkg))
+            val tree = request.getString("tree")!!
+            val uri = android.net.Uri.parse(tree)
+            require(uri.scheme == "content" && uri.authority == "com.android.externalstorage.documents" &&
+                uri.pathSegments == listOf("tree", "primary:$relative") && uri.query == null && uri.fragment == null)
+            val folder = sharedSetupDirectory(relative)
+            fun closed() = requireNoEmulatorProcess(uid, "the emulator", ::live)
+            closed()
+            val internal = RootSaveFiles(root, uid, label, ::live)
+            when (pkg) {
+                ARMSX2_PACKAGE -> {
+                    require(reviewedArmsx2(pkg, before)) { "Use the reviewed ARMSX2 APK for automatic folder setup." }
+                    requireArmsx2SharedSetup(internal, folder, "/storage/emulated/0/$relative")
+                }
+                AZAHAR_SCOPED_PACKAGE -> {
+                    requireReviewedAzahar(pkg, before)
+                    requireAzaharFolder(internal, tree)
+                }
+                CITRA_SHARED_PACKAGE -> {
+                    requireReviewedMmj(pkg, before)
+                    requireCitraSharedFolder(this, uid, tree)
+                }
+                MELON_PACKAGE -> {
+                    require(before["signer"] == MELON_SIGNER && before["version"] == MELON_VERSION)
+                    requireMelonSharedFolder(internal, uri.pathSegments.last())
+                }
+            }
+            RootPreparedFolder(folder, ::live, ::closed).operation(request, caller).also {
+                closed()
+                require(RootInspection.identity(this, pkg, 0) == before) { "Emulator changed during shared access." }
+            }
+        }
         if (sessionOperation) return SharedDocumentLock.acquire(storage).use {
             fun sameApp() {
                 live()
@@ -143,13 +228,7 @@ class RootSaveService : RootService() {
             result
         }
         if (mmj) return SharedDocumentLock.acquire(storage).use {
-            val app = packageManager.getApplicationInfo(pkg, 0)
-            require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
-                File(app.nativeLibraryDir).name == "arm64" && app.targetSdkVersion == 29 &&
-                packageManager.getPackageInfo(pkg, 0).longVersionCode == 3932L &&
-                before["signer"] == CITRA_SHARED_SIGNER && before["version"] == CITRA_SHARED_VERSION) {
-                "Root verification supports the reviewed standard Citra MMJ APK."
-            }
+            requireReviewedMmj(pkg, before)
             fun closed() = requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
             closed()
             if (operation != "mmjremoverom") requireCitraSharedFolder(this, uid, request.getString("tree")!!)
@@ -173,13 +252,7 @@ class RootSaveService : RootService() {
             result
         }
         if (azahar) return SharedDocumentLock.acquire(storage).use {
-            val app = packageManager.getApplicationInfo(pkg, 0)
-            require(android.os.Build.VERSION.SDK_INT >= 30 && app.splitSourceDirs.isNullOrEmpty() &&
-                File(app.nativeLibraryDir).name == "arm64" &&
-                packageManager.getPackageInfo(pkg, 0).longVersionCode == 33989152L &&
-                before["signer"] == AZAHAR_SCOPED_SIGNER && before["version"] == "2126.2-googleplay") {
-                "Root verification supports the reviewed Azahar APK. Use shared-folder setup for other builds."
-            }
+            requireReviewedAzahar(pkg, before)
             requireNoEmulatorProcess(uid, "Azahar", ::live)
             requireAzaharFolder(RootSaveFiles(root, uid, label, ::live), request.getString("tree")!!)
             requireNoEmulatorProcess(uid, "Azahar", ::live)

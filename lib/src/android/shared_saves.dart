@@ -139,7 +139,12 @@ class SharedAndroidSaves {
                 r['mediaStamp'] != plan.launch['mediaStamp'])) ||
         (r['rootPlatform'] != null &&
             r['rootPlatform'] != plan.launch['platform']) ||
-        plan.binding.entries.any((e) => r[e.key] != e.value) ||
+        plan.binding.entries.any(
+          (e) =>
+              (plan.binding['access'] != androidPreparedFolderAccess ||
+                  e.key != 'build') &&
+              r[e.key] != e.value,
+        ) ||
         !RegExp(r'^[a-f0-9]{32}$')
             .hasMatch(r['transaction'] as String? ?? '') ||
         !{

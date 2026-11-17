@@ -9,10 +9,12 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import android.provider.DocumentsContract.Document
+import android.system.Os
 import org.json.JSONArray
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.io.FileNotFoundException
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicBoolean
@@ -245,6 +247,11 @@ class SharedSaveFolder(private val activity: Activity) {
                     val directory = if (relative.isEmpty()) root(tree, op) else find(tree, sharedSavePath(relative), op) ?: return emptyList<Map<String, Any>>()
                     return children(tree, directory, op).map { mapOf("name" to it.name, "directory" to it.directory) }
                 }
+                "sharedArmsx2CardName" -> {
+                    require(call.argument<String>("emulator") == "armsx2" &&
+                        tree.authority == "com.android.externalstorage.documents")
+                    return armsx2CardName(tree, sharedSavePath(call.argument<String>("path")!!), op)
+                }
                 "sharedStat" -> {
                     val found = find(tree, sharedSavePath(call.argument<String>("path")!!), op) ?: return null
                     require(!found.directory)
@@ -332,6 +339,41 @@ class SharedSaveFolder(private val activity: Activity) {
             finally { running.compareAndSet(op, null); lock.close() }
         }
     }
+    private fun armsx2CardName(tree: Uri, parts: List<String>, op: Operation): String {
+        require(parts.isNotEmpty())
+        val name = parts.last()
+        val parent = find(tree, parts.dropLast(1), op) ?: return name
+        val matches = children(tree, parent, op).filter { it.name.equals(name, ignoreCase = true) }
+        require(matches.size <= 1 && matches.none { it.directory }) {
+            "ARMSX2 memory card names are ambiguous. Existing files were kept."
+        }
+        val listed = matches.singleOrNull() ?: return name
+        if (listed.name == name) return name
+
+        // ExternalStorageProvider document IDs are volume-relative paths. Check
+        // both spellings through the provider before treating them as aliases.
+        val listedId = "${parent.id}/${listed.name}"
+        require(listed.id == listedId) { "ARMSX2 memory card identity could not be verified." }
+        val requested = try {
+            resolver.openFileDescriptor(uri(tree, "${parent.id}/$name"), "r", op.signal)
+                ?: error("ARMSX2 memory card could not be opened.")
+        } catch (_: FileNotFoundException) {
+            return name
+        }
+        requested.use { alias ->
+            val exact = resolver.openFileDescriptor(uri(tree, listedId), "r", op.signal)
+                ?: error("ARMSX2 memory card could not be opened.")
+            exact.use {
+                val a = Os.fstat(alias.fileDescriptor)
+                val b = Os.fstat(it.fileDescriptor)
+                require(a.st_dev == b.st_dev && a.st_ino == b.st_ino) {
+                    "ARMSX2 memory card spellings refer to different files. Existing files were kept."
+                }
+            }
+        }
+        return listed.name
+    }
+
     private fun replace(call: MethodCall, tree: Uri, op: Operation) {
         val parts = sharedSavePath(call.argument<String>("path")!!)
         val before = call.argument<String>("before")

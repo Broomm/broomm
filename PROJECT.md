@@ -205,11 +205,16 @@ stop reply keeps recovery. Android App info remains available for manual
 recovery. Returning to Broomm must never force-stop a potentially live
 writer.
 
-For new shared-folder setups on rooted Android, prepare the default selectable
-folders under `Broomm/` for Azahar and shared PPSSPP, and prepare Citra MMJ's
-fixed `citra-emu` folder at the storage root. Tell the player exactly which
-folder to select and preserve any existing emulator folder choice. Rooted
-PPSSPP keeps its App Private Data workflow.
+For Android emulator setup, prepare known shared folders and any importable
+firmware before opening the APK installer. Once installation is confirmed,
+offer to open the emulator with instructions for its own first-run choices.
+Automatically connect initialized storage when Broomm can verify the emulator's
+settings and access the folder through its root helper or a prior grant. Use
+Android's folder picker when a compatible access route requires it. Preserve
+existing emulator folder choices and verify the initialized storage before
+marking setup ready. PPSSPP's reviewed private route still uses App Private Data.
+ARMSX2's shared first-run flow prepares the PS2 BIOS from the active RomM
+profile for import in the emulator's wizard.
 
 Use the installed emulator's ordinary Android behavior. Game selection, local progress, and RomM sync remain Broomm responsibilities, but private save-folder access and launch parameters must be verified per emulator. Where Android cannot redirect or access saves/states, show the precise limitation rather than claim a successful handoff or overwrite another profile's progress. This platform-specific scope is an explicit exception to desktop configuration isolation.
 
@@ -235,8 +240,8 @@ standalone saves through journaled swaps. On return, show **Finished? Sync
 progress** when native exit proof is unavailable, and explain that the player
 must save and close the emulator first. Shared-folder play without an authorized
 root connection uses explicit closure confirmation. Broomm's transfer and
-session locks still apply. BIOS/firmware
-and new content installers are later work. No additional Wii update support is
+session locks still apply. Additional BIOS/firmware and new content installers
+are later work. No additional Wii update support is
 required for the owner's library; preserve existing desktop WAD/DLC behavior.
 
 The owner selected a **root-backed Android route** as the next milestone on

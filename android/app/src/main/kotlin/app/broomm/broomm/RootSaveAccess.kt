@@ -112,6 +112,9 @@ class RootSaveAccess(private val activity: Activity) {
         try {
             val pkg = call.argument<String>("package")!!
             val prepareFolder = call.method == "rootPrepareSharedFolder"
+            val importReady = call.method == "rootPreparedArmsx2ImportReady"
+            val preinstall = call.method == "rootPrepareEmulatorInstall"
+            val preparedShared = call.method.startsWith("rootPreparedShared")
             val psp = call.method.startsWith("rootPsp")
             val duck = call.method.startsWith("rootDuck")
             val sessionOperation = call.method in setOf("rootEmulatorLifecycle", "rootEmulatorStop")
@@ -124,11 +127,21 @@ class RootSaveAccess(private val activity: Activity) {
             val armsProgress = arms && call.method !in setOf("rootArmsx2BiosStatus", "rootArmsx2BiosProvision", "rootArmsx2Inspect")
             require(!psp || android.os.Build.VERSION.SDK_INT >= 30) { "Rooted PPSSPP saves require Android 11 or newer. Use shared-folder setup on this Android version." }
             require(if (sessionOperation) RootInspection.supports(pkg)
-                else if (prepareFolder) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
-            val identity = RootInspection.identity(activity, pkg)
-            require(identity["user"] == 0) { "The first GBA root route supports Android user 0." }
-            require(identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
-            if (!sessionOperation && !prepareFolder && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootPspSharedLifecycle", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckResume", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
+                else if (importReady) pkg == ARMSX2_PACKAGE
+                else if (prepareFolder || preinstall || preparedShared) defaultSharedSetupFolder(pkg) != null else if (arms) pkg == ARMSX2_PACKAGE else if (eden) pkg == EDEN_PACKAGE else if (mmj) pkg == CITRA_SHARED_PACKAGE else if (azahar) pkg == AZAHAR_SCOPED_PACKAGE else if (dolphin) pkg == DOLPHIN_PACKAGE else if (melon) pkg == MELON_PACKAGE else if (duck) pkg == "com.github.stenzek.duckstation" else if (psp) pkg == "org.ppsspp.ppsspp" else pkg in setOf("com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"))
+            fun observedIdentity(): Map<String, Any> = if (preinstall) {
+                require(android.os.Process.myUid() / 100000 == 0) { "Automatic folder preparation requires Android user 0." }
+                val installed = try {
+                    activity.packageManager.getApplicationInfo(pkg, 0)
+                    true
+                } catch (_: android.content.pm.PackageManager.NameNotFoundException) { false }
+                require(!installed) { "The emulator is already installed. Refresh setup." }
+                mapOf("package" to pkg)
+            } else RootInspection.identity(activity, pkg)
+            val identity = observedIdentity()
+            require(preinstall || identity["user"] == 0) { "The first GBA root route supports Android user 0." }
+            require(preinstall || identity["build"] == call.argument<String>("build")) { "Refresh the changed emulator before connecting root saves." }
+            if (!sessionOperation && !prepareFolder && !preinstall && !preparedShared && !importReady && call.method !in setOf("rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootPspSharedLifecycle", "rootDuckInspect", "rootDuckLifecycle", "rootDuckStop", "rootDuckResume", "rootMelonInspect", "rootDolphinInspect", "rootAzaharFolder", "rootMmjFolder", "rootMmjStageRom", "rootMmjRemoveRom", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect")) for (key in listOf("signer", "uid", "user", "dataDir"))
                 require(identity[key].toString() == call.argument<String>(key)) { "The root save connection belongs to a different emulator installation." }
             val storage = SharedDocumentLock.appDirectory(activity.filesDir)
             // Create the shared inode as the app, before root can acquire it.
@@ -141,7 +154,7 @@ class RootSaveAccess(private val activity: Activity) {
                 for (key in listOf("path", "before", "after", "sha256", "metadata", "token", "label", "stage", "coreName", "stateGroup", "configPath"))
                     putString(key, call.argument<String>(key))
             }
-            if (azahar || mmj) {
+            if (azahar || mmj || preparedShared) {
                 val tree = call.argument<String>("tree")!!
                 require(tree.length in 1..4095)
                 request.putString("tree", tree)
@@ -235,7 +248,16 @@ class RootSaveAccess(private val activity: Activity) {
                     for ((key, value) in area) putString(key, value)
                 } }))
             }
-            val reading = call.method in setOf("rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead", "rootMelonRead", "rootDolphinRead", "rootEdenRead", "rootArmsx2Read")
+            if (call.method == "rootPreparedSharedList") {
+                val areas = call.argument<List<Map<String, String>>>("areas")!!
+                require(areas.size in 1..16 && areas.all { area ->
+                    area.size <= 8 && area.values.all { it.length <= 4096 }
+                })
+                request.putParcelableArrayList("areas", ArrayList(areas.map { area -> Bundle().apply {
+                    for ((key, value) in area) putString(key, value)
+                } }))
+            }
+            val reading = call.method in setOf("rootPreparedSharedRead", "rootRead", "rootFlycastRead", "rootPspRead", "rootPspProfileRead", "rootDuckRead", "rootDuckProfileRead", "rootMelonRead", "rootDolphinRead", "rootEdenRead", "rootArmsx2Read")
             if (reading) request.putLong("bytes", call.argument<Number>("bytes")!!.toLong())
             fun dispatch(binder: IBinder) {
                 phase("file operation")
@@ -264,7 +286,7 @@ class RootSaveAccess(private val activity: Activity) {
                         val input = Parcel.obtain(); val output = Parcel.obtain()
                         var descriptor: ParcelFileDescriptor? = null
                         val answer = try {
-                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace", "rootMelonReplace", "rootDolphinReplace", "rootEdenReplace", "rootEdenProvision", "rootArmsx2BiosProvision", "rootArmsx2Replace")) call.argument<String>("source") else null
+                            val source = if (call.method in setOf("rootReplace", "rootLynxFirmware", "rootOperaFirmware", "rootSaturnFirmware", "rootFlycastReplace", "rootPspReplace", "rootPspProfileReplace", "rootDuckReplace", "rootDuckProfileReplace", "rootMelonReplace", "rootDolphinReplace", "rootEdenReplace", "rootEdenProvision", "rootArmsx2BiosProvision", "rootArmsx2Replace", "rootPrepareEmulatorInstall", "rootPreparedSharedReplace")) call.argument<String>("source") else null
                             val target = if (reading) call.argument<String>("target") else null
                             if (source != null || target != null) {
                                 val file = if (call.method in setOf("rootPspProfileReplace", "rootPspProfileRead", "rootDuckProfileReplace", "rootDuckProfileRead") && call.argument<String>("archiveNonce") != null)
@@ -281,7 +303,7 @@ class RootSaveAccess(private val activity: Activity) {
                         } finally { descriptor?.close(); input.recycle(); output.recycle() }
                         check(!closed && !done.get()) { "Root reply arrived after the request ended. Recovery was kept." }
                         answer.getString("error")?.let { error(it) }
-                        require(RootInspection.identity(activity, pkg) == identity) { "Emulator changed during root access. Recovery was kept." }
+                        require(observedIdentity() == identity) { "Emulator changed during root access. Recovery was kept." }
                         val mapped = answer.keySet().associateWith { answer.get(it) }.toMutableMap()
                         if (call.method == "rootDuckInspect") {
                             val settings = answer.getBundle("settings") ?: error("Missing native settings identity")
@@ -293,7 +315,16 @@ class RootSaveAccess(private val activity: Activity) {
                         }
                         val value: Any? = when (call.method) {
                             "rootInspect", "rootMgbaSetup", "rootCoreSetup", "rootPspInspect", "rootDuckInspect", "rootMelonInspect", "rootDolphinInspect", "rootEdenInspect", "rootEdenFirmwareStatus", "rootArmsx2BiosStatus", "rootArmsx2Inspect" -> identity.mapValues { it.value.toString() } + mapped
-                            "rootPrepareSharedFolder" -> true
+                            "rootPrepareSharedFolder", "rootPrepareEmulatorInstall" -> true
+                            "rootPreparedArmsx2ImportReady" -> answer.getBoolean("ready")
+                            "rootPreparedSharedChildren" -> answer.getParcelableArrayList<Bundle>("children")!!.map {
+                                mapOf("name" to it.getString("name")!!, "directory" to it.getBoolean("directory"))
+                            }
+                            "rootPreparedSharedStat" -> answer.getString("id")?.let { id ->
+                                mapOf("id" to id, "bytes" to answer.getLong("bytes"), "modified" to answer.getLong("modified"))
+                            }
+                            "rootPreparedSharedBytes" -> answer.getByteArray("bytes")
+                            "rootPreparedSharedArmsx2CardName" -> answer.getString("name")
                             "rootEdenKey" -> answer.getByteArray("headerKey")
                             "rootEdenScope", "rootArmsx2Scope" -> mapped
                             "rootLifecycle", "rootEmulatorLifecycle", "rootPspLifecycle", "rootPspSharedLifecycle", "rootPspProfile", "rootPspSelection", "rootPspSelect", "rootPspReplace", "rootPspProfileReplace", "rootDuckLifecycle", "rootDuckStop", "rootDuckProfile", "rootDuckReplace", "rootDuckProfileReplace" -> mapped
@@ -304,7 +335,7 @@ class RootSaveAccess(private val activity: Activity) {
                                 answer.getBundle("files")!!.let { all -> all.keySet().associateWith { key ->
                                     all.getBundle(key)!!.let { item -> mapOf("bytes" to item.getLong("bytes"), "sha256" to item.getString("sha256"), "metadata" to item.getString("metadata")) }
                                 } })
-                            "rootList", "rootFlycastList", "rootMelonList", "rootDolphinList", "rootEdenList", "rootArmsx2List" -> {
+                            "rootList", "rootFlycastList", "rootMelonList", "rootDolphinList", "rootEdenList", "rootArmsx2List", "rootPreparedSharedList" -> {
                                 val entries = answer.getBundle("files") ?: error("Missing root inventory")
                                 entries.keySet().associateWith { key ->
                                     val entry = entries.getBundle(key)!!
