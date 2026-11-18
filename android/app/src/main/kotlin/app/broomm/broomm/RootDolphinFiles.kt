@@ -25,7 +25,7 @@ private val dolphinUndoFiles = setOf(
 )
 
 /** The official app's default GCI slots, Wii disc save data and numbered states. */
-internal class RootDolphinFiles(identity: Map<String, Any>, private val live: () -> Unit) {
+internal class RootDolphinFiles(identity: Map<String, Any>, private val live: () -> Unit, private val closed: () -> Unit) {
     private val uid = identity.getValue("uid") as Int
     private val internal = File(identity.getValue("dataDir") as String).canonicalFile
     private val internalLabel = Os.getxattr(internal.path, "security.selinux")
@@ -33,7 +33,7 @@ internal class RootDolphinFiles(identity: Map<String, Any>, private val live: ()
     private val root = File("/data/media/0/Android/data/$DOLPHIN_PACKAGE")
     private val logical = File("/storage/emulated/0/Android/data/$DOLPHIN_PACKAGE")
     private val first = Os.lstat(root.path)
-    private val files = RootSaveFiles(root, uid, label, live, writerClosed = ::closed, mediaGroup = 1078)
+    private val files = RootSaveFiles(root, uid, label, live, writerClosed = closed, mediaGroup = 1078)
     private val privateFiles = RootSaveFiles(internal, uid, internalLabel, live)
 
     init {
@@ -42,7 +42,6 @@ internal class RootDolphinFiles(identity: Map<String, Any>, private val live: ()
         verifyMount()
     }
 
-    private fun closed() = requireNoEmulatorProcess(uid, "Dolphin", live)
 
     private fun sameDirectory(a: StructStat, b: StructStat): Boolean =
         a.st_dev == b.st_dev && a.st_ino == b.st_ino && a.st_mode == b.st_mode &&

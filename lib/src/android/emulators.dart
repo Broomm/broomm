@@ -1066,6 +1066,13 @@ class AndroidEmulators extends ChangeNotifier {
   Future<bool> hasRootTools() async =>
       await channel.invokeMethod<bool>('canPrepareSharedFolder') == true;
 
+  Future<bool> isPackageStopped(AndroidApp app) async =>
+      await channel.invokeMethod<bool>('emulatorStopped', {
+        'package': app.package,
+        'build': app.build,
+      }) ==
+      true;
+
   Future<bool> prepareSharedFolder(AndroidApp app) async {
     if (!await hasRootTools()) return false;
     return await channel.invokeMethod<bool>('rootPrepareSharedFolder', {

@@ -9,6 +9,20 @@ extension ShellCloudSaves on ShellModel {
     if (s == null || p == null || disposed) return;
     final revision = ++_cloudStatusRevision;
     final statuses = <int, CloudSaveStatus>{};
+    Map<String, dynamic>? pending;
+    if (isAndroid) {
+      try {
+        pending = await androidSession.pending();
+      } catch (_) {
+        log?.write(
+          'Could not read the pending Android session.',
+          level: 'warning',
+        );
+      }
+    }
+    final pendingRom = pending?['server'] == s.id && pending?['profile'] == p.id
+        ? (pending?['rom'])
+        : null;
     for (final entry in List<InstalledGame>.of(installed)) {
       final platform = launchPlatform(entry.game);
       final androidEmulator = isAndroid
@@ -17,7 +31,8 @@ extension ShellCloudSaves on ShellModel {
                 .firstOrNull
           : null;
       statuses[entry.game.id] =
-          platform == null ||
+          entry.game.id == pendingRom ||
+              platform == null ||
               isAndroid &&
                   (androidEmulator == null ||
                       !android.progressSupported(androidEmulator) ||
@@ -153,8 +168,12 @@ extension ShellCloudSaves on ShellModel {
     return result;
   }
 
-  Future<T?> cloudAction<T>(Future<T> Function() action) async {
-    if (isAndroid) await android.ensureNoWriters();
+  Future<T?> cloudAction<T>(
+    Future<T> Function() action, {
+    bool emulatorClosed = false,
+  }) async {
+    if (isAndroid)
+      await android.ensureNoWriters(closureConfirmed: emulatorClosed);
     if (isAndroid && await androidSession.pending() != null)
       throw StateError(
         'Close the Android emulator and finish its session before managing cloud saves.',

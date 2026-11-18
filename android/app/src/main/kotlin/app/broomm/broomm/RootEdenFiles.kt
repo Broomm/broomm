@@ -13,7 +13,7 @@ internal const val EDEN_SIGNER = "7fca26483b2d1b3dc3e6d9bb836e2fee18f09dc644353b
 private const val EDEN_SAVE_BYTES = 64 * 1024 * 1024
 
 /** The reviewed Eden build's default NAND and one initialized console account. */
-internal class RootEdenFiles(identity: Map<String, Any>, private val live: () -> Unit) {
+internal class RootEdenFiles(identity: Map<String, Any>, private val live: () -> Unit, private val closed: () -> Unit) {
     private val uid = identity.getValue("uid") as Int
     private val internal = File(identity.getValue("dataDir") as String).canonicalFile
     private val internalLabel = Os.getxattr(internal.path, "security.selinux")
@@ -21,7 +21,7 @@ internal class RootEdenFiles(identity: Map<String, Any>, private val live: () ->
     private val root = File("/data/media/0/Android/data/$EDEN_PACKAGE")
     private val logical = File("/storage/emulated/0/Android/data/$EDEN_PACKAGE")
     private val first = Os.lstat(root.path)
-    private val files = RootSaveFiles(root, uid, label, live, writerClosed = ::closed, mediaGroup = 1078)
+    private val files = RootSaveFiles(root, uid, label, live, writerClosed = closed, mediaGroup = 1078)
 
     init {
         require(identity["package"] == EDEN_PACKAGE && identity["user"] == 0 &&
@@ -29,7 +29,6 @@ internal class RootEdenFiles(identity: Map<String, Any>, private val live: () ->
         verifyMount()
     }
 
-    private fun closed() = requireNoEmulatorProcess(uid, "Eden", live)
 
     private fun directory(file: File, stat: StructStat = Os.lstat(file.path)) {
         require(OsConstants.S_ISDIR(stat.st_mode) && stat.st_uid == uid && stat.st_gid == 1078 &&

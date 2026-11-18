@@ -11,7 +11,12 @@ import 'model.dart';
 import 'android_emulator_settings_screen.dart';
 
 class EmulatorSettingsScreen extends StatefulWidget {
-  const EmulatorSettingsScreen({super.key, required this.model});
+  const EmulatorSettingsScreen({
+    super.key,
+    required this.model,
+    this.recoverAndroid,
+  });
+  final Future<void> Function()? recoverAndroid;
   final ShellModel model;
   @override
   State<EmulatorSettingsScreen> createState() => _EmulatorSettingsScreenState();
@@ -241,7 +246,10 @@ class _EmulatorSettingsScreenState extends State<EmulatorSettingsScreen> {
 
   @override
   Widget build(BuildContext context) => model.isAndroid
-      ? AndroidEmulatorSettingsScreen(model: model)
+      ? AndroidEmulatorSettingsScreen(
+          model: model,
+          recoverAndroid: widget.recoverAndroid,
+        )
       : ListenableBuilder(
           listenable: Listenable.merge([model, m]),
           builder: (context, _) => ConsoleDirections(

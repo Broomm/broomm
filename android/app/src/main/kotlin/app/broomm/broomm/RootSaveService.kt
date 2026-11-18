@@ -121,6 +121,10 @@ class RootSaveService : RootService() {
         val root = File(before["dataDir"] as String).canonicalFile
         require(root.path == "/data/user/0/$pkg" || root.path == "/data/data/$pkg")
         val uid = before["uid"] as Int
+        fun requireClosed(name: String) {
+            live()
+            if (!emulatorPackageStopped(this, pkg)) requireNoEmulatorProcess(uid, name, ::live)
+        }
         val info = Os.lstat(root.path)
         require(info.st_uid == uid && OsConstants.S_ISDIR(info.st_mode))
         val label = Os.getxattr(root.path, "security.selinux")
@@ -133,7 +137,7 @@ class RootSaveService : RootService() {
             require(uri.scheme == "content" && uri.authority == "com.android.externalstorage.documents" &&
                 uri.pathSegments == listOf("tree", "primary:$relative") && uri.query == null && uri.fragment == null)
             val folder = sharedSetupDirectory(relative)
-            fun closed() = requireNoEmulatorProcess(uid, "the emulator", ::live)
+            fun closed() = requireClosed("the emulator")
             closed()
             val internal = RootSaveFiles(root, uid, label, ::live)
             when (pkg) {
@@ -177,7 +181,7 @@ class RootSaveService : RootService() {
                         } else null
                     RootRetroArchProcess(this, pkg, uid, ::live, nativeExit).observe(request, callerPid, caller)
                 }
-                "emulatorstop" -> { forceStopEmulator(pkg, uid, ::live); Bundle() }
+                "emulatorstop" -> { forceStopEmulator(pkg, ::live); Bundle() }
                 else -> error("Unsupported emulator session operation.")
             }
             sameApp()
@@ -193,7 +197,7 @@ class RootSaveService : RootService() {
             require(reviewedArmsx2(pkg, before)) {
                 "Rooted PS2 setup supports the reviewed ARM64 ARMSX2 2.9.2 APK."
             }
-            val files = RootArmsx2Files(before, ::live)
+            val files = RootArmsx2Files(before, ::live) { requireClosed("ARMSX2") }
             val result = when (operation) {
                 "armsx2biosstatus" -> files.status()
                 "armsx2biosprovision" -> files.provision(request, caller)
@@ -215,7 +219,7 @@ class RootSaveService : RootService() {
                 before["signer"] == EDEN_SIGNER && before["version"] == EDEN_VERSION) {
                 "Root saves support the reviewed ARM64 Eden 0.2.1 release."
             }
-            val files = RootEdenFiles(before, ::live)
+            val files = RootEdenFiles(before, ::live) { requireClosed("Eden") }
             val result = if (operation == "edeninspect") files.setup()
                 else if (operation == "edenfirmwarestatus") files.firmwareStatus()
                 else {
@@ -229,7 +233,7 @@ class RootSaveService : RootService() {
         }
         if (mmj) return SharedDocumentLock.acquire(storage).use {
             requireReviewedMmj(pkg, before)
-            fun closed() = requireNoEmulatorProcess(uid, "Citra MMJ", ::live)
+            fun closed() = requireClosed("Citra MMJ")
             closed()
             if (operation != "mmjremoverom") requireCitraSharedFolder(this, uid, request.getString("tree")!!)
             val files = RootSaveFiles(root, uid, label, ::live, writerClosed = ::closed)
@@ -253,9 +257,9 @@ class RootSaveService : RootService() {
         }
         if (azahar) return SharedDocumentLock.acquire(storage).use {
             requireReviewedAzahar(pkg, before)
-            requireNoEmulatorProcess(uid, "Azahar", ::live)
+            requireClosed("Azahar")
             requireAzaharFolder(RootSaveFiles(root, uid, label, ::live), request.getString("tree")!!)
-            requireNoEmulatorProcess(uid, "Azahar", ::live)
+            requireClosed("Azahar")
             require(RootInspection.identity(this, pkg, 0) == before) { "Azahar changed during folder verification." }
             live()
             Bundle()
@@ -268,7 +272,7 @@ class RootSaveService : RootService() {
                 before["signer"] == MELON_SIGNER && before["version"] == MELON_VERSION) {
                 "Root melonDS supports the reviewed ARM64 release. Use shared-folder setup on other builds."
             }
-            val files = RootMelonFiles(before, ::live)
+            val files = RootMelonFiles(before, ::live) { requireClosed("melonDS") }
             val result = if (operation == "meloninspect") files.report() else {
                 gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
                 files.operation(request, caller)
@@ -285,7 +289,7 @@ class RootSaveService : RootService() {
                 before["signer"] == DOLPHIN_SIGNER && before["version"] == DOLPHIN_VERSION) {
                 "Root Dolphin supports the reviewed ARM64 release. Use shared-folder setup on other builds."
             }
-            val files = RootDolphinFiles(before, ::live)
+            val files = RootDolphinFiles(before, ::live) { requireClosed("Dolphin") }
             val result = if (operation == "dolphininspect") files.report(request.getString("platform")!!) else {
                 val game = gameLibraryFromRelative(File(applicationInfo.dataDir, "files"), request.getString("libraryRelative")!!)
                 files.operation(request, game, caller)
@@ -360,6 +364,8 @@ class RootSaveService : RootService() {
             val coreName = request.getString("coreName") ?: "mgba"
             RootSaveFiles.corePath(coreName)
             fun ensureClosed() {
+                live()
+                if (emulatorPackageStopped(this, pkg)) return
                 val state = RootRetroArchProcess(this, pkg, uid, ::live).observe(Bundle(), callerPid, caller).getString("state")
                 check(state == "idle") { "Quit RetroArch so Broomm can verify it is closed before setting up RetroArch." }
             }

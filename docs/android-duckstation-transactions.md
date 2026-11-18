@@ -213,11 +213,11 @@ in-game, use **Close Game**, then return to Broomm for verified completion.
 The brief menu open/pause flushes cached preferences; no user closure
 acknowledgement is used when this proof succeeds.
 
-If Broomm was stopped while a game was open, choose Play again under the
-original profile to reach recovery. Use **Return to emulator** if the game is
-still running. After **Close Game**, choose **Review and finish session** if
-Broomm still shows the recovery screen. Broomm checks closure again before
-touching saves. An uncertain or interrupted writer leaves progress for review.
+If Broomm was stopped while a game was open, choose **Play** again under the
+original profile to reach recovery. If prompted, choose **Yes** to force-close
+DuckStation and continue. **No** returns to Home and retains the pending session
+and its sync warning. Save transfer and settings restoration still check the
+recorded file identities.
 
 **Remove** asks Android to uninstall DuckStation, which deletes standalone
 files. Broomm verifies both private profile backups before requesting that

@@ -12,7 +12,7 @@ internal const val ARMSX2_SIGNER = "df91c9ce39d3f53c9bab5f2c1e0820e761800c93f180
 private const val BIOS_BYTES = 4 * 1024 * 1024
 
 /** Firmware and game-specific progress in the reviewed ARMSX2 data root. */
-internal class RootArmsx2Files(identity: Map<String, Any>, private val live: () -> Unit) {
+internal class RootArmsx2Files(identity: Map<String, Any>, private val live: () -> Unit, private val closed: () -> Unit) {
     private val uid = identity.getValue("uid") as Int
     private val internal = File(identity.getValue("dataDir") as String).canonicalFile
     private val internalLabel = Os.getxattr(internal.path, "security.selinux")
@@ -20,10 +20,9 @@ internal class RootArmsx2Files(identity: Map<String, Any>, private val live: () 
     private val root = File("/data/media/0/Android/data/$ARMSX2_PACKAGE")
     private val logical = File("/storage/emulated/0/Android/data/$ARMSX2_PACKAGE")
     private val first = Os.lstat(root.path)
-    private val files = RootSaveFiles(root, uid, label, live, writerClosed = ::closed, mediaGroup = 1078)
+    private val files = RootSaveFiles(root, uid, label, live, writerClosed = closed, mediaGroup = 1078)
     private val privateFiles = RootSaveFiles(internal, uid, internalLabel, live)
 
-    private fun closed() = requireNoEmulatorProcess(uid, "ARMSX2", live)
 
     private fun verify() {
         closed()

@@ -57,13 +57,11 @@ not be read as native device or save acceptance.
 
 - Detect current ARMSX2 **`com.armsx2`** and **`com.armsx2.nightly`**, using their
   shared source namespace **`com.armsx2.MainActivity`**. Prefer enabled stable
-  when both are installed. Keep their folder connections separate. Recovery and
-  Return to emulator retain the package used by the original session.
-- The owner accepts **explicit emulator-closure confirmation**. Returning from
-  an emulator offers **Finished? Sync progress**. No process-exit hook or polling
-  is added. Broomm explains that the emulator must be saved/closed first and
-  honors the confirmation. Broomm's own save-transfer locks still prevent
-  concurrent file operations; those are not emulator-process checks.
+  when both are installed. Keep their folder connections separate. Recovery
+  uses the package recorded for the original session.
+- Play and return use the same **Yes / No** confirmation when Android cannot
+  establish closure. The confirmation is specific to the selected emulator.
+  Broomm retains its save-transfer locks and file checks.
 - BIOS/firmware provisioning and new content installers remain deferred. No
   additional Wii update integration is planned: the owner has no such media.
   Existing desktop WAD/DLC behavior is retained. Android has no pairing or
@@ -198,8 +196,16 @@ local rather than being silently assigned to a newly computed build group.
 Play restores the current profile's **BROOMM** history into its private working
 copy. Before native launch, a durable journal and complete original/working
 copies are made; only the selected game's boundaries are swapped into the
-external folder. On return, choose **Not finished** to leave the session active,
-or save/close the emulator and confirm **Emulator closed · Sync progress**.
+external folder. Before launch and on return, Broomm continues automatically
+if it can establish closure. Otherwise the popup has two choices:
+
+- **Yes** force-stops the emulator on rooted Android, then continues after
+  the Android stop command succeeds, even if later lifecycle evidence is
+  inconclusive. On standard Android, **Yes** confirms you already closed it.
+- **No** returns to Home. Before launch, setup and saves remain untouched.
+  On return, the game's cloud icon shows a warning and the unfinished session
+  stays available to retry.
+
 Broomm captures native progress, uses the existing cloud conflict/offline
 pipeline, and restores the external app's original standalone saves. Shared
 PlayStation cards are therefore isolated per Broomm profile/game while playing.
@@ -230,8 +236,8 @@ title's account directory is not evidence of migration for this title.
 
 ## Recovery, effects and cleanup
 
-Keep the emulator closed while finishing recovery. **Finish previous game
-session** remains reachable after Broomm restarts. A surviving shared-swap
+**Finish previous game session** remains reachable from Emulator Settings
+after Broomm restarts. It uses the same closure confirmation. A surviving shared-swap
 journal also exposes recovery if the general session marker was lost.
 **Reconnect original save folder** restores a revoked grant without changing
 the recorded identity or abandoning progress. A different selected tree is
