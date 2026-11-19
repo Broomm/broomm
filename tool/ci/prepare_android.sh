@@ -45,6 +45,18 @@ def pinCompiler = { repositories ->
     }
 }
 gradle.settingsEvaluated { settings ->
+    // Flutter's included build has its own plugin repositories. Its Kotlin
+    // plugin classpath otherwise relies only on the portal's Central redirect,
+    // which returned missing POMs on a clean release runner. Keep the existing
+    // portal for plugin markers and resolve Kotlin from Central directly.
+    settings.pluginManagement.repositories {
+        maven {
+            name = "kotlinPluginDependencies"
+            url = "https://repo1.maven.org/maven2/"
+            content { includeGroup("org.jetbrains.kotlin") }
+        }
+        gradlePluginPortal()
+    }
     def management = settings.dependencyResolutionManagement
     if (management.repositoriesMode.get() == org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_PROJECT) {
         gradle.beforeProject { project -> pinCompiler(project.repositories) }

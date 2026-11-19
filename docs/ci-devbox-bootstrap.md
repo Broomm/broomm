@@ -1,5 +1,26 @@
 # Pinned CI Devbox bootstrap
 
+## Kotlin plugin repository correction — 2026-11-19
+
+The [previous main release run](https://github.com/Broomm/broomm/actions/runs/44439231848)
+passed the desktop builds and checks but failed Android plugin initialization:
+Flutter's included Gradle build could not find Kotlin 2.2.21 POMs through the
+plugin portal. Those exact artifacts are present on Maven Central; its portal
+redirect subsequently recovered. This failure occurred before app compilation.
+
+The existing private CI init script now supplies a direct, Kotlin-group-only
+Maven Central repository to plugin management in each build, including Flutter's
+included build. The plugin portal remains available for plugin markers. The
+previous compiler-JAR routing and all SDK, Gradle and Kotlin pins are unchanged.
+This follows Gradle's separate [plugin repository configuration](https://docs.gradle.org/9.3.1/userguide/plugins_intermediate.html#sec:plugin_repositories),
+rather than changing the read-only Flutter SDK or workstation Gradle settings.
+The script is still created only in the disposable runner's private Gradle home;
+runner disposal removes it. Local Gradle 9.3.1 fixtures passed for the root and
+included builds under all three repository modes. Hosted Android packaging
+remains the integration check for the next release run.
+
+## Existing bootstrap
+
 The existing workflows use Devbox 0.18.4 through the pinned Jetify action.
 On 2026-11-08, multiple clean runners failed before compilation when its
 launcher downloaded the versioned binary through GitHub's browser asset URL.
