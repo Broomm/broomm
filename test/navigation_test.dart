@@ -756,12 +756,15 @@ void main() {
         final rect = t.getRect(find.byWidget(selected.context!.widget));
         expect(rect.top, greaterThanOrEqualTo(70));
         expect(rect.bottom, lessThanOrEqualTo(580));
-        expect(t.binding.transientCallbackCount, 0);
+        // OverlayPortal retains a passive geometry callback. Reduced motion
+        // must leave no animation frame scheduled.
+        expect(t.binding.hasScheduledFrame, false);
         model.navigate(ShellScreen.home);
         await t.pump();
         expect(buttonNode(t, labelled('Game Store')).hasFocus, true);
         await t.pump(); // Flush zero-duration implicit focus decoration.
-        expect(t.binding.transientCallbackCount, 0);
+        await t.pump(); // Lay out the focus overlay after it becomes visible.
+        expect(t.binding.hasScheduledFrame, false);
         expect(t.takeException(), isNull);
         await t.pumpWidget(const SizedBox());
       },

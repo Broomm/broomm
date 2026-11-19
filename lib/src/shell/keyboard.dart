@@ -190,7 +190,9 @@ class _KeyboardHostState extends State<ConsoleKeyboardHost>
   }
 
   @override
-  Widget build(BuildContext context) => _KeyboardScope(
+  Widget build(BuildContext context) => Overlay.wrap(child: keyboard(context));
+
+  Widget keyboard(BuildContext context) => _KeyboardScope(
     host: this,
     child: Focus(
       canRequestFocus: false,

@@ -925,6 +925,12 @@ devbox run prototype-check-macos
 
 The build is `build/macos/Build/Products/Debug/broomm.app`. Current widget PNGs and check logs are under `.tool-cache/research/navigation-followup/`; the earlier navigation record remains under `.tool-cache/research/navigation/`. Fixture data is isolated from normal accounts. These artifacts can be removed after checks finish. Native Home smoke retains its existing `.tool-cache/research/managed-play/home-data/` fixture progress; remove it only after all fixture writers exit. Ordinary navigation changes no game/save files; activation retains each action's existing effects. Physical input feel, Steam/gamescope and other native hosts still need owner verification. See [the evidence record](docs/navigation-and-motion.md).
 
+To check the focus outline, open the controller keyboard from a text field and
+move between keys using the D-pad. The full mint-to-teal ring should remain
+visible above adjacent keys. Repeat in a compact window and at 150% UI scale,
+then close the keyboard and navigate Home or a dialog. The ring follows the
+focused control as it scrolls or resizes and clears from the previous control.
+
 ## Verify 3DS updates and DLC
 
 Use the macOS Apple Silicon build above, a signed-in RomM 5.4 account and the configured tested Azahar installation. Put decrypted, unpacked CIA packages in a game's `updates/` (or `update/`) and `dlc/` subfolders and rescan that game in RomM. The game detail API must list those files; merely copying files to the server before a scan is insufficient. Each package must match the base game's title and region.
