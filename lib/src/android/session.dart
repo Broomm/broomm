@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../progress/files.dart';
 import '../progress/service.dart';
@@ -142,42 +143,90 @@ class AndroidGameSession extends ChangeNotifier {
     busy = true;
     _emit();
     try {
-      if (!await progressExists(marker.path))
-        throw StateError(
-          'The original emulator session record is unavailable. Use Android App info.',
-        );
       _lease ??= await SessionLease.acquire(manager.data);
       final record = await pending();
-      if (record == null || !await progressExists(marker.path))
-        throw StateError(
-          'The original emulator session record is unavailable. Use Android App info.',
-        );
+      if (record == null)
+        throw StateError('The emulator session record is unavailable.');
+      final recorded = await progressExists(marker.path);
       final app = _sessionApp(record);
-      if (record['build'] != app.build)
-        throw StateError(
-          'The original emulator build is unavailable. Use Android App info.',
-        );
       await manager.ensureNoWriters(closureConfirmed: true);
       // A failed or lost native reply leaves an interrupted session.
       final stopped = {...record, 'forceClosed': true}
         ..remove('forceCloseVerified')
         ..remove('forceCloseSync');
-      await progressWrite(marker, stopped);
+      if (recorded) await progressWrite(marker, stopped);
       phase = 'Force-closing the emulator…';
       _emit();
-      await manager.channel.invokeMethod<void>(
-        'rootEmulatorStop',
-        _processIdentity(app),
-      );
-      await progressWrite(marker, {
-        ...stopped,
-        'forceCloseVerified': true,
-        if (_launched || record['launched'] == true) 'forceCloseSync': true,
-      });
+      await _stop(app);
+      if (recorded)
+        await progressWrite(marker, {
+          ...stopped,
+          'forceCloseVerified': true,
+          if (_launched || record['launched'] == true) 'forceCloseSync': true,
+        });
     } finally {
       busy = false;
       _emit();
     }
+  }
+
+  Future<void> _stop(AndroidApp app) => manager.channel.invokeMethod<void>(
+    'rootEmulatorStop',
+    _processIdentity(app),
+  );
+
+  Future<bool> _stopped(AndroidApp app, {required bool canStop}) async {
+    try {
+      if (await manager.isPackageStopped(app)) return true;
+      if (!canStop) return false;
+      if (app.package == 'org.ppsspp.ppsspp' &&
+          {'v1.20.4', '1.20.4'}.contains(app.version)) {
+        return (await readAndroidPspState(
+              manager,
+              _processIdentity(app),
+              shared: true,
+            )).state ==
+            AndroidPspState.idle;
+      }
+      return (await readAndroidRetroArchState(
+            manager,
+            _processIdentity(app),
+            standalone: true,
+          )).state ==
+          AndroidRetroArchState.idle;
+    } on PlatformException {
+      return false;
+    } on FormatException {
+      return false;
+    }
+  }
+
+  Future<bool> approveEmulatorClosure(
+    AndroidApp app,
+    Future<bool> Function(bool canStop) confirm,
+  ) async {
+    final canStop = await manager.hasRootTools();
+    if (await _stopped(app, canStop: canStop)) return true;
+    if (!await confirm(canStop)) return false;
+    if (canStop) {
+      phase = 'Force-closing the emulator…';
+      _emit();
+      await _stop(app);
+    }
+    return true;
+  }
+
+  Future<bool> approveFinish(
+    Future<bool> Function(bool canStop) confirm,
+  ) async {
+    final record = await pending();
+    if (record == null) return true;
+    final app = _sessionApp(record);
+    final canStop = await manager.hasRootTools();
+    if (await _stopped(app, canStop: canStop)) return true;
+    if (!await confirm(canStop)) return false;
+    if (canStop) await forceClose();
+    return true;
   }
 
   Future<Map<String, dynamic>?> pending() async {
@@ -289,6 +338,7 @@ class AndroidGameSession extends ChangeNotifier {
     bool rooted = false,
     String? rootPlatform,
     bool emulatorClosed = true,
+    Future<bool> Function(bool canStop)? confirmClose,
     Future<void> Function()? onStarted,
   }) async {
     if (![
@@ -315,6 +365,15 @@ class AndroidGameSession extends ChangeNotifier {
           'MMJ has an unfinished shared-folder restore. Finish its original game session before starting another game.',
         );
       await manager.ensureNoWriters(closureConfirmed: true);
+      if (confirmClose != null) {
+        phase = 'Checking whether ${emulator.name} is closed…';
+        _emit();
+        if (!await approveEmulatorClosure(app, confirmClose)) {
+          await _lease?.release();
+          _lease = null;
+          return;
+        }
+      }
       final platform = rootPlatform ?? (core == 'snes9x' ? 'snes' : 'gba');
       final pspRooted = rooted && emulator.id == 'ppsspp' && platform == 'psp';
       final duckRooted =
@@ -331,7 +390,7 @@ class AndroidGameSession extends ChangeNotifier {
           : null;
       if (rooted && !pspRooted && !duckRooted && root == null)
         throw StateError('Reconnect RetroArch root saves before playing.');
-      if (root != null) {
+      if (root != null && confirmClose == null) {
         phase = 'Checking whether RetroArch is closed…';
         _emit();
         await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
@@ -461,7 +520,7 @@ class AndroidGameSession extends ChangeNotifier {
         if (_game!.layout case final AndroidSavePlan plan) {
           phase = 'Preparing ${emulator.name}’s connected save folder…';
           _emit();
-          if (root != null)
+          if (root != null && confirmClose == null)
             await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
           await _shared.begin(_game!, plan, app.build, selected: selected);
           if (plan.rooted) {
@@ -491,6 +550,8 @@ class AndroidGameSession extends ChangeNotifier {
       _emit();
       final launchClock = root == null
           ? null
+          : confirmClose != null
+          ? await _launchClock(root)
           : await _checkRetroArchIdle(root, emulatorClosed: emulatorClosed);
       final pspPlan = _game?.layout is AndroidPspPlan
           ? _game!.layout as AndroidPspPlan
@@ -619,6 +680,17 @@ class AndroidGameSession extends ChangeNotifier {
     }
   }
 
+  Future<int?> _launchClock(Map<String, String> root) async {
+    try {
+      final report = await readAndroidRetroArchState(manager, root);
+      return report.state == AndroidRetroArchState.idle ? report.elapsed : null;
+    } on PlatformException {
+      return null;
+    } on FormatException {
+      return null;
+    }
+  }
+
   Future<int?> _checkRetroArchIdle(
     Map<String, String> root, {
     required bool emulatorClosed,
@@ -660,10 +732,19 @@ class AndroidGameSession extends ChangeNotifier {
   Future<void> finish({
     required bool emulatorClosed,
     CloudGame? recovery,
+    bool confirmedByPlayer = false,
   }) async {
     if (!emulatorClosed)
       throw StateError('Close the emulator before synchronizing progress.');
-    await _finish(recovery: recovery);
+    await _finish(recovery: recovery, confirmedByPlayer: confirmedByPlayer);
+  }
+
+  Future<T> _observeExit<T>(Future<T> Function() read, T unknown) async {
+    try {
+      return await read();
+    } on PlatformException {
+      return unknown;
+    }
   }
 
   Future<AndroidRetroArchState> finishIfRetroArchClosed() =>
@@ -675,7 +756,10 @@ class AndroidGameSession extends ChangeNotifier {
       return AndroidPspState.unknown;
     var exit = AndroidPspState.unknown;
     for (var attempt = 0; attempt < 5; attempt++) {
-      exit = await _psp.exitState(game, game.layout as AndroidPspPlan);
+      exit = await _observeExit(
+        () => _psp.exitState(game, game.layout as AndroidPspPlan),
+        AndroidPspState.unknown,
+      );
       if (exit == AndroidPspState.closed || exit == AndroidPspState.interrupted)
         break;
       if (attempt < 4)
@@ -700,7 +784,10 @@ class AndroidGameSession extends ChangeNotifier {
       final game = _game;
       if (game == null || game.layout is! AndroidDuckPlan)
         return AndroidDuckState.unknown;
-      final state = await _duck.exitState(game, game.layout as AndroidDuckPlan);
+      final state = await _observeExit(
+        () => _duck.exitState(game, game.layout as AndroidDuckPlan),
+        AndroidDuckState.unknown,
+      );
       if (state == AndroidDuckState.closed) {
         busy = false;
         await _finish(duckAutomatic: true);
@@ -813,7 +900,7 @@ class AndroidGameSession extends ChangeNotifier {
     try {
       var state = AndroidRetroArchState.unknown;
       for (var attempt = 0; attempt < 5; attempt++) {
-        state = await observe();
+        state = await _observeExit(observe, AndroidRetroArchState.unknown);
         if (state == AndroidRetroArchState.closed ||
             state == AndroidRetroArchState.interrupted)
           break;
@@ -828,7 +915,7 @@ class AndroidGameSession extends ChangeNotifier {
         return await _finish(standaloneAutomatic: true);
       }
       phase = state == AndroidRetroArchState.running
-          ? 'Android still has the emulator open. Save and exit, or use Force close and sync after saving.'
+          ? 'Android still has the emulator open.'
           : 'The emulator’s normal exit could not be verified. Recovery was kept.';
       return state;
     } finally {
@@ -850,6 +937,7 @@ class AndroidGameSession extends ChangeNotifier {
     bool standaloneAutomatic = false,
     bool pspAutomatic = false,
     bool duckAutomatic = false,
+    bool confirmedByPlayer = false,
   }) async {
     if (busy) throw StateError('The Android session is still busy.');
     busy = true;
@@ -870,10 +958,10 @@ class AndroidGameSession extends ChangeNotifier {
       _lease ??= await SessionLease.acquire(manager.data);
       await manager.ensureNoWriters(closureConfirmed: true);
       final forced = record['forceClosed'] == true;
+      final authorized =
+          confirmedByPlayer || record['forceCloseVerified'] == true;
       final forceCloseSync =
-          forced &&
-          record['forceCloseVerified'] == true &&
-          record['forceCloseSync'] == true;
+          authorized && (_launched || record['launched'] == true);
       if (record['emulator'] == 'duckstation' &&
           (record['rooted'] == true || await _duck.pending)) {
         final game = recovery ?? _game;
@@ -890,7 +978,7 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidDuckPlan,
             automatic: duckAutomatic,
-            forced: forced,
+            forced: forced || confirmedByPlayer,
             forceCloseSync: forceCloseSync,
           );
         else
@@ -925,7 +1013,7 @@ class AndroidGameSession extends ChangeNotifier {
             game,
             game.layout as AndroidPspPlan,
             automatic: pspAutomatic,
-            forced: forced,
+            forced: forced || confirmedByPlayer,
             forceCloseSync: forceCloseSync,
           );
         else
@@ -943,36 +1031,26 @@ class AndroidGameSession extends ChangeNotifier {
         return AndroidRetroArchState.closed;
       }
       final root = await _recoveryRoot(record);
-      final forcedApp = record['forceCloseVerified'] == true
-          ? _sessionApp(record)
-          : null;
       Future<void> verifyStandaloneClosure() async {
         if (standaloneAutomatic) await _requireStandaloneExit();
-        if (forcedApp == null) return;
-        final report = await readAndroidRetroArchState(
-          manager,
-          _processIdentity(forcedApp),
-          standalone: true,
-        );
-        if (report.state != AndroidRetroArchState.idle)
-          throw StateError(
-            'The force-closed emulator is open again. Recovery was kept.',
-          );
       }
 
       var rootExit = AndroidRetroArchState.unknown;
-      if (root != null) {
+      if (root != null && !authorized) {
         final process = _retroArchProcess;
         if (process != null) {
           // The emulator can still be shutting down when Broomm resumes.
           // Give both the process and its exit record a bounded settling time.
           const checks = 5;
           for (var attempt = 0; attempt < (automatic ? checks : 1); attempt++) {
-            rootExit = (await readAndroidRetroArchState(
-              manager,
-              root,
-              process: process,
-            )).state;
+            rootExit = await _observeExit(
+              () async => (await readAndroidRetroArchState(
+                manager,
+                root,
+                process: process,
+              )).state,
+              AndroidRetroArchState.unknown,
+            );
             if (!automatic ||
                 rootExit == AndroidRetroArchState.closed ||
                 rootExit == AndroidRetroArchState.interrupted)
@@ -981,7 +1059,10 @@ class AndroidGameSession extends ChangeNotifier {
               await Future<void>.delayed(const Duration(milliseconds: 250));
           }
         } else {
-          rootExit = (await readAndroidRetroArchState(manager, root)).state;
+          rootExit = await _observeExit(
+            () async => (await readAndroidRetroArchState(manager, root)).state,
+            AndroidRetroArchState.unknown,
+          );
         }
         if (rootExit == AndroidRetroArchState.running) {
           phase =
@@ -1052,14 +1133,14 @@ class AndroidGameSession extends ChangeNotifier {
         }
         phase = 'Keeping your progress safe…';
         _emit();
-        if (root != null)
+        if (root != null && !authorized)
           await _checkRetroArchIdle(root, emulatorClosed: !automatic);
         await verifyStandaloneClosure();
         final capture = sharedPending
             ? await _shared.capture(game, cloud, sharedPlan!)
             : !mmjPending || await _mmj.capture(game, cloud);
         if (capture) {
-          if (root != null)
+          if (root != null && !authorized)
             await _checkRetroArchIdle(root, emulatorClosed: !automatic);
           await verifyStandaloneClosure();
           final unclean =
@@ -1071,7 +1152,7 @@ class AndroidGameSession extends ChangeNotifier {
                       root != null && rootExit != AndroidRetroArchState.closed);
           await cloud.afterPlay(game, unclean ? 1 : 0);
         }
-        if (root != null)
+        if (root != null && !authorized)
           await _checkRetroArchIdle(root, emulatorClosed: !automatic);
         await verifyStandaloneClosure();
         if (mmjPending) await _mmj.restoreOriginal(game);

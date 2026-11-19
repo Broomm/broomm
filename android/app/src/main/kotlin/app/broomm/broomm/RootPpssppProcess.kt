@@ -68,7 +68,7 @@ internal class RootPpssppProcess(
         if (launchElapsed >= 0 || launchWall >= 0) {
             check(launchElapsed in 0..elapsed && launchWall > 0 && abs(wall - launchWall - (elapsed - launchElapsed)) <= 2000)
         }
-        val found = processes()
+        val found = if (!session && launchElapsed < 0 && emulatorPackageStopped(context, pkg)) emptyList() else processes()
         observation("processes=${found.map { it.name }}")
         if (found.isEmpty()) {
             if (!session) state("idle", elapsed, wall) else exited(request, elapsed, wall)

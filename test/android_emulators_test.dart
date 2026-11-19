@@ -17,6 +17,7 @@ import 'package:broomm/src/progress/service.dart';
 import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/session_lease.dart';
 import 'package:broomm/src/shell/android_session_screen.dart';
+import 'package:broomm/src/shell/library.dart';
 import 'package:broomm/src/shell/controls.dart' show ConsoleButton;
 import 'package:broomm/src/widgets/pairing_screen.dart';
 import 'package:broomm/src/shell/model.dart';
@@ -57,14 +58,22 @@ class ObservedRetroArchSession extends AndroidGameSession {
 
 class ObservedPspSession extends AndroidGameSession {
   ObservedPspSession(super.manager, super.cloud);
-  AndroidPspState exit = AndroidPspState.running;
   int checks = 0;
+
   @override
   Future<AndroidPspState> finishIfPspClosed() async {
     checks++;
-    if (exit == AndroidPspState.closed) active = false;
-    return exit;
+    active = false;
+    return AndroidPspState.closed;
   }
+}
+
+class UnverifiedAndroidSession extends AndroidGameSession {
+  UnverifiedAndroidSession(super.manager, super.cloud);
+
+  @override
+  Future<bool> approveFinish(Future<bool> Function(bool) confirm) =>
+      confirm(false);
 }
 
 void main() {
@@ -76,6 +85,7 @@ void main() {
   Object? failure;
   int writers = 0;
   bool managerDisposed = false;
+  bool canStop = false, stopped = false;
   Future<Object?> Function(MethodCall)? handoff, nativeSession;
   AndroidEmulator emulator(String id) =>
       androidEmulators.singleWhere((e) => e.id == id);
@@ -122,6 +132,8 @@ void main() {
     nativeSession = null;
     writers = 0;
     managerDisposed = false;
+    canStop = false;
+    stopped = false;
     apps = [
       {'package': 'org.ppsspp.ppsspp', 'version': '1.20.4', 'build': buildHash},
       {
@@ -141,6 +153,10 @@ void main() {
           switch (call.method) {
             case 'canInstallPackages':
               return true;
+            case 'canPrepareSharedFolder':
+              return canStop;
+            case 'emulatorStopped':
+              return stopped;
             case 'ioBusy':
               return false;
             case 'installed':
@@ -602,83 +618,116 @@ void main() {
     },
   );
 
-  testWidgets(
-    'finishing an interrupted Android session releases the recovery route',
-    (t) async {
+  test(
+    'declining an unverified launch leaves no recovery or save work',
+    () async {
       final session = AndroidGameSession(manager, RecordingCloud(data));
-      var finishes = 0;
-      await t.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => AndroidSessionScreen(
-                    session: session,
-                    title: 'Interrupted game',
-                    emulator: 'PPSSPP',
-                    recovering: true,
-                    finish: () async {
-                      finishes++;
-                    },
-                  ),
-                ),
-              ),
-              child: const Text('Open recovery'),
-            ),
+      canStop = true;
+      nativeSession = (call) async => {'state': 'unknown'};
+      try {
+        await session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: emulator('ppsspp'),
+          app: manager.app(emulator('ppsspp'))!,
+          files: ['/fixture/Game.pbp'],
+          selected: '/fixture/Game.pbp',
+          confirmClose: (available) async {
+            expect(available, isTrue);
+            return false;
+          },
+          prepare: (_, _) async => fail('Declining must not prepare saves.'),
+        );
+        expect(await session.pending(), isNull);
+        expect(
+          calls.where(
+            (call) => {'rootEmulatorStop', 'launch'}.contains(call.method),
           ),
-        ),
-      );
-      await t.tap(find.text('Open recovery'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('Finish game session'));
-      await t.pumpAndSettle();
-      await t.tap(find.text('Emulator closed · Finish'));
-      await t.pumpAndSettle();
-      expect(finishes, 1);
-      expect(find.byType(AndroidSessionScreen), findsNothing);
-      expect(find.text('Open recovery'), findsOneWidget);
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
+          isEmpty,
+        );
+        final lease = await SessionLease.acquire(data);
+        await lease.release();
+      } finally {
+        session.dispose();
+      }
     },
   );
 
-  test('force close checkpoints the exact session and syncs only once the emulator is stopped', () async {
+  test(
+    'confirmed force stop precedes launch even if the observer stays unknown',
+    () async {
+      final session = AndroidGameSession(manager, RecordingCloud(data));
+      canStop = true;
+      nativeSession = (call) async => call.method == 'rootEmulatorStop'
+          ? null
+          : {'state': 'unknown', 'elapsed': 1, 'wall': 1};
+      try {
+        await session.start(
+          server: serverId,
+          profile: profileId,
+          rom: 42,
+          emulator: emulator('ppsspp'),
+          app: manager.app(emulator('ppsspp'))!,
+          files: ['/fixture/Game.pbp'],
+          selected: '/fixture/Game.pbp',
+          confirmClose: (available) async {
+            expect(available, isTrue);
+            expect(
+              calls.where((call) => call.method == 'rootEmulatorStop'),
+              isEmpty,
+            );
+            return true;
+          },
+        );
+        final stop = calls.indexWhere(
+          (call) => call.method == 'rootEmulatorStop',
+        );
+        final handoff = calls.indexWhere((call) => call.method == 'launch');
+        expect(stop, greaterThanOrEqualTo(0));
+        expect(handoff, greaterThan(stop));
+        expect((await session.pending())?['launched'], isTrue);
+        await session.finish(emulatorClosed: true);
+      } finally {
+        session.dispose();
+      }
+    },
+  );
+
+  test('a confirmed force stop syncs the original session without a second closure check', () async {
     final api = SaveServer(), cloud = RecordingCloud(data);
     final session = AndroidGameSession(manager, cloud);
-    var lostReply = true, reopened = false;
+    canStop = true;
+    var observations = 0;
     nativeSession = (call) async {
-      if (call.method == 'rootEmulatorLifecycle')
-        return {'state': reopened ? 'running' : 'idle'};
+      if (call.method == 'rootPspSharedLifecycle' ||
+          call.method == 'rootEmulatorLifecycle') {
+        observations++;
+        return {'state': 'unknown', 'elapsed': 1, 'wall': 1};
+      }
       if (call.method != 'rootEmulatorStop') return null;
       expect(call.arguments, {
         'package': 'org.ppsspp.ppsspp',
         'build': buildHash,
       });
       expect((await session.pending())?['forceClosed'], isTrue);
-      if (lostReply) throw PlatformException(code: 'lost-reply');
       return null;
     };
     try {
       await launch(session, game: game(cloud, api));
-      await expectLater(
-        session.forceClose(),
-        throwsA(isA<PlatformException>()),
-      );
-      expect(cloud.calls, ['before:$profileId']);
-      expect(session.active, isTrue);
-      expect((await session.pending())?['forceCloseSync'], isNull);
-
-      lostReply = false;
-      await session.forceClose();
-      reopened = true;
-      await expectLater(session.finish(emulatorClosed: true), throwsStateError);
+      expect(await session.approveFinish((available) async => false), isFalse);
       expect(cloud.calls, ['before:$profileId']);
       expect(await session.pending(), isNotNull);
-      reopened = false;
-      await session.forceClose();
+      expect(
+        await session.approveFinish((available) async {
+          expect(available, isTrue);
+          return true;
+        }),
+        isTrue,
+      );
+      final beforeFinish = observations;
       await session.finish(emulatorClosed: true);
+      expect(observations, beforeFinish);
       expect(cloud.calls, ['before:$profileId', 'after:0']);
       expect(await session.pending(), isNull);
     } finally {
@@ -686,6 +735,75 @@ void main() {
       api.close();
     }
   });
+
+  test(
+    'deferring sync warns on the game until the original session finishes',
+    () async {
+      await configure('ppsspp');
+      final model = ShellModel(ShellStorage(data), androidManager: manager)
+        ..server = const SavedServer(serverId, 'https://romm.invalid', '5.4.0')
+        ..profile = const SavedProfile(profileId, serverId, 3, 'Test')
+        ..installed = [
+          InstalledGame(
+            const RommGame(
+              id: 42,
+              name: 'Fixture game',
+              platformId: 9,
+              platform: 'PSP',
+              platformSlug: 'psp',
+              fsName: 'Game.pbp',
+              fullPath: 'psp/Game.pbp',
+            ),
+            data,
+            3,
+          ),
+        ];
+      final status = await progressFile(
+        data,
+        'cloud-saves/$serverId/$profileId/42/state.json',
+        createParents: true,
+      );
+      await progressWrite(status, {
+        'synced': '2026-11-18T12:00:00Z',
+        'pending': false,
+        'emptySynced': true,
+      });
+      try {
+        await model.refreshCloudStatus();
+        expect(model.cloudStatus(42), CloudSaveStatus.synced);
+        await launch(model.androidSession);
+        expect(
+          await model.androidSession.approveFinish((canStop) async {
+            expect(canStop, isFalse);
+            return false;
+          }),
+          isFalse,
+        );
+        await model.refreshCloudStatus();
+        expect(model.cloudStatus(42), CloudSaveStatus.attention);
+        expect(
+          await model.androidSession.approveFinish((canStop) async {
+            expect(canStop, isFalse);
+            return true;
+          }),
+          isTrue,
+        );
+        await model.androidSession.finish(
+          emulatorClosed: true,
+          confirmedByPlayer: true,
+        );
+        await model.refreshCloudStatus();
+        expect(model.cloudStatus(42), CloudSaveStatus.synced);
+        expect(
+          calls.where((call) => call.method == 'rootEmulatorStop'),
+          isEmpty,
+        );
+      } finally {
+        model.dispose();
+        managerDisposed = true;
+      }
+    },
+  );
 
   test('a lost force-close reply keeps captured progress for review', () async {
     final api = SaveServer(), cloud = RecordingCloud(data);
@@ -864,359 +982,184 @@ void main() {
     }
   });
 
-  testWidgets(
-    'returning from an emulator offers sync and declining retains the active session',
-    (t) async {
-      final session = AndroidGameSession(manager, RecordingCloud(data));
-      await t.runAsync(() => launch(session));
-      var finishes = 0;
-      await t.pumpWidget(
-        MaterialApp(
-          home: AndroidSessionScreen(
-            session: session,
-            recovering: true,
-            cloudReady: true,
-            title: 'A game',
-            emulator: 'PPSSPP',
-            finish: () async {
-              finishes++;
-            },
-          ),
+  Widget appWithSession(AndroidSessionScreen screen) => MaterialApp(
+    home: Builder(
+      builder: (context) => TextButton(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(builder: (_) => screen),
         ),
-      );
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(find.text('Emulator closed · Sync progress'), findsOneWidget);
-      await t.tap(find.text('Keep playing'));
-      await t.pumpAndSettle();
-      expect(finishes, 0);
-      expect(session.active, true);
-      await t.runAsync(() async {
-        expect(await session.pending(), isNotNull);
-        await session.finish(emulatorClosed: true);
-      });
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
-    },
+        child: const Text('Home'),
+      ),
+    ),
   );
 
-  testWidgets('Android sync and play and Back have separate touch bounds', (
+  void emulatorReturned(WidgetTester tester) {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  }
+
+  testWidgets('declining the return prompt goes Home and retains the session', (
     t,
   ) async {
-    final session = AndroidGameSession(manager, RecordingCloud(data));
+    final session = UnverifiedAndroidSession(manager, RecordingCloud(data));
+    var finishes = 0;
     await t.pumpWidget(
-      MaterialApp(
-        home: AndroidSessionScreen(
+      appWithSession(
+        AndroidSessionScreen(
           session: session,
-          title: 'Minish Cap',
-          emulator: 'RetroArch',
-          cloudReady: true,
-          start: ({required bool emulatorClosed}) async {},
-          finish: () async {},
+          title: 'A game',
+          emulator: 'PPSSPP',
+          start: (_) async => session.active = true,
+          finish: () async => finishes++,
         ),
       ),
     );
-    final play = find.widgetWithText(
-      ConsoleButton,
-      'Emulator closed · Sync and play',
+    await t.tap(find.text('Home'));
+    await t.pumpAndSettle();
+    emulatorReturned(t);
+    await t.pumpAndSettle();
+    expect(find.text('Is PPSSPP closed?'), findsOneWidget);
+    final choices = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(ConsoleButton),
     );
-    final back = find.widgetWithText(ConsoleButton, 'Back');
-    expect(t.getRect(back).top - t.getRect(play).bottom, 12);
+    expect(choices, findsNWidgets(2));
+    await t.tap(find.text('No'));
+    await t.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+    expect(finishes, 0);
+    expect(session.active, isTrue);
     await t.pumpWidget(const SizedBox());
     session.dispose();
   });
 
   testWidgets(
-    'rooted RetroArch launches and syncs without confirmation when verified',
+    'launch approval uses one force-close prompt and No returns Home',
     (t) async {
-      final session = ObservedRetroArchSession(manager, RecordingCloud(data));
+      final session = AndroidGameSession(manager, RecordingCloud(data));
       var launches = 0;
       await t.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => AndroidSessionScreen(
-                    session: session,
-                    title: 'Minish Cap',
-                    emulator: 'RetroArch',
-                    cloudReady: true,
-                    rooted: true,
-                    resume: () async {},
-                    start: ({required bool emulatorClosed}) async {
-                      expect(emulatorClosed, isFalse);
-                      launches++;
-                      session.active = true;
-                    },
-                    finish: () async =>
-                        fail('A verified exit needs no confirmation.'),
-                  ),
-                ),
-              ),
-              child: const Text('Play'),
-            ),
-          ),
-        ),
-      );
-      await t.tap(find.text('Play'));
-      await t.pumpAndSettle();
-      expect(launches, 1);
-      expect(find.text('Emulator closed · Sync and play'), findsNothing);
-
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(find.text('Return to emulator'), findsOneWidget);
-      expect(find.text('Android App info'), findsNothing);
-
-      session.exit = AndroidRetroArchState.closed;
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(find.byType(AndroidSessionScreen), findsNothing);
-      expect(find.text('Play'), findsOneWidget);
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
-    },
-  );
-
-  testWidgets(
-    'rooted PSP completes from app lifecycle without an activity result',
-    (t) async {
-      final session = ObservedPspSession(manager, RecordingCloud(data));
-      session.exit = AndroidPspState.closed;
-      await t.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (_) => AndroidSessionScreen(
-                    session: session,
-                    title: 'Lumines II',
-                    emulator: 'PPSSPP',
-                    cloudReady: true,
-                    rooted: true,
-                    start: ({required bool emulatorClosed}) async {
-                      session.active = true;
-                    },
-                    finish: () async =>
-                        fail('Native exit needs no confirmation.'),
-                  ),
-                ),
-              ),
-              child: const Text('Play PSP'),
-            ),
-          ),
-        ),
-      );
-      await t.tap(find.text('Play PSP'));
-      await t.pumpAndSettle();
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(session.active, isFalse);
-      expect(session.checks, 1);
-      expect(find.byType(AndroidSessionScreen), findsNothing);
-      expect(find.text('Play PSP'), findsOneWidget);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(session.checks, 1);
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
-    },
-  );
-
-  testWidgets(
-    'rooted PSP retains live and uncertain writers on lifecycle return',
-    (t) async {
-      final session = ObservedPspSession(manager, RecordingCloud(data));
-      var resumes = 0;
-      await t.pumpWidget(
-        MaterialApp(
-          home: AndroidSessionScreen(
+        appWithSession(
+          AndroidSessionScreen(
             session: session,
-            title: 'Lumines II',
+            title: 'A game',
             emulator: 'PPSSPP',
-            rooted: true,
-            cloudReady: true,
-            start: ({required bool emulatorClosed}) async =>
-                session.active = true,
-            resume: () async => resumes++,
-            finish: () async => fail('A live writer must not synchronize.'),
+            start: (confirm) async {
+              if (await confirm(true)) launches++;
+            },
+            finish: () async =>
+                fail('Declining launch must not finish or sync.'),
           ),
         ),
       );
+      await t.tap(find.text('Home'));
       await t.pumpAndSettle();
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      expect(
+        find.text(
+          'Broomm will force-close PPSSPP before continuing. Continue?',
+        ),
+        findsOneWidget,
+      );
+      final choices = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(ConsoleButton),
+      );
+      expect(choices, findsNWidgets(2));
+      await t.tap(find.text('No'));
       await t.pumpAndSettle();
-      expect(session.active, isTrue);
-      await t.tap(find.text('Check for exit'));
-      await t.pumpAndSettle();
-      expect(session.active, isTrue);
-      expect(session.checks, 2);
-      await t.tap(find.text('Return to emulator'));
-      await t.pumpAndSettle();
-      expect(resumes, 1);
-      session.exit = AndroidPspState.unknown;
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await t.pumpAndSettle();
-      expect(session.active, isTrue);
-      expect(session.checks, 3);
-      expect(find.byType(AndroidSessionScreen), findsOneWidget);
-      expect(find.text('Android App info'), findsNothing);
+      expect(find.text('Home'), findsOneWidget);
+      expect(launches, 0);
       await t.pumpWidget(const SizedBox());
       session.dispose();
     },
   );
 
-  testWidgets('cold RetroArch offers its normal launcher and a play retry', (
+  testWidgets('verified exits finish automatically without a closure prompt', (
     t,
   ) async {
-    final session = AndroidGameSession(manager, RecordingCloud(data));
-    var setupOpened = false, played = false;
+    final session = ObservedRetroArchSession(manager, RecordingCloud(data))
+      ..exit = AndroidRetroArchState.closed;
     await t.pumpWidget(
-      MaterialApp(
-        home: AndroidSessionScreen(
+      appWithSession(
+        AndroidSessionScreen(
           session: session,
           title: 'Minish Cap',
           emulator: 'RetroArch',
-          cloudReady: true,
           rooted: true,
-          start: ({required bool emulatorClosed}) async {
-            expect(emulatorClosed, isFalse);
+          start: (_) async => session.active = true,
+          finish: () async => fail('A verified exit needs no confirmation.'),
+        ),
+      ),
+    );
+    await t.tap(find.text('Home'));
+    await t.pumpAndSettle();
+    emulatorReturned(t);
+    await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Home'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
+
+  testWidgets('rooted PPSSPP finishes on resume without an activity result', (
+    t,
+  ) async {
+    final session = ObservedPspSession(manager, RecordingCloud(data));
+    await t.pumpWidget(
+      appWithSession(
+        AndroidSessionScreen(
+          session: session,
+          title: 'Lumines II',
+          emulator: 'PPSSPP',
+          rooted: true,
+          start: (_) async => session.active = true,
+          finish: () async =>
+              fail('Verified native closure needs no confirmation.'),
+        ),
+      ),
+    );
+    await t.tap(find.text('Home'));
+    await t.pumpAndSettle();
+    emulatorReturned(t);
+    await t.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+    expect(session.checks, 1);
+    await t.pumpWidget(const SizedBox());
+    session.dispose();
+  });
+
+  testWidgets('cold RetroArch offers setup and a Play retry', (t) async {
+    final session = AndroidGameSession(manager, RecordingCloud(data));
+    var setupOpened = false, played = false;
+    await t.pumpWidget(
+      appWithSession(
+        AndroidSessionScreen(
+          session: session,
+          title: 'Minish Cap',
+          emulator: 'RetroArch',
+          rooted: true,
+          start: (_) async {
             if (!setupOpened) throw const AndroidRetroArchSetupRequired();
             played = true;
+            session.active = true;
           },
-          resume: () async => setupOpened = true,
+          openSetup: () async => setupOpened = true,
           finish: () async => fail('Opening setup does not start save sync.'),
         ),
       ),
     );
+    await t.tap(find.text('Home'));
     await t.pumpAndSettle();
-    expect(played, isFalse);
     await t.tap(find.text('Open RetroArch'));
     await t.pumpAndSettle();
-    expect(setupOpened, isTrue);
     expect(played, isFalse);
-    await t.tap(find.text('Check and play'));
+    await t.tap(find.text('Retry'));
     await t.pumpAndSettle();
     expect(played, isTrue);
     expect(find.text('Open RetroArch'), findsNothing);
+    expect(find.byType(PairingScreen), findsNothing);
     await t.pumpWidget(const SizedBox());
     session.dispose();
   });
-
-  testWidgets(
-    'unverified PSP preparation offers native open and a guarded retry',
-    (t) async {
-      final session = AndroidGameSession(manager, RecordingCloud(data));
-      var opened = false, attempts = 0, finishes = 0;
-      await t.pumpWidget(
-        MaterialApp(
-          home: AndroidSessionScreen(
-            session: session,
-            title: 'LocoRoco',
-            emulator: 'PPSSPP',
-            cloudReady: true,
-            rooted: true,
-            start: ({required bool emulatorClosed}) async {
-              expect(emulatorClosed, isFalse);
-              attempts++;
-              if (!opened) throw StateError('PPSSPP shutdown is unverified.');
-              session.active = true;
-            },
-            resume: () async => opened = true,
-            finish: () async => finishes++,
-          ),
-        ),
-      );
-      await t.pumpAndSettle();
-      expect(session.active, isFalse);
-      expect(attempts, 1);
-      await t.tap(find.text('Open PPSSPP'));
-      await t.pumpAndSettle();
-      expect(opened, isTrue);
-      expect(attempts, 1);
-      expect(finishes, 0);
-      await t.tap(find.text('Check and play'));
-      await t.pumpAndSettle();
-      expect(attempts, 2);
-      expect(session.active, isTrue);
-      expect(find.text('Open PPSSPP'), findsNothing);
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
-    },
-  );
-
-  testWidgets('failed native PSP open stays visible without starting sync', (
-    t,
-  ) async {
-    final session = AndroidGameSession(manager, RecordingCloud(data));
-    var attempts = 0;
-    await t.pumpWidget(
-      MaterialApp(
-        home: AndroidSessionScreen(
-          session: session,
-          title: 'LocoRoco',
-          emulator: 'PPSSPP',
-          cloudReady: true,
-          rooted: true,
-          start: ({required bool emulatorClosed}) async {
-            attempts++;
-            throw StateError('PPSSPP shutdown is unverified.');
-          },
-          resume: () async => throw StateError('Native launcher unavailable.'),
-          finish: () async => fail('Opening the menu must not synchronize.'),
-        ),
-      ),
-    );
-    await t.pumpAndSettle();
-    await t.tap(find.text('Open PPSSPP'));
-    await t.pumpAndSettle();
-    expect(find.textContaining('Native launcher unavailable.'), findsOneWidget);
-    expect(find.text('Open PPSSPP'), findsOneWidget);
-    expect(find.text('Check and play'), findsOneWidget);
-    expect(attempts, 1);
-    expect(session.active, isFalse);
-    expect(await t.runAsync(session.pending), isNull);
-    await t.pumpWidget(const SizedBox());
-    session.dispose();
-  });
-
-  testWidgets(
-    'Android game route launches directly and never shows controller pairing',
-    (t) async {
-      final session = AndroidGameSession(manager, RecordingCloud(data));
-      var launches = 0;
-      await t.pumpWidget(
-        MaterialApp(
-          home: AndroidSessionScreen(
-            session: session,
-            title: 'A game',
-            emulator: 'PPSSPP',
-            start: ({required bool emulatorClosed}) async {
-              ++launches;
-            },
-            finish: () => session.finish(emulatorClosed: true),
-          ),
-        ),
-      );
-      await t.pumpAndSettle();
-      expect(find.byType(PairingScreen), findsNothing);
-      expect(launches, 1);
-      expect(
-        find.textContaining('Connect this emulator’s save folder'),
-        findsOneWidget,
-      );
-      await t.pumpWidget(const SizedBox());
-      session.dispose();
-    },
-  );
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../android/emulators.dart';
 import '../progress/service.dart';
 import '../romm/client.dart';
 import '../romm/models.dart';
+import 'android_session_screen.dart';
 import 'controls.dart';
 import 'model.dart';
 import 'navigation.dart';
@@ -62,27 +64,40 @@ Future<void> manageCloudSaves(
   String action,
 ) async {
   if (model.isAndroid) {
-    final closed = await showConsoleDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: const Text('Close the emulator first'),
-        content: const Text(
-          'Save and exit the Android emulator before importing, backing up or synchronizing progress. Switching applications can leave it running in the background.',
-        ),
-        actions: [
-          ConsoleButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancel'),
-          ),
-          ConsoleButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Emulator closed · Continue'),
-          ),
-        ],
-      ),
-    );
-    if (closed != true || !context.mounted) return;
+    try {
+      if (model.gameActive || model.busy || model.downloading) {
+        model.reportProblem(
+          'Finish the current game, download or save operation first.',
+        );
+        return;
+      }
+      if (await model.androidSession.pending() != null) {
+        model.reportProblem(
+          'Finish the previous Android game session before managing cloud saves.',
+        );
+        return;
+      }
+      final id = model.launchPlatform(game)?.emulatorId;
+      final emulator = androidEmulators
+          .where((item) => item.id == id)
+          .firstOrNull;
+      final app = emulator == null ? null : model.android.app(emulator);
+      if (app != null &&
+          !await model.androidSession.approveEmulatorClosure(
+            app,
+            (canStop) async =>
+                context.mounted &&
+                await confirmAndroidEmulatorClose(
+                  context,
+                  emulator!.name,
+                  canStop,
+                ),
+          ))
+        return;
+    } catch (e) {
+      model.reportProblem(progressFailure(e));
+      return;
+    }
   }
   if (!context.mounted) return;
   await showConsoleDialog<void>(
@@ -132,7 +147,7 @@ class _SaveDialogState extends State<_SaveDialog> {
       authorize = false;
     });
     try {
-      await m.cloudAction(action);
+      await m.cloudAction(action, emulatorClosed: m.isAndroid);
       return true;
     } catch (e) {
       if (mounted)

@@ -24,7 +24,7 @@ variants; keep the checked-in artwork and reproducible rendering recipe together
 - A selected/hovered Home game shows its hero top aligned over the existing background, covering 75% of the screen height with aspect-preserving cover/zoom and a transparent bottom fade. Keep the current background visible through the fade and below the image. Without selected artwork, retain the cropped-poster tile and existing background.
 - Fetch the platform illustration from the game's RomM server after a verified installation. Reuse it across games on that server and offline. Show it inside the Play button, to the left of the label, including for games without a logo. Existing playable games can acquire the icon on selection while online. Keep the platform badge and game actions usable when the image is unavailable.
 - Enlarge the selected square Home tile gradually, respecting reduced motion. Place the selected game's title beside a white platform badge at the tile's lower-right edge. Let titles wrap and move the caption below the rail when the space beside the tile is insufficient. Use familiar abbreviations such as PS1, PS2, PS3, GBA and N64 and preserve short names such as Switch. Ellipsize long platform labels. Preserve accessible tile labels, actionable installation issues and the side-by-side Play and Options actions.
-- Give focusable controls a consistent, thick mint-to-teal gradient outline separated from the control by a visible gap. Directional navigation joins the top shortcuts, game rail, actions and footer. Keep the profile at the bottom right. While offline, place a focusable retry icon beside the profile. Notifications remain transient top-left cards without shifting layout or taking focus.
+- Give focusable controls a consistent, thick mint-to-teal gradient outline separated from the control by a visible gap. Paint the outline above all UI content, including adjacent controls, elevated surfaces, and the controller keyboard. Keep it aligned while the control moves or scales and remove it when the control loses focus. Directional navigation joins the top shortcuts, game rail, actions and footer. Keep the profile at the bottom right. While offline, place a focusable retry icon beside the profile. Notifications remain transient top-left cards without shifting layout or taking focus.
 - Select on a selected/hovered Home game opens a menu with **Select Artwork** and **Delete**, plus **Download Updates and DLC** for implemented integrations. Provide keyboard, pointer and touch alternatives. Artwork selection repeats the same workflow using the current RomM mapping. Confirmed Delete removes shared local game files, installed updates/DLC and selected artwork for that server across profiles, preserving every profile's saves/states and all remote RomM content. Native content still used by another installed version is retained. Interrupted cleanup must remain identifiable and retryable.
 - Removing an installed game must distinguish local game content from saved progress. Uninstalling content does not silently delete any profile's saves or remote RomM files.
 - Catalogue failures and lost connectivity must be visible without turning an installed library into an apparently empty one.
@@ -195,15 +195,15 @@ space and allows Android to reveal its controls with an edge swipe. Respect
 display cutouts and the system keyboard. External emulator windows use their
 own settings.
 
-During installation and save setup, ask the player to open each emulator once,
-complete its first-run setup and permissions, then close it before playing from
-Broomm. Explain how to quit and dismiss its Android Recents card. In an
-active rooted session offer an explicit, confirmed Force close for the verified
-emulator package after saving and quitting. Verify process absence and send
-validated progress through the normal sync workflow. A lost or unverified
-stop reply keeps recovery. Android App info remains available for manual
-recovery. Returning to Broomm must never force-stop a potentially live
-writer.
+Ask players to complete each emulator’s first-run setup, then close it.
+Before Play and on return from the emulator, continue automatically when
+Broomm can establish closure. Otherwise show one **Yes / No** confirmation.
+With root access, **Yes** force-stops the selected emulator package, then
+continues with launch or save capture after Android accepts the stop. A further
+lifecycle observation is optional. Without root access, accept the player's
+confirmation that the emulator is closed. **No** returns to Home. After a
+declined sync, retain the session and show a warning on that game's sync icon.
+Keep save validation and recovery for real transfer or file conflicts.
 
 For Android emulator setup, prepare known shared folders and any importable
 firmware before opening the APK installer. Once installation is confirmed,
@@ -220,7 +220,7 @@ Use the installed emulator's ordinary Android behavior. Game selection, local pr
 
 For Citra MMJ, assume shared `citra-emu` storage and request a persistent folder grant. Warn that private `Android/data` / Storage Access builds are unsupported, and reject a folder outside this shared-root contract. Keep profile progress separately in Broomm, copy the active game's saves into MMJ's required paths only while it is closed, and preserve/restore existing standalone MMJ progress. Do not assume that selecting a folder proves MMJ is configured to consume it. An interrupted or uncertain swap must retain recovery copies and offer an explicit way to finish without overwriting the shared folder.
 
-Installation uses user-confirmed app/store or APK installer actions and subsequent package inspection; opening an installer is not confirmation of installation. Data-folder grants retain profile identity. Returning to Broomm does not establish emulator shutdown: require suitable writer-exit evidence or explicit closure confirmation before save capture/restore, retain interrupted-session recovery and never silently apply desktop installers on Android. The [Android audit](docs/android-emulators.md) records the current partial implementation. Ordinary cloud saves, local state handling and update/DLC parity remain product requirements.
+Installation uses user-confirmed app/store or APK installer actions and subsequent package inspection; opening an installer is not confirmation of installation. Data-folder grants retain profile identity. Use the same closure confirmation when resuming an interrupted session. Retain interrupted-session recovery and never silently apply desktop installers on Android. The [Android audit](docs/android-emulators.md) records the current partial implementation. Ordinary cloud saves, local state handling and update/DLC parity remain product requirements.
 
 When the player chooses Install or Install APK, check Broomm's Android APK-install
 permission before downloading or picking a file. If missing, open Broomm's

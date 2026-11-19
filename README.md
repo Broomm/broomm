@@ -89,15 +89,13 @@ and reach its main menu. MMJ's shared-storage build expects `citra-emu` at the
 root of internal storage. Keep your existing folder if you already configured
 one. For the rooted PPSSPP route, choose **Skip for now / App Private Data**.
 
-Save in the emulator and use its **Quit** or **Exit** action if available.
-Open Android Recents and swipe away the emulator's card before returning to
-Broomm. A verified normal exit syncs automatically when the rooted session
-can track the emulator process. If Android keeps the app open after you
-save and quit, choose **Force close → Force close and sync** on the session
-screen. Broomm checks that the process stopped and syncs the saved files it
-can verify. If closure or capture is uncertain, review the retained progress
-in Cloud Saves. Android App info provides Android's **Force stop** control
-on shared setups without root.
+Save in the emulator, use **Quit** or **Exit** if available, and return to
+Broomm. Play and save sync proceed automatically if Broomm confirms closure.
+Otherwise choose **Yes** to let Broomm force-close the emulator on a rooted
+device, or to confirm you closed it yourself on standard Android. **No**
+returns to Home. If you decline sync, the game displays a warning on its
+cloud icon. Choose **Play** again or use **Emulator Settings → Finish previous
+game session** to retry. [Android save workflow](docs/android-installation-and-saves.md#session-and-cloud-behavior)
 
 For DuckStation, **Download page** opens the official beta page. Download and
 open its APK, confirm installation in Android, then return to Broomm. The
@@ -926,6 +924,12 @@ devbox run prototype-check-macos
 ```
 
 The build is `build/macos/Build/Products/Debug/broomm.app`. Current widget PNGs and check logs are under `.tool-cache/research/navigation-followup/`; the earlier navigation record remains under `.tool-cache/research/navigation/`. Fixture data is isolated from normal accounts. These artifacts can be removed after checks finish. Native Home smoke retains its existing `.tool-cache/research/managed-play/home-data/` fixture progress; remove it only after all fixture writers exit. Ordinary navigation changes no game/save files; activation retains each action's existing effects. Physical input feel, Steam/gamescope and other native hosts still need owner verification. See [the evidence record](docs/navigation-and-motion.md).
+
+To check the focus outline, open the controller keyboard from a text field and
+move between keys using the D-pad. The full mint-to-teal ring should remain
+visible above adjacent keys. Repeat in a compact window and at 150% UI scale,
+then close the keyboard and navigate Home or a dialog. The ring follows the
+focused control as it scrolls or resizes and clears from the previous control.
 
 ## Verify 3DS updates and DLC
 

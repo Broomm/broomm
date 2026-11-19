@@ -1,5 +1,52 @@
 # Implementation plan
 
+## Focus outlines above the interface — 2026-11-18
+
+The shared focus ring renders in the outer Flutter overlay. That overlay
+contains the screen, dialogs, notifications, and controller keyboard, so
+adjacent or elevated controls cannot cover the active ring. The outline uses
+the control's current size and transform, follows scrolling and scaling,
+ignores pointer input, and disappears with the control or focus.
+
+Static analysis, 42 focused widget tests, and the desktop/compact fixture
+renderer passed. The three pixel regressions cover elevated neighbors and
+clipping, transformed scrolling controls, and keyboard-to-dialog focus.
+The reduced-motion regression checks frame scheduling because Flutter's
+overlay layout builder retains a passive geometry callback even while idle.
+Both keyboard renders were visually inspected. Physical-device testing of the
+focus rendering is pending.
+
+The [universal macOS preview](build/releases/Broomm-macOS-focus-outline.zip)
+is `0.1.29-dev` (1208), **24,430,279 bytes**, with SHA-256
+`e2ed11f2b3e52c5218b90c8feea0b038fecdd210517fa3d7ddb8f7c39f3b3de7`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
+## Android launch and return confirmation — 2026-11-18
+
+Android Play, return, and recovery use one Yes/No dialog when closure is
+unverified. Startup checks the selected package before preparing saves. On
+rooted Android, Yes issues the stop for that package and continues once the
+Android command succeeds. The native save routes can use Android's stopped
+package state without requiring an emulator exit history. On standard Android,
+Yes confirms the player's own closure. No goes to Home and retains a pending
+session after play, with an attention badge on the matching profile's game.
+Native file identity, locking, and save readback remain part of the transaction.
+
+The owner confirmed the Android launch and return flow worked on GammaOS
+with PR #20 build 1192. Static analysis and 170 focused Flutter tests passed.
+The Kotlin bridge and two DuckStation device fixtures compiled. The tests cover accepting a force-stop
+when later lifecycle evidence is unavailable, declining before save
+preparation, and the Home warning persisting through a deferred sync. The
+[walkthrough](docs/android-installation-and-saves.md#session-and-cloud-behavior)
+describes how to exercise both choices and retry an unfinished session.
+
+The [universal macOS preview](build/releases/Broomm-macOS-android-close-flow.zip)
+is `0.1.29-dev` (1207), **24,427,258 bytes**, with SHA-256
+`c115bd4fdeaf2ba611531bb343f8d2c76d6d64e4da52261be8229367e2a1043f`.
+ZIP integrity, source and extracted signatures, both architectures, setup
+assets, and bundled bridges passed verification.
+
 ## Rooted shared ARMSX2 path correction
 
 On GammaOS Android 14, build 1189 completed ARMSX2's first-run setup and

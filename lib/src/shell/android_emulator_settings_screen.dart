@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../android/emulators.dart';
 import '../android/root_inspection.dart';
 import '../romm/models.dart';
-import '../progress/service.dart';
 import 'controls.dart';
 import 'android_root_inspection_dialog.dart';
 import 'android_setup_dialog.dart';
@@ -11,7 +10,12 @@ import 'model.dart';
 import 'navigation.dart';
 
 class AndroidEmulatorSettingsScreen extends StatefulWidget {
-  const AndroidEmulatorSettingsScreen({super.key, required this.model});
+  const AndroidEmulatorSettingsScreen({
+    super.key,
+    required this.model,
+    this.recoverAndroid,
+  });
+  final Future<void> Function()? recoverAndroid;
   final ShellModel model;
   @override
   State<AndroidEmulatorSettingsScreen> createState() =>
@@ -134,49 +138,6 @@ class _AndroidEmulatorSettingsScreenState
       model.showNotice('${emulator.name} removed.');
   }
 
-  Future<void> recover() async {
-    final record = await model.androidSession.pending();
-    if (record == null || !mounted) return;
-    final emulator = androidEmulators.singleWhere(
-      (e) => e.id == record['emulator'],
-    );
-    final yes = await showConsoleDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text('Finish ${emulator.name} session?'),
-        content: const Text(
-          'Save and close the emulator completely before continuing. Interrupted progress is retained and will need review before upload.',
-        ),
-        actions: [
-          ConsoleButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancel'),
-          ),
-          ConsoleButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: const Text('Emulator closed · Finish'),
-          ),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    CloudGame? game;
-    if (model.server?.id == record['server'] &&
-        model.profile?.id == record['profile'] &&
-        model.installation(record['rom'] as int) != null &&
-        manager.progressSupported(emulator) &&
-        manager.connected(model.profile!.id, emulator))
-      game = await model.cloudGame(
-        record['rom'] as int,
-        androidRom: record['selected'] as String?,
-      );
-    await model.androidSession.finish(emulatorClosed: true, recovery: game);
-    model.showNotice(
-      'Android session finished. Interrupted progress was kept for review.',
-    );
-  }
-
   List<(AndroidEmulator, AndroidApp)> get rootTargets => [
     for (final emulator in androidEmulators)
       for (final package in emulator.packages)
@@ -266,12 +227,14 @@ class _AndroidEmulatorSettingsScreenState
               builder: (_, snapshot) {
                 if (snapshot.hasError)
                   return ProblemNotice('${snapshot.error}');
-                return snapshot.data == null
+                return snapshot.data == null || widget.recoverAndroid == null
                     ? const SizedBox.shrink()
                     : Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: ConsoleButton(
-                          onPressed: working ? null : () => run(recover),
+                          onPressed: working
+                              ? null
+                              : () => run(widget.recoverAndroid!),
                           child: const Text('Finish previous game session'),
                         ),
                       );

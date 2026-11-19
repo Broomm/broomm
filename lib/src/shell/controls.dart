@@ -48,7 +48,7 @@ class ConsoleIconButton extends StatelessWidget {
   );
 }
 
-class ConsoleFocusOutline extends StatelessWidget {
+class ConsoleFocusOutline extends StatefulWidget {
   const ConsoleFocusOutline({
     super.key,
     required this.focused,
@@ -60,9 +60,51 @@ class ConsoleFocusOutline extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => CustomPaint(
-    foregroundPainter: focused ? _FocusRingPainter(radius) : null,
-    child: child,
+  State<ConsoleFocusOutline> createState() => _ConsoleFocusOutlineState();
+}
+
+class _ConsoleFocusOutlineState extends State<ConsoleFocusOutline> {
+  final _overlay = OverlayPortalController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.focused) _overlay.show();
+  }
+
+  @override
+  void didUpdateWidget(ConsoleFocusOutline oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focused == oldWidget.focused) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || widget.focused == _overlay.isShowing) return;
+      if (widget.focused) {
+        _overlay.show();
+      } else {
+        _overlay.hide();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => OverlayPortal.overlayChildLayoutBuilder(
+    controller: _overlay,
+    overlayLocation: OverlayChildLocation.rootOverlay,
+    overlayChildBuilder: (context, info) => Positioned(
+      left: 0,
+      top: 0,
+      width: info.childSize.width,
+      height: info.childSize.height,
+      child: IgnorePointer(
+        child: Transform(
+          transform: info.childPaintTransform,
+          child: CustomPaint(
+            painter: widget.focused ? _FocusRingPainter(widget.radius) : null,
+          ),
+        ),
+      ),
+    ),
+    child: widget.child,
   );
 }
 

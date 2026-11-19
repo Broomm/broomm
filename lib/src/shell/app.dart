@@ -701,17 +701,15 @@ class _BroommAppState extends State<BroommApp> {
       );
       return;
     }
-    final forceCloseAvailable = await m.android.hasRootTools();
+    m.navigate(ShellScreen.home);
     await navigator.currentState!.push<void>(
       MaterialPageRoute(
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           title: entry.game.name,
-          forceCloseAvailable: forceCloseAvailable,
           emulator: emulator.name,
-          cloudReady: cloudReady,
           rooted: rooted,
-          start: ({required bool emulatorClosed}) async {
+          start: (confirm) async {
             final files = await m.library.contentFiles(
               entry,
               excludeAddons: true,
@@ -726,7 +724,7 @@ class _BroommAppState extends State<BroommApp> {
               selected: selected,
               rooted: rooted,
               rootPlatform: platform.slug,
-              emulatorClosed: emulatorClosed,
+              confirmClose: confirm,
               onStarted: () => m.recordPlay(entry.game.id),
               core:
                   platform.retroCore ??
@@ -909,18 +907,10 @@ class _BroommAppState extends State<BroommApp> {
                   resolveCloudConflict(navigator.currentContext!, conflict),
             );
           },
-          resume: rooted && emulator.id == 'duckstation'
-              ? m.androidSession.resumeDuckGame
-              : () => m.android.open(
-                  emulator,
-                  package: app.package,
-                  resumeSession: true,
-                ),
-          finish: () async => m.androidSession.finish(
+          openSetup: () => m.android.open(emulator, package: app.package),
+          finish: () => m.androidSession.finish(
             emulatorClosed: true,
-            recovery: cloudReady
-                ? await m.cloudGame(entry.game.id, androidRom: selected)
-                : null,
+            confirmedByPlayer: true,
           ),
         ),
       ),
@@ -934,27 +924,14 @@ class _BroommAppState extends State<BroommApp> {
       (e) => e.id == record['emulator'],
     );
     final entry = m.installation(record['rom'] as int);
-    final forceCloseAvailable = await m.android.hasRootTools();
+    m.navigate(ShellScreen.home);
     await navigator.currentState!.push<void>(
       MaterialPageRoute(
         builder: (_) => AndroidSessionScreen(
           session: m.androidSession,
           recovering: true,
-          forceCloseAvailable: forceCloseAvailable,
-          rooted:
-              {'ppsspp', 'duckstation'}.contains(record['emulator']) &&
-              record['rooted'] == true,
           title: entry?.game.name ?? 'Unfinished Android game session',
           emulator: emulator.name,
-          resume: m.android.app(emulator) == null
-              ? null
-              : emulator.id == 'duckstation' && record['rooted'] == true
-              ? m.androidSession.resumeDuckGame
-              : () => m.android.open(
-                  emulator,
-                  package: record['package'] as String?,
-                  resumeSession: true,
-                ),
           finish: () async {
             CloudGame? game;
             if (m.server?.id == record['server'] &&
@@ -967,11 +944,16 @@ class _BroommAppState extends State<BroommApp> {
                 androidRom: record['selected'] as String?,
               );
             }
-            await m.androidSession.finish(emulatorClosed: true, recovery: game);
+            await m.androidSession.finish(
+              emulatorClosed: true,
+              confirmedByPlayer: true,
+              recovery: game,
+            );
           },
         ),
       ),
     );
+    if (mounted) await m.refreshCloudStatus();
   }
 
   @override
@@ -1338,6 +1320,7 @@ class _BroommAppState extends State<BroommApp> {
                               ),
                               ShellScreen.emulators => EmulatorSettingsScreen(
                                 model: m,
+                                recoverAndroid: _recoverAndroidSession,
                               ),
                             },
                           ),

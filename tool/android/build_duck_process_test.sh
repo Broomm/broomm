@@ -9,6 +9,7 @@ if command -v sha256sum >/dev/null 2>&1; then broomm_duck_hash="$(sha256sum "$br
 else broomm_duck_hash="$(shasum -a 256 "$broomm_duck_d8" | cut -d ' ' -f 1)"; fi
 test "$broomm_duck_hash" = f8c762ff84640b10083b934a47278758a7665977e618fab0c927fff00521dea3
 kotlinc android/app/src/main/kotlin/app/broomm/broomm/RootDuckProcess.kt \
+  android/app/src/main/kotlin/app/broomm/broomm/RootStandaloneProcess.kt \
   android/app/src/main/kotlin/app/broomm/broomm/RootProcessKernel.kt \
   android/app/src/main/kotlin/app/broomm/broomm/DuckPauseProof.kt \
   tool/android/check_duck_process.kt -jvm-target 17 -include-runtime \

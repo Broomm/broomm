@@ -39,35 +39,17 @@ private fun emulatorProcessPresent(uid: Int, live: () -> Unit): Boolean {
     return false
 }
 
-/** Explicit package stop, serialized with root file access. Android owns the
- * process signal and stopped state for the verified user and application. */
-internal fun forceStopEmulator(pkg: String, uid: Int, live: () -> Unit) {
-    live()
-    val child = ProcessBuilder("/system/bin/am", "force-stop", "--user", "0", pkg)
-        .redirectErrorStream(true).redirectOutput(File("/dev/null")).start()
+/** Android marks force-stopped packages as unable to start themselves. */
+internal fun emulatorPackageStopped(context: android.content.Context, pkg: String): Boolean =
     try {
-        child.outputStream.close()
-        val deadline = android.os.SystemClock.elapsedRealtime() + 3000
-        while (true) {
-            live()
-            check(android.os.SystemClock.elapsedRealtime() < deadline) {
-                "Android did not finish stopping the emulator. Recovery was kept."
-            }
-            val exit = try { child.exitValue() } catch (_: IllegalThreadStateException) { null }
-            if (exit != null) {
-                check(exit == 0) { "Android could not force-close the emulator. Recovery was kept." }
-                break
-            }
-            Thread.sleep(25)
-        }
-    } finally { child.destroy() }
-    val deadline = android.os.SystemClock.elapsedRealtime() + 1000
-    while (emulatorProcessPresent(uid, live)) {
-        check(android.os.SystemClock.elapsedRealtime() < deadline) {
-            "The emulator still has a process. Recovery was kept."
-        }
-        Thread.sleep(25)
-    }
+        val info = context.packageManager.getApplicationInfo(pkg, 0)
+        info.flags and android.content.pm.ApplicationInfo.FLAG_STOPPED != 0
+    } catch (_: android.content.pm.PackageManager.NameNotFoundException) { false }
+
+/** The verified package stop runs under the same lock as native save access.
+ * Its result comes from Android's command, independent of process observation. */
+internal fun forceStopEmulator(pkg: String, live: () -> Unit) {
+    rootLifecycleCommand(listOf("/system/bin/am", "force-stop", "--user", "0", pkg), 4096, live)
 }
 
 // Literal arguments only. Both pipes are drained without waiting for a

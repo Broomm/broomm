@@ -51,8 +51,9 @@ If the two slots resolve to one card, fix the card assignments before retrying.
 
 Play a downloaded self-contained CHD, ISO or raw BIN with standard PS2 disc
 metadata. Save in the game, or use ARMSX2’s **Save State** menu, then choose
-**Close Game** and finish sync in Broomm. If ARMSX2 retains its library
-process, exit that app before retrying sync. Another launch restores the
+**Close Game** and return to Broomm. If it still has the library process
+open, choose **Yes** to force-close and sync on rooted Android. Choose **No**
+to defer sync and keep the session. Another launch restores the
 active RomM profile’s cards and matching states. The journal restores the
 original standalone cards and states after capture. Keep the original game
 installation and emulator while finishing a pending session.

@@ -110,6 +110,12 @@ class BroommEmulators(private val activity: Activity) {
                                 Uri.fromParts("package", pkg, null)))
                             result.success(null)
                         }
+                        "emulatorStopped" -> background(result) {
+                            val pkg = packageName(call.argument<String>("package"))
+                            require(RootInspection.supports(pkg))
+                            emulatorPackageStopped(activity, pkg) &&
+                                app(pkg)?.get("build") == call.argument<String>("build")
+                        }
                         "rootSessionAvailable" -> result.success(rootSaves.connected())
                         "canPrepareSharedFolder" -> result.success(
                             System.getenv("PATH").orEmpty().split(':').any { it.startsWith('/') && File(it, "su").canExecute() })

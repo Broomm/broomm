@@ -178,7 +178,12 @@ internal class RootDuckProcess(private val context: Context, private val uid: In
         require(abs(now-wall-(tick-elapsed))<=100);verify(pid,start)
         return DuckPauseProof.completed(bytes,pid,uid,after,now)
     }
-    fun absent() { check(processes().isEmpty()) { "DuckStation is still present. Close its game and return to Broomm before retrying." } }
+    fun absent() {
+        live()
+        check(emulatorPackageStopped(context, pkg) || processes().isEmpty()) {
+            "DuckStation is still present. Close its game and return to Broomm before retrying."
+        }
+    }
     fun observe(request: Bundle = Bundle(), dispose: Boolean = false): Bundle {
         live(); val found = processes()
         fun result(state: String) = Bundle().apply { putString("state", state); putLong("elapsed", SystemClock.elapsedRealtime()); putLong("wall", System.currentTimeMillis()) }

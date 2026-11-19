@@ -39,12 +39,11 @@ remaining account/offline-activation limits separately.
    separate game/profile save directory plus session configuration under
    `/data/user/0/<retroarch-package>/files/Broomm/<profile>/<content>`.
 4. Save in-game, choose **Quit RetroArch**, and return to Broomm. A verified
-   normal exit starts sync automatically. If RetroArch is still running, choose
-   **Return to emulator** and quit it there. For an uncertain or interrupted
-   exit, use **Review and finish session** after quitting. The existing Dart
-   workflow captures progress, synchronizes the selected
-   account's BROOMM history and restores the session directory's pre-launch
-   contents. The ordinary standalone `RetroArch/saves/mGBA` file is untouched.
+   exit starts sync automatically. If prompted, choose **Yes** to force-close
+   RetroArch and continue, or **No** to defer sync and return to Home.
+   Broomm captures progress, synchronizes the selected account's BROOMM
+   history and restores the session directory's pre-launch contents. The
+   ordinary standalone `RetroArch/saves/mGBA` file is untouched.
 5. For acceptance, retain the earlier history, create an independently changed
    save, use Broomm's existing history restore flow, relaunch and verify the
    earlier in-game position. Denial, lost connectivity and conflicts must retain

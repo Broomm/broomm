@@ -58,7 +58,7 @@ internal fun requireMelonSharedFolder(internal: RootSaveFiles, expected: String)
 
 /** File effects for the reviewed release's default DS cartridge paths. */
 internal class RootMelonFiles(
-    private val identity: Map<String, Any>, private val live: () -> Unit,
+    private val identity: Map<String, Any>, private val live: () -> Unit, private val closed: () -> Unit,
 ) {
     private val uid = identity.getValue("uid") as Int
     private val internal = File(identity.getValue("dataDir") as String).canonicalFile
@@ -69,7 +69,7 @@ internal class RootMelonFiles(
     private val label = String(internalLabel).replace("app_data_file:", "media_rw_data_file:").toByteArray()
     private val first = Os.lstat(root.path)
     private val gid = first.st_gid
-    private val fileAccess = RootSaveFiles(root, uid, label, live, writerClosed = ::closed, mediaGroup = gid)
+    private val fileAccess = RootSaveFiles(root, uid, label, live, writerClosed = closed, mediaGroup = gid)
 
     init {
         require(identity["package"] == MELON_PACKAGE && identity["user"] == 0 &&
@@ -95,7 +95,6 @@ internal class RootMelonFiles(
         }
     }
 
-    private fun closed() = requireNoEmulatorProcess(uid, "melonDS", live)
 
     private fun stateDirectory(): String {
         val storage = RootSaveFiles(internal, uid, internalLabel, live)
