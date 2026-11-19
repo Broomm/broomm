@@ -1,0 +1,139 @@
+{
+  "recordedAt": "2026-11-19T05:34:27.282872+00:00",
+  "revision": {
+    "head": "74f77585c449ad235e9d75b5392dc329f943f2a9",
+    "branch": "codex/android-closure-confirmation",
+    "dirtyWorkspace": true,
+    "sourceSha256": {
+      "lib/src/shell/keyboard.dart": "462c7e8086694f76126101e8f1880d86d66cc39f1c1855d0d4c4a07b9154dc5a",
+      "lib/src/shell/home_background.dart": "20b8d91ba35a3ce3d121f666d24f6768997488cd7cd71927055cfda68643e4c1",
+      "lib/src/shell/artwork.dart": "ce49f98bb199b227b590c09d397986b268db28fb2c7aa718d3aee7b79598700e",
+      "lib/src/shell/focus_motion.dart": "8fdbe3fa272a81e476b17afd1c7e9b374bee881bc2c60ed47c42c66dac684d8f",
+      "lib/src/shell/focus_outline.dart": "cd6475b5e5c1b12b507c2e1f42c432478ddcdc3c71328d653e4d2e157d119897",
+      "test/console_keyboard_grid_test.dart": "94513b50d4e67787c819019f6db8254275019e2651fa65b24d54774050fbd35a",
+      "test/home_background_test.dart": "93526015cfa160d7621a16a21889ac2d77148c9e9bf705c6b12855d5ab0585bf",
+      "test/home_artwork_widget_test.dart": "91edd07247502004c8875743b1389d71526db76e1f927d15a6089bc370d1594c",
+      "tool/render_home_artwork_test.dart": "2f3bd6d945cc71baea92db5380b717f5c1d91c7cbcf626b39e91ab7ef53dd285",
+      "tool/render_library_followup_test.dart": "bf2fde49dfb66e0f85261b9fb4580d5a6dedfb064a2ead568fc850f7dde8804f",
+      "PROJECT.md": "70a916e8d4c0b5a9bab0effb7f3ba152121ce8c4fd57784b92868152a8cf3185",
+      "IMPLEMENTATION.md": "0a7cc8017e39451b0846aa2847625da02dddf58498d29b1b8e6134fbdd6c2e3c",
+      "README.md": "7e1c5295b47b6d6f3068ca34da2d9e86a290d8493a0032f151b2abf2acd7f9dc",
+      "docs/navigation-and-motion.md": "21b08605a16ebf45d946397f513aca4400a40d070ec1acbee4245af16ebe7479",
+      "docs/catalogue-and-home-refresh.md": "077f5043f68bfb2c76ff8bba2266e2dcc308a46910e6df12b2e3490ba11aec00"
+    }
+  },
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.1"
+  },
+  "behavior": {
+    "keyboard": "Five ortholinear rows on a shared 14-column grid; both Shift keys span two columns; Up/Down remembers the entry column through wide keys; Left/Right selects adjacent keys; stable nodes across Shift/Caps and resize",
+    "hero": "Top-aligned cover art starts at the left crop; only horizontal overflow pans",
+    "panTravelSeconds": 20,
+    "edgePauseSeconds": 3,
+    "cycleSeconds": 46,
+    "clockMs": 50,
+    "visibility": "Hidden applications and muted rendering pause the current phase; reduced motion holds left; new artwork resets left",
+    "resources": "Metadata listener reads one decoded frame and releases its reference/listener; only the image subtree updates",
+    "preservedApprovedCircle": {
+      "build": 1214,
+      "sourceHashMatches": [
+        "lib/src/shell/focus_motion.dart",
+        "lib/src/shell/focus_outline.dart"
+      ]
+    },
+    "externalEffects": "No new dependencies, native adapters, emulator or save workflow changes; cached artwork is read-only"
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter --suppress-analytics analyze --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/research/keyboard-and-hero/analyze-final.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+      "result": "passed",
+      "passed": 844,
+      "skipped": 1,
+      "skipReason": "Existing Linux-only launcher case on macOS",
+      "log": ".tool-cache/research/keyboard-and-hero/full-tests.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub test/console_keyboard_grid_test.dart test/home_background_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 6,
+      "log": ".tool-cache/research/keyboard-and-hero/regressions-final.log"
+    },
+    {
+      "command": "BROOMM_HOME_RENDER_ROOT=.tool-cache/research/keyboard-and-hero/previews BROOMM_LIBRARY_RENDER_ROOT=.tool-cache/research/keyboard-and-hero/previews devbox run -- flutter --suppress-analytics test --no-pub tool/render_home_artwork_test.dart tool/render_library_followup_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 2,
+      "log": ".tool-cache/research/keyboard-and-hero/render-final.log",
+      "inspected": [
+        "keyboard-store.png",
+        "keyboard-narrow.png",
+        "home-hero.png",
+        "home-hero-pan-right.png"
+      ]
+    },
+    {
+      "command": "devbox run -- dart format --output=none --set-exit-if-changed lib/src/shell/keyboard.dart lib/src/shell/artwork.dart lib/src/shell/home_background.dart test/console_keyboard_grid_test.dart test/home_background_test.dart test/home_artwork_widget_test.dart tool/render_home_artwork_test.dart tool/render_library_followup_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/keyboard-and-hero/format.log"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "investigation": [
+    {
+      "log": ".tool-cache/research/keyboard-and-hero/regressions-1.log",
+      "finding": "Initial image fixture awaited decode without driving scheduled frames; interrupted and corrected to drive widget frames alongside real I/O using the existing artwork helper pattern."
+    },
+    {
+      "log": ".tool-cache/research/keyboard-and-hero/pan-diagnostic-2.log",
+      "finding": "The full-Home renderer decoded artwork while driving frames in runAsync, creating its timer in the real-time zone; virtual time snapshots did not advance it. After warming images, the fixture restarts motion through Reduce motion on/off before sampling. Production pan logic was unchanged for this harness correction; the final renderer asserts the right crop."
+    },
+    {
+      "log": ".tool-cache/research/keyboard-and-hero/final-fixtures.log",
+      "finding": "Renderer cases passed after the timer harness correction. The old Z-row geometry expectation then failed after the requested Shift-width change; the expected columns were updated and both two-column Shift widths are asserted. Final regressions pass."
+    }
+  ],
+  "package": {
+    "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub --build-name=0.1.29-dev --build-number=1215",
+    "version": "0.1.29-dev",
+    "build": 1215,
+    "path": "build/releases/Broomm-macOS-keyboard-hero.zip",
+    "bytes": 24474934,
+    "sha256": "ac7d70f6b7eca702f1e24526e47e0e7a5061a94086342d01c1d21785ad0f9813",
+    "log": ".tool-cache/research/keyboard-and-hero/macos-build.log",
+    "verificationLog": ".tool-cache/research/keyboard-and-hero/package.log",
+    "verificationScript": ".tool-cache/research/keyboard-and-hero/package.sh",
+    "zipIntegrity": "passed",
+    "sourceAndExtractedSignatures": "codesign --verify --deep --strict --all-architectures passed",
+    "universalBinaries": [
+      "broomm",
+      "App",
+      "FlutterMacOS",
+      "broomm-astris.dylib",
+      "broomm-installer-guard.dylib",
+      "broomm-sdl2.dylib",
+      "broomm-sdl3.dylib"
+    ],
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "binarySetupAndBridgeReadback": "passed"
+  },
+  "limits": [
+    "Widget direction tests use Flutter/controller intents, not physical controller acceptance",
+    "No new Windows, Linux or Android native execution",
+    "Owner acceptance of the new keyboard/pan and ambient motion feel remains pending",
+    "No new emulator or save-synchronization integration run"
+  ]
+}

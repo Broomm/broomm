@@ -1,0 +1,119 @@
+{
+  "recordedAt": "2026-11-19T04:03:44.490005+00:00",
+  "revision": {
+    "head": "74f77585c449ad235e9d75b5392dc329f943f2a9",
+    "branch": "codex/android-closure-confirmation",
+    "dirtyWorkspace": true,
+    "sourceSha256": {
+      "lib/src/shell/focus_flow.dart": "95d102b83ad9c6b39b55edd6019728148d7be097929d69cfedaccecf44f1dd75",
+      "lib/src/shell/focus_outline.dart": "d129b9eeb8afc40c645400e453f1a590de69dd5d2e201d15a28e49289ecbaa09",
+      "lib/src/shell/controls.dart": "549d3f3b36bf3d62072398b0cbc272023ccffc651b62c6494cda17f21fa5500d",
+      "lib/src/shell/keyboard.dart": "131372878c23a903b9a45f3efab2e1fbd71f855ceac5c85d6fca45420a7c7a30",
+      "test/focus_flow_test.dart": "b1041ec01c04e5bac3fc5906ea770d916826b83531dc397d7442c9b435ec55b8",
+      "test/focus_outline_test.dart": "63b0f192af6bac0d86578fa26d3b10e7a5e7fac4cf92a5417626dd762e348f77",
+      "tool/render_focus_motion_test.dart": "538ce7d40ef088e8f08d084a46d523f5086fee26927a0ac8c85c70f8f41ca278",
+      "PROJECT.md": "c5ebaa7877017118f4332d63d41735501c576a94ef9e740777ccbdf2018d91e7",
+      "IMPLEMENTATION.md": "4048c8490eb19ebed1bc4acfe1e7b7774a72b27557174ddaa77f91b9f8f8d803",
+      "README.md": "fc722ade04ce47e9af316fb911b2f91efd695b26f13b479f494b669eb2047491",
+      "docs/navigation-and-motion.md": "c881cd41fe18b640ca7bdc3ab2a54566d4e6a279cacb4b276e0f6abf68076c10",
+      "docs/research/split-and-wrap-focus-proposal.md": "be0f4105cb7bafc72fe8f567812c460d65d06c66909ae1ecbc934485b3a4c3d3"
+    }
+  },
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.1"
+  },
+  "changes": [
+    "Live source and destination anchors during scroll and selected-tile growth",
+    "Stable perimeter join locations during layout changes",
+    "Nearby portrait-card pacing proportional to route travel",
+    "Retargeted painted snapshots follow their departing control origin and UI scale"
+  ],
+  "checks": [
+    {
+      "command": "devbox run -- flutter --suppress-analytics analyze --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-scroll/analyze-final.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+      "result": "passed",
+      "passed": 836,
+      "skipped": 1,
+      "skipReason": "Existing Linux-only launcher case on macOS",
+      "log": ".tool-cache/research/focus-scroll/full-tests.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub test/focus_flow_test.dart test/focus_outline_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 14,
+      "log": ".tool-cache/research/focus-scroll/focus-tests-1.log"
+    },
+    {
+      "command": "BROOMM_FOCUS_RENDER_ROOT=.tool-cache/research/focus-scroll/previews devbox run -- flutter --suppress-analytics test --no-pub tool/render_focus_motion_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 3,
+      "log": ".tool-cache/research/focus-scroll/render-3.log",
+      "inspected": [
+        "home-scroll-100.png",
+        "home-scroll-260.png",
+        "home-reverse-050.png",
+        "store-up-000.png",
+        "store-up-100.png",
+        "store-up-260.png"
+      ]
+    },
+    {
+      "command": "devbox run -- dart format --output=none --set-exit-if-changed lib/src/shell/focus_flow.dart lib/src/shell/focus_outline.dart test/focus_flow_test.dart test/focus_outline_test.dart tool/render_focus_motion_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-scroll/format.log"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "diagnostic": {
+    "fixtureCard": "170x265 logical pixels; 186 horizontal / 283 vertical center distance",
+    "baseline": "Vertical initial stroke speed 3823.97 vs horizontal 3403.15 logical pixels/s, about 12% faster",
+    "baselineLog": ".tool-cache/research/focus-scroll/before.log",
+    "corrected": "3300 logical pixels/s initial speed in all four fixture directions; slows to zero",
+    "scope": "Stationary geometry diagnostic, not owner-observed input timing"
+  },
+  "package": {
+    "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub --build-name=0.1.29-dev --build-number=1212",
+    "version": "0.1.29-dev",
+    "build": 1212,
+    "path": "build/releases/Broomm-macOS-focus-scroll.zip",
+    "bytes": 24496551,
+    "sha256": "17d2523daa8a5a9eb7887447bc22c7c6d9c7d57501805e4fcac66caf4437305d",
+    "log": ".tool-cache/research/focus-scroll/macos-build.log",
+    "verificationLog": ".tool-cache/research/focus-scroll/package.log",
+    "verificationScript": ".tool-cache/research/focus-scroll/package.sh",
+    "zipIntegrity": "passed",
+    "sourceAndExtractedSignatures": "codesign --verify --deep --strict --all-architectures passed",
+    "universalBinaries": [
+      "broomm",
+      "App",
+      "FlutterMacOS",
+      "broomm-astris.dylib",
+      "broomm-installer-guard.dylib",
+      "broomm-sdl2.dylib",
+      "broomm-sdl3.dylib"
+    ],
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "binarySetupAndBridgeReadback": "passed"
+  },
+  "limits": [
+    "Offscreen Flutter raster fixtures do not establish physical input feel",
+    "No new Windows, Linux or Android native execution",
+    "Owner visual acceptance of this correction remains pending",
+    "No new emulator or save-synchronization integration run"
+  ]
+}

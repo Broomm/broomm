@@ -1,0 +1,139 @@
+{
+  "recordedAt": "2026-11-19T05:03:06.508177+00:00",
+  "revision": {
+    "head": "74f77585c449ad235e9d75b5392dc329f943f2a9",
+    "branch": "codex/android-closure-confirmation",
+    "dirtyWorkspace": true,
+    "sourceSha256": {
+      "lib/src/shell/focus_motion.dart": "8fdbe3fa272a81e476b17afd1c7e9b374bee881bc2c60ed47c42c66dac684d8f",
+      "lib/src/shell/focus_outline.dart": "cd6475b5e5c1b12b507c2e1f42c432478ddcdc3c71328d653e4d2e157d119897",
+      "lib/src/shell/controls.dart": "549d3f3b36bf3d62072398b0cbc272023ccffc651b62c6494cda17f21fa5500d",
+      "lib/src/shell/keyboard.dart": "131372878c23a903b9a45f3efab2e1fbd71f855ceac5c85d6fca45420a7c7a30",
+      "test/focus_motion_test.dart": "874fff5f445e76b5c51ed35ed2bbef473de0f8349f67854e02b0e3511f8335a3",
+      "test/focus_outline_test.dart": "db6455b580f11e9a74cac8827cbe7aebc95798e9d0cc302ac22e5f428a4fa2a1",
+      "tool/render_focus_motion_test.dart": "1ccf6f7ceddb148a2724c6dfa84d88531e999f2bf4d2027694ed8ce8269d3aed",
+      "PROJECT.md": "8ee4b195abde0c3c4a42af6934c5a759e385f37a0a7148e90b4438f9a0a02b52",
+      "IMPLEMENTATION.md": "a1e18116e4d6117aaaa1b3691301a400f4448dc139431bbef064b5c17de6252f",
+      "README.md": "cd5d943c7f9e4a15ba8b61fd407d96870e0ab0b19afbdaba6adac027d13e6150",
+      "docs/navigation-and-motion.md": "e75b7c67484b4dc043e55f46bdca623885ebfd5c0d3221e3a36aef4c8689d923",
+      "docs/research/focus-motion-history.md": "1ca56047ff09b442921632b24668f4e1665ad8e65bb57017ef4692f91ea62486"
+    }
+  },
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.1"
+  },
+  "behavior": {
+    "geometry": "One native rounded rectangle, becoming a hollow traveling circle",
+    "shrinkMs": 160,
+    "circleDiameterLogicalPoints": 16,
+    "expandMs": 140,
+    "baseCenterTravelMs": [
+      90,
+      360
+    ],
+    "arrival": "Interrupt shrink immediately and transition from the current size",
+    "retarget": "Capture the visible ring; redirect its center and shrink again",
+    "tracking": "Live source/destination geometry without resetting motion clocks; interrupted poses follow the source origin and UI scale",
+    "preserved": [
+      "Global foreground layer",
+      "Constant stroke width",
+      "Eight-second rotating mint/teal gradient",
+      "Reduced motion",
+      "Lifecycle and input transparency"
+    ]
+  },
+  "cleanup": {
+    "removed": [
+      "lib/src/shell/focus_flow.dart",
+      "test/focus_flow_test.dart",
+      "docs/research/split-and-wrap-focus-proposal.md"
+    ],
+    "runtimeAudit": "No FocusFlow/FocusFrame/FocusStroke/FocusRoute/_Perimeter/_departureOrder/cubicTo or old-engine import in current focus modules",
+    "archivedHistory": "docs/research/focus-motion-history.md",
+    "olderFingerprintRecords": "Historical only; their source paths identify earlier workspaces and may no longer exist",
+    "unchanged": "No new dependency, native adapter, emulator configuration or save workflow"
+  },
+  "checks": [
+    {
+      "command": "devbox run -- flutter --suppress-analytics analyze --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-circle/analyze-final.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+      "result": "passed",
+      "passed": 838,
+      "skipped": 1,
+      "skipReason": "Existing Linux-only launcher case on macOS",
+      "log": ".tool-cache/research/focus-circle/full-tests.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub test/focus_motion_test.dart test/focus_outline_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 16,
+      "log": ".tool-cache/research/focus-circle/focus-tests-2.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub tool/render_focus_motion_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 3,
+      "log": ".tool-cache/research/focus-circle/render-clean.log",
+      "inspected": [
+        "tile-130.png",
+        "tile-210.png",
+        "home-scroll-100.png",
+        "redirect-expanding.png",
+        "redirect-040.png"
+      ]
+    },
+    {
+      "command": "devbox run -- dart format --output=none --set-exit-if-changed lib/src/shell/focus_motion.dart lib/src/shell/focus_outline.dart test/focus_motion_test.dart test/focus_outline_test.dart tool/render_focus_motion_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-circle/format-final.log"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "investigation": {
+    "log": ".tool-cache/research/focus-circle/focus-tests-1.log",
+    "finding": "Translated rectangle dimensions differed only by floating-point subtraction precision; the geometry assertion now uses a 0.001-point tolerance. Final focused and complete suites pass."
+  },
+  "package": {
+    "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub --build-name=0.1.29-dev --build-number=1214",
+    "version": "0.1.29-dev",
+    "build": 1214,
+    "path": "build/releases/Broomm-macOS-circle-focus.zip",
+    "bytes": 24453570,
+    "sha256": "81ffd30279f9386e9fb2d7ef745bf1acbe47920d878ae65032208cfb496f918e",
+    "log": ".tool-cache/research/focus-circle/macos-build.log",
+    "verificationLog": ".tool-cache/research/focus-circle/package.log",
+    "verificationScript": ".tool-cache/research/focus-circle/package.sh",
+    "zipIntegrity": "passed",
+    "sourceAndExtractedSignatures": "codesign --verify --deep --strict --all-architectures passed",
+    "universalBinaries": [
+      "broomm",
+      "App",
+      "FlutterMacOS",
+      "broomm-astris.dylib",
+      "broomm-installer-guard.dylib",
+      "broomm-sdl2.dylib",
+      "broomm-sdl3.dylib"
+    ],
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "binarySetupAndBridgeReadback": "passed"
+  },
+  "limits": [
+    "Offscreen Flutter fixtures do not establish physical input feel or owner acceptance",
+    "No new Windows, Linux or Android native execution",
+    "No new emulator or save-synchronization integration run"
+  ]
+}

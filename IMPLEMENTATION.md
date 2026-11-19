@@ -1,26 +1,84 @@
 # Implementation plan
 
-## Focus outlines above the interface — 2026-11-18
+## Ortholinear keyboard and ambient Home artwork — 2026-11-19
 
-The shared focus ring renders in the outer Flutter overlay. That overlay
-contains the screen, dialogs, notifications, and controller keyboard, so
-adjacent or elevated controls cannot cover the active ring. The outline uses
-the control's current size and transform, follows scrolling and scaling,
-ignores pointer input, and disappears with the control or focus.
+All five keyboard rows now share a 14-column grid. Both Shift keys span two
+columns, as requested; the remaining controls use whole-column spans. Explicit
+directional navigation retains the entry column through wide controls such as
+Space, with adjacent-key Left/Right movement and bounded edges. Focus nodes
+survive Shift/Caps relabeling, rapid repeated input and resizing. Existing
+editing, Unicode, clipboard and controller shortcuts are retained.
 
-Static analysis, 42 focused widget tests, and the desktop/compact fixture
-renderer passed. The three pixel regressions cover elevated neighbors and
-clipping, transformed scrolling controls, and keyboard-to-dialog focus.
-The reduced-motion regression checks frame scheduling because Flutter's
-overlay layout builder retains a passive geometry callback even while idle.
-Both keyboard renders were visually inspected. Physical-device testing of the
-focus rendering is pending.
+Home heroes begin against the left edge. Horizontally overflowing artwork
+pauses for three seconds, eases right over 20 seconds, pauses for three seconds,
+then returns over 20 seconds. Fitting artwork stays still. Reduced motion
+holds the left crop; hidden or muted rendering pauses the current position.
+New selections restart at the left. A dedicated image boundary and 50 ms
+on-demand clock update the background without rebuilding the page. Metadata
+inspection releases its image reference/listener after the first frame.
+The approved circle focus renderer remains unchanged. No dependency, native
+adapter, emulator configuration or save workflow changed.
 
-The [universal macOS preview](build/releases/Broomm-macOS-focus-outline.zip)
-is `0.1.29-dev` (1208), **24,430,279 bytes**, with SHA-256
-`e2ed11f2b3e52c5218b90c8feea0b038fecdd210517fa3d7ddb8f7c39f3b3de7`.
-ZIP integrity, source and extracted signatures, both architectures, setup
-assets, and bundled bridges passed verification.
+See the [design](docs/navigation-and-motion.md#ortholinear-keyboard-and-home-artwork-movement--2026-11-19)
+and [walkthrough](README.md#verify-keyboardcontroller-navigation-and-motion).
+
+Static analysis, **844 macOS-hosted Flutter tests** and **two offscreen
+renderer fixtures** passed, with the existing Linux-only launcher case skipped.
+Six added regressions check desktop/compact column geometry and Shift widths,
+wide-key navigation, rapid/shifted/resized input, both pan directions/pauses,
+pixel crop changes without page rebuilds, hidden/muted/reduced motion, selection
+reset, fitting art, image failure and resize. Full Home screenshots assert the
+right crop; desktop and narrow keyboard frames were inspected. The owner
+accepted build 1215 and requested publication. Other-host native execution
+remains pending. Logs and frames are under
+`.tool-cache/research/keyboard-and-hero/`.
+
+The [universal macOS preview](build/releases/Broomm-macOS-keyboard-hero.zip)
+is `0.1.29-dev` (1215), **24,474,934 bytes**, with SHA-256
+`ac7d70f6b7eca702f1e24526e47e0e7a5061a94086342d01c1d21785ad0f9813`.
+ZIP integrity, source/extracted signatures, both architectures, setup assets
+and bundled bridges passed verification. The [verification record](docs/keyboard-and-home-motion.json)
+identifies the tested sources and retained diagnostics.
+
+## Circle focus transition — 2026-11-19
+
+The owner selected a simpler native outline: shrink toward a small hollow
+circle while moving to the destination center, then expand into its outline.
+Arrival interrupts shrinking immediately; another focus change interrupts
+expansion and shrinks from the current visible pose. The foreground layer,
+rotating mint/teal gradient, live scroll/resize tracking and reduced motion
+remain. Point sampling, Bezier contours, split routes and pinch logic were
+removed, along with their obsolete algorithm tests and proposal document.
+The [history](docs/research/focus-motion-history.md) retains prior-build evidence.
+
+The moving shape is a native `RRect` throughout. Shrinking takes up to 160 ms
+toward a 16-point circle; arrival starts a 140 ms transition into the target
+from its current size. Center travel eases over 90–360 ms and carries bounded
+incoming speed. Both layout anchors stay live, including offscreen sources;
+interrupted poses follow their control's origin and UI scale. Delayed frames
+catch up the movement and expansion clocks. No dependency, native adapter,
+emulator configuration or save workflow changed. The [design](docs/navigation-and-motion.md#circle-focus-outline-and-living-gradient--2026-11-19)
+and [walkthrough](README.md#verify-keyboardcontroller-navigation-and-motion)
+describe current behavior.
+
+Static analysis, **838 macOS-hosted Flutter tests** and **three offscreen
+renderer fixtures** passed, with the existing Linux-only launcher case skipped.
+The 16 focused checks cover the hollow circle and constant stroke, concurrent
+shrink/movement, early arrival, retargeting during expansion, repeated rapid
+targets, delayed frames, coincident centers, live scroll/resize/scale, removed
+sources, directional pacing, lifecycle/reduced motion, layering and input
+transparency. Inspected frames show actual Home/Store scrolling, keyboard
+motion and a redirect during expansion. The owner subsequently confirmed build
+1214 works perfectly and selected it for retention. Other-host native execution
+remains pending. Logs and frames are under
+`.tool-cache/research/focus-circle/`.
+
+The [universal macOS preview](build/releases/Broomm-macOS-circle-focus.zip)
+is `0.1.29-dev` (1214), **24,453,570 bytes**, with SHA-256
+`81ffd30279f9386e9fb2d7ef745bf1acbe47920d878ae65032208cfb496f918e`.
+ZIP integrity, source/extracted signatures, both architectures, setup assets
+and bundled bridges passed verification. The [verification record](docs/focus-circle.json)
+identifies the current sources, cleanup and logs.
 
 ## Android launch and return confirmation — 2026-11-18
 

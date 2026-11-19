@@ -177,6 +177,35 @@ void main() {
       t.state<HomeScreenState>(find.byType(HomeScreen)).focusSelection();
       await t.pump(const Duration(seconds: 8));
       await save('home-hero');
+      // Warm all image streams before starting the sampled motion clock.
+      // The artwork decoder drives real I/O frames in runAsync; restart via
+      // the actual preference so these snapshots use the test frame clock.
+      for (final reduced in [true, false]) {
+        await t.runAsync(
+          () => model.savePreferences(
+            model.preferences.copy(reduceMotion: reduced),
+          ),
+        );
+        await t.pumpAndSettle();
+      }
+      await save('home-hero');
+      await t.pump(const Duration(seconds: 13));
+      await save('home-hero-pan-middle');
+      await t.pump(const Duration(seconds: 11));
+      await save('home-hero-pan-right');
+      expect(
+        t
+            .widget<Image>(find.byKey(const ValueKey('home-hero-image')))
+            .alignment
+            .resolve(TextDirection.ltr)
+            .x,
+        closeTo(1, .03),
+        reason: 'The actual Home fixture must reach the right-hand crop.',
+      );
+      await t.pump(const Duration(seconds: 1));
+      await save('home-hero-pan-right-pause');
+      await t.pump(const Duration(seconds: 11));
+      await save('home-hero-pan-return');
       final original = model.installed.single;
       model.installed = [
         original,

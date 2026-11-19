@@ -505,7 +505,7 @@ void main() {
         find.byKey(const ValueKey('home-hero-image')),
       );
       expect(hero.fit, BoxFit.cover);
-      expect(hero.alignment, Alignment.topCenter);
+      expect(hero.alignment.resolve(TextDirection.ltr).y, -1);
       expect(t.getSize(find.byType(HomeBackground)).height, 600);
       expect(
         t

@@ -1,62 +1,12 @@
 import 'dart:typed_data';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../romm/models.dart';
 import 'controls.dart';
 import 'model.dart';
-import 'navigation.dart';
 
-/// The existing atmosphere stays behind this transparent, top-aligned image.
-class HomeBackground extends StatelessWidget {
-  const HomeBackground({super.key, required this.model});
-  final ShellModel model;
-  @override
-  Widget build(BuildContext context) {
-    final path =
-        model.screen == ShellScreen.home && model.preferences.showArtwork
-        ? model.selectedHomeGame?.artwork?.hero
-        : null;
-    return IgnorePointer(
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .75,
-        width: double.infinity,
-        child: AnimatedSwitcher(
-          duration: motionDuration(context),
-          child: path == null
-              ? const SizedBox.expand(key: ValueKey('no-home-hero'))
-              : ClipRect(
-                  key: ValueKey(path),
-                  child: ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (bounds) => const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white, Colors.white, Colors.transparent],
-                      stops: [0, .5, 1],
-                    ).createShader(bounds),
-                    child: Image.file(
-                      File(path),
-                      key: const ValueKey('home-hero-image'),
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                      cacheWidth:
-                          (MediaQuery.sizeOf(context).width *
-                                  MediaQuery.devicePixelRatioOf(context))
-                              .round()
-                              .clamp(1, 3840),
-                      errorBuilder: (_, _, _) => const SizedBox.expand(),
-                    ),
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-}
+export 'home_background.dart' show HomeBackground;
 
 class GameArtwork extends StatelessWidget {
   const GameArtwork({

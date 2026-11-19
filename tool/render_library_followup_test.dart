@@ -113,6 +113,8 @@ void main() {
       await save('keyboard-store');
       await size(const Size(800, 600));
       await save('keyboard-compact');
+      await size(const Size(390, 844));
+      await save('keyboard-narrow');
       await t.sendKeyEvent(LogicalKeyboardKey.escape);
       await t.pumpAndSettle();
       await t.pumpWidget(const SizedBox());

@@ -24,6 +24,103 @@ Logo scale and UI scale combine to size the logo while preserving its
 aspect ratio and fitting the available space. See the [current Home walkthrough](../README.md#home-and-save-sync-preview).
 Earlier observations below describe their tested builds.
 
+## Ortholinear keyboard and Home artwork movement — 2026-11-19
+
+The keyboard uses one 14-column grid across all five rows. Character keys are
+one column wide; both Shift keys and Enter span two columns. Wider footer
+controls occupy whole columns. All key edges use the same grid at desktop and
+compact widths. Directional navigation uses explicit row/column positions:
+Up/Down retains the entry column through wide controls, while Left/Right moves
+to an adjacent key and chooses its center column. Row edges stop. The preferred
+column survives repeated directions, Shift/Caps relabeling and window resize;
+Tab retains ordinary reading order. Existing text, Unicode, clipboard and
+controller shortcuts continue to use the original editor.
+
+Horizontally overflowing Home heroes start at the left crop, pause for three
+seconds, ease across to the right over 20 seconds, pause for three seconds,
+then return over 20 seconds. Top alignment, aspect-preserving cover, the bottom
+fade and the underlying atmosphere are retained. Fitting images stay still.
+A new image starts from the left. Reduced motion holds the left crop; hidden
+applications and muted rendering pause/resume the current position.
+
+The dedicated background widget owns a 50 ms on-demand clock and repaints its
+image boundary. It does not rebuild the surrounding page. A one-frame metadata
+listener measures decoded aspect ratio and releases its reference/listener;
+Image retains its existing cache and animation lifecycle. Image failure keeps
+the atmosphere available and stops panning. No game, save or emulator state is
+changed. The [walkthrough](../README.md#verify-keyboardcontroller-navigation-and-motion)
+covers navigation, pauses, artwork changes and accessibility.
+
+## Circle focus outline and living gradient — 2026-11-19
+
+The application shell paints one foreground outline across screens, dialogs,
+notifications and the controller keyboard. The newest visible focused control
+owns it. An editing field does not keep a second outline while its controller
+dock has focus. Standalone controls retain their root-overlay outline.
+
+The renderer uses one native rounded rectangle throughout. Movement and size
+have independent clocks. The ring moves toward the destination center while
+shrinking over 160 ms toward a 16-point hollow circle. Stroke width stays
+constant and the circle scales with UI scale. Arrival starts a 140 ms expansion
+from the current size, even if shrinking has not finished. A new target captures
+the current rounded rectangle, redirects its center and starts shrinking again;
+rapid navigation therefore keeps the traveling shape compact. Coincident
+centers only resize. A delayed frame catches up both clocks rather than
+postponing expansion until its next paint.
+
+Center travel eases out over 90–360 ms, with bounded incoming-speed carry on a
+retarget. Nearby portrait-card moves have proportional duration in either
+axis. Long jumps accelerate within the upper bound. First focus is immediate.
+Both source and destination geometry are sampled after layout. Scroll and tile
+growth update their geometry without restarting clocks. An interrupted pose
+follows its source control's origin and UI scale; attached offscreen sources
+remain anchors, and removal retains the last valid source geometry. Once
+arrived, expansion stays centered on the live destination.
+
+Point sampling, Bezier contour interpolation, center-line ordering, split
+paths and pinch heuristics are no longer in the runtime or current tests.
+[Historical experiment notes and fingerprints](research/focus-motion-history.md)
+remain separate from the current implementation.
+
+The unchanged 3.5-point mint-to-teal stroke and 3-point gap now have an eight
+second rotating gradient, including at rest. A 33 ms timer requests only the
+foreground repaint; the page's cached layer is retained. Finite navigation
+animations can settle while this slow decoration continues. The timer stops
+when focus is removed, hidden or offscreen, or when the application is hidden.
+Saved reduced motion and platform disabled animations stop both travel and
+rotation. The outline remains transparent to input. Removing the shell disposes
+its motion ticker, geometry callback and timer.
+
+The [README walkthrough](../README.md#verify-keyboardcontroller-navigation-and-motion)
+includes keyboard, Home, dialog, interruption, scaling, resting color and
+reduced-motion checks, plus the offscreen renderer. Physical input feel and
+other-host native execution remain owner/platform verification steps. Earlier
+observations below describe their tested builds.
+
+### Scrolling and portrait-card correction
+
+Owner testing of build 1211 found faster upward Store motion and broken flow
+during Home rail movement. The source perimeter was captured in screen
+coordinates while only the destination followed layout. A stationary
+170×265-card fixture also measured initial vertical stroke speed about 12%
+above horizontal speed with the former square-root duration rule. This was
+a contributing pacing difference, not proof of a separate Up-only timing bug.
+
+Build 1212 introduced live anchors and proportional nearby-route timing for
+those issues. The owner confirmed the correction worked. The circle renderer
+retains the live anchors and directional pacing checks.
+Regressions compare portrait pacing in all four directions, translate both
+perimeters and interrupted strokes at fixed progress, resize both ends, and
+exercise horizontal/vertical viewports with offscreen/removed sources. The
+offscreen renderer now includes the actual Home rail's simultaneous growth
+and scroll, a mid-scroll reversal, and upward Store reveal. Those checks are
+retained for circle motion. These are fixture and raster checks; final
+physical-input feel remains owner verification.
+The earlier commands, source hashes and frames are retained under
+`.tool-cache/research/focus-scroll/`. Current circle checks and frames are under
+`.tool-cache/research/focus-circle/`; see the
+[implementation status](../IMPLEMENTATION.md) for current counts and build.
+
 Updated 2026-10-18. This review covered the product, implementation, decisions, architecture, profile/authentication, download/setup and controller research Markdown documents, then every implemented Flutter screen: server/profile selection and login, Home/header, Store/search/filters/details/download feedback, preferences, emulator setup/removal, game loading/pairing/paused/playing states and the local controller lab. Save conflict and Android emulator handoff screens are still future work, not reviewed implemented features.
 
 ## Changes

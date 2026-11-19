@@ -1,0 +1,132 @@
+{
+  "recordedAt": "2026-11-19T04:40:20.181765+00:00",
+  "revision": {
+    "head": "74f77585c449ad235e9d75b5392dc329f943f2a9",
+    "branch": "codex/android-closure-confirmation",
+    "dirtyWorkspace": true,
+    "sourceSha256": {
+      "lib/src/shell/focus_flow.dart": "6308b02275c7280cfcd1cd2ccbe1356407d51f54a8776f081a75a1748cdf5587",
+      "lib/src/shell/focus_outline.dart": "6c88ba44e3afa4df1a640fb1c524404ccaed858440af5a0095f4accbfbeed5e9",
+      "lib/src/shell/controls.dart": "549d3f3b36bf3d62072398b0cbc272023ccffc651b62c6494cda17f21fa5500d",
+      "lib/src/shell/keyboard.dart": "131372878c23a903b9a45f3efab2e1fbd71f855ceac5c85d6fca45420a7c7a30",
+      "test/focus_flow_test.dart": "b0b770db505019f87566a5842986de01cb066543c093d2846451695268cda363",
+      "test/focus_outline_test.dart": "eb37929e3ef53c49e918318beada9efa670d9e5e7ed1bc5ed490256bb2ea0993",
+      "tool/render_focus_motion_test.dart": "426355b012dcd60ee79cf58160297c8de30a44379d6179df3a4ede50d3341b7e",
+      "PROJECT.md": "8bfb4125e54f227a727961fa27de3a31260e5ef9840c8560ca71e6d1ca274a01",
+      "IMPLEMENTATION.md": "4bcb0407ebcd70e9979e182e6fe9c8c40137d4acc0a32623e83b10036f5796ac",
+      "README.md": "5e2b2bfa8e287db7abb993618fed98d4e4d3b8a99153416dcd1c995abfc5fe06",
+      "docs/navigation-and-motion.md": "d7060de5f60495e4c0c3c27f5f9cc26088b54ecea8791bb1ba2084f5a4f862ad",
+      "docs/research/split-and-wrap-focus-proposal.md": "09e3f6e50b442f654350a3202ec6686a0060e4da230ed17a790fecf6d43a2213"
+    }
+  },
+  "host": {
+    "os": "macOS 27.0.1 (26A434)",
+    "architecture": "arm64",
+    "flutter": "3.47.0",
+    "dart": "3.13.0",
+    "xcode": "27.1"
+  },
+  "changes": [
+    "One closed contour with 96 corresponding edge/corner samples joined by bounded cubic Beziers",
+    "Center-line departure order, smooth staggered point interpolation and temporary transverse pinch",
+    "Contraction limited for thin controls and large breadth changes; smooth release restores the exact destination",
+    "Preserved live anchors, bounded retarget snapshots, directional portrait pacing, rotating gradient and reduced motion"
+  ],
+  "checks": [
+    {
+      "command": "devbox run -- flutter --suppress-analytics analyze --no-pub",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-point-morph/analyze.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub --reporter expanded",
+      "result": "passed",
+      "passed": 837,
+      "skipped": 1,
+      "skipReason": "Existing Linux-only launcher case on macOS",
+      "log": ".tool-cache/research/focus-point-morph/full-tests.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub .tool-cache/research/focus-point-morph/stress_test.dart test/focus_flow_test.dart test/focus_outline_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 16,
+      "log": ".tool-cache/research/focus-point-morph/focus-tests-5.log"
+    },
+    {
+      "command": "devbox run -- flutter --suppress-analytics test --no-pub tool/render_focus_motion_test.dart --concurrency=1 --reporter expanded",
+      "result": "passed",
+      "passed": 3,
+      "log": ".tool-cache/research/focus-point-morph/render-final.log",
+      "inspected": [
+        "tile-070.png",
+        "tile-130.png",
+        "home-scroll-100.png",
+        "home-reverse-100.png",
+        "keyboard-090.png",
+        "store-up-100.png"
+      ]
+    },
+    {
+      "command": "devbox run -- dart format --output=none --set-exit-if-changed lib/src/shell/focus_flow.dart lib/src/shell/focus_outline.dart test/focus_flow_test.dart test/focus_outline_test.dart tool/render_focus_motion_test.dart",
+      "result": "passed",
+      "log": ".tool-cache/research/focus-point-morph/format.log"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "diagnostic": {
+    "geometrySweep": {
+      "seed": 1213,
+      "pairs": 160,
+      "intermediatePosesPerPair": 19,
+      "result": "No polygon crossings after limiting contraction",
+      "fixture": ".tool-cache/research/focus-point-morph/stress_test.dart",
+      "geometryCopy": ".tool-cache/research/focus-point-morph/probe_geometry.dart",
+      "geometryCopySha256": "c87d65aadd65c25f8e84efdbc4a55ea775b5b2440f4792157fb74e8527e12d4e",
+      "log": ".tool-cache/research/focus-point-morph/focus-tests-5.log"
+    },
+    "earlierFailures": [
+      ".tool-cache/research/focus-point-morph/focus-tests-1.log",
+      ".tool-cache/research/focus-point-morph/focus-tests-2.log",
+      ".tool-cache/research/focus-point-morph/geometry-sweep-1.log",
+      ".tool-cache/research/focus-point-morph/focus-tests-4.log"
+    ],
+    "cause": "Excess contraction folded thin or dramatically growing contours; smooth departure/arrival and geometry-dependent contraction limits corrected the sampled cases.",
+    "scope": "Finite deterministic geometry/raster fixtures; not proof for every possible contour or physical animation feel."
+  },
+  "package": {
+    "command": "devbox run -- bash tool/build_app.sh --release --portable --no-pub --build-name=0.1.29-dev --build-number=1213",
+    "version": "0.1.29-dev",
+    "build": 1213,
+    "path": "build/releases/Broomm-macOS-delayed-goo.zip",
+    "bytes": 24474321,
+    "sha256": "033e575259805d82fe9fc45e00341dc50428bb083009e4218d6bdb1d6f377c2f",
+    "log": ".tool-cache/research/focus-point-morph/macos-build.log",
+    "verificationLog": ".tool-cache/research/focus-point-morph/package.log",
+    "verificationScript": ".tool-cache/research/focus-point-morph/package.sh",
+    "zipIntegrity": "passed",
+    "sourceAndExtractedSignatures": "codesign --verify --deep --strict --all-architectures passed",
+    "universalBinaries": [
+      "broomm",
+      "App",
+      "FlutterMacOS",
+      "broomm-astris.dylib",
+      "broomm-installer-guard.dylib",
+      "broomm-sdl2.dylib",
+      "broomm-sdl3.dylib"
+    ],
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "binarySetupAndBridgeReadback": "passed"
+  },
+  "limits": [
+    "Offscreen Flutter fixtures do not establish physical input feel or owner acceptance of the new effect",
+    "No new Windows, Linux or Android native execution",
+    "The geometry sweep is finite and checks sampled point polygons",
+    "No new emulator or save-synchronization integration run"
+  ]
+}

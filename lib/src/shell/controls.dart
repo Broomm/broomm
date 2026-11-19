@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import 'navigation.dart';
 import 'keyboard.dart';
+import 'focus_outline.dart';
+export 'focus_outline.dart' show ConsoleFocusOutline;
 export 'keyboard.dart' show ConsoleKeyboardHost;
 export 'navigation.dart' show ControllerDirectionIntent;
 
@@ -46,100 +48,6 @@ class ConsoleIconButton extends StatelessWidget {
         ? ExcludeSemantics(child: ActionLabel(label, icon: icon))
         : Icon(icon, size: 20),
   );
-}
-
-class ConsoleFocusOutline extends StatefulWidget {
-  const ConsoleFocusOutline({
-    super.key,
-    required this.focused,
-    required this.radius,
-    required this.child,
-  });
-  final bool focused;
-  final double radius;
-  final Widget child;
-
-  @override
-  State<ConsoleFocusOutline> createState() => _ConsoleFocusOutlineState();
-}
-
-class _ConsoleFocusOutlineState extends State<ConsoleFocusOutline> {
-  final _overlay = OverlayPortalController();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.focused) _overlay.show();
-  }
-
-  @override
-  void didUpdateWidget(ConsoleFocusOutline oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.focused == oldWidget.focused) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || widget.focused == _overlay.isShowing) return;
-      if (widget.focused) {
-        _overlay.show();
-      } else {
-        _overlay.hide();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => OverlayPortal.overlayChildLayoutBuilder(
-    controller: _overlay,
-    overlayLocation: OverlayChildLocation.rootOverlay,
-    overlayChildBuilder: (context, info) => Positioned(
-      left: 0,
-      top: 0,
-      width: info.childSize.width,
-      height: info.childSize.height,
-      child: IgnorePointer(
-        child: Transform(
-          transform: info.childPaintTransform,
-          child: CustomPaint(
-            painter: widget.focused ? _FocusRingPainter(widget.radius) : null,
-          ),
-        ),
-      ),
-    ),
-    child: widget.child,
-  );
-}
-
-class _FocusRingPainter extends CustomPainter {
-  const _FocusRingPainter(this.radius);
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const stroke = 3.5, gap = 3.0;
-    final bounds = (Offset.zero & size).inflate(gap + stroke / 2);
-    final shader = const SweepGradient(
-      colors: [
-        Color(0xffdef9ef),
-        Color(0xffa7e5d2),
-        Color(0xff75c8be),
-        Color(0xffa5ded8),
-        Color(0xffdef9ef),
-      ],
-    ).createShader(bounds);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        bounds,
-        Radius.circular(radius + gap + stroke / 2),
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = stroke
-        ..shader = shader,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_FocusRingPainter oldDelegate) =>
-      radius != oldDelegate.radius;
 }
 
 class ConsoleButton extends StatefulWidget {

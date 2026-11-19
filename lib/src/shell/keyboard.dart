@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'controls.dart';
+import 'focus_outline.dart';
 import 'navigation.dart';
 
 class ConsoleKeyboardHost extends StatefulWidget {
@@ -190,7 +191,8 @@ class _KeyboardHostState extends State<ConsoleKeyboardHost>
   }
 
   @override
-  Widget build(BuildContext context) => Overlay.wrap(child: keyboard(context));
+  Widget build(BuildContext context) =>
+      ConsoleFocusOverlay(child: Overlay.wrap(child: keyboard(context)));
 
   Widget keyboard(BuildContext context) => _KeyboardScope(
     host: this,
@@ -291,9 +293,93 @@ class _SteamKeyboard extends StatefulWidget {
   State<_SteamKeyboard> createState() => _SteamKeyboardState();
 }
 
+class _DockKey {
+  const _DockKey(
+    this.label,
+    this.action, {
+    this.span = 1,
+    this.secondary,
+    this.icon,
+    this.hint,
+  });
+  final String label;
+  final VoidCallback action;
+  final int span;
+  final String? secondary, hint;
+  final IconData? icon;
+}
+
 class _SteamKeyboardState extends State<_SteamKeyboard> {
   bool shift = false, caps = false, heldShift = false;
+  late final List<List<FocusNode>> nodes;
+  (int, int)? requested;
+  int column = 1;
   bool get shifted => shift || heldShift;
+
+  @override
+  void initState() {
+    super.initState();
+    nodes = [
+      for (final (row, keys) in layout().indexed)
+        [
+          for (var i = 0; i < keys.length; i++)
+            FocusNode(debugLabel: 'Keyboard $row:$i'),
+        ],
+    ];
+  }
+
+  @override
+  void dispose() {
+    for (final row in nodes) for (final node in row) node.dispose();
+    super.dispose();
+  }
+
+  int startColumn(List<_DockKey> row, int index) =>
+      row.take(index).fold(0, (total, key) => total + key.span);
+
+  void focused(int row, int index) {
+    if (requested != (row, index)) {
+      final keys = layout()[row];
+      column = startColumn(keys, index) + (keys[index].span - 1) ~/ 2;
+    }
+    requested = null;
+  }
+
+  bool direction(TraversalDirection direction) {
+    final rows = layout();
+    var current = requested;
+    for (var row = 0; current == null && row < nodes.length; row++) {
+      final index = nodes[row].indexWhere((node) => node.hasPrimaryFocus);
+      if (index >= 0) current = (row, index);
+    }
+    if (current == null) return true;
+    var (row, index) = current;
+    switch (direction) {
+      case TraversalDirection.left:
+      case TraversalDirection.right:
+        final next = (index + (direction == TraversalDirection.left ? -1 : 1))
+            .clamp(0, rows[row].length - 1);
+        if (next == index) return true;
+        index = next;
+        column =
+            startColumn(rows[row], index) + (rows[row][index].span - 1) ~/ 2;
+      case TraversalDirection.up:
+      case TraversalDirection.down:
+        row = (row + (direction == TraversalDirection.up ? -1 : 1)).clamp(
+          0,
+          rows.length - 1,
+        );
+        var end = 0;
+        index = rows[row].indexWhere((key) {
+          end += key.span;
+          return column < end;
+        });
+    }
+    requested = (row, index);
+    requestConsoleFocus(nodes[row][index]);
+    return true;
+  }
+
   void holdShift(bool value) {
     if (heldShift != value) setState(() => heldShift = value);
   }
@@ -335,75 +421,72 @@ class _SteamKeyboardState extends State<_SteamKeyboard> {
     t.selection = TextSelection.collapsed(offset: next);
   }
 
-  Widget key(
-    String label,
-    VoidCallback action, {
-    int flex = 2,
-    bool first = false,
-    String? secondary,
-    IconData? icon,
-    String? hint,
-  }) => Expanded(
-    flex: flex,
-    child: Padding(
-      padding: const EdgeInsets.all(2),
-      child: ConsoleButton(
-        label: label == ' ' ? 'Space' : label,
-        autofocus: first,
-        radius: 5,
-        padding: const EdgeInsets.symmetric(horizontal: 3),
-        onPressed: action,
-        child: Center(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (hint != null) ...[
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: .12),
-                      border: Border.all(color: accent.withValues(alpha: .5)),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
+  Widget key(_DockKey spec, int row, int index) {
+    final _DockKey(:label, :action, :secondary, :icon, :hint) = spec;
+    return Expanded(
+      flex: spec.span,
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: ConsoleButton(
+          label: label == ' ' ? 'Space' : label,
+          autofocus: row == 0 && index == 1,
+          focusNode: nodes[row][index],
+          onFocus: () => focused(row, index),
+          radius: 5,
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          onPressed: action,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hint != null) ...[
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: .12),
+                        border: Border.all(color: accent.withValues(alpha: .5)),
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                      child: Text(
-                        hint,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: accent,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          hint,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: accent,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
+                    const SizedBox(width: 6),
+                  ],
+                  icon != null
+                      ? Icon(icon, size: 22)
+                      : Text(
+                          secondary == null
+                              ? (label == ' ' ? 'Space' : label)
+                              : '$secondary\n$label',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: secondary == null ? 15 : 12,
+                            height: 1.15,
+                          ),
+                        ),
                 ],
-                icon != null
-                    ? Icon(icon, size: 22)
-                    : Text(
-                        secondary == null
-                            ? (label == ' ' ? 'Space' : label)
-                            : '$secondary\n$label',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: secondary == null ? 15 : 12,
-                          height: 1.15,
-                        ),
-                      ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-  @override
-  Widget build(BuildContext context) {
+    );
+  }
+
+  List<List<_DockKey>> layout() {
     final upper = shifted != caps;
     String glyph(String ch) {
       const plain = "[]\\;',./", shifted = "{}|:\"<>?";
@@ -413,108 +496,87 @@ class _SteamKeyboardState extends State<_SteamKeyboard> {
           : (upper ? ch.toUpperCase() : ch);
     }
 
-    Widget letters(String row) => Row(
-      children: [
-        for (final ch in row.characters)
-          key(glyph(ch), () => insert(glyph(ch))),
+    List<_DockKey> letters(String row) => [
+      for (final ch in row.characters)
+        _DockKey(glyph(ch), () => insert(glyph(ch))),
+    ];
+    return [
+      [
+        for (var i = 0; i < 13; i++)
+          _DockKey(
+            (shifted ? '~!@#\$%^&*()_+' : '`1234567890-=')[i],
+            () => insert((shifted ? '~!@#\$%^&*()_+' : '`1234567890-=')[i]),
+            secondary: shifted ? null : '~!@#\$%^&*()_+'[i],
+          ),
+        _DockKey('Backspace', erase, icon: Icons.backspace_outlined, hint: 'X'),
       ],
-    );
-    return FocusTraversalGroup(
-      policy: ConsoleTraversalPolicy(),
-      child: Padding(
-        key: const ValueKey('console-keyboard'),
-        padding: const EdgeInsets.all(6),
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  for (var i = 0; i < 13; i++)
-                    key(
-                      (shifted ? '~!@#\$%^&*()_+' : '`1234567890-=')[i],
-                      () => insert(
-                        (shifted ? '~!@#\$%^&*()_+' : '`1234567890-=')[i],
-                      ),
-                      first: i == 1,
-                      secondary: shifted ? null : '~!@#\$%^&*()_+'[i],
-                    ),
-                  key(
-                    'Backspace',
-                    erase,
-                    flex: 4,
-                    icon: Icons.backspace_outlined,
-                    hint: 'X',
+      [_DockKey('Tab', () => insert('    ')), ...letters('qwertyuiop[]\\')],
+      [
+        _DockKey(caps ? 'Caps ●' : 'Caps', toggleCaps, hint: 'L3'),
+        ...letters("asdfghjkl;'"),
+        _DockKey('Enter', widget.close, span: 2, hint: 'R2'),
+      ],
+      [
+        _DockKey(
+          shifted ? 'Shift ●' : 'Shift',
+          () => setState(() => shift = !shift),
+          span: 2,
+          hint: 'Hold L2',
+        ),
+        ...letters('zxcvbnm,./'),
+        _DockKey(
+          'Shift',
+          () => setState(() => shift = !shift),
+          span: 2,
+          hint: 'Hold L2',
+        ),
+      ],
+      [
+        _DockKey(' ', () => insert(' '), span: 8, hint: 'Y'),
+        _DockKey(
+          'Move cursor left',
+          () => caret(-1),
+          icon: Icons.arrow_left_rounded,
+          hint: 'L1',
+        ),
+        _DockKey(
+          'Move cursor right',
+          () => caret(1),
+          icon: Icons.arrow_right_rounded,
+          hint: 'R1',
+        ),
+        _DockKey('Paste', () async {
+          final data = await Clipboard.getData(Clipboard.kTextPlain);
+          if (mounted && data?.text != null) insert(data!.text!);
+        }, span: 2),
+        _DockKey('Done', widget.close, span: 2, hint: 'Start'),
+      ],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = layout();
+    return ConsoleDirections(
+      onDirection: direction,
+      child: FocusTraversalGroup(
+        policy: ConsoleTraversalPolicy(),
+        child: Padding(
+          key: const ValueKey('console-keyboard'),
+          padding: const EdgeInsets.all(6),
+          child: Column(
+            children: [
+              for (final (row, keys) in rows.indexed)
+                Expanded(
+                  child: Row(
+                    children: [
+                      for (final (index, spec) in keys.indexed)
+                        key(spec, row, index),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  key('Tab', () => insert('    '), flex: 3),
-                  Expanded(flex: 24, child: letters('qwertyuiop[]\\')),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  key(
-                    caps ? 'Caps ●' : 'Caps',
-                    toggleCaps,
-                    flex: 4,
-                    hint: 'L3',
-                  ),
-                  Expanded(flex: 22, child: letters("asdfghjkl;'")),
-                  key('Enter', widget.close, flex: 4, hint: 'R2'),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  key(
-                    shifted ? 'Shift ●' : 'Shift',
-                    () => setState(() => shift = !shift),
-                    flex: 5,
-                    hint: 'Hold L2',
-                  ),
-                  Expanded(flex: 20, child: letters('zxcvbnm,./')),
-                  key(
-                    'Shift',
-                    () => setState(() => shift = !shift),
-                    flex: 5,
-                    hint: 'Hold L2',
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  const Spacer(flex: 3),
-                  key(' ', () => insert(' '), flex: 17, hint: 'Y'),
-                  key(
-                    'Move cursor left',
-                    () => caret(-1),
-                    icon: Icons.arrow_left_rounded,
-                    hint: 'L1',
-                  ),
-                  key(
-                    'Move cursor right',
-                    () => caret(1),
-                    icon: Icons.arrow_right_rounded,
-                    hint: 'R1',
-                  ),
-                  key('Paste', () async {
-                    final data = await Clipboard.getData(Clipboard.kTextPlain);
-                    if (mounted && data?.text != null) insert(data!.text!);
-                  }, flex: 4),
-                  key('Done', widget.close, flex: 4, hint: 'Start'),
-                ],
-              ),
-            ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );

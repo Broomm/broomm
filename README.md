@@ -925,11 +925,44 @@ devbox run prototype-check-macos
 
 The build is `build/macos/Build/Products/Debug/broomm.app`. Current widget PNGs and check logs are under `.tool-cache/research/navigation-followup/`; the earlier navigation record remains under `.tool-cache/research/navigation/`. Fixture data is isolated from normal accounts. These artifacts can be removed after checks finish. Native Home smoke retains its existing `.tool-cache/research/managed-play/home-data/` fixture progress; remove it only after all fixture writers exit. Ordinary navigation changes no game/save files; activation retains each action's existing effects. Physical input feel, Steam/gamescope and other native hosts still need owner verification. See [the evidence record](docs/navigation-and-motion.md).
 
-To check the focus outline, open the controller keyboard from a text field and
-move between keys using the D-pad. The full mint-to-teal ring should remain
-visible above adjacent keys. Repeat in a compact window and at 150% UI scale,
-then close the keyboard and navigate Home or a dialog. The ring follows the
-focused control as it scrolls or resizes and clears from the previous control.
+To check the focus outline, turn **Reduce motion** off, open the controller
+keyboard from a text field, and move between keys using the D-pad. The outline should shrink while moving,
+travel as a small hollow circle on longer jumps, then expand into the new
+control. Nearby moves may arrive before it finishes shrinking and should begin
+expanding immediately. On Home, move from Game Store to the settings controls,
+then change direction during expansion: the current ring shrinks again and
+redirects without jumping or briefly growing over the old target.
+Move sideways and up/down between Store portrait cards to compare pacing.
+Move repeatedly along Home's rail while tiles grow and shrink, then reverse.
+The ring should track both controls during scrolling. Repeat while Store
+navigation reveals a row above the viewport. After arrival, the expansion
+should stay centered on the selected control as scrolling finishes.
+
+Leave a control focused for a few seconds. The mint-to-teal colors should
+rotate slowly around the outline even while its shape stays still. Repeat in
+a compact window and at 50% and 150% UI scale. Scroll or resize the selected
+control, then open and close a dialog. Enable **Reduce motion** in Appearance:
+focus changes become immediate and the color cycle freezes. The platform's
+disabled-animation preference has the same effect. Hiding the app pauses the
+color animation; returning resumes it without a trail from old controls.
+
+For Home artwork, turn **Reduce motion** off and select a game whose hero is
+wider than the visible background. It should begin against the left edge,
+pause for three seconds, pan right over 20 seconds, pause for three seconds,
+then return over 20 seconds. The logo, tile and actions stay still. Select
+another game to restart its artwork from the left. Fitting artwork stays still;
+Reduce motion holds the left crop. Hiding the app pauses the pan.
+
+For reproducible offscreen Home/Store scrolling, keyboard, tile-to-settings
+and resting-gradient keyframes using isolated fixture data, run:
+
+```sh
+devbox run -- flutter --suppress-analytics test --no-pub tool/render_focus_motion_test.dart
+```
+
+The PNGs are in `.tool-cache/research/focus-circle/previews/` (override
+with `BROOMM_FOCUS_RENDER_ROOT`). This fixture changes no emulator, account or
+save files; its output directory can be removed after the command finishes.
 
 ## Verify 3DS updates and DLC
 
@@ -1007,7 +1040,7 @@ Native checks use isolated APFS copies and the supplied ROMs. They do not upload
 
 ## Verify controller keyboard shortcuts and RPCS3 cache reuse
 
-1. Open a text field using controller A. The keyboard stays docked under the original field. Use **Y** for Space, **X** for Backspace, **hold L2** for Shift across several characters, **L3** for Caps Lock, **L1/R1** for caret movement, **R2** to submit (Start also works) and **B** to dismiss. The matching badges appear on the keys. Caps Lock and held Shift invert letter case together. Ordinary key selection with A remains available.
+1. Open a text field using controller A. The keyboard stays docked under the original field. Use **Y** for Space, **X** for Backspace, **hold L2** for Shift across several characters, **L3** for Caps Lock, **L1/R1** for caret movement, **R2** to submit (Start also works) and **B** to dismiss. The matching badges appear on the keys. All rows use the same column grid, and both Shift keys are two columns wide. Try 2 → W → S → Z → Space with Down, then return with Up: the column should remain consistent through Space. Resize the window and repeat with Shift held. Caps Lock and held Shift invert letter case together. Ordinary key selection with A remains available.
 2. Check an existing selection and an emoji: replacement/deletion and caret movement preserve Unicode boundaries. Switch away from Broomm while holding L2, release it and return; Shift should be clear. A dialog above the dock must not let shortcuts edit its covered field. Close/reopen the keyboard and confirm ordinary typing still works. Pointer input remains inline without the dock.
 3. For the PS3 check, use the existing managed RPCS3 and downloaded encrypted 3D Dot Game Heroes ISO/key. With interactive games closed, run the native cache check below. It copies configuration, firmware and caches into isolated storage, launches twice and reports cached PPU objects reused/changed plus time to pairing readiness. The measured macOS runs each took about 187 seconds while preserving all 204 PPU objects and 155 shader files. The remaining work sampled inside Vulkan/MoltenVK shader conversion; the current pinned pipeline compiler does not persist its driver cache. This build leaves graphics/cache settings unchanged. See [the investigation](docs/loading-preview-and-keyboard.md).
 
