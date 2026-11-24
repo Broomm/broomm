@@ -27,29 +27,43 @@ Android hosting remains deferred.
 The preview uses an unencrypted LAN connection with a persistent installation
 code, explained on the connection screen. It supports one source controller,
 requires connecting before game launch, and matches Azahar's English secondary
-window title. Touch and audio forwarding remain later capabilities. The
+window title. melonDS now forwards single touch; Azahar touch and audio remain
+later capabilities. The tablet video fills its available viewport, and remote
+melonDS maximizes both windows while keeping the primary above the secondary.
+Capture crops to the game area and follows geometry changes. Temporary geometry
+and screen preferences are restored after confirmed exit. Shutdown invokes the
+pinned primary frontend close action even while its AppKit windows are hidden. The
 [walkthrough](README.md#remote-screen-preview) and [implementation record](docs/remote-screen.md)
 include prerequisites, data locations, effects, recovery and verification limits.
 
-Static analysis, **851 macOS-hosted Flutter tests** and the **32 final affected checks** pass, with the existing Linux-only test skipped on macOS.
-The real loopback checks cover authentication, UDP discovery and control delivery.
-A controlled clock verifies stale navigation is rejected. Persistence, transport
-bounds, layout interruption and the narrow role/connected screens are exercised.
-The C receiver passes ordinary and independent AddressSanitizer/UBSan execution
-through real Unix sockets with controlled SDL calls. Both native bridge slices
-build, and the full Android Kotlin bridge compiles with its existing deprecation
-warnings. Diagnostics are retained under `.tool-cache/remote-*.log` and
-`.tool-cache/research/remote-screen/`.
+Static analysis and **854 macOS-hosted Flutter tests** pass, with the existing
+Linux-only test skipped. The 10 remote regressions cover full viewport fitting,
+letterboxes, drag/cancel/multitouch, focus loss, authenticated touch delivery,
+persistence, stale inputs, transport bounds and layout recovery. Ordinary and
+independent ASan/UBSan native fixtures pass for input and window behavior. Both
+native bridge architectures and the universal macOS application build.
 
-Two-device LAN gameplay, physical controllers, native video/permission/focus and
-renderer acceptance, latency/bandwidth measurements, and Android/Windows/Linux
-client execution remain pending. No DS/3DS game fixture is installed here, so
-these checks do not establish real melonDS or Azahar input/video consumption.
-The PR remains a development preview for that device acceptance.
+The owner accepted video and controller forwarding from the Mac to the Galaxy
+tablet on the original preview and reported the four follow-up defects.
+A real melonDS 1.1 ARM64 integration check now uses a copied verified installation
+and ROM with fresh private saves. Normal and two remote sessions close with
+all AppKit windows invisible in **503, 639 and 500 ms**, and both remote sessions
+read back native frontend touch coordinates, release and pause clearing. The
+published game crop is **1228×921**, without chrome or letterboxing. Diagnostics
+are in `.tool-cache/remote-followup-*.log` and
+`.tool-cache/research/remote-followup/`. The earlier native test harness's external
+hide request was rejected; a test-only in-process orderOut action establishes
+the exact invisible-window precondition. WindowServer's fading snapshot is not
+used as AppKit visibility evidence.
+
+Revised tablet touch/gameplay and cropped streaming need owner acceptance.
+Azahar gameplay, permission/renderer scenarios, latency/bandwidth measurements,
+and native Windows/Linux client checks remain pending. See the
+[verification details](docs/remote-screen.md#verification).
 
 The fresh [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
-is `0.1.30-dev` (1216), **24,635,517 bytes**, with SHA-256
-`4d44fd9a313c2cc97e37f3fb418b517b5ab592dc5002908a37db88061fdc1144`.
+is `0.1.31-dev` (1217), **24,655,656 bytes**, with SHA-256
+`b6d9f4206d1676df37bee26d5bb57a48dc230a3040d72eb331fa0df62ec66830`.
 Archive integrity and source/fresh-extraction deep, strict, all-architecture
 signatures pass. All seven Mach-O payloads contain ARM64 and x86_64. Local
 packaging refreshes the App.framework and outer ad-hoc signatures after the

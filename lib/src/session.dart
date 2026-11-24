@@ -160,6 +160,7 @@ class BridgeStatus {
       macWindowAck = j['macWindowAck'] as int? ?? 0,
       macWindowHidden = j['macWindowHidden'] as bool? ?? false,
       macWindowBirth = (j['macWindowBirth'] as List? ?? []).cast<int>(),
+      remoteCapture = (j['remoteCapture'] as List? ?? []).cast<num>(),
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -179,6 +180,7 @@ class BridgeStatus {
   final int macWindowAck;
   final bool macWindowHidden;
   final List<int> macWindowBirth;
+  final List<num> remoteCapture;
   final Rpcs3Loading? loading;
 }
 
@@ -290,6 +292,8 @@ class GameSession {
       'microseconds': bridge.macWindowBirth[1],
       'executable': File(prepared.executable).absolute.path,
       'writer': File('$dataRoot/writer.lock').absolute.path,
+      if (bridge.remoteCapture.length == 5 && bridge.remoteCapture.first > 0)
+        'remoteCapture': bridge.remoteCapture,
     };
   }
 
@@ -564,6 +568,7 @@ class GameSession {
             remoteSocket != null &&
             {'melonDS', 'Azahar'}.contains(e.name))
           'BROOMM_REMOTE_SOCKET': remoteSocket!,
+        if (Platform.isMacOS && e.remoteScreen) 'BROOMM_REMOTE_SCREEN': '1',
         if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP'))
           'BROOMM_NATIVE_CONTROL_PORT': '$_retroPort',
         'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',

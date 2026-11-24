@@ -8,8 +8,19 @@ import '../progress/files.dart';
 class RemoteLayout {
   static Map<String, Set<String>> keys(String name) => name == 'melonDS'
       ? {
-          'Instance0.Window0': {'ScreenSizing'},
-          'Instance0.Window1': {'Enabled', 'ScreenSizing', 'Width', 'Height'},
+          for (var window = 0; window < 2; window++)
+            'Instance0.Window$window': {
+              if (window == 1) 'Enabled',
+              'ScreenSizing',
+              'ScreenRotation',
+              'ScreenSwap',
+              'ScreenAspectTop',
+              'ScreenAspectBot',
+              'IntegerScaling',
+              'Geometry',
+              'Width',
+              'Height',
+            },
         }
       : {
           'Layout': {

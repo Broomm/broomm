@@ -174,13 +174,19 @@ class MelonDsAdapter extends EmulatorAdapter {
           'SavestatePath': jsonEncode('${e.root}/states/$identity'),
         },
         if (e.remoteScreen) ...{
-          'Instance0.Window0': {'ScreenSizing': '4'},
-          'Instance0.Window1': {
-            'Enabled': 'true',
-            'ScreenSizing': '5',
-            'Width': '512',
-            'Height': '384',
-          },
+          for (var window = 0; window < 2; window++)
+            'Instance0.Window$window': {
+              if (window == 1) 'Enabled': 'true',
+              'ScreenSizing': window == 0 ? '4' : '5',
+              'ScreenRotation': '0',
+              'ScreenSwap': 'false',
+              'ScreenAspectTop': '0',
+              'ScreenAspectBot': '0',
+              'IntegerScaling': 'false',
+              'Geometry': '""',
+              'Width': '512',
+              'Height': '384',
+            },
         },
         'Instance0.Joystick': {
           for (final e in {

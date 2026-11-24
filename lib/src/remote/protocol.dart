@@ -57,6 +57,28 @@ class RemotePad {
   String get report => '$buttons ${axes.join(' ')}';
 }
 
+/// Coordinates in the unrotated DS touch screen, independent of video scaling.
+class RemoteTouch {
+  const RemoteTouch(this.pressed, this.x, this.y);
+  static const released = RemoteTouch(false, 0, 0);
+  factory RemoteTouch.read(Map<String, dynamic> value) {
+    if (value['pressed'] is! bool ||
+        value['x'] is! int ||
+        value['y'] is! int ||
+        (value['x'] as int) < 0 ||
+        (value['x'] as int) > 255 ||
+        (value['y'] as int) < 0 ||
+        (value['y'] as int) > 191) {
+      throw const FormatException('Invalid touch coordinates.');
+    }
+    return RemoteTouch(value['pressed'], value['x'], value['y']);
+  }
+  final bool pressed;
+  final int x, y;
+  Map<String, Object> get json => {'pressed': pressed, 'x': x, 'y': y};
+  String get report => 'touch ${pressed ? 1 : 0} $x $y';
+}
+
 Map<String, dynamic> remoteMessage(Object? value) {
   if (value is! String || value.length > 2048) {
     throw const FormatException('Invalid remote message.');

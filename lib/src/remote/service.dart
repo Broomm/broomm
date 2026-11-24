@@ -70,6 +70,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   RemotePad _pad = RemotePad.neutral;
   Object? _sourceDevice;
   bool _padPresent = false;
+  RemoteTouch _touch = RemoteTouch.released;
+  bool touchSupported = false;
   String? _targetKey;
   Future<void>? _targetWork;
   bool _captureCancelling = false;
@@ -119,6 +121,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       });
       _heartbeat = Timer.periodic(const Duration(milliseconds: 100), (_) {
         _sendPad();
+        if (_touch.pressed) _sendTouch();
         if (_client != null && ++_ticks % 10 == 0) {
           _client!.add(jsonEncode({'type': 'ping'}));
           if (DateTime.now().difference(_lastHost).inSeconds > 5)
@@ -127,6 +130,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         if (_guest != null &&
             DateTime.now().difference(_lastInput).inMilliseconds > 500) {
           _deliverPad(RemotePad.neutral, false);
+          _deliverTouch(RemoteTouch.released);
         }
       });
     } catch (e) {
@@ -260,7 +264,9 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           _emit();
           continue;
         }
-        if (message['type'] == 'action' || message['type'] == 'pad') {
+        if (message['type'] == 'action' ||
+            message['type'] == 'pad' ||
+            message['type'] == 'touch') {
           final sent = message['sent'];
           if (sent is! int ||
               sent < previousSent ||
@@ -286,6 +292,12 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             _lastInput = DateTime.now();
             _deliverPad(RemotePad.read(message), message['connected'] == true);
             if (message['connected'] != true) onAction?.call('shift-up');
+          case 'touch':
+            final touch = RemoteTouch.read(message);
+            if (_gameName == 'melonDS' && _target?['remoteCapture'] != null) {
+              _lastInput = DateTime.now();
+              _deliverTouch(touch);
+            }
           case 'frameAck':
             _frameBusy = false;
             unawaited(channel.invokeMethod<void>('nextFrame'));
@@ -304,6 +316,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         onEvent?.call('Remote screen disconnected from this host');
         _frameBusy = false;
         _deliverPad(RemotePad.neutral, false);
+        _deliverTouch(RemoteTouch.released);
         onAction?.call('shift-up');
         _targetKey = null;
         _syncTarget();
@@ -327,6 +340,33 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  void _deliverTouch(RemoteTouch touch) {
+    if (!Platform.isMacOS || socketPath == null) return;
+    unawaited(
+      channel
+          .invokeMethod<void>('input', {
+            'path': socketPath,
+            'report': touch.report,
+          })
+          .catchError((Object e) {
+            error = 'Remote touch delivery failed. $e';
+            _emit();
+          }),
+    );
+  }
+
+  void touch(RemoteTouch value) {
+    _touch = touchSupported && _foreground ? value : RemoteTouch.released;
+    _sendTouch();
+  }
+
+  void _sendTouch() {
+    if (touchSupported)
+      _client?.add(
+        jsonEncode({'type': 'touch', ..._touch.json, 'sent': _milliseconds}),
+      );
+  }
+
   void setGame(int? pid, String? name, Map<String, Object>? target) {
     _gamePid = pid;
     _gameName = name;
@@ -340,8 +380,11 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         hasGuest &&
         {'melonDS', 'Azahar'}.contains(_gameName) &&
         _gamePid != null &&
-        _target != null;
-    final key = compatible ? '$_gamePid:$_gameName:${_target!['seconds']}' : '';
+        _target != null &&
+        (_gameName != 'melonDS' || _target!['remoteCapture'] != null);
+    final key = compatible
+        ? '$_gamePid:$_gameName:${_target!['seconds']}:${_target!['remoteCapture']}'
+        : '';
     if (_targetWork != null) {
       if (_targetKey != key && !_captureCancelling) {
         _captureCancelling = true;
@@ -387,7 +430,16 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   void _sendStatus(String value) {
     if (_lastStatus != value) onEvent?.call('Remote screen: $value');
     _lastStatus = value;
-    _guest?.add(jsonEncode({'type': 'status', 'message': value}));
+    _guest?.add(
+      jsonEncode({
+        'type': 'status',
+        'message': value,
+        'touch':
+            _gameName == 'melonDS' &&
+            _target?['remoteCapture'] != null &&
+            value == 'melonDS secondary screen',
+      }),
+    );
   }
 
   Future<void> discover() {
@@ -502,6 +554,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
               ready.complete();
             } else if (message['type'] == 'status' &&
                 message['message'] is String) {
+              touch(RemoteTouch.released);
+              touchSupported = message['touch'] == true;
               status = message['message'];
               frame = null;
               _emit();
@@ -585,6 +639,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _foreground = state == AppLifecycleState.resumed;
     if (!_foreground) {
+      touch(RemoteTouch.released);
       _client?.add(
         jsonEncode({
           'type': 'action',
@@ -629,6 +684,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> disconnect() async {
     ++_generation;
     connecting = false;
+    touch(RemoteTouch.released);
+    touchSupported = false;
     final client = _client;
     _client = null;
     frame = null;

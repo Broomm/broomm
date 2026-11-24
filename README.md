@@ -22,7 +22,11 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    Join the forwarded controller in the existing pairing screen with L1 + R1,
    then hold Start to play. The desktop uses the main screen and the client
    displays the secondary window. Connect before launching the game so its
-   separate windows are prepared.
+   separate windows are prepared. melonDS maximizes both windows without
+   fullscreen and raises the primary when play begins. The tablet image fills
+   the available area above the connection controls, preserving its aspect ratio.
+   Tap or drag that image to use the DS touch screen; releasing or leaving the
+   client clears touch. Presses in the surrounding letterbox do nothing.
 5. Grant Broomm Screen Recording permission when macOS requests it. If capture
    needs attention, use **Retry screen** on the client after correcting the
    permission. An English Azahar secondary-window title is required by this
@@ -33,8 +37,8 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
 
 Use a trusted local network. This preview transmits its connection code,
 controller input and JPEG video without encryption. It supports one client and
-one source controller. Second-screen touch, forwarded audio, and Linux, Windows
-or Android hosting are future work.
+one source controller. melonDS supports single-touch input. Azahar touch,
+forwarded audio, and Linux, Windows or Android hosting are future work.
 
 Recent hosts and the local connection code are stored in `remote-screen.json`
 inside Broomm's application data directory. Logs use the existing `broomm.log`.

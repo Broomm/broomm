@@ -25,7 +25,7 @@ Future<void> main(List<String> args) async {
   final nm = await Process.run('/usr/bin/nm', ['-arch', 'arm64', exe]);
   if (nm.exitCode != 0) throw StateError('Cannot inspect melonDS');
   final symbols = RegExp(
-    r'^([0-9a-f]+) [tT] _(SDL_\S+|_ZN\S*(?:QApplication|QWidget|QCoreApplication|MainWindow)\S*)$',
+    r'^([0-9a-f]+) [tT] _(SDL_\S+|_ZN\S*(?:QApplication|QWidget|QCoreApplication|MainWindow)\S*|_ZN11ScreenPanel(?:15mousePressEvent|17mouseReleaseEvent)EP11QMouseEvent)$',
     multiLine: true,
   ).allMatches(nm.stdout as String).map((m) => '${m[1]} ${m[2]}').join('\n');
   await File('assets/setup/melonds.symbols').writeAsString(symbols);

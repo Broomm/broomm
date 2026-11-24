@@ -68,6 +68,134 @@ void main() {
     );
   });
 
+  test('touch coordinates reject invalid ranges and types', () {
+    for (final value in [
+      {'pressed': true, 'x': 256, 'y': 0},
+      {'pressed': true, 'x': 0, 'y': -1},
+      {'pressed': 1, 'x': 0, 'y': 0},
+      {'pressed': true, 'x': 1.5, 'y': 0},
+    ]) {
+      expect(() => RemoteTouch.read(value), throwsFormatException);
+    }
+    expect(
+      RemoteTouch.read({'pressed': true, 'x': 255, 'y': 191}).report,
+      'touch 1 255 191',
+    );
+  });
+
+  testWidgets('video fills tablet and portrait space and maps only its image', (
+    t,
+  ) async {
+    t.view.physicalSize = const Size(1280, 800);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    final touches = <RemoteTouch>[];
+    final bytes = (await t.runAsync(() async {
+      final recorder = ui.PictureRecorder();
+      Canvas(recorder).drawColor(Colors.teal, BlendMode.src);
+      final picture = recorder.endRecording();
+      final image = await picture.toImage(4, 3);
+      final data = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
+      picture.dispose();
+      return data!.buffer.asUint8List();
+    }))!;
+    Widget view(bool enabled) => MaterialApp(
+      home: Scaffold(
+        body: Column(
+          children: [
+            Expanded(
+              child: RemoteVideo(
+                bytes: bytes,
+                touchEnabled: enabled,
+                onTouch: touches.add,
+                onDisplayed: () {},
+              ),
+            ),
+            const SizedBox(height: 64, child: Text('Controls')),
+          ],
+        ),
+      ),
+    );
+    await t.pumpWidget(view(true));
+    final surface = find.byKey(const ValueKey('remote-video-surface'));
+    var rect = t.getRect(surface);
+    expect(rect.height, 736);
+    expect(rect.width, closeTo(736 * 4 / 3, 0.01));
+    await t.tapAt(const Offset(10, 200));
+    expect(touches, isEmpty);
+    await t.tapAt(rect.center);
+    expect(touches.map((v) => v.report), ['touch 1 128 96', 'touch 0 0 0']);
+    touches.clear();
+    final finger = await t.startGesture(rect.topLeft + const Offset(1, 1));
+    final second = await t.startGesture(rect.center, pointer: 2);
+    await second.up();
+    expect(touches.length, 1);
+    await finger.moveTo(rect.bottomLeft + const Offset(-50, 50));
+    expect(touches.last.report, 'touch 1 0 191');
+    await finger.cancel();
+    expect(touches.last.pressed, false);
+    t.view.physicalSize = const Size(360, 740);
+    await t.pumpWidget(view(true));
+    rect = t.getRect(surface);
+    expect(rect.width, 360);
+    expect(rect.height, 270);
+    final held = await t.startGesture(rect.center);
+    await t.pumpWidget(view(false));
+    expect(touches.last.pressed, false);
+    await held.up();
+    expect(t.takeException(), isNull);
+  });
+
+  test(
+    'touch crosses authenticated transport and releases on focus loss',
+    () async {
+      final reports = <String>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(RemoteScreenService.channel, (call) async {
+            if (call.method == 'input')
+              reports.add((call.arguments as Map)['report'] as String);
+            return null;
+          });
+      final host = RemoteScreenService(root, hostEnabled: true, listenPort: 0);
+      final client = RemoteScreenService(
+        await root.createTemp('client-'),
+        hostEnabled: false,
+      );
+      try {
+        await host.start();
+        await client.start();
+        host.newInputSocket();
+        await client.connect('127.0.0.1:${host.port}', host.history.code);
+        client.touch(const RemoteTouch(true, 100, 50));
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(reports.where((v) => v.startsWith('touch')), isEmpty);
+        host.setGame(99, 'melonDS', {
+          'seconds': 1,
+          'remoteCapture': [5, 0, 20, 800, 600],
+        });
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(client.touchSupported, true);
+        client.touch(const RemoteTouch(true, 255, 191));
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(reports, contains('touch 1 255 191'));
+        client.didChangeAppLifecycleState(AppLifecycleState.inactive);
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(reports.lastWhere((v) => v.startsWith('touch')), 'touch 0 0 0');
+        host.setGame(99, 'Azahar', {'seconds': 1});
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(client.touchSupported, false);
+        await client.disconnect();
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(reports.lastWhere((v) => v.startsWith('touch')), 'touch 0 0 0');
+      } finally {
+        await client.close();
+        await host.close();
+      }
+    },
+  );
+
   test(
     'successful hosts persist recent order and bounded history across restarts',
     () async {
@@ -114,13 +242,14 @@ void main() {
     e.remoteScreen = true;
     await RemoteLayout.prepare(e);
     await file.writeAsString(
-      '[Instance0.Window0]\nScreenSizing = 4\nScreenRotation = 3\n[Instance0.Window1]\nEnabled = true\nScreenSizing = 5\n',
+      '[Instance0.Window0]\nScreenSizing = 4\nScreenRotation = 3\nScreenFilter = false\n[Instance0.Window1]\nEnabled = true\nScreenSizing = 5\n',
     );
     // A new session recovers the durable record before preparing its own layout.
     e.remoteScreen = false;
     await RemoteLayout.prepare(e);
     expect(await file.readAsString(), contains('ScreenSizing = 2'));
-    expect(await file.readAsString(), contains('ScreenRotation = 3'));
+    expect(await file.readAsString(), contains('ScreenRotation = 1'));
+    expect(await file.readAsString(), contains('ScreenFilter = false'));
     expect(await file.readAsString(), isNot(contains('Enabled = true')));
     expect(await RemoteLayout.journal(e).exists(), false);
   });

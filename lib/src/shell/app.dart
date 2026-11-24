@@ -1358,7 +1358,12 @@ class _BroommAppState extends State<BroommApp> {
                         ),
                       ),
                     ),
-                    _footer(context),
+                    ListenableBuilder(
+                      listenable: remote,
+                      builder: (context, _) => remote.connected
+                          ? const SizedBox.shrink()
+                          : _footer(context),
+                    ),
                   ],
                 ),
               ),

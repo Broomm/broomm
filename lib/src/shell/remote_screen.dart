@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../remote/service.dart';
+import '../remote/protocol.dart';
+
+import 'dart:typed_data';
+
 import 'controls.dart';
 import 'navigation.dart';
 
@@ -49,51 +53,30 @@ class _RemoteScreenState extends State<RemoteScreen> {
                         ),
                       ),
                     )
-                  : Image.memory(
-                      image,
-                      cacheWidth: 640,
-                      cacheHeight: 480,
-                      gaplessPlayback: true,
-                      fit: BoxFit.contain,
-                      frameBuilder: (context, child, frame, sync) {
-                        if (frame != null)
-                          WidgetsBinding.instance.addPostFrameCallback(
-                            (_) => remote.frameDisplayed(),
-                          );
-                        return child;
-                      },
-                      errorBuilder: (context, error, stack) {
-                        WidgetsBinding.instance.addPostFrameCallback(
-                          (_) => remote.frameDisplayed(),
-                        );
-                        return const Center(
-                          child: Text('Could not decode the remote frame.'),
-                        );
-                      },
+                  : RemoteVideo(
+                      bytes: image,
+                      touchEnabled: remote.touchSupported,
+                      onTouch: remote.touch,
+                      onDisplayed: remote.frameDisplayed,
                     ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              padding: const EdgeInsets.all(8),
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                alignment: WrapAlignment.center,
                 children: [
                   Text('Connected to ${remote.clientHost}'),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    alignment: WrapAlignment.end,
-                    children: [
-                      if (remote.frame == null)
-                        ConsoleButton(
-                          onPressed: remote.retryCapture,
-                          child: const Text('Retry screen'),
-                        ),
-                      ConsoleButton(
-                        onPressed: remote.disconnect,
-                        child: const Text('Disconnect'),
-                      ),
-                    ],
+                  if (remote.frame == null)
+                    ConsoleButton(
+                      onPressed: remote.retryCapture,
+                      child: const Text('Retry screen'),
+                    ),
+                  ConsoleButton(
+                    onPressed: remote.disconnect,
+                    child: const Text('Disconnect'),
                   ),
                 ],
               ),
@@ -211,6 +194,111 @@ class _RemoteScreenState extends State<RemoteScreen> {
                 if (page != 'choose')
                   button('Back', () => setState(() => page = 'choose')),
               ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// The image and touch surface share the exact fitted rectangle. Letterboxing
+/// never sends a press; a drag leaving that rectangle clamps until release.
+class RemoteVideo extends StatefulWidget {
+  const RemoteVideo({
+    super.key,
+    required this.bytes,
+    required this.touchEnabled,
+    required this.onTouch,
+    required this.onDisplayed,
+  });
+  final Uint8List bytes;
+  final bool touchEnabled;
+  final ValueChanged<RemoteTouch> onTouch;
+  final VoidCallback onDisplayed;
+  @override
+  State<RemoteVideo> createState() => _RemoteVideoState();
+}
+
+class _RemoteVideoState extends State<RemoteVideo> {
+  int? pointer;
+  void release() {
+    if (pointer == null) return;
+    pointer = null;
+    widget.onTouch(RemoteTouch.released);
+  }
+
+  @override
+  void didUpdateWidget(RemoteVideo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.touchEnabled) release();
+  }
+
+  @override
+  void dispose() {
+    release();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, limits) {
+      final size = applyBoxFit(
+        BoxFit.contain,
+        const Size(4, 3),
+        limits.biggest,
+      ).destination;
+      void move(PointerEvent event) => widget.onTouch(
+        RemoteTouch(
+          true,
+          (event.localPosition.dx / size.width * 256).floor().clamp(0, 255),
+          (event.localPosition.dy / size.height * 192).floor().clamp(0, 191),
+        ),
+      );
+      return SizedBox.expand(
+        child: Center(
+          child: SizedBox(
+            width: size.width,
+            height: size.height,
+            child: Listener(
+              key: const ValueKey('remote-video-surface'),
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (event) {
+                if (!widget.touchEnabled || pointer != null) return;
+                pointer = event.pointer;
+                move(event);
+              },
+              onPointerMove: (event) {
+                if (pointer == event.pointer) move(event);
+              },
+              onPointerUp: (event) {
+                if (pointer == event.pointer) release();
+              },
+              onPointerCancel: (event) {
+                if (pointer == event.pointer) release();
+              },
+              child: Image.memory(
+                widget.bytes,
+                cacheWidth: 640,
+                cacheHeight: 480,
+                gaplessPlayback: true,
+                fit: BoxFit.fill,
+                frameBuilder: (context, child, frame, sync) {
+                  if (frame != null)
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => widget.onDisplayed(),
+                    );
+                  return child;
+                },
+                errorBuilder: (context, error, stack) {
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => widget.onDisplayed(),
+                  );
+                  return const Center(
+                    child: Text('Could not decode the remote frame.'),
+                  );
+                },
+              ),
             ),
           ),
         ),

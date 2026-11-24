@@ -18,7 +18,9 @@ to 1 MiB before payload allocation. Both endpoints bound pending writes and use
 write deadlines. Client heartbeats detect a silent host. Sender-relative monotonic timestamps
 reject input delayed in transit before it can trigger launcher actions. Video waits for a client
 render acknowledgement before the native encoder produces the next frame.
-The client decodes at 640 by 480. It remembers successful hosts in most recent
+The client decodes at 640 by 480 and expands the image to its available viewport,
+with only a compact connection strip below it. The ordinary shell footer is
+hidden while connected. It remembers successful hosts in most recent
 order, capped at twelve, under an OS file lock and atomic publication.
 
 The initial transport uses the existing Dart SDK and an unencrypted connection
@@ -40,6 +42,18 @@ pairing and logical-port routing. It expires after 350 ms without fresh input.
 This is process-local input and requires no host OS controller driver.
 The native socket's packet count, size and numeric values are bounded.
 
+melonDS additionally accepts single-touch press, drag and release in DS pixels
+(0–255, 0–191). The shared client maps the exact fitted image rectangle, rejects
+letterbox presses, clamps an active drag, and ignores extra fingers. Touch uses
+the authenticated, timestamp-checked connection. A bounded native queue coalesces
+moves while preserving edges; quick taps remain pressed for at least 20 ms so
+one DS input frame can observe them. Native expiry is independent of controller
+heartbeats. Pause, client focus loss and disconnect release touch. The main-queue
+adapter writes the same frontend touch state as the pinned 1.1 ScreenPanel mouse
+handlers, guarded by executable identity and matching ARM64 instructions.
+It neither moves the system pointer nor creates an OS input device.
+Azahar touch remains deferred.
+
 ## Emulator layout and video
 
 A connected client at launch enables two windows for melonDS 1.1 or Azahar
@@ -54,6 +68,31 @@ through the existing macOS session adapter. The selector requires a unique
 melonDS `[w2]` title or Azahar `Secondary Window` suffix. A missing or ambiguous
 source is visible and retryable. Capture requires macOS 12.3 and Screen Recording
 permission. The existing app remains deployed for macOS 12.0.
+
+Remote melonDS starts with unrotated, native-aspect, non-integer-scaled top-only
+and bottom-only windows. Both maximize once to their display's visible work area;
+this does not enter fullscreen or repeatedly override a user resize. Play orders
+the primary above the secondary without activating another application. The
+bridge publishes the secondary window number and a crop in logical window points,
+excluding chrome and letterboxing. Identity-checked capture uses that crop and
+updates when geometry changes. Temporary geometry, size and screen preferences
+are included in the durable restoration journal.
+
+The [1.1 frontend](https://github.com/melonDS-emu/melonDS/blob/1.1/src/frontend/qt_sdl/Screen.cpp)
+uses Qt painting or its OpenGL path, rather than SDL_Renderer. A generic SDL
+present hook cannot extract these frames. Direct capture remains feasible with
+an emulator-specific bridge covering software and accelerated renderers and their
+buffer ownership; that bridge is not implemented here. This follow-up selects
+the owner's authorized maximize fallback, retaining ScreenCaptureKit permission
+and window-lifecycle requirements.
+
+The observed close failure used a missing QCoreApplication::quit export as a
+prerequisite to the Qt close path, then fell back to searching visible AppKit
+windows. Hidden windows therefore received no close request; the observed process
+exited normally about 36 seconds later, beyond Broomm's 20-second deadline.
+The adapter now identifies root window ID 0 and calls melonDS's own onQuit action.
+Its normal closeEvent closes child windows and flushes configuration/progress.
+The deadline and normal writer/save supervision remain unchanged.
 
 Native capture targets 30 frames per second at 640 by 480 and encodes JPEGs
 through system frameworks. Actual frame rate, bandwidth and input/video delay
@@ -81,10 +120,39 @@ devbox run -- bash tool/check_remote_input.sh
 devbox run -- bash tool/check_remote_input.sh --sanitize
 ```
 
-Native macOS packaging, full test counts and artifact fingerprints are recorded
-in IMPLEMENTATION.md after final verification. The implementation still needs
-a two-device LAN run with real melonDS and Azahar gameplay, physical controller
-acceptance, macOS capture-permission and renderer checks, and Android/Windows/Linux
-client execution. No DS or 3DS game fixture is installed on this development host.
-The current native C fixture establishes receiver behavior with controlled SDL
-calls. Its results do not establish real emulator input consumption or video.
+The owner verified macOS-to-Galaxy-tablet video and forwarded controller input
+on the original PR preview, reporting image sizing, missing touch and close
+problems. That is scoped owner-performed melonDS acceptance, not Azahar or
+all-platform acceptance.
+
+The follow-up passes static analysis, 854 macOS-hosted Flutter tests (one existing
+Linux-only skip), real loopback touch/authentication/focus-loss checks, and
+ordinary plus independent ASan/UBSan native receiver/window fixtures. The latter
+check tap edges, minimum duration, invalid packets, expiry, pause, windowed
+maximize, cropping, resize behavior, unrelated windows and primary stacking.
+An actual melonDS 1.1 ARM64 fixture copies an existing verified installation and
+local ROM under its source session lease, then runs with fresh private saves.
+Three runs (normal, remote and remote relaunch) confirm all AppKit windows are
+invisible before normal close. They exit in 503, 639 and 500 ms. Both remote
+runs read back press coordinates and release/pause state in the native frontend
+and publish a 1228×921 game crop. These checks establish native frontend delivery;
+they do not replace owner gameplay acceptance of touch or the revised stream.
+No production profile/save is used by that fixture.
+
+To repeat that explicit integration check, supply a managed Broomm data root and
+a local DS ROM, then run:
+
+```sh
+BROOMM_REMOTE_FIXTURE_INSTALL=/path/to/Broomm-data \
+BROOMM_REMOTE_FIXTURE_ROM=/path/to/game.nds \
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+devbox run -- flutter --suppress-analytics test --no-pub tool/check_remote_melonds_test.dart
+```
+
+Its private copies, fresh saves and diagnostics remain under
+`.tool-cache/research/remote-followup/native-*`; after the fixture has exited,
+those fixture directories may be removed. The source lock is released after
+copying. Final package fingerprints are in IMPLEMENTATION.md. Owner verification
+of revised tablet sizing, touch gameplay, cropped capture, permissions and
+renderer behavior remains pending, along with Azahar gameplay, latency/bandwidth
+measurements and native Windows/Linux client execution.

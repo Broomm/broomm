@@ -218,8 +218,15 @@ previous layout after confirmed emulator exit, retaining a recovery journal
 across interruption. Capture uses the verified child process and its secondary
 window. macOS Screen Recording permission is required for video. The initial
 LAN transport uses a connection code and bounded messages with an explicit
-unencrypted-connection notice. Second-screen touch and audio forwarding remain
-later capabilities. See the [walkthrough](README.md#remote-screen-preview) and
+unencrypted-connection notice. Fit the remote image to the largest available
+area while preserving its aspect ratio and space for connection controls.
+Forward a single touch/drag/release to melonDS's secondary touch screen without
+moving the host pointer or creating an OS input device. Reject letterbox presses
+and clear held touch on focus loss, pause, disconnect and expiry. In remote
+melonDS sessions, maximize both windows without fullscreen, raise the primary
+above the secondary when play begins, and crop the stream to the game area.
+Restore temporary geometry and screen preferences after confirmed exit.
+Azahar touch and forwarded audio remain later capabilities. See the [walkthrough](README.md#remote-screen-preview) and
 [design and verification](docs/remote-screen.md).
 
 ## Android handoff

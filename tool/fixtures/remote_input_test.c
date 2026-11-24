@@ -19,6 +19,8 @@ static int instance(int index){assert(index==0);return 7;}
 static int button(void *joystick,int b,uint8_t value){assert(joystick==&attached);buttons[b]=value;return 0;}
 static int axis(void *joystick,int a,int16_t value){assert(joystick==&attached);axes[a]=value;return 0;}
 static void update(void){}
+static int touch_calls,touch_x,touch_y;static bool touching;
+static void touch(bool pressed,int x,int y){touch_calls++;touching=pressed;touch_x=x;touch_y=y;}
 static void *symbol(const char *name){
 #define API(n,f) if(!strcmp(name,n))return (void *)f
  API("SDL_JoystickAttachVirtual",attach);API("SDL_JoystickOpen",open_joystick);
@@ -43,6 +45,27 @@ int main(void){
  remote_tick(1.36);assert(!attached&&detach_count==1);
  send_report(client,path,"1 0 0 0 0 0 0 0");remote_tick(2);assert(attached&&!buttons[0]);
  send_report(client,path,"0 0 0 0 0 0 0 0");remote_tick(2.1);assert(!attached&&detach_count==2);
+ // Tap edges survive a single receive batch; movement coalesces, releases do not.
+ send_report(client,path,"touch 1 0 0");send_report(client,path,"touch 1 255 191");
+ send_report(client,path,"touch 0 255 191");remote_tick(3);
+ remote_touch_poll(false,3,touch);assert(touching&&touch_x==255&&touch_y==191);
+ remote_touch_poll(false,3.01,touch);assert(touching&&touch_calls==1);
+ remote_touch_poll(false,3.03,touch);assert(!touching&&touch_calls==2);
+ send_report(client,path,"touch 1 256 0");send_report(client,path,"touch 1 0 -1");
+ send_report(client,path,"touch 1 10 10 trailing");remote_tick(3.1);
+ remote_touch_poll(false,3.1,touch);assert(touch_calls==2);
+ // A still-held touch expires independently of controller heartbeats.
+ send_report(client,path,"touch 1 100 80");remote_tick(4);
+ remote_touch_poll(false,4,touch);assert(touching);
+ send_report(client,path,"1 0 0 0 0 0 0 0");remote_tick(4.36);
+ remote_touch_poll(false,4.36,touch);assert(!touching);
+ // Pause/focus loss discards queued movement and releases the active stylus.
+ send_report(client,path,"touch 1 150 90");remote_tick(5);
+ remote_touch_poll(false,5,touch);assert(touching);
+ send_report(client,path,"touch 1 160 100");remote_tick(5.1);
+ remote_touch_poll(true,5.1,touch);assert(!touching);
+ remote_touch_poll(false,5.2,touch);assert(!touching);
+ send_report(client,path,"0 0 0 0 0 0 0 0");remote_tick(5.2);
  remote_close();assert(access(path,F_OK)!=0);close(client);assert(rmdir(dir)==0);
  puts("Remote input attach, ranges, malformed packets, expiry and reconnect passed.");
  return 0;

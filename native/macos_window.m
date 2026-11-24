@@ -22,6 +22,45 @@ static uint64_t toggle_revision, activation_revision, hide_revision;
 static NSMapTable<NSWindow *, NSNumber *> *transitions;
 static pthread_once_t birth_once = PTHREAD_ONCE_INIT;
 static uint64_t birth_seconds, birth_microseconds;
+static pthread_mutex_t remote_geometry_lock=PTHREAD_MUTEX_INITIALIZER;
+static uint32_t remote_window;
+static double remote_crop[4];
+
+void broomm_macos_remote_tick(bool playing) {
+    if(!getenv("BROOMM_REMOTE_SCREEN"))return;
+    NSWindow *main=nil,*secondary=nil;
+    for(NSWindow *window in NSApp.windows) {
+        if([window.title containsString:@"[w1]"]) {if(main)return;main=window;}
+        if([window.title containsString:@"[w2]"]) {if(secondary)return;secondary=window;}
+    }
+    if(!main||!secondary)return;
+    static NSHashTable<NSWindow *> *maximized;
+    if(!maximized)maximized=NSHashTable.weakObjectsHashTable;
+    for(NSWindow *window in @[secondary,main]) {
+        if([maximized containsObject:window])continue;
+        NSScreen *screen=window.screen?:NSScreen.mainScreen;
+        if(!screen||(window.styleMask&NSWindowStyleMaskFullScreen))return;
+        [window setFrame:screen.visibleFrame display:YES];
+        [maximized addObject:window];
+    }
+    static bool ordered;
+    if(!playing)ordered=false;
+    if(playing&&!ordered&&!NSApp.isHidden) {
+        [secondary orderWindow:NSWindowBelow relativeTo:main.windowNumber];
+        [main orderFront:nil];ordered=true;
+    }
+    // Qt's secondary central widget fills the Cocoa content area. Crop its
+    // unrotated, non-integer-scaled 4:3 screen, excluding chrome/letterboxing.
+    NSRect frame=secondary.frame;
+    NSRect content=[secondary contentRectForFrameRect:frame];
+    double width=fmin(content.size.width,content.size.height*4.0/3.0),height=width*3.0/4.0;
+    pthread_mutex_lock(&remote_geometry_lock);
+    remote_window=(uint32_t)secondary.windowNumber;
+    remote_crop[0]=NSMinX(content)-NSMinX(frame)+(content.size.width-width)/2;
+    remote_crop[1]=NSMaxY(frame)-NSMaxY(content)+(content.size.height-height)/2;
+    remote_crop[2]=width;remote_crop[3]=height;
+    pthread_mutex_unlock(&remote_geometry_lock);
+}
 
 void broomm_macos_window_observe(void) {
     if (!getenv("BROOMM_MAC_WINDOW_COMMAND")) return;
@@ -205,6 +244,11 @@ static void read_birth(void) {
 struct MacWindowStatus broomm_macos_window_status(void) {
     pthread_once(&birth_once, read_birth);
     uint64_t ack = atomic_load(&window_ack);
-    return (struct MacWindowStatus){ack >> 1, (ack & 1) != 0,
-        birth_seconds, birth_microseconds};
+    struct MacWindowStatus status={.revision=ack>>1,.hidden=(ack&1)!=0,
+        .seconds=birth_seconds,.microseconds=birth_microseconds};
+    pthread_mutex_lock(&remote_geometry_lock);
+    status.remote_window=remote_window;
+    memcpy(status.remote_crop,remote_crop,sizeof(remote_crop));
+    pthread_mutex_unlock(&remote_geometry_lock);
+    return status;
 }

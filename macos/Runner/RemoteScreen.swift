@@ -56,7 +56,7 @@ final class BroommRemoteScreen {
                 guard revision == self.revision else { reply(nil); return }
                 let stream = BroommWindowStream(channel: self.channel)
                 self.capture = stream
-                try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", valid: {
+                try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", geometry: args["remoteCapture"] as? [NSNumber], valid: {
                   revision == self.revision && !app.isTerminated
                 })
               }
@@ -136,7 +136,7 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   init(channel: FlutterMethodChannel) { self.channel = channel }
 
   @MainActor
-  func start(pid: pid_t, name: String, valid: () -> Bool) async throws {
+  func start(pid: pid_t, name: String, geometry: [NSNumber]?, valid: () -> Bool) async throws {
     guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
       throw failure("Allow Broomm in System Settings → Privacy & Security → Screen & System Audio Recording, then reconnect.")
     }
@@ -147,7 +147,7 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       let windows = content.windows.filter { window in
         guard window.owningApplication?.processID == pid else { return false }
         let title = window.title ?? ""
-        return name == "melonDS" ? title.contains("[w2]") : title.hasSuffix("Secondary Window")
+        return name == "melonDS" ? title.contains("[w2]") && geometry?.first?.uint32Value == window.windowID : title.hasSuffix("Secondary Window")
       }
       if windows.count == 1 { selected = windows[0]; break }
       if windows.count > 1 { throw failure("The secondary emulator window is ambiguous.") }
@@ -157,6 +157,15 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       throw failure("The emulator has no secondary window. Connect before launching melonDS or Azahar, then launch the game again.")
     }
     let configuration = SCStreamConfiguration()
+    if name == "melonDS" {
+      guard let geometry = geometry, geometry.count == 5 else { throw failure("The emulator screen geometry is unavailable.") }
+      let values = geometry.dropFirst().map { $0.doubleValue }
+      guard values.allSatisfy({ $0.isFinite }), values[0] >= 0, values[1] >= 0,
+            values[2] > 0, values[3] > 0,
+            values[0] + values[2] <= window.frame.width + 1,
+            values[1] + values[3] <= window.frame.height + 1 else { throw failure("The emulator screen geometry changed. Retry screen capture.") }
+      configuration.sourceRect = CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
+    }
     configuration.width = 640
     configuration.height = 480
     configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
@@ -175,7 +184,10 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
     stream = nil
   }
   func stream(_ stream: SCStream, didStopWithError error: Error) {
-    DispatchQueue.main.async { self.channel.invokeMethod("captureError", arguments: error.localizedDescription) }
+    queue.async {
+      guard !self.stopped else { return }
+      DispatchQueue.main.async { self.channel.invokeMethod("captureError", arguments: error.localizedDescription) }
+    }
   }
   func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
     guard type == .screen, !stopped, permitted, sampleBuffer.isValid,

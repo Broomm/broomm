@@ -16,4 +16,8 @@ fi
   /usr/bin/xcrun clang -std=c11 -Wall -Wextra -Werror "${broomm_remote_flags[@]}" \
     tool/fixtures/remote_input_test.c -o "build/native-remote-checks/input-test$broomm_remote_suffix"
   "build/native-remote-checks/input-test$broomm_remote_suffix"
+  /usr/bin/xcrun clang -std=c11 -Wall -Wextra -Werror -fobjc-arc -fblocks "${broomm_remote_flags[@]}" \
+    tool/fixtures/remote_window_test.m native/macos_window.m -framework AppKit \
+    -o "build/native-remote-checks/window-test$broomm_remote_suffix"
+  "build/native-remote-checks/window-test$broomm_remote_suffix"
 } 2>&1 | tee "build/native-remote-checks/results$broomm_remote_suffix.log"
