@@ -90,18 +90,24 @@ old private key here. The installed target-36 release is not debuggable;
 normal ADB access/backup cannot preserve its private data for a key change.
 
 A Galaxy-specific retained preview key is now stored privately under
-`.tool-cache/galaxy-preview-signing/`. The prepared
+`.tool-cache/galaxy-preview-signing/`. The installed
 [Galaxy APK](build/releases/Broomm-0.1.31-pr21.45454442404-galaxy-preview.apk)
 is **65,437,357 bytes**, SHA-256
 `59ad7ccf99a5f287a6b85c442a7870422e5552198b8280d6fc7a7cf39ef7da7f`,
 with certificate
 `8257ad3968f5642b7dc6aaf3a7ad9180d0374836209ba3b1207f23daa162eeb6`.
 Its signature verifies and all **171 non-signature APK payload entries** match
-CI. The CI APK and production/release signing remain unchanged. A one-time
-uninstall/reinstall would erase Broomm's tablet app data; **owner approval is
-pending**, so the existing 1196 app and its data remain intact. Subsequent
-Galaxy preview updates should use this retained key and ordinary `install -r`.
-No private signing key/password is committed or included in evidence records.
+CI. The owner explicitly approved the one-time uninstall and erasure of
+Broomm app data. ADB uninstall and installation succeeded on the Galaxy tablet
+running Android 16. Package readback confirms **0.1.31 / code 1197**, and the
+installed APK hash matches the local Galaxy package above. A cold launch of
+`app.broomm.broomm/.MainActivity` returned `Status: ok` in **528 ms**; scoped
+startup logs contained no fatal Android or unhandled Flutter exception. The
+owner must reconnect Remote screen because the prior app data was reset.
+Revised stream/touch gameplay acceptance remains owner-performed and pending.
+Subsequent Galaxy preview updates should use the retained key and ordinary
+`install -r`. No private signing key/password is committed or included in
+evidence records. The CI APK and production/release signing remain unchanged.
 
 CI run `45454442404` built Android, universal macOS, Windows and both Linux
 architectures and passed native macOS checks. Its Linux/Windows shared tests
