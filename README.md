@@ -67,6 +67,13 @@ the authorization prompt. Open Broomm on the tablet, reconnect to the Mac, and
 verify the enlarged view, taps/drags and normal Close game flow. These user
 observations complete the device acceptance; a successful APK build does not.
 
+PR CI builds use runner-local debug signing, which can differ between runs.
+If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use a build signed with
+the installed app's retained key. Uninstalling to change keys erases app data
+and requires the owner's explicit approval. The local Galaxy preview retains
+its private key under `.tool-cache/galaxy-preview-signing/`; preserve that
+ignored directory for later updates and keep its contents private.
+
 ## Home and save-sync preview
 
 [Download the universal macOS preview](build/releases/Broomm-macOS-pairing-picker-focus.zip).

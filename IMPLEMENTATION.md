@@ -78,12 +78,30 @@ is `0.1.31-pr21.45454442404`, Android version `0.1.31` / code **1197**,
 Artifact digest, metadata, ARM64 ELF and PR-merge provenance verify. Its merge
 has no tree differences from feature commit `e7613a4`; the following commit
 only scopes the native-host regression to macOS. The APK is retained at
-`.tool-cache/remote-screen-tablet/followup/`. Installation was attempted with
-`adb -s R52T406ZH6F install -r`, but ADB reported **device not found**.
-macOS sees Samsung SM-X800 USB file-transfer/modem interfaces; both default and
-libusb ADB backends list no debugging device. The default backend is restored.
-Owner USB debugging/reconnection is required before installation; the previous
-1196 installation and its app data have not been replaced.
+`.tool-cache/remote-screen-tablet/followup/`. After the owner reconnected USB,
+ADB recognized Samsung SM-X800 serial `R52T406ZH6F`. The update attempt then
+failed with **INSTALL_FAILED_UPDATE_INCOMPATIBLE**. Installed code 1196's APK
+readback matches the previous CI hash; its certificate is
+`beae935700e1da02ccc41e0c372090c73cab92129065c9c94465865f416de0eb`,
+while CI code 1197 uses
+`43b6ab0e68806b815e864ff57b1a263bdcb777116d580f185d719cbccdb6a007`.
+The PR workflow generates a runner-local debug key and has not retained the
+old private key here. The installed target-36 release is not debuggable;
+normal ADB access/backup cannot preserve its private data for a key change.
+
+A Galaxy-specific retained preview key is now stored privately under
+`.tool-cache/galaxy-preview-signing/`. The prepared
+[Galaxy APK](build/releases/Broomm-0.1.31-pr21.45454442404-galaxy-preview.apk)
+is **65,437,357 bytes**, SHA-256
+`59ad7ccf99a5f287a6b85c442a7870422e5552198b8280d6fc7a7cf39ef7da7f`,
+with certificate
+`8257ad3968f5642b7dc6aaf3a7ad9180d0374836209ba3b1207f23daa162eeb6`.
+Its signature verifies and all **171 non-signature APK payload entries** match
+CI. The CI APK and production/release signing remain unchanged. A one-time
+uninstall/reinstall would erase Broomm's tablet app data; **owner approval is
+pending**, so the existing 1196 app and its data remain intact. Subsequent
+Galaxy preview updates should use this retained key and ordinary `install -r`.
+No private signing key/password is committed or included in evidence records.
 
 CI run `45454442404` built Android, universal macOS, Windows and both Linux
 architectures and passed native macOS checks. Its Linux/Windows shared tests
