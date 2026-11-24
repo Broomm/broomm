@@ -32,6 +32,7 @@ class PreparedEmulator {
     this.armadaDualScreen = false,
   });
   final String name, root, executable;
+  bool remoteScreen = false;
   final String? sdlLibrary, core;
   final int sdlMajor;
   final String? userDirectory;
@@ -171,6 +172,15 @@ class MelonDsAdapter extends EmulatorAdapter {
           'JoystickID': '0',
           'SaveFilePath': jsonEncode('${e.root}/saves/$identity'),
           'SavestatePath': jsonEncode('${e.root}/states/$identity'),
+        },
+        if (e.remoteScreen) ...{
+          'Instance0.Window0': {'ScreenSizing': '4'},
+          'Instance0.Window1': {
+            'Enabled': 'true',
+            'ScreenSizing': '5',
+            'Width': '512',
+            'Height': '384',
+          },
         },
         'Instance0.Joystick': {
           for (final e in {
@@ -699,6 +709,11 @@ class AzaharAdapter extends EmulatorAdapter {
       '"$base,axis_x:2,axis_y:3,deadzone:0.1,range:1.0"',
     );
     set('profiles\\1\\motion_device', '"$base"');
+    if (e.remoteScreen) {
+      if (!text.contains('[Layout]')) text += '\n[Layout]\n';
+      set('layout_option', '4', section: 'Layout');
+      set('swap_screen', 'false', section: 'Layout');
+    }
     if (e.armadaGamingMode) {
       if (!text.contains('[Renderer]')) text += '\n[Renderer]\n';
       set('graphics_api', '2', section: 'Renderer');

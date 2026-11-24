@@ -239,6 +239,12 @@ jobs:
       - name: Native pause transition sanitizers
         if: ${{ !cancelled() }}
         run: bash tool/ci/run.sh bash tool/check_sony_pause.sh --sanitize
+      - name: Native remote controller regressions
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_remote_input.sh
+      - name: Native remote controller sanitizers
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_remote_input.sh --sanitize
       - name: Shared save native file-lock tests
         if: ${{ !cancelled() }}
         run: |
@@ -284,6 +290,7 @@ jobs:
             build/macos/Logs/Test/*.xcresult
             build/android-checks/*.log
             build/native-pause-checks/*.log
+            build/native-remote-checks/*.log
           if-no-files-found: warn
           retention-days: 14
 

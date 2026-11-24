@@ -47,6 +47,8 @@ import 'update_screen.dart';
 import '../updates/installation.dart';
 import '../session_lease.dart';
 import 'quit_dialog.dart';
+import '../remote/service.dart';
+import 'remote_screen.dart';
 import 'session_recovery_dialog.dart';
 
 class BroommApp extends StatefulWidget {
@@ -67,8 +69,17 @@ class BroommApp extends StatefulWidget {
 class _BroommAppState extends State<BroommApp> {
   final navigator = GlobalKey<NavigatorState>();
   final homeScreen = GlobalKey<HomeScreenState>();
-  late final input = ShellControllerInput(dispatch: _dispatch);
+  late final input = ShellControllerInput(
+    dispatch: _dispatch,
+    raw: (value) => remote.localPad(value),
+  );
   ShellModel get m => widget.model;
+  late final remote = RemoteScreenService(
+    m.storage.directory,
+    onAction: _dispatch,
+    onEvent: (message) => m.log?.write(message),
+  );
+  Timer? remoteGameTimer;
   bool lab = false;
   PrototypeModel? _activeGameModel;
   bool startingGame = false;
@@ -620,6 +631,8 @@ class _BroommAppState extends State<BroommApp> {
             widget.project ?? '',
             managedRoot: m.storage.directory.path,
             resolve: resolve,
+            remoteSocket: remote.newInputSocket(),
+            remoteScreen: remote.hasGuest,
           );
       session.finalizeProgress = (exit) async {
         try {
@@ -961,6 +974,15 @@ class _BroommAppState extends State<BroommApp> {
     super.initState();
     _bind();
     input.start();
+    unawaited(remote.start());
+    remoteGameTimer = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      final session = _activeGameModel?.session;
+      remote.setGame(
+        session?.processId,
+        session?.emulator?.name,
+        session?.macWindowTarget,
+      );
+    });
     if (m.isAndroid)
       updateChannel.setMethodCallHandler((call) async {
         if (call.method == 'installerReturned')
@@ -1068,6 +1090,10 @@ class _BroommAppState extends State<BroommApp> {
   }
 
   void _dispatch(String value) {
+    if (remote.connected) {
+      remote.action(value);
+      return;
+    }
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     if (lifecycle != null && lifecycle != AppLifecycleState.resumed) return;
     if (_quitting == null && GameSettingsOverlay.controller(value)) return;
@@ -1132,6 +1158,8 @@ class _BroommAppState extends State<BroommApp> {
   @override
   void dispose() {
     cloudRetry?.cancel();
+    remoteGameTimer?.cancel();
+    unawaited(remote.close());
     m.removeListener(_scheduleArtwork);
     contentFocus.dispose();
     homeFocus.dispose();
@@ -1305,6 +1333,9 @@ class _BroommAppState extends State<BroommApp> {
                                 model: m,
                                 focusFooter: () =>
                                     requestConsoleFocus(homeFocus),
+                              ),
+                              ShellScreen.remote => RemoteScreen(
+                                service: remote,
                               ),
                               ShellScreen.store => StoreScreen(model: m),
                               ShellScreen.downloads => DownloadsScreen(

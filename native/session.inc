@@ -516,6 +516,7 @@ static void write_status(void) {
 }
 
 #include "test_sources.inc"
+#include "remote_input.inc"
 
 static void session_worker(void) {
     session_test=getenv("BROOMM_SESSION_TEST")!=NULL;
@@ -560,7 +561,9 @@ static void session_worker(void) {
         }
         if(getppid()!=owner&&!atomic_load(&session_gate))session_request("launcher-exit");
         fixture_call=true;
-        lock();test_watch_tick();test_sources_tick();update();
+        lock();test_watch_tick();test_sources_tick();
+        struct timespec remote_now;clock_gettime(CLOCK_MONOTONIC,&remote_now);
+        remote_tick(remote_now.tv_sec+remote_now.tv_nsec/1e9);update();
         if(tick%16==0) {
             bool ready=discover_sources();atomic_store(&input_ready,ready);
             if(!ready&&!discovery_failed)session_request("input-error");
@@ -629,5 +632,6 @@ static void session_worker(void) {
         // A disappeared launcher never releases input or automatically resumes.
         usleep(8000);
     }
+    remote_close();
     atomic_store(&session_worker_stopped,true);
 }

@@ -1,0 +1,68 @@
+import 'dart:convert';
+
+const remotePort = 43187;
+const remoteProtocol = 1;
+
+class RemoteAddress {
+  const RemoteAddress(this.host, this.port);
+  factory RemoteAddress.parse(String text) {
+    final value = text.trim();
+    if (value.length > 300 || RegExp(r'[\s\x00-\x1f]').hasMatch(value)) {
+      throw const FormatException('Enter an IP address and port.');
+    }
+    final uri = Uri.tryParse(value.contains('://') ? value : 'broomm://$value');
+    if (uri == null ||
+        !{'broomm'}.contains(uri.scheme) ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        (uri.path.isNotEmpty && uri.path != '/') ||
+        uri.hasQuery ||
+        uri.hasFragment) {
+      throw const FormatException(
+        'Enter an address such as 192.168.1.20:43187.',
+      );
+    }
+    final port = uri.hasPort ? uri.port : remotePort;
+    if (port < 1 || port > 65535) throw const FormatException('Invalid port.');
+    return RemoteAddress(uri.host.toLowerCase(), port);
+  }
+  final String host;
+  final int port;
+  String get label => '${host.contains(':') ? '[$host]' : host}:$port';
+  Uri get uri => Uri(scheme: 'broomm', host: host, port: port, path: '/remote');
+}
+
+/// SDL positional buttons and signed axes. Trigger values are 0 through 32767.
+class RemotePad {
+  const RemotePad(this.buttons, this.axes);
+  static const neutral = RemotePad(0, [0, 0, 0, 0, 0, 0]);
+  factory RemotePad.read(Object? value) {
+    if (value is! Map || value['buttons'] is! int || value['axes'] is! List) {
+      throw const FormatException('Invalid controller state.');
+    }
+    final buttons = value['buttons'] as int;
+    final axes = (value['axes'] as List).cast<int>();
+    if (buttons < 0 ||
+        buttons > 0x1fffff ||
+        axes.length != 6 ||
+        axes.take(4).any((v) => v < -32768 || v > 32767) ||
+        axes.skip(4).any((v) => v < 0 || v > 32767)) {
+      throw const FormatException('Invalid controller range.');
+    }
+    return RemotePad(buttons, List.unmodifiable(axes));
+  }
+  final int buttons;
+  final List<int> axes;
+  Map<String, Object> get json => {'buttons': buttons, 'axes': axes};
+  String get report => '$buttons ${axes.join(' ')}';
+}
+
+Map<String, dynamic> remoteMessage(Object? value) {
+  if (value is! String || value.length > 2048) {
+    throw const FormatException('Invalid remote message.');
+  }
+  final message = jsonDecode(value);
+  if (message is! Map<String, dynamic>)
+    throw const FormatException('Invalid message.');
+  return message;
+}

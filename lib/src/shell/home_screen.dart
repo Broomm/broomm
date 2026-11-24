@@ -23,6 +23,7 @@ const homeTitles = [
   'Emulator Settings',
   'Downloads',
   'Update Broomm',
+  'Remote screen',
 ];
 const homeIcons = [
   Icons.tune_rounded,
@@ -30,6 +31,7 @@ const homeIcons = [
   Icons.memory_rounded,
   Icons.downloading_rounded,
   Icons.system_update_alt_rounded,
+  Icons.connected_tv_rounded,
 ];
 const homeColors = [
   Color(0xff6a657f),
@@ -37,6 +39,7 @@ const homeColors = [
   Color(0xff566f97),
   Color(0xff497c91),
   Color(0xff3d8b73),
+  Color(0xff497c91),
 ];
 const homeScreens = [
   ShellScreen.settings,
@@ -44,6 +47,7 @@ const homeScreens = [
   ShellScreen.emulators,
   ShellScreen.downloads,
   ShellScreen.update,
+  ShellScreen.remote,
 ];
 
 String homePlatformLabel(RommGame game) {
@@ -311,7 +315,7 @@ class HomeScreenState extends State<HomeScreen>
                                 ),
                                 fill: homeColors[app].withValues(alpha: .48),
                                 icon: homeIcons[app],
-                                showLabel: app == 0 || app == 2,
+                                showLabel: app == 0 || app == 2 || app == 5,
                               ),
                             ),
                           ),

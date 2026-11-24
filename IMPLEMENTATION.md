@@ -1,5 +1,62 @@
 # Implementation plan
 
+## LAN remote screen preview — 2026-11-24
+
+The owner's Remote screen flow is implemented inside Broomm on branch
+`codex/remote-screen`. Home has the labeled shortcut after Emulator Settings.
+The two roles expose host information and client connection, discovery and
+recent-host entry. The macOS server starts with the application and remains
+available through onboarding, Home and gameplay. A connection code gates one
+remote screen. The client can enter from onboarding without a RomM account.
+
+The shared Dart connection uses bounded TCP messages, UDP discovery, heartbeat,
+sender-relative monotonic input expiry, and bounded writes. Client state includes
+both sticks, triggers and positional buttons from Android, macOS, Windows and
+Linux readers. macOS delivers supported gameplay input through a private Unix
+socket into the emulator's own SDL2 runtime. An expired source disconnects and
+follows the existing pause/pairing path. No host controller driver is required.
+
+With a client connected before launch, melonDS and Azahar prepare separate
+windows. ScreenCaptureKit verifies the supervised child's process identity and
+captures its unique secondary window. Native JPEG encoding waits for client
+render acknowledgements. A durable journal restores the temporary layout keys
+after writer exit or before the next session, preserving unrelated preferences.
+The initial host scope is macOS. Linux and Windows hosting follow later, and
+Android hosting remains deferred.
+
+The preview uses an unencrypted LAN connection with a persistent installation
+code, explained on the connection screen. It supports one source controller,
+requires connecting before game launch, and matches Azahar's English secondary
+window title. Touch and audio forwarding remain later capabilities. The
+[walkthrough](README.md#remote-screen-preview) and [implementation record](docs/remote-screen.md)
+include prerequisites, data locations, effects, recovery and verification limits.
+
+Static analysis, **851 macOS-hosted Flutter tests** and the **32 final affected checks** pass, with the existing Linux-only test skipped on macOS.
+The real loopback checks cover authentication, UDP discovery and control delivery.
+A controlled clock verifies stale navigation is rejected. Persistence, transport
+bounds, layout interruption and the narrow role/connected screens are exercised.
+The C receiver passes ordinary and independent AddressSanitizer/UBSan execution
+through real Unix sockets with controlled SDL calls. Both native bridge slices
+build, and the full Android Kotlin bridge compiles with its existing deprecation
+warnings. Diagnostics are retained under `.tool-cache/remote-*.log` and
+`.tool-cache/research/remote-screen/`.
+
+Two-device LAN gameplay, physical controllers, native video/permission/focus and
+renderer acceptance, latency/bandwidth measurements, and Android/Windows/Linux
+client execution remain pending. No DS/3DS game fixture is installed here, so
+these checks do not establish real melonDS or Azahar input/video consumption.
+The PR remains a development preview for that device acceptance.
+
+The fresh [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+is `0.1.30-dev` (1216), **24,635,517 bytes**, with SHA-256
+`4d44fd9a313c2cc97e37f3fb418b517b5ab592dc5002908a37db88061fdc1144`.
+Archive integrity and source/fresh-extraction deep, strict, all-architecture
+signatures pass. All seven Mach-O payloads contain ARM64 and x86_64. Local
+packaging refreshes the App.framework and outer ad-hoc signatures after the
+incremental Flutter build. This portable build uses production Application
+Support storage, disabled development self-installation and ad-hoc signing.
+
+
 ## Ortholinear keyboard and ambient Home artwork — 2026-11-19
 
 All five keyboard rows now share a 14-column grid. Both Shift keys span two

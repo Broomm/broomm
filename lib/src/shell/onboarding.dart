@@ -42,6 +42,11 @@ class _OnboardingState extends State<Onboarding> {
               : 'Connect to your RomM server.\nRediscover everything you love to play.',
           style: const TextStyle(color: muted, fontSize: 17, height: 1.7),
         ),
+        const SizedBox(height: 20),
+        ConsoleButton(
+          onPressed: () => m.navigate(ShellScreen.remote),
+          child: const Text('Remote screen'),
+        ),
         const SizedBox(height: 32),
         Row(
           children: [

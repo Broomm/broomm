@@ -11,6 +11,7 @@ import 'retroarch_control.dart';
 import 'session_log.dart';
 import 'session_lease.dart';
 import 'switch_launch_identity.dart';
+import 'remote/layout.dart';
 import 'romm/transfer.dart';
 export 'session_log.dart';
 
@@ -193,8 +194,12 @@ class GameSession {
     this.managedRoot,
     this.resolve,
     this.preparationLease,
+    this.remoteSocket,
+    this.remoteScreen = false,
   });
   final String project;
+  final String? remoteSocket;
+  final bool remoteScreen;
   final String? managedRoot;
   final Future<ResolvedSession> Function(LaunchGame)? resolve;
   final SessionLease? preparationLease;
@@ -396,6 +401,7 @@ class GameSession {
       }
       _romPath = rom.path;
       emulator = e;
+      e.remoteScreen = remoteScreen && Platform.isMacOS;
       game = selected;
       // Keep version-sensitive native ABI addresses tied to the exact prepared executable.
       if (Platform.isMacOS) {
@@ -482,6 +488,7 @@ class GameSession {
         _retroPort = endpoint.port;
         await endpoint.close();
       }
+      await RemoteLayout.prepare(e);
       final args = await EmulatorAdapter.forName(e.name)
           .prepare(e, selected, rom.path, _retroPort);
       cancellation.check();
@@ -553,6 +560,10 @@ class GameSession {
           'BROOMM_MAC_WINDOW_COMMAND': '${e.root}/mac-window-command.txt',
         'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
         'BROOMM_SESSION': '1',
+        if (Platform.isMacOS &&
+            remoteSocket != null &&
+            {'melonDS', 'Azahar'}.contains(e.name))
+          'BROOMM_REMOTE_SOCKET': remoteSocket!,
         if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP'))
           'BROOMM_NATIVE_CONTROL_PORT': '$_retroPort',
         'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',
@@ -996,6 +1007,13 @@ class GameSession {
   }
 
   Future<void> _release() async {
+    if (emulator case final prepared?) {
+      try {
+        await RemoteLayout.restore(prepared);
+      } catch (e) {
+        onProblem?.call('Remote layout recovery is pending: $e');
+      }
+    }
     finalizingProgress = false;
     ++_generation;
     _stopping = true;
