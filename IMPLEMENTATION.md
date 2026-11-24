@@ -57,6 +57,26 @@ ARM64 and x86_64. This is the same portable ad-hoc distribution using production
 Application Support and disabled development self-installation. No dependency,
 OS service, global setting, user emulator profile or live save was changed.
 
+The matching Android build is `0.1.31-pr21.45511798437`, version `0.1.31` /
+code **1202**. Its CI artifact digest, metadata, ARM64 ELF and merge provenance
+verify against feature commit `16e9443`; subsequent changes are documentation
+and test formatting only. The locally signed
+[Galaxy update](build/releases/Broomm-0.1.31-pr21.45511798437-galaxy-preview.apk)
+is **65,453,741 bytes**, SHA-256
+`39d57470720141025509717494a50163b80a704e24b85364f0b93da25e86894e`.
+Its signature matches the retained preview certificate installed on the tablet,
+and all **171 non-signature ZIP entries** match the CI APK. It is ready for
+`adb install -r` without resetting app data. ADB still lists no device, so this
+build has **not been installed or measured on the Galaxy**. Verification records
+are under `.tool-cache/remote-screen-tablet/stream/`.
+
+The runtime-source CI build packages all five targets and its native macOS job
+passes. Windows checks still report file-in-use failures during temporary test
+directory cleanup in unchanged artwork, shell and version tests. Linux stopped
+on an overlong test annotation; that formatting issue is corrected in `b72b057`
+and the complete local formatting check passes. The follow-up cross-platform
+checks remain in progress; this delivery does not claim a green full CI run.
+
 ## LAN remote screen preview — 2026-11-24
 
 The owner's Remote screen flow is implemented inside Broomm on branch
