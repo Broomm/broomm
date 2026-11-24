@@ -149,7 +149,7 @@ void main() {
   });
 
   test(
-    'touch crosses authenticated transport and releases on focus loss',
+    'macOS touch crosses authenticated transport and releases on focus loss',
     () async {
       final reports = <String>[];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -194,6 +194,7 @@ void main() {
         await host.close();
       }
     },
+    skip: Platform.isMacOS ? false : 'Native touch hosting is staged for macOS.',
   );
 
   test(
