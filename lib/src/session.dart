@@ -161,6 +161,7 @@ class BridgeStatus {
       macWindowHidden = j['macWindowHidden'] as bool? ?? false,
       macWindowBirth = (j['macWindowBirth'] as List? ?? []).cast<int>(),
       remoteCapture = (j['remoteCapture'] as List? ?? []).cast<num>(),
+      remotePrimary = j['remotePrimary'] as int? ?? 0,
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -181,6 +182,7 @@ class BridgeStatus {
   final bool macWindowHidden;
   final List<int> macWindowBirth;
   final List<num> remoteCapture;
+  final int remotePrimary;
   final Rpcs3Loading? loading;
 }
 
@@ -600,6 +602,10 @@ class GameSession {
           'BROOMM_DEFER_SDL_WATCHES': '1',
         if (Platform.isLinux && e.name == 'Azahar') 'BROOMM_AZAHAR': '1',
         if (e.name == 'melonDS') 'BROOMM_MELONDS': '1',
+        // The pinned Qt menu regex JIT can fault on ARM64 focus changes under
+        // W^X. This affects Qt menu matching, not the DS CPU recompiler.
+        if (Platform.isMacOS && e.name == 'melonDS' && e.remoteScreen)
+          'QT_ENABLE_REGEXP_JIT': '0',
         if (e.name == 'Eden') 'BROOMM_EDEN': '1',
         if (e.name == 'PPSSPP') ...{
           'BROOMM_PPSSPP': '1',

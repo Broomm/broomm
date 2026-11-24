@@ -16,8 +16,11 @@ The versioned TCP protocol uses a five-byte header with a message kind and
 big-endian payload length. Control messages are limited to 2 KiB and JPEG frames
 to 1 MiB before payload allocation. Both endpoints bound pending writes and use
 write deadlines. Client heartbeats detect a silent host. Sender-relative monotonic timestamps
-reject input delayed in transit before it can trigger launcher actions. Video waits for a client
-render acknowledgement before the native encoder produces the next frame.
+reject input delayed in transit before it can trigger launcher actions. The native encoder gets its next credit when the bounded socket write finishes,
+not when the client paints and acknowledges a frame. One encoded frame is in
+flight. The client decodes one JPEG at a time with one replaceable pending frame;
+older pending images are dropped and video never fills Flutter's ImageCache.
+Codecs/source images are disposed on completion, replacement, pause and teardown.
 The client decodes at 640 by 480 and expands the image to its available viewport,
 with only a compact connection strip below it. The ordinary shell footer is
 hidden while connected. It remembers successful hosts in most recent
@@ -94,11 +97,64 @@ The adapter now identifies root window ID 0 and calls melonDS's own onQuit actio
 Its normal closeEvent closes child windows and flushes configuration/progress.
 The deadline and normal writer/save supervision remain unchanged.
 
-Native capture targets 30 frames per second at 640 by 480 and encodes JPEGs
-through system frameworks. Actual frame rate, bandwidth and input/video delay
-need measurement on the host and client pair. Renderer, window covering,
+Native capture targets up to 60 frames per second at 640 by 480 and encodes JPEGs
+through system frameworks. Five-second diagnostics report capture fps/encoding time, socket fps/bytes/write
+time, and client receive/decode fps/time/failures to the host log. Idle, blank and
+suspended capture samples are counted separately. Actual Wi-Fi frame rate,
+bandwidth and input/video delay still need measurement on the host/client pair. Renderer, window covering,
 minimization, fullscreen and Spaces behavior need native acceptance. The client
 shows capture problems while preserving its controller connection.
+
+## Stream reliability and frame pacing follow-up
+
+The owner's latest run mostly worked, then displayed the active melonDS caption
+without video and consistently raised the secondary. Existing host logs record
+stream starts and normal-gameplay/exit transitions but no per-frame progress.
+The logged ScreenCaptureKit failures coincide with emulator shutdown; they do
+not establish the cause of the earlier blank view.
+
+A real-TCP regression reproduces a deterministic race: the first JPEG arrives,
+then the stream-start status clears that image before its widget paints. The
+old host then waits forever for the discarded frame's paint acknowledgement.
+A second lifecycle race let an older asynchronous capture stop clear a newer
+capture handle. Stream generations now reject obsolete native callbacks and
+credits. Native ownership detaches the previous handle before awaiting stop;
+older work never clears a replacement. Starting status precedes frames, active
+status requires a real frame, and active-status updates preserve that frame.
+A successfully started stream without a frame gets an actionable four-second
+watchdog message while controller input continues. The version-1 JPEG wire
+format is retained; old paint acknowledgements are accepted but ignored by the
+new host, and a new client can still acknowledge an old host.
+
+A generated 640×480 native encoding benchmark measured **1.61 ms mean / 2.09 ms
+p95** for the existing CGImage/NSBitmap encoder, versus **2.07 / 2.30 ms** for
+direct CoreImage JPEG. The existing encoder remains. A real loopback comparison
+using the original/revised production services and a controlled 40 ms paint-ACK
+delay measured **14.98 fps → 29.97 fps** at the same 33 ms source interval.
+The revised path achieved **62.28 fps** at a 16 ms source interval. These are
+controlled transport measurements with a pre-encoded frame, not tablet Wi-Fi
+measurements or end-to-end hardware latency.
+
+Primary ordering now reconciles later activation and secondary raises instead
+of remembering only the first order operation. The bridge selects the pinned
+Qt root window, uses its raise/activate methods, and keeps Cocoa's primary key
+window consistent. Native primary/secondary IDs and order diagnostics are logged.
+The integration check uses `optionOnScreenOnly`, which Apple's CGWindow.h
+explicitly defines as front-to-back. The earlier `optionAll` test used an
+all-window inventory without an ordering guarantee; its failed comparisons were
+not accepted as visual evidence. No private WindowServer API is used.
+
+Real focus/close testing also exposed a **SIGBUS in pcre2_jit_match_16 through
+QCocoaMenuItem::sync**. The remote melonDS child receives
+`QT_ENABLE_REGEXP_JIT=0`, Qt's documented switch for its regex matcher
+([Qt documentation](https://doc.qt.io/qt-6/qregularexpression.html#debugging-code-that-uses-qregularexpression)).
+This is scoped to that child and concerns Qt menu matching; it does not select
+a different DS CPU renderer/recompiler or change any global environment.
+
+Benchmark data, the failing race, complete fixture logs and native crash evidence
+are retained under `.tool-cache/research/remote-stream/` and the private
+`.tool-cache/research/remote-followup/native-*` roots. The final implementation
+record distinguishes compilation, native execution and owner acceptance.
 
 ## Verification
 
@@ -125,15 +181,16 @@ on the original PR preview, reporting image sizing, missing touch and close
 problems. That is scoped owner-performed melonDS acceptance, not Azahar or
 all-platform acceptance.
 
-The follow-up passes static analysis, 854 macOS-hosted Flutter tests (one existing
+The latest follow-up passes static analysis, 859 macOS-hosted Flutter tests (one existing
 Linux-only skip), real loopback touch/authentication/focus-loss checks, and
 ordinary plus independent ASan/UBSan native receiver/window fixtures. The latter
 check tap edges, minimum duration, invalid packets, expiry, pause, windowed
 maximize, cropping, resize behavior, unrelated windows and primary stacking.
 An actual melonDS 1.1 ARM64 fixture copies an existing verified installation and
 local ROM under its source session lease, then runs with fresh private saves.
-Three runs (normal, remote and remote relaunch) confirm all AppKit windows are
-invisible before normal close. They exit in 503, 639 and 500 ms. Both remote
+Three runs (normal, remote and remote relaunch) verify visible primary ordering
+and recovery after a controlled secondary raise, then confirm all AppKit windows
+are invisible before normal close. They exit in 532, 611 and 567 ms. Both remote
 runs read back press coordinates and release/pause state in the native frontend
 and publish a 1228×921 game crop. These checks establish native frontend delivery;
 they do not replace owner gameplay acceptance of touch or the revised stream.

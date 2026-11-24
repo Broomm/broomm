@@ -29,9 +29,11 @@ import Darwin
       return
     }
     guard args[2] == "inspect" else { fatalError("Unknown operation.") }
-    let windows = (CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]] ?? [])
+    let all = (CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]] ?? [])
       .filter { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == app.processIdentifier }
-    let report: [String: Any] = ["hidden": app.isHidden, "windows": windows]
+    let windows = (CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? [])
+      .filter { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == app.processIdentifier }
+    let report: [String: Any] = ["hidden": app.isHidden, "windows": windows, "allWindows": all]
     print(String(data: try JSONSerialization.data(withJSONObject: report, options: [.sortedKeys]), encoding: .utf8)!)
   }
 }

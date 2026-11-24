@@ -179,6 +179,16 @@ static void native_pause_fixture(int actual,id window) {
         record("SESSION_TEST_HIDE visible=%lu",visible);
         atomic_store(&test_native_pause_action,0);return;
     }
+    if(action==7) {
+        id app=send0((id)objc_getClass("NSApplication"),"sharedApplication"),windows=send0(app,"windows");
+        unsigned long count=((unsigned long(*)(id,SEL))objc_msgSend)(windows,sel_registerName("count"));
+        for(unsigned long i=0;i<count;++i) {
+            id item=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
+            const char *title=appkit_window_title(item);
+            if(title&&strstr(title,"[w2]"))((void(*)(id,SEL,id))objc_msgSend)(item,sel_registerName("orderFront:"),NULL);
+        }
+        record("SESSION_TEST_RAISE_SECONDARY");atomic_store(&test_native_pause_action,0);return;
+    }
     if((action!=4&&action!=5)||actual<0)return;
     bool paused=action==4;
     if(getenv("BROOMM_PAUSE_APPKIT_F5")) {
@@ -216,12 +226,18 @@ static void session_ui(void *unused) {
     (void)unused;
     if(atomic_load(&session_finishing)){atomic_store(&ui_pending,false);return;}
     broomm_macos_window_observe();
-    if(getenv("BROOMM_MELONDS"))broomm_macos_remote_tick(!atomic_load(&session_gate));
     atomic_store(&pause_requested,atomic_load(&session_wanted));
     static uint32_t *azahar_pause;
     static bool symbols_resolved;
     if(!symbols_resolved){azahar_pause=symbol("_ZN11GMainWindow11OnPauseGameEv");symbols_resolved=true;}
     qt_tick();
+    if(getenv("BROOMM_MELONDS")&&broomm_macos_remote_tick(!atomic_load(&session_gate))&&qt_main) {
+        static void (*raise_window)(void *),(*activate_window)(void *);
+        if(!raise_window)raise_window=symbol("_ZN7QWidget5raiseEv");
+        if(!activate_window)activate_window=symbol("_ZN7QWidget14activateWindowEv");
+        if(raise_window)raise_window(qt_main);
+        if(activate_window)activate_window(qt_main);
+    }
     int actual=-1;
     if(getenv("BROOMM_EDEN")) {
         actual=eden_tick();
@@ -527,6 +543,7 @@ static void write_status(void) {
     motion_write_status(out);
     loading_status(out);
     struct MacWindowStatus window_status=broomm_macos_window_status();
+    fprintf(out,",\"remotePrimary\":%u",window_status.remote_primary);
     if(atomic_load(&ryubing_pause_timed_out))fputs(",\"pauseRequestTimedOut\":true",out);
     fprintf(out,",\"macWindowAck\":%llu,\"macWindowHidden\":%s,\"macWindowBirth\":[%llu,%llu]",
         (unsigned long long)window_status.revision,window_status.hidden?"true":"false",

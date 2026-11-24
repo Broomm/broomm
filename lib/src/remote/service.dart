@@ -75,6 +75,17 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   String? _targetKey;
   Future<void>? _targetWork;
   bool _captureCancelling = false;
+  int _captureId = 0;
+  Timer? _firstFrameDeadline;
+  bool _videoActive = false, _videoDiagnostics = false;
+  int _videoWindow = 0,
+      _sentFrames = 0,
+      _sentBytes = 0,
+      _receivedFrames = 0,
+      _decodedFrames = 0,
+      _decodeErrors = 0;
+  double _writeMillis = 0, _decodeMillis = 0;
+  int _lastPeerVideoReport = -10000;
   int? _gamePid;
   String? _gameName;
   Map<String, Object>? _target;
@@ -107,20 +118,26 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (_closed) return;
       channel.setMethodCallHandler((call) async {
-        if (call.method == 'frame' && call.arguments is Uint8List) {
-          final bytes = call.arguments as Uint8List;
-          if (_guest != null && !_frameBusy && bytes.length <= 1024 * 1024) {
-            _frameBusy = true;
-            _guest!.add(bytes);
+        if (call.method == 'frame') await _sendFrame(call.arguments);
+        if (call.method == 'captureError') {
+          final args = call.arguments;
+          if (args is Map && args['id'] == _captureId) {
+            _firstFrameDeadline?.cancel();
+            _sendStatus('Screen capture needs attention. ${args['message']}');
           }
         }
-        if (call.method == 'captureError') {
-          _sendStatus('Screen capture needs attention. ${call.arguments}');
+        if (call.method == 'captureStats') {
+          final args = call.arguments;
+          if (args is Map && args['id'] == _captureId)
+            onEvent?.call(
+              'Remote video capture: ${args['fps']} fps, encode ${args['encodeMs']} ms, source idle ${args['idle']}, source blank ${args['blank']}, source suspended ${args['suspended']}',
+            );
         }
         if (call.method == 'pad') localPad(call.arguments);
       });
       _heartbeat = Timer.periodic(const Duration(milliseconds: 100), (_) {
         _sendPad();
+        _reportVideo();
         if (_touch.pressed) _sendTouch();
         if (_client != null && ++_ticks % 10 == 0) {
           _client!.add(jsonEncode({'type': 'ping'}));
@@ -257,7 +274,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           _guest = socket;
           _frameBusy = false;
           _lastInput = DateTime.now();
-          socket.add(jsonEncode({'type': 'ready', 'version': remoteProtocol}));
+          socket.add(
+            jsonEncode({
+              'type': 'ready',
+              'version': remoteProtocol,
+              'videoDiagnostics': true,
+            }),
+          );
           _sendStatus('Waiting for a compatible emulator to be launched.');
           _targetKey = null;
           _syncTarget();
@@ -299,8 +322,37 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
               _deliverTouch(touch);
             }
           case 'frameAck':
-            _frameBusy = false;
-            unawaited(channel.invokeMethod<void>('nextFrame'));
+            // Legacy clients may acknowledge painting; it no longer gates capture.
+            break;
+          case 'videoStats':
+            if (_milliseconds - _lastPeerVideoReport >= 1000) {
+              final received = message['received'],
+                  decoded = message['decoded'],
+                  errors = message['errors'],
+                  interval = message['intervalMs'],
+                  decode = message['decodeMs'];
+              if (received is! int ||
+                  decoded is! int ||
+                  errors is! int ||
+                  interval is! int ||
+                  decode is! num ||
+                  received < 0 ||
+                  received > 100000 ||
+                  decoded < 0 ||
+                  decoded > 100000 ||
+                  errors < 0 ||
+                  errors > 100000 ||
+                  interval < 100 ||
+                  interval > 60000 ||
+                  !decode.isFinite ||
+                  decode < 0 ||
+                  decode > 10000)
+                throw const FormatException('Invalid video diagnostics.');
+              _lastPeerVideoReport = _milliseconds;
+              onEvent?.call(
+                'Remote video client: ${(received * 1000 / interval).toStringAsFixed(1)} fps received, ${(decoded * 1000 / interval).toStringAsFixed(1)} fps decoded, ${decode.toStringAsFixed(2)} ms decode, $errors decode failures',
+              );
+            }
           default:
             throw const FormatException('Unsupported remote message.');
         }
@@ -323,6 +375,80 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         _emit();
       }
     }
+  }
+
+  Future<void> _sendFrame(Object? arguments) async {
+    if (arguments is! Map ||
+        arguments['id'] != _captureId ||
+        arguments['bytes'] is! Uint8List)
+      return;
+    final id = _captureId, peer = _guest;
+    final bytes = arguments['bytes'] as Uint8List;
+    if (peer == null ||
+        _frameBusy ||
+        bytes.isEmpty ||
+        bytes.length > 1024 * 1024)
+      return;
+    _frameBusy = true;
+    if (!_videoActive) {
+      _videoActive = true;
+      _firstFrameDeadline?.cancel();
+      _sendStatus('$_gameName secondary screen', clear: false);
+    }
+    final watch = Stopwatch()..start();
+    try {
+      await peer.sendFrame(bytes);
+      _sentFrames++;
+      _sentBytes += bytes.length;
+      _writeMillis += watch.elapsedMicroseconds / 1000;
+    } catch (e) {
+      if (identical(peer, _guest))
+        onEvent?.call('Remote video write failed. $e');
+    } finally {
+      if (id == _captureId && identical(peer, _guest)) {
+        _frameBusy = false;
+        unawaited(
+          channel
+              .invokeMethod<void>('nextFrame', {'id': id})
+              .catchError((Object _) {}),
+        );
+      }
+    }
+  }
+
+  void frameDecoded(Duration elapsed) {
+    _decodedFrames++;
+    _decodeMillis += elapsed.inMicroseconds / 1000;
+  }
+
+  void frameDecodeFailed() {
+    _decodeErrors++;
+  }
+
+  void _reportVideo() {
+    final now = _milliseconds, interval = now - _videoWindow;
+    if (interval < 5000) return;
+    if (_sentFrames > 0)
+      onEvent?.call(
+        'Remote video send: ${(_sentFrames * 1000 / interval).toStringAsFixed(1)} fps, ${(_sentBytes * 1000 / interval / 1024).toStringAsFixed(0)} KiB/s, ${(_writeMillis / _sentFrames).toStringAsFixed(2)} ms socket write',
+      );
+    if (connected &&
+        _videoDiagnostics &&
+        (_receivedFrames > 0 || _decodeErrors > 0))
+      _client?.add(
+        jsonEncode({
+          'type': 'videoStats',
+          'received': _receivedFrames,
+          'decoded': _decodedFrames,
+          'errors': _decodeErrors,
+          'intervalMs': interval.clamp(100, 60000),
+          'decodeMs': _decodedFrames == 0 ? 0 : _decodeMillis / _decodedFrames,
+        }),
+      );
+    _videoWindow = now;
+    _sentFrames = _sentBytes = _receivedFrames = _decodedFrames =
+        _decodeErrors = 0;
+    _writeMillis = _decodeMillis = 0;
   }
 
   void _deliverPad(RemotePad pad, bool present) {
@@ -388,6 +514,10 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     if (_targetWork != null) {
       if (_targetKey != key && !_captureCancelling) {
         _captureCancelling = true;
+        ++_captureId;
+        _frameBusy = false;
+        _videoActive = false;
+        _firstFrameDeadline?.cancel();
         _targetKey = null;
         unawaited(
           channel.invokeMethod<void>('cancelCapture').catchError((Object _) {}),
@@ -397,8 +527,17 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     }
     if (_targetKey == key) return;
     _targetKey = key;
+    final id = ++_captureId;
+    _frameBusy = false;
+    _videoActive = false;
+    _firstFrameDeadline?.cancel();
+    if (compatible) {
+      _sendStatus('Starting $_gameName secondary screen…');
+    } else {
+      _sendStatus('Waiting for a compatible emulator to be launched.');
+    }
     final args = compatible
-        ? <String, Object>{..._target!, 'name': _gameName!}
+        ? <String, Object>{..._target!, 'name': _gameName!, 'id': id}
         : null;
     final work = channel.invokeMethod<void>('capture', args);
     _targetWork = work;
@@ -407,14 +546,19 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           .then(
             (_) {
               if (_targetKey != key) return;
-              if (compatible)
-                _sendStatus('$_gameName secondary screen');
-              else
-                _sendStatus(
-                  'Waiting for a compatible emulator to be launched.',
-                );
+              // A started stream is not proof of a frame. _sendFrame marks it live.
+              if (compatible && !_videoActive) {
+                _firstFrameDeadline = Timer(const Duration(seconds: 4), () {
+                  if (id == _captureId && !_videoActive)
+                    _sendStatus(
+                      'No video frames from $_gameName. Use Retry screen to reconnect capture.',
+                    );
+                });
+              }
             },
             onError: (Object e) {
+              if (id != _captureId) return;
+              _firstFrameDeadline?.cancel();
               _sendStatus('Screen capture needs attention. $e');
             },
           )
@@ -427,17 +571,19 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   String? _lastStatus;
-  void _sendStatus(String value) {
+  void _sendStatus(String value, {bool clear = true}) {
     if (_lastStatus != value) onEvent?.call('Remote screen: $value');
     _lastStatus = value;
     _guest?.add(
       jsonEncode({
         'type': 'status',
         'message': value,
+        'clear': clear,
         'touch':
             _gameName == 'melonDS' &&
             _target?['remoteCapture'] != null &&
-            value == 'melonDS secondary screen',
+            (value == 'melonDS secondary screen' ||
+                value == 'Starting melonDS secondary screen…'),
       }),
     );
   }
@@ -543,7 +689,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             if (data is List<int>) {
               if (!connected || data.length > 1024 * 1024)
                 throw const FormatException('Invalid frame.');
-              frame = Uint8List.fromList(data);
+              _receivedFrames++;
+              frame = data is Uint8List ? data : Uint8List.fromList(data);
               _emit();
               return;
             }
@@ -551,13 +698,20 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             if (message['type'] == 'ready' &&
                 message['version'] == remoteProtocol &&
                 !ready.isCompleted) {
+              _videoDiagnostics = message['videoDiagnostics'] == true;
+              _videoWindow = _milliseconds;
               ready.complete();
             } else if (message['type'] == 'status' &&
                 message['message'] is String) {
               touch(RemoteTouch.released);
               touchSupported = message['touch'] == true;
               status = message['message'];
-              frame = null;
+              final active =
+                  status == 'melonDS secondary screen' ||
+                  status == 'Azahar secondary screen';
+              if (message['clear'] == true ||
+                  (message['clear'] != false && !active))
+                frame = null;
               _emit();
             }
           } catch (e) {
@@ -705,6 +859,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     await _discoveryWork;
     WidgetsBinding.instance.removeObserver(this);
     await disconnect();
+    _firstFrameDeadline?.cancel();
     _heartbeat?.cancel();
     _retry?.cancel();
     _discoveryTimer?.cancel();

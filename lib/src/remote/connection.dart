@@ -29,7 +29,8 @@ class RemoteConnection extends Stream<Object> {
   final _header = Uint8List(5);
   int _headerUsed = 0, _used = 0, _kind = 0;
   Uint8List? _payload;
-  final Queue<Uint8List> _output = Queue();
+  final Queue<({Uint8List data, Completer<void>? sent})> _output = Queue();
+  Completer<void>? _activeWrite;
   bool _sending = false, _closed = false;
 
   @override
@@ -84,13 +85,26 @@ class RemoteConnection extends Stream<Object> {
     }
   }
 
-  void add(Object value) {
-    if (_closed) return;
+  void add(Object value) => _enqueue(value, null);
+
+  /// Completion bounds the encoder by the socket writer, not remote painting.
+  Future<void> sendFrame(Uint8List bytes) {
+    final sent = Completer<void>();
+    _enqueue(bytes, sent);
+    return sent.future;
+  }
+
+  void _enqueue(Object value, Completer<void>? sent) {
+    if (_closed) {
+      sent?.completeError(StateError('Remote connection closed.'));
+      return;
+    }
     final text = value is String;
     final bytes = text ? utf8.encode(value) : value as List<int>;
     if (bytes.isEmpty ||
         bytes.length > (text ? 2048 : 1024 * 1024) ||
         _output.length >= 32) {
+      sent?.completeError(StateError('Remote write exceeded its limit.'));
       unawaited(close());
       return;
     }
@@ -98,7 +112,7 @@ class RemoteConnection extends Stream<Object> {
     data[0] = text ? 0 : 1;
     ByteData.sublistView(data).setUint32(1, bytes.length);
     data.setRange(5, data.length, bytes);
-    _output.add(data);
+    _output.add((data: data, sent: sent));
     if (!_sending) unawaited(_write());
   }
 
@@ -106,8 +120,12 @@ class RemoteConnection extends Stream<Object> {
     _sending = true;
     try {
       while (_output.isNotEmpty && !_closed) {
-        socket.add(_output.removeFirst());
+        final next = _output.removeFirst();
+        _activeWrite = next.sent;
+        socket.add(next.data);
         await socket.flush().timeout(const Duration(seconds: 2));
+        if (next.sent?.isCompleted == false) next.sent!.complete();
+        _activeWrite = null;
       }
     } catch (_) {
       await close();
@@ -119,6 +137,12 @@ class RemoteConnection extends Stream<Object> {
   Future<void> close([int? code, String? reason]) async {
     if (_closed) return;
     _closed = true;
+    if (_activeWrite?.isCompleted == false)
+      _activeWrite!.completeError(StateError('Remote connection closed.'));
+    for (final pending in _output) {
+      if (pending.sent?.isCompleted == false)
+        pending.sent!.completeError(StateError('Remote connection closed.'));
+    }
     _output.clear();
     socket.destroy();
     await _subscription.cancel();

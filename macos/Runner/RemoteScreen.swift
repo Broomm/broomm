@@ -34,31 +34,36 @@ final class BroommRemoteScreen {
         reply(nil)
       case "cancelCapture":
         self.revision += 1
+        let previous = self.capture
+        self.capture = nil
         Task { @MainActor in
-          if #available(macOS 12.3, *), let stream = self.capture as? BroommWindowStream { await stream.stop() }
-          self.capture = nil
+          if #available(macOS 12.3, *), let stream = previous as? BroommWindowStream { await stream.stop() }
           reply(nil)
         }
       case "nextFrame":
-        if #available(macOS 12.3, *), let capture = self.capture as? BroommWindowStream { capture.nextFrame() }
+        if #available(macOS 12.3, *), let capture = self.capture as? BroommWindowStream,
+           let args = call.arguments as? [String: Any], args["id"] as? Int == capture.captureID { capture.nextFrame() }
         reply(nil)
       case "capture":
         self.revision += 1
         let revision = self.revision
         let arguments = call.arguments as? [String: Any]
+        let previous = self.capture
+        self.capture = nil
         Task { @MainActor in
           do {
             if #available(macOS 12.3, *) {
-              if let previous = self.capture as? BroommWindowStream { await previous.stop() }
-              self.capture = nil
+              if let previous = previous as? BroommWindowStream { await previous.stop() }
+              guard revision == self.revision else { reply(nil); return }
               if let args = arguments {
                 let app = try self.recovery.emulatorWindowTarget(args)
                 guard revision == self.revision else { reply(nil); return }
-                let stream = BroommWindowStream(channel: self.channel)
+                let stream = BroommWindowStream(channel: self.channel, captureID: args["id"] as? Int ?? 0)
                 self.capture = stream
                 try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", geometry: args["remoteCapture"] as? [NSNumber], valid: {
                   revision == self.revision && !app.isTerminated
                 })
+                if revision != self.revision { await stream.stop() }
               }
               reply(nil)
             } else {
@@ -127,13 +132,17 @@ final class BroommRemoteScreen {
 @available(macOS 12.3, *)
 private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelegate {
   private let channel: FlutterMethodChannel
-  private let queue = DispatchQueue(label: "app.broomm.remote.capture")
+  private let queue = DispatchQueue(label: "app.broomm.remote.capture", autoreleaseFrequency: .workItem)
   private let context = CIContext(options: [.cacheIntermediates: false])
   private var stream: SCStream?
   private var permitted = true
   private var stopped = false
+  let captureID: Int
+  private var statsStart = ProcessInfo.processInfo.systemUptime
+  private var frames = 0, idle = 0, blank = 0, suspended = 0
+  private var encodeMillis = 0.0
 
-  init(channel: FlutterMethodChannel) { self.channel = channel }
+  init(channel: FlutterMethodChannel, captureID: Int) { self.channel = channel; self.captureID = captureID }
 
   @MainActor
   func start(pid: pid_t, name: String, geometry: [NSNumber]?, valid: () -> Bool) async throws {
@@ -168,9 +177,10 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
     }
     configuration.width = 640
     configuration.height = 480
-    configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
+    configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
     configuration.queueDepth = 3
     configuration.showsCursor = false
+    if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
     let stream = SCStream(filter: SCContentFilter(desktopIndependentWindow: window), configuration: configuration, delegate: self)
     self.stream = stream
     try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
@@ -178,6 +188,7 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   }
 
   func nextFrame() { queue.async { self.permitted = true } }
+  @MainActor
   func stop() async {
     queue.sync { stopped = true }
     try? await stream?.stopCapture()
@@ -186,19 +197,42 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   func stream(_ stream: SCStream, didStopWithError error: Error) {
     queue.async {
       guard !self.stopped else { return }
-      DispatchQueue.main.async { self.channel.invokeMethod("captureError", arguments: error.localizedDescription) }
+      DispatchQueue.main.async { self.channel.invokeMethod("captureError", arguments: ["id": self.captureID, "message": error.localizedDescription]) }
     }
   }
   func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
-    guard type == .screen, !stopped, permitted, sampleBuffer.isValid,
-          let buffer = sampleBuffer.imageBuffer else { return }
+    guard type == .screen, !stopped, sampleBuffer.isValid else { return }
+    defer { reportStats() }
+    if let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
+       let raw = attachments.first?[.status] as? Int, let status = SCFrameStatus(rawValue: raw), status != .complete {
+      if status == .idle { idle += 1 }
+      if status == .blank { blank += 1 }
+      if status == .suspended { suspended += 1 }
+      return
+    }
+    guard permitted, let buffer = sampleBuffer.imageBuffer else { return }
+    let start = ProcessInfo.processInfo.systemUptime
     let image = CIImage(cvPixelBuffer: buffer)
     guard let cg = context.createCGImage(image, from: image.extent),
           let jpeg = NSBitmapImageRep(cgImage: cg).representation(using: .jpeg, properties: [.compressionFactor: 0.75]),
           jpeg.count <= 1024 * 1024 else { return }
+    frames += 1
+    encodeMillis += (ProcessInfo.processInfo.systemUptime - start) * 1000
     permitted = false
-    DispatchQueue.main.async { self.channel.invokeMethod("frame", arguments: FlutterStandardTypedData(bytes: jpeg)) }
+    DispatchQueue.main.async {
+      self.channel.invokeMethod("frame", arguments: ["id": self.captureID, "bytes": FlutterStandardTypedData(bytes: jpeg)])
+    }
   }
+  private func reportStats() {
+    let now = ProcessInfo.processInfo.systemUptime, elapsed = now - statsStart
+    guard elapsed >= 5 else { return }
+    let report: [String: Any] = ["id": captureID, "fps": String(format: "%.1f", Double(frames)/elapsed),
+      "encodeMs": String(format: "%.2f", frames == 0 ? 0 : encodeMillis/Double(frames)),
+      "idle": idle, "blank": blank, "suspended": suspended]
+    statsStart = now; frames = 0; idle = 0; blank = 0; suspended = 0; encodeMillis = 0
+    DispatchQueue.main.async { self.channel.invokeMethod("captureStats", arguments: report) }
+  }
+
   private func failure(_ message: String) -> NSError {
     NSError(domain: "app.broomm.remote", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
   }

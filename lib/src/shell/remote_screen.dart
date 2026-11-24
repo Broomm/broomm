@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../remote/service.dart';
 import '../remote/protocol.dart';
+import '../remote/video_decoder.dart';
 
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'controls.dart';
 import 'navigation.dart';
@@ -58,6 +60,8 @@ class _RemoteScreenState extends State<RemoteScreen> {
                       touchEnabled: remote.touchSupported,
                       onTouch: remote.touch,
                       onDisplayed: remote.frameDisplayed,
+                      onDecoded: remote.frameDecoded,
+                      onDecodeError: remote.frameDecodeFailed,
                     ),
             ),
             Padding(
@@ -211,11 +215,15 @@ class RemoteVideo extends StatefulWidget {
     required this.touchEnabled,
     required this.onTouch,
     required this.onDisplayed,
+    this.onDecoded,
+    this.onDecodeError,
   });
   final Uint8List bytes;
   final bool touchEnabled;
   final ValueChanged<RemoteTouch> onTouch;
   final VoidCallback onDisplayed;
+  final ValueChanged<Duration>? onDecoded;
+  final VoidCallback? onDecodeError;
   @override
   State<RemoteVideo> createState() => _RemoteVideoState();
 }
@@ -277,27 +285,11 @@ class _RemoteVideoState extends State<RemoteVideo> {
               onPointerCancel: (event) {
                 if (pointer == event.pointer) release();
               },
-              child: Image.memory(
-                widget.bytes,
-                cacheWidth: 640,
-                cacheHeight: 480,
-                gaplessPlayback: true,
-                fit: BoxFit.fill,
-                frameBuilder: (context, child, frame, sync) {
-                  if (frame != null)
-                    WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => widget.onDisplayed(),
-                    );
-                  return child;
-                },
-                errorBuilder: (context, error, stack) {
-                  WidgetsBinding.instance.addPostFrameCallback(
-                    (_) => widget.onDisplayed(),
-                  );
-                  return const Center(
-                    child: Text('Could not decode the remote frame.'),
-                  );
-                },
+              child: _RemoteDecodedImage(
+                bytes: widget.bytes,
+                onDisplayed: widget.onDisplayed,
+                onDecoded: widget.onDecoded,
+                onDecodeError: widget.onDecodeError,
               ),
             ),
           ),
@@ -305,4 +297,87 @@ class _RemoteVideoState extends State<RemoteVideo> {
       );
     },
   );
+}
+
+/// Decode one frame at a time, keeping only the newest pending JPEG. This avoids
+/// cancelling a slow decode on every arrival or caching hundreds of video frames.
+class _RemoteDecodedImage extends StatefulWidget {
+  const _RemoteDecodedImage({
+    required this.bytes,
+    required this.onDisplayed,
+    this.onDecoded,
+    this.onDecodeError,
+  });
+  final Uint8List bytes;
+  final VoidCallback onDisplayed;
+  final ValueChanged<Duration>? onDecoded;
+  final VoidCallback? onDecodeError;
+  @override
+  State<_RemoteDecodedImage> createState() => _RemoteDecodedImageState();
+}
+
+class _RemoteDecodedImageState extends State<_RemoteDecodedImage>
+    with WidgetsBindingObserver {
+  ui.Image? image;
+  late final RemoteFrameDecoder decoder;
+  bool paused = false, failed = false;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    decoder = RemoteFrameDecoder(
+      onImage: (next) {
+        final old = image;
+        setState(() {
+          image = next;
+          failed = false;
+        });
+        // RawImage/RenderImage owns its own clone of the previous image.
+        old?.dispose();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && identical(image, next)) widget.onDisplayed();
+        });
+      },
+      onDecoded: (elapsed) => widget.onDecoded?.call(elapsed),
+      onError: () {
+        setState(() => failed = true);
+        widget.onDecodeError?.call();
+        widget.onDisplayed();
+      },
+    );
+    final state = WidgetsBinding.instance.lifecycleState;
+    paused = state != null && state != AppLifecycleState.resumed;
+    decoder.pause(paused);
+    decoder.add(widget.bytes);
+  }
+
+  @override
+  void didUpdateWidget(_RemoteDecodedImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(widget.bytes, oldWidget.bytes)) decoder.add(widget.bytes);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    paused = state != AppLifecycleState.resumed;
+    decoder.pause(paused);
+    if (!paused) decoder.add(widget.bytes);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    decoder.dispose();
+    image?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => failed
+      ? const Center(child: Text('Could not decode the remote frame.'))
+      : RawImage(
+          image: image,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.low,
+        );
 }

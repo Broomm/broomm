@@ -26,6 +26,7 @@ int main(void) {
         assert(NSEqualRects(settings,windows[2].frame));
         struct MacWindowStatus status=broomm_macos_window_status();
         assert(status.remote_window==(uint32_t)windows[1].windowNumber);
+        assert(status.remote_primary==(uint32_t)windows[0].windowNumber);
         assert(status.remote_crop[2]>512&&fabs(status.remote_crop[2]/status.remote_crop[3]-4.0/3.0)<0.001);
         [windows[1] setFrame:NSMakeRect(100,100,600,600) display:YES];
         broomm_macos_remote_tick(false);
@@ -35,6 +36,11 @@ int main(void) {
         // Stacking the owned windows must not require activating this process.
         broomm_macos_remote_tick(true);
         NSArray<NSWindow *> *ordered=NSApp.orderedWindows;
+        assert([ordered indexOfObject:windows[0]]<[ordered indexOfObject:windows[1]]);
+        // Qt/activation may raise the secondary after initial ordering.
+        [windows[1] orderFront:nil];
+        broomm_macos_remote_tick(true);
+        ordered=NSApp.orderedWindows;
         assert([ordered indexOfObject:windows[0]]<[ordered indexOfObject:windows[1]]);
         for(NSWindow *window in windows)[window close];
         puts("Remote window maximize, crop, resizing, unrelated windows and primary order passed.");

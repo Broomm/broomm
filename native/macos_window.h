@@ -11,6 +11,7 @@ struct MacWindowStatus {
     uint64_t seconds;
     uint64_t microseconds;
     uint32_t remote_window;
+    uint32_t remote_primary;
     double remote_crop[4];
 };
 
@@ -19,7 +20,7 @@ void broomm_macos_window_observe(void);
 void broomm_macos_window_tick(void *window, pid_t launcher, bool hide_windowed);
 struct MacWindowStatus broomm_macos_window_status(void);
 // Remote melonDS only: maximize once, maintain role order on play, publish crop.
-void broomm_macos_remote_tick(bool playing);
+bool broomm_macos_remote_tick(bool playing);
 
 // Avalonia exposes Ryubing's native pause state in the game window title.
 void *broomm_macos_ryubing_window(int *paused);

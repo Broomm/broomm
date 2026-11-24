@@ -1,5 +1,61 @@
 # Implementation plan
 
+## Remote video stall, frame pacing and primary focus — 2026-11-24
+
+The owner reported an active melonDS caption with no image after initially
+working, the secondary appearing in front, and choppy video. The host logs
+contained stream starts and expected capture failures on emulator exit, but no
+frame-rate/progress metrics. A controlled TCP regression reproduces a lost-frame
+race: stream-start status clears an image before painting, and the old host then
+waits indefinitely for its missing render acknowledgement.
+
+Video now advances after a bounded socket write, independently of client
+painting. The client completes one decode with one replaceable pending JPEG,
+drops superseded pending frames and avoids Flutter's global ImageCache. Native
+capture targets up to 60 fps. Capture generations reject old frames/errors/
+credits, and cancellation detaches the previous native handle before awaiting
+stop. Active status requires a real frame and preserves it; a no-frame watchdog
+leaves controller input connected and shows a retry action. The version-1 JPEG
+wire format and old-host acknowledgement compatibility are retained.
+Five-second logs separate capture/encoding, socket throughput and client
+receive/decode rates, including idle/blank/suspended frames and decode failures.
+
+The encoder benchmark retained the current encoder: **1.61 ms mean / 2.09 ms
+p95**, versus **2.07 / 2.30 ms** for direct CoreImage JPEG. A real-TCP comparison
+with a controlled 40 ms paint delay improved **14.98 → 29.97 fps** at the same
+33 ms source interval; a 16 ms source interval delivered **62.28 fps**. This is
+a controlled loopback result, not a measured tablet/Wi-Fi frame rate.
+
+Primary presentation now selects the pinned Qt root window, reconciles its
+raise/activate state with Cocoa's key window and reasserts ordering after later
+secondary raises. Actual melonDS checks verify visible primary/secondary IDs
+at launch, after a controlled secondary raise and after relaunch. The initial
+test incorrectly inferred z-order from the all-window inventory; it now uses
+Apple's explicitly ordered visible-window list. A real Qt menu focus/close
+SIGBUS in PCRE JIT was also caught. Only the remote melonDS child disables Qt's
+regex JIT using its documented environment switch; the DS recompiler and
+machine-wide environment are unchanged.
+
+Static analysis, **859 macOS-hosted Flutter tests** (one existing Linux-only
+skip), **15 focused remote checks**, and ordinary plus independent ASan/UBSan
+native input/window checks pass. The real melonDS fixture uses copied immutable
+installation/ROM data and fresh saves under the source/session leases. Its
+normal/remote/relaunch cases pass touch readback, primary ordering and hidden
+shutdown in **532, 611 and 567 ms**. Diagnostics and benchmark data are under
+`.tool-cache/research/remote-stream/`; private native fixture diagnostics remain
+under `.tool-cache/research/remote-followup/native-*`. Revised capture/render
+behavior and actual Wi-Fi FPS still need owner device acceptance. The tablet
+was unavailable to ADB while these checks ran.
+
+The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+is **0.1.31-dev / 1218**, **24,690,424 bytes**, SHA-256
+`2ff5eda699ec5ede158053eecfbce51b0755d9ec31d5a395e0b054cd562799c8`.
+The source/fresh-extracted deep, strict, all-architecture signatures, ZIP
+integrity and bundled bridge hashes verify. All seven Mach-O payloads retain
+ARM64 and x86_64. This is the same portable ad-hoc distribution using production
+Application Support and disabled development self-installation. No dependency,
+OS service, global setting, user emulator profile or live save was changed.
+
 ## LAN remote screen preview — 2026-11-24
 
 The owner's Remote screen flow is implemented inside Broomm on branch
@@ -61,8 +117,7 @@ Azahar gameplay, permission/renderer scenarios, latency/bandwidth measurements,
 and native Windows/Linux client checks remain pending. See the
 [verification details](docs/remote-screen.md#verification).
 
-The fresh [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
-is `0.1.31-dev` (1217), **24,655,656 bytes**, with SHA-256
+The earlier macOS preview was `0.1.31-dev` (1217), **24,655,656 bytes**, with SHA-256
 `b6d9f4206d1676df37bee26d5bb57a48dc230a3040d72eb331fa0df62ec66830`.
 Archive integrity and source/fresh-extraction deep, strict, all-architecture
 signatures pass. All seven Mach-O payloads contain ARM64 and x86_64. Local

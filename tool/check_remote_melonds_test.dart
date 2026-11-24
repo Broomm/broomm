@@ -114,6 +114,56 @@ void main() {
               jsonDecode(await File('$root/bridge-status.json').readAsString())
                   as Map<String, dynamic>;
           if (remote) {
+            Future<void> primaryAboveSecondary() async {
+              final deadline = DateTime.now().add(const Duration(seconds: 3));
+              while (DateTime.now().isBefore(deadline)) {
+                final inspect = await Process.run(helper, [
+                  target.path,
+                  'inspect',
+                ]);
+                expect(inspect.exitCode, 0, reason: '${inspect.stderr}');
+                final windows =
+                    (jsonDecode(inspect.stdout as String)['windows'] as List)
+                        .cast<Map>();
+                final main = windows.indexWhere(
+                  (w) => w['kCGWindowNumber'] == session.status!.remotePrimary,
+                );
+                final secondary = windows.indexWhere(
+                  (w) =>
+                      w['kCGWindowNumber'] ==
+                      session.status!.remoteCapture.first,
+                );
+                if (main >= 0 && secondary >= 0 && main < secondary) return;
+                await Future<void>.delayed(const Duration(milliseconds: 20));
+              }
+              final inspect = await Process.run(helper, [
+                target.path,
+                'inspect',
+              ]);
+              final snapshot = {
+                'primary': session.status!.remotePrimary,
+                'secondary': session.status!.remoteCapture.first,
+                'bridge': await read(),
+                'windows': jsonDecode(inspect.stdout as String),
+              };
+              await File('$root/remote-order-failure.json')
+                  .writeAsString(jsonEncode(snapshot));
+              fail(
+                'The actual melonDS primary window did not remain above the secondary. Inspect $root/remote-order-failure.json',
+              );
+            }
+
+            await primaryAboveSecondary();
+            await atomicText('$root/test-input.txt', '0 0 3 0 7');
+            final raised = DateTime.now().add(const Duration(seconds: 3));
+            while (!(await File(
+              '$root/bridge.log',
+            ).readAsString()).contains('SESSION_TEST_RAISE_SECONDARY')) {
+              if (DateTime.now().isAfter(raised))
+                fail('The controlled secondary raise was not delivered.');
+              await Future<void>.delayed(const Duration(milliseconds: 20));
+            }
+            await primaryAboveSecondary();
             await session.waitFor(
               (s) => s.remoteCapture.length == 5 && s.remoteCapture[0] > 0,
               timeout: const Duration(seconds: 10),

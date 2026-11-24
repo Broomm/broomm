@@ -226,6 +226,10 @@ and clear held touch on focus loss, pause, disconnect and expiry. In remote
 melonDS sessions, maximize both windows without fullscreen, raise the primary
 above the secondary when play begins, and crop the stream to the game area.
 Restore temporary geometry and screen preferences after confirmed exit.
+Keep video queues bounded and show the newest available frames on a slow client.
+Only report active video after a frame arrives. Capture/decoding failures must
+be visible while retaining the controller connection. Reassert the primary
+window when play resumes or emulator activation raises its secondary.
 Azahar touch and forwarded audio remain later capabilities. See the [walkthrough](README.md#remote-screen-preview) and
 [design and verification](docs/remote-screen.md).
 

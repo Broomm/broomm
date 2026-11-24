@@ -31,6 +31,10 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    needs attention, use **Retry screen** on the client after correcting the
    permission. An English Azahar secondary-window title is required by this
    preview's window selector. Keep the secondary window available while testing.
+   Use the current Mac and Android previews together for the revised streaming
+   path. It targets up to 60 fps, subject to emulator updates, decoding and LAN
+   bandwidth. A stream that starts without frames shows a retryable message;
+   an active-stream caption appears only after video arrives.
 6. Choose **Disconnect** on the client to return to the host list. Lost assigned
    controllers follow Broomm's normal pause and pairing flow. Close the game
    normally to finalize progress and restore its previous layout.
@@ -47,6 +51,15 @@ emulator's private profile root. Quit Broomm on every instance before removing
 `remote-screen.json` to clear remembered hosts and generate a new host code.
 Leave any layout recovery journal in place until the emulator has closed and
 Broomm has restored it. No controller driver installation is required.
+
+For a stalled/choppy stream, reproduce it for at least ten seconds, then inspect
+the Mac's `broomm.log`. Five-second `Remote video` records separate native
+capture/encoding, socket sending, and the client's receive/decode rates. The
+client reports diagnostics back to the host. The controller remains usable
+when capture or JPEG decoding fails. Reconnect if the LAN connection itself
+closes. This preview needs actual device verification; the loopback benchmark
+is not a measured Wi-Fi frame rate.
+
 
 
 ### Install the Android preview over USB
