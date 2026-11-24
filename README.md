@@ -49,6 +49,24 @@ Leave any layout recovery journal in place until the emulator has closed and
 Broomm has restored it. No controller driver installation is required.
 
 
+### Install the Android preview over USB
+
+Enable USB debugging on the Android device, connect it and accept its debugging
+authorization prompt. Download the Android artifact from the PR's successful
+build job and extract its APK. With platform-tools installed, check the device
+and install while retaining existing Broomm data:
+
+```sh
+~/Documents/platform-tools/adb devices -l
+~/Documents/platform-tools/adb -s DEVICE_SERIAL install -r /path/to/Broomm-android-universal.apk
+```
+
+Expect the tablet to appear with status `device` and installation to report
+`Success`. If no device appears, toggle USB debugging, reconnect and check for
+the authorization prompt. Open Broomm on the tablet, reconnect to the Mac, and
+verify the enlarged view, taps/drags and normal Close game flow. These user
+observations complete the device acceptance; a successful APK build does not.
+
 ## Home and save-sync preview
 
 [Download the universal macOS preview](build/releases/Broomm-macOS-pairing-picker-focus.zip).

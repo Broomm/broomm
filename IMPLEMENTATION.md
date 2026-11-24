@@ -71,6 +71,29 @@ incremental Flutter build. This portable build uses production Application
 Support storage, disabled development self-installation and ad-hoc signing.
 
 
+The [Android artifact](https://github.com/Broomm/broomm/actions/runs/45454442404/artifacts/14949338909)
+is `0.1.31-pr21.45454442404`, Android version `0.1.31` / code **1197**,
+**65,423,662 bytes**, SHA-256
+`069bbe8865c9a2ff9926c1ed70629ac0143b2d068fee7521c96f251e10d46142`.
+Artifact digest, metadata, ARM64 ELF and PR-merge provenance verify. Its merge
+has no tree differences from feature commit `e7613a4`; the following commit
+only scopes the native-host regression to macOS. The APK is retained at
+`.tool-cache/remote-screen-tablet/followup/`. Installation was attempted with
+`adb -s R52T406ZH6F install -r`, but ADB reported **device not found**.
+macOS sees Samsung SM-X800 USB file-transfer/modem interfaces; both default and
+libusb ADB backends list no debugging device. The default backend is restored.
+Owner USB debugging/reconnection is required before installation; the previous
+1196 installation and its app data have not been replaced.
+
+CI run `45454442404` built Android, universal macOS, Windows and both Linux
+architectures and passed native macOS checks. Its Linux/Windows shared tests
+included the macOS-only host regression before the platform annotation; that
+scope is corrected in `8d8ac2d`. Windows additionally reports file-in-use errors
+in temporary-directory teardown in game_versions, home_artwork_widget and
+shell_widget tests. Those failures are retained in
+`.tool-cache/remote-followup-windows-ci.log` and are not corrected here.
+The subsequent CI run remains separate from the verified local results.
+
 ## Ortholinear keyboard and ambient Home artwork — 2026-11-19
 
 All five keyboard rows now share a 14-column grid. Both Shift keys span two
