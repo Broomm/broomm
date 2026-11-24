@@ -38,7 +38,8 @@ machine-wide environment are unchanged.
 
 Static analysis, **859 macOS-hosted Flutter tests** (one existing Linux-only
 skip), **15 focused remote checks**, and ordinary plus independent ASan/UBSan
-native input/window checks pass. The real melonDS fixture uses copied immutable
+native input/window checks pass. All **11 native macOS XCTest cases** also pass
+with zero skips; both app and test targets compiled. The real melonDS fixture uses copied immutable
 installation/ROM data and fresh saves under the source/session leases. Its
 normal/remote/relaunch cases pass touch readback, primary ordering and hidden
 shutdown in **532, 611 and 567 ms**. Diagnostics and benchmark data are under

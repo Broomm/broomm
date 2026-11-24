@@ -194,7 +194,9 @@ void main() {
         await host.close();
       }
     },
-    skip: Platform.isMacOS ? false : 'Native touch hosting is staged for macOS.',
+    skip: Platform.isMacOS
+        ? false
+        : 'Native touch hosting is staged for macOS.',
   );
 
   test(
