@@ -65,10 +65,15 @@ and test formatting only. The locally signed
 is **65,453,741 bytes**, SHA-256
 `39d57470720141025509717494a50163b80a704e24b85364f0b93da25e86894e`.
 Its signature matches the retained preview certificate installed on the tablet,
-and all **171 non-signature ZIP entries** match the CI APK. It is ready for
-`adb install -r` without resetting app data. ADB still lists no device, so this
-build has **not been installed or measured on the Galaxy**. Verification records
-are under `.tool-cache/remote-screen-tablet/stream/`.
+and all **171 non-signature ZIP entries** match the CI APK. On **25 November**,
+the owner reconnected Samsung SM-X800 / Android 16 / serial `R52T406ZH6F`.
+`adb install -r` upgraded code 1197 to **1202**, preserving the application UID
+and app data. Installed APK readback matches the signed preview's SHA-256.
+MainActivity launches successfully and remains alive; its scoped startup log
+has no observed fatal exception. No host server or melonDS game was running
+during installation. Actual Wi-Fi frame delivery remains pending an owner-started
+host/client gameplay session. Verification records are under
+`.tool-cache/remote-screen-tablet/stream/`.
 
 The runtime-source CI build packages all five targets and its native macOS job
 passes. Windows checks still report file-in-use failures during temporary test
