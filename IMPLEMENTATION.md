@@ -1,5 +1,34 @@
 # Implementation plan
 
+## Live tablet sharpness and frame-rate investigation — 2026-11-25
+
+The owner started melonDS on macOS build **1218** with the Galaxy SM-X800 /
+Android 16 / client build **1202**. Live read-only diagnostics confirm an actual
+LAN connection (`en0` to `wlan0`). Across the initial 3m46s reporting window,
+capture averages **54.02 fps**, sending **53.82**, client receive **53.35** and
+decode **50.78**, with zero decode errors. The lowest client decode interval
+is **23.3 fps**; more recent intervals average **54.25**. Socket writes average
+**0.28 ms** with no sustained backpressure. Actual SurfaceView presentation
+samples measure **55–57 fps**, including repeated **33.4 ms** intervals. These
+are frame-rate/throughput measurements; the owner has not tested input/video
+latency and this investigation does not establish it.
+
+The owner describes low overall detail/softness, without compression artifacts,
+and a sharper image in the Mac window. Both capture and client decoding are
+hard-capped at **640×480**, enlarged over the tablet's **2800×1752** surface.
+That concrete limitation remains unfixed. A higher-resolution JPEG experiment
+measures **5.27 ms / 261,711 bytes** at 1280×960 versus
+**1.73 ms / 65,573 bytes** at 640×480, both quality 0.75. Increasing resolution
+without checking decode/presentation could worsen frame rate.
+
+The [live investigation and alternatives](docs/remote-screen.md#live-image-quality-and-frame-rate--25-november-2026)
+distinguish measured behavior, image-quality requirements and a proposed
+higher-resolution system-codec/external-texture milestone. No new codec/runtime,
+dependency or application behavior is introduced by this investigation.
+Evidence is under `.tool-cache/research/remote-stream/live-20261125/`; the
+existing verified macOS/Android packages remain current. Image sharpness and
+consistent frame-rate acceptance are still open.
+
 ## Remote video stall, frame pacing and primary focus — 2026-11-24
 
 The owner reported an active melonDS caption with no image after initially

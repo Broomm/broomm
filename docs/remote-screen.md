@@ -156,6 +156,78 @@ are retained under `.tool-cache/research/remote-stream/` and the private
 `.tool-cache/research/remote-followup/native-*` roots. The final implementation
 record distinguishes compilation, native execution and owner acceptance.
 
+## Live image quality and frame rate — 25 November 2026
+
+The owner started a real melonDS session after upgrading the Galaxy. The running
+host is macOS build **1218**, the client is SM-X800 / Android 16 / build **1202**,
+and the game is *Pokemon Ranger: Shadows of Almia*. The TCP connection uses
+the local network, through host `en0` and tablet `wlan0`; USB is only the ADB
+diagnostic connection. The owner reports general low resolution/softness and
+insufficient frame rate, with a much sharper image in the Mac emulator window.
+They did not report compression artifacts and have not tested input/video latency.
+
+Forty-five capture/send intervals and forty-six client intervals between
+**03:51:00 and 03:54:46 UTC** give the following five-second-window statistics.
+The later encoder benchmark was not running during these intervals.
+
+| Phase | Mean fps | Lowest interval | Highest interval |
+| --- | ---: | ---: | ---: |
+| Capture/encode | 54.02 | 36.4 | 57.9 |
+| Socket send | 53.82 | 41.0 | 57.8 |
+| Tablet receive | 53.35 | 24.1 | 57.8 |
+| Tablet decode | 50.78 | 23.3 | 57.0 |
+
+There are zero reported decode failures. The latest twelve client intervals in
+that window average **54.25 decoded fps**. These phases use independent report
+boundaries, so their minima are not a same-frame attribution. Capture averages
+**2.43 ms** encoding; client decode completion averages **12.20 ms**. Send rate
+averages **1,758 KiB/s**, peaks at **4,053 KiB/s**, and socket writes average
+**0.28 ms**. The tablet reports a 5 GHz link at 1,441 Mbps PHY rate and -48 dBm;
+this is advertised link speed, not a measured capacity test. Thermal status is
+zero. This run does not show sustained socket backpressure explaining the drops.
+
+Android SurfaceFlinger presentation timestamps separately establish actual
+SurfaceView updates: an initial 126-timestamp sample gives **57.08 fps**, with
+six intervals at least 25 ms. Three later samples after the encoding benchmark
+give **55.02, 55.39 and 55.39 fps**, with 10–11 doubled intervals per 125–126
+intervals and a maximum interval of **33.44 ms**. This establishes uneven
+presentation cadence; it does not count distinct emulated-game images or measure
+input/video latency. Android `gfxinfo` only tracked 24 native view frames and
+is not used as Flutter video FPS evidence.
+
+The sharpness limitation is concrete: capture is fixed at **640×480**, and the
+Dart decoder independently caps every incoming image to that same size. The
+tablet's Flutter surface is **2800×1752**. Fitting the image across its available
+viewport enlarges an already downsampled picture. JPEG quality is 0.75; increasing
+that value alone cannot recover detail removed by the resolution caps.
+
+A separate generated-image benchmark of the existing native JPEG path finds
+**1.73 ms / 65,573 bytes** at 640×480 versus **5.27 ms / 261,711 bytes** at
+1280×960, both quality 0.75. At quality 0.90 the 1280×960 result is
+**6.04 ms / 365,149 bytes**. These are encode-only means from 80 warmed frames
+per case, not real-game bandwidth or tablet decoding measurements. Merely
+raising both caps therefore needs new native client checks before shipping.
+
+The proposed next milestone is higher-resolution hardware video, with a
+client-sized 4:3 target (initial experiment: **1440×1080 at 60 fps**) bounded by
+the captured source. The existing native-adapter design can use Apple's
+[VideoToolbox streaming encoder](https://developer.apple.com/documentation/videotoolbox/encoding-video-for-live-streaming),
+Android's [hardware codec capability checks](https://developer.android.com/media/optimize/performance/codec)
+and a Flutter [external texture](https://api.flutter.dev/flutter/widgets/Texture-class.html).
+This would avoid decoding each JPEG into a new Dart-managed image. It is a
+proposal, not implemented or verified support, and is not a new dependency decision.
+
+| Approach | Benefit | Work and remaining risk |
+| --- | --- | --- |
+| Higher-resolution JPEG | Reuses the current wire format and all four client implementations; no new runtime | Encoding, bandwidth and client image decode/upload rise together. Needs explicit quality limits and native frame-rate checks. |
+| System H.264 codecs and external textures | Candidate for higher detail with hardware decode and temporal compression; no bundled media runtime on macOS/Android | Requires capability negotiation, bounded codec queues, keyframe/config recovery and cancellation checks. macOS/Android, Windows [Media Foundation](https://learn.microsoft.com/en-us/windows/win32/medfound/h-264-video-decoder) and Linux codec availability need separate native adapters and verification. JPEG can remain the supported fallback. |
+| Bundled cross-platform media runtime | Could share more codec/transport behavior | Reopens the dependency comparison: distribution, licenses, runtime assets and hardware backends on every target. No such dependency is selected here. |
+
+Live reports, timestamps, source/build identity, thermal/memory checks and the
+encoding benchmark remain under `.tool-cache/research/remote-stream/live-20261125/`.
+No emulator settings, live progress, network settings or running application
+were changed. Sharpness and frame-rate acceptance remain open.
+
 ## Verification
 
 The remote tests exercise real loopback authentication and control delivery,
@@ -211,5 +283,6 @@ Its private copies, fresh saves and diagnostics remain under
 those fixture directories may be removed. The source lock is released after
 copying. Final package fingerprints are in IMPLEMENTATION.md. Owner verification
 of revised tablet sizing, touch gameplay, cropped capture, permissions and
-renderer behavior remains pending, along with Azahar gameplay, latency/bandwidth
-measurements and native Windows/Linux client execution.
+renderer behavior remains pending, along with Azahar gameplay and native
+Windows/Linux client execution. The live measurements above establish current
+LAN throughput and presentation cadence; input/video latency remains unmeasured.

@@ -220,6 +220,9 @@ window. macOS Screen Recording permission is required for video. The initial
 LAN transport uses a connection code and bounded messages with an explicit
 unencrypted-connection notice. Fit the remote image to the largest available
 area while preserving its aspect ratio and space for connection controls.
+Preserve image detail when expanding the secondary screen on a large client
+display, and aim for a smooth, consistent frame cadence. Image sharpness and
+frame rate need their own verification; input/video latency is a separate check.
 Forward a single touch/drag/release to melonDS's secondary touch screen without
 moving the host pointer or creating an OS input device. Reject letterbox presses
 and clear held touch on focus loss, pause, disconnect and expiry. In remote
