@@ -63,6 +63,12 @@ Native runtime versions and source/build references:
   inspected before pinning. Native architecture compilation remains a separate check.
 - AudioSwitch: pinned commit **039a35aefab7747c557242fa216c9ea11743b604**, a native
   Android transitive dependency. Its upstream Apache license ships with the notices.
+- Android path-provider implementation: **2.2.23**, explicitly constrained within
+  path_provider's supported range. The 2.3 JNI rewrite adds a desktop native
+  asset requiring `libjvm.so`; Linux package verification caught that unwanted
+  runtime dependency. The channel-based implementation keeps Java a development
+  tool rather than an application requirement. Desktop bundles still undergo
+  their complete native dependency checks.
 
 The standalone native check is a separate development entry point, never the
 packaged app's entry point. Use a previously prepared private melonDS fixture:

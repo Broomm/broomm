@@ -29,6 +29,15 @@ first run passed Astris but exposed two missing-SDK-header checks; those pass
 after selecting the approved Apple SDK in the child test environment. These
 results are retained separately, not presented as a green suite.
 
+All **11 native macOS XCTest cases** also pass, with zero failures/skips. The
+final media fixture receives **57.0–57.4 fps** at 1440×1080 using VideoToolbox
+on both sides, with no reported loss/drop. Windows packaging and its native
+corrupt-cache checks pass in CI. Linux compiles the WebRTC plugin but rejects
+an unused `libdartjni.so` requiring a JVM, introduced by the latest Android
+path-provider dependency. `path_provider_android` is now pinned to compatible
+**2.2.23**; its channel-based implementation removes JNI from the resolved
+desktop graph. New native packages must verify that correction.
+
 Native source/archive hashes, Android Gradle verification and bundled upstream
 license notices accompany the dependency. Windows/Linux native downloads gain
 hash verification, a cross-process CMake cache lock and refusal of damaged
