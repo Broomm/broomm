@@ -82,9 +82,11 @@ and install while retaining existing Broomm data:
 
 Expect the tablet to appear with status `device` and installation to report
 `Success`. If no device appears, toggle USB debugging, reconnect and check for
-the authorization prompt. Open Broomm on the tablet, reconnect to the Mac, and
-verify the enlarged view, taps/drags and normal Close game flow. These user
-observations complete the device acceptance; a successful APK build does not.
+the authorization prompt. Close the old Mac Broomm/game normally before opening
+the matching new preview. Connect the tablet first, then launch a game; verify
+image detail/frame rate, the enlarged view, taps/drags and normal Close game flow.
+These user observations complete the device acceptance; a successful APK build
+does not.
 
 PR CI builds use runner-local debug signing, which can differ between runs.
 If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use a build signed with

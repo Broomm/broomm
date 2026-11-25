@@ -89,15 +89,23 @@ without `--target` before packaging. The executed first check reports success,
 reported drops/loss. The final fixture measures 57.0–57.4 fps. It preserves the
 owner's installation, profile and progress. CI run 45550187927 packages all five
 targets and passes native macOS XCTest plus Windows/Linux package and corrupt-cache
-checks. This establishes native compilation/packaging, not Windows/Linux client
-media playback. Tablet Wi-Fi/visual acceptance is still pending.
+checks. Run 45552737250 also packages all five targets after the discovery fix,
+passes native macOS XCTest and passes macOS/Linux checks.
+This establishes native compilation/packaging, not Windows/Linux client media
+playback. Tablet Wi-Fi/visual acceptance is still pending.
 
-Static analysis and 21 focused remote tests pass. Three discovery regressions
+Static analysis, all 865 local Flutter tests (one existing Linux-only skip)
+and 21 focused remote tests pass. Three discovery regressions
 cover asynchronous no-route errors, preserving TCP control when advertisement
 fails, and stale socket errors after a new search. These address the real macOS
 CI discovery failure without disabling broadcast or changing network settings.
-New full-suite and package checks track that correction separately from the
-unchanged Windows file-in-use fixture cleanup failures.
+Full-suite and package checks track that correction separately from the
+unchanged Windows file-in-use fixture cleanup failures. The current Mac preview
+is build 1221. Matching Android build 1210 is installed on the Galaxy with the
+retained signing identity, an unchanged UID and matching installed APK readback.
+The app launches without an observed fatal startup error. This verifies package
+installation/startup, not tablet hardware decode or visual acceptance. Exact
+package hashes and revision identities are in IMPLEMENTATION.md.
 
 ## Connection and input
 
@@ -252,6 +260,8 @@ are retained under `.tool-cache/research/remote-stream/` and the private
 record distinguishes compilation, native execution and owner acceptance.
 
 ## Live image quality and frame rate — 25 November 2026
+
+This records the JPEG baseline before the approved WebRTC prototype above.
 
 The owner started a real melonDS session after upgrading the Galaxy. The running
 host is macOS build **1218**, the client is SM-X800 / Android 16 / build **1202**,

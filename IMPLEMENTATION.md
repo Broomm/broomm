@@ -22,12 +22,12 @@ The first real native Flutter check passed using a copied melonDS installation,
 the private fixture ROM and a new isolated profile: **1440×1080 H.264**, sender
 and receiver **VideoToolbox**, **54.8–56.8 fps** in the measured loopback windows,
 zero reported drops/loss. This is a native macOS sender/receiver check, not tablet
-Wi-Fi acceptance. All **21 focused remote regressions** pass. The full Flutter
-run currently has **861 passing / one existing Linux-only skip / one failure**
-in unchanged Astris application-identity capture during its crash fixture. Its
-first run passed Astris but exposed two missing-SDK-header checks; those pass
-after selecting the approved Apple SDK in the child test environment. These
-results are retained separately, not presented as a green suite.
+Wi-Fi acceptance. All **21 focused remote regressions** pass. After the discovery
+correction below, the complete local Flutter run passes **865 tests**, with one
+existing Linux-only skip. Earlier complete logs retain an intermittent Astris
+application-identity failure and missing SDK headers; the latter were corrected
+by selecting the approved Apple SDK in the child test environment. Neither
+failure was hidden by changed assertions, skips or increased timeouts.
 
 All **11 native macOS XCTest cases** also pass, with zero failures/skips. The
 final media fixture receives **57.0–57.4 fps** at 1440×1080 using VideoToolbox
@@ -42,18 +42,43 @@ That run's macOS Flutter checks exposed an asynchronous UDP discovery error
 (`No route to host`) escaping the manual-address fallback. Discovery now handles
 socket-stream errors, preserves an authenticated TCP connection when advertising
 fails, and ignores queued errors from replaced searches. Three deterministic
-regressions cover these boundaries. Static analysis passes; a new full run and
-native packages are in progress. Windows checks still report five unchanged
-temporary-directory cleanup failures involving open files; those are not media
-or native-package failures.
+regressions cover these boundaries. Static analysis and the new complete local
+run pass. CI run **45552737250** also packages all five current targets and passes
+native macOS XCTest, macOS/Linux checks, and native Windows/Linux package guards.
+The discovery failure is absent from that run. Windows checks still report five
+unchanged temporary-directory cleanup failures involving open files; those are
+not media or native-package failures.
 
 Native source/archive hashes, Android Gradle verification and bundled upstream
 license notices accompany the dependency. Windows/Linux native downloads gain
 hash verification, a cross-process CMake cache lock and refusal of damaged
-cache state; native corruption checks run after packaging. CI/native tests,
-current production packaging and Android/device acceptance are in progress.
-Evidence is under `.tool-cache/research/remote-webrtc/`. No new preview is yet
-presented as current; the following historical package records predate this change.
+cache state; native corruption checks run after packaging. Tablet Wi-Fi/visual
+acceptance remains pending. Evidence is under
+`.tool-cache/research/remote-webrtc/`.
+
+The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+is **0.1.31-dev / 1221**, from application revision `c36ecfa`, **38,702,879 bytes**,
+SHA-256 `dfda2c1fa3a539e70a76ebf2687e3e19acac4d42f8479e2ead6eebcd1a592431`.
+ZIP integrity, source/fresh-extraction deep, strict, all-architecture signatures,
+exact bridge readbacks and all nine universal Mach-O binaries verify. It retains
+production Application Support storage and ad-hoc signing. The following
+historical package records predate this change.
+
+The matching Android CI artifact is **0.1.31-pr21.45552737250 / code 1210**,
+from PR merge `8d179b4`, whose application tree matches `c36ecfa`. Its verified
+CI APK is **101,316,011 bytes**, SHA-256
+`c5d04f8821729d685e4b8c474348f3f47123d0d1bdf1c210632e2236973d8720`.
+The locally signed [Galaxy update](build/releases/Broomm-0.1.31-pr21.45552737250-galaxy-preview.apk)
+is **101,331,602 bytes**, SHA-256
+`a0a54b8363c139847ec401380f186e4f705d9338c681e453bd9d90d70098cc93`.
+Its retained preview certificate verifies; all **181 non-signature payload
+entries** match CI. `adb install -r` upgrades Samsung SM-X800 / Android 16
+from code 1202 to **1210**, preserving the application UID and data. Installed
+APK readback matches, MainActivity launches and remains alive, and its scoped
+startup log shows no fatal error. No uninstall/reset or owner progress change
+was performed. Records are under `.tool-cache/remote-screen-tablet/webrtc-discovery/`.
+Actual tablet hardware decoding, Wi-Fi frame rate and owner image-quality
+acceptance require connecting it to Mac build 1221 and launching a game.
 
 ## Live tablet sharpness and frame-rate investigation — 2026-11-25
 
@@ -71,17 +96,18 @@ latency and this investigation does not establish it.
 The owner describes low overall detail/softness, without compression artifacts,
 and a sharper image in the Mac window. Both capture and client decoding are
 hard-capped at **640×480**, enlarged over the tablet's **2800×1752** surface.
-That concrete limitation remains unfixed. A higher-resolution JPEG experiment
+That limitation motivated the approved WebRTC prototype above. A JPEG experiment
 measures **5.27 ms / 261,711 bytes** at 1280×960 versus
 **1.73 ms / 65,573 bytes** at 640×480, both quality 0.75. Increasing resolution
 without checking decode/presentation could worsen frame rate.
 
 The [live investigation and alternatives](docs/remote-screen.md#live-image-quality-and-frame-rate--25-november-2026)
 distinguish measured behavior, image-quality requirements and a proposed
-higher-resolution system-codec/external-texture milestone. No new codec/runtime,
-dependency or application behavior is introduced by this investigation.
+higher-resolution system-codec/external-texture milestone. That investigation
+introduced no new codec/runtime, dependency or application behavior; the owner
+subsequently selected the WebRTC prototype recorded above.
 Evidence is under `.tool-cache/research/remote-stream/live-20261125/`; the
-existing verified macOS/Android packages remain current. Image sharpness and
+packages described in that evidence predate WebRTC. Image sharpness and
 consistent frame-rate acceptance are still open.
 
 ## Remote video stall, frame pacing and primary focus — 2026-11-24
