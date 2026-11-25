@@ -382,14 +382,15 @@ class RemoteRtcVideo {
         final now = _clock.elapsedMilliseconds.toDouble();
         final previous = _previous[sample.id];
         _previous[sample.id] = (count.toDouble(), now);
-        final fps = previous == null
-            ? 'starting'
-            : ((count - previous.$1) * 1000 / (now - previous.$2))
-                  .toStringAsFixed(1);
+        // A cumulative counter needs two observations; missing baseline is
+        // not evidence of a zero frame rate.
+        if (previous == null || now <= previous.$2 || count < previous.$1)
+          continue;
+        final fps = (count - previous.$1) * 1000 / (now - previous.$2);
         final codec = codecs[v['codecId']];
         final value = readVideoReport({
           'role': sender ? 'send' : 'receive',
-          'fps': double.tryParse(fps) ?? 0,
+          'fps': fps,
           'width': v['frameWidth'] ?? 0,
           'height': v['frameHeight'] ?? 0,
           'codec': codec?['mimeType'] ?? 'unknown',
