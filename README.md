@@ -32,7 +32,8 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    permission. An English Azahar secondary-window title is required by this
    preview's window selector. Keep the secondary window available while testing.
    Use the current Mac and Android previews together for the revised streaming
-   path. It targets up to 60 fps, subject to emulator updates, decoding and LAN
+   path. Matching previews use WebRTC with a 1440×1080 capture target and up to
+   60 fps, subject to emulator updates, decoding and LAN
    bandwidth. A stream that starts without frames shows a retryable message;
    an active-stream caption appears only after video arrives.
 6. Choose **Disconnect** on the client to return to the host list. Lost assigned
@@ -40,7 +41,10 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    normally to finalize progress and restore its previous layout.
 
 Use a trusted local network. This preview transmits its connection code,
-controller input and JPEG video without encryption. It supports one client and
+controller input without encryption. Negotiated WebRTC media is encrypted by
+WebRTC; older peers retain the unencrypted JPEG compatibility path. The preview
+uses direct LAN media with no configured STUN/TURN service. The local firewall
+must allow its media connection as well as TCP/UDP port 43187. It supports one client and
 one source controller. melonDS supports single-touch input. Azahar touch,
 forwarded audio, and Linux, Windows or Android hosting are future work.
 
@@ -53,12 +57,14 @@ Leave any layout recovery journal in place until the emulator has closed and
 Broomm has restored it. No controller driver installation is required.
 
 For a stalled/choppy stream, reproduce it for at least ten seconds, then inspect
-the Mac's `broomm.log`. Five-second `Remote video` records separate native
-capture/encoding, socket sending, and the client's receive/decode rates. The
+the Mac's `broomm.log`. Five-second `Remote WebRTC` records report dimensions,
+codec implementation, frame rates, drops and packet loss; `WebRTC source`
+records report the native capture rate. Legacy `Remote video` records separate
+JPEG capture/encoding, socket sending, and the client's receive/decode rates. The
 client reports diagnostics back to the host. The controller remains usable
-when capture or JPEG decoding fails. Reconnect if the LAN connection itself
-closes. This preview needs actual device verification; the loopback benchmark
-is not a measured Wi-Fi frame rate.
+when video fails. Use **Retry screen** to recreate capture and the media peer;
+reconnect if the LAN control connection itself closes. Inspect the current
+[verification record](docs/remote-screen.md) for native/device acceptance.
 
 
 

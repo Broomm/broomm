@@ -1,5 +1,42 @@
 # Implementation plan
 
+## Approved WebRTC video prototype — 2026-11-25
+
+The owner selected **flutter_webrtc** after the cross-platform comparison. The
+plugin is pinned to **1.6.3**, with the full Dart dependency lock committed.
+Signaling is negotiated over the existing authenticated Broomm LAN connection;
+its separate message kind is limited to 64 KiB without increasing the 2 KiB
+control or 1 MiB legacy JPEG limits. Controls/touch, discovery, history, session
+supervision and window identity stay with Broomm. Peers without the capability
+retain JPEG. A failed media peer leaves controls connected and offers retry.
+
+The macOS adapter registers a video-only source through the pinned plugin's
+engine-scoped native hooks. Existing verified/cropped ScreenCaptureKit buffers
+feed that source directly at **1440×1080 / up to 60 fps**. New clients use a
+native WebRTC texture instead of per-frame Dart JPEG decoding. H.264 is preferred
+with other negotiated codecs retained. Media queues, setup messages, startup,
+statistics and teardown are bounded; old session IDs and late native acquisitions
+cannot replace the current stream. Structured telemetry omits SDP/ICE credentials.
+
+The first real native Flutter check passed using a copied melonDS installation,
+the private fixture ROM and a new isolated profile: **1440×1080 H.264**, sender
+and receiver **VideoToolbox**, **54.8–56.8 fps** in the measured loopback windows,
+zero reported drops/loss. This is a native macOS sender/receiver check, not tablet
+Wi-Fi acceptance. All **18 focused remote regressions** pass. The full Flutter
+run currently has **861 passing / one existing Linux-only skip / one failure**
+in unchanged Astris application-identity capture during its crash fixture. Its
+first run passed Astris but exposed two missing-SDK-header checks; those pass
+after selecting the approved Apple SDK in the child test environment. These
+results are retained separately, not presented as a green suite.
+
+Native source/archive hashes, Android Gradle verification and bundled upstream
+license notices accompany the dependency. Windows/Linux native downloads gain
+hash verification, a cross-process CMake cache lock and refusal of damaged
+cache state; native corruption checks run after packaging. CI/native tests,
+current production packaging and Android/device acceptance are in progress.
+Evidence is under `.tool-cache/research/remote-webrtc/`. No new preview is yet
+presented as current; the following historical package records predate this change.
+
 ## Live tablet sharpness and frame-rate investigation — 2026-11-25
 
 The owner started melonDS on macOS build **1218** with the Galaxy SM-X800 /

@@ -4,10 +4,13 @@ import GameController
 import ScreenCaptureKit
 import CoreImage
 import Darwin
+import WebRTC
+import flutter_webrtc
 
 /// OS capture and local input transport. Connection and session policy stay in Dart.
 final class BroommRemoteScreen {
   private let channel: FlutterMethodChannel
+  private let messenger: FlutterBinaryMessenger
   private let recovery = BroommSessionRecovery()
   private var controllerTimer: Timer?
   private var capture: AnyObject?
@@ -16,6 +19,7 @@ final class BroommRemoteScreen {
   private var inputEnabled = false
 
   init(messenger: FlutterBinaryMessenger) {
+    self.messenger = messenger
     channel = FlutterMethodChannel(name: "app.broomm/remote", binaryMessenger: messenger)
     channel.setMethodCallHandler { [weak self] call, reply in
       guard let self = self else { reply(nil); return }
@@ -60,6 +64,7 @@ final class BroommRemoteScreen {
                 guard revision == self.revision else { reply(nil); return }
                 let stream = BroommWindowStream(channel: self.channel, captureID: args["id"] as? Int ?? 0)
                 self.capture = stream
+                if let streamID = args["streamId"] as? String { try stream.attachVideo(streamID: streamID, messenger: self.messenger) }
                 try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", geometry: args["remoteCapture"] as? [NSNumber], valid: {
                   revision == self.revision && !app.isTerminated
                 })
@@ -135,14 +140,39 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   private let queue = DispatchQueue(label: "app.broomm.remote.capture", autoreleaseFrequency: .workItem)
   private let context = CIContext(options: [.cacheIntermediates: false])
   private var stream: SCStream?
+  private var videoSource: RTCVideoSource?
+  private var videoCapturer: RTCVideoCapturer?
+  private var rtcPlugin: FlutterWebRTCPlugin?
+  private var rtcTrack: RTCVideoTrack?
+  private var rtcStream: RTCMediaStream?
   private var permitted = true
   private var stopped = false
   let captureID: Int
   private var statsStart = ProcessInfo.processInfo.systemUptime
   private var frames = 0, idle = 0, blank = 0, suspended = 0
   private var encodeMillis = 0.0
+  private var firstVideoFrame = true
 
   init(channel: FlutterMethodChannel, captureID: Int) { self.channel = channel; self.captureID = captureID }
+
+  @MainActor
+  func attachVideo(streamID: String, messenger: FlutterBinaryMessenger) throws {
+    guard let plugin = FlutterWebRTCPlugin.instance(for: messenger),
+          let factory = plugin.peerConnectionFactory,
+          let media = plugin.localStreams?[streamID] as? RTCMediaStream else {
+      throw failure("The WebRTC video source is unavailable. Retry screen capture.")
+    }
+    let source = factory.videoSource(forScreenCast: true)
+    source.adaptOutputFormat(toWidth: 1440, height: 1080, fps: 60)
+    let track = factory.videoTrack(with: source, trackId: UUID().uuidString)
+    media.addVideoTrack(track)
+    plugin.localTracks?[track.trackId] = LocalVideoTrack(track: track)
+    videoSource = source
+    videoCapturer = RTCVideoCapturer(delegate: source)
+    rtcPlugin = plugin
+    rtcTrack = track
+    rtcStream = media
+  }
 
   @MainActor
   func start(pid: pid_t, name: String, geometry: [NSNumber]?, valid: () -> Bool) async throws {
@@ -175,8 +205,8 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
             values[1] + values[3] <= window.frame.height + 1 else { throw failure("The emulator screen geometry changed. Retry screen capture.") }
       configuration.sourceRect = CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
     }
-    configuration.width = 640
-    configuration.height = 480
+    configuration.width = videoSource == nil ? 640 : 1440
+    configuration.height = videoSource == nil ? 480 : 1080
     configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
     configuration.queueDepth = 3
     configuration.showsCursor = false
@@ -193,6 +223,16 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
     queue.sync { stopped = true }
     try? await stream?.stopCapture()
     stream = nil
+    if let track = rtcTrack {
+      track.isEnabled = false
+      rtcStream?.removeVideoTrack(track)
+      rtcPlugin?.localTracks?[track.trackId] = nil
+    }
+    rtcTrack = nil
+    rtcStream = nil
+    rtcPlugin = nil
+    videoCapturer = nil
+    videoSource = nil
   }
   func stream(_ stream: SCStream, didStopWithError error: Error) {
     queue.async {
@@ -210,7 +250,23 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       if status == .suspended { suspended += 1 }
       return
     }
-    guard permitted, let buffer = sampleBuffer.imageBuffer else { return }
+    guard let buffer = sampleBuffer.imageBuffer else { return }
+    if let source = videoSource, let capturer = videoCapturer {
+      let start = ProcessInfo.processInfo.systemUptime
+      let timestamp = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+      guard timestamp.isFinite, timestamp >= 0, timestamp < 1e9 else { return }
+      source.capturer(capturer, didCapture: RTCVideoFrame(
+        buffer: RTCCVPixelBuffer(pixelBuffer: buffer), rotation: ._0,
+        timeStampNs: Int64(timestamp * 1_000_000_000)))
+      frames += 1
+      encodeMillis += (ProcessInfo.processInfo.systemUptime - start) * 1000
+      if firstVideoFrame {
+        firstVideoFrame = false
+        DispatchQueue.main.async { self.channel.invokeMethod("videoFrame", arguments: ["id": self.captureID]) }
+      }
+      return
+    }
+    guard permitted else { return }
     let start = ProcessInfo.processInfo.systemUptime
     let image = CIImage(cvPixelBuffer: buffer)
     guard let cg = context.createCGImage(image, from: image.extent),
@@ -226,7 +282,7 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   private func reportStats() {
     let now = ProcessInfo.processInfo.systemUptime, elapsed = now - statsStart
     guard elapsed >= 5 else { return }
-    let report: [String: Any] = ["id": captureID, "fps": String(format: "%.1f", Double(frames)/elapsed),
+    let report: [String: Any] = ["id": captureID, "webrtc": videoSource != nil, "fps": String(format: "%.1f", Double(frames)/elapsed),
       "encodeMs": String(format: "%.2f", frames == 0 ? 0 : encodeMillis/Double(frames)),
       "idle": idle, "blank": blank, "suspended": suspended]
     statsStart = now; frames = 0; idle = 0; blank = 0; suspended = 0; encodeMillis = 0

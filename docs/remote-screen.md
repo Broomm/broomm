@@ -4,6 +4,85 @@
 inside the Flutter application. The [product contract](../PROJECT.md#remote-screen)
 and [walkthrough](../README.md#remote-screen-preview) define the visible flow.
 
+## Approved WebRTC prototype — 25 November 2026
+
+The owner selected `flutter_webrtc` after reviewing native adapters and shared
+media engines. Broomm pins version 1.6.3 and keeps the existing application,
+discovery, connection/history UI, authentication and controller/touch transport.
+Peers advertise `webrtc-1`; otherwise the existing version-1 JPEG path remains.
+WebRTC descriptions/candidates use a separately bounded 64 KiB message kind on
+the authenticated control socket. Normal control messages remain limited to
+2 KiB. SDP and ICE credentials are never logged. Media uses direct ICE with no
+configured external STUN/TURN server and a video-only peer; forwarded audio is
+still deferred. WebRTC secures its media transport; the preview's control
+connection/code remains unencrypted and retains its trusted-LAN notice.
+
+The current macOS source keeps Broomm's supervised process/window validation,
+game-area crop, window restoration and cancellation generations. It registers
+one source through the plugin's engine-scoped `instanceForMessenger` and public
+local-stream/track hooks. ScreenCaptureKit forwards cropped pixel buffers to
+`RTCVideoSource` at a 1440×1080 / 60 fps target, avoiding the JPEG encode path.
+The shared receiver uses the plugin's native renderer/texture. H.264 is preferred
+when offered, while other supported codecs remain negotiable. The first real
+macOS loopback check identifies VideoToolbox on both sides; hardware use on
+Android, Windows and Linux must be established separately.
+
+Media startup, pending signaling, ICE candidates, socket writes, diagnostic
+operations and resource teardown have explicit limits. Local descriptions are
+sent before their candidates. Old session IDs are ignored. Cancellation closes
+an eventual late peer acquisition; capture stops before local stream teardown.
+Video failures retain controller/touch connectivity and expose Retry screen.
+That action starts a new capture generation/peer. A remote texture is displayed
+only after its first rendered frame, with an actionable startup deadline.
+Every five seconds, validated structured reports identify dimensions, codec
+implementation, encoded/decoded fps and cumulative loss/drop counts. They do not
+establish perceptual image quality, distinct game-image FPS or input/video latency.
+
+`tool/webrtc_native.json` records the reviewed desktop runtime hashes. Before
+packaging, `dart tool/prepare_webrtc.dart` verifies the pinned upstream recipe
+and applies bounded, serialized downloads plus archive/binary verification in
+the project-managed package cache. It refuses unreviewed recipes and damaged
+cache contents. `tool/check_webrtc_native_cache.dart` exercises corrupt archives
+and binaries on native Windows/Linux runners after building the actual plugin.
+Apple's Swift package pins the XCFramework checksum; Android verifies the new
+WebRTC/AudioSwitch Maven artifacts in `android/gradle/verification-metadata.xml`.
+Upstream-provided license/notice texts ship under `assets/licenses/`. Build tools
+remain development-only; applications ship the plugin runtimes, not compilers.
+
+Native runtime versions and source/build references:
+
+- Flutter plugin: [1.6.3](https://pub.dev/packages/flutter_webrtc/versions/1.6.3),
+  MIT wrapper plus its upstream NOTICE; Dart transitive dependencies are locked.
+- Apple/Android SDK: **150.7871.04**, [SDK source](https://github.com/webrtc-sdk/webrtc),
+  [build recipes](https://github.com/webrtc-sdk/webrtc-build),
+  [Apple release](https://github.com/webrtc-sdk/Specs/releases/tag/150.7871.04),
+  Android `io.github.webrtc-sdk:android:150.7871.04`.
+- Windows x64/Linux x64/ARM64 wrapper: **libwebrtc.m150.7871.07**,
+  [source and release](https://github.com/webrtc-sdk/libwebrtc-wrapper/releases/tag/libwebrtc.m150.7871.07).
+  Archive structure, embedded runtime architecture/hash and supplied notices were
+  inspected before pinning. Native architecture compilation remains a separate check.
+- AudioSwitch: pinned commit **039a35aefab7747c557242fa216c9ea11743b604**, a native
+  Android transitive dependency. Its upstream Apache license ships with the notices.
+
+The standalone native check is a separate development entry point, never the
+packaged app's entry point. Use a previously prepared private melonDS fixture:
+
+```sh
+devbox run -- bash tool/build_app.sh --release --portable --no-pub \
+  --target=tool/check_remote_rtc.dart \
+  --dart-define=BROOMM_RTC_PROJECT=/absolute/path/to/broomm \
+  --dart-define=BROOMM_RTC_FIXTURE_ROOT=/absolute/path/to/broomm/.tool-cache/research/remote-followup/native-EXAMPLE
+```
+
+Run that fixture bundle's executable and inspect
+`.tool-cache/research/remote-webrtc/native-loopback.json`. It launches a fresh
+private profile, verifies high-resolution native H.264 reception, closes capture
+and both peers, then closes the private game normally. Rebuild the ordinary app
+without `--target` before packaging. The executed first check reports success,
+1440×1080 VideoToolbox encoding/decoding, 54.8–56.8 fps measured windows and no
+reported drops/loss. It preserves the owner's installation, profile and progress.
+Tablet Wi-Fi/visual acceptance and Windows/Linux native execution are pending.
+
 ## Connection and input
 
 The application owns a TCP listener on port 43187 for its lifetime. UDP discovery

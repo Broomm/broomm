@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 import '../remote/service.dart';
 import '../remote/protocol.dart';
@@ -44,12 +45,26 @@ class _RemoteScreenState extends State<RemoteScreen> {
         return Column(
           children: [
             Expanded(
-              child: image == null
+              child: remote.rtcVideoReady
+                  ? RemoteVideo(
+                      bytes: null,
+                      nativeVideo: RTCVideoView(
+                        remote.rtcVideo!.renderer!,
+                        objectFit:
+                            RTCVideoViewObjectFit.RTCVideoViewObjectFitContain,
+                      ),
+                      touchEnabled: remote.touchSupported,
+                      onTouch: remote.touch,
+                      onDisplayed: () {},
+                    )
+                  : image == null
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          remote.status,
+                          remote.rtcVideo?.renderer != null
+                              ? 'Connecting video…'
+                              : remote.status,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 24),
                         ),
@@ -73,7 +88,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
                 alignment: WrapAlignment.center,
                 children: [
                   Text('Connected to ${remote.clientHost}'),
-                  if (remote.frame == null)
+                  if (remote.frame == null && !remote.rtcVideoReady)
                     ConsoleButton(
                       onPressed: remote.retryCapture,
                       child: const Text('Retry screen'),
@@ -212,13 +227,15 @@ class RemoteVideo extends StatefulWidget {
   const RemoteVideo({
     super.key,
     required this.bytes,
+    this.nativeVideo,
     required this.touchEnabled,
     required this.onTouch,
     required this.onDisplayed,
     this.onDecoded,
     this.onDecodeError,
   });
-  final Uint8List bytes;
+  final Uint8List? bytes;
+  final Widget? nativeVideo;
   final bool touchEnabled;
   final ValueChanged<RemoteTouch> onTouch;
   final VoidCallback onDisplayed;
@@ -285,12 +302,14 @@ class _RemoteVideoState extends State<RemoteVideo> {
               onPointerCancel: (event) {
                 if (pointer == event.pointer) release();
               },
-              child: _RemoteDecodedImage(
-                bytes: widget.bytes,
-                onDisplayed: widget.onDisplayed,
-                onDecoded: widget.onDecoded,
-                onDecodeError: widget.onDecodeError,
-              ),
+              child:
+                  widget.nativeVideo ??
+                  _RemoteDecodedImage(
+                    bytes: widget.bytes!,
+                    onDisplayed: widget.onDisplayed,
+                    onDecoded: widget.onDecoded,
+                    onDecodeError: widget.onDecodeError,
+                  ),
             ),
           ),
         ),

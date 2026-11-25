@@ -4,6 +4,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+/// WebRTC descriptions/ICE use a separately bounded, negotiated message kind.
+class RemoteSignal {
+  const RemoteSignal(this.text);
+  final String text;
+}
+
 /// Length-prefixed messages are bounded before allocation. A slow peer cannot
 /// build an unbounded input or video queue in either Broomm instance.
 class RemoteConnection extends Stream<Object> {
@@ -58,9 +64,14 @@ class RemoteConnection extends Stream<Object> {
           if (_headerUsed < 5) return;
           final size = ByteData.sublistView(_header).getUint32(1);
           _kind = _header[0];
-          if ((_kind != 0 && _kind != 1) ||
+          if ((_kind != 0 && _kind != 1 && _kind != 2) ||
               size == 0 ||
-              size > (_kind == 0 ? 2048 : 1024 * 1024)) {
+              size >
+                  (_kind == 0
+                      ? 2048
+                      : _kind == 2
+                      ? 65536
+                      : 1024 * 1024)) {
             throw const FormatException(
               'Remote message exceeds its size limit.',
             );
@@ -76,7 +87,13 @@ class RemoteConnection extends Stream<Object> {
         if (_used == payload.length) {
           _payload = null;
           _headerUsed = 0;
-          _messages.add(_kind == 0 ? utf8.decode(payload) : payload);
+          _messages.add(
+            _kind == 0
+                ? utf8.decode(payload)
+                : _kind == 2
+                ? RemoteSignal(utf8.decode(payload))
+                : payload,
+          );
         }
       }
     } catch (e, stack) {
@@ -94,22 +111,42 @@ class RemoteConnection extends Stream<Object> {
     return sent.future;
   }
 
+  Future<void> sendSignal(RemoteSignal signal) {
+    final sent = Completer<void>();
+    _enqueue(signal, sent);
+    return sent.future;
+  }
+
   void _enqueue(Object value, Completer<void>? sent) {
     if (_closed) {
       sent?.completeError(StateError('Remote connection closed.'));
       return;
     }
     final text = value is String;
-    final bytes = text ? utf8.encode(value) : value as List<int>;
+    final signal = value is RemoteSignal;
+    final bytes = text
+        ? utf8.encode(value)
+        : signal
+        ? utf8.encode(value.text)
+        : value as List<int>;
     if (bytes.isEmpty ||
-        bytes.length > (text ? 2048 : 1024 * 1024) ||
+        bytes.length >
+            (text
+                ? 2048
+                : signal
+                ? 65536
+                : 1024 * 1024) ||
         _output.length >= 32) {
       sent?.completeError(StateError('Remote write exceeded its limit.'));
       unawaited(close());
       return;
     }
     final data = Uint8List(5 + bytes.length);
-    data[0] = text ? 0 : 1;
+    data[0] = text
+        ? 0
+        : signal
+        ? 2
+        : 1;
     ByteData.sublistView(data).setUint32(1, bytes.length);
     data.setRange(5, data.length, bytes);
     _output.add((data: data, sent: sent));

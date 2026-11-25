@@ -34,6 +34,7 @@ Future<void> main() async {
       !RegExp(r'^[0-9a-f]{40}$').hasMatch(sha))
     throw const FormatException('Invalid build identity/target.');
   await validateFlutterPin();
+  await command('dart', ['tool/prepare_webrtc.dart']);
   final dist = Directory('dist');
   if (await dist.exists() && !await dist.list().isEmpty) {
     throw StateError(

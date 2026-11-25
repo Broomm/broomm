@@ -10,6 +10,7 @@ import 'history.dart';
 import '../progress/files.dart';
 import 'connection.dart';
 import 'protocol.dart';
+import 'rtc_video.dart';
 
 const remoteActions = {
   'up',
@@ -78,6 +79,12 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   int _captureId = 0;
   Timer? _firstFrameDeadline;
   bool _videoActive = false, _videoDiagnostics = false;
+  bool _guestWebRtc = false, _clientWebRtc = false;
+  int _lastVideoOffer = 0;
+  RemoteRtcVideo? _rtcHost;
+  RemoteRtcVideo? rtcVideo;
+  bool get rtcVideoReady =>
+      rtcVideo?.firstFrame == true && rtcVideo?.renderer != null;
   int _videoWindow = 0,
       _sentFrames = 0,
       _sentBytes = 0,
@@ -119,6 +126,11 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       if (_closed) return;
       channel.setMethodCallHandler((call) async {
         if (call.method == 'frame') await _sendFrame(call.arguments);
+        if (call.method == 'videoFrame') {
+          final args = call.arguments;
+          if (args is Map && args['id'] == _captureId && _guestWebRtc)
+            _markVideoActive();
+        }
         if (call.method == 'captureError') {
           final args = call.arguments;
           if (args is Map && args['id'] == _captureId) {
@@ -130,7 +142,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           final args = call.arguments;
           if (args is Map && args['id'] == _captureId)
             onEvent?.call(
-              'Remote video capture: ${args['fps']} fps, encode ${args['encodeMs']} ms, source idle ${args['idle']}, source blank ${args['blank']}, source suspended ${args['suspended']}',
+              'Remote ${args['webrtc'] == true ? 'WebRTC source' : 'video capture'}: ${args['fps']} fps, ${args['webrtc'] == true ? 'forward' : 'encode'} ${args['encodeMs']} ms, source idle ${args['idle']}, source blank ${args['blank']}, source suspended ${args['suspended']}',
             );
         }
         if (call.method == 'pad') localPad(call.arguments);
@@ -251,6 +263,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         if (!authenticated) socket?.close(1008, 'Connection code required');
       });
       await for (final data in socket) {
+        if (data is RemoteSignal) {
+          if (!authenticated || !_guestWebRtc)
+            throw const FormatException('Video is not negotiated.');
+          final message = readVideoSignal(data);
+          if (message['id'] == _captureId) _rtcHost?.signal(message);
+          continue;
+        }
         final message = remoteMessage(data);
         if (!authenticated) {
           if (message['type'] != 'hello' ||
@@ -272,6 +291,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           onEvent?.call('Remote screen connected to this host');
           deadline.cancel();
           _guest = socket;
+          _guestWebRtc = message['video'] == 'webrtc-1';
           _frameBusy = false;
           _lastInput = DateTime.now();
           socket.add(
@@ -279,6 +299,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
               'type': 'ready',
               'version': remoteProtocol,
               'videoDiagnostics': true,
+              'video': _guestWebRtc ? 'webrtc-1' : 'jpeg-1',
             }),
           );
           _sendStatus('Waiting for a compatible emulator to be launched.');
@@ -324,6 +345,12 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           case 'frameAck':
             // Legacy clients may acknowledge painting; it no longer gates capture.
             break;
+          case 'rtcStats':
+            final report = readVideoReport(message['report']);
+            if (_milliseconds - _lastPeerVideoReport >= 1000) {
+              _lastPeerVideoReport = _milliseconds;
+              onEvent?.call(formatVideoReport(report));
+            }
           case 'videoStats':
             if (_milliseconds - _lastPeerVideoReport >= 1000) {
               final received = message['received'],
@@ -365,6 +392,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       _pending--;
       if (identical(_guest, socket)) {
         _guest = null;
+        _guestWebRtc = false;
         onEvent?.call('Remote screen disconnected from this host');
         _frameBusy = false;
         _deliverPad(RemotePad.neutral, false);
@@ -375,6 +403,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         _emit();
       }
     }
+  }
+
+  void _markVideoActive() {
+    if (_videoActive) return;
+    _videoActive = true;
+    _firstFrameDeadline?.cancel();
+    _sendStatus('$_gameName secondary screen', clear: false);
   }
 
   Future<void> _sendFrame(Object? arguments) async {
@@ -519,6 +554,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         _videoActive = false;
         _firstFrameDeadline?.cancel();
         _targetKey = null;
+        unawaited(_rtcHost?.close());
         unawaited(
           channel.invokeMethod<void>('cancelCapture').catchError((Object _) {}),
         );
@@ -539,7 +575,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     final args = compatible
         ? <String, Object>{..._target!, 'name': _gameName!, 'id': id}
         : null;
-    final work = channel.invokeMethod<void>('capture', args);
+    final work = _capture(args, id);
     _targetWork = work;
     unawaited(
       work
@@ -570,6 +606,47 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _capture(Map<String, Object>? args, int id) async {
+    final previous = _rtcHost;
+    _rtcHost = null;
+    // Native capture releases its source before the plugin's stream is disposed.
+    if (previous != null) {
+      await channel.invokeMethod<void>('capture');
+      await previous.close();
+    }
+    if (id != _captureId || _closed) return;
+    if (args == null || !_guestWebRtc) {
+      await channel.invokeMethod<void>('capture', args);
+      return;
+    }
+    final peer = _guest!;
+    final video = RemoteRtcVideo(
+      id: id,
+      sender: true,
+      send: (signal) async {
+        if (id == _captureId && identical(peer, _guest))
+          await peer.sendSignal(signal);
+      },
+      changed: () {},
+      event: onEvent,
+      problem: (message) {
+        if (id != _captureId || _closed) return;
+        _sendStatus(message);
+        unawaited(
+          channel.invokeMethod<void>('cancelCapture').catchError((Object _) {}),
+        );
+      },
+    );
+    _rtcHost = video;
+    await video.startSender((stream) async {
+      if (id != _captureId || _closed) throw StateError('Capture cancelled.');
+      await channel.invokeMethod<void>('capture', {
+        ...args,
+        'streamId': stream.id,
+      });
+    });
+  }
+
   String? _lastStatus;
   void _sendStatus(String value, {bool clear = true}) {
     if (_lastStatus != value) onEvent?.call('Remote screen: $value');
@@ -579,11 +656,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         'type': 'status',
         'message': value,
         'clear': clear,
-        'touch':
-            _gameName == 'melonDS' &&
-            _target?['remoteCapture'] != null &&
-            (value == 'melonDS secondary screen' ||
-                value == 'Starting melonDS secondary screen…'),
+        'touch': _gameName == 'melonDS' && _target?['remoteCapture'] != null,
       }),
     );
   }
@@ -658,6 +731,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     connecting = true;
     error = null;
     frame = null;
+    _clientWebRtc = false;
+    _lastVideoOffer = 0;
     _emit();
     final generation = ++_generation;
     RemoteConnection? socket;
@@ -694,11 +769,51 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
               _emit();
               return;
             }
+            if (data is RemoteSignal) {
+              if (!_clientWebRtc)
+                throw const FormatException('Video is not negotiated.');
+              final signal = readVideoSignal(data);
+              final id = signal['id'] as int;
+              if (signal['type'] == 'offer' && id > _lastVideoOffer) {
+                _lastVideoOffer = id;
+                unawaited(rtcVideo?.close());
+                late final RemoteRtcVideo video;
+                video = RemoteRtcVideo(
+                  id: id,
+                  sender: false,
+                  send: (value) async {
+                    if (generation == _generation)
+                      await socket?.sendSignal(value);
+                  },
+                  changed: () {
+                    if (identical(rtcVideo, video)) _emit();
+                  },
+                  event: onEvent,
+                  report: (value) {
+                    if (generation == _generation)
+                      socket?.add(
+                        jsonEncode({'type': 'rtcStats', 'report': value}),
+                      );
+                  },
+                  problem: (message) {
+                    if (generation == _generation &&
+                        identical(rtcVideo, video)) {
+                      status = message;
+                      _emit();
+                    }
+                  },
+                );
+                rtcVideo = video;
+              }
+              rtcVideo?.signal(signal);
+              return;
+            }
             final message = remoteMessage(data);
             if (message['type'] == 'ready' &&
                 message['version'] == remoteProtocol &&
                 !ready.isCompleted) {
               _videoDiagnostics = message['videoDiagnostics'] == true;
+              _clientWebRtc = message['video'] == 'webrtc-1';
               _videoWindow = _milliseconds;
               ready.complete();
             } else if (message['type'] == 'status' &&
@@ -710,8 +825,12 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
                   status == 'melonDS secondary screen' ||
                   status == 'Azahar secondary screen';
               if (message['clear'] == true ||
-                  (message['clear'] != false && !active))
+                  (message['clear'] != false && !active)) {
                 frame = null;
+                final previous = rtcVideo;
+                rtcVideo = null;
+                unawaited(previous?.close());
+              }
               _emit();
             }
           } catch (e) {
@@ -728,6 +847,9 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             );
           if (generation == _generation) {
             _client = null;
+            final video = rtcVideo;
+            rtcVideo = null;
+            unawaited(video?.close());
             frame = null;
             error = 'Disconnected from the host. Reconnect to continue.';
             _setInput(false);
@@ -738,6 +860,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       socket.add(
         jsonEncode({
           'type': 'hello',
+          'video': 'webrtc-1',
           'version': remoteProtocol,
           'sent': _milliseconds,
           'code': code.trim().toLowerCase(),
@@ -841,10 +964,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     touch(RemoteTouch.released);
     touchSupported = false;
     final client = _client;
+    final video = rtcVideo;
+    rtcVideo = null;
     _client = null;
     frame = null;
     _setInput(false);
     await client?.close();
+    await video?.close();
     _emit();
   }
 
@@ -876,6 +1002,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         /* Tests and clients can run without capture. */
       }
     }
+    await _rtcHost?.close();
+    _rtcHost = null;
     channel.setMethodCallHandler(null);
     // The emulator owns the IPC socket until its writer has stopped.
     if (_gamePid == null && _ipc != null) await _ipc!.delete(recursive: true);
