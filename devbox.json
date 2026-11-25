@@ -9,9 +9,9 @@
       "prototype-prepare": "bash tool/build_bridges.sh && dart tool/prepare_prototype.dart",
       "app-run": "bash tool/run_prototype.sh",
       "app-build": "bash tool/build_app.sh",
-      "app-check": "flutter --suppress-analytics analyze && flutter --suppress-analytics test",
+      "app-check": "bash tool/ci/in_env.sh bash -c 'flutter --suppress-analytics analyze && flutter --suppress-analytics test'",
       "prototype-run": "bash tool/run_prototype.sh --dart-define=BROOMM_CONTROLLER_LAB=true",
-      "prototype-check": "flutter --suppress-analytics analyze && flutter --suppress-analytics test",
+      "prototype-check": "bash tool/ci/in_env.sh bash -c 'flutter --suppress-analytics analyze && flutter --suppress-analytics test'",
       "prototype-check-macos": "bash tool/test_macos.sh",
       "prototype-build": "bash tool/build_app.sh",
       "prototype-smoke": "dart tool/smoke_prototype.dart"

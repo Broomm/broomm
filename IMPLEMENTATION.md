@@ -22,7 +22,7 @@ The first real native Flutter check passed using a copied melonDS installation,
 the private fixture ROM and a new isolated profile: **1440×1080 H.264**, sender
 and receiver **VideoToolbox**, **54.8–56.8 fps** in the measured loopback windows,
 zero reported drops/loss. This is a native macOS sender/receiver check, not tablet
-Wi-Fi acceptance. All **18 focused remote regressions** pass. The full Flutter
+Wi-Fi acceptance. All **21 focused remote regressions** pass. The full Flutter
 run currently has **861 passing / one existing Linux-only skip / one failure**
 in unchanged Astris application-identity capture during its crash fixture. Its
 first run passed Astris but exposed two missing-SDK-header checks; those pass
@@ -31,12 +31,21 @@ results are retained separately, not presented as a green suite.
 
 All **11 native macOS XCTest cases** also pass, with zero failures/skips. The
 final media fixture receives **57.0–57.4 fps** at 1440×1080 using VideoToolbox
-on both sides, with no reported loss/drop. Windows packaging and its native
-corrupt-cache checks pass in CI. Linux compiles the WebRTC plugin but rejects
-an unused `libdartjni.so` requiring a JVM, introduced by the latest Android
-path-provider dependency. `path_provider_android` is now pinned to compatible
-**2.2.23**; its channel-based implementation removes JNI from the resolved
-desktop graph. New native packages must verify that correction.
+on both sides, with no reported loss/drop. CI run **45550187927** packages all
+five targets and passes native macOS XCTest plus Windows/Linux corrupt-cache
+checks. Its earlier Linux package rejection exposed an unused `libdartjni.so`
+requiring a JVM, introduced by the latest Android path-provider dependency.
+Pinning compatible **2.2.23** removes JNI from the resolved desktop graph;
+the corrected Linux packages pass their native dependency checks.
+
+That run's macOS Flutter checks exposed an asynchronous UDP discovery error
+(`No route to host`) escaping the manual-address fallback. Discovery now handles
+socket-stream errors, preserves an authenticated TCP connection when advertising
+fails, and ignores queued errors from replaced searches. Three deterministic
+regressions cover these boundaries. Static analysis passes; a new full run and
+native packages are in progress. Windows checks still report five unchanged
+temporary-directory cleanup failures involving open files; those are not media
+or native-package failures.
 
 Native source/archive hashes, Android Gradle verification and bundled upstream
 license notices accompany the dependency. Windows/Linux native downloads gain

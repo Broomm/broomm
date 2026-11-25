@@ -74,7 +74,7 @@ The standalone native check is a separate development entry point, never the
 packaged app's entry point. Use a previously prepared private melonDS fixture:
 
 ```sh
-devbox run -- bash tool/build_app.sh --release --portable --no-pub \
+devbox run -- bash tool/build_app.sh --release --portable \
   --target=tool/check_remote_rtc.dart \
   --dart-define=BROOMM_RTC_PROJECT=/absolute/path/to/broomm \
   --dart-define=BROOMM_RTC_FIXTURE_ROOT=/absolute/path/to/broomm/.tool-cache/research/remote-followup/native-EXAMPLE
@@ -86,8 +86,18 @@ private profile, verifies high-resolution native H.264 reception, closes capture
 and both peers, then closes the private game normally. Rebuild the ordinary app
 without `--target` before packaging. The executed first check reports success,
 1440×1080 VideoToolbox encoding/decoding, 54.8–56.8 fps measured windows and no
-reported drops/loss. It preserves the owner's installation, profile and progress.
-Tablet Wi-Fi/visual acceptance and Windows/Linux native execution are pending.
+reported drops/loss. The final fixture measures 57.0–57.4 fps. It preserves the
+owner's installation, profile and progress. CI run 45550187927 packages all five
+targets and passes native macOS XCTest plus Windows/Linux package and corrupt-cache
+checks. This establishes native compilation/packaging, not Windows/Linux client
+media playback. Tablet Wi-Fi/visual acceptance is still pending.
+
+Static analysis and 21 focused remote tests pass. Three discovery regressions
+cover asynchronous no-route errors, preserving TCP control when advertisement
+fails, and stale socket errors after a new search. These address the real macOS
+CI discovery failure without disabling broadcast or changing network settings.
+New full-suite and package checks track that correction separately from the
+unchanged Windows file-in-use fixture cleanup failures.
 
 ## Connection and input
 
@@ -325,13 +335,18 @@ sanitizer execution is independent of the ordinary fixture.
 Commands run from the checkout use its Devbox environments.
 
 ```sh
-devbox run -- flutter --suppress-analytics analyze --no-pub
-devbox run -- flutter --suppress-analytics test --no-pub
+devbox run -- bash tool/ci/in_env.sh flutter --suppress-analytics analyze --no-pub
+devbox run -- bash tool/ci/in_env.sh flutter --suppress-analytics test --no-pub
 devbox run --config tool/android check
 devbox run -- bash tool/build_bridges.sh
 devbox run -- bash tool/check_remote_input.sh
 devbox run -- bash tool/check_remote_input.sh --sanitize
 ```
+
+The child environment selects the pre-provisioned Apple compiler and SDK on
+macOS for native Dart assets and native test fixtures. `devbox run app-check`
+and `prototype-check` use that same environment. It does not change the global
+Xcode selection or install machine-wide dependencies.
 
 The owner verified macOS-to-Galaxy-tablet video and forwarded controller input
 on the original PR preview, reporting image sizing, missing touch and close

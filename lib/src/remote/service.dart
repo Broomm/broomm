@@ -39,6 +39,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     this.listenPort = remotePort,
     this.onEvent,
     this.monotonicMillis,
+    this.datagramSocket,
   }) : history = RemoteHistory(directory);
   static const channel = MethodChannel('app.broomm/remote');
   final RemoteHistory history;
@@ -46,6 +47,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   final int listenPort;
   final void Function(String)? onEvent;
   final int Function()? monotonicMillis;
+  final Future<RawDatagramSocket> Function(int port)? datagramSocket;
   final Stopwatch _clock = Stopwatch()..start();
   int get _milliseconds =>
       monotonicMillis?.call() ?? _clock.elapsedMilliseconds;
@@ -186,27 +188,35 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           .map((a) => a.address)
           .toList();
       try {
-        _advertiser = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4,
-          _server!.port,
-        );
-        _advertiser!.listen((event) {
-          if (event != RawSocketEvent.read) return;
-          final packet = _advertiser?.receive();
-          if (packet == null ||
-              packet.data.length != 'BROOMM_DISCOVER1'.length ||
-              utf8.decode(packet.data, allowMalformed: true) !=
-                  'BROOMM_DISCOVER1')
-            return;
-          final data = utf8.encode(jsonEncode({'broomm': 1, 'port': port}));
-          try {
-            _advertiser?.send(data, packet.address, packet.port);
-          } catch (e) {
+        final advertiser = _advertiser = await _bindDatagram(_server!.port);
+        advertiser.listen(
+          (event) {
+            if (event != RawSocketEvent.read) return;
+            final packet = advertiser.receive();
+            if (packet == null ||
+                packet.data.length != 'BROOMM_DISCOVER1'.length ||
+                utf8.decode(packet.data, allowMalformed: true) !=
+                    'BROOMM_DISCOVER1')
+              return;
+            final data = utf8.encode(jsonEncode({'broomm': 1, 'port': port}));
+            try {
+              advertiser.send(data, packet.address, packet.port);
+            } catch (e) {
+              discoveryError =
+                  'Host discovery is unavailable. Use a manual address.';
+              _emit();
+            }
+          },
+          onError: (Object error) {
+            advertiser.close();
+            if (_closed || !identical(_advertiser, advertiser)) return;
+            _advertiser = null;
             discoveryError =
                 'Host discovery is unavailable. Use a manual address.';
+            onEvent?.call('Remote host discovery failed: $error');
             _emit();
-          }
-        });
+          },
+        );
       } catch (e) {
         discoveryError = 'Host discovery is unavailable. Use a manual address.';
       }
@@ -668,6 +678,10 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     );
   }
 
+  Future<RawDatagramSocket> _bindDatagram(int port) =>
+      datagramSocket?.call(port) ??
+      RawDatagramSocket.bind(InternetAddress.anyIPv4, port);
+
   Future<void> _discover() async {
     _discoveryTimer?.cancel();
     _discovery?.close();
@@ -675,35 +689,44 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     discoveryError = null;
     _emit();
     try {
-      final socket = _discovery = await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4,
-        0,
-      );
+      final socket = _discovery = await _bindDatagram(0);
       if (_closed) {
         socket.close();
         return;
       }
       socket.broadcastEnabled = true;
-      socket.listen((event) {
-        if (event != RawSocketEvent.read) return;
-        final packet = socket.receive();
-        if (packet == null || packet.data.length > 200) return;
-        try {
-          final message = jsonDecode(utf8.decode(packet.data));
-          if (message is Map &&
-              message['broomm'] == 1 &&
-              message['port'] is int) {
-            discovered.add(
-              RemoteAddress.parse(
-                '${packet.address.address}:${message['port']}',
-              ).label,
-            );
-            _emit();
+      socket.listen(
+        (event) {
+          if (event != RawSocketEvent.read) return;
+          final packet = socket.receive();
+          if (packet == null || packet.data.length > 200) return;
+          try {
+            final message = jsonDecode(utf8.decode(packet.data));
+            if (message is Map &&
+                message['broomm'] == 1 &&
+                message['port'] is int) {
+              discovered.add(
+                RemoteAddress.parse(
+                  '${packet.address.address}:${message['port']}',
+                ).label,
+              );
+              _emit();
+            }
+          } catch (_) {
+            /* Ignore unrelated discovery traffic. */
           }
-        } catch (_) {
-          /* Ignore unrelated discovery traffic. */
-        }
-      });
+        },
+        onError: (Object error) {
+          socket.close();
+          // A queued error from a previous search must not cancel its replacement.
+          if (_closed || !identical(_discovery, socket)) return;
+          _discovery = null;
+          _discoveryTimer?.cancel();
+          discoveryError =
+              'Discovery is unavailable. Enter the host address below. $error';
+          _emit();
+        },
+      );
       socket.send(
         utf8.encode('BROOMM_DISCOVER1'),
         InternetAddress('255.255.255.255'),

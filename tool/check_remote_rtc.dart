@@ -17,8 +17,13 @@ import 'package:broomm/src/session.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  const project = String.fromEnvironment('BROOMM_RTC_PROJECT');
-  const root = String.fromEnvironment('BROOMM_RTC_FIXTURE_ROOT');
+  const requestedProject = String.fromEnvironment('BROOMM_RTC_PROJECT');
+  const requestedRoot = String.fromEnvironment('BROOMM_RTC_FIXTURE_ROOT');
+  if (requestedProject.isEmpty || requestedRoot.isEmpty) {
+    throw StateError('Select an existing private macOS fixture.');
+  }
+  final project = Directory(requestedProject).resolveSymbolicLinksSync();
+  final root = Directory(requestedRoot).resolveSymbolicLinksSync();
   if (!Platform.isMacOS ||
       project.isEmpty ||
       !root.startsWith(
