@@ -1,5 +1,28 @@
 # Implementation plan
 
+## Android WebRTC network-monitor crash — 2026-11-26
+
+Galaxy SM-X800 / Android 16 / Broomm build 1210 records three native SIGABRT
+exits at **13:28:17, 13:28:29 and 13:28:43 UTC**. Each process reports the same
+`SecurityException`: `ConnectivityService` denies `ACCESS_NETWORK_STATE` in
+WebRTC's `NetworkMonitorAutoDetect`, then the JNI exception check aborts the
+network thread. This occurs when media negotiation starts network monitoring;
+it is not evidence of a decoder, resolution or frame-rate failure.
+
+The application manifest now declares `ACCESS_NETWORK_STATE` and
+`CHANGE_NETWORK_STATE`, as required by the pinned plugin's Android integration.
+The release packager reads the final merged APK's permissions using the existing
+SDK's AAPT2 and refuses missing or API-capped WebRTC network permissions before
+publication. Three regressions cover complete declarations, either missing
+network permission, and a declaration restricted to old Android versions.
+All **24 focused remote/package cases** and static analysis pass. Fresh native
+packages and a data-preserving Galaxy update/reconnection check are in progress.
+
+Original crash/process/exit reports remain in the private
+`.tool-cache/research/remote-webrtc/android-crash-20261126/` evidence directory.
+The build/startup checks recorded below did not exercise Android media, and
+therefore did not establish successful tablet reception.
+
 ## Approved WebRTC video prototype — 2026-11-25
 
 The owner selected **flutter_webrtc** after the cross-platform comparison. The

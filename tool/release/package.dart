@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../lib/src/progress/digest.dart';
+import 'android_permissions.dart';
 import 'common.dart';
 import 'version.dart';
 
@@ -170,6 +171,13 @@ Future<void> main() async {
     await apk.copy(artifact.path);
     // Test builds use the existing debug key; publication requires the four secrets.
     final sdk = requiredEnvironment(env, 'ANDROID_HOME');
+    verifyAndroidVideoPermissions(
+      await command('$sdk/build-tools/36.1.0/aapt2', [
+        'dump',
+        'permissions',
+        artifact.path,
+      ]),
+    );
     await command('$sdk/build-tools/36.1.0/apksigner', [
       'verify',
       '--verbose',

@@ -4,6 +4,23 @@
 inside the Flutter application. The [product contract](../PROJECT.md#remote-screen)
 and [walkthrough](../README.md#remote-screen-preview) define the visible flow.
 
+## Android receive crash — 26 November 2026
+
+The owner's Galaxy records three identical build-1210 crashes as a video session
+starts. Each has `SecurityException: ... android.permission.ACCESS_NETWORK_STATE`
+in `NetworkMonitorAutoDetect`, followed by WebRTC's JNI fatal check and SIGABRT
+on `network_thread`. The missing Android network-state declarations are now
+included in the application manifest. These are install-time normal permissions
+([Android reference](https://developer.android.com/reference/android/Manifest.permission#ACCESS_NETWORK_STATE));
+camera/microphone capture is outside this receiver change.
+
+The Android release recipe checks permissions in the actual merged APK with
+the existing SDK's [AAPT2](https://developer.android.com/tools/aapt2#dump).
+Missing or API-capped network permissions fail packaging. Three regressions
+exercise those conditions; 24 focused cases and static analysis pass. Device
+media verification must follow a freshly installed update; prior compilation,
+startup and macOS loopback results did not prove Android video reception.
+
 ## Approved WebRTC prototype — 25 November 2026
 
 The owner selected `flutter_webrtc` after reviewing native adapters and shared
