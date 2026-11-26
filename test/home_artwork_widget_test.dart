@@ -15,6 +15,7 @@ import 'package:broomm/src/shell/library.dart';
 import 'package:broomm/src/shell/storage.dart';
 import 'package:broomm/src/shell/home_screen.dart';
 import 'package:broomm/src/shell/controls.dart';
+import 'package:broomm/src/remote/service.dart';
 
 import 'remembered_signin_test.dart' show MemoryCredentials;
 import 'shell_model_test.dart' show FixtureRomm, settleModel;
@@ -196,12 +197,16 @@ void main() {
   late Directory root;
   late ShellModel model;
   late FixtureSteamGrid grid;
+  late RemoteScreenService remote;
   setUp(() async {
     root = await Directory.systemTemp.createTemp('broomm-artwork-widget-');
     grid = FixtureSteamGrid('fixture');
     model = await artworkFixture(root, grid: grid);
+    remote = RemoteScreenService(root);
+    await remote.start();
   });
   tearDown(() async {
+    await remote.close();
     if (!model.disposed) model.dispose();
     await model.finishDownloads();
     await model.finishCloud();
@@ -211,7 +216,7 @@ void main() {
     t.view.devicePixelRatio = 1;
     t.view.physicalSize = size;
     await t.binding.setSurfaceSize(size);
-    await t.pumpWidget(BroommApp(model: model));
+    await t.pumpWidget(BroommApp(model: model, remoteService: remote));
     await t.pumpAndSettle();
   }
 

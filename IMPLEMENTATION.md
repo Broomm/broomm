@@ -1,5 +1,30 @@
 # Implementation plan
 
+## Release CI recovery — 2026-11-26
+
+Remote screen was squash-merged as `0ea874d`, but its production workflow
+[45842681632](https://github.com/Broomm/broomm/actions/runs/45842681632)
+failed. All five packages and the Linux/macOS gates passed. Five Windows UI
+tests failed while removing fixture directories with error 32 (file in use),
+so the publish job was skipped; the last published stable at investigation start
+was `v0.1.30`.
+Package success and the owner's tablet acceptance did not establish release
+success.
+
+The affected fixtures now own their real remote service, start it outside the
+widget test's fake clock, supply it to `BroommApp`, and await its shutdown before
+deleting storage, alongside download/cloud shutdown. Supplied services remain
+caller-owned; ordinary app construction still creates and closes its own service.
+This waits for the remote history's asynchronous startup and settings lock.
+Two regressions cover unmount while another process holds the production
+remote-settings lock, and shutdown after invalid saved settings. No deletion
+retry, test skip or relaxed assertion is added. All **30 affected Flutter cases**
+pass locally on macOS, alongside static analysis and repository-wide formatting.
+Native Windows, the remaining hosted gates, and actual publication must be
+verified separately; the original failed run is not evidence for those results.
+`AGENTS.md` now requires monitoring every pushed revision's CI
+through completion and verifying publication after release-branch merges.
+
 ## Remote detail and Android focus decoration — 2026-11-26
 
 The owner confirms Android frame rate improved after build 1212, while image

@@ -9,6 +9,7 @@ import 'package:broomm/src/shell/app.dart';
 import 'package:broomm/src/shell/artwork.dart';
 import 'package:broomm/src/shell/model.dart';
 import 'package:broomm/src/shell/storage.dart';
+import 'package:broomm/src/remote/service.dart';
 
 import 'shell_model_test.dart' show FixtureRomm, settleModel;
 import 'library_download_test.dart' show fixture, bytes;
@@ -106,8 +107,11 @@ void main() {
     late Directory root;
     late ShellModel model;
     late VersionCatalogue catalogue;
+    late RemoteScreenService remote;
     setUp(() async {
       root = await Directory.systemTemp.createTemp('broomm-versions-');
+      remote = RemoteScreenService(root);
+      await remote.start();
       model = ShellModel(
         ShellStorage(root),
         credentials: MemoryCredentials(),
@@ -121,14 +125,17 @@ void main() {
       model.navigate(ShellScreen.store);
     });
     tearDown(() async {
+      await remote.close();
       model.dispose();
+      await model.finishDownloads();
+      await model.finishCloud();
       await root.delete(recursive: true);
     });
     Future<void> open(WidgetTester t) async {
       t.view.devicePixelRatio = 1;
       t.view.physicalSize = const Size(1100, 800);
       await t.binding.setSurfaceSize(const Size(1100, 800));
-      await t.pumpWidget(BroommApp(model: model));
+      await t.pumpWidget(BroommApp(model: model, remoteService: remote));
       await t.pumpAndSettle();
       expect(find.byType(GameCard), findsOneWidget);
       await t.tap(find.byType(GameCard));
