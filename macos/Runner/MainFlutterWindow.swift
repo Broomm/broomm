@@ -18,6 +18,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
   private var heldDirections: [String: (String, TimeInterval)] = [:]
   private var shiftControllers = Set<String>()
   private var navigationTimer: Timer?
+  private var remoteScreen: BroommRemoteScreen?
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { true }
 
@@ -32,6 +33,7 @@ class MainFlutterWindow: NSWindow, NSWindowDelegate {
     isOpaque = true
     backgroundColor = NSColor(calibratedRed: 0.05, green: 0.08, blue: 0.13, alpha: 1)
     RegisterGeneratedPlugins(registry: controller)
+    remoteScreen = BroommRemoteScreen(messenger: controller.engine.binaryMessenger)
     credentialChannel = FlutterMethodChannel(name: "app.broomm/credentials", binaryMessenger: controller.engine.binaryMessenger)
     credentialChannel.setMethodCallHandler { [weak self] call, reply in
       guard let self = self else { return }

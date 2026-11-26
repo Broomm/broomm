@@ -615,6 +615,7 @@ static void *melonds_thread(void) {
     if(!pause||pause[8]!=0xf9404814||pause[9]!=0x3940e288)return NULL;
     return *(void **)((char *)qt_main+0x90);
 }
+#include "../../../native/melonds_frontend.inc"
 static void *core_system_fn, *core_state_fn, *core_set_state_fn;
 static uint32_t *rpcs_status;
 static uint32_t *rpcs_ftotal, *rpcs_fdone, *rpcs_ptotal, *rpcs_pdone;
@@ -664,6 +665,7 @@ static void qt_tick(void) {
         void *w=widgets.data[i];if(!w)continue;
         void **vtable=*(void ***)w;
         if((main_meta&&vtable[0]==main_meta)||(rpcs_meta&&vtable[0]==rpcs_meta)||(dolphin_meta&&vtable[0]==dolphin_meta)) {
+            if(getenv("BROOMM_MELONDS")&&!melonds_primary(w))continue;
             if(!qt_main)record("QT_MAIN_WINDOW object=%p",w);
             qt_main=w;
         }

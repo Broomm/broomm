@@ -1,5 +1,110 @@
 # Broomm
 
+## Remote screen preview
+
+[Download the universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip).
+Remote screen is built into Broomm. macOS hosts melonDS 1.1 and Azahar 2126.1.2.
+The client UI and protocol work on Android and desktop hosts. Native device
+acceptance is tracked in [the verification record](docs/remote-screen.md).
+
+1. Open Broomm on the Mac. Its TCP server starts on port **43187** immediately,
+   including before RomM sign-in and while a game is running. Keep Broomm open.
+   In Home's top row, choose **Remote screen → Use this device as a host** to
+   view local addresses and the connection code.
+2. On another device on the same LAN, open **Remote screen → Use this device as
+   a remote screen**. This is also available from onboarding. Choose a nearby
+   host or enter its IP and port, then enter the connection code. Discovery uses
+   UDP port 43187 and may be blocked by the router. Manual connection uses TCP.
+   Successful connections appear under **Recent hosts** on later visits.
+3. Connect the client controller. Its input now navigates Broomm on the Mac.
+   The client displays **Waiting for a compatible emulator to be launched.**
+4. Launch a game using melonDS or Azahar from the Mac's installed library.
+   Join the forwarded controller in the existing pairing screen with L1 + R1,
+   then hold Start to play. The desktop uses the main screen and the client
+   displays the secondary window. Connect before launching the game so its
+   separate windows are prepared. melonDS maximizes both windows without
+   fullscreen and raises the primary when play begins. The tablet image fills
+   the available area above the connection controls, preserving its aspect ratio.
+   Tap or drag that image to use the DS touch screen; releasing or leaving the
+   client clears touch. Presses in the surrounding letterbox do nothing.
+5. Grant Broomm Screen Recording permission when macOS requests it. If capture
+   needs attention, use **Retry screen** on the client after correcting the
+   permission. An English Azahar secondary-window title is required by this
+   preview's window selector. Keep the secondary window available while testing.
+   Use the current Mac and Android previews together for the revised streaming
+   path. Matching previews use WebRTC with up to 2560×1920 capture and up to
+   60 fps, subject to emulator updates, decoding and LAN
+   bandwidth. A stream that starts without frames shows a retryable message;
+   an active-stream caption appears only after video arrives.
+   Use the current Mac preview for the higher-resolution source. On macOS 14+
+   the stream is capped to the actual rendered game area; a smaller source
+   window cannot supply extra detail. The Android preview also removes the
+   native full-window focus border after keyboard/controller input, including
+   in dark mode, while retaining Broomm's focused-control outlines.
+6. Choose **Disconnect** on the client to return to the host list. Lost assigned
+   controllers follow Broomm's normal pause and pairing flow. Close the game
+   normally to finalize progress and restore its previous layout.
+
+Use a trusted local network. This preview transmits its connection code,
+controller input without encryption. Negotiated WebRTC media is encrypted by
+WebRTC; older peers retain the unencrypted JPEG compatibility path. The preview
+uses direct LAN media with no configured STUN/TURN service. The local firewall
+must allow its media connection as well as TCP/UDP port 43187. It supports one client and
+one source controller. melonDS supports single-touch input. Azahar touch,
+forwarded audio, and Linux, Windows or Android hosting are future work.
+
+Recent hosts and the local connection code are stored in `remote-screen.json`
+inside Broomm's application data directory. Logs use the existing `broomm.log`.
+Temporary screen settings have a `remote-layout.json` recovery journal in the
+emulator's private profile root. Quit Broomm on every instance before removing
+`remote-screen.json` to clear remembered hosts and generate a new host code.
+Leave any layout recovery journal in place until the emulator has closed and
+Broomm has restored it. No controller driver installation is required.
+
+For a stalled/choppy stream, reproduce it for at least ten seconds, then inspect
+the Mac's `broomm.log`. Five-second `Remote WebRTC` records report dimensions,
+codec implementation, frame rates, drops and packet loss; `WebRTC source`
+records report the native capture rate. Legacy `Remote video` records separate
+JPEG capture/encoding, socket sending, and the client's receive/decode rates. The
+client reports diagnostics back to the host. The controller remains usable
+when video fails. Use **Retry screen** to recreate capture and the media peer;
+reconnect if the LAN control connection itself closes. Inspect the current
+[verification record](docs/remote-screen.md) for native/device acceptance.
+
+
+
+### Install the Android preview over USB
+
+Enable USB debugging on the Android device, connect it and accept its debugging
+authorization prompt. Download the Android artifact from the PR's successful
+build job and extract its APK. With platform-tools installed, check the device
+and install while retaining existing Broomm data:
+
+```sh
+~/Documents/platform-tools/adb devices -l
+~/Documents/platform-tools/adb -s DEVICE_SERIAL install -r /path/to/Broomm-android-universal.apk
+```
+
+Expect the tablet to appear with status `device` and installation to report
+`Success`. If no device appears, toggle USB debugging, reconnect and check for
+the authorization prompt. Close the old Mac Broomm/game normally before opening
+the matching new preview. Connect the tablet first, then launch a game; verify
+image detail/frame rate, the enlarged view, taps/drags and normal Close game flow.
+These user observations complete the device acceptance; a successful APK build
+does not.
+
+The first WebRTC Android preview (code 1210) crashes when video starts because
+of missing network permissions. Use code **1212 or later** for that path. The
+corrected permissions are granted during installation; reconnect to the existing
+WebRTC Mac host after updating.
+
+PR CI builds use runner-local debug signing, which can differ between runs.
+If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use a build signed with
+the installed app's retained key. Uninstalling to change keys erases app data
+and requires the owner's explicit approval. The local Galaxy preview retains
+its private key under `.tool-cache/galaxy-preview-signing/`; preserve that
+ignored directory for later updates and keep its contents private.
+
 ## Home and save-sync preview
 
 [Download the universal macOS preview](build/releases/Broomm-macOS-pairing-picker-focus.zip).

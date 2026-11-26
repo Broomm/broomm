@@ -51,6 +51,7 @@ enum ShellScreen {
   emulators,
   downloads,
   update,
+  remote,
 }
 
 class ShellNotice {
@@ -200,6 +201,7 @@ class ShellModel extends ChangeNotifier {
   List<int> get systemApps => [
     0,
     2,
+    5,
     if (updates.available != null) 4,
     if (downloads.isNotEmpty) 3,
   ];
@@ -1346,7 +1348,11 @@ class ShellModel extends ChangeNotifier {
   }
 
   void navigate(ShellScreen target, {int? homeShortcut}) {
-    if (busy || applicationUpdating || gameActive || !authenticated) return;
+    if (busy ||
+        applicationUpdating ||
+        gameActive ||
+        (!authenticated && target != ShellScreen.remote))
+      return;
     if (screen == ShellScreen.home && target != ShellScreen.home)
       homeReturnShortcut = homeShortcut;
     error = null;
@@ -1431,6 +1437,11 @@ class ShellModel extends ChangeNotifier {
 
   void back() {
     if (busy) return;
+    if (screen == ShellScreen.remote && !authenticated) {
+      screen = server == null ? ShellScreen.servers : ShellScreen.profiles;
+      _emit();
+      return;
+    }
     if (screen == ShellScreen.profiles) {
       changeServer();
       return;

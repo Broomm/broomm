@@ -85,6 +85,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         if (!wasDown && enters.any { it.startsWith("$device-") }) controls?.invokeMethod("controller", "keyboard-enter")
     }
     private var inputs: InputManager? = null
+    private var remoteController: RemoteController? = null
     private fun shift(key: String, down: Boolean) {
         val previous = shifts.isNotEmpty()
         if (down) shifts.add(key) else shifts.remove(key)
@@ -97,6 +98,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     }
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
+        remoteController = RemoteController(engine)
         credentials = BroommCredentials(this).also { it.register(engine) }
         emulators = BroommEmulators(this).also { it.register(engine) }
         rootInspection = RootInspection(this).also { it.register(engine) }
@@ -109,6 +111,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         }
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        remoteController?.key(event)
         if ((event.source and InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD ||
             (event.source and InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK) {
             if (event.keyCode == KeyEvent.KEYCODE_BUTTON_L2) {
@@ -143,6 +146,7 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
         return super.dispatchKeyEvent(event)
     }
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        remoteController?.motion(event)
         if ((event.source and InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK && event.action == MotionEvent.ACTION_MOVE) {
             shift("${event.deviceId}-axis", event.getAxisValue(MotionEvent.AXIS_LTRIGGER) > 0.55f || event.getAxisValue(MotionEvent.AXIS_BRAKE) > 0.55f)
             enter("${event.deviceId}-axis", event.getAxisValue(MotionEvent.AXIS_RTRIGGER) > 0.55f || event.getAxisValue(MotionEvent.AXIS_GAS) > 0.55f)
@@ -174,10 +178,11 @@ class MainActivity : FlutterActivity(), InputManager.InputDeviceListener {
     }
     override fun onInputDeviceChanged(deviceId: Int) {}
     override fun onInputDeviceRemoved(deviceId: Int) {
+        remoteController?.removed(deviceId)
         for (key in shifts.filter { it.startsWith("$deviceId-") }) shift(key, false)
         enters.removeAll { it.startsWith("$deviceId-") }
     }
-    override fun onPause() { held = null; handler.removeCallbacks(repeat); for (key in shifts.toList()) shift(key, false); enters.clear(); super.onPause() }
+    override fun onPause() { remoteController?.clear(); held = null; handler.removeCallbacks(repeat); for (key in shifts.toList()) shift(key, false); enters.clear(); super.onPause() }
     override fun onDestroy() {
         window.decorView.viewTreeObserver.removeOnGlobalLayoutListener(layoutListener)
         handler.removeCallbacks(restoreFullscreen)

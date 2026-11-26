@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../lib/src/progress/digest.dart';
+import 'android_permissions.dart';
 import 'common.dart';
 import 'version.dart';
 
@@ -34,6 +35,7 @@ Future<void> main() async {
       !RegExp(r'^[0-9a-f]{40}$').hasMatch(sha))
     throw const FormatException('Invalid build identity/target.');
   await validateFlutterPin();
+  await command('dart', ['tool/prepare_webrtc.dart']);
   final dist = Directory('dist');
   if (await dist.exists() && !await dist.list().isEmpty) {
     throw StateError(
@@ -169,6 +171,13 @@ Future<void> main() async {
     await apk.copy(artifact.path);
     // Test builds use the existing debug key; publication requires the four secrets.
     final sdk = requiredEnvironment(env, 'ANDROID_HOME');
+    verifyAndroidVideoPermissions(
+      await command('$sdk/build-tools/36.1.0/aapt2', [
+        'dump',
+        'permissions',
+        artifact.path,
+      ]),
+    );
     await command('$sdk/build-tools/36.1.0/apksigner', [
       'verify',
       '--verbose',

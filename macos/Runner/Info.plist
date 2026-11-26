@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Connect Broomm controllers and remote screens on your local network.</string>
   <!-- Flutter 3.47 macOS Impeller can crash on foreground/resize (#192522).
        Use the SDK's existing Skia Metal backend until a pinned fix is verified. -->
   <key>FLTEnableImpeller</key>

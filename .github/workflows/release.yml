@@ -128,6 +128,8 @@ jobs:
           pub-cache-path: ${{ github.workspace }}/.tool-cache/pub
       - name: Resolve locked packages
         run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Verify WebRTC native download pins
+        run: bash tool/ci/run.sh dart tool/prepare_webrtc.dart
       - name: Analyze
         run: bash tool/ci/run.sh flutter --suppress-analytics analyze --no-pub
       - name: Check Dart formatting
@@ -227,6 +229,8 @@ jobs:
       - name: Test Gradle wrapper bootstrap boundaries
         run: devbox run -- devbox --config tool/android run -- bash -c 'cd ../.. && python3 -m unittest discover -s tool/ci -p test_seed_gradle.py -v'
       - run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Verify WebRTC native download pins
+        run: bash tool/ci/run.sh dart tool/prepare_webrtc.dart
       - name: Compile bridges and host test application
         run: |
           bash tool/ci/run.sh bash tool/build_bridges.sh
@@ -239,6 +243,12 @@ jobs:
       - name: Native pause transition sanitizers
         if: ${{ !cancelled() }}
         run: bash tool/ci/run.sh bash tool/check_sony_pause.sh --sanitize
+      - name: Native remote controller regressions
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_remote_input.sh
+      - name: Native remote controller sanitizers
+        if: ${{ !cancelled() }}
+        run: bash tool/ci/run.sh bash tool/check_remote_input.sh --sanitize
       - name: Shared save native file-lock tests
         if: ${{ !cancelled() }}
         run: |
@@ -284,6 +294,7 @@ jobs:
             build/macos/Logs/Test/*.xcresult
             build/android-checks/*.log
             build/native-pause-checks/*.log
+            build/native-remote-checks/*.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -368,12 +379,17 @@ jobs:
         run: bash tool/ci/run.sh python3 tool/ci/seed_gradle.py
       - name: Resolve locked packages
         run: bash tool/ci/run.sh flutter --suppress-analytics pub get --enforce-lockfile
+      - name: Verify WebRTC native download pins
+        run: bash tool/ci/run.sh dart tool/prepare_webrtc.dart
       - name: Test Linux bundle portability checks
         if: matrix.platform == 'linux'
         run: bash tool/ci/run.sh bash tool/ci/test_linux_bundle.sh
       - name: Build and package (PR/local Android signing)
         if: matrix.platform != 'android' || needs.version.outputs.publish != 'true'
         run: bash tool/ci/run.sh dart tool/release/package.dart
+      - name: Verify WebRTC native cache rejection
+        if: matrix.platform == 'linux' || matrix.platform == 'windows'
+        run: bash tool/ci/run.sh dart tool/check_webrtc_native_cache.dart
       - name: Build and package (Android release signing)
         if: matrix.platform == 'android' && needs.version.outputs.publish == 'true'
         env:

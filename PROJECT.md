@@ -14,7 +14,7 @@ variants; keep the checked-in artwork and reproducible rendering recipe together
 ## Home and Store
 
 - Home keeps **Game Store** first in its main rail, followed by installed games in descending interaction order. A verified installation and a successful emulator launch each count as an interaction. Recency is device-local and shared with the installation across permitted profiles on the same server. Existing installations use their recorded completion date. The current selection follows the game as the rail reorders.
-- Put **Broomm settings**, **Emulator Settings**, and the conditional **Downloads** and **Update Broomm** shortcuts in a compact row above the selected tile. Start the row with both settings shortcuts at the tile’s fixed left edge. Show the name next to the icon on each settings shortcut. Profile selection and connection setup remain separate flows.
+- Put **Broomm settings**, **Emulator Settings**, **Remote screen**, and the conditional **Downloads** and **Update Broomm** shortcuts in a compact row above the selected tile. Start the row with both settings shortcuts at the tile’s fixed left edge. Show the name next to the icon on each settings shortcut. Profile selection and connection setup remain separate flows.
 - The Store browses the connected RomM catalogue, with artwork, game details, search, and platform/category browsing. Related ROM versions appear as one game entry using RomM's metadata grouping. Before downloading a grouped game, let the user choose the release using its filename/region/revision tags. Preserve the selected ROM's identity and permission checks. It provides installation actions for that catalogue; purchases and a separate commercial marketplace are outside this specification.
 - A game appears as playable on Home only after its installation succeeds. Partial downloads must not become playable entries. Downloads form a persistent queue, with a configurable maximum of 1–6 simultaneous game transfers (default 3) and a Downloads shortcut above the rail while active, queued or failed entries exist. Each job has independent progress, cancellation, retries and removal. Separate private transfer stages can overlap; shared library publication and emulator content mutations remain serialized and OS-locked. Removing a failed download discards its partial payload and selected artwork, preserving any already completed base game and all progress. Do not display a persistent transfer overlay. Always validate complete transfer sizes; an optional full game-checksum scan is off by default. This setting does not weaken firmware, add-on, save or executable validation.
 - Installed games appear on Home like console games, with a clear Play action and relevant installation or synchronization status.
@@ -186,6 +186,56 @@ emulators. A host offers only the setup recipes and native integrations actually
 implemented for it; published upstream binaries alone do not establish support.
 This staging retains the full Windows/macOS/Linux/Android product targets.
 
+## Remote screen
+
+Remote screen is part of the existing Broomm application. Home places a labeled
+**Remote screen** shortcut immediately after **Emulator Settings**. The screen
+offers **Use this device as a host** and **Use this device as a remote screen**.
+The first host milestone supports macOS with melonDS and Azahar. Linux and
+Windows hosting follow later. Android hosting is deferred. The connection
+protocol and remote screen UI are shared across Android, macOS, Linux and Windows.
+
+The macOS host server starts when Broomm opens and remains available through
+server/profile selection, Home and gameplay. **Use this device as a host**
+displays its local addresses, listening port, connection code and instructions.
+The remote screen role offers discovered LAN hosts, manual address and code
+entry, and the most recently connected hosts. Persist successful connections
+on the client and order them by last successful connection. Remote screen is
+also reachable from onboarding for devices that only act as a client.
+
+After connecting, forward controller input to the host's Broomm navigation and
+show **Waiting for a compatible emulator to be launched.** A supported game
+launch prepares the main display on the computer and streams the secondary
+window to the client. Controller assignments use the existing pairing flow.
+Deliver gameplay input inside the emulator process using Broomm's native bridge.
+Keep the host as the owner of emulator supervision, profiles and saved progress.
+Clear remote input on disconnection, loss of client focus or expired samples,
+and let the existing pairing and pause flow handle a lost assigned controller.
+
+The first preview permits one remote screen and one source controller per host.
+Connect before launching the game to prepare its separate windows. Restore the
+previous layout after confirmed emulator exit, retaining a recovery journal
+across interruption. Capture uses the verified child process and its secondary
+window. macOS Screen Recording permission is required for video. The initial
+LAN transport uses a connection code and bounded messages with an explicit
+unencrypted-connection notice. Fit the remote image to the largest available
+area while preserving its aspect ratio and space for connection controls.
+Preserve image detail when expanding the secondary screen on a large client
+display, and aim for a smooth, consistent frame cadence. Image sharpness and
+frame rate need their own verification; input/video latency is a separate check.
+Forward a single touch/drag/release to melonDS's secondary touch screen without
+moving the host pointer or creating an OS input device. Reject letterbox presses
+and clear held touch on focus loss, pause, disconnect and expiry. In remote
+melonDS sessions, maximize both windows without fullscreen, raise the primary
+above the secondary when play begins, and crop the stream to the game area.
+Restore temporary geometry and screen preferences after confirmed exit.
+Keep video queues bounded and show the newest available frames on a slow client.
+Only report active video after a frame arrives. Capture/decoding failures must
+be visible while retaining the controller connection. Reassert the primary
+window when play resumes or emulator activation raises its secondary.
+Azahar touch and forwarded audio remain later capabilities. See the [walkthrough](README.md#remote-screen-preview) and
+[design and verification](docs/remote-screen.md).
+
 ## Android handoff
 
 Android detects and uses compatible installed emulator apps and can guide users through installing an emulator when absent. It launches the selected emulator with the ROM and the profile's save/save-state inputs through that emulator's supported contract. It does not run the desktop controller join/assignment machinery, inject bridges, render in-game Broomm overlays, or attempt desktop-style sandboxing of the emulator app.
@@ -194,6 +244,10 @@ Broomm's Android activity uses immersive fullscreen. It draws into system-bar
 space and allows Android to reveal its controls with an edge swipe. Respect
 display cutouts and the system keyboard. External emulator windows use their
 own settings.
+
+Hardware keyboard/controller input must not add a native border around the
+whole Android app. Preserve Broomm's focused-control outlines, navigation and
+accessibility in both light and dark system themes.
 
 Ask players to complete each emulator’s first-run setup, then close it.
 Before Play and on return from the emulator, continue automatically when

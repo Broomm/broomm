@@ -11,6 +11,7 @@ import 'retroarch_control.dart';
 import 'session_log.dart';
 import 'session_lease.dart';
 import 'switch_launch_identity.dart';
+import 'remote/layout.dart';
 import 'romm/transfer.dart';
 export 'session_log.dart';
 
@@ -159,6 +160,8 @@ class BridgeStatus {
       macWindowAck = j['macWindowAck'] as int? ?? 0,
       macWindowHidden = j['macWindowHidden'] as bool? ?? false,
       macWindowBirth = (j['macWindowBirth'] as List? ?? []).cast<int>(),
+      remoteCapture = (j['remoteCapture'] as List? ?? []).cast<num>(),
+      remotePrimary = j['remotePrimary'] as int? ?? 0,
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -178,6 +181,8 @@ class BridgeStatus {
   final int macWindowAck;
   final bool macWindowHidden;
   final List<int> macWindowBirth;
+  final List<num> remoteCapture;
+  final int remotePrimary;
   final Rpcs3Loading? loading;
 }
 
@@ -193,8 +198,12 @@ class GameSession {
     this.managedRoot,
     this.resolve,
     this.preparationLease,
+    this.remoteSocket,
+    this.remoteScreen = false,
   });
   final String project;
+  final String? remoteSocket;
+  final bool remoteScreen;
   final String? managedRoot;
   final Future<ResolvedSession> Function(LaunchGame)? resolve;
   final SessionLease? preparationLease;
@@ -285,6 +294,8 @@ class GameSession {
       'microseconds': bridge.macWindowBirth[1],
       'executable': File(prepared.executable).absolute.path,
       'writer': File('$dataRoot/writer.lock').absolute.path,
+      if (bridge.remoteCapture.length == 5 && bridge.remoteCapture.first > 0)
+        'remoteCapture': bridge.remoteCapture,
     };
   }
 
@@ -396,6 +407,7 @@ class GameSession {
       }
       _romPath = rom.path;
       emulator = e;
+      e.remoteScreen = remoteScreen && Platform.isMacOS;
       game = selected;
       // Keep version-sensitive native ABI addresses tied to the exact prepared executable.
       if (Platform.isMacOS) {
@@ -482,6 +494,7 @@ class GameSession {
         _retroPort = endpoint.port;
         await endpoint.close();
       }
+      await RemoteLayout.prepare(e);
       final args = await EmulatorAdapter.forName(e.name)
           .prepare(e, selected, rom.path, _retroPort);
       cancellation.check();
@@ -553,6 +566,11 @@ class GameSession {
           'BROOMM_MAC_WINDOW_COMMAND': '${e.root}/mac-window-command.txt',
         'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
         'BROOMM_SESSION': '1',
+        if (Platform.isMacOS &&
+            remoteSocket != null &&
+            {'melonDS', 'Azahar'}.contains(e.name))
+          'BROOMM_REMOTE_SOCKET': remoteSocket!,
+        if (Platform.isMacOS && e.remoteScreen) 'BROOMM_REMOTE_SCREEN': '1',
         if (Platform.isLinux && (e.name == 'Ryubing' || e.name == 'PPSSPP'))
           'BROOMM_NATIVE_CONTROL_PORT': '$_retroPort',
         'BROOMM_WRITER_LOCK': '$dataRoot/writer.lock',
@@ -584,6 +602,10 @@ class GameSession {
           'BROOMM_DEFER_SDL_WATCHES': '1',
         if (Platform.isLinux && e.name == 'Azahar') 'BROOMM_AZAHAR': '1',
         if (e.name == 'melonDS') 'BROOMM_MELONDS': '1',
+        // The pinned Qt menu regex JIT can fault on ARM64 focus changes under
+        // W^X. This affects Qt menu matching, not the DS CPU recompiler.
+        if (Platform.isMacOS && e.name == 'melonDS' && e.remoteScreen)
+          'QT_ENABLE_REGEXP_JIT': '0',
         if (e.name == 'Eden') 'BROOMM_EDEN': '1',
         if (e.name == 'PPSSPP') ...{
           'BROOMM_PPSSPP': '1',
@@ -996,6 +1018,13 @@ class GameSession {
   }
 
   Future<void> _release() async {
+    if (emulator case final prepared?) {
+      try {
+        await RemoteLayout.restore(prepared);
+      } catch (e) {
+        onProblem?.call('Remote layout recovery is pending: $e');
+      }
+    }
     finalizingProgress = false;
     ++_generation;
     _stopping = true;

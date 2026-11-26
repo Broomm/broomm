@@ -18,6 +18,33 @@ private class QuitTestWindow: MainFlutterWindow {
 }
 
 class RunnerTests: XCTestCase {
+  func testRemoteVideoRetainsHighResolutionWithinItsPixelBudget() throws {
+    let size = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: 2456, sourceHeight: 1842))
+    XCTAssertEqual(size.width, 2456)
+    XCTAssertEqual(size.height, 1842)
+    let large = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: 3840, sourceHeight: 2880))
+    XCTAssertEqual(large.width, 2560)
+    XCTAssertEqual(large.height, 1920)
+  }
+
+  func testRemoteVideoDoesNotUpscaleSmallOrFractionalSources() throws {
+    for (width, height) in [(1280.0, 960.0), (1001.5, 751.5)] {
+      let size = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: width, sourceHeight: height))
+      XCTAssertLessThanOrEqual(Double(size.width), width)
+      XCTAssertLessThanOrEqual(Double(size.height), height)
+      XCTAssertEqual(size.width * 3, size.height * 4)
+      XCTAssertEqual(size.width % 2, 0)
+      XCTAssertEqual(size.height % 2, 0)
+    }
+  }
+
+  func testRemoteVideoRejectsUnknownOrEmptySourcePixels() {
+    for value in [Double.nan, Double.infinity, -1, 0, 1] {
+      XCTAssertNil(remoteVideoCaptureSize(sourceWidth: value, sourceHeight: 1536))
+      XCTAssertNil(remoteVideoCaptureSize(sourceWidth: 2048, sourceHeight: value))
+    }
+  }
+
   @MainActor
   private func setButton(_ button: GCControllerButtonInput, pressed: Bool) async throws {
     let handler = try XCTUnwrap(button.pressedChangedHandler)

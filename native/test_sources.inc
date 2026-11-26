@@ -65,7 +65,7 @@ static void test_sources_tick(void) {
     }
     static unsigned int pause_previous;
     if(!getenv("BROOMM_PLAYSTATION")&&close_window!=pause_previous) {
-        if(close_window==4||close_window==5)atomic_store(&test_native_pause_action,(int)close_window);
+        if(close_window>=4&&close_window<=7)atomic_store(&test_native_pause_action,(int)close_window);
         pause_previous=close_window;
     }
     static bool close_sent;

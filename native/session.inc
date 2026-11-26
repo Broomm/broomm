@@ -111,6 +111,10 @@ static void finish_session_close(void *window) {
         dispatch_after_f(dispatch_time(DISPATCH_TIME_NOW,50*NSEC_PER_MSEC),dispatch_get_main_queue(),window,finish_session_close);
         return;
     }
+    if(getenv("BROOMM_MELONDS")&&qt_main&&melonds_primary(qt_main)) {
+        void (*quit)(void *)=symbol("_ZN10MainWindow6onQuitEv");
+        if(quit) {record("MELONDS_QUIT_PRIMARY_WINDOW");quit(qt_main);return;}
+    }
     bool (*close_widget)(void *)=dlsym(RTLD_DEFAULT,"_ZN7QWidget5closeEv");
     void (*quit_app)(void)=dlsym(RTLD_DEFAULT,"_ZN16QCoreApplication4quitEv");
     if(getenv("BROOMM_MELONDS")||getenv("BROOMM_EDEN")) {
@@ -163,6 +167,28 @@ static void appkit_observe_content(bool ready) {
 // desired state. These invoke the frontend's API and never write native state.
 static void native_pause_fixture(int actual,id window) {
     int action=session_test?atomic_load(&test_native_pause_action):0;
+    if(action==6) {
+        id app=send0((id)objc_getClass("NSApplication"),"sharedApplication");
+        id windows=send0(app,"windows");
+        unsigned long count=((unsigned long(*)(id,SEL))objc_msgSend)(windows,sel_registerName("count")),visible=0;
+        for(unsigned long i=0;i<count;++i) {
+            id item=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
+            ((void(*)(id,SEL,id))objc_msgSend)(item,sel_registerName("orderOut:"),NULL);
+            if(((bool(*)(id,SEL))objc_msgSend)(item,sel_registerName("isVisible")))visible++;
+        }
+        record("SESSION_TEST_HIDE visible=%lu",visible);
+        atomic_store(&test_native_pause_action,0);return;
+    }
+    if(action==7) {
+        id app=send0((id)objc_getClass("NSApplication"),"sharedApplication"),windows=send0(app,"windows");
+        unsigned long count=((unsigned long(*)(id,SEL))objc_msgSend)(windows,sel_registerName("count"));
+        for(unsigned long i=0;i<count;++i) {
+            id item=((id(*)(id,SEL,unsigned long))objc_msgSend)(windows,sel_registerName("objectAtIndex:"),i);
+            const char *title=appkit_window_title(item);
+            if(title&&strstr(title,"[w2]"))((void(*)(id,SEL,id))objc_msgSend)(item,sel_registerName("orderFront:"),NULL);
+        }
+        record("SESSION_TEST_RAISE_SECONDARY");atomic_store(&test_native_pause_action,0);return;
+    }
     if((action!=4&&action!=5)||actual<0)return;
     bool paused=action==4;
     if(getenv("BROOMM_PAUSE_APPKIT_F5")) {
@@ -205,6 +231,13 @@ static void session_ui(void *unused) {
     static bool symbols_resolved;
     if(!symbols_resolved){azahar_pause=symbol("_ZN11GMainWindow11OnPauseGameEv");symbols_resolved=true;}
     qt_tick();
+    if(getenv("BROOMM_MELONDS")&&broomm_macos_remote_tick(!atomic_load(&session_gate))&&qt_main) {
+        static void (*raise_window)(void *),(*activate_window)(void *);
+        if(!raise_window)raise_window=symbol("_ZN7QWidget5raiseEv");
+        if(!activate_window)activate_window=symbol("_ZN7QWidget14activateWindowEv");
+        if(raise_window)raise_window(qt_main);
+        if(activate_window)activate_window(qt_main);
+    }
     int actual=-1;
     if(getenv("BROOMM_EDEN")) {
         actual=eden_tick();
@@ -287,6 +320,7 @@ static void session_ui(void *unused) {
         if(title&&(strstr(title,"ContentDialogOverlay")||strstr(title,"Broomm")))continue;
         CGRect frame=objc_rect(candidate,sel_registerName("frame"));
         double area=frame.size.width*frame.size.height;
+        if(getenv("BROOMM_MELONDS")&&title&&strstr(title,"[w2]"))continue;
         if(area>largest){window=candidate;largest=area;}
     }
     if(game_window)window=game_window;
@@ -499,6 +533,8 @@ static void write_status(void) {
         }
     }
     if(session_test) {
+        uint32_t touch=atomic_load(&melonds_touch_readback);
+        fprintf(out,",\"remoteTouch\":[%s,%u,%u]",(touch&(1u<<16))?"true":"false",touch&255,(touch>>8)&255);
         fprintf(out,",\"watchDeferralVerified\":%s",atomic_load(&test_watch_step)==2&&!atomic_load(&test_watch_failed)?"true":"false");
         fprintf(out,",\"testSourceIds\":[%u,%u],\"driverButtons\":[",test_ids[0],test_ids[1]);
         for(int p=0;p<4;++p)fprintf(out,"%s%u",p?",":"",retro_driver_buttons[p]);
@@ -507,15 +543,28 @@ static void write_status(void) {
     motion_write_status(out);
     loading_status(out);
     struct MacWindowStatus window_status=broomm_macos_window_status();
+    fprintf(out,",\"remotePrimary\":%u",window_status.remote_primary);
     if(atomic_load(&ryubing_pause_timed_out))fputs(",\"pauseRequestTimedOut\":true",out);
     fprintf(out,",\"macWindowAck\":%llu,\"macWindowHidden\":%s,\"macWindowBirth\":[%llu,%llu]",
         (unsigned long long)window_status.revision,window_status.hidden?"true":"false",
         (unsigned long long)window_status.seconds,(unsigned long long)window_status.microseconds);
+    fprintf(out,",\"remoteCapture\":[%u,%.3f,%.3f,%.3f,%.3f]",window_status.remote_window,
+        window_status.remote_crop[0],window_status.remote_crop[1],window_status.remote_crop[2],window_status.remote_crop[3]);
     fprintf(out,",\"inputReady\":%s",atomic_load(&input_ready)?"true":"false");
     fprintf(out,",\"queries\":%llu,\"consumedPorts\":%u}\n",(unsigned long long)atomic_load(&queries),atomic_load(&consumed_ports));fclose(out);rename(temp,path);
 }
 
 #include "test_sources.inc"
+#include "remote_input.inc"
+
+static _Atomic bool remote_touch_pending;
+static void remote_touch_dispatch(void *unused) {
+    (void)unused;
+    struct timespec now;clock_gettime(CLOCK_MONOTONIC,&now);
+    if(!atomic_load(&session_finishing))
+        remote_touch_poll(atomic_load(&session_gate),now.tv_sec+now.tv_nsec/1e9,melonds_remote_touch);
+    atomic_store(&remote_touch_pending,false);
+}
 
 static void session_worker(void) {
     session_test=getenv("BROOMM_SESSION_TEST")!=NULL;
@@ -560,7 +609,12 @@ static void session_worker(void) {
         }
         if(getppid()!=owner&&!atomic_load(&session_gate))session_request("launcher-exit");
         fixture_call=true;
-        lock();test_watch_tick();test_sources_tick();update();
+        lock();test_watch_tick();test_sources_tick();
+        struct timespec remote_now;clock_gettime(CLOCK_MONOTONIC,&remote_now);
+        remote_tick(remote_now.tv_sec+remote_now.tv_nsec/1e9);update();
+        if(getenv("BROOMM_MELONDS")&&getenv("BROOMM_REMOTE_SOCKET")&&
+           !atomic_exchange(&remote_touch_pending,true))
+            dispatch_async_f(dispatch_get_main_queue(),NULL,remote_touch_dispatch);
         if(tick%16==0) {
             bool ready=discover_sources();atomic_store(&input_ready,ready);
             if(!ready&&!discovery_failed)session_request("input-error");
@@ -629,5 +683,6 @@ static void session_worker(void) {
         // A disappeared launcher never releases input or automatically resumes.
         usleep(8000);
     }
+    remote_close();
     atomic_store(&session_worker_stopped,true);
 }

@@ -14,6 +14,15 @@ fi
 export PUB_CACHE="$broomm_cache_root/.tool-cache/pub"
 export GRADLE_USER_HOME="$broomm_cache_root/.tool-cache/android/gradle"
 export FLUTTER_SUPPRESS_ANALYTICS=true DART_SUPPRESS_ANALYTICS=true CI=true
+if [[ "$(uname -s)" == Darwin ]]; then
+  # Native Dart assets introduced by path_provider's Objective-C bindings need
+  # Apple's compiler/SDK, just like the app. Keep selection child-scoped.
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+  export PATH="$PWD/tool/apple_tools:$DEVELOPER_DIR/Toolchains/XcodeDefault.xctoolchain/usr/bin:/usr/bin:/bin:$PATH"
+  unset CC CXX LD AR SDKROOT NIX_LDFLAGS NIX_CFLAGS_COMPILE NIX_CC
+  export SDKROOT
+  SDKROOT="$(/usr/bin/xcrun --sdk macosx --show-sdk-path)"
+fi
 if [[ "${TARGET_PLATFORM:-}" == android ]]; then
   # Ignore the hosted runner's inherited JAVA_HOME; use this Devbox's JDK.
   broomm_java="$(readlink -f "$(command -v java)")"

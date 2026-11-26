@@ -7,16 +7,17 @@ import 'dart:typed_data';
 // Launcher navigation only. Gameplay assignment still uses the emulator's own
 // SDL bridge. macOS/Android forward their native APIs through the Flutter channel.
 class ShellControllerInput {
-  ShellControllerInput({required this.dispatch});
+  ShellControllerInput({required this.dispatch, this.raw});
   final void Function(String) dispatch;
+  final void Function(Map<String, Object>)? raw;
   Timer? _timer;
   _WindowsPads? _windows;
   LinuxControllerInput? _linux;
   void start() {
     try {
-      if (Platform.isWindows) _windows = _WindowsPads(dispatch);
+      if (Platform.isWindows) _windows = _WindowsPads(dispatch, raw: raw);
       if (Platform.isLinux) {
-        _linux = LinuxControllerInput(dispatch: dispatch)..start();
+        _linux = LinuxControllerInput(dispatch: dispatch, raw: raw)..start();
       }
       if (_windows != null) {
         _timer = Timer.periodic(const Duration(milliseconds: 16), (_) {
@@ -42,10 +43,12 @@ class ShellControllerInput {
 class LinuxControllerInput {
   LinuxControllerInput({
     required this.dispatch,
+    this.raw,
     void Function(SendPort)? entryPoint,
   }) : _entryPoint = entryPoint ?? _linuxControllerMain;
 
   final void Function(String) dispatch;
+  final void Function(Map<String, Object>)? raw;
   final void Function(SendPort) _entryPoint;
   final _done = Completer<void>();
   ReceivePort? _messages;
@@ -64,6 +67,8 @@ class LinuxControllerInput {
         if (_closed) message.send(null);
       } else if (message is String) {
         if (!_closed) dispatch(message);
+      } else if (message is Map && !_closed) {
+        raw?.call(Map<String, Object>.from(message));
       } else if (message == null) {
         _finish();
       }
@@ -105,7 +110,10 @@ void _linuxControllerMain(SendPort output) async {
   }
 
   try {
-    pads = _LinuxPads((action) => output.send(action));
+    pads = _LinuxPads(
+      (action) => output.send(action),
+      raw: (value) => output.send(value),
+    );
     control.listen((_) {
       if (!stopped.isCompleted) stopped.complete();
     });
@@ -203,7 +211,8 @@ class NavigationRepeat {
 }
 
 class _WindowsPads {
-  _WindowsPads(this.dispatch) {
+  final void Function(Map<String, Object>)? raw;
+  _WindowsPads(this.dispatch, {this.raw}) {
     DynamicLibrary? xinput;
     for (final name in ['xinput1_4.dll', 'xinput9_1_0.dll']) {
       try {
@@ -245,6 +254,7 @@ class _WindowsPads {
   void poll() {
     String? direction;
     var shifted = false;
+    var reported = false;
     final actions = <String>[];
     for (var i = 0; i < 4; i++) {
       if (get(i, buffer) != 0) {
@@ -254,6 +264,43 @@ class _WindowsPads {
       }
       final b = ByteData.sublistView(buffer.asTypedList(16)),
           buttons = b.getUint16(4, Endian.little);
+      if (!reported) {
+        reported = true;
+        const mask = [
+          0x1000,
+          0x2000,
+          0x4000,
+          0x8000,
+          0x20,
+          0,
+          0x10,
+          0x40,
+          0x80,
+          0x100,
+          0x200,
+          1,
+          2,
+          4,
+          8,
+        ];
+        var mapped = 0;
+        for (var j = 0; j < mask.length; j++) {
+          if (buttons & mask[j] != 0) mapped |= 1 << j;
+        }
+        raw?.call({
+          'connected': true,
+          'device': i,
+          'buttons': mapped,
+          'axes': [
+            b.getInt16(8, Endian.little),
+            (-b.getInt16(10, Endian.little)).clamp(-32768, 32767),
+            b.getInt16(12, Endian.little),
+            (-b.getInt16(14, Endian.little)).clamp(-32768, 32767),
+            b.getUint8(6) * 32767 ~/ 255,
+            b.getUint8(7) * 32767 ~/ 255,
+          ],
+        });
+      }
       final edges = buttons & ~(previous[i] ?? buttons);
       previous[i] = buttons;
       shifted |= b.getUint8(6) > 140;
@@ -284,6 +331,12 @@ class _WindowsPads {
           ? 'right'
           : null;
     }
+    if (!reported)
+      raw?.call({
+        'connected': false,
+        'buttons': 0,
+        'axes': [0, 0, 0, 0, 0, 0],
+      });
     if (shift != shifted) {
       shift = shifted;
       dispatch(shift ? 'shift-down' : 'shift-up');
@@ -310,22 +363,28 @@ class _LinuxDevice {
     this.ltMax,
     this.rtMin,
     this.rtMax,
+    this.rxMin,
+    this.rxMax,
+    this.ryMin,
+    this.ryMax,
   ) : lt = ltMin,
       rt = rtMin;
   final String path;
   final int fd, xMin, xMax, yMin, yMax, ltMin, ltMax, rtMin, rtMax;
+  final int rxMin, rxMax, ryMin, ryMax;
   int lt, rt;
   bool triggerButton = false, enterButton = false, enterHeld = false;
   bool get shift =>
       triggerButton || ltMax > ltMin && (lt - ltMin) / (ltMax - ltMin) > .55;
   bool get enter =>
       enterButton || rtMax > rtMin && (rt - rtMin) / (rtMax - rtMin) > .55;
-  int x = 0, y = 0, hx = 0, hy = 0;
+  int x = 0, y = 0, hx = 0, hy = 0, rx = 0, ry = 0, buttons = 0;
   bool dropping = false;
 }
 
 class _LinuxPads {
-  _LinuxPads(this.dispatch) {
+  final void Function(Map<String, Object>)? raw;
+  _LinuxPads(this.dispatch, {this.raw}) {
     final libc = DynamicLibrary.process();
     open = libc
         .lookupFunction<
@@ -412,6 +471,7 @@ class _LinuxPads {
         }
 
         final x = range(0), y = range(1), lt = range(2), rt = range(5);
+        final rx = range(3), ry = range(4);
         devices[entry.path] =
             _LinuxDevice(
                 entry.path,
@@ -424,9 +484,15 @@ class _LinuxPads {
                 lt[1],
                 rt[0],
                 rt[1],
+                rx[0],
+                rx[1],
+                ry[0],
+                ry[1],
               )
               ..x = (x[0] + x[1]) ~/ 2
-              ..y = (y[0] + y[1]) ~/ 2;
+              ..y = (y[0] + y[1]) ~/ 2
+              ..rx = (rx[0] + rx[1]) ~/ 2
+              ..ry = (ry[0] + ry[1]) ~/ 2;
       }
       for (final path in devices.keys.toList()) {
         if (!paths.contains(path)) {
@@ -456,6 +522,9 @@ class _LinuxPads {
               value = data.getInt32(base + 4, Endian.host);
           if (type == 0 && code == 3) {
             device.dropping = true;
+            device.buttons = 0;
+            device.rx = (device.rxMin + device.rxMax) ~/ 2;
+            device.ry = (device.ryMin + device.ryMax) ~/ 2;
             device.hx = 0;
             device.hy = 0;
             device.rt = device.rtMin;
@@ -469,6 +538,30 @@ class _LinuxPads {
           if (device.dropping) {
             if (type == 0 && code == 0) device.dropping = false;
             continue;
+          }
+          if (type == 1) {
+            const mapping = {
+              304: 0,
+              305: 1,
+              308: 2,
+              307: 3,
+              314: 4,
+              315: 6,
+              317: 7,
+              318: 8,
+              310: 9,
+              311: 10,
+              544: 11,
+              545: 12,
+              546: 13,
+              547: 14,
+            };
+            final index = mapping[code];
+            if (index != null) {
+              device.buttons = value == 0
+                  ? device.buttons & ~(1 << index)
+                  : device.buttons | (1 << index);
+            }
           }
           if (type == 1 && code == 312) device.triggerButton = value != 0;
           if (type == 1 && code == 313) device.enterButton = value != 0;
@@ -493,6 +586,10 @@ class _LinuxPads {
                 device.x = value;
               case 1:
                 device.y = value;
+              case 3:
+                device.rx = value;
+              case 4:
+                device.ry = value;
               case 16:
                 device.hx = value;
               case 17:
@@ -525,6 +622,46 @@ class _LinuxPads {
           : device.hx > 0 || x > .55
           ? 'right'
           : null;
+    }
+    final d = devices.values.firstOrNull;
+    if (d == null || d.dropping) {
+      raw?.call({
+        'connected': false,
+        'buttons': 0,
+        'axes': [0, 0, 0, 0, 0, 0],
+      });
+    } else {
+      int axis(int value, int min, int max) => max <= min
+          ? 0
+          : ((value - min) * 65535 / (max - min) - 32768).round().clamp(
+              -32768,
+              32767,
+            );
+      int trigger(int value, int min, int max) => max <= min
+          ? 0
+          : ((value - min) * 32767 / (max - min)).round().clamp(0, 32767);
+      var buttons = d.buttons;
+      for (final e in {
+        11: d.hy < 0,
+        12: d.hy > 0,
+        13: d.hx < 0,
+        14: d.hx > 0,
+      }.entries) {
+        if (e.value) buttons |= 1 << e.key;
+      }
+      raw?.call({
+        'connected': true,
+        'device': d.path,
+        'buttons': buttons,
+        'axes': [
+          axis(d.x, d.xMin, d.xMax),
+          axis(d.y, d.yMin, d.yMax),
+          axis(d.rx, d.rxMin, d.rxMax),
+          axis(d.ry, d.ryMin, d.ryMax),
+          d.triggerButton ? 32767 : trigger(d.lt, d.ltMin, d.ltMax),
+          d.enterButton ? 32767 : trigger(d.rt, d.rtMin, d.rtMax),
+        ],
+      });
     }
     final shifted = devices.values.any((d) => d.shift);
     if (shift != shifted) {

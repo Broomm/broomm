@@ -72,7 +72,7 @@ void main() {
       await t.pumpWidget(BroommApp(model: model));
       printOnFailure('Updater UI: model ready');
       await t.pumpAndSettle();
-      expect(model.systemApps, [0, 2]);
+      expect(model.systemApps, [0, 2, 5]);
       final selected = model.homeIndex;
       final settings = find.byKey(const ValueKey('system-app-0'));
       final emulators = find.byKey(const ValueKey('system-app-2'));
@@ -82,7 +82,7 @@ void main() {
         selectUpdate([updateRelease('0.1.1')], '0.1.0', false, 'windows-x64'),
       );
       await t.pumpAndSettle();
-      expect(model.systemApps, [0, 2, 4]);
+      expect(model.systemApps, [0, 2, 5, 4]);
       expect(model.homeIndex, selected);
       final update = find.byKey(const ValueKey('system-app-4'));
       expect(t.getTopLeft(settings).dx, settingsLeft);
@@ -102,6 +102,7 @@ void main() {
       await controller('up');
       printOnFailure('Updater UI: system row reached');
       await t.pumpAndSettle();
+      await controller('right');
       await controller('right');
       await controller('right');
       printOnFailure('Updater UI: update focused');

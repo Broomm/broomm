@@ -6,7 +6,7 @@
       <!-- Introduce verification for the newly approved modules only. Existing
            Flutter/Android dependencies retain their previous verification policy. -->
       <trusted-artifacts>
-         <trust group="^(?!com[.]github[.]topjohnwu[.]libsu$).*" regex="true"/>
+         <trust group="^(?!(com[.]github[.]topjohnwu[.]libsu|io[.]github[.]webrtc-sdk|com[.]github[.]davidliu)$).*" regex="true"/>
       </trusted-artifacts>
    </configuration>
    <components>
@@ -17,6 +17,14 @@
       <component group="com.github.topjohnwu.libsu" name="service" version="6.0.0">
          <artifact name="service-6.0.0.pom"><sha256 value="5837c29b3e53270f237306c3e34a1abfb26e000e76274d49eef785e9684b0ca6" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
          <artifact name="service-6.0.0.aar"><sha256 value="528bbcc3f057e8b5ea6f69a2deea1e0ff536880602e99e98763d7b74cf1d0659" origin="Reviewed upstream 6.0.0 artifact"/></artifact>
+      </component>
+      <component group="io.github.webrtc-sdk" name="android" version="150.7871.04">
+         <artifact name="android-150.7871.04.pom"><sha256 value="c511dba5b204f6056530359f1d0a30a431a9c07946dbb73322db5ee4a1d71405" origin="Reviewed flutter_webrtc 1.6.3 native runtime"/></artifact>
+         <artifact name="android-150.7871.04.aar"><sha256 value="1872dda4e3bf7d6ea6f7c6e11861332081c57081a1e62fc82fab72415c69c84c" origin="Reviewed flutter_webrtc 1.6.3 native runtime"/></artifact>
+      </component>
+      <component group="com.github.davidliu" name="audioswitch" version="039a35aefab7747c557242fa216c9ea11743b604">
+         <artifact name="audioswitch-039a35aefab7747c557242fa216c9ea11743b604.pom"><sha256 value="b01278803fe0a007591a44143e1919a406c0c529794b13aa30e86a87532095fd" origin="Reviewed flutter_webrtc 1.6.3 native runtime"/></artifact>
+         <artifact name="audioswitch-039a35aefab7747c557242fa216c9ea11743b604.aar"><sha256 value="c8240221daa9a96d4ea01a4dc6f6f6b10b4903d2a71f9b57f838bdfeb6c3fcbc" origin="Reviewed flutter_webrtc 1.6.3 native runtime"/></artifact>
       </component>
    </components>
 </verification-metadata>
