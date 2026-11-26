@@ -245,6 +245,10 @@ space and allows Android to reveal its controls with an edge swipe. Respect
 display cutouts and the system keyboard. External emulator windows use their
 own settings.
 
+Hardware keyboard/controller input must not add a native border around the
+whole Android app. Preserve Broomm's focused-control outlines, navigation and
+accessibility in both light and dark system themes.
+
 Ask players to complete each emulator’s first-run setup, then close it.
 Before Play and on return from the emulator, continue automatically when
 Broomm can establish closure. Otherwise show one **Yes / No** confirmation.

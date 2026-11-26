@@ -4,6 +4,47 @@
 inside the Flutter application. The [product contract](../PROJECT.md#remote-screen)
 and [walkthrough](../README.md#remote-screen-preview) define the visible flow.
 
+## Detail and Android focus follow-up — 26 November 2026
+
+The owner reports improved frame rate on Android 1212. Actual reports confirm
+1440×1080 H.264 at about 58 fps using Qualcomm's `c2.qti.avc.decoder` after
+VideoToolbox encoding. The remaining fixed 1080-pixel height still discards
+detail before enlargement on the tablet.
+
+Capture now permits **2560×1920 at up to 60 fps**. On macOS 14+, the actual
+cropped window's point-to-pixel scale bounds the result, preserving source
+detail without upscaling a smaller source. Dimensions remain even and 4:3;
+the JPEG compatibility path retains its existing limits. macOS 12.3–13 keeps
+the fixed target because that capture API does not expose the same pixel scale.
+The sender's **50 Mbps ceiling** gives the larger image more encoding room;
+WebRTC still adapts to available capacity. The private native fixture receives
+2456×1842 H.264, initially 46.4 fps then 56.8 fps, with VideoToolbox on both
+sides and no reported loss/drop. This is a Mac loopback result, not renewed
+tablet acceptance of the higher resolution.
+
+Android's full-window outline is its default focus highlight, which can appear
+after keyboard/controller navigation when a native view has no focused-state
+background ([Android behavior](https://developer.android.com/about/versions/oreo/android-8.0-changes#ian),
+[Flutter report](https://github.com/flutter/flutter/issues/162743)). Both launch
+and normal themes now disable that decoration in day and night resources.
+Broomm's own focused controls and controller navigation remain enabled.
+
+The development-only native probe uses the installed APK's compiled themes,
+without attaching a window, navigating the UI or opening app data:
+
+```sh
+devbox run --config tool/android -- bash build_focus_test.sh
+adb push .tool-cache/research/android/focus-test-dex.zip /data/local/tmp/broomm-focus-check.zip
+adb shell 'CLASSPATH=/data/local/tmp/broomm-focus-check.zip app_process /system/bin app.broomm.broomm.focusfixture.Check_focus_highlightKt'
+adb shell rm /data/local/tmp/broomm-focus-check.zip
+```
+
+Use the already authorized ADB device explicitly when more than one is attached.
+The existing verified API and D8 dependencies must be provisioned by
+`tool/android/check_bridge.sh` and `build_root_save_test.sh`. Before the fix,
+all four theme cases report `defaultHighlight=true` and preserved focus; the
+corrected installed APK must report false with focus preserved in every case.
+
 ## Android receive crash — 26 November 2026
 
 The owner's Galaxy records three identical build-1210 crashes as a video session

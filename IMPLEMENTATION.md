@@ -1,5 +1,40 @@
 # Implementation plan
 
+## Remote detail and Android focus decoration — 2026-11-26
+
+The owner confirms Android frame rate improved after build 1212, while image
+detail remains insufficient. Live host/client reports identify **1440×1080
+H.264**, **VideoToolbox → c2.qti.avc.decoder**, at about **58 fps**. This establishes
+real Android hardware reception after the permission correction. The last
+steady intervals have no additional cumulative drops and report zero loss;
+the session's earlier cumulative drop count is not treated as zero.
+
+The source now targets up to **2560×1920 / 60 fps**, retaining a 4:3 image with
+even codec dimensions. On macOS 14+, ScreenCaptureKit's point-to-pixel scale
+caps output to the real cropped source pixels instead of enlarging a smaller
+window. Older ScreenCaptureKit hosts retain the fixed ceiling; native pixel
+measurement on those hosts is unverified. The shared sender's bitrate ceiling
+is **50 Mbps**, allowing the larger image without forcing that network rate.
+The private native melonDS check receives **2456×1842 H.264** on VideoToolbox,
+about **2.9×** the previous pixel count. Its first measured receive interval is
+46.4 fps during startup and its subsequent interval reaches **56.8 fps**, with
+zero reported loss/drop. New tablet visual/frame-rate acceptance remains pending.
+
+The screenshot's thin full-window green border matches Android's native
+default focus highlight, separate from Broomm's focused-control decoration.
+A read-only native probe against installed build 1212 confirms it is enabled
+in all four day/night × launch/normal theme combinations, while views still
+accept Flutter-style touch-mode keyboard focus. Both application themes now
+disable that fallback highlight in both resource variants. A development-only
+probe checks the compiled installed resources and preserved focus; no OS
+accessibility preference, controller mapping or user data is changed.
+
+Three native macOS regressions cover the capture ceiling, smaller/fractional
+source bounds and invalid source geometry. Static analysis and 24 focused
+remote/package cases pass. Native XCTest, fresh production packages and the
+installed-theme after-check are in progress. Evidence remains under
+`.tool-cache/research/remote-webrtc/quality-20261126/`.
+
 ## Android WebRTC network-monitor crash — 2026-11-26
 
 Galaxy SM-X800 / Android 16 / Broomm build 1210 records three native SIGABRT

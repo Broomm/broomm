@@ -122,8 +122,10 @@ Future<void> main() async {
     );
     await first.future.timeout(const Duration(seconds: 20));
     await Future<void>.delayed(const Duration(seconds: 16));
-    if (receiver.renderer!.videoWidth < 1280 ||
-        receiver.renderer!.videoHeight < 960) {
+    if (receiver.renderer!.videoWidth < 2048 ||
+        receiver.renderer!.videoHeight < 1536 ||
+        receiver.renderer!.videoWidth > 2560 ||
+        receiver.renderer!.videoHeight > 1920) {
       throw StateError('Video negotiated below the high-resolution target.');
     }
     if (problems.isNotEmpty)

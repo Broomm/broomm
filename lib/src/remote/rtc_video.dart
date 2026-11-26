@@ -236,7 +236,7 @@ class RemoteRtcVideo {
           streams: [_local!],
           sendEncodings: [
             RTCRtpEncoding(
-              maxBitrate: 20000000,
+              maxBitrate: 50000000,
               maxFramerate: 60,
               scaleResolutionDownBy: 1.0,
             ),

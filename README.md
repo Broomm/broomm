@@ -32,10 +32,15 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    permission. An English Azahar secondary-window title is required by this
    preview's window selector. Keep the secondary window available while testing.
    Use the current Mac and Android previews together for the revised streaming
-   path. Matching previews use WebRTC with a 1440×1080 capture target and up to
+   path. Matching previews use WebRTC with up to 2560×1920 capture and up to
    60 fps, subject to emulator updates, decoding and LAN
    bandwidth. A stream that starts without frames shows a retryable message;
    an active-stream caption appears only after video arrives.
+   Use the current Mac preview for the higher-resolution source. On macOS 14+
+   the stream is capped to the actual rendered game area; a smaller source
+   window cannot supply extra detail. The Android preview also removes the
+   native full-window focus border after keyboard/controller input, including
+   in dark mode, while retaining Broomm's focused-control outlines.
 6. Choose **Disconnect** on the client to return to the host list. Lost assigned
    controllers follow Broomm's normal pause and pairing flow. Close the game
    normally to finalize progress and restore its previous layout.

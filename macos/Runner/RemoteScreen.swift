@@ -7,6 +7,15 @@ import Darwin
 import WebRTC
 import flutter_webrtc
 
+/// Fit a 4:3 video to real source pixels, with even codec dimensions and a
+/// 2560×1920 ceiling. Enlarging an undersized window cannot recover detail.
+func remoteVideoCaptureSize(sourceWidth: Double, sourceHeight: Double) -> (width: Int, height: Int)? {
+  guard sourceWidth.isFinite, sourceHeight.isFinite,
+        sourceWidth >= 8, sourceHeight >= 6 else { return nil }
+  let units = Int(min(320, floor(sourceWidth / 8), floor(sourceHeight / 6)))
+  return (units * 8, units * 6)
+}
+
 /// OS capture and local input transport. Connection and session policy stay in Dart.
 final class BroommRemoteScreen {
   private let channel: FlutterMethodChannel
@@ -163,7 +172,6 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       throw failure("The WebRTC video source is unavailable. Retry screen capture.")
     }
     let source = factory.videoSource(forScreenCast: true)
-    source.adaptOutputFormat(toWidth: 1440, height: 1080, fps: 60)
     let track = factory.videoTrack(with: source, trackId: UUID().uuidString)
     media.addVideoTrack(track)
     plugin.localTracks?[track.trackId] = LocalVideoTrack(track: track)
@@ -205,13 +213,25 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
             values[1] + values[3] <= window.frame.height + 1 else { throw failure("The emulator screen geometry changed. Retry screen capture.") }
       configuration.sourceRect = CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
     }
-    configuration.width = videoSource == nil ? 640 : 1440
-    configuration.height = videoSource == nil ? 480 : 1080
+    let filter = SCContentFilter(desktopIndependentWindow: window)
+    var videoSize = (width: 2560, height: 1920)
+    if videoSource != nil, #available(macOS 14.0, *) {
+      let sourceRect = configuration.sourceRect.isEmpty ? filter.contentRect : configuration.sourceRect
+      let scale = Double(filter.pointPixelScale)
+      guard let fitted = remoteVideoCaptureSize(sourceWidth: sourceRect.width * scale,
+                                                sourceHeight: sourceRect.height * scale) else {
+        throw failure("The emulator screen pixel dimensions are unavailable. Retry screen capture.")
+      }
+      videoSize = fitted
+    }
+    configuration.width = videoSource == nil ? 640 : videoSize.width
+    configuration.height = videoSource == nil ? 480 : videoSize.height
+    videoSource?.adaptOutputFormat(toWidth: Int32(videoSize.width), height: Int32(videoSize.height), fps: 60)
     configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
     configuration.queueDepth = 3
     configuration.showsCursor = false
     if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
-    let stream = SCStream(filter: SCContentFilter(desktopIndependentWindow: window), configuration: configuration, delegate: self)
+    let stream = SCStream(filter: filter, configuration: configuration, delegate: self)
     self.stream = stream
     try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
     try await stream.startCapture()
