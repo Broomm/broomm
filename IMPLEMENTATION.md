@@ -18,22 +18,58 @@ is **50 Mbps**, allowing the larger image without forcing that network rate.
 The private native melonDS check receives **2456×1842 H.264** on VideoToolbox,
 about **2.9×** the previous pixel count. Its first measured receive interval is
 46.4 fps during startup and its subsequent interval reaches **56.8 fps**, with
-zero reported loss/drop. New tablet visual/frame-rate acceptance remains pending.
+zero reported loss/drop. The live owner check below establishes tablet acceptance.
 
 The screenshot's thin full-window green border matches Android's native
 default focus highlight, separate from Broomm's focused-control decoration.
-A read-only native probe against installed build 1212 confirms it is enabled
-in all four day/night × launch/normal theme combinations, while views still
-accept Flutter-style touch-mode keyboard focus. Both application themes now
-disable that fallback highlight in both resource variants. A development-only
-probe checks the compiled installed resources and preserved focus; no OS
-accessibility preference, controller mapping or user data is changed.
+Both application themes now disable that fallback highlight in both resource
+variants. The read-only native probe uses `FrameLayout(context, attributes)`,
+matching the pinned FlutterView's actual superclass initialization. All four
+installed day/night × launch/normal combinations report **highlight disabled
+and keyboard focus preserved**; the unmodified platform parent remains an
+enabled-highlight positive control. The probe's initial one-argument `View`
+constructor bypassed styled attributes; that diagnostic is retained separately
+and is not treated as a valid theme check. No OS accessibility preference,
+controller mapping or user data is changed.
 
 Three native macOS regressions cover the capture ceiling, smaller/fractional
-source bounds and invalid source geometry. Static analysis and 24 focused
-remote/package cases pass. Native XCTest, fresh production packages and the
-installed-theme after-check are in progress. Evidence remains under
+source bounds and invalid source geometry. Static analysis, **868 Flutter tests**
+(one existing Linux-only skip), **24 focused remote/package cases**, and all
+**14 native macOS XCTest cases** pass. The four installed Android theme cases
+also pass. Evidence remains under
 `.tool-cache/research/remote-webrtc/quality-20261126/`.
+
+The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+is **0.1.31-dev / 1223**, application revision `b58f479`, **38,704,044 bytes**,
+SHA-256 `22bd4504104bd93f7c80040a6f4dd4cce4b200f5884f018e6d252b9d63a7a64c`.
+ZIP integrity, source/fresh-extracted deep/strict/all-architecture signatures,
+all nine universal Mach-O payloads and exact bridge readbacks verify. This is
+the restored normal application entry point, not the development media fixture.
+
+Android CI **0.1.31-pr21.45838385979 / code 1214**, PR merge `14a6a49`, matches
+the application tree at `b58f479`. Its APK is **101,316,415 bytes**, SHA-256
+`4117939f8b0c93f56eb89299f091e96d25ffa1223e2bd3e30ed9467d50cab1ae`.
+The retained-key [Galaxy update](build/releases/Broomm-0.1.31-pr21.45838385979-galaxy-preview.apk)
+is **101,331,602 bytes**, SHA-256
+`16d5f3f7adc5da3d0523cefca7ef340ef5405f24233e1ef383b0afac91f5006a`.
+All 181 non-signature payload entries match CI. `adb install -r` upgrades
+**1212 → 1214**, preserves UID/data, confirms both networking permissions granted,
+and verifies exact installed APK readback and successful startup. The installed
+native focus probe passes all four cases; its temporary device file is removed.
+All five packages and Linux checks pass in source CI run **45838385979**.
+The same five Windows file-in-use cleanup failures remain; native macOS CI
+passes and its broader Flutter job is still in progress. Records are under
+`.tool-cache/remote-screen-tablet/webrtc-quality/` and the quality evidence root.
+
+The owner then runs Mac **1223** with Android **1214**. Live reports confirm
+**2456×1842 H.264**, VideoToolbox encoding and Qualcomm hardware decoding.
+Receive intervals reach **57.8 fps**, but vary down to 2.6 fps during intervals
+with fewer capture updates; one SurfaceFlinger sample is 5.01 fps. Those counters
+are not described as constant 60 fps, distinct animated-game FPS, or latency.
+The owner separately confirms the picture is **way better**, movement remains
+**smooth during active animation**, and keyboard/controller navigation leaves
+the outer green border **gone**. This is owner-performed melonDS/tablet visual
+and focus acceptance; other clients, Azahar gameplay and latency remain separate.
 
 ## Android WebRTC network-monitor crash — 2026-11-26
 
@@ -67,11 +103,11 @@ Its signature verifies; all 181 non-signature payload entries match CI.
 `adb install -r` upgrades the Galaxy from **1210 to 1212**, preserving UID/app
 data. Installed APK readback matches and Android reports both new permissions
 as **granted**. MainActivity launches and remains alive without an observed
-fatal startup error. Actual video reception/reconnection remains pending the
-owner-started media check. Installation records are under
+fatal startup error. Subsequent hardware reception and owner visual checks are
+recorded above; startup alone did not establish those results. Records are under
 `.tool-cache/remote-screen-tablet/webrtc-network/`.
 
-The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+The [permission-correction macOS preview](build/releases/Broomm-macOS-remote-screen-1222.zip)
 is **0.1.31-dev / 1222**, from application revision `be9a5ad`, **38,702,883 bytes**,
 SHA-256 `e285b64f701e6cb4d3b0ef3ff3419e559b7a4c9f0be2dfd89a6ef06de5236aa3`.
 Source/fresh-extracted deep, strict, all-architecture signatures, ZIP integrity,

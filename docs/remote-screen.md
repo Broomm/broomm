@@ -29,8 +29,9 @@ background ([Android behavior](https://developer.android.com/about/versions/oreo
 and normal themes now disable that decoration in day and night resources.
 Broomm's own focused controls and controller navigation remain enabled.
 
-The development-only native probe uses the installed APK's compiled themes,
-without attaching a window, navigating the UI or opening app data:
+The development-only native probe uses the installed APK's compiled themes and
+FlutterView's attribute-aware FrameLayout initialization, without attaching a
+window, navigating the UI or opening app data:
 
 ```sh
 devbox run --config tool/android -- bash build_focus_test.sh
@@ -41,9 +42,22 @@ adb shell rm /data/local/tmp/broomm-focus-check.zip
 
 Use the already authorized ADB device explicitly when more than one is attached.
 The existing verified API and D8 dependencies must be provisioned by
-`tool/android/check_bridge.sh` and `build_root_save_test.sh`. Before the fix,
-all four theme cases report `defaultHighlight=true` and preserved focus; the
-corrected installed APK must report false with focus preserved in every case.
+`tool/android/check_bridge.sh` and `build_root_save_test.sh`. Platform parent
+themes provide an enabled-highlight positive control. Installed build **1214**
+passes all four cases with `defaultHighlight=false` and focus preserved. The
+simple one-argument View constructor does not read styled attributes and must
+not be substituted for FlutterView's initialization in this check.
+
+Build 1214 is installed on the Galaxy with the retained key, preserved data/UID,
+matching APK readback and no observed startup fatal error. Current Mac build
+**1223** is required for the higher-resolution source. All 868 local Flutter
+tests and 14 native macOS tests pass; the native fixture reaches 2456×1842.
+The owner verifies Mac 1223 / Android 1214: the picture is **way better**, active
+movement remains smooth, and the full-window border stays gone after keyboard/
+controller navigation. Native reports confirm 2456×1842 H.264 with Qualcomm
+hardware decoding and receive intervals reaching 57.8 fps. Rates vary with the
+captured updates, so this is not a constant-60-fps or latency claim. Exact
+package identities, complete observations and CI limits are in IMPLEMENTATION.md.
 
 ## Android receive crash — 26 November 2026
 
@@ -66,8 +80,8 @@ also passes universal packaging, code-signature and archive checks.
 Fixed Android build **1212** is installed on the Galaxy over 1210 with the retained
 certificate, matching APK readback and unchanged application UID/data. Android
 confirms both permissions are granted and MainActivity launches without an
-observed fatal startup error. Media reception/reconnection still needs the
-owner-started session. Prior compilation, startup and macOS loopback results
+observed fatal startup error. Subsequent Android hardware reception and owner
+acceptance are recorded above. Compilation, startup and macOS loopback alone
 did not prove Android video reception. Exact hashes are in IMPLEMENTATION.md.
 
 ## Approved WebRTC prototype — 25 November 2026
@@ -83,7 +97,7 @@ configured external STUN/TURN server and a video-only peer; forwarded audio is
 still deferred. WebRTC secures its media transport; the preview's control
 connection/code remains unencrypted and retains its trusted-LAN notice.
 
-The current macOS source keeps Broomm's supervised process/window validation,
+The initial macOS source kept Broomm's supervised process/window validation,
 game-area crop, window restoration and cancellation generations. It registers
 one source through the plugin's engine-scoped `instanceForMessenger` and public
 local-stream/track hooks. ScreenCaptureKit forwards cropped pixel buffers to
