@@ -1,13 +1,12 @@
 # GitHub builds, versions and releases
 
-**Current checkpoint — 2026-11-05:** [v0.1.15](https://github.com/Broomm/broomm/releases/tag/v0.1.15)
-is published from `79ef7e825287a4613e7120393ed284496c939e0b`.
-[All release gates pass](https://github.com/Broomm/broomm/actions/runs/42053405473),
-including native macOS checks, Linux kernel/sanitizer checks, Windows checks
-and all five packages. These are build/automated results, not new emulator
-gameplay or Android-device acceptance. Linux ARM64 investigation is deferred;
-[root-backed Android storage access](android-installation-and-saves.md#next-milestone-root-backed-storage-access)
-is the next milestone and is not implemented in this release.
+**Release recovery checkpoint — 2026-11-26:** at investigation start the latest published stable was
+[v0.1.30](https://github.com/Broomm/broomm/releases/tag/v0.1.30), from
+`a5a1ebb`. Remote screen is merged as `0ea874d`, but its
+[production run failed](https://github.com/Broomm/broomm/actions/runs/45842681632):
+all five packages and Linux/macOS gates passed; five Windows UI fixture cleanup
+failures blocked publication. The correction and its native verification requirements
+are described below. A built artifact is not a published release.
 
 The owner selected the workflow and version policy from the sibling Teddy
 project. Broomm adapts its `.github/workflows/release.yml`,
@@ -244,6 +243,32 @@ other progress data. A release publication check/command requires GitHub event
 identity and should run only in the authorized workflow.
 
 ## Verification record
+
+### Remote-service fixture shutdown — 2026-11-26
+
+Windows run `45842681632` reports sharing violation 32 in
+`game_versions_test.dart` (one case), `home_artwork_widget_test.dart` (three)
+and `shell_widget_test.dart` (one). These tests removed storage after the model's
+download/cloud work, but did not await the app widget's separate remote service.
+Widget disposal starts `remote.close()` asynchronously; that future waits for
+startup/history operations and their `remote-screen.lock` handle.
+
+`BroommApp` now accepts an optional caller-owned concrete remote service,
+preserving its existing default construction/disposal. The affected fixtures
+start that service outside the widget fake clock, provide it to the app, and
+await its close future before deletion. Two regressions cover a separate process
+holding the production settings lock during unmount and invalid-history startup
+failure. Neither deletion retries nor disabled checks are used. All 30 affected
+cases, static analysis, and repository-wide formatting pass locally on macOS.
+Native Windows and all other release gates must also pass; publication must be
+verified on the merged revision before this correction establishes a delivered
+release. The original failed run does not establish that outcome.
+
+```sh
+bash tool/ci/run.sh flutter --suppress-analytics test --no-pub \
+  test/shell_remote_lifecycle_test.dart test/home_artwork_widget_test.dart \
+  test/game_versions_test.dart test/shell_widget_test.dart
+```
 
 ### Release checkpoint — 2026-11-05
 

@@ -57,9 +57,13 @@ class BroommApp extends StatefulWidget {
     required this.model,
     this.project,
     this.sessionFactory,
+    this.remoteService,
   });
   final ShellModel model;
   final String? project;
+
+  /// An injected service is owned and closed by its caller.
+  final RemoteScreenService? remoteService;
   final GameSession Function(Future<ResolvedSession> Function(LaunchGame))?
   sessionFactory;
   @override
@@ -74,11 +78,13 @@ class _BroommAppState extends State<BroommApp> {
     raw: (value) => remote.localPad(value),
   );
   ShellModel get m => widget.model;
-  late final remote = RemoteScreenService(
-    m.storage.directory,
-    onAction: _dispatch,
-    onEvent: (message) => m.log?.write(message),
-  );
+  late final remote =
+      widget.remoteService ??
+      RemoteScreenService(
+        m.storage.directory,
+        onAction: _dispatch,
+        onEvent: (message) => m.log?.write(message),
+      );
   Timer? remoteGameTimer;
   bool lab = false;
   PrototypeModel? _activeGameModel;
@@ -1159,7 +1165,7 @@ class _BroommAppState extends State<BroommApp> {
   void dispose() {
     cloudRetry?.cancel();
     remoteGameTimer?.cancel();
-    unawaited(remote.close());
+    if (widget.remoteService == null) unawaited(remote.close());
     m.removeListener(_scheduleArtwork);
     contentFocus.dispose();
     homeFocus.dispose();

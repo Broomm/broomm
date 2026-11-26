@@ -8,6 +8,7 @@ import 'package:broomm/src/managed_emulators.dart' show SetupPlan;
 import 'package:broomm/src/shell/controls.dart';
 import 'package:broomm/src/romm/models.dart';
 import 'package:broomm/src/romm/transfer.dart';
+import 'package:broomm/src/remote/service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -41,14 +42,19 @@ void main() {
   });
   late Directory root;
   late ShellModel model;
+  late RemoteScreenService remote;
   setUp(() async {
     root = await Directory.systemTemp.createTemp('broomm-shell-widgets-');
+    remote = RemoteScreenService(root);
+    await remote.start();
     model = ShellModel(ShellStorage(root), clientFactory: FixtureRomm.new);
     await model.start();
   });
   tearDown(() async {
-    await model.finishDownloads();
+    await remote.close();
     model.dispose();
+    await model.finishDownloads();
+    await model.finishCloud();
     await root.delete(recursive: true);
   });
   Future<void> resize(WidgetTester t, Size size) async {
@@ -133,7 +139,7 @@ void main() {
       await model.login('Player', 'pass');
       await settleModel(model);
     });
-    await t.pumpWidget(BroommApp(model: model));
+    await t.pumpWidget(BroommApp(model: model, remoteService: remote));
     await t.pumpAndSettle();
   }
 
@@ -141,7 +147,7 @@ void main() {
     t,
   ) async {
     await resize(t, const Size(1180, 800));
-    await t.pumpWidget(BroommApp(model: model));
+    await t.pumpWidget(BroommApp(model: model, remoteService: remote));
     await t.pumpAndSettle();
     expect(find.text('Connect your server'), findsOneWidget);
     expect(find.text('Game Store'), findsNothing);
@@ -164,7 +170,7 @@ void main() {
     'pointer and keyboard edit inline, preserve caret keys, and switch to controller on demand',
     (t) async {
       await resize(t, const Size(1180, 800));
-      await t.pumpWidget(BroommApp(model: model));
+      await t.pumpWidget(BroommApp(model: model, remoteService: remote));
       await t.pumpAndSettle();
       final address = find.byKey(const ValueKey('field-Server address'));
       await t.tap(address);
@@ -205,7 +211,7 @@ void main() {
     (t) async {
       await resize(t, const Size(1180, 800));
       await t.runAsync(() => model.addServer('https://server.example'));
-      await t.pumpWidget(BroommApp(model: model));
+      await t.pumpWidget(BroommApp(model: model, remoteService: remote));
       await t.pumpAndSettle();
       await press(t, LogicalKeyboardKey.gameButtonA);
       final username = find.byKey(const ValueKey('field-Username'));
@@ -376,7 +382,7 @@ void main() {
     'controller onboarding submits a server and account, closes login and opens Home',
     (t) async {
       await resize(t, const Size(1180, 800));
-      await t.pumpWidget(BroommApp(model: model));
+      await t.pumpWidget(BroommApp(model: model, remoteService: remote));
       await t.pumpAndSettle();
       await press(t, LogicalKeyboardKey.gameButtonA);
       await keyboardType(t, 'https://server.example');
@@ -603,7 +609,7 @@ void main() {
         const Size(1600, 900),
       ]) {
         await resize(t, size);
-        await t.pumpWidget(BroommApp(model: model));
+        await t.pumpWidget(BroommApp(model: model, remoteService: remote));
         await t.pumpAndSettle();
         expect(t.takeException(), isNull, reason: 'onboarding $size');
         await t.pumpWidget(const SizedBox());
@@ -619,7 +625,7 @@ void main() {
         const Size(1600, 900),
       ]) {
         await resize(t, size);
-        await t.pumpWidget(BroommApp(model: model));
+        await t.pumpWidget(BroommApp(model: model, remoteService: remote));
         for (final screen in [
           ShellScreen.home,
           ShellScreen.store,
