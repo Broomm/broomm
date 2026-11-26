@@ -88,6 +88,11 @@ image detail/frame rate, the enlarged view, taps/drags and normal Close game flo
 These user observations complete the device acceptance; a successful APK build
 does not.
 
+The first WebRTC Android preview (code 1210) crashes when video starts because
+of missing network permissions. Use code **1212 or later** for that path. The
+corrected permissions are granted during installation; reconnect to the existing
+WebRTC Mac host after updating.
+
 PR CI builds use runner-local debug signing, which can differ between runs.
 If Android reports `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use a build signed with
 the installed app's retained key. Uninstalling to change keys erases app data

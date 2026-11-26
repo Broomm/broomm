@@ -15,8 +15,33 @@ The release packager reads the final merged APK's permissions using the existing
 SDK's AAPT2 and refuses missing or API-capped WebRTC network permissions before
 publication. Three regressions cover complete declarations, either missing
 network permission, and a declaration restricted to old Android versions.
-All **24 focused remote/package cases** and static analysis pass. Fresh native
-packages and a data-preserving Galaxy update/reconnection check are in progress.
+All **24 focused remote/package cases**, **868 total Flutter tests** (one existing
+Linux-only skip), and static analysis pass. All five source-revision packages
+pass in CI run **45830363217**, including the new actual-APK permission check.
+Linux checks pass. The same five Windows fixture directory-cleanup failures
+remain; the independent macOS test jobs are in progress.
+
+The corrected Android CI artifact is **0.1.31-pr21.45830363217 / code 1212**,
+PR merge `09b0a5e`, verified to match feature revision `be9a5ad`.
+Its APK is **101,316,071 bytes**, SHA-256
+`baf36da011e55357381e2c51df5eb7e48ac58d3da6d90cbaeec9e1170ce3e071`.
+The retained-key [Galaxy update](build/releases/Broomm-0.1.31-pr21.45830363217-galaxy-preview.apk)
+is **101,331,602 bytes**, SHA-256
+`d7594f0ca4d6f4f8be465b7b3e25972b3296e482dcacdac7402d3300639e9c71`.
+Its signature verifies; all 181 non-signature payload entries match CI.
+`adb install -r` upgrades the Galaxy from **1210 to 1212**, preserving UID/app
+data. Installed APK readback matches and Android reports both new permissions
+as **granted**. MainActivity launches and remains alive without an observed
+fatal startup error. Actual video reception/reconnection remains pending the
+owner-started media check. Installation records are under
+`.tool-cache/remote-screen-tablet/webrtc-network/`.
+
+The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+is **0.1.31-dev / 1222**, from application revision `be9a5ad`, **38,702,883 bytes**,
+SHA-256 `e285b64f701e6cb4d3b0ef3ff3419e559b7a4c9f0be2dfd89a6ef06de5236aa3`.
+Source/fresh-extracted deep, strict, all-architecture signatures, ZIP integrity,
+exact bridge readbacks and all nine universal Mach-O payloads verify. This
+Android-only correction does not require changing the running WebRTC Mac host.
 
 Original crash/process/exit reports remain in the private
 `.tool-cache/research/remote-webrtc/android-crash-20261126/` evidence directory.
@@ -79,7 +104,7 @@ cache state; native corruption checks run after packaging. Tablet Wi-Fi/visual
 acceptance remains pending. Evidence is under
 `.tool-cache/research/remote-webrtc/`.
 
-The current [universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip)
+The first verified [universal WebRTC preview](build/releases/Broomm-macOS-remote-screen-1221.zip)
 is **0.1.31-dev / 1221**, from application revision `c36ecfa`, **38,702,879 bytes**,
 SHA-256 `dfda2c1fa3a539e70a76ebf2687e3e19acac4d42f8479e2ead6eebcd1a592431`.
 ZIP integrity, source/fresh-extraction deep, strict, all-architecture signatures,

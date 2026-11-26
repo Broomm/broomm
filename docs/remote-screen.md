@@ -17,9 +17,17 @@ camera/microphone capture is outside this receiver change.
 The Android release recipe checks permissions in the actual merged APK with
 the existing SDK's [AAPT2](https://developer.android.com/tools/aapt2#dump).
 Missing or API-capped network permissions fail packaging. Three regressions
-exercise those conditions; 24 focused cases and static analysis pass. Device
-media verification must follow a freshly installed update; prior compilation,
-startup and macOS loopback results did not prove Android video reception.
+exercise those conditions; 24 focused cases, 868 total Flutter tests (one
+existing Linux-only skip) and static analysis pass. All five source-revision
+packages pass in CI, including actual-APK permission validation. Mac preview 1222
+also passes universal packaging, code-signature and archive checks.
+
+Fixed Android build **1212** is installed on the Galaxy over 1210 with the retained
+certificate, matching APK readback and unchanged application UID/data. Android
+confirms both permissions are granted and MainActivity launches without an
+observed fatal startup error. Media reception/reconnection still needs the
+owner-started session. Prior compilation, startup and macOS loopback results
+did not prove Android video reception. Exact hashes are in IMPLEMENTATION.md.
 
 ## Approved WebRTC prototype — 25 November 2026
 
