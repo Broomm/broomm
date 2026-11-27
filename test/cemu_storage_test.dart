@@ -122,6 +122,14 @@ void main() {
     expect(restored.getElement('Graphic')!.getElement('VSync')!.innerText, '3');
     expect(await CemuRemoteLayout.journal(root).exists(), false);
     await CemuRemoteLayout.restore(root); // confirmed cleanup is repeatable
+    final unchanged = await config.readAsString();
+    await progressWrite(CemuRemoteLayout.journal(root), {
+      'version': 1,
+      'config': 'launcher/${'a' * 64}/Cemu/portable/settings.xml',
+      'keys': {'open_pad': null},
+    });
+    await expectLater(CemuRemoteLayout.restore(root), throwsFormatException);
+    expect(await config.readAsString(), unchanged);
     await progressWrite(CemuRemoteLayout.journal(root), {
       'version': 1,
       'config': '../../foreign.xml',

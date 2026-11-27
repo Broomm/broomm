@@ -49,7 +49,8 @@ verification are tracked in the PR. Real Wii U gameplay/stream/save round-trip
 remain pending.
 The native Windows fixture exercises the shipped injector/writer before entry,
 normal close after kernel pause, and rejection of changed birth/token/lock file.
-The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
+Incomplete layout journals are rejected without clearing saved preferences,
+including missing owned keys. The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
 for physical gameplay. The owner has been asked for a suitable local Wii U game.
 
 

@@ -66,7 +66,8 @@ class CemuRemoteLayout {
     if (data['version'] != 1 ||
         data['config'] is! String ||
         data['keys'] is! Map ||
-        (data['keys'] as Map).keys.toSet().difference(keys).isNotEmpty)
+        (data['keys'] as Map).length != keys.length ||
+        !keys.every((key) => (data['keys'] as Map).containsKey(key)))
       throw const FormatException('Invalid Cemu layout recovery.');
     _path(data['config']);
     final file = await progressFile(Directory(root), data['config']);

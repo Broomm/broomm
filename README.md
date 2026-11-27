@@ -6,6 +6,7 @@ Remote screen is built into Broomm. This branch adds Cemu 2.6/Wii U to macOS,
 Linux x64 and Windows x64. Linux also has best-effort melonDS/Azahar hosting.
 See the [Cemu setup and verification guide](docs/cemu-and-desktop-remote.md) for
 prerequisites and the distinction between implemented and verified behavior.
+Current branch builds and CI are tracked in [PR #23](https://github.com/Broomm/broomm/pull/23).
 macOS also hosts melonDS 1.1 and Azahar 2126.1.2.
 The client UI and protocol work on Android and desktop hosts. Native device
 acceptance is tracked in [the verification record](docs/remote-screen.md).
