@@ -14,7 +14,8 @@ static int window_error(Display *display,XErrorEvent *error) {
   return display==guard_display?0:previous_error?previous_error(display,error):0;
 }
 void broomm_cemu_window_initialize(void) { XInitThreads(); previous_error=XSetErrorHandler(window_error); }
-static bool game_ready;
+static bool game_ready,application_ready;
+bool broomm_cemu_application_ready(void) {return application_ready;}
 bool broomm_cemu_window_ready(void) { return game_ready; }
 bool broomm_cemu_window_geometry(double out[5]) { (void)out;return false; }
 
@@ -57,6 +58,7 @@ void broomm_cemu_window_tick(bool playing, bool quit, uint64_t request) {
     }
   }
   XFree(bytes);
+  application_ready=main!=0;
   if (!playing) ordered=false;
   if (main && quit && request!=closed_revision) {
     XEvent event={0};event.xclient.type=ClientMessage;event.xclient.window=main;

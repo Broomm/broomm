@@ -74,8 +74,8 @@ static DWORD WINAPI worker(void*) {
     if(!playing)raised=false;
     if(main&&playing&&(!raised||(pad&&GetForegroundWindow()==pad))){SetForegroundWindow(main);raised=true;}
     char output[512];int n=snprintf(output,sizeof(output),
-      "{\"version\":1,\"pid\":%lu,\"token\":\"%s\",\"ack\":%llu,\"sample\":%llu,\"paused\":0,\"title\":\"%016llx\",\"birth\":\"%llu\"}\n",
-      GetCurrentProcessId(),token,revision,++sample,ready?title():0,birth);
+      "{\"version\":1,\"pid\":%lu,\"token\":\"%s\",\"ack\":%llu,\"sample\":%llu,\"applicationReady\":%s,\"paused\":0,\"title\":\"%016llx\",\"birth\":\"%llu\"}\n",
+      GetCurrentProcessId(),token,revision,++sample,main?"true":"false",ready?title():0,birth);
     const auto pending=status_path+L".pending";
     HANDLE out=CreateFileW(pending.c_str(),GENERIC_WRITE,0,nullptr,CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_OPEN_REPARSE_POINT,nullptr);
     if(out!=INVALID_HANDLE_VALUE) {

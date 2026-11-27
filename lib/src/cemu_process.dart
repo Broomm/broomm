@@ -229,6 +229,7 @@ class CemuProcess implements Process, CemuControlProcess {
         data['ack'] < 0 ||
         data['sample'] is! int ||
         data['sample'] < 1 ||
+        data['applicationReady'] is! bool ||
         data['title'] is! String ||
         !RegExp(r'^[0-9a-f]{16}$').hasMatch(data['title']) ||
         (!Platform.isMacOS &&
@@ -263,7 +264,7 @@ class CemuProcess implements Process, CemuControlProcess {
   Future<void> admit() async {
     final until = DateTime.now().add(const Duration(seconds: 15));
     while (!_ended && DateTime.now().isBefore(until)) {
-      if (await receipt() != null) return;
+      if ((await receipt())?['applicationReady'] == true) return;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     throw StateError(

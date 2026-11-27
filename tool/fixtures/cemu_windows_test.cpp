@@ -20,6 +20,7 @@ static PROCESS_INFORMATION launch(const std::wstring& helper,const std::wstring&
 static void ended(PROCESS_INFORMATION& pi,DWORD expected) {assert(WaitForSingleObject(pi.hProcess,15000)==WAIT_OBJECT_0);DWORD code=1;assert(GetExitCodeProcess(pi.hProcess,&code)&&code==expected);CloseHandle(pi.hProcess);}
 static bool refused(const broomm_remote::Identity& identity) {try{broomm_remote::Process p;broomm_remote::inspect(p,identity);return false;}catch(const std::string&){return true;}}
 int wmain(int argc,wchar_t** argv) {
+  if(argc==2&&!wcscmp(argv[1],L"--owner")){Sleep(INFINITE);return 0;}
   if(argc==3&&!wcscmp(argv[1],L"--child")) {
     assert(std::wstring(argv[2])==L"literal \"quoted\" tail\\");
     HANDLE writer=CreateFileW(env(L"BROOMM_CEMU_WRITER").c_str(),GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);OVERLAPPED range{};
@@ -45,9 +46,25 @@ int wmain(int argc,wchar_t** argv) {
   broomm_remote::PauseController pause;pause.pause(process);assert(pause.paused_pid==pid);
   write(command,token+" 2 0 1\n");assert(WaitForSingleObject(child.hProcess,200)==WAIT_TIMEOUT); // normal close cannot run while frozen
   pause.resume();ended(child,0);
-  std::ifstream close_result(closed);std::string result;close_result>>result;assert(result=="normal");assert(refused(identity));
+  std::ifstream close_result(closed);std::string result;close_result>>result;assert(result=="normal");close_result.close();assert(refused(identity));
   puts("PASS: writer admitted before application entry; literal arguments survive Windows quoting");
   puts("PASS: kernel pause/resume preserves normal close; changed birth, token and another busy lock are refused");
+  // A supervised game loses its DSU producer when the verified launcher exits.
+  // The native guard must request normal closure rather than retain stale input.
+  DeleteFileW(ready.c_str());DeleteFileW(closed.c_str());
+  std::wstring owner_command=quote(self)+L" --owner";STARTUPINFOW startup{};startup.cb=sizeof(startup);PROCESS_INFORMATION owner{};
+  assert(CreateProcessW(self.c_str(),owner_command.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&startup,&owner));CloseHandle(owner.hThread);
+  FILETIME born,exited,kernel,user;assert(GetProcessTimes(owner.hProcess,&born,&exited,&kernel,&user));
+  SetEnvironmentVariableW(L"BROOMM_CEMU_SUPERVISED",L"1");
+  SetEnvironmentVariableW(L"BROOMM_CEMU_LAUNCHER_PID",std::to_wstring(owner.dwProcessId).c_str());
+  SetEnvironmentVariableW(L"BROOMM_CEMU_LAUNCHER_BIRTH",std::to_wstring((static_cast<uint64_t>(born.dwHighDateTime)<<32)|born.dwLowDateTime).c_str());
+  write(command,token+" 1 0 0\n");auto supervised=launch(helper,dll,self);DWORD supervised_pid=0;std::string supervised_birth;
+  const auto wait_ready=GetTickCount64()+15000;
+  while(GetTickCount64()<wait_ready){std::ifstream in(ready);if(in>>supervised_pid>>supervised_birth)break;Sleep(20);}assert(supervised_pid);
+  assert(TerminateProcess(owner.hProcess,0));ended(owner,0);ended(supervised,0);
+  std::ifstream normal(closed);normal>>result;assert(result=="normal");
+  SetEnvironmentVariableW(L"BROOMM_CEMU_SUPERVISED",L"0");
+  puts("PASS: verified launcher death requests normal Cemu closure and cannot leave stale DSU input running");
   // An unavailable DLL must never admit the application entry point.
   DeleteFileW(ready.c_str());auto rejected=launch(helper,root+L"\\missing.dll",self);ended(rejected,78);assert(GetFileAttributesW(ready.c_str())==INVALID_FILE_ATTRIBUTES);
   puts("PASS: pre-entry injection failure cannot start the application writer");return 0;

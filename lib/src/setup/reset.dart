@@ -58,7 +58,8 @@ Future<void> resetEmulatorData(
                   'save_list_cache.xml',
                 ]) {
                   final relative =
-                      '${build.path.substring(data.path.length + 1)}/$portable/$setting';
+                      '${build.path.substring(data.path.length + 1)}/$portable/$setting'
+                          .replaceAll('\\', '/');
                   if (await progressExists('${data.path}/$relative'))
                     targets.add(relative);
                 }
@@ -85,7 +86,8 @@ Future<void> resetEmulatorData(
                   'session-options.cfg',
                 ]) {
                   final relative =
-                      '${game.path.substring(data.path.length + 1)}/$file';
+                      '${game.path.substring(data.path.length + 1)}/$file'
+                          .replaceAll('\\', '/');
                   if (await progressExists('${data.path}/$relative'))
                     targets.add(relative);
                 }

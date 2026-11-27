@@ -15,7 +15,11 @@ void main() {
 
   setUp(() async {
     data = await Directory.systemTemp.createTemp('broomm-reset-');
-    manager = ManagedEmulators(data, asset: (p) => File(p).readAsString());
+    manager = ManagedEmulators(
+      data,
+      asset: (p) => File(p).readAsString(),
+      hostOverride: 'macos-arm64',
+    );
   });
   tearDown(() async {
     manager.dispose();

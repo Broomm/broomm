@@ -22,6 +22,7 @@
 extern void broomm_cemu_window_tick(bool playing, bool quit, uint64_t request);
 extern void broomm_cemu_window_initialize(void);
 extern bool broomm_cemu_window_ready(void);
+extern bool broomm_cemu_application_ready(void);
 extern bool broomm_cemu_window_geometry(double out[5]);
 static int writer_fd = -1;
 static const char *status_path, *command_path, *nonce;
@@ -64,9 +65,9 @@ static bool publish(uint64_t title, int paused) {
   FILE *file = fdopen(fd, "w");
   if (!file) { close(fd); unlink(pending); return false; }
   int result = fprintf(file,
-    "{\"version\":1,\"pid\":%d,\"token\":\"%s\",\"ack\":%llu,\"sample\":%llu,\"paused\":%d,"
+    "{\"version\":1,\"pid\":%d,\"token\":\"%s\",\"ack\":%llu,\"sample\":%llu,\"applicationReady\":%s,\"paused\":%d,"
     "\"title\":\"%016llx\",\"seconds\":%llu,\"microseconds\":%llu,\"birth\":\"%s\",\"remoteCapture\":[",
-    getpid(), nonce, revision, ++sample, paused, (unsigned long long)title, birth_seconds, birth_microseconds, birth_ticks);
+    getpid(), nonce, revision, ++sample, broomm_cemu_application_ready()?"true":"false", paused, (unsigned long long)title, birth_seconds, birth_microseconds, birth_ticks);
   double geometry[5];bool failed=result<0;
   if(broomm_cemu_window_geometry(geometry))for(int i=0;i<5;++i)if(fprintf(file,"%s%.4f",i?",":"",geometry[i])<0)failed=true;
   if(fputs("]}\n",file)==EOF)failed=true;

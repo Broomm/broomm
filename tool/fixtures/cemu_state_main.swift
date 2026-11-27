@@ -2,8 +2,11 @@ import Cocoa
 import Foundation
 
 @main struct CemuStateCheck {
-  static func main() throws {
-    guard CommandLine.arguments.count == 2 else { throw NSError(domain: "cemu-test", code: 1) }
+  static func main() {
+    do {try run()} catch {FileHandle.standardError.write(Data("Cemu native check failed: \(error)\n".utf8));exit(1)}
+  }
+  static func run() throws {
+    guard CommandLine.arguments.count == 2 || CommandLine.arguments.count == 3 else { throw NSError(domain: "cemu-test", code: 1) }
     let path = CommandLine.arguments[1]
     guard let target = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path))) as? [String: Any] else {
       throw NSError(domain: "cemu-test", code: 2)
@@ -24,5 +27,14 @@ import Foundation
     pause["paused"] = false
     guard try recovery.cemuState(pause)["paused"] as? Bool == false else { throw NSError(domain: "cemu-test", code: 7) }
     print("Confirmed real Cemu kernel pause/resume and rejected changed birth identity.")
+    if CommandLine.arguments.count == 3 {
+      pause["paused"] = true
+      _ = try recovery.cemuState(pause)
+      guard let orphan = try recovery.inspect(root: CommandLine.arguments[2]),
+            orphan["status"] as? String == "emulator", (orphan["pid"] as? NSNumber)?.intValue == (target["pid"] as? NSNumber)?.intValue,
+            let token = orphan["token"] as? String else {throw NSError(domain: "cemu-test", code: 8)}
+      try recovery.control(token: token, action: "stop")
+      print("Confirmed a restarted coordinator identifies the frozen native writer and requests normal closure.")
+    }
   }
 }

@@ -9,7 +9,7 @@ $vcvars = Join-Path $vs 'VC/Auxiliary/Build/vcvars64.bat'
 $commands = @"
 call "$vcvars"
 cd /d "$build"
-cl /nologo /std:c++17 /EHsc /W4 /WX /MT /LD "$PWD/native/cemu_guard_windows.cpp" /Fe:broomm-cemu-guard.dll || exit /b 1
+cl /nologo /std:c++17 /EHsc /W4 /WX /MT /LD "$PWD/native/cemu_guard_windows.cpp" /Fe:broomm-cemu-guard.dll /link user32.lib || exit /b 1
 cl /nologo /std:c++17 /EHsc /W4 /WX /MT "$PWD/native/cemu_process_windows.cpp" /Fe:broomm-cemu-run.exe /link psapi.lib || exit /b 1
 cl /nologo /std:c++17 /EHsc /W4 /WX /MT "$PWD/tool/fixtures/cemu_windows_test.cpp" /Fe:cemu-check.exe /link psapi.lib user32.lib || exit /b 1
 cemu-check.exe "$build/broomm-cemu-run.exe" "$build/broomm-cemu-guard.dll" "$build/cemu-check.exe" "$build/private profile" || exit /b 1

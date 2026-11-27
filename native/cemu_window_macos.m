@@ -3,7 +3,8 @@
 #include <pthread.h>
 
 void broomm_cemu_window_initialize(void) {}
-static _Atomic bool game_ready;
+static _Atomic bool game_ready, application_ready;
+bool broomm_cemu_application_ready(void) {return atomic_load(&application_ready);}
 bool broomm_cemu_window_ready(void) { return atomic_load(&game_ready); }
 static pthread_mutex_t geometry_lock=PTHREAD_MUTEX_INITIALIZER;
 static double crop[5];
@@ -32,6 +33,7 @@ void broomm_cemu_window_tick(bool playing, bool quit, uint64_t request) {
         if (main) { atomic_store(&pending,false); return; } main=window;
       }
     }
+    atomic_store(&application_ready,main!=nil);
     atomic_store(&game_ready,main&&[main.title containsString:@" - FPS:"]);
     if(pad) {
       NSRect frame=pad.frame,content=[pad contentRectForFrameRect:frame];

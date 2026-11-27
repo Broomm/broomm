@@ -145,6 +145,8 @@ Future<void> main() async {
     final bundle = Directory('build/windows/x64/runner/Release');
     if (!await File('${bundle.path}/broomm.exe').exists() ||
         !await File('${bundle.path}/flutter_windows.dll').exists() ||
+        !await File('${bundle.path}/broomm-cemu-guard.dll').exists() ||
+        !await File('${bundle.path}/broomm-cemu-run.exe').exists() ||
         !await Directory('${bundle.path}/data').exists())
       throw StateError('Incomplete Windows bundle.');
     await writeBuildRecord(bundle, version, number, sha, target);

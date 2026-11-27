@@ -26,7 +26,11 @@ source identity replacement, held resume cancellation, native save exclusion,
 settings reset preservation, interrupted layout restoration and exact captured
 window identity. A real reviewed Cemu 2.6 no-game run under Rosetta verifies the
 private portable anchor, kernel writer PID/birth lock, kernel pause/resume,
-rejection of changed birth identity and normal exit. No ordinary application
+rejection of changed birth identity and normal exit. The extended check also
+confirms Cemu consumes the private DSU controller profile over actual UDP, refuses
+a second session while its native writer survives coordinator loss, and recovers
+a frozen orphan through a normal application close. A real startup race was
+corrected by waiting for native application-window readiness after writer admission. No ordinary application
 profile or save was used. Logs are `/private/tmp/broomm-wiiu-final-flutter.log`,
 `/private/tmp/broomm-wiiu-final-analyze.log`,
 `/private/tmp/broomm-wiiu-storage-tests.log` and
