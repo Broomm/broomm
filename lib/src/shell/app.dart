@@ -509,7 +509,12 @@ class _BroommAppState extends State<BroommApp> {
             emulator: platform.emulator,
           );
         }
-        var resolved = await m.emulators.resolve(g, profile.id);
+        var resolved = await m.emulators.resolve(
+          g,
+          profile.id,
+          owner: session.ownerLease,
+          cancellation: cancellation,
+        );
         cancellation.check();
         if (platform.slug == 'switch')
           resolved = resolved.withInstallationIdentity(
@@ -639,6 +644,7 @@ class _BroommAppState extends State<BroommApp> {
             resolve: resolve,
             remoteSocket: remote.newInputSocket(),
             remoteScreen: remote.hasGuest,
+            cemuControllers: remote.cemuControllers,
           );
       session.finalizeProgress = (exit) async {
         try {
@@ -986,7 +992,7 @@ class _BroommAppState extends State<BroommApp> {
       remote.setGame(
         session?.processId,
         session?.emulator?.name,
-        session?.macWindowTarget,
+        session?.remoteWindowTarget,
       );
     });
     if (m.isAndroid)

@@ -18,6 +18,7 @@ import '../psp.dart';
 import '../sony_sfo.dart';
 import '../addons/wii.dart';
 import '../addons/package_profile.dart';
+import '../cemu.dart';
 
 /// A native save boundary, derived from the actual game rather than its title.
 /// Remote paths are never used as native paths without passing this boundary.
@@ -186,6 +187,26 @@ Future<ProgressLayout> gameProgressLayout(
   final state =
       'states-${stateBuild.finish().substring(0, 16)}-${Platform.operatingSystem}-${Platform.version.contains('arm64') ? 'arm64' : 'native'}';
   switch (e.name) {
+    case 'Cemu':
+      if (platform != 'wiiu' || e.contentId == null)
+        throw const FormatException('Wii U game identity differs.');
+      final id = cemuTitleId(e.contentId!);
+      return ProgressLayout(
+        root.path,
+        'cemu-savedata-v1',
+        id,
+        [
+          ProgressArea(
+            'save',
+            'user/mlc01/usr/save/${id.substring(0, 8)}/${id.substring(8)}/user/80000001',
+          ),
+          ProgressArea(
+            'common',
+            'user/mlc01/usr/save/${id.substring(0, 8)}/${id.substring(8)}/user/common',
+          ),
+        ],
+        note: 'Native Wii U save folders for this base title and Broomm’s private offline account, plus title-common saves. Cemu has no supported save states. Console accounts and installed content are excluded.',
+      );
     case 'PPSSPP':
       if (platform != 'psp')
         throw const FormatException('PSP game platform differs');

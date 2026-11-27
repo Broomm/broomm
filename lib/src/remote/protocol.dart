@@ -57,18 +57,45 @@ class RemotePad {
   String get report => '$buttons ${axes.join(' ')}';
 }
 
-/// Coordinates in the unrotated DS touch screen, independent of video scaling.
+/// Native touch coordinates and display aspect for the supported second screens.
+class RemoteScreenSize {
+  const RemoteScreenSize._(
+    this.width,
+    this.height,
+    this.aspectWidth,
+    this.aspectHeight,
+  );
+  static const ds = RemoteScreenSize._(256, 192, 4, 3);
+  static const wiiu = RemoteScreenSize._(854, 480, 16, 9);
+  final int width, height, aspectWidth, aspectHeight;
+  Map<String, int> get json => {'width': width, 'height': height};
+  factory RemoteScreenSize.read(Object? value) {
+    if (value == null) return ds; // Version-1 peers predate geometry metadata.
+    if (value is Map && value['width'] is int && value['height'] is int) {
+      for (final size in [ds, wiiu]) {
+        if (value['width'] == size.width && value['height'] == size.height)
+          return size;
+      }
+    }
+    throw const FormatException('Unsupported remote screen geometry.');
+  }
+}
+
+/// Coordinates in the negotiated touch screen, independent of video scaling.
 class RemoteTouch {
   const RemoteTouch(this.pressed, this.x, this.y);
   static const released = RemoteTouch(false, 0, 0);
-  factory RemoteTouch.read(Map<String, dynamic> value) {
+  factory RemoteTouch.read(
+    Map<String, dynamic> value, {
+    RemoteScreenSize size = RemoteScreenSize.ds,
+  }) {
     if (value['pressed'] is! bool ||
         value['x'] is! int ||
         value['y'] is! int ||
         (value['x'] as int) < 0 ||
-        (value['x'] as int) > 255 ||
+        (value['x'] as int) >= size.width ||
         (value['y'] as int) < 0 ||
-        (value['y'] as int) > 191) {
+        (value['y'] as int) >= size.height) {
       throw const FormatException('Invalid touch coordinates.');
     }
     return RemoteTouch(value['pressed'], value['x'], value['y']);

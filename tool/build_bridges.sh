@@ -21,6 +21,9 @@ mv "$stage/broomm-installer-guard.dylib" build/native/broomm-installer-guard.dyl
   native/astris_bridge.m native/macos_window.m -framework AppKit -framework GameController -Wl,-undefined,dynamic_lookup \
   -o "$stage/broomm-astris.dylib"
 mv "$stage/broomm-astris.dylib" build/native/broomm-astris.dylib
+/usr/bin/xcrun clang -arch arm64 -arch x86_64 -dynamiclib -fobjc-arc -fblocks -std=c11 -g -O1 -Wall -Wextra -Werror \
+  -mmacosx-version-min=12.3 native/cemu_guard_posix.c native/cemu_window_macos.m -framework AppKit -o "$stage/broomm-cemu.dylib"
+mv "$stage/broomm-cemu.dylib" build/native/broomm-cemu.dylib
 for library in build/native/broomm-*.dylib; do
   /usr/bin/codesign --force --sign - "$library"
   /usr/bin/codesign --verify --strict --all-architectures "$library"

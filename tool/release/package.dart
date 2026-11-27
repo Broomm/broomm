@@ -71,6 +71,7 @@ Future<void> main() async {
       'Contents/Resources/native/broomm-sdl3.dylib',
       'Contents/Resources/native/broomm-installer-guard.dylib',
       'Contents/Resources/native/broomm-astris.dylib',
+      'Contents/Resources/native/broomm-cemu.dylib',
     ];
     for (final path in paths) {
       final arches = (await command('/usr/bin/lipo', [
@@ -144,6 +145,8 @@ Future<void> main() async {
     final bundle = Directory('build/windows/x64/runner/Release');
     if (!await File('${bundle.path}/broomm.exe').exists() ||
         !await File('${bundle.path}/flutter_windows.dll').exists() ||
+        !await File('${bundle.path}/broomm-cemu-guard.dll').exists() ||
+        !await File('${bundle.path}/broomm-cemu-run.exe').exists() ||
         !await Directory('${bundle.path}/data').exists())
       throw StateError('Incomplete Windows bundle.');
     await writeBuildRecord(bundle, version, number, sha, target);

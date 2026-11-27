@@ -212,7 +212,11 @@ Future<String> extractSetupArchive(
   Directory stage,
   DownloadCancellation cancellation,
 ) async {
-  if (Platform.isLinux) {
+  if (Platform.isWindows && format != 'zip')
+    throw UnsupportedError(
+      'Windows emulator setup requires a reviewed ZIP package.',
+    );
+  if (Platform.isLinux || Platform.isWindows) {
     cancellation.check();
     if (format == 'appimage' || format == 'appimage-zip') {
       stage = Directory(await stage.resolveSymbolicLinks());

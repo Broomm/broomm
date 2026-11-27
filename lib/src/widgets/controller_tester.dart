@@ -284,6 +284,10 @@ class _ControllerPainter extends CustomPainter {
   }
 
   void gamepad() {
+    if (target == ControllerTarget.wiiu) {
+      wiiu();
+      return;
+    }
     if (target == ControllerTarget.psp) {
       psp();
       return;
@@ -374,6 +378,33 @@ class _ControllerPainter extends CustomPainter {
     if (classic) button('Classic/Buttons/Home', '⌂', 250, 176, radius: 12);
     if (target == ControllerTarget.ps3)
       button('PS', 'PS', 250, 176, radius: 12);
+  }
+
+  void wiiu() {
+    shell(const Rect.fromLTWH(26, 62, 448, 200), 32);
+    final screen = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(138, 105, 224, 126),
+      const Radius.circular(6),
+    );
+    c.drawRRect(screen, Paint()..color = const Color(0xff10232b));
+    c.drawRRect(screen, edge);
+    text('WII U GAMEPAD', const Offset(250, 84), size: 11);
+    stick('Left Stick', 84, 114, radius: 20);
+    stick('Right Stick', 416, 114, radius: 20);
+    dpad(84, 198, step: 16);
+    button('A', 'A', 445, 186, radius: 12);
+    button('B', 'B', 416, 215, radius: 12);
+    button('X', 'X', 416, 157, radius: 12);
+    button('Y', 'Y', 387, 186, radius: 12);
+    pill('ZL', 'ZL', 68, 41, width: 40);
+    pill('L', 'L', 113, 61, width: 34);
+    pill('ZR', 'ZR', 432, 41, width: 40);
+    pill('R', 'R', 387, 61, width: 34);
+    button('Select', '−', 192, 245, radius: 10);
+    button('Start', '+', 308, 245, radius: 10);
+    c.drawCircle(const Offset(250, 245), 9, edge);
+    button('L3', 'L3', 106, 242, radius: 10);
+    button('R3', 'R3', 394, 242, radius: 10);
   }
 
   void snes() {

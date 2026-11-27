@@ -11,6 +11,8 @@ import '../progress/files.dart';
 import 'connection.dart';
 import 'protocol.dart';
 import 'rtc_video.dart';
+import 'desktop_capture.dart';
+import 'cemu_sources.dart';
 
 const remoteActions = {
   'up',
@@ -43,6 +45,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   }) : history = RemoteHistory(directory);
   static const channel = MethodChannel('app.broomm/remote');
   final RemoteHistory history;
+  final cemuControllers = CemuControllerSources();
   final bool? hostEnabled;
   final int listenPort;
   final void Function(String)? onEvent;
@@ -75,15 +78,17 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   bool _padPresent = false;
   RemoteTouch _touch = RemoteTouch.released;
   bool touchSupported = false;
+  RemoteScreenSize screenSize = RemoteScreenSize.ds;
   String? _targetKey;
   Future<void>? _targetWork;
   bool _captureCancelling = false;
   int _captureId = 0;
   Timer? _firstFrameDeadline;
   bool _videoActive = false, _videoDiagnostics = false;
-  bool _guestWebRtc = false, _clientWebRtc = false;
+  bool _guestWebRtc = false, _clientWebRtc = false, _guestGeometry = false;
   int _lastVideoOffer = 0;
   RemoteRtcVideo? _rtcHost;
+  DesktopWindowCapture? _desktopCapture;
   RemoteRtcVideo? rtcVideo;
   bool get rtcVideoReady =>
       rtcVideo?.firstFrame == true && rtcVideo?.renderer != null;
@@ -98,7 +103,9 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   int? _gamePid;
   String? _gameName;
   Map<String, Object>? _target;
-  bool get canHost => hostEnabled ?? Platform.isMacOS;
+  bool get canHost =>
+      hostEnabled ??
+      (Platform.isMacOS || Platform.isLinux || Platform.isWindows);
   bool get connected => _client != null;
   bool get hasGuest => _guest != null;
   int? get port => _server?.port;
@@ -302,6 +309,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
           deadline.cancel();
           _guest = socket;
           _guestWebRtc = message['video'] == 'webrtc-1';
+          _guestGeometry = message['screenGeometry'] == true;
           _frameBusy = false;
           _lastInput = DateTime.now();
           socket.add(
@@ -347,7 +355,14 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             _deliverPad(RemotePad.read(message), message['connected'] == true);
             if (message['connected'] != true) onAction?.call('shift-up');
           case 'touch':
-            final touch = RemoteTouch.read(message);
+            final touch = RemoteTouch.read(
+              message,
+              size: _gameName == 'Cemu'
+                  ? RemoteScreenSize.wiiu
+                  : RemoteScreenSize.ds,
+            );
+            if (_gameName == 'Cemu' && _guestGeometry)
+              cemuControllers.touch(touch);
             if (_gameName == 'melonDS' && _target?['remoteCapture'] != null) {
               _lastInput = DateTime.now();
               _deliverTouch(touch);
@@ -497,7 +512,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _deliverPad(RemotePad pad, bool present) {
-    if (!Platform.isMacOS || socketPath == null) return;
+    cemuControllers.update(
+      remote: true,
+      device: _guest,
+      pad: pad,
+      connected: present,
+    );
+    if ((!Platform.isMacOS && !Platform.isLinux) || socketPath == null) return;
     unawaited(
       channel
           .invokeMethod<void>('input', {
@@ -546,15 +567,21 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _syncTarget() {
-    if (!Platform.isMacOS || _closed) return;
+    if (!canHost || _closed) return;
     final compatible =
         hasGuest &&
-        {'melonDS', 'Azahar'}.contains(_gameName) &&
+        {'melonDS', 'Azahar', 'Cemu'}.contains(_gameName) &&
+        (_gameName != 'Cemu' || _guestGeometry) &&
         _gamePid != null &&
         _target != null &&
-        (_gameName != 'melonDS' || _target!['remoteCapture'] != null);
+        (_gameName != 'Cemu' ||
+            !Platform.isMacOS ||
+            _target!['remoteCapture'] != null) &&
+        (_gameName != 'melonDS' ||
+            !Platform.isMacOS ||
+            _target!['remoteCapture'] != null);
     final key = compatible
-        ? '$_gamePid:$_gameName:${_target!['seconds']}:${_target!['remoteCapture']}'
+        ? '$_gamePid:$_gameName:${_target!['birth'] ?? _target!['seconds']}:${_target!['remoteCapture']}'
         : '';
     if (_targetWork != null) {
       if (_targetKey != key && !_captureCancelling) {
@@ -564,6 +591,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         _videoActive = false;
         _firstFrameDeadline?.cancel();
         _targetKey = null;
+        _desktopCapture?.close();
         unawaited(_rtcHost?.close());
         unawaited(
           channel.invokeMethod<void>('cancelCapture').catchError((Object _) {}),
@@ -579,6 +607,10 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     _firstFrameDeadline?.cancel();
     if (compatible) {
       _sendStatus('Starting $_gameName secondary screen…');
+    } else if (hasGuest && _gameName == 'Cemu' && !_guestGeometry) {
+      _sendStatus(
+        'Wii U Remote screen needs a newer Broomm client. Update the remote device, then reconnect.',
+      );
     } else {
       _sendStatus('Waiting for a compatible emulator to be launched.');
     }
@@ -617,6 +649,8 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _capture(Map<String, Object>? args, int id) async {
+    _desktopCapture?.close();
+    _desktopCapture = null;
     final previous = _rtcHost;
     _rtcHost = null;
     // Native capture releases its source before the plugin's stream is disposed.
@@ -626,28 +660,59 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     }
     if (id != _captureId || _closed) return;
     if (args == null || !_guestWebRtc) {
+      if (args != null && !Platform.isMacOS) {
+        throw StateError(
+          'Linux and Windows hosting require a current WebRTC remote-screen client.',
+        );
+      }
       await channel.invokeMethod<void>('capture', args);
       return;
     }
     final peer = _guest!;
-    final video = RemoteRtcVideo(
+    late final RemoteRtcVideo video;
+    video = RemoteRtcVideo(
       id: id,
       sender: true,
       send: (signal) async {
         if (id == _captureId && identical(peer, _guest))
           await peer.sendSignal(signal);
       },
-      changed: () {},
+      changed: () {
+        if (id == _captureId && !_closed && video.firstFrame)
+          _markVideoActive();
+      },
       event: onEvent,
       problem: (message) {
         if (id != _captureId || _closed) return;
         _sendStatus(message);
+        _desktopCapture?.close();
         unawaited(
           channel.invokeMethod<void>('cancelCapture').catchError((Object _) {}),
         );
       },
     );
     _rtcHost = video;
+    if (!Platform.isMacOS) {
+      final desktop = DesktopWindowCapture(
+        problem: (message) {
+          if (id != _captureId || _closed) return;
+          _sendStatus(message);
+          unawaited(video.close());
+        },
+      );
+      _desktopCapture = desktop;
+      try {
+        await video.startSender(
+          (_) async {},
+          openStream: () => desktop.open(args),
+        );
+      } catch (_) {
+        desktop.close();
+        await video.close();
+        rethrow;
+      }
+      return;
+    }
     await video.startSender((stream) async {
       if (id != _captureId || _closed) throw StateError('Capture cancelled.');
       await channel.invokeMethod<void>('capture', {
@@ -666,7 +731,14 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         'type': 'status',
         'message': value,
         'clear': clear,
-        'touch': _gameName == 'melonDS' && _target?['remoteCapture'] != null,
+        'touch':
+            (_gameName == 'melonDS' && _target?['remoteCapture'] != null) ||
+            (_gameName == 'Cemu' && _guestGeometry && _target != null),
+        'geometry':
+            (_gameName == 'Cemu' && _guestGeometry
+                    ? RemoteScreenSize.wiiu
+                    : RemoteScreenSize.ds)
+                .json,
       }),
     );
   }
@@ -842,11 +914,13 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
             } else if (message['type'] == 'status' &&
                 message['message'] is String) {
               touch(RemoteTouch.released);
+              screenSize = RemoteScreenSize.read(message['geometry']);
               touchSupported = message['touch'] == true;
               status = message['message'];
               final active =
                   status == 'melonDS secondary screen' ||
-                  status == 'Azahar secondary screen';
+                  status == 'Azahar secondary screen' ||
+                  status == 'Cemu secondary screen';
               if (message['clear'] == true ||
                   (message['clear'] != false && !active)) {
                 frame = null;
@@ -884,6 +958,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         jsonEncode({
           'type': 'hello',
           'video': 'webrtc-1',
+          'screenGeometry': true,
           'version': remoteProtocol,
           'sent': _milliseconds,
           'code': code.trim().toLowerCase(),
@@ -932,6 +1007,12 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
       _pad = RemotePad.neutral;
       _padPresent = false;
     }
+    cemuControllers.update(
+      remote: false,
+      device: _sourceDevice,
+      pad: _pad,
+      connected: _padPresent,
+    );
     _sendPad();
   }
 
@@ -986,6 +1067,7 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
     connecting = false;
     touch(RemoteTouch.released);
     touchSupported = false;
+    screenSize = RemoteScreenSize.ds;
     final client = _client;
     final video = rtcVideo;
     rtcVideo = null;
@@ -1025,8 +1107,11 @@ class RemoteScreenService extends ChangeNotifier with WidgetsBindingObserver {
         /* Tests and clients can run without capture. */
       }
     }
+    _desktopCapture?.close();
+    _desktopCapture = null;
     await _rtcHost?.close();
     _rtcHost = null;
+    await cemuControllers.close();
     channel.setMethodCallHandler(null);
     // The emulator owns the IPC socket until its writer has stopped.
     if (_gamePid == null && _ipc != null) await _ipc!.delete(recursive: true);

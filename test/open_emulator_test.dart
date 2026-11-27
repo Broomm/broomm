@@ -17,7 +17,10 @@ class LaunchFixture extends EmulatorConfiguration {
   bool fail = false;
   Completer<void>? pending;
   @override
-  Future<void> start(Future<ResolvedSession> Function() resolve) async {
+  Future<void> start(
+    Future<ResolvedSession> Function() resolve, {
+    String? emulator,
+  }) async {
     calls++;
     if (fail) throw StateError('The OS refused this launch.');
     await pending?.future;

@@ -196,7 +196,11 @@ void main() {
     );
     expect(retroarch.downloads.values.every((p) => p.file == null), true);
     final all = await shipping.readPlan();
-    expect(all.items, hasLength(13));
+    expect(all.items, hasLength(14));
+    final cemu = all.items.singleWhere((i) => i.build.id == 'cemu');
+    expect(cemu.build.version, '2.6');
+    expect(cemu.build.architecture, 'x64');
+    expect(cemu.downloads.values.single.prepare, 'macos-adhoc');
     expect(
       all.items
           .expand((i) => i.downloads.values)

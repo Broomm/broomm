@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'emulators.dart';
 import 'managed_emulators.dart' show ownedDirectory;
@@ -7,6 +8,7 @@ import 'session_lease.dart';
 import 'romm/transfer.dart';
 import 'setup/archive.dart';
 import 'linux_runtime.dart';
+import 'cemu_process.dart';
 
 /// Hands a private no-game application to the OS. There is no retained child,
 /// readiness polling, exit watcher or lease after the launch request. Native
@@ -17,9 +19,45 @@ class EmulatorConfiguration {
   final String? project;
   final SessionLog? log;
 
-  Future<void> start(Future<ResolvedSession> Function() resolve) async {
+  Future<void> start(
+    Future<ResolvedSession> Function() resolve, {
+    String? emulator,
+  }) async {
     final lease = await SessionLease.acquire(data);
     try {
+      if (emulator == 'Cemu') {
+        final resolved = await resolve();
+        final arguments = await const CemuAdapter().configurationArguments(
+          resolved.emulator,
+        );
+        final child = await CemuProcess.start(
+          resolved: resolved,
+          dataRoot: data.path,
+          project: project ?? '',
+          arguments: arguments,
+        );
+        child.stdout.listen((bytes) => log?.output(bytes));
+        child.stderr.listen((bytes) => log?.output(bytes));
+        try {
+          await child.admit();
+        } catch (_) {
+          try {
+            await child.command(active: false, quit: true);
+            await child.exitCode.timeout(const Duration(seconds: 20));
+          } catch (_) {
+            lease.retainForUncertainWriter();
+          }
+          rethrow;
+        }
+        // The admitted child now holds the stable native writer lock. The
+        // independent configuration window can outlive this launcher.
+        unawaited(
+          child.exitCode.then((code) {
+            log?.write('Private Cemu configuration exited with status $code');
+          }),
+        );
+        return;
+      }
       if (Platform.isLinux) {
         final resolved = await resolve();
         final e = resolved.emulator;

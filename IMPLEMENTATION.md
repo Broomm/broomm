@@ -1,5 +1,64 @@
 # Implementation plan
 
+## Cemu and desktop Remote screen — 2026-11-27 (in development)
+
+The owner approved full Cemu setup, launch, native saves and Remote screen,
+plus best-effort Linux/Windows hosting on `codex/remote-wiiu-desktop-hosts`.
+Approved `xml` 7.1.0 is pinned with resolved dependencies. The concrete walkthrough,
+prerequisites, storage and verification boundaries are in
+[the Cemu guide](docs/cemu-and-desktop-remote.md).
+
+Implemented paths include reviewed Cemu 2.6 recipes for macOS Intel/Rosetta,
+Linux x64 and Windows x64; private versioned portable launch copies with stable
+MLC; exact native RPX/WUA base-title inspection; account 80000001/common ordinary
+save boundaries; one native DSU GamePad with buttons/sticks/triggers/touch; kernel
+pause and normal closure; and 16:9 remote geometry. No OS virtual input device is
+created. Windows includes pre-entry writer admission and identity-bound pause.
+Linux adds X11/XWayland secondary-window capture for existing melonDS/Azahar,
+plus process-local input. Desktop servers remain available from application
+startup. Android hosting, Linux native Wayland capture, Cemu Linux ARM64,
+additional Windows emulator runtimes, Wii U add-on installers, gyro/rumble and
+multiplayer remain outside this milestone.
+
+Local macOS static analysis and all **885 Flutter tests** pass (one existing
+Linux-only skip). Fifteen focused Cemu/capture tests include actual UDP protocol,
+source identity replacement, held resume cancellation, native save exclusion,
+settings reset preservation, interrupted layout restoration and exact captured
+window identity. A real reviewed Cemu 2.6 no-game run under Rosetta verifies the
+private portable anchor, kernel writer PID/birth lock, kernel pause/resume,
+rejection of changed birth identity and normal exit. The extended check also
+confirms Cemu consumes the private DSU controller profile over actual UDP, refuses
+a second session while its native writer survives coordinator loss, and recovers
+a frozen orphan through a normal application close. A real startup race was
+corrected by waiting for native application-window readiness after writer admission. No ordinary application
+profile or save was used. Logs are `/private/tmp/broomm-wiiu-final-flutter.log`,
+`/private/tmp/broomm-wiiu-final-analyze.log`,
+`/private/tmp/broomm-wiiu-storage-tests.log` and
+`/private/tmp/broomm-wiiu-native-cemu.log` on the development host.
+
+PR [#23](https://github.com/Broomm/broomm/pull/23) tracks exact-revision CI.
+Run 46020880872 completed: desktop packages built, with shell-lint, Windows
+reset/library linkage and Linux test include-path failures. Corrections at
+0a3e212 pass all Linux/macOS checks, independent Linux sanitizers, native macOS,
+and all desktop packages in completed run 46022218468. Windows Flutter tests
+pass there, but its native fixture identifies a loader-initialization deadlock;
+the helper now traps/restores the actual AMD64 PE entry instead. Android's
+package fails on an external Maven Central HTTP 429 for pinned Kotlin metadata;
+no dependency version or assertion is relaxed. Follow-up CI and current package
+verification are tracked in the PR. Real Wii U gameplay/stream/save round-trip
+remain pending.
+The native Windows fixture exercises the shipped injector/writer before entry,
+normal close after kernel pause, and rejection of changed birth/token/lock file.
+Two additional controller regressions reproduce and correct the frozen-heartbeat
+resume race: a long kernel pause keeps its old receipt until the worker runs,
+and a real stopped heartbeat still blocks input even after an active-route
+refresh. Only a confirmed resume transition starts a fresh bounded heartbeat
+interval. The original long-pause case fails before this correction and both
+boundaries pass afterward. Incomplete layout journals are rejected without clearing saved preferences,
+including missing owned keys. The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
+for physical gameplay. The owner has been asked for a suitable local Wii U game.
+
+
 ## Release CI recovery — 2026-11-26
 
 Remote screen was squash-merged as `0ea874d`, but its production workflow

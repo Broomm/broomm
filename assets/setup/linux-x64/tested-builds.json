@@ -224,6 +224,31 @@
         "entry": "AppDir"
       },
       "linux_launcher": "bin/eden"
+    },
+    {
+      "id": "cemu",
+      "name": "Cemu",
+      "version": "2.6",
+      "host": "linux-x64",
+      "architecture": "x64",
+      "bundle": "Cemu_2.6",
+      "executable": "Cemu",
+      "sha256": "9692b5163ed8142d1fdd65f6b24a8308dd5388a68705d93f978333f86028e6b9",
+      "sdl": 0,
+      "native": {
+        "BROOMM_CEMU_RUNNING": "21ff000",
+        "BROOMM_CEMU_TITLE": "21ff008",
+        "BROOMM_CEMU_PAD_TITLES": "GamePad|GamePad View|GamePad nézet|GamePad 视图|GamePad-Ansicht|GamePad-vy|Tela do GamePad|Vista del GamePad|Vue du GamePad|Вікно контроллера|Окно GamePad|عرض GamePad|게임패드 보기"
+      },
+      "source_package": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-ubuntu-22.04-x64.zip",
+        "sha256": "5e4592d0dae394fa0614cb8c875eff3f81b23170b349511de318d9caf7215e1b",
+        "bytes": 31825643,
+        "format": "zip",
+        "entry": "Cemu_2.6"
+      },
+      "integrity_asset": "assets/setup/linux-x64/cemu.integrity.json",
+      "symbols_asset": "assets/setup/linux-x64/cemu.symbols"
     }
   ]
 }

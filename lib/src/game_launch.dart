@@ -34,6 +34,10 @@ final playablePlatforms = [
       retroCore: s.core,
     ),
   GamePlatform('nds', 'melonds', 'melonDS', ControllerTarget.nds, 1, ['nds']),
+  GamePlatform('wiiu', 'cemu', 'Cemu', ControllerTarget.wiiu, 1, [
+    'wua',
+    'rpx',
+  ]),
   GamePlatform(
     'nds',
     'melonds-armada',
@@ -146,6 +150,8 @@ GamePlatform? gamePlatform(RommGame game, List<RommPlatform> platforms) {
     'gamecube': 'ngc',
     'nintendo-gamecube': 'ngc',
     'nintendo-switch': 'switch',
+    'nintendo-wii-u': 'wiiu',
+    'wii-u': 'wiiu',
     'super-nintendo-entertainment-system': 'snes',
     'super-nintendo': 'snes',
     'ps1': 'psx',
@@ -176,6 +182,8 @@ GamePlatform? gamePlatform(RommGame game, List<RommPlatform> platforms) {
     'sony playstation portable': 'psp',
     'nintendo 3ds': '3ds',
     'nintendo switch': 'switch',
+    'nintendo wii u': 'wiiu',
+    'wii u': 'wiiu',
   };
   return playablePlatforms
       .where((p) => p.slug == names[game.platform.toLowerCase()])

@@ -117,7 +117,8 @@ class RemoteRtcVideo {
   Future<void> _signals = Future.value(), _outgoing = Future.value();
   int _queuedSignals = 0;
   int _pending = 0;
-  Timer? _deadline, _stats;
+  Timer? _deadline, _stats, _firstSentFrame;
+  bool _firstSentFrameBusy = false;
   final _previous = <String, (double, double)>{};
   final _clock = Stopwatch()..start();
 
@@ -208,12 +209,15 @@ class RemoteRtcVideo {
     );
   }
 
-  Future<void> startSender(Future<void> Function(MediaStream) capture) async {
+  Future<void> startSender(
+    Future<void> Function(MediaStream) capture, {
+    Future<MediaStream> Function()? openStream,
+  }) async {
     try {
       await _createPeer();
       _local = await _acquire<MediaStream>(
-        createLocalMediaStream('Broomm secondary screen'),
-        (s) => s.dispose(),
+        openStream?.call() ?? createLocalMediaStream('Broomm secondary screen'),
+        _releaseStream,
       );
       if (_closed) {
         await _local!.dispose();
@@ -224,7 +228,7 @@ class RemoteRtcVideo {
       if (_closed) return;
       // The pinned native bridge attaches the track after stream creation.
       // ignore: deprecated_member_use
-      await _local!.getMediaTracks();
+      if (openStream == null) await _local!.getMediaTracks();
       if (_closed) return;
       final tracks = _local!.getVideoTracks();
       if (tracks.length != 1)
@@ -255,6 +259,12 @@ class RemoteRtcVideo {
         ]);
       }
       if (_closed) return;
+      if (openStream != null) {
+        _firstSentFrame = Timer.periodic(
+          const Duration(milliseconds: 250),
+          (_) => unawaited(_probeSentFrame()),
+        );
+      }
       final offer = await _peer!.createOffer({
         'offerToReceiveAudio': false,
         'offerToReceiveVideo': false,
@@ -264,6 +274,32 @@ class RemoteRtcVideo {
     } catch (_) {
       if (!_closed) _fail('Could not start WebRTC video. Use Retry screen.');
       rethrow;
+    }
+  }
+
+  Future<void> _probeSentFrame() async {
+    if (_closed || _firstSentFrameBusy || _peer == null) return;
+    _firstSentFrameBusy = true;
+    try {
+      final reports = await _peer!.getStats().timeout(
+        const Duration(seconds: 2),
+      );
+      if (_closed) return;
+      if (reports.any(
+        (r) =>
+            r.type == 'outbound-rtp' &&
+            (r.values['kind'] ?? r.values['mediaType']) == 'video' &&
+            r.values['framesEncoded'] is num &&
+            (r.values['framesEncoded'] as num) > 0,
+      )) {
+        firstFrame = true;
+        _firstSentFrame?.cancel();
+        changed();
+      }
+    } catch (_) {
+      // The existing startup watchdog reports a source which never sends frames.
+    } finally {
+      _firstSentFrameBusy = false;
     }
   }
 
@@ -420,11 +456,23 @@ class RemoteRtcVideo {
   }
 
   Future<void>? _closing;
+  static Future<void> _releaseStream(MediaStream stream) async {
+    for (final track in stream.getTracks()) {
+      try {
+        await track.stop().timeout(const Duration(seconds: 2));
+      } catch (_) {}
+    }
+    try {
+      await stream.dispose().timeout(const Duration(seconds: 2));
+    } catch (_) {}
+  }
+
   Future<void> close() => _closing ??= _close();
   Future<void> _close() async {
     _closed = true;
     _deadline?.cancel();
     _stats?.cancel();
+    _firstSentFrame?.cancel();
     _candidates.clear();
     _localCandidates.clear();
     final peer = _peer;
@@ -433,14 +481,7 @@ class RemoteRtcVideo {
     renderer = null;
     if (peer != null) await _releasePeer(peer);
     for (final stream in [_local, _remote].whereType<MediaStream>()) {
-      for (final track in stream.getTracks()) {
-        try {
-          await track.stop().timeout(const Duration(seconds: 2));
-        } catch (_) {}
-      }
-      try {
-        await stream.dispose().timeout(const Duration(seconds: 2));
-      } catch (_) {}
+      await _releaseStream(stream);
     }
     _local = _remote = null;
     if (view != null) {

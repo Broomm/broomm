@@ -36,6 +36,37 @@ Future<void> resetEmulatorData(
         if (!RegExp(r'^[a-z0-9_-]+$').hasMatch(name) || name.startsWith('.'))
           continue;
         retainedProfiles.add((id, name));
+        if (name == 'cemu') {
+          final launchers = Directory('${emulator.path}/launcher');
+          if (await launchers.exists()) {
+            await progressDirectory(launchers);
+            await for (final build in launchers.list(followLinks: false)) {
+              final key = build.uri.pathSegments
+                  .where((s) => s.isNotEmpty)
+                  .last;
+              if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(key)) continue;
+              if (build is! Directory)
+                throw const FileSystemException(
+                  'A linked Cemu launcher needs inspection before reset.',
+                );
+              for (final portable in ['portable', 'Cemu/portable']) {
+                for (final setting in [
+                  'settings.xml',
+                  'controllerProfiles',
+                  'shaderCache',
+                  'title_list_cache.xml',
+                  'save_list_cache.xml',
+                ]) {
+                  final relative =
+                      '${build.path.substring(data.path.length + 1)}/$portable/$setting'
+                          .replaceAll('\\', '/');
+                  if (await progressExists('${data.path}/$relative'))
+                    targets.add(relative);
+                }
+              }
+            }
+          }
+        }
         for (final setting in emulatorSettingsPaths(name)) {
           final relative = 'profiles/$id/emulators/$name/$setting';
           // Missing optional native configuration parents need no mutation.
@@ -55,7 +86,8 @@ Future<void> resetEmulatorData(
                   'session-options.cfg',
                 ]) {
                   final relative =
-                      '${game.path.substring(data.path.length + 1)}/$file';
+                      '${game.path.substring(data.path.length + 1)}/$file'
+                          .replaceAll('\\', '/');
                   if (await progressExists('${data.path}/$relative'))
                     targets.add(relative);
                 }

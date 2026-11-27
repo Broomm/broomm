@@ -35,7 +35,20 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
 target_link_libraries(${BINARY_NAME} PRIVATE "advapi32.lib")
+target_link_libraries(${BINARY_NAME} PRIVATE "psapi.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
+add_library(broomm_cemu_guard SHARED "../../native/cemu_guard_windows.cpp")
+set_target_properties(broomm_cemu_guard PROPERTIES PREFIX "" OUTPUT_NAME "broomm-cemu-guard" WINDOWS_EXPORT_ALL_SYMBOLS OFF MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+apply_standard_settings(broomm_cemu_guard)
+target_link_libraries(broomm_cemu_guard PRIVATE user32)
+add_executable(broomm_cemu_run "../../native/cemu_process_windows.cpp")
+set_target_properties(broomm_cemu_run PROPERTIES OUTPUT_NAME "broomm-cemu-run" MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+apply_standard_settings(broomm_cemu_run)
+target_link_libraries(broomm_cemu_run PRIVATE psapi)
+add_dependencies(${BINARY_NAME} broomm_cemu_guard broomm_cemu_run)
+add_custom_command(TARGET ${BINARY_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:broomm_cemu_guard>" "$<TARGET_FILE_DIR:${BINARY_NAME}>"
+  COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:broomm_cemu_run>" "$<TARGET_FILE_DIR:${BINARY_NAME}>")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)

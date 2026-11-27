@@ -85,6 +85,7 @@ extension ShellCloudSaves on ShellModel {
         androidRom == null &&
         cached != null &&
         platform.slug != 'switch' &&
+        platform.slug != 'wiiu' &&
         cached.profile == p.id &&
         identical(cached.client, c))
       return cached;

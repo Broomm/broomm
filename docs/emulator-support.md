@@ -1,5 +1,11 @@
 # Initial emulator scope and setup files
 
+The [Cemu/desktop Remote screen milestone](cemu-and-desktop-remote.md) adds
+Cemu 2.6 setup, private launch, native title/save boundaries and GamePad
+forwarding on macOS Intel/Rosetta, Linux x64 and Windows x64. Native execution
+and owner acceptance are tracked separately there. Linux ARM64 has no reviewed
+Cemu runtime. Windows starts with this Cemu runtime only.
+
 The [Linux x64 RetroArch milestone](linux-retroarch.md) adds bundled setup, private configuration and native Wayland/Mesen input/progress/recovery checks. All fifteen cores pass Linux ABI probes. The [standalone milestone](linux-standalone.md) adds nine Linux x64 frontends with the native evidence and remaining Switch/physical/Steam/gamescope acceptance listed there. Dated macOS evidence below keeps its host scope.
 
 The [Astris/Citra MMJ follow-up](astris-and-citra-mmj.md) adds the managed Astris macOS alternative and Android MMJ direct launch. The newer [Android installation/save milestone](android-installation-and-saves.md) adds APK acquisition and connected ordinary saves/matching states across its nine adapters (Eden has no states), including MMJ and both ARMSX2 channels. Native Android acceptance and new content/firmware installers remain outstanding. Only configured emulators have a default; successful setup selects the newly installed emulator. Historical milestone counts below retain their dates.

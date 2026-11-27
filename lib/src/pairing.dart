@@ -22,7 +22,8 @@ enum ControllerTarget {
   pcengine,
   psx,
   ps2,
-  psp;
+  psp,
+  wiiu;
 
   bool get isPlayStation =>
       this == psx || this == ps2 || this == ps3 || this == psp;
@@ -40,7 +41,8 @@ enum WiiMode {
 
 enum ControllerFamily { unknown, xbox, playstation, nintendo, gamecube }
 
-// Identity belongs to the emulator's SDL runtime, never another enumeration.
+// Identity belongs to the owning adapter. SDL sessions use their own runtime's
+// IDs; Cemu explicitly pairs Broomm source IDs to its native DSU backend.
 class ControllerDevice {
   const ControllerDevice(
     this.id,
@@ -172,6 +174,7 @@ class Pairing {
       ControllerTarget.n3ds,
       ControllerTarget.nds,
       ControllerTarget.switchPro,
+      ControllerTarget.wiiu,
       ControllerTarget.wii,
       ControllerTarget.gameboy,
       ControllerTarget.gba,

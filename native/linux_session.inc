@@ -1,3 +1,20 @@
+#define BROOMM_REMOTE_TOUCH_DISABLED 1
+#include "remote_input.inc"
+
+static const char *remote_process_birth(void) {
+    static char result[32];
+    if(result[0])return result;
+    FILE *file=fopen("/proc/self/stat","r");char text[4096];
+    if(!file)return "";
+    char *read=fgets(text,sizeof(text),file);fclose(file);
+    if(!read)return "";
+    char *tail=strrchr(text,')');if(!tail)return "";
+    char *state=NULL,*word=strtok_r(tail+1," ",&state);
+    for(int field=3;word&&field<22;++field)word=strtok_r(NULL," ",&state);
+    if(!word||strlen(word)>20||strspn(word,"0123456789")!=strlen(word))return "";
+    snprintf(result,sizeof(result),"%s",word);return result;
+}
+
 static bool discover_sources(void) {
     bool complete=true;
     uint32_t found[32];int count=0;
@@ -117,7 +134,7 @@ static void write_status(void) {
         fprintf(out,"{\"id\":%u,\"name\":",sources[i].id);json_text(out,sources[i].name);
         fprintf(out,",\"buttons\":%u,\"x\":%d,\"y\":%d,\"rx\":%d,\"ry\":%d,\"lt\":%d,\"rt\":%d,\"family\":%d,\"sensors\":%d,\"sensorReady\":%d,\"motionTime\":%llu,\"accel\":[%.6f,%.6f,%.6f],\"gyro\":[%.6f,%.6f,%.6f]}",sources[i].buttons,sources[i].axes[0],sources[i].axes[1],sources[i].axes[2],sources[i].axes[3],sources[i].axes[4],sources[i].axes[5],sources[i].family,sources[i].sensors,sources[i].sensor_ready,(unsigned long long)sources[i].motion_time,sources[i].motion[0][0],sources[i].motion[0][1],sources[i].motion[0][2],sources[i].motion[1][0],sources[i].motion[1][1],sources[i].motion[1][2]);
     }
-    fprintf(out,"],\"ports\":[");
+    fprintf(out,"],\"remoteBirth\":\"%s\",\"ports\":[",remote_process_birth());
     for(int p=0;p<4;++p)fprintf(out,"%s%u",p?",":"",ids[p]);
     fprintf(out,"],\"logicalButtons\":[");
     for(int p=0;p<4;++p){unsigned int bits=0;for(int b=0;b<21;b++)if(real_button(pad[p],b))bits|=1u<<b;fprintf(out,"%s%u",p?",":"",bits);}
@@ -214,7 +231,10 @@ static void session_worker(void) {
         }
         if(getppid()!=owner){atomic_store(&linux_orphaned,true);if(!atomic_load(&session_gate))session_request("launcher-exit");}
         fixture_call=true;
-        lock();test_watch_tick();test_sources_tick();update();
+        lock();
+        struct timespec remote_now;clock_gettime(CLOCK_MONOTONIC,&remote_now);
+        remote_tick(remote_now.tv_sec+remote_now.tv_nsec/1e9);
+        test_watch_tick();test_sources_tick();update();
         if(tick%16==0) {
             bool ready=discover_sources();atomic_store(&input_ready,ready);
             if(!ready&&!discovery_failed)session_request("input-error");
@@ -283,5 +303,6 @@ static void session_worker(void) {
         // A disappeared launcher never releases input or automatically resumes.
         usleep(8000);
     }
+    remote_close();
     atomic_store(&session_worker_stopped,true);
 }

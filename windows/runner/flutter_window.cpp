@@ -27,6 +27,7 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   credentials_channel_ = RegisterCredentialStore(flutter_controller_->engine()->messenger());
+  remote_screen_ = broomm_remote::RegisterRemoteScreen(flutter_controller_->engine()->messenger());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -42,6 +43,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  remote_screen_ = nullptr;
   credentials_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;

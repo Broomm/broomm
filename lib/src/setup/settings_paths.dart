@@ -30,6 +30,7 @@ List<String> emulatorSettingsPaths(String id) => [
     ],
     'ps2' => ['user/pcsx2/PCSX2/inis', 'user/armsx2/ARMSX2/inis'],
     'ppsspp' => ['user/PSP/SYSTEM/ppsspp.ini', 'user/PSP/SYSTEM/controls.ini'],
+    'cemu' => ['cemu-remote-layout.json'],
     _ => <String>[],
   },
 ];

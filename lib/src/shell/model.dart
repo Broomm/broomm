@@ -825,6 +825,7 @@ class ShellModel extends ChangeNotifier {
         await finishCloud();
         await configuration.start(
           () => emulators.resolveConfiguration(emulator, selected.id),
+          emulator: emulator,
         );
         showNotice(
           'Opening $emulator. Its settings stay private to this Broomm profile.',

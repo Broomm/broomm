@@ -190,6 +190,7 @@ void main() {
       'pcsx2',
       'ppsspp',
       'eden',
+      'cemu',
     });
     expect(
       plan.items
@@ -198,6 +199,11 @@ void main() {
       isTrue,
     );
     final item = plan.items.firstWhere((i) => i.build.id == 'retroarch');
+    final cemu = plan.items.firstWhere((i) => i.build.id == 'cemu');
+    expect(cemu.build.architecture, 'x64');
+    expect(cemu.build.sdl, 0);
+    expect(cemu.build.native['BROOMM_CEMU_RUNNING'], '21ff000');
+    expect(cemu.downloads.values.single.format, 'zip');
     expect(item.build.host, 'linux-x64');
     expect(item.build.native, isEmpty);
     expect(item.downloads.length, 16);
