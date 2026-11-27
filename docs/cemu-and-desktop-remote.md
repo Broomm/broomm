@@ -82,7 +82,9 @@ Original Broomm C/Objective-C/C++ interop only admits an actual native writer,
 observes process state, changes kernel pause and operates owned windows. No Cemu implementation code is copied into these sources. Build recipes are
 `tool/build_bridges.sh`, `tool/build_linux_bridges.sh`, and Windows runner CMake;
 no compiler or test runtime is needed by packaged users. Windows packages ship
-broomm-cemu-guard.dll and broomm-cemu-run.exe with a static C++ runtime.
+broomm-cemu-guard.dll and broomm-cemu-run.exe with a static C++ runtime;
+thread notifications remain enabled as required by Microsoft's
+[static CRT rules](https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-disablethreadlibrarycalls).
 The helper temporarily breaks at the verified AMD64 PE entry point, restores
 its original byte/instruction pointer, and admits the writer before application
 entry. It does not suspend the initial loader breakpoint: Windows serializes

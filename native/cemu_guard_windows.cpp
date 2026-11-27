@@ -89,9 +89,9 @@ static DWORD WINAPI worker(void*) {
   }
 }
 
-BOOL WINAPI DllMain(HINSTANCE module,DWORD reason,LPVOID) {
+BOOL WINAPI DllMain(HINSTANCE,DWORD reason,LPVOID) {
   if(reason!=DLL_PROCESS_ATTACH)return TRUE;
-  DisableThreadLibraryCalls(module);
+  // The statically linked C++ runtime requires thread attach/detach notifications.
   const auto path=environment(L"BROOMM_CEMU_WRITER");
   status_path=environment(L"BROOMM_CEMU_STATUS");command_path=environment(L"BROOMM_CEMU_COMMAND");
   const auto nonce=environment(L"BROOMM_CEMU_TOKEN");
