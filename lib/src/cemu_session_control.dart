@@ -232,8 +232,13 @@ class CemuSessionControl {
         // worker sees its new route immediately. Closure uses WM_CLOSE/AppKit.
         final revision = await child.command(active: active, quit: quit);
         if (active || quit) {
+          final wasPaused = _paused != 0;
           if (await child.state(paused: false))
             throw StateError('Cemu did not confirm resume.');
+          // A frozen native worker cannot advance its receipt. Give only an
+          // actual resume transition time to publish; route refreshes while
+          // already running must not conceal a genuinely stopped heartbeat.
+          if (wasPaused) _nativeAt = sources.milliseconds;
           _paused = 0;
         } else if (_ready) {
           if (!await child.state(paused: true))

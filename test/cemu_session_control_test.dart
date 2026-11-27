@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 class NativeCemu implements CemuControlProcess {
   Completer<bool>? heldPause;
   final pauseEntered = Completer<void>();
-  bool paused = false;
+  bool paused = false, freezeSample = false;
   int revision = 1;
   int sample = 0;
   final commands = <(bool, bool)>[];
@@ -32,7 +32,7 @@ class NativeCemu implements CemuControlProcess {
     'pid': pid,
     'ack': revision,
     'title': '0005000010101000',
-    'sample': ++sample,
+    'sample': freezeSample ? sample : ++sample,
   };
   @override
   Future<int> command({required bool active, bool quit = false}) async {
@@ -67,13 +67,15 @@ void main() {
   late CemuSessionControl control;
   late NativeCemu native;
   late RawDatagramSocket reader;
+  var now = 0;
   final statuses = <BridgeStatus>[], problems = <String>[];
   setUp(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(CemuProcess.channel, (_) async => null);
+    now = 0;
     statuses.clear();
     problems.clear();
-    sources = CemuControllerSources(milliseconds: () => 0);
+    sources = CemuControllerSources(milliseconds: () => now);
     native = NativeCemu()..heldPause = Completer<bool>();
     control = CemuSessionControl(
       sources,
@@ -159,5 +161,67 @@ void main() {
     await rejected;
     expect(native.commands, [(false, true)]);
     expect(statuses.last.blocked, true);
+  });
+  test('resuming a long kernel pause tolerates the frozen native receipt until a fresh sample arrives', () async {
+    native.heldPause!.complete(true);
+    await until(() => statuses.any((s) => s.inputReady));
+    native.freezeSample = true;
+    now = 60000;
+    final before = statuses.length;
+    await until(() => statuses.length > before);
+    expect(problems, isEmpty); // A paused native worker cannot publish.
+    sources.update(
+      remote: false,
+      device: 'first',
+      pad: RemotePad.neutral,
+      connected: true,
+    );
+    await control.command([
+      PlayerAssignment(control.devices.single.id),
+    ], active: true);
+    final resumed = statuses.length;
+    await until(() => statuses.length > resumed);
+    expect(native.paused, false);
+    expect(statuses.last.blocked, false);
+    expect(problems, isEmpty);
+    native.freezeSample = false;
+  });
+
+  test('an unpaused native worker that stops advancing its heartbeat blocks input and reports once', () async {
+    native.heldPause!.complete(true);
+    sources.update(
+      remote: false,
+      device: 'first',
+      pad: RemotePad.neutral,
+      connected: true,
+    );
+    await until(() => statuses.any((s) => s.inputReady));
+    await control.command([
+      PlayerAssignment(control.devices.single.id),
+    ], active: true);
+    native.freezeSample = true;
+    now = 1000;
+    sources.update(
+      remote: false,
+      device: 'first',
+      pad: RemotePad.neutral,
+      connected: true,
+    );
+    await control.command([
+      PlayerAssignment(control.devices.single.id),
+    ], active: true);
+    now = 2001;
+    sources.update(
+      remote: false,
+      device: 'first',
+      pad: RemotePad.neutral,
+      connected: true,
+    );
+    await until(() => problems.isNotEmpty);
+    expect(statuses.last.blocked, true);
+    expect(problems.single, contains('stopped updating'));
+    final failed = statuses.length;
+    await until(() => statuses.length > failed);
+    expect(problems, hasLength(1));
   });
 }

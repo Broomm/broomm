@@ -49,7 +49,12 @@ verification are tracked in the PR. Real Wii U gameplay/stream/save round-trip
 remain pending.
 The native Windows fixture exercises the shipped injector/writer before entry,
 normal close after kernel pause, and rejection of changed birth/token/lock file.
-Incomplete layout journals are rejected without clearing saved preferences,
+Two additional controller regressions reproduce and correct the frozen-heartbeat
+resume race: a long kernel pause keeps its old receipt until the worker runs,
+and a real stopped heartbeat still blocks input even after an active-route
+refresh. Only a confirmed resume transition starts a fresh bounded heartbeat
+interval. The original long-pause case fails before this correction and both
+boundaries pass afterward. Incomplete layout journals are rejected without clearing saved preferences,
 including missing owned keys. The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
 for physical gameplay. The owner has been asked for a suitable local Wii U game.
 
