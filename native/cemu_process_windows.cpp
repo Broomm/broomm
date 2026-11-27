@@ -30,32 +30,69 @@ static HMODULE module(HANDLE process,const std::wstring& path) {
   }
   return nullptr;
 }
+static void close_debug_file(const DEBUG_EVENT& event) {
+  if(event.dwDebugEventCode==CREATE_PROCESS_DEBUG_EVENT&&event.u.CreateProcessInfo.hFile)CloseHandle(event.u.CreateProcessInfo.hFile);
+  if(event.dwDebugEventCode==LOAD_DLL_DEBUG_EVENT&&event.u.LoadDll.hFile)CloseHandle(event.u.LoadDll.hFile);
+}
+static bool read(HANDLE process,const void* address,void* value,SIZE_T bytes) {
+  SIZE_T copied=0;return ReadProcessMemory(process,address,value,bytes,&copied)&&copied==bytes;
+}
+static bool patch(HANDLE process,void* address,BYTE value) {
+  DWORD original=0,ignored=0;SIZE_T written=0;
+  if(!VirtualProtectEx(process,address,1,PAGE_EXECUTE_READWRITE,&original))return false;
+  const bool ok=WriteProcessMemory(process,address,&value,1,&written)&&written==1&&FlushInstructionCache(process,address,1);
+  const bool restored=VirtualProtectEx(process,address,1,original,&ignored)!=FALSE;return ok&&restored;
+}
 static bool detached_before_entry(PROCESS_INFORMATION& child) {
   if(ResumeThread(child.hThread)==MAXDWORD)return false;
-  const ULONGLONG end=GetTickCount64()+10000;
+  const ULONGLONG end=GetTickCount64()+10000;void* entry=nullptr;BYTE original=0;
   while(GetTickCount64()<end) {
     DEBUG_EVENT event{};
     if(!WaitForDebugEvent(&event,250)) {if(GetLastError()==ERROR_SEM_TIMEOUT)continue;return false;}
-    DWORD disposition=DBG_CONTINUE;bool initial=false;
+    close_debug_file(event);DWORD disposition=DBG_CONTINUE;
     if(event.dwDebugEventCode==CREATE_PROCESS_DEBUG_EVENT) {
-      if(event.u.CreateProcessInfo.hFile)CloseHandle(event.u.CreateProcessInfo.hFile);
-    } else if(event.dwDebugEventCode==LOAD_DLL_DEBUG_EVENT) {
-      if(event.u.LoadDll.hFile)CloseHandle(event.u.LoadDll.hFile);
+      if(entry||event.dwProcessId!=child.dwProcessId)return false;
+      const auto base=reinterpret_cast<uintptr_t>(event.u.CreateProcessInfo.lpBaseOfImage);
+      IMAGE_DOS_HEADER dos{};IMAGE_NT_HEADERS64 pe{};
+      if(!read(child.hProcess,reinterpret_cast<void*>(base),&dos,sizeof(dos))||dos.e_magic!=IMAGE_DOS_SIGNATURE||dos.e_lfanew<0||dos.e_lfanew>1024*1024||
+         !read(child.hProcess,reinterpret_cast<void*>(base+static_cast<uintptr_t>(dos.e_lfanew)),&pe,sizeof(pe))||
+         pe.Signature!=IMAGE_NT_SIGNATURE||pe.FileHeader.Machine!=IMAGE_FILE_MACHINE_AMD64||pe.OptionalHeader.Magic!=IMAGE_NT_OPTIONAL_HDR64_MAGIC||
+         !pe.OptionalHeader.AddressOfEntryPoint||pe.OptionalHeader.AddressOfEntryPoint>=pe.OptionalHeader.SizeOfImage)return false;
+      entry=reinterpret_cast<void*>(base+pe.OptionalHeader.AddressOfEntryPoint);
+      if(!read(child.hProcess,entry,&original,1)||original==0xcc||!patch(child.hProcess,entry,0xcc))return false;
     } else if(event.dwDebugEventCode==EXCEPTION_DEBUG_EVENT) {
-      initial=event.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT&&event.u.Exception.dwFirstChance;
-      if(!initial)disposition=DBG_EXCEPTION_NOT_HANDLED;
+      const auto& exception=event.u.Exception;
+      const bool breakpoint=exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT&&exception.dwFirstChance;
+      if(breakpoint&&entry&&exception.ExceptionRecord.ExceptionAddress==entry) {
+        // The initial loader breakpoint still holds loader initialization and
+        // cannot admit a remote loader thread. Stop at the PE entry instead:
+        // loader work has finished, and no application/CRT entry has executed.
+        CONTEXT context{};context.ContextFlags=CONTEXT_CONTROL;
+        if(event.dwProcessId!=child.dwProcessId||event.dwThreadId!=child.dwThreadId||
+           !patch(child.hProcess,entry,original)||!GetThreadContext(child.hThread,&context)||
+           context.Rip!=reinterpret_cast<uintptr_t>(entry)+1)return false;
+        context.Rip=reinterpret_cast<uintptr_t>(entry);
+        if(!SetThreadContext(child.hThread,&context)||SuspendThread(child.hThread)==MAXDWORD)return false;
+        return ContinueDebugEvent(event.dwProcessId,event.dwThreadId,DBG_CONTINUE)&&DebugActiveProcessStop(child.dwProcessId);
+      }
+      if(!breakpoint)disposition=DBG_EXCEPTION_NOT_HANDLED;
     } else if(event.dwDebugEventCode==EXIT_PROCESS_DEBUG_EVENT) {
       ContinueDebugEvent(event.dwProcessId,event.dwThreadId,DBG_CONTINUE);return false;
     }
-    if(initial) {
-      // Loader initialization is complete, but the application entry point has
-      // not run. Keep that thread suspended while detaching and admitting DLL.
-      if(event.dwProcessId!=child.dwProcessId||event.dwThreadId!=child.dwThreadId||SuspendThread(child.hThread)==MAXDWORD)return false;
-      return ContinueDebugEvent(event.dwProcessId,event.dwThreadId,DBG_CONTINUE)&&DebugActiveProcessStop(child.dwProcessId);
-    }
     if(!ContinueDebugEvent(event.dwProcessId,event.dwThreadId,disposition))return false;
   }
-  return false;
+  SetLastError(ERROR_TIMEOUT);return false;
+}
+static void reject(PROCESS_INFORMATION& child,const char* phase,DWORD error) {
+  // A failed pre-entry admission must not leave a child behind. Drain pending
+  // debugger events as well: Windows can defer exit until they are continued.
+  TerminateProcess(child.hProcess,78);DebugActiveProcessStop(child.dwProcessId);
+  while(WaitForSingleObject(child.hProcess,50)!=WAIT_OBJECT_0) {
+    DEBUG_EVENT event{};
+    if(WaitForDebugEvent(&event,50)){close_debug_file(event);ContinueDebugEvent(event.dwProcessId,event.dwThreadId,DBG_CONTINUE);}
+  }
+  CloseHandle(child.hThread);CloseHandle(child.hProcess);
+  fprintf(stderr,"Broomm could not establish Cemu's native writer during %s (Windows error %lu). Existing progress was kept.\n",phase,error);
 }
 static bool inject(PROCESS_INFORMATION& child,const std::wstring& dll) {
   FARPROC function=GetProcAddress(GetModuleHandleW(L"kernel32.dll"),"LoadLibraryW");HMODULE local=nullptr;
@@ -84,15 +121,9 @@ int wmain(int argc,wchar_t** argv) {
   startup.hStdInput=GetStdHandle(STD_INPUT_HANDLE);startup.hStdOutput=GetStdHandle(STD_OUTPUT_HANDLE);startup.hStdError=GetStdHandle(STD_ERROR_HANDLE);
   PROCESS_INFORMATION child{};
   if(!CreateProcessW(argv[2],command.data(),nullptr,nullptr,TRUE,CREATE_SUSPENDED|DEBUG_ONLY_THIS_PROCESS,nullptr,nullptr,&startup,&child))return 73;
-  if(!detached_before_entry(child)||!inject(child,argv[1])||ResumeThread(child.hThread)==MAXDWORD) {
-    // Failure is confined to our retained, pre-entry child handle. It has never
-    // been admitted to gameplay or a save transfer.
-    TerminateProcess(child.hProcess,78);
-    // Do not report helper completion while a writer could remain alive.
-    WaitForSingleObject(child.hProcess,INFINITE);
-    CloseHandle(child.hThread);CloseHandle(child.hProcess);
-    fputs("Broomm could not establish Cemu's private native writer. Existing progress was kept.\n",stderr);return 78;
-  }
+  if(!detached_before_entry(child)){const DWORD error=GetLastError();reject(child,"application entry",error);return 78;}
+  if(!inject(child,argv[1])){const DWORD error=GetLastError();reject(child,"writer injection",error);return 78;}
+  if(ResumeThread(child.hThread)==MAXDWORD){const DWORD error=GetLastError();reject(child,"application resume",error);return 78;}
   CloseHandle(child.hThread);
   if(WaitForSingleObject(child.hProcess,INFINITE)!=WAIT_OBJECT_0){CloseHandle(child.hProcess);return 74;}
   DWORD code=74;GetExitCodeProcess(child.hProcess,&code);CloseHandle(child.hProcess);

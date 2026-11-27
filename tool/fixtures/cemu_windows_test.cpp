@@ -8,6 +8,13 @@
 #include <cassert>
 extern "C" __declspec(dllexport) unsigned long long gameMeta_getTitleId() {return 0x0005000012345678ULL;}
 static std::wstring env(const wchar_t* name) {wchar_t v[4096];DWORD n=GetEnvironmentVariableW(name,v,4096);return n&&n<4096?std::wstring(v,n):L"";}
+struct BeforeApplication {
+  BeforeApplication() {
+    if(env(L"BROOMM_CEMU_EXPECT_GUARD")!=L"1")return;
+    HANDLE writer=CreateFileW(env(L"BROOMM_CEMU_WRITER").c_str(),GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);OVERLAPPED range{};
+    assert(writer!=INVALID_HANDLE_VALUE&&!LockFileEx(writer,LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,0,MAXDWORD,MAXDWORD,&range)&&GetLastError()==ERROR_LOCK_VIOLATION);CloseHandle(writer);
+  }
+} before_application;
 static std::string utf8(const std::wstring& v) {int n=WideCharToMultiByte(CP_UTF8,0,v.data(),static_cast<int>(v.size()),nullptr,0,nullptr,nullptr);std::string r(n,'\0');WideCharToMultiByte(CP_UTF8,0,v.data(),static_cast<int>(v.size()),r.data(),n,nullptr,nullptr);return r;}
 static std::wstring quote(const std::wstring& v) {std::wstring r=L"\"";size_t slashes=0;for(auto c:v){if(c==L'\\'){++slashes;continue;}r.append(c==L'"'?slashes*2+1:slashes,L'\\');slashes=0;r+=c;}r.append(slashes*2,L'\\');return r+L"\"";}
 static LRESULT CALLBACK window(HWND h,UINT m,WPARAM w,LPARAM l) {if(m==WM_CLOSE){std::ofstream out(env(L"BROOMM_CEMU_CLOSED"));out<<"normal";DestroyWindow(h);PostQuitMessage(0);return 0;}return DefWindowProcW(h,m,w,l);}
@@ -15,7 +22,9 @@ static void write(const std::wstring& p,const std::string& value) {std::ofstream
 static PROCESS_INFORMATION launch(const std::wstring& helper,const std::wstring& dll,const std::wstring& child) {
   std::wstring cmd=quote(helper)+L" "+quote(dll)+L" "+quote(child)+L" --child "+quote(L"literal \"quoted\" tail\\");
   STARTUPINFOW si{};si.cb=sizeof(si);PROCESS_INFORMATION pi{};
-  assert(CreateProcessW(helper.c_str(),cmd.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&si,&pi));CloseHandle(pi.hThread);return pi;
+  SetEnvironmentVariableW(L"BROOMM_CEMU_EXPECT_GUARD",L"1");
+  const BOOL created=CreateProcessW(helper.c_str(),cmd.data(),nullptr,nullptr,FALSE,0,nullptr,nullptr,&si,&pi);
+  SetEnvironmentVariableW(L"BROOMM_CEMU_EXPECT_GUARD",nullptr);assert(created);CloseHandle(pi.hThread);return pi;
 }
 static void ended(PROCESS_INFORMATION& pi,DWORD expected) {assert(WaitForSingleObject(pi.hProcess,15000)==WAIT_OBJECT_0);DWORD code=1;assert(GetExitCodeProcess(pi.hProcess,&code)&&code==expected);CloseHandle(pi.hProcess);}
 static bool refused(const broomm_remote::Identity& identity) {try{broomm_remote::Process p;broomm_remote::inspect(p,identity);return false;}catch(const std::string&){return true;}}
@@ -23,8 +32,7 @@ int wmain(int argc,wchar_t** argv) {
   if(argc==2&&!wcscmp(argv[1],L"--owner")){Sleep(INFINITE);return 0;}
   if(argc==3&&!wcscmp(argv[1],L"--child")) {
     assert(std::wstring(argv[2])==L"literal \"quoted\" tail\\");
-    HANDLE writer=CreateFileW(env(L"BROOMM_CEMU_WRITER").c_str(),GENERIC_READ|GENERIC_WRITE,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);OVERLAPPED range{};
-    assert(writer!=INVALID_HANDLE_VALUE&&!LockFileEx(writer,LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY,0,MAXDWORD,MAXDWORD,&range)&&GetLastError()==ERROR_LOCK_VIOLATION);CloseHandle(writer);
+    assert(env(L"BROOMM_CEMU_EXPECT_GUARD")==L"1"); // constructor above must already have checked admission
     WNDCLASSW cls{};cls.lpfnWndProc=window;cls.hInstance=GetModuleHandleW(nullptr);cls.lpszClassName=L"BroommCemuFixture";assert(RegisterClassW(&cls));
     HWND main=CreateWindowW(cls.lpszClassName,L"Cemu 2.6 - FPS: 60",WS_OVERLAPPEDWINDOW,0,0,640,480,nullptr,nullptr,cls.hInstance,nullptr);assert(main);ShowWindow(main,SW_SHOW);
     FILETIME b,e,k,u;assert(GetProcessTimes(GetCurrentProcess(),&b,&e,&k,&u));

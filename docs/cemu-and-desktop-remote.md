@@ -83,6 +83,14 @@ observes process state, changes kernel pause and operates owned windows. No Cemu
 `tool/build_bridges.sh`, `tool/build_linux_bridges.sh`, and Windows runner CMake;
 no compiler or test runtime is needed by packaged users. Windows packages ship
 broomm-cemu-guard.dll and broomm-cemu-run.exe with a static C++ runtime.
+The helper temporarily breaks at the verified AMD64 PE entry point, restores
+its original byte/instruction pointer, and admits the writer before application
+entry. It does not suspend the initial loader breakpoint: Windows serializes
+remote-thread startup behind loader initialization, which would deadlock that
+admission. See Microsoft's [CreateRemoteThread lifecycle rules](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread)
+and [process debug event fields](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-create_process_debug_info).
+Only the retained pre-entry child is terminated after failed admission; normal
+sessions always request native closure and wait for actual exit.
 
 Reviewed upstream: [Cemu v2.6](https://github.com/cemu-project/Cemu/releases/tag/v2.6),
 source tree a6fb0a48eb437a8a41c13b782ac8ae0433bf8f98, MPL-2.0.

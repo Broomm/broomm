@@ -36,8 +36,17 @@ profile or save was used. Logs are `/private/tmp/broomm-wiiu-final-flutter.log`,
 `/private/tmp/broomm-wiiu-storage-tests.log` and
 `/private/tmp/broomm-wiiu-native-cemu.log` on the development host.
 
-Native Windows/Linux execution, hosted CI, current macOS packaging and real
-Wii U gameplay/stream/save-round-trip remain pending at this record's revision.
+PR [#23](https://github.com/Broomm/broomm/pull/23) tracks exact-revision CI.
+Run 46020880872 completed: desktop packages built, with shell-lint, Windows
+reset/library linkage and Linux test include-path failures. Corrections at
+0a3e212 pass all Linux/macOS checks, independent Linux sanitizers, native macOS,
+and all desktop packages in completed run 46022218468. Windows Flutter tests
+pass there, but its native fixture identifies a loader-initialization deadlock;
+the helper now traps/restores the actual AMD64 PE entry instead. Android's
+package fails on an external Maven Central HTTP 429 for pinned Kotlin metadata;
+no dependency version or assertion is relaxed. Follow-up CI and current package
+verification are tracked in the PR. Real Wii U gameplay/stream/save round-trip
+remain pending.
 The native Windows fixture exercises the shipped injector/writer before entry,
 normal close after kernel pause, and rejection of changed birth/token/lock file.
 The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
