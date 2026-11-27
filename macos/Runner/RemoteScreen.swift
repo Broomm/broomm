@@ -7,13 +7,15 @@ import Darwin
 import WebRTC
 import flutter_webrtc
 
-/// Fit a 4:3 video to real source pixels, with even codec dimensions and a
-/// 2560×1920 ceiling. Enlarging an undersized window cannot recover detail.
-func remoteVideoCaptureSize(sourceWidth: Double, sourceHeight: Double) -> (width: Int, height: Int)? {
+/// Fit supported screen aspects to source pixels with even codec dimensions.
+func remoteVideoCaptureSize(sourceWidth: Double, sourceHeight: Double,
+                            widescreen: Bool = false) -> (width: Int, height: Int)? {
+  let stepWidth = widescreen ? 32.0 : 8.0, stepHeight = widescreen ? 18.0 : 6.0
   guard sourceWidth.isFinite, sourceHeight.isFinite,
-        sourceWidth >= 8, sourceHeight >= 6 else { return nil }
-  let units = Int(min(320, floor(sourceWidth / 8), floor(sourceHeight / 6)))
-  return (units * 8, units * 6)
+        sourceWidth >= stepWidth, sourceHeight >= stepHeight else { return nil }
+  let units = min(floor(2560 / stepWidth), floor(1920 / stepHeight),
+                  floor(sourceWidth / stepWidth), floor(sourceHeight / stepHeight))
+  return (Int(units * stepWidth), Int(units * stepHeight))
 }
 
 /// OS capture and local input transport. Connection and session policy stay in Dart.
@@ -26,6 +28,8 @@ final class BroommRemoteScreen {
   private var revision = 0
   private var inputSocket: Int32 = -1
   private var inputEnabled = false
+  private var gameController: NSRunningApplication?
+  private var previousBackgroundEvents: Bool?
 
   init(messenger: FlutterBinaryMessenger) {
     self.messenger = messenger
@@ -34,14 +38,27 @@ final class BroommRemoteScreen {
       guard let self = self else { reply(nil); return }
       switch call.method {
       case "controller":
-        self.controllerTimer?.invalidate()
-        self.controllerTimer = nil
         self.inputEnabled = call.arguments as? Bool == true
-        for controller in GCController.controllers() { self.observe(controller) }
-        if self.inputEnabled {
-          self.controllerTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in self?.sampleController() }
-        }
+        self.updateControllerTimer()
         reply(nil)
+      case "gameController":
+        do {
+          if let args = call.arguments as? [String: Any] {
+            guard args["name"] as? String == "Cemu" else { throw NSError(domain: "remote", code: 1) }
+            self.gameController = try self.recovery.emulatorWindowTarget(args)
+            if self.previousBackgroundEvents == nil { self.previousBackgroundEvents = GCController.shouldMonitorBackgroundEvents }
+            GCController.shouldMonitorBackgroundEvents = true
+          } else {
+            self.gameController = nil
+            if let previous = self.previousBackgroundEvents { GCController.shouldMonitorBackgroundEvents = previous }
+            self.previousBackgroundEvents = nil
+          }
+          self.updateControllerTimer()
+          reply(nil)
+        } catch { reply(FlutterError(code: "controller", message: error.localizedDescription, details: nil)) }
+      case "cemuState":
+        do { reply(try self.recovery.cemuState(call.arguments as? [String: Any] ?? [:])) }
+        catch { reply(FlutterError(code: "cemu", message: error.localizedDescription, details: nil)) }
       case "input":
         self.sendInput(call.arguments as? [String: Any] ?? [:])
         reply(nil)
@@ -74,7 +91,7 @@ final class BroommRemoteScreen {
                 let stream = BroommWindowStream(channel: self.channel, captureID: args["id"] as? Int ?? 0)
                 self.capture = stream
                 if let streamID = args["streamId"] as? String { try stream.attachVideo(streamID: streamID, messenger: self.messenger) }
-                try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", geometry: args["remoteCapture"] as? [NSNumber], valid: {
+                try await stream.start(pid: app.processIdentifier, name: args["name"] as? String ?? "", geometry: args["remoteCapture"] as? [NSNumber], secondaryTitles: args["secondaryTitles"] as? [String], valid: {
                   revision == self.revision && !app.isTerminated
                 })
                 if revision != self.revision { await stream.stop() }
@@ -96,9 +113,17 @@ final class BroommRemoteScreen {
   }
 
   private func observe(_ controller: GCController) {
-    controller.extendedGamepad?.valueChangedHandler = inputEnabled ? { [weak self] _, _ in
+    controller.extendedGamepad?.valueChangedHandler = (inputEnabled || gameController != nil) ? { [weak self] _, _ in
       DispatchQueue.main.async { self?.sampleController() }
     } : nil
+  }
+  private func updateControllerTimer() {
+    controllerTimer?.invalidate()
+    controllerTimer = nil
+    for controller in GCController.controllers() { observe(controller) }
+    if inputEnabled || gameController != nil {
+      controllerTimer = Timer.scheduledTimer(withTimeInterval: 0.016, repeats: true) { [weak self] _ in self?.sampleController() }
+    }
   }
 
   private func sendInput(_ args: [String: Any]) {
@@ -123,7 +148,9 @@ final class BroommRemoteScreen {
   }
 
   private func sampleController() {
-    guard inputEnabled, NSApp.isActive, let controller = GCController.controllers().first, let pad = controller.extendedGamepad else {
+    let ownGameActive = gameController.map { !$0.isTerminated && NSWorkspace.shared.frontmostApplication?.processIdentifier == $0.processIdentifier } ?? false
+    guard (inputEnabled && NSApp.isActive) || (gameController != nil && (NSApp.isActive || ownGameActive)),
+          let controller = GCController.controllers().first, let pad = controller.extendedGamepad else {
       channel.invokeMethod("pad", arguments: ["buttons": 0, "axes": [0,0,0,0,0,0], "connected": false]); return
     }
     let buttons: [GCControllerButtonInput?] = [pad.buttonA, pad.buttonB, pad.buttonX, pad.buttonY,
@@ -183,7 +210,7 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
   }
 
   @MainActor
-  func start(pid: pid_t, name: String, geometry: [NSNumber]?, valid: () -> Bool) async throws {
+  func start(pid: pid_t, name: String, geometry: [NSNumber]?, secondaryTitles: [String]?, valid: () -> Bool) async throws {
     guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
       throw failure("Allow Broomm in System Settings → Privacy & Security → Screen & System Audio Recording, then reconnect.")
     }
@@ -194,17 +221,22 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       let windows = content.windows.filter { window in
         guard window.owningApplication?.processID == pid else { return false }
         let title = window.title ?? ""
-        return name == "melonDS" ? title.contains("[w2]") && geometry?.first?.uint32Value == window.windowID : title.hasSuffix("Secondary Window")
+        switch name {
+        case "melonDS": return title.contains("[w2]") && geometry?.first?.uint32Value == window.windowID
+        case "Azahar": return title.hasSuffix("Secondary Window")
+        case "Cemu": return geometry?.first?.uint32Value == window.windowID && secondaryTitles?.contains(where: { title == $0 || title.hasPrefix($0 + " - FPS:") }) == true
+        default: return false
+        }
       }
       if windows.count == 1 { selected = windows[0]; break }
       if windows.count > 1 { throw failure("The secondary emulator window is ambiguous.") }
       try await Task.sleep(nanoseconds: 250_000_000)
     }
     guard let window = selected, valid() else {
-      throw failure("The emulator has no secondary window. Connect before launching melonDS or Azahar, then launch the game again.")
+      throw failure("The emulator has no secondary window. Connect before launching the game and enable its separate second screen.")
     }
     let configuration = SCStreamConfiguration()
-    if name == "melonDS" {
+    if name == "melonDS" || name == "Cemu" {
       guard let geometry = geometry, geometry.count == 5 else { throw failure("The emulator screen geometry is unavailable.") }
       let values = geometry.dropFirst().map { $0.doubleValue }
       guard values.allSatisfy({ $0.isFinite }), values[0] >= 0, values[1] >= 0,
@@ -214,18 +246,19 @@ private final class BroommWindowStream: NSObject, SCStreamOutput, SCStreamDelega
       configuration.sourceRect = CGRect(x: values[0], y: values[1], width: values[2], height: values[3])
     }
     let filter = SCContentFilter(desktopIndependentWindow: window)
-    var videoSize = (width: 2560, height: 1920)
+    var videoSize = (width: 2560, height: name == "Cemu" ? 1440 : 1920)
     if videoSource != nil, #available(macOS 14.0, *) {
       let sourceRect = configuration.sourceRect.isEmpty ? filter.contentRect : configuration.sourceRect
       let scale = Double(filter.pointPixelScale)
       guard let fitted = remoteVideoCaptureSize(sourceWidth: sourceRect.width * scale,
-                                                sourceHeight: sourceRect.height * scale) else {
+                                                sourceHeight: sourceRect.height * scale,
+                                                widescreen: name == "Cemu") else {
         throw failure("The emulator screen pixel dimensions are unavailable. Retry screen capture.")
       }
       videoSize = fitted
     }
     configuration.width = videoSource == nil ? 640 : videoSize.width
-    configuration.height = videoSource == nil ? 480 : videoSize.height
+    configuration.height = videoSource == nil ? (name == "Cemu" ? 360 : 480) : videoSize.height
     videoSource?.adaptOutputFormat(toWidth: Int32(videoSize.width), height: Int32(videoSize.height), fps: 60)
     configuration.minimumFrameInterval = CMTime(value: 1, timescale: 60)
     configuration.queueDepth = 3

@@ -213,6 +213,15 @@
         "format": "appimage",
         "entry": "AppDir"
       }
+    },
+    "cemu": {
+      "source": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-ubuntu-22.04-x64.zip",
+        "sha256": "5e4592d0dae394fa0614cb8c875eff3f81b23170b349511de318d9caf7215e1b",
+        "bytes": 31825643,
+        "format": "zip",
+        "entry": "Cemu_2.6"
+      }
     }
   }
 }

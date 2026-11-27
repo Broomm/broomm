@@ -2,12 +2,15 @@
 
 ## Remote screen preview
 
-[Download the universal macOS preview](build/releases/Broomm-macOS-remote-screen.zip).
-Remote screen is built into Broomm. macOS hosts melonDS 1.1 and Azahar 2126.1.2.
+Remote screen is built into Broomm. This branch adds Cemu 2.6/Wii U to macOS,
+Linux x64 and Windows x64. Linux also has best-effort melonDS/Azahar hosting.
+See the [Cemu setup and verification guide](docs/cemu-and-desktop-remote.md) for
+prerequisites and the distinction between implemented and verified behavior.
+macOS also hosts melonDS 1.1 and Azahar 2126.1.2.
 The client UI and protocol work on Android and desktop hosts. Native device
 acceptance is tracked in [the verification record](docs/remote-screen.md).
 
-1. Open Broomm on the Mac. Its TCP server starts on port **43187** immediately,
+1. Open Broomm on the host computer. Its TCP server starts on port **43187** immediately,
    including before RomM sign-in and while a game is running. Keep Broomm open.
    In Home's top row, choose **Remote screen → Use this device as a host** to
    view local addresses and the connection code.
@@ -18,7 +21,7 @@ acceptance is tracked in [the verification record](docs/remote-screen.md).
    Successful connections appear under **Recent hosts** on later visits.
 3. Connect the client controller. Its input now navigates Broomm on the Mac.
    The client displays **Waiting for a compatible emulator to be launched.**
-4. Launch a game using melonDS or Azahar from the Mac's installed library.
+4. Launch a game using melonDS, Azahar or Cemu from the host's installed library.
    Join the forwarded controller in the existing pairing screen with L1 + R1,
    then hold Start to play. The desktop uses the main screen and the client
    displays the secondary window. Connect before launching the game so its
@@ -50,8 +53,8 @@ controller input without encryption. Negotiated WebRTC media is encrypted by
 WebRTC; older peers retain the unencrypted JPEG compatibility path. The preview
 uses direct LAN media with no configured STUN/TURN service. The local firewall
 must allow its media connection as well as TCP/UDP port 43187. It supports one client and
-one source controller. melonDS supports single-touch input. Azahar touch,
-forwarded audio, and Linux, Windows or Android hosting are future work.
+one source controller. melonDS supports single-touch input. Cemu adds single-touch GamePad input. Azahar touch, forwarded audio, native
+Wayland capture, other Windows emulator runtimes and Android hosting remain future work.
 
 Recent hosts and the local connection code are stored in `remote-screen.json`
 inside Broomm's application data directory. Logs use the existing `broomm.log`.

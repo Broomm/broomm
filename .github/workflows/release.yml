@@ -193,6 +193,10 @@ jobs:
             printf '::error title=Windows updater fixture::%s\n' "$broomm_updater_details"
           fi
           exit "$broomm_updater_status"
+      - name: Native Windows Cemu writer and pause checks
+        if: ${{ !cancelled() && matrix.platform == 'windows' }}
+        shell: pwsh
+        run: ./tool/check_cemu_windows.ps1
       - name: Annotate test failures
         if: ${{ !cancelled() }}
         run: bash tool/ci/run.sh dart tool/ci/annotate_tests.dart build/test-results/main.json build/test-results/full-size.json build/test-results/native-updater.json

@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "host": "macos-x64",
+  "launchers": {
+    "cemu": {
+      "source": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-macos-12-x64.dmg",
+        "sha256": "698c4b298f94983e4d6c30e9687ba8ff05094dd3930837c5104cddc0b0a49e4e",
+        "bytes": 36588188,
+        "format": "dmg",
+        "entry": "Cemu.app",
+        "prepare": "macos-adhoc"
+      }
+    }
+  }
+}

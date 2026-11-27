@@ -1,10 +1,12 @@
-// Private, process-local input for supported macOS SDL2 emulators.
+// Private, process-local input for supported POSIX SDL2 emulators.
 // The launcher owns the LAN connection. This socket accepts pad and DS touch state.
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifndef BROOMM_REMOTE_TOUCH_DISABLED
 #include "remote_touch.h"
+#endif
 
 static int remote_fd=-1;
 #if BROOMM_SDL_MAJOR == 2
@@ -51,11 +53,13 @@ static void remote_tick(double now) {
         ssize_t n=recv(remote_fd,input,sizeof(input)-1,0);
         if(n<0)break;
         input[n]=0;
-        unsigned int touch;int x,y,touch_used=0;
         if(!strncmp(input,"touch ",6)) {
+#ifndef BROOMM_REMOTE_TOUCH_DISABLED
+            unsigned int touch;int x,y,touch_used=0;
             if(sscanf(input,"touch %u %d %d %n",&touch,&x,&y,&touch_used)==3&&
                 touch_used==n&&touch<=1&&x>=0&&x<=255&&y>=0&&y<=191)
                 remote_touch_enqueue(touch!=0,x,y,now);
+#endif
             continue;
         }
         unsigned int present,buttons;int axes[6],used=0;
@@ -89,5 +93,7 @@ static void remote_tick(double now) {
 #else
     (void)now;
 #endif
+#ifndef BROOMM_REMOTE_TOUCH_DISABLED
     remote_touch_expire(now);
+#endif
 }

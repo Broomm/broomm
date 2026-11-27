@@ -71,6 +71,7 @@ Future<void> main() async {
       'Contents/Resources/native/broomm-sdl3.dylib',
       'Contents/Resources/native/broomm-installer-guard.dylib',
       'Contents/Resources/native/broomm-astris.dylib',
+      'Contents/Resources/native/broomm-cemu.dylib',
     ];
     for (final path in paths) {
       final arches = (await command('/usr/bin/lipo', [

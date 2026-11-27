@@ -8,6 +8,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_webrtc: 1.6.3
+  xml: 7.1.0
   # 2.3.x introduces JNI native assets into desktop bundles, requiring a JVM.
   # Keep the compatible channel-based Android implementation for this preview.
   path_provider_android: 2.2.23
@@ -21,6 +22,8 @@ flutter:
     - assets/setup/
     - assets/setup/linux-x64/
     - assets/setup/linux-arm64/
+    - assets/setup/windows-x64/
+    - assets/setup/macos-x64/
     - assets/branding/MATERIAL-ICONS-LICENSE.txt
     - assets/branding/broomm-icon.png
     - assets/steam/

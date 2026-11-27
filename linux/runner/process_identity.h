@@ -17,7 +17,7 @@
 namespace broomm_host {
 struct Lock {int pid=0;unsigned major=0,minor=0;unsigned long long inode=0;
   bool operator==(const Lock& b) const{return pid==b.pid&&major==b.major&&minor==b.minor&&inode==b.inode;}};
-struct Process {std::string root,executable,birth,cwd;Lock lock;int handle=-1;bool stopped=false;
+struct Process {std::string root,executable,birth,cwd,name;Lock lock;int handle=-1;bool stopped=false;
   ~Process(){if(handle>=0)::close(handle);}};
 inline std::string file(const std::string& path,size_t limit=65536) {
   std::ifstream in(path,std::ios::binary);if(!in)throw std::string("The operating system could not inspect the previous session.");

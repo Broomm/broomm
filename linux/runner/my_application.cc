@@ -8,6 +8,7 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "credential_store.h"
 #include "broomm_host.h"
+#include "remote_screen.h"
 
 struct _MyApplication {
   GtkApplication parent_instance;
@@ -93,6 +94,7 @@ static void my_application_activate(GApplication* application) {
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   broomm_credentials::register_store(fl_engine_get_binary_messenger(fl_view_get_engine(view)));
   broomm_host::register_host(view, window);
+  broomm_remote::register_remote(view);
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 }

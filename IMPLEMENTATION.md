@@ -1,5 +1,45 @@
 # Implementation plan
 
+## Cemu and desktop Remote screen — 2026-11-27 (in development)
+
+The owner approved full Cemu setup, launch, native saves and Remote screen,
+plus best-effort Linux/Windows hosting on `codex/remote-wiiu-desktop-hosts`.
+Approved `xml` 7.1.0 is pinned with resolved dependencies. The concrete walkthrough,
+prerequisites, storage and verification boundaries are in
+[the Cemu guide](docs/cemu-and-desktop-remote.md).
+
+Implemented paths include reviewed Cemu 2.6 recipes for macOS Intel/Rosetta,
+Linux x64 and Windows x64; private versioned portable launch copies with stable
+MLC; exact native RPX/WUA base-title inspection; account 80000001/common ordinary
+save boundaries; one native DSU GamePad with buttons/sticks/triggers/touch; kernel
+pause and normal closure; and 16:9 remote geometry. No OS virtual input device is
+created. Windows includes pre-entry writer admission and identity-bound pause.
+Linux adds X11/XWayland secondary-window capture for existing melonDS/Azahar,
+plus process-local input. Desktop servers remain available from application
+startup. Android hosting, Linux native Wayland capture, Cemu Linux ARM64,
+additional Windows emulator runtimes, Wii U add-on installers, gyro/rumble and
+multiplayer remain outside this milestone.
+
+Local macOS static analysis and all **885 Flutter tests** pass (one existing
+Linux-only skip). Fifteen focused Cemu/capture tests include actual UDP protocol,
+source identity replacement, held resume cancellation, native save exclusion,
+settings reset preservation, interrupted layout restoration and exact captured
+window identity. A real reviewed Cemu 2.6 no-game run under Rosetta verifies the
+private portable anchor, kernel writer PID/birth lock, kernel pause/resume,
+rejection of changed birth identity and normal exit. No ordinary application
+profile or save was used. Logs are `/private/tmp/broomm-wiiu-final-flutter.log`,
+`/private/tmp/broomm-wiiu-final-analyze.log`,
+`/private/tmp/broomm-wiiu-storage-tests.log` and
+`/private/tmp/broomm-wiiu-native-cemu.log` on the development host.
+
+Native Windows/Linux execution, hosted CI, current macOS packaging and real
+Wii U gameplay/stream/save-round-trip remain pending at this record's revision.
+The native Windows fixture exercises the shipped injector/writer before entry,
+normal close after kernel pause, and rejection of changed birth/token/lock file.
+The Linux recovery fixture adds a stopped Cemu writer; neither fixture substitutes
+for physical gameplay. The owner has been asked for a suitable local Wii U game.
+
+
 ## Release CI recovery — 2026-11-26
 
 Remote screen was squash-merged as `0ea874d`, but its production workflow

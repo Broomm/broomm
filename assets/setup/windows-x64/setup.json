@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "host": "windows-x64",
+  "launchers": {
+    "cemu": {
+      "source": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-windows-x64.zip",
+        "sha256": "a6bcc2bc42a362d10213819948f3152fae7d47f70067f25939b51d3ddcfb0896",
+        "bytes": 26374093,
+        "format": "zip",
+        "entry": "Cemu_2.6"
+      }
+    }
+  }
+}

@@ -191,11 +191,13 @@ This staging retains the full Windows/macOS/Linux/Android product targets.
 Remote screen is part of the existing Broomm application. Home places a labeled
 **Remote screen** shortcut immediately after **Emulator Settings**. The screen
 offers **Use this device as a host** and **Use this device as a remote screen**.
-The first host milestone supports macOS with melonDS and Azahar. Linux and
-Windows hosting follow later. Android hosting is deferred. The connection
+The first host milestone supports macOS with melonDS and Azahar. The next
+milestone adds Cemu/Wii U on macOS, Linux x64 and Windows x64, plus best-effort
+Linux X11/XWayland hosting for melonDS and Azahar. Windows starts with Cemu;
+other Windows managed emulator runtimes remain later work. Android hosting is deferred. The connection
 protocol and remote screen UI are shared across Android, macOS, Linux and Windows.
 
-The macOS host server starts when Broomm opens and remains available through
+The desktop host server starts when Broomm opens and remains available through
 server/profile selection, Home and gameplay. **Use this device as a host**
 displays its local addresses, listening port, connection code and instructions.
 The remote screen role offers discovered LAN hosts, manual address and code
@@ -233,6 +235,16 @@ Keep video queues bounded and show the newest available frames on a slow client.
 Only report active video after a frame arrives. Capture/decoding failures must
 be visible while retaining the controller connection. Reassert the primary
 window when play resumes or emulator activation raises its secondary.
+Wii U uses Cemu's native DSU protocol for one GamePad's buttons, sticks,
+triggers and single touch; do not create an OS virtual controller. Start with
+WUA archives and decrypted code/*.rpx games. Resolve the native base-title ID
+before selecting any save. Keep account 80000001 and title-common ordinary
+saves in a stable profile-private MLC across emulator upgrades, excluding other
+accounts, titles and console identity files. No save-state support is implied.
+Cemu's GamePad image is 16:9 / 854×480 for touch, distinct from DS/3DS's 4:3.
+Restore remote-only window preferences after confirmed exit. Linux native Wayland
+capture and Cemu on Linux ARM64 remain unavailable in this milestone.
+
 Azahar touch and forwarded audio remain later capabilities. See the [walkthrough](README.md#remote-screen-preview) and
 [design and verification](docs/remote-screen.md).
 

@@ -53,8 +53,11 @@ int main(int argc,char** argv) {
   {g_autoptr(FlValue) result=broomm_host::inspect(&host,root.c_str());
     assert(property(result,"status")=="emulator");token=property(result,"token");}
   {g_autoptr(FlValue) result=broomm_host::inspect(&host,root.c_str());assert(property(result,"token")==token);}
-  broomm_host::control(&host,token.c_str(),"show");
-  assert(!broomm_host::file(cwd+"/bridge-recovery-show.txt").empty());
+  const bool cemu=cwd.size()>=5&&cwd.substr(cwd.size()-5)=="/cemu";
+  if(!cemu){broomm_host::control(&host,token.c_str(),"show");
+    assert(!broomm_host::file(cwd+"/bridge-recovery-show.txt").empty());}
+  else {assert(kill(child,SIGSTOP)==0);int paused=0;assert(waitpid(child,&paused,WUNTRACED)==child&&WIFSTOPPED(paused));}
+
   const std::string canary=root+"/preserved",checkpoint=cwd+"/bridge-recovery-stop.txt";
   {std::ofstream file(canary);file<<"keep";}
   assert(symlink(canary.c_str(),checkpoint.c_str())==0);

@@ -192,7 +192,11 @@ Map<String, InputBinding> targetBindings(
         'ZL': a(4),
         'ZR': a(5),
       },
-      if (target == ControllerTarget.switchPro) ...{'L3': b(7), 'R3': b(8)},
+      if (target == ControllerTarget.switchPro ||
+          target == ControllerTarget.wiiu) ...{
+        'L3': b(7),
+        'R3': b(8),
+      },
     },
     if (target != ControllerTarget.gamecube) 'Select': b(4),
     'Start': b(6),

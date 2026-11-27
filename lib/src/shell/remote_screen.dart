@@ -54,6 +54,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
                             RTCVideoViewObjectFit.RTCVideoViewObjectFitContain,
                       ),
                       touchEnabled: remote.touchSupported,
+                      screenSize: remote.screenSize,
                       onTouch: remote.touch,
                       onDisplayed: () {},
                     )
@@ -73,6 +74,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
                   : RemoteVideo(
                       bytes: image,
                       touchEnabled: remote.touchSupported,
+                      screenSize: remote.screenSize,
                       onTouch: remote.touch,
                       onDisplayed: remote.frameDisplayed,
                       onDecoded: remote.frameDecoded,
@@ -146,7 +148,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'On the other device, open Remote screen, choose Use this device as a remote screen, and enter an address above and this connection code. Launch melonDS or Azahar after connecting.',
+                      'On the other device, open Remote screen, choose Use this device as a remote screen, and enter an address above and this connection code. Launch melonDS, Azahar or Cemu after connecting. Windows currently hosts Cemu; Linux hosting requires X11/XWayland.',
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -156,7 +158,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
                     ),
                   ] else
                     const Text(
-                      'Hosting is currently available on macOS. This device can connect as a remote screen.',
+                      'Hosting is available on desktop. This device can connect as a remote screen.',
                     ),
                 ],
                 if (page == 'client') ...[
@@ -228,6 +230,7 @@ class RemoteVideo extends StatefulWidget {
     super.key,
     required this.bytes,
     this.nativeVideo,
+    this.screenSize = RemoteScreenSize.ds,
     required this.touchEnabled,
     required this.onTouch,
     required this.onDisplayed,
@@ -236,6 +239,7 @@ class RemoteVideo extends StatefulWidget {
   });
   final Uint8List? bytes;
   final Widget? nativeVideo;
+  final RemoteScreenSize screenSize;
   final bool touchEnabled;
   final ValueChanged<RemoteTouch> onTouch;
   final VoidCallback onDisplayed;
@@ -256,7 +260,8 @@ class _RemoteVideoState extends State<RemoteVideo> {
   @override
   void didUpdateWidget(RemoteVideo oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.touchEnabled) release();
+    if (!widget.touchEnabled || oldWidget.screenSize != widget.screenSize)
+      release();
   }
 
   @override
@@ -270,14 +275,21 @@ class _RemoteVideoState extends State<RemoteVideo> {
     builder: (context, limits) {
       final size = applyBoxFit(
         BoxFit.contain,
-        const Size(4, 3),
+        Size(
+          widget.screenSize.aspectWidth.toDouble(),
+          widget.screenSize.aspectHeight.toDouble(),
+        ),
         limits.biggest,
       ).destination;
       void move(PointerEvent event) => widget.onTouch(
         RemoteTouch(
           true,
-          (event.localPosition.dx / size.width * 256).floor().clamp(0, 255),
-          (event.localPosition.dy / size.height * 192).floor().clamp(0, 191),
+          (event.localPosition.dx / size.width * widget.screenSize.width)
+              .floor()
+              .clamp(0, widget.screenSize.width - 1),
+          (event.localPosition.dy / size.height * widget.screenSize.height)
+              .floor()
+              .clamp(0, widget.screenSize.height - 1),
         ),
       );
       return SizedBox.expand(

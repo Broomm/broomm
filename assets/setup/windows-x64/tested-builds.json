@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "builds": [
+    {
+      "id": "cemu",
+      "name": "Cemu",
+      "version": "2.6",
+      "host": "windows-x64",
+      "architecture": "x64",
+      "bundle": "Cemu_2.6",
+      "executable": "Cemu.exe",
+      "sha256": "d35da74021799ebffa762b6c29ba0de5d9c1914c9539610b994bfd6499cf3c0d",
+      "sdl": 0,
+      "native": {
+        "BROOMM_CEMU_PAD_TITLES": "GamePad|GamePad View|GamePad nézet|GamePad 视图|GamePad-Ansicht|GamePad-vy|Tela do GamePad|Vista del GamePad|Vue du GamePad|Вікно контроллера|Окно GamePad|عرض GamePad|게임패드 보기"
+      },
+      "source_package": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-windows-x64.zip",
+        "sha256": "a6bcc2bc42a362d10213819948f3152fae7d47f70067f25939b51d3ddcfb0896",
+        "bytes": 26374093,
+        "format": "zip",
+        "entry": "Cemu_2.6"
+      },
+      "integrity_asset": "assets/setup/windows-x64/cemu.integrity.json",
+      "symbols_asset": "assets/setup/windows-x64/cemu.symbols"
+    }
+  ]
+}

@@ -19,6 +19,10 @@ mv "$stage/broomm-native-run" build/native/broomm-native-run
 "$broomm_linux_cc" -std=c11 -shared -fPIC -O1 -g -Wall -Wextra -Werror \
   native/linux_installer.c -ldl -o "$stage/broomm-installer.so"
 mv "$stage/broomm-installer.so" build/native/broomm-installer.so
+"$broomm_linux_cc" -std=c11 -shared -fPIC -O1 -g -Wall -Wextra -Werror \
+  $(pkg-config --cflags x11) -pthread native/cemu_guard_posix.c native/cemu_window_linux.c \
+  -ldl $(pkg-config --libs x11) -o "$stage/broomm-cemu.so"
+mv "$stage/broomm-cemu.so" build/native/broomm-cemu.so
 for broomm_sdl in 2 3; do
   read -r -a broomm_x11_flags <<< "$(pkg-config --cflags x11)"
   "$broomm_linux_cc" -std=c11 -shared -fPIC -O1 -g -Wall -Wextra -Werror \

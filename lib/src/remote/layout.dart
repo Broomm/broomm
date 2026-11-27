@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../emulators.dart';
 import '../progress/files.dart';
+import 'cemu_layout.dart';
 
 /// A durable journal for the layout keys temporarily owned by a remote session.
 /// Call only while holding the emulator/session writer lease.
@@ -41,6 +42,7 @@ class RemoteLayout {
       {'melonDS', 'Azahar'}.contains(e.name);
 
   static Future<void> prepare(PreparedEmulator e) async {
+    if (e.name == 'Cemu') return CemuRemoteLayout.prepare(e);
     if (!supports(e)) return;
     await restore(e);
     if (!e.remoteScreen) return;
@@ -78,6 +80,7 @@ class RemoteLayout {
   }
 
   static Future<void> restore(PreparedEmulator e) async {
+    if (e.name == 'Cemu') return CemuRemoteLayout.restore(e.root);
     if (!supports(e) || !await journal(e).exists()) return;
     final data = await progressJson(journal(e));
     if (data['version'] != 1 || data['keys'] is! Map)

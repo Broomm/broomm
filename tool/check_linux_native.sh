@@ -35,3 +35,13 @@ read -r -a broomm_gio_libs <<< "$(pkg-config --libs gio-2.0)"
 mkdir "$broomm_fixture/credentials-data"
 "$broomm_fixture/credentials-check" "$broomm_fixture/credentials-data" write
 "$broomm_fixture/credentials-check" "$broomm_fixture/credentials-data" restore
+
+# Cemu writer admission uses the same shipped guard in regular and sanitizer
+# jobs. A controlled native entry point does not stand in for gameplay.
+mkdir "$broomm_fixture/cemu-profile"
+env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_c_compiler" -std=c11 -Wall -Wextra -Werror \
+  "${broomm_flags[@]}" -fPIC -shared -pthread native/cemu_guard_posix.c native/cemu_window_linux.c \
+  -lX11 -ldl -o "$broomm_fixture/cemu-guard.so"
+env -u LIBRARY_PATH -u LD_LIBRARY_PATH "$broomm_c_compiler" -std=c11 -Wall -Wextra -Werror \
+  "${broomm_flags[@]}" -rdynamic tool/fixtures/cemu_posix_test.c -ldl -o "$broomm_fixture/cemu-check"
+"$broomm_fixture/cemu-check" "$broomm_fixture/cemu-check" "$broomm_fixture/cemu-guard.so" "$broomm_fixture/cemu-profile"

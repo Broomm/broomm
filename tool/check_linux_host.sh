@@ -12,7 +12,13 @@ read -r -a broomm_gtk_flags <<< "$(pkg-config --cflags --libs gtk+-3.0 gio-2.0)"
 env -u LIBRARY_PATH -u LD_LIBRARY_PATH "${BROOMM_LINUX_CXX:-/usr/bin/clang++-18}" \
   -std=c++14 -Wall -Wextra -Werror -Wno-unused-parameter -I"$broomm_engine" \
   tool/fixtures/linux_host_test.cc -L"$broomm_engine" -lflutter_linux_gtk \
-  -Wl,-rpath,"$broomm_engine" "${broomm_gtk_flags[@]}" -o "$broomm_executable"
+  -Wl,-rpath,"$broomm_engine" "${broomm_gtk_flags[@]}" -lX11 -o "$broomm_executable"
 "$broomm_executable" "$broomm_fixture/data" "$broomm_executable" "$broomm_profile"
 mkdir -p build/native-linux-checks
 cp "$broomm_executable" build/native-linux-checks/host-probe
+
+broomm_cemu_profile="$broomm_fixture/data/profiles/$(printf 'a%.0s' {1..32})/emulators/cemu"
+broomm_cemu_executable="$broomm_cemu_profile/launcher/$(printf '2%.0s' {1..64})/Cemu/Cemu"
+mkdir -p "$(dirname "$broomm_cemu_executable")"
+cp "$broomm_executable" "$broomm_cemu_executable"
+"$broomm_cemu_executable" "$broomm_fixture/data" "$broomm_cemu_executable" "$broomm_cemu_profile"

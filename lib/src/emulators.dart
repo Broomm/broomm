@@ -9,10 +9,12 @@ import 'ps3_disc.dart';
 import 'retroarch.dart';
 import 'retroarch_saves.dart';
 import 'playstation.dart';
+import 'cemu.dart';
 
 part 'playstation_adapters.dart';
 part 'ppsspp_adapter.dart';
 part 'eden_adapter.dart';
+part 'cemu_adapter.dart';
 
 class PreparedEmulator {
   PreparedEmulator(
@@ -134,6 +136,7 @@ abstract class EmulatorAdapter {
     'PPSSPP' => const PpssppAdapter(),
     'Eden' => const EdenAdapter(),
     'Astris' => const AstrisAdapter(),
+    'Cemu' => const CemuAdapter(),
     _ => throw UnsupportedError('Unsupported emulator: $name'),
   };
 }

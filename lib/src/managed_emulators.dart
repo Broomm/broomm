@@ -22,6 +22,12 @@ import 'setup/package.dart';
 import 'setup/linux_identity.dart';
 import 'setup/rolling_core.dart';
 import 'setup/reset.dart';
+import 'setup/windows_identity.dart';
+import 'cemu_profile.dart';
+import 'cemu.dart';
+import 'progress/files.dart' show progressJson;
+import 'remote/cemu_layout.dart';
+import 'cemu_inspection.dart';
 
 class TestedBuild {
   TestedBuild(Map j)
@@ -248,9 +254,14 @@ class ManagedEmulators extends ChangeNotifier {
   String get host =>
       hostOverride ??
       '${Platform.operatingSystem}-${Abi.current().toString().split('_').last}';
-  bool get supported =>
-      const {'macos-arm64', 'linux-x64', 'linux-arm64'}.contains(host);
-  String get setupAssets => host.startsWith('linux-') && supported
+  bool get supported => const {
+    'macos-arm64',
+    'macos-x64',
+    'linux-x64',
+    'linux-arm64',
+    'windows-x64',
+  }.contains(host);
+  String get setupAssets => host != 'macos-arm64' && supported
       ? 'assets/setup/$host'
       : 'assets/setup';
   String get coreFile => host.startsWith('linux-') ? 'core.so' : 'core.dylib';
@@ -998,6 +1009,8 @@ class ManagedEmulators extends ChangeNotifier {
               if (item.preparation != null) 'preparation': item.preparation,
               if (b.host.startsWith('linux-'))
                 'verification': await _linuxVerification(b, staging),
+              if (b.host.startsWith('windows-'))
+                'verification': await _windowsVerification(b, staging),
             });
             final f = File('${staging.path}/receipt.json');
             await f.writeAsString(receipt, flush: true);
@@ -1030,6 +1043,8 @@ class ManagedEmulators extends ChangeNotifier {
             // Already checked above; adding a core does not reinstall the frontend.
           } else if (b.host.startsWith('linux-')) {
             await _verifyLinuxInstallation(b, destination);
+          } else if (b.host.startsWith('windows-')) {
+            await _verifyWindowsInstallation(b, destination);
           } else {
             await verifyBundle(
               b,
@@ -1515,15 +1530,21 @@ class ManagedEmulators extends ChangeNotifier {
     return ('${release.path}/${b.bundle}/${b.executable}', runtime);
   }
 
-  Future<ResolvedSession> resolve(LaunchGame game, String profileId) =>
-      _resolve(
-        game.emulator,
-        game.rom,
-        profileId,
-        configuration: false,
-        coreId: game.retroCore,
-        contentId: game.id,
-      );
+  Future<ResolvedSession> resolve(
+    LaunchGame game,
+    String profileId, {
+    SessionLease? owner,
+    DownloadCancellation? cancellation,
+  }) => _resolve(
+    game.emulator,
+    game.rom,
+    profileId,
+    configuration: false,
+    coreId: game.retroCore,
+    contentId: game.id,
+    owner: owner,
+    cancellation: cancellation,
+  );
 
   // Inspect/restore ordinary progress even before firmware is provisioned.
   // This still verifies the managed build and prepares only private storage.
@@ -1549,6 +1570,8 @@ class ManagedEmulators extends ChangeNotifier {
     required bool configuration,
     String? coreId,
     String? contentId,
+    SessionLease? owner,
+    DownloadCancellation? cancellation,
   }) async {
     if (!supported)
       throw UnsupportedError(
@@ -1581,7 +1604,9 @@ class ManagedEmulators extends ChangeNotifier {
       throw StateError(
         '${resourceProblems[b.id]}. Add the required local resources in Emulator Settings before playing.',
       );
-    final executableHash = b.host.startsWith('linux-')
+    final executableHash = b.host.startsWith('windows-')
+        ? await _verifyWindowsInstallation(b, release)
+        : b.host.startsWith('linux-')
         ? await _verifyLinuxInstallation(b, release)
         : await verifyBundle(
             b,
@@ -1591,6 +1616,37 @@ class ManagedEmulators extends ChangeNotifier {
     await requireRuntime(b);
     final runtime = await prepareManagedProfile(data, profileId, b, release);
     var executable = '${release.path}/${b.bundle}/${b.executable}';
+    String? cemuPortable;
+    if (b.id == 'cemu') {
+      await CemuRemoteLayout.restore(runtime.path);
+      final launcher = await prepareCemuLauncher(
+        profile: runtime,
+        source: Directory('${release.path}/${b.bundle}'),
+        executable: b.executable,
+        executableHash: executableHash,
+        inventory: jsonDecode(await asset(b.integrityAsset)) as Map,
+        host: host,
+      );
+      executable = launcher.$1;
+      cemuPortable = launcher.$2;
+      if (rom.isNotEmpty && rom.toLowerCase().endsWith('.rpx'))
+        contentId = await cemuRpxTitle(rom);
+      else if (rom.isNotEmpty)
+        contentId = await inspectCemuArchive(
+          rom: File(rom),
+          profile: runtime,
+          data: data,
+          source: Directory('${release.path}/${b.bundle}'),
+          executable: b.executable,
+          executableHash: executableHash,
+          inventory: jsonDecode(await asset(b.integrityAsset)) as Map,
+          native: b.native,
+          host: host,
+          project: project ?? '',
+          owner: owner,
+          cancellation: cancellation,
+        );
+    }
     var home = '${runtime.path}/home';
     if (b.id == 'rpcs3-intel') {
       // RPCS3 uses HOME for its macOS caches even with XDG_CACHE_HOME set.
@@ -1710,7 +1766,9 @@ class ManagedEmulators extends ChangeNotifier {
         linuxLauncher: b.linuxLauncher == null
             ? null
             : '${release.path}/${b.bundle}/${b.linuxLauncher}',
-        userDirectory: b.id == 'eden'
+        userDirectory: b.id == 'cemu'
+            ? cemuPortable
+            : b.id == 'eden'
             ? '${runtime.path}/data/eden'
             : b.profileId == 'melonds'
             ? '${runtime.path}/launcher/portable'
@@ -1760,6 +1818,50 @@ class ManagedEmulators extends ChangeNotifier {
       if (b.coreHash != null)
         'default_core': await linuxTreeStamp(release, [snesCoreFile]),
     };
+  }
+
+  Future<Map<String, Object>> _windowsVerification(
+    TestedBuild b,
+    Directory release,
+  ) async {
+    final bundle = Directory('${release.path}/${b.bundle}');
+    await verifyWindowsPe(File('${bundle.path}/${b.executable}'));
+    final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
+    return {
+      'app': await linuxTreeStamp(
+        bundle,
+        (expected['files'] as Map).keys.cast<String>(),
+      ),
+    };
+  }
+
+  Future<String> _verifyWindowsInstallation(
+    TestedBuild b,
+    Directory release,
+  ) async {
+    final receipt = await progressJson(File('${release.path}/receipt.json'));
+    if (receipt['id'] != b.id ||
+        receipt['hash'] != b.hash ||
+        receipt['host'] != host ||
+        receipt['verification'] is! Map)
+      throw StateError(
+        'The Windows installation receipt changed. Verify setup; existing progress was kept.',
+      );
+    final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
+    final bundle = Directory('${release.path}/${b.bundle}');
+    await IoWorker(verifySetupBundle, [
+      bundle.path,
+      expected,
+      b.name,
+      false,
+    ]).run();
+    await verifyWindowsPe(File('${bundle.path}/${b.executable}'));
+    await verifyLinuxStamp(
+      bundle,
+      (expected['files'] as Map).keys.cast<String>(),
+      (receipt['verification'] as Map)['app'],
+    );
+    return b.hash;
   }
 
   Future<String> _verifyLinuxInstallation(
@@ -1854,7 +1956,11 @@ class ManagedEmulators extends ChangeNotifier {
     if (path == '${root.path}/${b.id}/${b.hash}/${b.bundle}')
       preparation = await _installedPreparation(b);
     final expected = jsonDecode(await asset(b.integrityAsset)) as Map;
-    if (host.startsWith('linux-') || verifiedArchive && preparation == null) {
+    if (host.startsWith('windows-'))
+      await verifyWindowsPe(File('$path/${b.executable}'));
+    if (host.startsWith('linux-') ||
+        host.startsWith('windows-') ||
+        verifiedArchive && preparation == null) {
       await IoWorker(verifySetupBundle, [
         path,
         expected,

@@ -12,8 +12,12 @@ import 'session_log.dart';
 import 'session_lease.dart';
 import 'switch_launch_identity.dart';
 import 'remote/layout.dart';
+import 'remote/cemu_sources.dart';
+import 'cemu_process.dart';
+import 'cemu_session_control.dart';
 import 'romm/transfer.dart';
 export 'session_log.dart';
+part 'session_cemu.dart';
 
 class ResolvedSession {
   const ResolvedSession(
@@ -162,6 +166,7 @@ class BridgeStatus {
       macWindowBirth = (j['macWindowBirth'] as List? ?? []).cast<int>(),
       remoteCapture = (j['remoteCapture'] as List? ?? []).cast<num>(),
       remotePrimary = j['remotePrimary'] as int? ?? 0,
+      remoteBirth = j['remoteBirth'] as String?,
       loading = Rpcs3Loading.read(j['loading']) {
     if (j['protocol'] != 4)
       throw const FormatException(
@@ -183,6 +188,7 @@ class BridgeStatus {
   final List<int> macWindowBirth;
   final List<num> remoteCapture;
   final int remotePrimary;
+  final String? remoteBirth;
   final Rpcs3Loading? loading;
 }
 
@@ -200,10 +206,13 @@ class GameSession {
     this.preparationLease,
     this.remoteSocket,
     this.remoteScreen = false,
+    this.cemuControllers,
   });
   final String project;
   final String? remoteSocket;
   final bool remoteScreen;
+  final CemuControllerSources? cemuControllers;
+  CemuSessionControl? _cemu;
   final String? managedRoot;
   final Future<ResolvedSession> Function(LaunchGame)? resolve;
   final SessionLease? preparationLease;
@@ -276,6 +285,9 @@ class GameSession {
   bool get macWindowResumePending => _macWindowResumePending;
 
   Map<String, Object>? get macWindowTarget {
+    // Cemu's complete-process pause uses the ordinary Broomm overlay. Its
+    // remote capture still receives the native, verified writer identity.
+    if (_cemu != null) return null;
     final process = _process;
     final bridge = status;
     final prepared = emulator;
@@ -296,6 +308,27 @@ class GameSession {
       'writer': File('$dataRoot/writer.lock').absolute.path,
       if (bridge.remoteCapture.length == 5 && bridge.remoteCapture.first > 0)
         'remoteCapture': bridge.remoteCapture,
+    };
+  }
+
+  Map<String, Object>? get remoteWindowTarget {
+    if (_cemu != null) return _cemu!.process?.target;
+    if (Platform.isMacOS) return macWindowTarget;
+    final process = _process, prepared = emulator;
+    final bridge = status;
+    final birth = bridge?.remoteBirth;
+    if (!Platform.isLinux ||
+        process == null ||
+        prepared == null ||
+        bridge?.pid != process.pid ||
+        birth == null ||
+        !RegExp(r'^[0-9]{1,20}$').hasMatch(birth))
+      return null;
+    return {
+      'pid': process.pid,
+      'birth': birth,
+      'executable': File(prepared.executable).absolute.path,
+      'writer': File('$dataRoot/writer.lock').absolute.path,
     };
   }
 
@@ -364,7 +397,9 @@ class GameSession {
     nativeProgramId = null;
     _bridgeLost = false;
     _nativeGameReady = false;
-    if (!Platform.isMacOS && !Platform.isLinux)
+    if (!Platform.isMacOS &&
+        !Platform.isLinux &&
+        !(Platform.isWindows && selected.emulator == 'Cemu'))
       throw UnsupportedError(
         'No native controller adapter is available for this emulator on this host.',
       );
@@ -407,8 +442,13 @@ class GameSession {
       }
       _romPath = rom.path;
       emulator = e;
-      e.remoteScreen = remoteScreen && Platform.isMacOS;
+      e.remoteScreen = remoteScreen && (Platform.isMacOS || Platform.isLinux);
       game = selected;
+      if (e.name == 'Cemu') {
+        e.remoteScreen = remoteScreen;
+        await _launchCemu(e, selected, rom.path);
+        return;
+      }
       // Keep version-sensitive native ABI addresses tied to the exact prepared executable.
       if (Platform.isMacOS) {
         final hash = await Process.run('/usr/bin/shasum', [
@@ -566,7 +606,7 @@ class GameSession {
           'BROOMM_MAC_WINDOW_COMMAND': '${e.root}/mac-window-command.txt',
         'BROOMM_PROBE_LOG': '${e.root}/bridge.log',
         'BROOMM_SESSION': '1',
-        if (Platform.isMacOS &&
+        if ((Platform.isMacOS || Platform.isLinux) &&
             remoteSocket != null &&
             {'melonDS', 'Azahar'}.contains(e.name))
           'BROOMM_REMOTE_SOCKET': remoteSocket!,
@@ -606,6 +646,10 @@ class GameSession {
         // W^X. This affects Qt menu matching, not the DS CPU recompiler.
         if (Platform.isMacOS && e.name == 'melonDS' && e.remoteScreen)
           'QT_ENABLE_REGEXP_JIT': '0',
+        if (Platform.isLinux &&
+            e.remoteScreen &&
+            {'melonDS', 'Azahar'}.contains(e.name))
+          'QT_QPA_PLATFORM': 'xcb',
         if (e.name == 'Eden') 'BROOMM_EDEN': '1',
         if (e.name == 'PPSSPP') ...{
           'BROOMM_PPSSPP': '1',
@@ -884,6 +928,8 @@ class GameSession {
     required bool active,
     bool quit = false,
   }) async {
+    if (_cemu case final cemu?)
+      return cemu.command(players, active: active, quit: quit);
     final e = emulator!;
     final generation = _generation;
     final ids = [
@@ -1018,6 +1064,13 @@ class GameSession {
   }
 
   Future<void> _release() async {
+    final cemu = _cemu;
+    _cemu = null;
+    try {
+      await cemu?.close();
+    } catch (e) {
+      onProblem?.call('Cemu input cleanup needs attention: $e');
+    }
     if (emulator case final prepared?) {
       try {
         await RemoteLayout.restore(prepared);

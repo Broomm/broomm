@@ -4,6 +4,8 @@
 #include "file_icon.h"
 #include <flutter_linux/flutter_linux.h>
 #include <gtk/gtk.h>
+#include <gdk/gdkx.h>
+#include <X11/Xatom.h>
 #include <glib-unix.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
@@ -49,14 +51,24 @@ inline FlValue* inspect(Host* host,const char* root) {
     const std::string executables=path+"/emulators/retroarch/",profiles=path+"/profiles/";
     const std::string suffix="/RetroArch/retroarch",profile_suffix="/emulators/retroarch";
     auto hex=[](const std::string& value,size_t size){return value.size()==size&&value.find_first_not_of("0123456789abcdef")==std::string::npos;};
-    if(process->executable.compare(0,executables.size(),executables)!=0||
-       process->executable.size()!=executables.size()+64+suffix.size()||
-       process->executable.compare(executables.size()+64,suffix.size(),suffix)!=0||
-       !hex(process->executable.substr(executables.size(),64),64)||
-       process->cwd.compare(0,profiles.size(),profiles)!=0||
-       process->cwd.size()!=profiles.size()+32+profile_suffix.size()||
-       process->cwd.compare(profiles.size()+32,profile_suffix.size(),profile_suffix)!=0||
-       !hex(process->cwd.substr(profiles.size(),32),32))throw std::string("The writer is outside Broomm's managed emulator paths.");
+    const bool profile=process->cwd.compare(0,profiles.size(),profiles)==0&&
+       process->cwd.size()>=profiles.size()+32&&hex(process->cwd.substr(profiles.size(),32),32);
+    const bool retroarch=profile&&
+       process->executable.compare(0,executables.size(),executables)==0&&
+       process->executable.size()==executables.size()+64+suffix.size()&&
+       process->executable.compare(executables.size()+64,suffix.size(),suffix)==0&&
+       hex(process->executable.substr(executables.size(),64),64)&&
+       process->cwd.size()==profiles.size()+32+profile_suffix.size()&&
+       process->cwd.compare(profiles.size()+32,profile_suffix.size(),profile_suffix)==0;
+    const std::string cemu_suffix="/emulators/cemu",anchor=process->cwd+"/launcher/",cemu_exe="/Cemu/Cemu";
+    const bool cemu=profile&&process->cwd.size()==profiles.size()+32+cemu_suffix.size()&&
+       process->cwd.compare(profiles.size()+32,cemu_suffix.size(),cemu_suffix)==0&&
+       process->executable.compare(0,anchor.size(),anchor)==0&&
+       process->executable.size()==anchor.size()+64+cemu_exe.size()&&
+       hex(process->executable.substr(anchor.size(),64),64)&&
+       process->executable.compare(anchor.size()+64,cemu_exe.size(),cemu_exe)==0;
+    if(!retroarch&&!cemu)throw std::string("The writer is outside Broomm's managed emulator paths.");
+    process->name=cemu?"Cemu":"RetroArch";
     process->handle=static_cast<int>(syscall(SYS_pidfd_open,writer.pid,0));
     if(process->handle<0||process_birth(writer.pid)!=process->birth||
        link("/proc/"+std::to_string(writer.pid)+"/exe")!=process->executable||!(lock_owner(path+"/writer.lock")==writer))
@@ -65,13 +77,14 @@ inline FlValue* inspect(Host* host,const char* root) {
       try {if(process_birth(it->second->lock.pid)!=it->second->birth){it=host->processes.erase(it);continue;}}catch(const std::string&){it=host->processes.erase(it);continue;}
       if(it->second->root==path&&it->second->lock==writer&&it->second->birth==process->birth) {
         auto* result=status("emulator",writer.pid,"The emulator survived the previous session. Close it before another game or save operation; local progress was kept.");
-        fl_value_set_string_take(result,"token",fl_value_new_string(it->first.c_str()));fl_value_set_string_take(result,"name",fl_value_new_string("RetroArch"));return result;
+        fl_value_set_string_take(result,"token",fl_value_new_string(it->first.c_str()));fl_value_set_string_take(result,"name",fl_value_new_string(it->second->name.c_str()));return result;
       }++it;
     }
     if(host->processes.size()>=16)throw std::string("Too many recovery handles are open.");
+    const auto name=process->name;
     g_autofree gchar* uuid=g_uuid_string_random();host->processes.emplace(uuid,std::move(process));
     auto* result=status("emulator",writer.pid,"The emulator survived the previous session. Close it before another game or save operation; local progress was kept.");
-    fl_value_set_string_take(result,"token",fl_value_new_string(uuid));fl_value_set_string_take(result,"name",fl_value_new_string("RetroArch"));return result;
+    fl_value_set_string_take(result,"token",fl_value_new_string(uuid));fl_value_set_string_take(result,"name",fl_value_new_string(name.c_str()));return result;
   }catch(const std::string& reason) {
     const std::string message="A writer still owns the game data. "+reason+" Close it normally; Broomm has preserved the files.";
     return status("unknown",writer.pid,message.c_str());
@@ -120,6 +133,29 @@ inline void control(Host* host,const char* token,const char* action) {
      link("/proc/"+std::to_string(p.lock.pid)+"/cwd")!=p.cwd||
      lock_owner(p.root+"/session.lock").pid||!(lock_owner(p.root+"/writer.lock")==p.lock)) {
     host->processes.erase(found);throw std::string("The process or lock owner changed. No process was signalled.");}
+  if(!strcmp(action,"show")&&p.name=="Cemu") {
+    GdkDisplay* gdk=gtk_widget_get_display(GTK_WIDGET(host->window));
+    if(!GDK_IS_X11_DISPLAY(gdk))throw std::string("Show Cemu requires an X11 Broomm session. Restore its window from the desktop.");
+    Display* display=gdk_x11_display_get_xdisplay(gdk);
+    gdk_x11_display_error_trap_push(gdk);
+    Atom actual;int format;unsigned long count,left;unsigned char* data=nullptr;Window selected=0;
+    if(!XGetWindowProperty(display,DefaultRootWindow(display),XInternAtom(display,"_NET_CLIENT_LIST",False),0,4096,False,XA_WINDOW,&actual,&format,&count,&left,&data)&&
+       data&&actual==XA_WINDOW&&format==32&&!left) {
+      for(unsigned long i=0;i<count;++i) {
+        Window window=reinterpret_cast<Window*>(data)[i];unsigned char* owner=nullptr;unsigned long n,remaining;
+        XGetWindowProperty(display,window,XInternAtom(display,"_NET_WM_PID",False),0,1,False,XA_CARDINAL,&actual,&format,&n,&remaining,&owner);
+        const bool ours=owner&&actual==XA_CARDINAL&&format==32&&n==1&&*reinterpret_cast<unsigned long*>(owner)==static_cast<unsigned long>(p.lock.pid);
+        if(owner)XFree(owner);if(!ours)continue;
+        char* title=nullptr;if(XFetchName(display,window,&title)&&title) {
+          if(!strncmp(title,"Cemu",4)){if(selected){selected=0;XFree(title);break;}selected=window;}XFree(title);
+        }
+      }
+    }
+    if(data)XFree(data);
+    if(selected){XMapRaised(display,selected);XFlush(display);}
+    const int error=gdk_x11_display_error_trap_pop(gdk);
+    if(error||!selected)throw std::string("Cemu's primary window could not be identified. Restore it from the desktop.");return;
+  }
   if(!strcmp(action,"show")) {
     std::string path=p.cwd+"/bridge-recovery-show.txt";int fd=open(path.c_str(),O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC|O_NOFOLLOW,0600);
     if(fd<0)throw std::string("The emulator window could not be requested.");
@@ -133,6 +169,10 @@ inline void control(Host* host,const char* token,const char* action) {
     if(stop_checkpoint(p)){p.stopped=true;return;}signal=SIGTERM;
   }else if(!strcmp(action,"force"))signal=SIGKILL;
   else throw std::string("Unknown recovery action.");
+  // A frozen orphan must run its native normal-close handler. The retained
+  // pidfd and verified writer prevent signalling a recycled process identity.
+  if(signal==SIGTERM&&p.name=="Cemu"&&syscall(SYS_pidfd_send_signal,p.handle,SIGCONT,nullptr,0)!=0)
+    throw std::string("Cemu could not resume for a normal close. Its data was kept.");
   if(syscall(SYS_pidfd_send_signal,p.handle,signal,nullptr,0)!=0)throw std::string("The emulator could not be signalled; its data was kept.");
   if(signal==SIGTERM)p.stopped=true; // A second upstream termination signal is a hard exit.
 }

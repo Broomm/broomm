@@ -94,6 +94,31 @@ final class BroommSessionRecovery {
     return app
   }
 
+  func cemuState(_ args: [String: Any]) throws -> [String: Any] {
+    guard args["name"] as? String == "Cemu" else { throw failure("Invalid Cemu process target.") }
+    let app = try emulatorWindowTarget(args)
+    let pid = app.processIdentifier
+    if let paused = args["paused"] as? Bool {
+      guard !app.isTerminated, kill(pid, paused ? SIGSTOP : SIGCONT) == 0 else {
+        throw failure("macOS could not change Cemu’s pause state. Close its window normally.")
+      }
+      var confirmed = false
+      for _ in 0..<200 {
+        var info = proc_bsdinfo()
+        if proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) == MemoryLayout<proc_bsdinfo>.size,
+           (info.pbi_status == 4) == paused { confirmed = true; break }
+        usleep(5000)
+      }
+      guard confirmed else { throw failure("Cemu did not confirm its pause state. Input remains blocked.") }
+    }
+    _ = try emulatorWindowTarget(args)
+    var info = proc_bsdinfo()
+    guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.size)) == MemoryLayout<proc_bsdinfo>.size else {
+      throw failure("The operating system could not confirm Cemu’s process state.")
+    }
+    return ["paused": info.pbi_status == 4]
+  }
+
   func inspect(root: String) throws -> [String: Any]? {
     guard root.hasPrefix("/"), !root.contains("\0"), root.utf8.count < 4096 else {
       throw failure("Invalid Broomm storage location.")
@@ -146,6 +171,17 @@ final class BroommSessionRecovery {
     case "show":
       captured.app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
     case "stop":
+      if captured.executable.hasSuffix("/Cemu") {
+        // A whole-process Cemu pause can survive a launcher crash. Resume the
+        // same verified writer so AppKit can process its normal quit request.
+        var state = proc_bsdinfo()
+        if proc_pidinfo(captured.owner.pid, PROC_PIDTBSDINFO, 0, &state, Int32(MemoryLayout<proc_bsdinfo>.size)) == MemoryLayout<proc_bsdinfo>.size,
+           state.pbi_status == 4 {
+          guard try birth(captured.owner.pid) == captured.birth, kill(captured.owner.pid, SIGCONT) == 0 else {
+            throw failure("Cemu could not resume for normal closure. Its local data was kept.")
+          }
+        }
+      }
       guard captured.app.terminate() else { throw failure("The emulator did not accept a normal quit request. Your local data was kept.") }
     case "force":
       // Called only after the owner's explicit in-app force-quit confirmation.

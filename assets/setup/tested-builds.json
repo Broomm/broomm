@@ -396,6 +396,28 @@
         "prepare": "macos-astris"
       },
       "native": {}
+    },
+    {
+      "id": "cemu",
+      "name": "Cemu",
+      "version": "2.6",
+      "host": "macos-arm64",
+      "architecture": "x64",
+      "bundle": "Cemu.app",
+      "executable": "Contents/MacOS/Cemu",
+      "sha256": "53503cd8ef402e0a4c9adcfdd11b5f1fe153872d8c77b14aa89ef2b1de81ed2e",
+      "sdl": 0,
+      "native": {
+        "BROOMM_CEMU_PAD_TITLES": "GamePad|GamePad View|GamePad nézet|GamePad 视图|GamePad-Ansicht|GamePad-vy|Tela do GamePad|Vista del GamePad|Vue du GamePad|Вікно контроллера|Окно GamePad|عرض GamePad|게임패드 보기"
+      },
+      "source_package": {
+        "url": "https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-macos-12-x64.dmg",
+        "sha256": "698c4b298f94983e4d6c30e9687ba8ff05094dd3930837c5104cddc0b0a49e4e",
+        "bytes": 36588188,
+        "format": "dmg",
+        "entry": "Cemu.app",
+        "prepare": "macos-adhoc"
+      }
     }
   ],
   "previous_builds": [

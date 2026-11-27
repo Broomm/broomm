@@ -18,6 +18,20 @@ private class QuitTestWindow: MainFlutterWindow {
 }
 
 class RunnerTests: XCTestCase {
+  func testRemoteGamePadVideoRetainsWideAspectWithinSourcePixels() throws {
+    let large = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: 3840, sourceHeight: 2160, widescreen: true))
+    XCTAssertEqual(large.width, 2560)
+    XCTAssertEqual(large.height, 1440)
+    for (width, height) in [(854.0, 480.0), (1901.5, 1070.5)] {
+      let size = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: width, sourceHeight: height, widescreen: true))
+      XCTAssertLessThanOrEqual(Double(size.width), width)
+      XCTAssertLessThanOrEqual(Double(size.height), height)
+      XCTAssertEqual(size.width * 9, size.height * 16)
+      XCTAssertEqual(size.width % 2, 0)
+      XCTAssertEqual(size.height % 2, 0)
+    }
+  }
+
   func testRemoteVideoRetainsHighResolutionWithinItsPixelBudget() throws {
     let size = try XCTUnwrap(remoteVideoCaptureSize(sourceWidth: 2456, sourceHeight: 1842))
     XCTAssertEqual(size.width, 2456)
